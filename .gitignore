@@ -1,0 +1,5 @@
+.idea/
+scratch_pad.py
+**/__pycache__/
+./docs/build
+./docs/_build
