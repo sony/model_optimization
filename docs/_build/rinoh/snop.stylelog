@@ -1,0 +1,852 @@
+---------------------------------- page 1 ----------------------------------
+#### DownExpandingContainer('title')
+  StaticGroupedFlowables()
+    Paragraph('SNOP', style='title page title')
+         > (0,0,1,0,2) title page title
+           (0,0,0,0,2) body
+        SingleStyledText('SNOP')
+    Paragraph('Release 0.0.1', style='title page subtitle')
+         > (0,0,1,0,2) title page subtitle
+           (0,0,0,0,2) body
+        SingleStyledText('Release 0.0.1')
+    Paragraph('Sony Semiconductors Israel', style='title page author')
+         > (0,0,1,0,2) title page author
+           (0,0,0,0,2) body
+        SingleStyledText('Sony Semiconductors Israel')
+    Paragraph('May 31, 2021', style='title page date')
+         > (0,0,1,0,2) title page date
+           (0,0,0,0,2) body
+        SingleStyledText('May 31, 2021')
+---------------------------------- page i ----------------------------------
+#### FootnoteContainer('footnotes')
+  StaticGroupedFlowables()
+#### DownExpandingContainer('floats')
+  StaticGroupedFlowables()
+#### FlowablesContainer('chapter title')
+  Paragraph('Table of Contents', style='front matter section title')
+       > (0,0,1,0,2) front matter section title
+         (0,0,0,0,2) body
+      Field('Table of Contents')
+        StringField('Table of Contents')
+          SingleStyledText('Table of Contents')
+#### ChainedContainer('column1')
+  StaticGroupedFlowables()
+    TableOfContentsSection(style='table of contents')
+         > (0,0,1,0,1) table of contents section
+           (0,0,0,1,1) chapter
+      TableOfContents()   table of contents
+           > (0,0,0,0,2) table of contents
+        TableOfContentsEntry('	Python Module Index	3')
+             > (0,0,0,1,2) toc level 1
+            ReferenceField('')
+                 > (0,0,0,1,4) toc entry number reference field
+                   (0,0,0,0,1) linked reference
+              SingleStyledText('')
+            Tab('	')
+            ReferenceField('Python Module Index')
+                 > (0,0,0,0,1) linked reference
+              SingleStyledText('Python Module Index')
+            Tab('	')
+            ReferenceField('3')
+                 > (0,0,0,0,1) linked reference
+              SingleStyledText('3')
+        TableOfContentsEntry('	Index	5')
+             > (0,0,0,1,2) toc level 1
+            ReferenceField('')
+                 > (0,0,0,1,4) toc entry number reference field
+                   (0,0,0,0,1) linked reference
+              SingleStyledText('')
+            Tab('	')
+            ReferenceField('Index')
+                 > (0,0,0,0,1) linked reference
+              StringField('Index')
+                SingleStyledText('Index')
+            Tab('	')
+            ReferenceField('5')
+                 > (0,0,0,0,1) linked reference
+              SingleStyledText('5')
+#### DownExpandingContainer('footer')
+  StaticGroupedFlowables()
+    Footer('		i')
+         > (0,0,0,0,2) footer
+        MixedStyledText('		i')
+          MixedStyledText('		i')
+            Tab('	')
+            Tab('	')
+            Field('i')
+              SingleStyledText('i')
+---------------------------------- page 1 ----------------------------------
+#### FootnoteContainer('footnotes')
+  StaticGroupedFlowables()
+#### DownExpandingContainer('floats')
+  StaticGroupedFlowables()
+#### ChainedContainer('column1')
+  StaticGroupedFlowables()
+    DocumentTree()
+      StaticGroupedFlowables()   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/docs/source/index.rst:0 <compound>
+      List(style='bulleted')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/docs/source/index.rst:18 <bullet_list>
+           > (0,0,1,0,2) bulleted list
+        ListItem()   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/docs/source/index.rst:None <list_item>
+             x (0,0,1,0,4) bulleted list item
+             > fallback to default style
+          ListItemLabel('•')
+               > (0,0,1,0,6) bulleted list item label
+                 (0,0,0,0,2) list item label
+              MixedStyledText('•')
+                SingleStyledText('')
+                SingleStyledText('•')
+                SingleStyledText('')
+          StaticGroupedFlowables()
+               > (0,0,0,0,3) list item body
+            Paragraph('genindex')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/docs/source/index.rst:18 <paragraph>
+                 > (0,0,0,0,5) list item paragraph
+                   (0,0,0,0,2) body
+                MixedStyledText('genindex')
+                  MixedStyledText('genindex')
+                    MixedStyledText('genindex')   None:None <inline>
+                      SingleStyledText('genindex')
+        ListItem()   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/docs/source/index.rst:None <list_item>
+             x (0,0,1,0,4) bulleted list item
+             > fallback to default style
+          ListItemLabel('•')
+               > (0,0,1,0,6) bulleted list item label
+                 (0,0,0,0,2) list item label
+              MixedStyledText('•')
+                SingleStyledText('')
+                SingleStyledText('•')
+                SingleStyledText('')
+          StaticGroupedFlowables()
+               > (0,0,0,0,3) list item body
+            Paragraph('modindex')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/docs/source/index.rst:19 <paragraph>
+                 > (0,0,0,0,5) list item paragraph
+                   (0,0,0,0,2) body
+                MixedStyledText('modindex')
+                  MixedStyledText('modindex')
+                    MixedStyledText('modindex')   None:None <inline>
+                      SingleStyledText('modindex')
+        ListItem()   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/docs/source/index.rst:None <list_item>
+             x (0,0,1,0,4) bulleted list item
+             > fallback to default style
+          ListItemLabel('•')
+               > (0,0,1,0,6) bulleted list item label
+                 (0,0,0,0,2) list item label
+              MixedStyledText('•')
+                SingleStyledText('')
+                SingleStyledText('•')
+                SingleStyledText('')
+          StaticGroupedFlowables()
+               > (0,0,0,0,3) list item body
+            Paragraph('search')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/docs/source/index.rst:20 <paragraph>
+                 > (0,0,0,0,5) list item paragraph
+                   (0,0,0,0,2) body
+                MixedStyledText('search')
+                  MixedStyledText('search')
+                    MixedStyledText('search')   None:None <inline>
+                      SingleStyledText('search')
+      LabeledFlowable(style='object description')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/docs/source/index.rst:0 <desc>
+           > (0,0,1,0,2) object description
+        StaticGroupedFlowables(style='signatures')
+             > (0,0,2,0,3) object signatures
+          Paragraph('class constrained_model_optimiza...', id='constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector:1 <desc_signature>
+               > (0,0,2,0,5) object signature
+                 (0,0,0,0,2) body
+              MixedStyledText('class constrained_model_optimiza...')
+                MixedStyledText('class constrained_model_optimiza...')
+                  MixedStyledText('class ', style='annotation')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector:None <desc_annotation>
+                       > (0,0,3,0,6) object annotation
+                    SingleStyledText('class ')
+                  MixedStyledText('constrained_model_optimization.c...', style='additional name part')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector:None <desc_addname>
+                       > (0,0,3,0,6) additional name part
+                    SingleStyledText('constrained_model_optimization.c...')
+                  MixedStyledText('FastHistogramCollector', style='main object name')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector:None <desc_name>
+                       > (0,0,3,0,6) object name
+                    SingleStyledText('FastHistogramCollector')
+                  MixedStyledText(' ( n_bins: int = 2048 ) ')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector:None <desc_parameterlist>
+                    MixedStyledText(' ( n_bins: int = 2048')
+                      SingleStyledText(' ( ', style='parentheses')
+                           > (0,0,3,0,6) object parentheses
+                      MixedStyledText('n_bins: int = 2048', style='parameter list')
+                           > (0,0,3,0,6) object parameter list
+                        MixedStyledText('n_bins: int = 2048', style='parameter')   None:None <desc_parameter>
+                             > (0,0,3,0,6) object parameter
+                          MixedStyledText('n_bins')   None:None <inline>
+                            SingleStyledText('n_bins')
+                          MixedStyledText(':')   None:None <inline>
+                            SingleStyledText(':')
+                          SingleStyledText(' ')
+                          MixedStyledText('int')   None:None <inline>
+                            SingleStyledText('int')
+                          SingleStyledText(' ')
+                          MixedStyledText('=')   None:None <inline>
+                            SingleStyledText('=')
+                          SingleStyledText(' ')
+                          MixedStyledText('2048')   None:None <inline>
+                            SingleStyledText('2048')
+                    SingleStyledText(' ) ', style='parentheses')
+                         > (0,0,3,0,6) object parentheses
+        StaticGroupedFlowables(style='content')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector:None <desc_content>
+             > (0,0,2,0,3) object description content
+          Paragraph('Collector for holding histogram ...')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector:1 <paragraph>
+               > (0,0,2,0,5) object description content paragraph
+                 (0,0,0,0,2) body
+              MixedStyledText('Collector for holding histogram ...')
+                MixedStyledText('Collector for holding histogram ...')
+                  SingleStyledText('Collector for holding histogram ...')
+          LabeledFlowable(style='object description')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.get_histogram:None <desc>
+               > (0,0,1,0,2) object description
+            StaticGroupedFlowables(style='signatures')
+                 > (0,0,2,0,3) object signatures
+              Paragraph('get_histogram (  ) → Tuple[numpy...', id='constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.get_histogram')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.get_histogram:1 <desc_signature>
+                   > (0,0,2,0,5) object signature
+                     (0,0,0,0,2) body
+                  MixedStyledText('get_histogram (  ) → Tuple[numpy...')
+                    MixedStyledText('get_histogram (  ) → Tuple[numpy...')
+                      MixedStyledText('get_histogram', style='main object name')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.get_histogram:None <desc_name>
+                           > (0,0,3,0,6) object name
+                        SingleStyledText('get_histogram')
+                      MixedStyledText(' (  ) ')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.get_histogram:None <desc_parameterlist>
+                        MixedStyledText(' ( ')
+                          SingleStyledText(' ( ', style='parentheses')
+                               > (0,0,3,0,6) object parentheses
+                          MixedStyledText('', style='parameter list')
+                               > (0,0,3,0,6) object parameter list
+                        SingleStyledText(' ) ', style='parentheses')
+                             > (0,0,3,0,6) object parentheses
+                      MixedStyledText('→ Tuple[numpy.ndarray, numpy.nda...')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.get_histogram:None <desc_returns>
+                        MixedStyledText('→ ')
+                          SingleStyledText('→', style='returns arrow')
+                          SingleStyledText(' ')
+                        MixedStyledText('Tuple[numpy.ndarray, numpy.ndarr...', style='returns')
+                             > (0,0,3,0,6) object returns
+                          SingleStyledText('Tuple')
+                          MixedStyledText('[')   None:None <inline>
+                            SingleStyledText('[')
+                          SingleStyledText('numpy.ndarray')
+                          MixedStyledText(', ')   None:None <inline>
+                            SingleStyledText(', ')
+                          SingleStyledText('numpy.ndarray')
+                          MixedStyledText(']')   None:None <inline>
+                            SingleStyledText(']')
+            StaticGroupedFlowables(style='content')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.get_histogram:None <desc_content>
+                 > (0,0,2,0,3) object description content
+              Paragraph('Returns: The histogram (bins and...')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.get_histogram:1 <paragraph>
+                   > (0,0,2,0,5) object description content paragraph
+                     (0,0,0,0,2) body
+                  MixedStyledText('Returns: The histogram (bins and...')
+                    MixedStyledText('Returns: The histogram (bins and...')
+                      SingleStyledText('Returns: The histogram (bins and...')
+          LabeledFlowable(style='object description')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.max:None <desc>
+               > (0,0,1,0,2) object description
+            StaticGroupedFlowables(style='signatures')
+                 > (0,0,2,0,3) object signatures
+              Paragraph('max (  ) ', id='constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.max')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.max:1 <desc_signature>
+                   > (0,0,2,0,5) object signature
+                     (0,0,0,0,2) body
+                  MixedStyledText('max (  ) ')
+                    MixedStyledText('max (  ) ')
+                      MixedStyledText('max', style='main object name')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.max:None <desc_name>
+                           > (0,0,3,0,6) object name
+                        SingleStyledText('max')
+                      MixedStyledText(' (  ) ')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.max:None <desc_parameterlist>
+                        MixedStyledText(' ( ')
+                          SingleStyledText(' ( ', style='parentheses')
+                               > (0,0,3,0,6) object parentheses
+                          MixedStyledText('', style='parameter list')
+                               > (0,0,3,0,6) object parameter list
+                        SingleStyledText(' ) ', style='parentheses')
+                             > (0,0,3,0,6) object parentheses
+            StaticGroupedFlowables(style='content')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.max:None <desc_content>
+                 > (0,0,2,0,3) object description content
+              Paragraph('Returns: Maximum value in the hi...')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.max:1 <paragraph>
+                   > (0,0,2,0,5) object description content paragraph
+                     (0,0,0,0,2) body
+                  MixedStyledText('Returns: Maximum value in the hi...')
+                    MixedStyledText('Returns: Maximum value in the hi...')
+                      SingleStyledText('Returns: Maximum value in the hi...')
+          LabeledFlowable(style='object description')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.min:None <desc>
+               > (0,0,1,0,2) object description
+            StaticGroupedFlowables(style='signatures')
+                 > (0,0,2,0,3) object signatures
+              Paragraph('min (  ) ', id='constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.min')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.min:1 <desc_signature>
+                   > (0,0,2,0,5) object signature
+                     (0,0,0,0,2) body
+                  MixedStyledText('min (  ) ')
+                    MixedStyledText('min (  ) ')
+                      MixedStyledText('min', style='main object name')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.min:None <desc_name>
+                           > (0,0,3,0,6) object name
+                        SingleStyledText('min')
+                      MixedStyledText(' (  ) ')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.min:None <desc_parameterlist>
+                        MixedStyledText(' ( ')
+                          SingleStyledText(' ( ', style='parentheses')
+                               > (0,0,3,0,6) object parentheses
+                          MixedStyledText('', style='parameter list')
+                               > (0,0,3,0,6) object parameter list
+                        SingleStyledText(' ) ', style='parentheses')
+                             > (0,0,3,0,6) object parentheses
+            StaticGroupedFlowables(style='content')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.min:None <desc_content>
+                 > (0,0,2,0,3) object description content
+              Paragraph('Returns: Minimum value in the hi...')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.min:1 <paragraph>
+                   > (0,0,2,0,5) object description content paragraph
+                     (0,0,0,0,2) body
+                  MixedStyledText('Returns: Minimum value in the hi...')
+                    MixedStyledText('Returns: Minimum value in the hi...')
+                      SingleStyledText('Returns: Minimum value in the hi...')
+          LabeledFlowable(style='object description')   None:None <desc>
+               > (0,0,1,0,2) object description
+            StaticGroupedFlowables(style='signatures')
+                 > (0,0,2,0,3) object signatures
+              Paragraph('scale ( scale_factor: numpy.ndar...', id='constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.scale')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.scale:1 <desc_signature>
+                   > (0,0,2,0,5) object signature
+                     (0,0,0,0,2) body
+                  MixedStyledText('scale ( scale_factor: numpy.ndar...')
+                    MixedStyledText('scale ( scale_factor: numpy.ndar...')
+                      MixedStyledText('scale', style='main object name')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.scale:None <desc_name>
+                           > (0,0,3,0,6) object name
+                        SingleStyledText('scale')
+                      MixedStyledText(' ( scale_factor: numpy.ndarray )...')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.scale:None <desc_parameterlist>
+                        MixedStyledText(' ( scale_factor: numpy.ndarray')
+                          SingleStyledText(' ( ', style='parentheses')
+                               > (0,0,3,0,6) object parentheses
+                          MixedStyledText('scale_factor: numpy.ndarray', style='parameter list')
+                               > (0,0,3,0,6) object parameter list
+                            MixedStyledText('scale_factor: numpy.ndarray', style='parameter')   None:None <desc_parameter>
+                                 > (0,0,3,0,6) object parameter
+                              MixedStyledText('scale_factor')   None:None <inline>
+                                SingleStyledText('scale_factor')
+                              MixedStyledText(':')   None:None <inline>
+                                SingleStyledText(':')
+                              SingleStyledText(' ')
+                              MixedStyledText('numpy.ndarray')   None:None <inline>
+                                SingleStyledText('numpy.ndarray')
+                        SingleStyledText(' ) ', style='parentheses')
+                             > (0,0,3,0,6) object parentheses
+            StaticGroupedFlowables(style='content')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.scale:None <desc_content>
+                 > (0,0,2,0,3) object description content
+              Paragraph('Scale all statistics in collecto...')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.scale:1 <paragraph>
+                   > (0,0,2,0,5) object description content paragraph
+                     (0,0,0,0,2) body
+                  MixedStyledText('Scale all statistics in collecto...')
+                    MixedStyledText('Scale all statistics in collecto...')
+                      SingleStyledText('Scale all statistics in collecto...')
+              DefinitionList(style='field list')   None:None <field_list>
+                   > (0,0,1,0,2) field list
+                     (0,0,0,0,2) definition list
+                LabeledFlowable()   None:None <field>
+                     > (0,0,1,0,4) field list item
+                       (0,0,0,0,4) definition list item
+                  Paragraph('Parameters', style='field name')
+                       > (0,0,2,0,6) field name
+                         (0,0,0,0,2) body
+                      MixedStyledText('Parameters')
+                        MixedStyledText('Parameters')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.scale:0 <field_name>
+                          SingleStyledText('Parameters')
+                  StaticGroupedFlowables()   None:None <field_body>
+                    Paragraph('scale_factor – Factor to scale a...')   None:None <paragraph>
+                         > (0,0,0,0,2) body
+                        MixedStyledText('scale_factor – Factor to scale a...')
+                          MixedStyledText('scale_factor – Factor to scale a...')
+                            MixedStyledText('scale_factor', style='literal strong')   None:None <literal_strong>
+                                 > (0,0,1,0,1) literal strong
+                              SingleStyledText('scale_factor')
+                            SingleStyledText(' – ')
+                            SingleStyledText('Factor to scale all collector’s ...')
+          LabeledFlowable(style='object description')   None:None <desc>
+               > (0,0,1,0,2) object description
+            StaticGroupedFlowables(style='signatures')
+                 > (0,0,2,0,3) object signatures
+              Paragraph('shift ( shift_value: numpy.ndarr...', id='constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.shift')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.shift:1 <desc_signature>
+                   > (0,0,2,0,5) object signature
+                     (0,0,0,0,2) body
+                  MixedStyledText('shift ( shift_value: numpy.ndarr...')
+                    MixedStyledText('shift ( shift_value: numpy.ndarr...')
+                      MixedStyledText('shift', style='main object name')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.shift:None <desc_name>
+                           > (0,0,3,0,6) object name
+                        SingleStyledText('shift')
+                      MixedStyledText(' ( shift_value: numpy.ndarray ) ')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.shift:None <desc_parameterlist>
+                        MixedStyledText(' ( shift_value: numpy.ndarray')
+                          SingleStyledText(' ( ', style='parentheses')
+                               > (0,0,3,0,6) object parentheses
+                          MixedStyledText('shift_value: numpy.ndarray', style='parameter list')
+                               > (0,0,3,0,6) object parameter list
+                            MixedStyledText('shift_value: numpy.ndarray', style='parameter')   None:None <desc_parameter>
+                                 > (0,0,3,0,6) object parameter
+                              MixedStyledText('shift_value')   None:None <inline>
+                                SingleStyledText('shift_value')
+                              MixedStyledText(':')   None:None <inline>
+                                SingleStyledText(':')
+                              SingleStyledText(' ')
+                              MixedStyledText('numpy.ndarray')   None:None <inline>
+                                SingleStyledText('numpy.ndarray')
+                        SingleStyledText(' ) ', style='parentheses')
+                             > (0,0,3,0,6) object parentheses
+            StaticGroupedFlowables(style='content')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.shift:None <desc_content>
+                 > (0,0,2,0,3) object description content
+              Paragraph('Shift all statistics in collecto...')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.shift:1 <paragraph>
+                   > (0,0,2,0,5) object description content paragraph
+                     (0,0,0,0,2) body
+                  MixedStyledText('Shift all statistics in collecto...')
+                    MixedStyledText('Shift all statistics in collecto...')
+                      SingleStyledText('Shift all statistics in collecto...')
+              DefinitionList(style='field list')   None:None <field_list>
+                   > (0,0,1,0,2) field list
+                     (0,0,0,0,2) definition list
+                LabeledFlowable()   None:None <field>
+                     > (0,0,1,0,4) field list item
+                       (0,0,0,0,4) definition list item
+                  Paragraph('Parameters', style='field name')
+                       > (0,0,2,0,6) field name
+                         (0,0,0,0,2) body
+                      MixedStyledText('Parameters')
+                        MixedStyledText('Parameters')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.shift:0 <field_name>
+                          SingleStyledText('Parameters')
+                  StaticGroupedFlowables()   None:None <field_body>
+                    Paragraph('shift_value – Value to shift all...')   None:None <paragraph>
+                         > (0,0,0,0,2) body
+                        MixedStyledText('shift_value – Value to shift all...')
+                          MixedStyledText('shift_value – Value to shift all...')
+                            MixedStyledText('shift_value', style='literal strong')   None:None <literal_strong>
+                                 > (0,0,1,0,1) literal strong
+                              SingleStyledText('shift_value')
+                            SingleStyledText(' – ')
+                            SingleStyledText('Value to shift all collector’s s...')
+          LabeledFlowable(style='object description')   None:None <desc>
+               > (0,0,1,0,2) object description
+            StaticGroupedFlowables(style='signatures')
+                 > (0,0,2,0,3) object signatures
+              Paragraph('update ( x: numpy.ndarray ) ', id='constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.update')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.update:1 <desc_signature>
+                   > (0,0,2,0,5) object signature
+                     (0,0,0,0,2) body
+                  MixedStyledText('update ( x: numpy.ndarray ) ')
+                    MixedStyledText('update ( x: numpy.ndarray ) ')
+                      MixedStyledText('update', style='main object name')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.update:None <desc_name>
+                           > (0,0,3,0,6) object name
+                        SingleStyledText('update')
+                      MixedStyledText(' ( x: numpy.ndarray ) ')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.update:None <desc_parameterlist>
+                        MixedStyledText(' ( x: numpy.ndarray')
+                          SingleStyledText(' ( ', style='parentheses')
+                               > (0,0,3,0,6) object parentheses
+                          MixedStyledText('x: numpy.ndarray', style='parameter list')
+                               > (0,0,3,0,6) object parameter list
+                            MixedStyledText('x: numpy.ndarray', style='parameter')   None:None <desc_parameter>
+                                 > (0,0,3,0,6) object parameter
+                              MixedStyledText('x')   None:None <inline>
+                                SingleStyledText('x')
+                              MixedStyledText(':')   None:None <inline>
+                                SingleStyledText(':')
+                              SingleStyledText(' ')
+                              MixedStyledText('numpy.ndarray')   None:None <inline>
+                                SingleStyledText('numpy.ndarray')
+                        SingleStyledText(' ) ', style='parentheses')
+                             > (0,0,3,0,6) object parentheses
+            StaticGroupedFlowables(style='content')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.update:None <desc_content>
+                 > (0,0,2,0,3) object description content
+              Paragraph('Update the current state of the ...')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.update:1 <paragraph>
+                   > (0,0,2,0,5) object description content paragraph
+                     (0,0,0,0,2) body
+                  MixedStyledText('Update the current state of the ...')
+                    MixedStyledText('Update the current state of the ...')
+                      SingleStyledText('Update the current state of the ...')
+              DefinitionList(style='field list')   None:None <field_list>
+                   > (0,0,1,0,2) field list
+                     (0,0,0,0,2) definition list
+                LabeledFlowable()   None:None <field>
+                     > (0,0,1,0,4) field list item
+                       (0,0,0,0,4) definition list item
+                  Paragraph('Parameters', style='field name')
+                       > (0,0,2,0,6) field name
+                         (0,0,0,0,2) body
+                      MixedStyledText('Parameters')
+                        MixedStyledText('Parameters')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.FastHistogramCollector.update:0 <field_name>
+                          SingleStyledText('Parameters')
+                  StaticGroupedFlowables()   None:None <field_body>
+                    Paragraph('x – Tensor going through the col...')   None:None <paragraph>
+                         > (0,0,0,0,2) body
+                        MixedStyledText('x – Tensor going through the col...')
+                          MixedStyledText('x – Tensor going through the col...')
+                            MixedStyledText('x', style='literal strong')   None:None <literal_strong>
+                                 > (0,0,1,0,1) literal strong
+                              SingleStyledText('x')
+                            SingleStyledText(' – ')
+                            SingleStyledText('Tensor going through the collect...')
+      LabeledFlowable(style='object description')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/docs/source/index.rst:0 <desc>
+           > (0,0,1,0,2) object description
+        StaticGroupedFlowables(style='signatures')
+             > (0,0,2,0,3) object signatures
+          Paragraph('constrained_model_optimization.c...', id='constrained_model_optimization.common.collectors.fast_histogram_collector.interpolate_histogram')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.interpolate_histogram:1 <desc_signature>
+               > (0,0,2,0,5) object signature
+                 (0,0,0,0,2) body
+              MixedStyledText('constrained_model_optimization.c...')
+                MixedStyledText('constrained_model_optimization.c...')
+                  MixedStyledText('constrained_model_optimization.c...', style='additional name part')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.interpolate_histogram:None <desc_addname>
+                       > (0,0,3,0,6) additional name part
+                    SingleStyledText('constrained_model_optimization.c...')
+                  MixedStyledText('interpolate_histogram', style='main object name')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.interpolate_histogram:None <desc_name>
+                       > (0,0,3,0,6) object name
+                    SingleStyledText('interpolate_histogram')
+                  MixedStyledText(' ( current_bins: numpy.ndarray, ...')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.interpolate_histogram:None <desc_parameterlist>
+                    MixedStyledText(' ( current_bins: numpy.ndarray, ...')
+                      SingleStyledText(' ( ', style='parentheses')
+                           > (0,0,3,0,6) object parentheses
+                      MixedStyledText('current_bins: numpy.ndarray, bin...', style='parameter list')
+                           > (0,0,3,0,6) object parameter list
+                        MixedStyledText('current_bins: numpy.ndarray', style='parameter')   None:None <desc_parameter>
+                             > (0,0,3,0,6) object parameter
+                          MixedStyledText('current_bins')   None:None <inline>
+                            SingleStyledText('current_bins')
+                          MixedStyledText(':')   None:None <inline>
+                            SingleStyledText(':')
+                          SingleStyledText(' ')
+                          MixedStyledText('numpy.ndarray')   None:None <inline>
+                            SingleStyledText('numpy.ndarray')
+                        SingleStyledText(', ')
+                        MixedStyledText('bins_to_interpolate: numpy.ndarr...', style='parameter')   None:None <desc_parameter>
+                             > (0,0,3,0,6) object parameter
+                          MixedStyledText('bins_to_interpolate')   None:None <inline>
+                            SingleStyledText('bins_to_interpolate')
+                          MixedStyledText(':')   None:None <inline>
+                            SingleStyledText(':')
+                          SingleStyledText(' ')
+                          MixedStyledText('numpy.ndarray')   None:None <inline>
+                            SingleStyledText('numpy.ndarray')
+                        SingleStyledText(', ')
+                        MixedStyledText('counts_to_interpolate: numpy.nda...', style='parameter')   None:None <desc_parameter>
+                             > (0,0,3,0,6) object parameter
+                          MixedStyledText('counts_to_interpolate')   None:None <inline>
+                            SingleStyledText('counts_to_interpolate')
+                          MixedStyledText(':')   None:None <inline>
+                            SingleStyledText(':')
+                          SingleStyledText(' ')
+                          MixedStyledText('numpy.ndarray')   None:None <inline>
+                            SingleStyledText('numpy.ndarray')
+                    SingleStyledText(' ) ', style='parentheses')
+                         > (0,0,3,0,6) object parentheses
+                  MixedStyledText('→ numpy.ndarray')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.interpolate_histogram:None <desc_returns>
+                    MixedStyledText('→ ')
+                      SingleStyledText('→', style='returns arrow')
+                      SingleStyledText(' ')
+                    MixedStyledText('numpy.ndarray', style='returns')
+                         > (0,0,3,0,6) object returns
+                      SingleStyledText('numpy.ndarray')
+        StaticGroupedFlowables(style='content')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.interpolate_histogram:None <desc_content>
+             > (0,0,2,0,3) object description content
+          Paragraph('Interpolate a histogram to new b...')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.interpolate_histogram:1 <paragraph>
+               > (0,0,2,0,5) object description content paragraph
+                 (0,0,0,0,2) body
+              MixedStyledText('Interpolate a histogram to new b...')
+                MixedStyledText('Interpolate a histogram to new b...')
+                  SingleStyledText('Interpolate a histogram to new b...')
+#### DownExpandingContainer('footer')
+  StaticGroupedFlowables()
+    Footer('		1')
+         > (0,0,0,0,2) footer
+        MixedStyledText('		1')
+          MixedStyledText('		1')
+            Tab('	')
+            Tab('	')
+            Field('1')
+              SingleStyledText('1')
+---------------------------------- page 2 ----------------------------------
+#### FootnoteContainer('footnotes')
+  StaticGroupedFlowables()
+#### DownExpandingContainer('floats')
+  StaticGroupedFlowables()
+#### ChainedContainer('column1')
+  (continued) StaticGroupedFlowables()
+    (continued) DocumentTree()
+      (continued) LabeledFlowable(style='object description')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/docs/source/index.rst:0 <desc>
+           > (0,0,1,0,2) object description
+        (continued) StaticGroupedFlowables(style='content')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.interpolate_histogram:None <desc_content>
+             > (0,0,2,0,3) object description content
+          DefinitionList(style='field list')   None:None <field_list>
+               > (0,0,1,0,2) field list
+                 (0,0,0,0,2) definition list
+            LabeledFlowable()   None:None <field>
+                 > (0,0,1,0,4) field list item
+                   (0,0,0,0,4) definition list item
+              Paragraph('Returns', style='field name')
+                   > (0,0,2,0,6) field name
+                     (0,0,0,0,2) body
+                  MixedStyledText('Returns')
+                    MixedStyledText('Returns')   /Vols/vol_design/tools/swat/users/reuvenp/ptq/posttrainingquantization/constrained_model_optimization/common/collectors/fast_histogram_collector.py:docstring of constrained_model_optimization.common.collectors.fast_histogram_collector.interpolate_histogram:0 <field_name>
+                      SingleStyledText('Returns')
+              StaticGroupedFlowables()   None:None <field_body>
+                Paragraph('Counts of the histogram if it wa...')   None:None <paragraph>
+                     > (0,0,0,0,2) body
+                    MixedStyledText('Counts of the histogram if it wa...')
+                      MixedStyledText('Counts of the histogram if it wa...')
+                        SingleStyledText('Counts of the histogram if it wa...')
+#### UpExpandingContainer('header')
+  StaticGroupedFlowables()
+    Header('SNOP, Release 0.0.1')
+         > (0,0,0,0,2) header
+        MixedStyledText('SNOP, Release 0.0.1')
+          MixedStyledText('SNOP, Release 0.0.1')
+            Field('SNOP')
+              SingleStyledText('SNOP')
+            SingleStyledText(', ')
+            Field('Release 0.0.1')
+              SingleStyledText('Release 0.0.1')
+#### DownExpandingContainer('footer')
+  StaticGroupedFlowables()
+    Footer('2		Chapter ​.  ​')
+         > (0,0,0,0,2) footer
+        MixedStyledText('2		Chapter ​.  ​')
+          MixedStyledText('2		Chapter ​.  ​')
+            Field('2')
+              SingleStyledText('2')
+            Tab('	')
+            Tab('	')
+            StringField('Chapter')
+              SingleStyledText('Chapter')
+            SingleStyledText(' ')
+            Field('​')
+              SingleStyledText('​')
+            SingleStyledText('.  ')
+            Field('​')
+              SingleStyledText('​')
+---------------------------------- page 3 ----------------------------------
+#### FootnoteContainer('footnotes')
+  StaticGroupedFlowables()
+#### DownExpandingContainer('floats')
+  StaticGroupedFlowables()
+#### FlowablesContainer('chapter title')
+  Paragraph('Python Module Index', style='front matter section title')
+       > (0,0,1,0,2) front matter section title
+         (0,0,0,0,2) body
+      Field('Python Module Index')
+        SingleStyledText('Python Module Index')
+#### ChainedContainer('column1')
+  StaticGroupedFlowables()
+    StaticGroupedFlowables()
+      IndexSection()
+           > (0,0,0,1,1) chapter
+        IndexLabel('c')
+             > (0,0,0,0,2) index section label
+               (0,0,0,0,1) body
+            SingleStyledText('c')
+        IndexEntry('constrained_model_optimization')
+             > (0,0,0,1,2) level 1 index entry
+               (0,0,0,0,1) body
+            SingleStyledText('constrained_model_optimization', style='domain')
+                 > (0,0,1,0,3) domain index entry name
+        IndexEntry('constrained_model_optimization.c...')
+             > (0,0,0,1,2) level 2 index entry
+               (0,0,0,0,1) body
+            MixedStyledText('constrained_model_optimization.c...')
+              MixedStyledText('constrained_model_optimization.c...')
+                SingleStyledText('constrained_model_optimization.c...', style='domain')
+                     > (0,0,1,0,3) domain index entry name
+                SingleStyledText(', ')
+                Reference('XX')
+                     > (0,0,0,0,1) linked reference
+                  SingleStyledText('XX')
+#### DownExpandingContainer('footer')
+  StaticGroupedFlowables()
+    Footer('		3')
+         > (0,0,0,0,2) footer
+        MixedStyledText('		3')
+          MixedStyledText('		3')
+            Tab('	')
+            Tab('	')
+            Field('3')
+              SingleStyledText('3')
+---------------------------------- page 4 ----------------------------------
+#### FootnoteContainer('footnotes')
+  StaticGroupedFlowables()
+#### DownExpandingContainer('floats')
+  StaticGroupedFlowables()
+#### ChainedContainer('column1')
+  (continued) StaticGroupedFlowables()
+#### UpExpandingContainer('header')
+  StaticGroupedFlowables()
+    Header('SNOP, Release 0.0.1')
+         > (0,0,0,0,2) header
+        MixedStyledText('SNOP, Release 0.0.1')
+          MixedStyledText('SNOP, Release 0.0.1')
+            Field('SNOP')
+              SingleStyledText('SNOP')
+            SingleStyledText(', ')
+            Field('Release 0.0.1')
+              SingleStyledText('Release 0.0.1')
+#### DownExpandingContainer('footer')
+  StaticGroupedFlowables()
+    Footer('4		Python Module Index')
+         > (0,0,0,0,2) footer
+        MixedStyledText('4		Python Module Index')
+          MixedStyledText('4		Python Module Index')
+            Field('4')
+              SingleStyledText('4')
+            Tab('	')
+            Tab('	')
+            Field('Python Module Index')
+              SingleStyledText('Python Module Index')
+---------------------------------- page 5 ----------------------------------
+#### FootnoteContainer('footnotes')
+  StaticGroupedFlowables()
+#### DownExpandingContainer('floats')
+  StaticGroupedFlowables()
+#### FlowablesContainer('chapter title')
+  Paragraph('Index', style='front matter section title')
+       > (0,0,1,0,2) front matter section title
+         (0,0,0,0,2) body
+      Field('Index')
+        StringField('Index')
+          SingleStyledText('Index')
+#### ChainedContainer('column1')
+  (continued) StaticGroupedFlowables()
+    IndexSection()
+         > (0,0,0,1,1) chapter
+      Index()   index
+           > (0,0,0,0,2) index
+        IndexLabel('C')
+             > (0,0,0,0,2) index section label
+               (0,0,0,0,1) body
+            SingleStyledText('C')
+        IndexEntry('constrained_model_optimization.c...')
+             > (0,0,0,1,2) level 1 index entry
+               (0,0,0,0,1) body
+            SingleStyledText('constrained_model_optimization.c...')
+        IndexEntry('module, 1')
+             > (0,0,0,1,2) level 2 index entry
+               (0,0,0,0,1) body
+            MixedStyledText('module, 1')
+              MixedStyledText('module, 1')
+                SingleStyledText('module, ')
+                MixedStyledText('1')
+                  Reference('1')
+                       > (0,0,0,0,1) linked reference
+                    SingleStyledText('1')
+        IndexLabel('F')
+             > (0,0,0,0,2) index section label
+               (0,0,0,0,1) body
+            SingleStyledText('F')
+        IndexEntry('FastHistogramCollector (class in...')
+             > (0,0,0,1,2) level 1 index entry
+               (0,0,0,0,1) body
+            MixedStyledText('FastHistogramCollector (class in...')
+              MixedStyledText('FastHistogramCollector (class in...')
+                SingleStyledText('FastHistogramCollector (class in...')
+                MixedStyledText('1')
+                  Reference('1')
+                       > (0,0,0,0,1) linked reference
+                    SingleStyledText('1')
+        IndexLabel('G')
+             > (0,0,0,0,2) index section label
+               (0,0,0,0,1) body
+            SingleStyledText('G')
+        IndexEntry('get_histogram() (constrained_mod...')
+             > (0,0,0,1,2) level 1 index entry
+               (0,0,0,0,1) body
+            MixedStyledText('get_histogram() (constrained_mod...')
+              MixedStyledText('get_histogram() (constrained_mod...')
+                SingleStyledText('get_histogram() (constrained_mod...')
+                MixedStyledText('1')
+                  Reference('1')
+                       > (0,0,0,0,1) linked reference
+                    SingleStyledText('1')
+        IndexLabel('I')
+             > (0,0,0,0,2) index section label
+               (0,0,0,0,1) body
+            SingleStyledText('I')
+        IndexEntry('interpolate_histogram() (in modu...')
+             > (0,0,0,1,2) level 1 index entry
+               (0,0,0,0,1) body
+            MixedStyledText('interpolate_histogram() (in modu...')
+              MixedStyledText('interpolate_histogram() (in modu...')
+                SingleStyledText('interpolate_histogram() (in modu...')
+                MixedStyledText('1')
+                  Reference('1')
+                       > (0,0,0,0,1) linked reference
+                    SingleStyledText('1')
+        IndexLabel('M')
+             > (0,0,0,0,2) index section label
+               (0,0,0,0,1) body
+            SingleStyledText('M')
+        IndexEntry('max() (constrained_model_optimiz...')
+             > (0,0,0,1,2) level 1 index entry
+               (0,0,0,0,1) body
+            MixedStyledText('max() (constrained_model_optimiz...')
+              MixedStyledText('max() (constrained_model_optimiz...')
+                SingleStyledText('max() (constrained_model_optimiz...')
+                MixedStyledText('1')
+                  Reference('1')
+                       > (0,0,0,0,1) linked reference
+                    SingleStyledText('1')
+        IndexEntry('min() (constrained_model_optimiz...')
+             > (0,0,0,1,2) level 1 index entry
+               (0,0,0,0,1) body
+            MixedStyledText('min() (constrained_model_optimiz...')
+              MixedStyledText('min() (constrained_model_optimiz...')
+                SingleStyledText('min() (constrained_model_optimiz...')
+                MixedStyledText('1')
+                  Reference('1')
+                       > (0,0,0,0,1) linked reference
+                    SingleStyledText('1')
+        IndexEntry('module')
+             > (0,0,0,1,2) level 1 index entry
+               (0,0,0,0,1) body
+            SingleStyledText('module')
+        IndexEntry('constrained_model_optimization.c...')
+             > (0,0,0,1,2) level 2 index entry
+               (0,0,0,0,1) body
+            MixedStyledText('constrained_model_optimization.c...')
+              MixedStyledText('constrained_model_optimization.c...')
+                SingleStyledText('constrained_model_optimization.c...')
+                MixedStyledText('1')
+                  Reference('1')
+                       > (0,0,0,0,1) linked reference
+                    SingleStyledText('1')
+        IndexLabel('S')
+             > (0,0,0,0,2) index section label
+               (0,0,0,0,1) body
+            SingleStyledText('S')
+        IndexEntry('scale() (constrained_model_optim...')
+             > (0,0,0,1,2) level 1 index entry
+               (0,0,0,0,1) body
+            MixedStyledText('scale() (constrained_model_optim...')
+              MixedStyledText('scale() (constrained_model_optim...')
+                SingleStyledText('scale() (constrained_model_optim...')
+                MixedStyledText('1')
+                  Reference('1')
+                       > (0,0,0,0,1) linked reference
+                    SingleStyledText('1')
+        IndexEntry('shift() (constrained_model_optim...')
+             > (0,0,0,1,2) level 1 index entry
+               (0,0,0,0,1) body
+            MixedStyledText('shift() (constrained_model_optim...')
+              MixedStyledText('shift() (constrained_model_optim...')
+                SingleStyledText('shift() (constrained_model_optim...')
+                MixedStyledText('1')
+                  Reference('1')
+                       > (0,0,0,0,1) linked reference
+                    SingleStyledText('1')
+#### ChainedContainer('column2')
+  (continued) StaticGroupedFlowables()
+    (continued) IndexSection()
+         > (0,0,0,1,1) chapter
+      (continued) Index()   index
+           > (0,0,0,0,2) index
+        IndexLabel('U')
+             > (0,0,0,0,2) index section label
+               (0,0,0,0,1) body
+            SingleStyledText('U')
+        IndexEntry('update() (constrained_model_opti...')
+             > (0,0,0,1,2) level 1 index entry
+               (0,0,0,0,1) body
+            MixedStyledText('update() (constrained_model_opti...')
+              MixedStyledText('update() (constrained_model_opti...')
+                SingleStyledText('update() (constrained_model_opti...')
+                MixedStyledText('1')
+                  Reference('1')
+                       > (0,0,0,0,1) linked reference
+                    SingleStyledText('1')
+#### DownExpandingContainer('footer')
+  StaticGroupedFlowables()
+    Footer('		5')
+         > (0,0,0,0,2) footer
+        MixedStyledText('		5')
+          MixedStyledText('		5')
+            Tab('	')
+            Tab('	')
+            Field('5')
+              SingleStyledText('5')

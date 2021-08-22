@@ -1,0 +1,141 @@
+# ===============================================================================
+# Copyright (c) 2021, Sony Semiconductors Israel, Inc. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# ===============================================================================
+
+
+import copy
+
+import numpy as np
+from tensorflow.keras.layers import BatchNormalization, DepthwiseConv2D, Conv2DTranspose, Conv2D
+from typing import Tuple
+
+from network_optimization_package import common
+from network_optimization_package.common.graph.base_graph import Graph
+from network_optimization_package.common.graph.graph_matchers import EdgeMatcher, NodeOperationMatcher, \
+    NodeFrameworkAttrMatcher
+from network_optimization_package.common.graph.node import Node
+from network_optimization_package.keras.constants import KERNEL, BIAS, USE_BIAS, LINEAR, ACTIVATION, LAYER_NAME, \
+    GAMMA, BETA, EPSILON, \
+    MOVING_MEAN, \
+    MOVING_VARIANCE
+
+
+class BatchNormalizationFolding(common.BaseSubstitution):
+    """
+    Fold BatchNormalization into preceding linear layers.
+    """
+
+    def __init__(self):
+        """
+        Matches: (DepthwiseConv2D, Conv2D, Conv2DTranspose)[activation=linear] -> BatchNormalization.
+        """
+        bn_node = NodeOperationMatcher(BatchNormalization)
+        source_node = NodeOperationMatcher(DepthwiseConv2D) | \
+                      NodeOperationMatcher(Conv2D) | \
+                      NodeOperationMatcher(Conv2DTranspose)
+
+        act_linear = NodeFrameworkAttrMatcher(ACTIVATION, LINEAR)
+        source_node = source_node & act_linear
+        super().__init__(matcher_instance=EdgeMatcher(source_node, bn_node))
+
+    def substitute(self,
+                   graph: Graph,
+                   edge_nodes: Tuple[Node, Node]) -> Graph:
+        """
+        Fold BatchNormalization into preceding linear layers.
+
+        Args:
+            graph: Graph we apply the substitution on.
+            edge_nodes: Tuple of tow nodes (linear op and batchnorm node).
+
+        Returns:
+            Graph after applying the substitution.
+        """
+
+        num_nodes_before_substition = len(graph.nodes)
+        num_edges_before_substition = len(graph.edges)
+
+        conv_node = edge_nodes[0]
+        bn_node = edge_nodes[1]
+
+        if len(graph.get_next_nodes(conv_node)) > 1 or len(graph.get_prev_nodes(bn_node)) > 1:
+            return graph
+
+        kernel = conv_node.get_weights_by_keys(KERNEL)
+        bias = conv_node.get_weights_by_keys(BIAS)
+        gamma = bn_node.get_weights_by_keys(GAMMA)
+        beta = bn_node.get_weights_by_keys(BETA)
+        moving_mean = bn_node.get_weights_by_keys(MOVING_MEAN)
+        moving_variance = bn_node.get_weights_by_keys(MOVING_VARIANCE)
+        eps = bn_node.framework_attr[EPSILON]
+
+        if gamma is None:
+            gamma = 1.0
+        if beta is None:
+            beta = 0.0
+        if bias is None:
+            bias = 0.0
+
+        weights_scale = gamma / np.sqrt(moving_variance + eps)
+        bias = beta + (bias - moving_mean) * weights_scale
+
+        # Update Kernel
+        if conv_node.layer_class == DepthwiseConv2D:
+            kernel = kernel * weights_scale.reshape(1, 1, kernel.shape[-2], kernel.shape[-1])
+        elif conv_node.layer_class == Conv2DTranspose:
+            kernel = kernel * weights_scale.reshape(1, 1, -1, 1)
+        else:
+            kernel = kernel * weights_scale.reshape(1, 1, 1, -1)
+
+        framework_attr = copy.copy(conv_node.framework_attr)
+        framework_attr[USE_BIAS] = True
+        framework_attr[LAYER_NAME] = conv_node.name + '_bn'
+
+        weights_dict = {KERNEL: kernel,
+                        BIAS: bias}
+
+        conv_bn = common.graph.Node(conv_node.name + '_bn',
+                                    framework_attr,
+                                    conv_node.input_shape,
+                                    conv_node.output_shape,
+                                    weights_dict,
+                                    conv_node.layer_class)
+
+        graph.add_node(conv_bn)
+        graph.reconnect_out_edges(current_node=bn_node, new_node=conv_bn)
+        graph.reconnect_in_edges(current_node=conv_node, new_node=conv_bn)
+
+        graph.replace_output_node(current_node=bn_node, new_node=conv_bn)
+
+        graph.remove_edge(conv_node, bn_node)
+        graph.remove_node(bn_node)
+        graph.remove_node(conv_node)
+
+        assert num_nodes_before_substition - len(graph.nodes) == 1
+        assert num_edges_before_substition - len(graph.edges) == 1
+        return graph
