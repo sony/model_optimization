@@ -32,11 +32,6 @@ git clone https://github.com/sony-si/quantization-library.git
 python setup.py install
 ```
 
-#### From PIP
-```
-python setup.py install
-```
-
 ### Example Usage
 Here is a snapshot of a code that shown an example of how to use the post training quantization using keras.
 ```python
