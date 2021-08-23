@@ -62,6 +62,8 @@ Tensorboard Visualization (Experimental):
 
 Note that currently we only have full support for Keras layers, using the TensorFlow native layer may lead to unexpected behavior. This limitation will be removed in future releases. 
 
+SNOP is test with Tensorflow Version 2.5. 
+
 ## Tutorials and Results
 As part of the SNOP library, we have a set of example network on image classification which can be used as an example while using the package.
 
