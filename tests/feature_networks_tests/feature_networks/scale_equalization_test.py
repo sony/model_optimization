@@ -31,7 +31,7 @@
 import numpy as np
 import tensorflow as tf
 
-import network_optimization_package as snop
+import sony_model_optimization_package as smop
 from tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
 from tests.helpers.tensors_compare import cosine_similarity
 
@@ -48,10 +48,10 @@ class ScaleEqualizationTest(BaseFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
     def get_quantization_config(self):
-        return snop.QuantizationConfig(snop.ThresholdSelectionMethod.MSE,
-                                       snop.ThresholdSelectionMethod.MSE,
-                                       snop.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       snop.QuantizationMethod.SYMMETRIC_UNIFORM,
+        return smop.QuantizationConfig(smop.ThresholdSelectionMethod.MSE,
+                                       smop.ThresholdSelectionMethod.MSE,
+                                       smop.QuantizationMethod.SYMMETRIC_UNIFORM,
+                                       smop.QuantizationMethod.SYMMETRIC_UNIFORM,
                                        16,
                                        16,
                                        relu_unbound_correction=False,

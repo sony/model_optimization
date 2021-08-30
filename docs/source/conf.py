@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'SNOP'
+project = 'SMOP'
 copyright = '2021, Sony Semiconductors Israel'
 author = 'Sony Semiconductors Israel'
 
@@ -95,7 +95,7 @@ autosectionlabel_prefix_document = True
 
 html_theme = 'classic'
 html_theme = 'bizstyle'
-html_title = 'SNOP Documentation: ver ' + release
+html_title = 'SMOP Documentation: ver ' + release
 html_logo = '../images/ssi_logo.png'
 
 html_sidebars = {'**': ['localtoc.html', 'relations.html', 'searchbox.html']}
@@ -125,12 +125,12 @@ autodoc_preserve_defaults = True
 
 
 
-# from network_optimization_package import DEFAULTCONFIG
+# from sony_model_optimization_package import DEFAULTCONFIG
 # import textwrap
-# from network_optimization_package.keras.default_framework_info import DEFAULT_KERAS_INFO
+# from sony_model_optimization_package.keras.default_framework_info import DEFAULT_KERAS_INFO
 #
-# var2params = {DEFAULTCONFIG: ('DEFAULTCONFIG', 'network_optimization_package.DEFAULTCONFIG', 'Default quantization configuration is:'),
-#               DEFAULT_KERAS_INFO: ('DEFAULT_KERAS_INFO', 'network_optimization_package.keras.default_framework_info.DEFAULT_KERAS_INFO', 'Default framework info for Keras:')}
+# var2params = {DEFAULTCONFIG: ('DEFAULTCONFIG', 'sony_model_optimization_package.DEFAULTCONFIG', 'Default quantization configuration is:'),
+#               DEFAULT_KERAS_INFO: ('DEFAULT_KERAS_INFO', 'sony_model_optimization_package.keras.default_framework_info.DEFAULT_KERAS_INFO', 'Default framework info for Keras:')}
 #
 #
 #

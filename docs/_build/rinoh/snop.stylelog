@@ -1,10 +1,10 @@
 ---------------------------------- page 1 ----------------------------------
 #### DownExpandingContainer('title')
   StaticGroupedFlowables()
-    Paragraph('SNOP', style='title page title')
+    Paragraph('SMOP', style='title page title')
          > (0,0,1,0,2) title page title
            (0,0,0,0,2) body
-        SingleStyledText('SNOP')
+        SingleStyledText('SMOP')
     Paragraph('Release 0.0.1', style='title page subtitle')
          > (0,0,1,0,2) title page subtitle
            (0,0,0,0,2) body
@@ -577,12 +577,12 @@
                         SingleStyledText('Counts of the histogram if it wa...')
 #### UpExpandingContainer('header')
   StaticGroupedFlowables()
-    Header('SNOP, Release 0.0.1')
+    Header('SMOP, Release 0.0.1')
          > (0,0,0,0,2) header
-        MixedStyledText('SNOP, Release 0.0.1')
-          MixedStyledText('SNOP, Release 0.0.1')
-            Field('SNOP')
-              SingleStyledText('SNOP')
+        MixedStyledText('SMOP, Release 0.0.1')
+          MixedStyledText('SMOP, Release 0.0.1')
+            Field('SMOP')
+              SingleStyledText('SMOP')
             SingleStyledText(', ')
             Field('Release 0.0.1')
               SingleStyledText('Release 0.0.1')
@@ -659,12 +659,12 @@
   (continued) StaticGroupedFlowables()
 #### UpExpandingContainer('header')
   StaticGroupedFlowables()
-    Header('SNOP, Release 0.0.1')
+    Header('SMOP, Release 0.0.1')
          > (0,0,0,0,2) header
-        MixedStyledText('SNOP, Release 0.0.1')
-          MixedStyledText('SNOP, Release 0.0.1')
-            Field('SNOP')
-              SingleStyledText('SNOP')
+        MixedStyledText('SMOP, Release 0.0.1')
+          MixedStyledText('SMOP, Release 0.0.1')
+            Field('SMOP')
+              SingleStyledText('SMOP')
             SingleStyledText(', ')
             Field('Release 0.0.1')
               SingleStyledText('Release 0.0.1')

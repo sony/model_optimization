@@ -11,29 +11,29 @@ network_editor Module
 
 EditRule
 ==========
-.. autoclass:: network_optimization_package.network_editor.EditRule
+.. autoclass:: sony_model_optimization_package.network_editor.EditRule
 
 Filters
 ==========
 
-.. autoclass:: network_optimization_package.network_editor.NodeTypeFilter
+.. autoclass:: sony_model_optimization_package.network_editor.NodeTypeFilter
 
 |
 
-.. autoclass:: network_optimization_package.network_editor.NodeNameFilter
+.. autoclass:: sony_model_optimization_package.network_editor.NodeNameFilter
 
 |
 
-.. autoclass:: network_optimization_package.network_editor.NodeNameScopeFilter
+.. autoclass:: sony_model_optimization_package.network_editor.NodeNameScopeFilter
 
 
 Actions
 ==========
 
-.. autoclass:: network_optimization_package.network_editor.ChangeWeightsQuantConfigAttr
+.. autoclass:: sony_model_optimization_package.network_editor.ChangeWeightsQuantConfigAttr
 
 |
 
-.. autoclass:: network_optimization_package.network_editor.ChangeActivationQuantConfigAttr
+.. autoclass:: sony_model_optimization_package.network_editor.ChangeActivationQuantConfigAttr
 
 

@@ -27,12 +27,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===============================================================================
 
-import network_optimization_package as snop
+import sony_model_optimization_package as smop
 from tensorflow.keras.applications.mobilenet import MobileNet
 
 """
 This tutorial demonstrates how a model (more specifically, MobileNetV1) can be
-quantized and optimized using the Contrainted Model Optimization (snop) enables. 
+quantized and optimized using the Contrainted Model Optimization (smop) enables. 
 """
 
 ####################################
@@ -72,18 +72,18 @@ if __name__ == '__main__':
     # a list of preprocessing functions.
     folder = '/path/to/images/folder'
 
-    from network_optimization_package import FolderImageLoader
+    from sony_model_optimization_package import FolderImageLoader
     image_data_loader = FolderImageLoader(folder,
                                           preprocessing=[resize, normalization],
                                           batch_size=batch_size)
 
-    # The representative data generator to pass to snop.
+    # The representative data generator to pass to smop.
     def representative_data_gen() -> list:
         return [image_data_loader.sample()]
 
     # Create a model and quantize it using the representative_data_gen as the calibration images.
     # Set the number of calibration iterations to 10.
     model = MobileNet()
-    quantized_model, quantization_info = snop.keras_post_training_quantization(model,
+    quantized_model, quantization_info = smop.keras_post_training_quantization(model,
                                                                                representative_data_gen,
                                                                                n_iter=10)

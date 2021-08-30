@@ -32,9 +32,9 @@ import numpy as np
 import tensorflow as tf
 import unittest
 
-from network_optimization_package.keras.back2framework.model_builder import model_builder, ModelBuilderMode
-from network_optimization_package.keras.graph_substitutions.substituter import pre_statistics_collection_substitute
-from network_optimization_package.keras.reader.reader import model_reader
+from sony_model_optimization_package.keras.back2framework.model_builder import model_builder, ModelBuilderMode
+from sony_model_optimization_package.keras.graph_substitutions.substituter import pre_statistics_collection_substitute
+from sony_model_optimization_package.keras.reader.reader import model_reader
 from tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras

@@ -29,10 +29,10 @@
 
 
 from tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
-import network_optimization_package as snop
+import sony_model_optimization_package as smop
 import tensorflow as tf
 import numpy as np
-from network_optimization_package.keras.back2framework.model_builder import is_layer_fake_quant
+from sony_model_optimization_package.keras.back2framework.model_builder import is_layer_fake_quant
 from tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
@@ -44,8 +44,8 @@ class BaseInputScalingTest(BaseFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=1, val_batch_size=32)
 
     def get_quantization_config(self):
-        return snop.QuantizationConfig(snop.ThresholdSelectionMethod.NOCLIPPING, snop.ThresholdSelectionMethod.NOCLIPPING,
-                                       snop.QuantizationMethod.SYMMETRIC_UNIFORM, snop.QuantizationMethod.SYMMETRIC_UNIFORM,
+        return smop.QuantizationConfig(smop.ThresholdSelectionMethod.NOCLIPPING, smop.ThresholdSelectionMethod.NOCLIPPING,
+                                       smop.QuantizationMethod.SYMMETRIC_UNIFORM, smop.QuantizationMethod.SYMMETRIC_UNIFORM,
                                        16, 16, False, False, True, input_scaling=True)
 
     def create_inputs_shape(self):

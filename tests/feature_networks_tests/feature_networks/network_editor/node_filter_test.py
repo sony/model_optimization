@@ -26,16 +26,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ===============================================================================
-from network_optimization_package.common.matchers.node_matcher import NodeAndMatcher
-from network_optimization_package.common.quantization.quantization_params_fn_selection import \
+from sony_model_optimization_package.common.matchers.node_matcher import NodeAndMatcher
+from sony_model_optimization_package.common.quantization.quantization_params_fn_selection import \
     get_weights_quantization_params_fn
 from tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
-import network_optimization_package as snop
+import sony_model_optimization_package as smop
 import tensorflow as tf
 import numpy as np
 from tests.helpers.tensors_compare import cosine_similarity
-from network_optimization_package.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, NodeTypeFilter
-from network_optimization_package.common.network_editors.actions import ChangeActivationQuantConfigAttr, ChangeWeightsQuantConfigAttr, \
+from sony_model_optimization_package.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, NodeTypeFilter
+from sony_model_optimization_package.common.network_editors.actions import ChangeActivationQuantConfigAttr, ChangeWeightsQuantConfigAttr, \
     ChangeQuantizationParamFunction, EditRule
 
 keras = tf.keras
@@ -62,8 +62,8 @@ class ScopeFilterTest(BaseFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
     def get_quantization_config(self):
-        return snop.QuantizationConfig(snop.ThresholdSelectionMethod.MSE, snop.ThresholdSelectionMethod.MSE,
-                                       snop.QuantizationMethod.SYMMETRIC_UNIFORM, snop.QuantizationMethod.SYMMETRIC_UNIFORM, 16, 16,
+        return smop.QuantizationConfig(smop.ThresholdSelectionMethod.MSE, smop.ThresholdSelectionMethod.MSE,
+                                       smop.QuantizationMethod.SYMMETRIC_UNIFORM, smop.QuantizationMethod.SYMMETRIC_UNIFORM, 16, 16,
                                        False, False, True)
 
     def get_network_editor(self):
@@ -127,8 +127,8 @@ class NameFilterTest(BaseFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
     def get_quantization_config(self):
-        return snop.QuantizationConfig(snop.ThresholdSelectionMethod.MSE, snop.ThresholdSelectionMethod.MSE,
-                                       snop.QuantizationMethod.SYMMETRIC_UNIFORM, snop.QuantizationMethod.SYMMETRIC_UNIFORM, 16, 16,
+        return smop.QuantizationConfig(smop.ThresholdSelectionMethod.MSE, smop.ThresholdSelectionMethod.MSE,
+                                       smop.QuantizationMethod.SYMMETRIC_UNIFORM, smop.QuantizationMethod.SYMMETRIC_UNIFORM, 16, 16,
                                        False, False, True)
 
     def get_network_editor(self):
@@ -178,11 +178,11 @@ class TypeFilterTest(BaseFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
     def params_fn(self):
-        return get_weights_quantization_params_fn(snop.QuantizationMethod.SYMMETRIC_UNIFORM, snop.ThresholdSelectionMethod.NOCLIPPING)
+        return get_weights_quantization_params_fn(smop.QuantizationMethod.SYMMETRIC_UNIFORM, smop.ThresholdSelectionMethod.NOCLIPPING)
 
     def get_quantization_config(self):
-        return snop.QuantizationConfig(snop.ThresholdSelectionMethod.MSE, snop.ThresholdSelectionMethod.MSE,
-                                       snop.QuantizationMethod.SYMMETRIC_UNIFORM, snop.QuantizationMethod.SYMMETRIC_UNIFORM,
+        return smop.QuantizationConfig(smop.ThresholdSelectionMethod.MSE, smop.ThresholdSelectionMethod.MSE,
+                                       smop.QuantizationMethod.SYMMETRIC_UNIFORM, smop.QuantizationMethod.SYMMETRIC_UNIFORM,
                                        16, 16, False, False, False)
 
     def get_network_editor(self):
@@ -240,8 +240,8 @@ class FilterLogicTest(BaseFeatureNetworkTest):
         return get_weights_quantization_params_fn(cmo.QuantizationMethod.SYMMETRIC_UNIFORM, cmo.ThresholdSelectionMethod.NOCLIPPING)
 
     def get_quantization_config(self):
-        return snop.QuantizationConfig(snop.ThresholdSelectionMethod.MSE, snop.ThresholdSelectionMethod.MSE,
-                                       snop.QuantizationMethod.SYMMETRIC_UNIFORM, snop.QuantizationMethod.SYMMETRIC_UNIFORM,
+        return smop.QuantizationConfig(smop.ThresholdSelectionMethod.MSE, smop.ThresholdSelectionMethod.MSE,
+                                       smop.QuantizationMethod.SYMMETRIC_UNIFORM, smop.QuantizationMethod.SYMMETRIC_UNIFORM,
                                        16, 16,
                                        False, False, False)
 

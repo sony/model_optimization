@@ -7,5 +7,5 @@
 DefaultDict Class
 =================================
 
-.. autoclass:: network_optimization_package.DefaultDict
+.. autoclass:: sony_model_optimization_package.DefaultDict
     :members:

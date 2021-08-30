@@ -3,13 +3,13 @@
 .. _ug-quickstart-keras:
 
 ==========================
-SNOP Quickstart Guideline
+SMOP Quickstart Guideline
 ==========================
 
-Here is an example of a code that shows how to use SNOP with Keras models.
+Here is an example of a code that shows how to use SMOP with Keras models.
 
 
-Import SNOP and MobileNetV1 from Keras applications:
+Import SMOP and MobileNetV1 from Keras applications:
 
 .. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python

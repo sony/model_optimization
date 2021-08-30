@@ -2,7 +2,7 @@
 API Docs
 =========
 
-**Init module for SNOP API.**
+**Init module for SMOP API.**
 
 .. literalinclude:: ../../../../tutorials/example_keras_mobilenet.py
     :language: python
@@ -23,7 +23,7 @@ Classes
 
 - :ref:`KnowledgeDistillationConfig<ug-KnowledgeDistillationConfig>`: Class to configure KnowledgeDistillation options for post training quantization.
 - :ref:`FolderImageLoader<ug-FolderImageLoader>`: Class to use an images directory as a representative dataset.
-- :ref:`FrameworkInfo<ug-FrameworkInfo>`: Class to wrap framework information to be used by SNOP when optimizing models.
+- :ref:`FrameworkInfo<ug-FrameworkInfo>`: Class to wrap framework information to be used by SMOP when optimizing models.
 
 
 

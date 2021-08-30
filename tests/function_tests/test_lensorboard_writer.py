@@ -30,7 +30,7 @@
 
 import unittest
 
-import network_optimization_package as snop
+import sony_model_optimization_package as smop
 import numpy as np
 from tensorflow.keras.applications.mobilenet import MobileNet
 from tensorboard.compat.proto.graph_pb2 import GraphDef
@@ -46,15 +46,15 @@ class TestLogger(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        snop.common.Logger.set_log_file('/tmp/')
+        smop.common.Logger.set_log_file('/tmp/')
         model = MobileNet()
-        snop.keras_post_training_quantization(model, random_datagen, n_iter=1)
+        smop.keras_post_training_quantization(model, random_datagen, n_iter=1)
 
     def test_tensorboard_log_dir(self):
-        self.assertTrue(os.path.exists(os.path.join(snop.common.Logger.LOG_PATH, 'tensorboard_logs')))
+        self.assertTrue(os.path.exists(os.path.join(smop.common.Logger.LOG_PATH, 'tensorboard_logs')))
 
     def test_tensorboard_initial_graph_num_of_nodes(self):
-        events_dir = os.path.join(snop.common.Logger.LOG_PATH, 'tensorboard_logs/')
+        events_dir = os.path.join(smop.common.Logger.LOG_PATH, 'tensorboard_logs/')
         events_files = glob.glob(events_dir+'initial_graph/*events*')
         self.assertTrue(len(events_files) == 1)  # Make sure there is only event file in 'initial_graph' subdir
 

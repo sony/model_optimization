@@ -30,10 +30,10 @@
 
 import unittest
 import numpy as np
-from network_optimization_package.common.constants import THRESHOLD
-from network_optimization_package.common.threshold_selection.no_clipping import no_clipping_selection_tensor
-from network_optimization_package.common.threshold_selection.mse_selection import mse_selection_histogram
-from network_optimization_package.common.collectors.histogram_collector import HistogramCollector
+from sony_model_optimization_package.common.constants import THRESHOLD
+from sony_model_optimization_package.common.threshold_selection.no_clipping import no_clipping_selection_tensor
+from sony_model_optimization_package.common.threshold_selection.mse_selection import mse_selection_histogram
+from sony_model_optimization_package.common.collectors.histogram_collector import HistogramCollector
 
 
 class TestThresholdSelection(unittest.TestCase):

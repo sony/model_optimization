@@ -28,12 +28,12 @@
 # ===============================================================================
 
 
-from network_optimization_package.keras.default_framework_info import DEFAULT_KERAS_INFO
+from sony_model_optimization_package.keras.default_framework_info import DEFAULT_KERAS_INFO
 import os
 import tensorflow as tf
 import numpy as np
 import unittest
-import network_optimization_package as snop
+import sony_model_optimization_package as smop
 from tests.helpers.tensors_compare import cosine_similarity
 from enum import Enum
 from tests.helpers.logs import LOGS_DIR
@@ -43,30 +43,30 @@ import random
 keras = tf.keras
 layers = keras.layers
 
-TWO_BIT_QUANTIZATION = snop.QuantizationConfig(activation_threshold_method=snop.ThresholdSelectionMethod.MSE,
-                                               weights_threshold_method=snop.ThresholdSelectionMethod.MSE,
-                                               activation_quantization_method=snop.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                               weights_quantization_method=snop.QuantizationMethod.SYMMETRIC_UNIFORM,
+TWO_BIT_QUANTIZATION = smop.QuantizationConfig(activation_threshold_method=smop.ThresholdSelectionMethod.MSE,
+                                               weights_threshold_method=smop.ThresholdSelectionMethod.MSE,
+                                               activation_quantization_method=smop.QuantizationMethod.SYMMETRIC_UNIFORM,
+                                               weights_quantization_method=smop.QuantizationMethod.SYMMETRIC_UNIFORM,
                                                activation_n_bits=2,
                                                weights_n_bits=2,
                                                weights_bias_correction=False,
                                                weights_per_channel_threshold=True,
                                                relu_unbound_correction=False)
 
-EIGHT_BIT_QUANTIZATION = snop.QuantizationConfig(activation_threshold_method=snop.ThresholdSelectionMethod.MSE,
-                                                 weights_threshold_method=snop.ThresholdSelectionMethod.MSE,
-                                                 activation_quantization_method=snop.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                                 weights_quantization_method=snop.QuantizationMethod.SYMMETRIC_UNIFORM,
+EIGHT_BIT_QUANTIZATION = smop.QuantizationConfig(activation_threshold_method=smop.ThresholdSelectionMethod.MSE,
+                                                 weights_threshold_method=smop.ThresholdSelectionMethod.MSE,
+                                                 activation_quantization_method=smop.QuantizationMethod.SYMMETRIC_UNIFORM,
+                                                 weights_quantization_method=smop.QuantizationMethod.SYMMETRIC_UNIFORM,
                                                  activation_n_bits=8,
                                                  weights_n_bits=8,
                                                  weights_bias_correction=False,
                                                  weights_per_channel_threshold=True,
                                                  relu_unbound_correction=False)
 
-FLOAT_QUANTIZATION = snop.QuantizationConfig(activation_threshold_method=snop.ThresholdSelectionMethod.MSE,
-                                             weights_threshold_method=snop.ThresholdSelectionMethod.MSE,
-                                             activation_quantization_method=snop.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                             weights_quantization_method=snop.QuantizationMethod.SYMMETRIC_UNIFORM,
+FLOAT_QUANTIZATION = smop.QuantizationConfig(activation_threshold_method=smop.ThresholdSelectionMethod.MSE,
+                                             weights_threshold_method=smop.ThresholdSelectionMethod.MSE,
+                                             activation_quantization_method=smop.QuantizationMethod.SYMMETRIC_UNIFORM,
+                                             weights_quantization_method=smop.QuantizationMethod.SYMMETRIC_UNIFORM,
                                              activation_n_bits=16,
                                              weights_n_bits=16,
                                              weights_bias_correction=False,
@@ -125,15 +125,15 @@ class NetworkTest(object):
             return inputs_list
 
         if self.kd:
-            kdc = snop.KnowledgeDistillationConfig(n_iter=2)
-            ptq_model, quantization_info = snop.keras_post_training_quantization(self.model_float,
+            kdc = smop.KnowledgeDistillationConfig(n_iter=2)
+            ptq_model, quantization_info = smop.keras_post_training_quantization(self.model_float,
                                                                                  representative_data_gen,
                                                                                  quant_config=qc,
                                                                                  fw_info=DEFAULT_KERAS_INFO,
                                                                                  n_iter=self.num_calibration_iter,
                                                                                  knowledge_distillation_config=kdc)
         else:
-            ptq_model, quantization_info = snop.keras_post_training_quantization(self.model_float,
+            ptq_model, quantization_info = smop.keras_post_training_quantization(self.model_float,
                                                                                  representative_data_gen,
                                                                                  quant_config=qc,
                                                                                  fw_info=DEFAULT_KERAS_INFO,

@@ -30,7 +30,7 @@
 
 import unittest
 import numpy as np
-from network_optimization_package.common.logger import set_log_folder
+from sony_model_optimization_package.common.logger import set_log_folder
 
 
 class TestLogger(unittest.TestCase):

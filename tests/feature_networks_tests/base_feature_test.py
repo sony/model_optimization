@@ -30,9 +30,9 @@
 
 import numpy as np
 
-import network_optimization_package as snop
-from network_optimization_package.common.quantization.quantization_config import DEFAULTCONFIG
-from network_optimization_package.keras.default_framework_info import DEFAULT_KERAS_INFO
+import sony_model_optimization_package as smop
+from sony_model_optimization_package.common.quantization.quantization_config import DEFAULTCONFIG
+from sony_model_optimization_package.keras.default_framework_info import DEFAULT_KERAS_INFO
 
 
 class BaseFeatureNetworkTest:
@@ -71,7 +71,7 @@ class BaseFeatureNetworkTest:
             return x
 
         model_float = self.create_feature_network(input_shapes)
-        ptq_model, quantization_info = snop.keras_post_training_quantization(model_float, representative_data_gen,
+        ptq_model, quantization_info = smop.keras_post_training_quantization(model_float, representative_data_gen,
                                                                              n_iter=self.num_calibration_iter,
                                                                              quant_config=self.get_quantization_config(),
                                                                              fw_info=DEFAULT_KERAS_INFO,

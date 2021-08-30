@@ -35,7 +35,7 @@ from tensorflow.keras.applications.efficientnet import EfficientNetB0
 from tensorflow.keras.applications.nasnet import NASNetMobile
 from tensorflow.keras.applications.resnet import ResNet50
 from tensorflow.keras.applications.xception import Xception
-from network_optimization_package.keras.reader.reader import model_reader
+from sony_model_optimization_package.keras.reader.reader import model_reader
 
 class TestGraphReading(unittest.TestCase):
     def _base_test(self, model_class):

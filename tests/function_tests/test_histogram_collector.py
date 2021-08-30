@@ -30,7 +30,7 @@
 
 import unittest
 import numpy as np
-from network_optimization_package.common.collectors.histogram_collector import HistogramCollector, interpolate_histogram
+from sony_model_optimization_package.common.collectors.histogram_collector import HistogramCollector, interpolate_histogram
 from tests.feature_networks_tests.test_networks_runner import set_seed
 
 

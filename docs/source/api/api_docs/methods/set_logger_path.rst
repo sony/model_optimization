@@ -6,5 +6,5 @@
 Enable a Logger
 =================================
 
-.. autofunction:: network_optimization_package.set_log_folder
+.. autofunction:: sony_model_optimization_package.set_log_folder
 

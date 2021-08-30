@@ -1,10 +1,10 @@
 import unittest
 
-from network_optimization_package.common.network_editors.node_filters import NodeNameFilter
-from network_optimization_package.common.network_editors.actions import EditRule, \
+from sony_model_optimization_package.common.network_editors.node_filters import NodeNameFilter
+from sony_model_optimization_package.common.network_editors.actions import EditRule, \
     ChangeQuantizationMethod
 from tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
-import network_optimization_package as cmo
+import sony_model_optimization_package as cmo
 import tensorflow as tf
 import numpy as np
 

@@ -30,9 +30,9 @@
 
 import unittest
 import numpy as np
-from network_optimization_package.common.statistics_collector import StatsContainer
-from network_optimization_package.common.statistics_collector import scale_statistics
-from network_optimization_package.common.statistics_collector import shift_statistics
+from sony_model_optimization_package.common.statistics_collector import StatsContainer
+from sony_model_optimization_package.common.statistics_collector import scale_statistics
+from sony_model_optimization_package.common.statistics_collector import shift_statistics
 
 
 def init_stats_container(num_of_input_channels, init_min=None, init_max=None):
