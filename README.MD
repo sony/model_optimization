@@ -1,8 +1,8 @@
 ![Sony Semiconductor Israel, Inc.](docs/images/ssi_logo.png)
 
 
-# Sony Networks Optimization Package (SMOP)
-Sony Networks Optimization Package (SMOP) is an open source project for neural network model optimization under efficient hardware constrained. <br />
+# Sony Model Optimization Package (SMOP)
+Sony Model Optimization Package (SMOP) is an open source project for neural network model optimization under efficient hardware constrained. <br />
 This project enables researchers, developers and engineers an easy way to optimized and deploy state-of-the-art neural network on efficient hardware. <br />
 Specifically this project apply constrained quantization and pruning scheme on a neural network. 
 
@@ -84,7 +84,7 @@ SMOP aims at keeping a more up-to-date fork and welcomes contributions from anyo
 
 
 ## License
-Sony Networks Optimization Package (SMOP) is provided under the [BSD 3.0](LICENSE) license.
+Sony Model Optimization Package (SMOP) is provided under the [BSD 3.0](LICENSE) license.
 
 ## Refernce 
 

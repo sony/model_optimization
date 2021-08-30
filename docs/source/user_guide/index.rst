@@ -8,7 +8,7 @@ Sony Model Optimization Package User Guide
 Overview
 ========
 
-Sony Model Optimization Package (SMOP) is an open source project for neural network network optimization that enables users to compress and quantize models.
+Sony Model Optimization Package (SMOP) is an open source project for neural network optimization that enables users to compress and quantize models.
 This project enables researchers, developers and engeniners an easily way to optimized and quantized state-of-the-art neural network.
 
 Currently, SMOP support support hardware-friendly post training quantization (HPTQ) with Tensorflow 2 [1].
