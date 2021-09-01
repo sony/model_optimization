@@ -86,8 +86,8 @@ SMOP aims at keeping a more up-to-date fork and welcomes contributions from anyo
 ## License
 Sony Model Optimization Package (SMOP) is provided under the [BSD 3.0](LICENSE) license.
 
-## Refernce 
+## References 
 
 [1] Habi, H.V., Peretz, R., Cohen, E., Dikstein, L., Dror, O., Diamant, I., Jennings, R.H. and Netzer, A., 2021. HPTQ: Hardware-Friendly Post Training Quantization. arXiv preprint.
 
-[2] [MobilNet](https://keras.io/api/applications/mobilenet/#mobilenet-function) from Keras applications.
+[2] [MobileNet](https://keras.io/api/applications/mobilenet/#mobilenet-function) from Keras applications.
