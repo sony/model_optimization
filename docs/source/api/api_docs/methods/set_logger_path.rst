@@ -6,5 +6,5 @@
 Enable a Logger
 =================================
 
-.. autofunction:: sony_model_optimization_package.set_log_folder
+.. autofunction:: model_compression_toolkit.set_log_folder
 

@@ -1,10 +1,25 @@
+# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 import unittest
 
-from sony_model_optimization_package.common.network_editors.node_filters import NodeNameFilter
-from sony_model_optimization_package.common.network_editors.actions import EditRule, \
+from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter
+from model_compression_toolkit.common.network_editors.actions import EditRule, \
     ChangeQuantizationMethod
 from tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
-import sony_model_optimization_package as cmo
+import model_compression_toolkit as cmo
 import tensorflow as tf
 import numpy as np
 

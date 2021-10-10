@@ -11,8 +11,8 @@ To use it, all you have to do is to set a logger path. Setting a path is done by
 
 .. code-block:: python
 
-   import sony_model_optimization_package as smop
-   smop.set_logger_folder('/logger/dir/path')
+   import model_compression_toolkit as mct
+   mct.set_logger_folder('/logger/dir/path')
 
 Then, by calling :ref:`keras_post_training_quantization<ug-keras_post_training_quantization>`, a TensorBoard writer will log graphs of the model at different stages.
 To visualize them, TensorBoard should be launched with:
@@ -86,7 +86,7 @@ output similar tensors.
 |
 
 There are many ways to measure similarity between two models (or tensors). To name a few: MSE, MAE, KL-Divergence, etc.
-As for now, smop uses cosine-similarity to compare the tensors along the models and display its changes within the
+As for now, mct uses cosine-similarity to compare the tensors along the models and display its changes within the
 TensorBoard UI.
 
 |

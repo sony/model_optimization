@@ -3,17 +3,17 @@
 .. _ug-quickstart-keras:
 
 ==========================
-SMOP Quickstart Guideline
+MCT Quickstart Guideline
 ==========================
 
-Here is an example of a code that shows how to use SMOP with Keras models.
+Here is an example of a code that shows how to use MCT with Keras models.
 
 
-Import SMOP and MobileNetV1 from Keras applications:
+Import MCT and MobileNetV1 from Keras applications:
 
 .. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
-    :lines: 30-31
+    :lines: 16-17
 
 |
 
@@ -21,7 +21,7 @@ Data preprocessing functions:
 
 .. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
-    :lines: 41-62
+    :lines: 27-48
 
 |
 
@@ -29,7 +29,7 @@ Initialize data loader:
 
 .. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
-    :lines: 67-82
+    :lines: 53-68
 
 |
 
@@ -37,5 +37,5 @@ Run Post Training Quantization:
 
 .. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
-    :lines: 84-89
+    :lines: 70-75
 

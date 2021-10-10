@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'SMOP'
+project = 'MCT'
 copyright = '2021, Sony Semiconductors Israel'
 author = 'Sony Semiconductors Israel'
 
@@ -95,8 +95,8 @@ autosectionlabel_prefix_document = True
 
 html_theme = 'classic'
 html_theme = 'bizstyle'
-html_title = 'SMOP Documentation: ver ' + release
-html_logo = '../images/ssi_logo.png'
+html_title = 'MCT Documentation: ver ' + release
+
 
 html_sidebars = {'**': ['localtoc.html', 'relations.html', 'searchbox.html']}
 
@@ -125,12 +125,12 @@ autodoc_preserve_defaults = True
 
 
 
-# from sony_model_optimization_package import DEFAULTCONFIG
+# from model_compression_toolkit import DEFAULTCONFIG
 # import textwrap
-# from sony_model_optimization_package.keras.default_framework_info import DEFAULT_KERAS_INFO
+# from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 #
-# var2params = {DEFAULTCONFIG: ('DEFAULTCONFIG', 'sony_model_optimization_package.DEFAULTCONFIG', 'Default quantization configuration is:'),
-#               DEFAULT_KERAS_INFO: ('DEFAULT_KERAS_INFO', 'sony_model_optimization_package.keras.default_framework_info.DEFAULT_KERAS_INFO', 'Default framework info for Keras:')}
+# var2params = {DEFAULTCONFIG: ('DEFAULTCONFIG', 'model_compression_toolkit.DEFAULTCONFIG', 'Default quantization configuration is:'),
+#               DEFAULT_KERAS_INFO: ('DEFAULT_KERAS_INFO', 'model_compression_toolkit.keras.default_framework_info.DEFAULT_KERAS_INFO', 'Default framework info for Keras:')}
 #
 #
 #

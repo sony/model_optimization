@@ -11,7 +11,7 @@ ThresholdSelectionMethod
 ==========================
 **Enum to select a method for quantization threshold selection:**
 
-.. autoclass:: sony_model_optimization_package.ThresholdSelectionMethod
+.. autoclass:: model_compression_toolkit.ThresholdSelectionMethod
 
 
 |
@@ -20,5 +20,5 @@ QuantizationConfig
 ==========================
 **Class to configure the quantization process of the model:**
 
-.. autoclass:: sony_model_optimization_package.QuantizationConfig
+.. autoclass:: model_compression_toolkit.QuantizationConfig
 

@@ -7,5 +7,5 @@
 DefaultDict Class
 =================================
 
-.. autoclass:: sony_model_optimization_package.DefaultDict
+.. autoclass:: model_compression_toolkit.DefaultDict
     :members:

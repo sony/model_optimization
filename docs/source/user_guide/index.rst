@@ -1,24 +1,24 @@
 .. _ug-index:
 
 ============================================
-Sony Model Optimization Package User Guide
+Model Compression Toolkit User Guide
 ============================================
 
 
 Overview
 ========
 
-Sony Model Optimization Package (SMOP) is an open source project for neural network optimization that enables users to compress and quantize models.
-This project enables researchers, developers and engeniners an easily way to optimized and quantized state-of-the-art neural network.
+Model Compression Toolkit (MCT) is an open source project for neural networks optimization that enables users to compress and quantize models.
+This project enables researchers, developers and engineers an easily way to optimized and quantized state-of-the-art neural network.
 
-Currently, SMOP support support hardware-friendly post training quantization (HPTQ) with Tensorflow 2 [1].
+Currently, MCT supports hardware-friendly post training quantization (HPTQ) with Tensorflow 2 [1].
 
-SMOP project is developed by researchers and engineers working in Sony Semiconductor's Israel.
+
+MCT project is developed by researchers and engineers working in Sony Semiconductors Israel.
 
 Install
 ====================================
-See the SMOP install guide for build from source.
-
+See the MCT install guide for the pip package, and build from source.
 
 
 From Source:
@@ -34,7 +34,7 @@ Supported Features
 Quantization:
 
 * Hardware-friendly Post Training Quantization [1]
-* Gradient base post training using kowlaged distillation (Experimental)
+* Gradient base post training using knowledge distillation (Experimental)
 
 Visualization:
 
@@ -47,7 +47,7 @@ Visualization:
 
 Quickstart
 ====================================
-Take a look of how you can start using SMOP in just a few minutes
+Take a look of how you can start using MCT in just a few minutes
 
 .. toctree::
     :titlesonly:
@@ -61,7 +61,7 @@ Take a look of how you can start using SMOP in just a few minutes
 
 API Documentation
 ==================
-Please visit the SMOP API documentation here
+Please visit the MCT API documentation here
 
 .. toctree::
     :titlesonly:
@@ -72,4 +72,5 @@ Please visit the SMOP API documentation here
 References
 ====================================
 
-[1] Habi, H.V., Peretz, R., Cohen, E., Dikstein, L., Dror, O., Diamant, I., Jennings, R.H. and Netzer, A., 2021. HPTQ: Hardware-Friendly Post Training Quantization. arXiv preprint.
+[1] Habi, H.V., Peretz, R., Cohen, E., Dikstein, L., Dror, O., Diamant, I., Jennings, R.H. and Netzer, A., 2021. `HPTQ: Hardware-Friendly Post Training Quantization. arXiv preprint. <https://arxiv.org/abs/2109.09113>`_
+

@@ -1,37 +1,23 @@
-# ===============================================================================
-# Copyright (c) 2021, Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# 1. Redistributions of source code must retain the above copyright notice, this
-#    list of conditions and the following disclaimer.
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-# 2. Redistributions in binary form must reproduce the above copyright notice,
-#    this list of conditions and the following disclaimer in the documentation
-#    and/or other materials provided with the distribution.
-#
-# 3. Neither the name of the copyright holder nor the names of its
-#    contributors may be used to endorse or promote products derived from
-#    this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# ===============================================================================
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
 
 
-from sony_model_optimization_package.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 import unittest
 import numpy as np
-import sony_model_optimization_package as smop
+import model_compression_toolkit as mct
 import tensorflow as tf
 from tensorflow.keras import layers
 
@@ -54,45 +40,45 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         relu_unbound_correction = False
-        activation_threshold_selection = smop.ThresholdSelectionMethod.NOCLIPPING
+        activation_threshold_selection = mct.ThresholdSelectionMethod.NOCLIPPING
         for bias_correction in [True, False]:
-            for weights_threshold_selection in [smop.ThresholdSelectionMethod.MSE,
-                                                smop.ThresholdSelectionMethod.NOCLIPPING,
-                                                smop.ThresholdSelectionMethod.MAE,
-                                                smop.ThresholdSelectionMethod.LP,
-                                                smop.ThresholdSelectionMethod.KL]:
+            for weights_threshold_selection in [mct.ThresholdSelectionMethod.MSE,
+                                                mct.ThresholdSelectionMethod.NOCLIPPING,
+                                                mct.ThresholdSelectionMethod.MAE,
+                                                mct.ThresholdSelectionMethod.LP,
+                                                mct.ThresholdSelectionMethod.KL]:
                 for weights_per_channel_threshold in [False, True]:
-                    qc = smop.QuantizationConfig(activation_threshold_selection,
+                    qc = mct.QuantizationConfig(activation_threshold_selection,
                                                 weights_threshold_selection,
-                                                smop.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                                smop.QuantizationMethod.SYMMETRIC_UNIFORM,
+                                                mct.QuantizationMethod.SYMMETRIC_UNIFORM,
+                                                mct.QuantizationMethod.SYMMETRIC_UNIFORM,
                                                 activation_n_bits=8,
                                                 weights_n_bits=16,
                                                 relu_unbound_correction=relu_unbound_correction,
                                                 weights_bias_correction=bias_correction,
                                                 weights_per_channel_threshold=weights_per_channel_threshold)
-                    q_model, quantization_info = smop.keras_post_training_quantization(model,
+                    q_model, quantization_info = mct.keras_post_training_quantization(model,
                                                                                       representative_data_gen,
                                                                                       n_iter=1,
                                                                                       quant_config=qc,
                                                                                       fw_info=DEFAULT_KERAS_INFO)
 
         for relu_unbound_correction in [True, False]:
-            for activation_threshold_selection in [smop.ThresholdSelectionMethod.MSE,
-                                                   smop.ThresholdSelectionMethod.NOCLIPPING,
-                                                   smop.ThresholdSelectionMethod.MAE,
-                                                   smop.ThresholdSelectionMethod.LP,
-                                                   smop.ThresholdSelectionMethod.KL]:
-                qc = smop.QuantizationConfig(activation_threshold_selection,
+            for activation_threshold_selection in [mct.ThresholdSelectionMethod.MSE,
+                                                   mct.ThresholdSelectionMethod.NOCLIPPING,
+                                                   mct.ThresholdSelectionMethod.MAE,
+                                                   mct.ThresholdSelectionMethod.LP,
+                                                   mct.ThresholdSelectionMethod.KL]:
+                qc = mct.QuantizationConfig(activation_threshold_selection,
                                             weights_threshold_selection,
-                                            smop.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                            smop.QuantizationMethod.SYMMETRIC_UNIFORM,
+                                            mct.QuantizationMethod.SYMMETRIC_UNIFORM,
+                                            mct.QuantizationMethod.SYMMETRIC_UNIFORM,
                                             activation_n_bits=8,
                                             weights_n_bits=16,
                                             relu_unbound_correction=relu_unbound_correction,
                                             weights_bias_correction=bias_correction,
                                             weights_per_channel_threshold=weights_per_channel_threshold)
-                q_model, quantization_info = smop.keras_post_training_quantization(model,
+                q_model, quantization_info = mct.keras_post_training_quantization(model,
                                                                                   representative_data_gen,
                                                                                   n_iter=1,
                                                                                   quant_config=qc,

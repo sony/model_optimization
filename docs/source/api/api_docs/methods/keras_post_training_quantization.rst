@@ -7,4 +7,4 @@
 Keras Post Training Quantization
 =================================
 
-.. autofunction:: sony_model_optimization_package.keras_post_training_quantization
+.. autofunction:: model_compression_toolkit.keras_post_training_quantization

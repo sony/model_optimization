@@ -1,48 +1,34 @@
-# ===============================================================================
-# Copyright (c) 2021, Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# 1. Redistributions of source code must retain the above copyright notice, this
-#    list of conditions and the following disclaimer.
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-# 2. Redistributions in binary form must reproduce the above copyright notice,
-#    this list of conditions and the following disclaimer in the documentation
-#    and/or other materials provided with the distribution.
-#
-# 3. Neither the name of the copyright holder nor the names of its
-#    contributors may be used to endorse or promote products derived from
-#    this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# ===============================================================================
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
 
 
 import unittest
 import numpy as np
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
-from sony_model_optimization_package.common.quantization.set_node_quantization_config import set_qcs_to_graph_nodes
-from sony_model_optimization_package.keras.reader.reader import model_reader
-from sony_model_optimization_package.keras.back2framework.model_collector import ModelCollector
-from sony_model_optimization_package.common.quantization.quantization_analyzer import analyzer_graph
-from sony_model_optimization_package.keras.tensor_marking import get_node_stats_collector
-from sony_model_optimization_package.keras.back2framework.model_builder import model_builder
-from sony_model_optimization_package.common.quantization.quantize_model import quantize_model, calculate_quantization_params
-from sony_model_optimization_package.keras.default_framework_info import DEFAULT_KERAS_INFO
-from sony_model_optimization_package.common.quantization.quantization_config import DEFAULTCONFIG
+from model_compression_toolkit.common.quantization.set_node_quantization_config import set_qcs_to_graph_nodes
+from model_compression_toolkit.keras.reader.reader import model_reader
+from model_compression_toolkit.keras.back2framework.model_collector import ModelCollector
+from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
+from model_compression_toolkit.keras.tensor_marking import get_node_stats_collector
+from model_compression_toolkit.keras.back2framework.model_builder import model_builder
+from model_compression_toolkit.common.quantization.quantize_model import quantize_model, calculate_quantization_params
+from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG
 import tensorflow as tf
-from sony_model_optimization_package.keras.graph_substitutions.substituter import pre_statistics_collection_substitute
+from model_compression_toolkit.keras.graph_substitutions.substituter import pre_statistics_collection_substitute
 
 
 class TestGraphQuantization(unittest.TestCase):

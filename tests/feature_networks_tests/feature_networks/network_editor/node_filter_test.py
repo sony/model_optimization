@@ -1,41 +1,29 @@
-# ===============================================================================
-# Copyright (c) 2021, Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# 1. Redistributions of source code must retain the above copyright notice, this
-#    list of conditions and the following disclaimer.
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-# 2. Redistributions in binary form must reproduce the above copyright notice,
-#    this list of conditions and the following disclaimer in the documentation
-#    and/or other materials provided with the distribution.
-#
-# 3. Neither the name of the copyright holder nor the names of its
-#    contributors may be used to endorse or promote products derived from
-#    this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# ===============================================================================
-from sony_model_optimization_package.common.matchers.node_matcher import NodeAndMatcher
-from sony_model_optimization_package.common.quantization.quantization_params_fn_selection import \
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+
+from model_compression_toolkit.common.matchers.node_matcher import NodeAndMatcher
+from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
     get_weights_quantization_params_fn
 from tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
-import sony_model_optimization_package as smop
+import model_compression_toolkit as mct
 import tensorflow as tf
 import numpy as np
 from tests.helpers.tensors_compare import cosine_similarity
-from sony_model_optimization_package.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, NodeTypeFilter
-from sony_model_optimization_package.common.network_editors.actions import ChangeActivationQuantConfigAttr, ChangeWeightsQuantConfigAttr, \
+from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, NodeTypeFilter
+from model_compression_toolkit.common.network_editors.actions import ChangeActivationQuantConfigAttr, ChangeWeightsQuantConfigAttr, \
     ChangeQuantizationParamFunction, EditRule
 
 keras = tf.keras
@@ -62,8 +50,8 @@ class ScopeFilterTest(BaseFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
     def get_quantization_config(self):
-        return smop.QuantizationConfig(smop.ThresholdSelectionMethod.MSE, smop.ThresholdSelectionMethod.MSE,
-                                       smop.QuantizationMethod.SYMMETRIC_UNIFORM, smop.QuantizationMethod.SYMMETRIC_UNIFORM, 16, 16,
+        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
+                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.QuantizationMethod.SYMMETRIC_UNIFORM, 16, 16,
                                        False, False, True)
 
     def get_network_editor(self):
@@ -127,8 +115,8 @@ class NameFilterTest(BaseFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
     def get_quantization_config(self):
-        return smop.QuantizationConfig(smop.ThresholdSelectionMethod.MSE, smop.ThresholdSelectionMethod.MSE,
-                                       smop.QuantizationMethod.SYMMETRIC_UNIFORM, smop.QuantizationMethod.SYMMETRIC_UNIFORM, 16, 16,
+        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
+                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.QuantizationMethod.SYMMETRIC_UNIFORM, 16, 16,
                                        False, False, True)
 
     def get_network_editor(self):
@@ -178,11 +166,11 @@ class TypeFilterTest(BaseFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
     def params_fn(self):
-        return get_weights_quantization_params_fn(smop.QuantizationMethod.SYMMETRIC_UNIFORM, smop.ThresholdSelectionMethod.NOCLIPPING)
+        return get_weights_quantization_params_fn(mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.ThresholdSelectionMethod.NOCLIPPING)
 
     def get_quantization_config(self):
-        return smop.QuantizationConfig(smop.ThresholdSelectionMethod.MSE, smop.ThresholdSelectionMethod.MSE,
-                                       smop.QuantizationMethod.SYMMETRIC_UNIFORM, smop.QuantizationMethod.SYMMETRIC_UNIFORM,
+        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
+                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.QuantizationMethod.SYMMETRIC_UNIFORM,
                                        16, 16, False, False, False)
 
     def get_network_editor(self):
@@ -240,8 +228,8 @@ class FilterLogicTest(BaseFeatureNetworkTest):
         return get_weights_quantization_params_fn(cmo.QuantizationMethod.SYMMETRIC_UNIFORM, cmo.ThresholdSelectionMethod.NOCLIPPING)
 
     def get_quantization_config(self):
-        return smop.QuantizationConfig(smop.ThresholdSelectionMethod.MSE, smop.ThresholdSelectionMethod.MSE,
-                                       smop.QuantizationMethod.SYMMETRIC_UNIFORM, smop.QuantizationMethod.SYMMETRIC_UNIFORM,
+        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
+                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.QuantizationMethod.SYMMETRIC_UNIFORM,
                                        16, 16,
                                        False, False, False)
 
