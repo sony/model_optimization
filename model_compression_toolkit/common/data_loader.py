@@ -82,7 +82,7 @@ class FolderImageLoader(object):
         prepare it for retrieving.
         """
 
-        index = np.random.randint(0, self.n_files - 1, self.batch_size)
+        index = np.random.randint(0, self.n_files, self.batch_size)
         image_list = []
         for i in index:
             file = self.image_list[i]
