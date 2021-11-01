@@ -1,0 +1,9 @@
+# Add 'test' label to any change in tests dir
+test:
+- tests/*
+
+common:
+- model_compression_toolkit/common/*
+
+keras:
+- model_compression_toolkit/keras/*
