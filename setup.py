@@ -39,19 +39,18 @@ def get_release_arguments():
 
 
 args = get_release_arguments()
-setup_obj = setup(name='constrained_model_optimization',
+setup_obj = setup(name='model_compression_toolkit',
                   version=args.new_version,
                   long_description=get_log_description(),
                   long_description_content_type="text/markdown",
-                  description='A Constrained Model Optimization for neural network.',
+                  description='A Model Compression Toolkit for neural networks',
                   packages=find_packages(
                       exclude=["tests", "tests.*",
                                "requirements", "requirements.*",
-                               "model_zoo", "model_zoo.*"
                                "tutorials", "tutorials.*"]),
                   classifiers=[
                       "Programming Language :: Python :: 3",
-                      "License :: OSI Approved :: MIT License",
+                      "License :: OSI Approved :: Apache Software License",
                       "Operating System :: OS Independent",
                   ],
                   install_requires=read_install_requires(),
