@@ -53,11 +53,12 @@ if __name__ == '__main__':
     # Set the batch size of the images at each calibration iteration.
     batch_size = 50
 
-    # Create a representative data generator, which returns a list of images.
-    # Load a folder of images. The images can be preprocessed using
-    # a list of preprocessing functions.
+    # Set the path to the folder of images to load and use for the representative dataset.
+    # Notice that the folder have to contain at least one image.
     folder = '/path/to/images/folder'
 
+    # Create a representative data generator, which returns a list of images.
+    # The images can be preprocessed using a list of preprocessing functions.
     from model_compression_toolkit import FolderImageLoader
     image_data_loader = FolderImageLoader(folder,
                                           preprocessing=[resize, normalization],
@@ -71,5 +72,5 @@ if __name__ == '__main__':
     # Set the number of calibration iterations to 10.
     model = MobileNet()
     quantized_model, quantization_info = mct.keras_post_training_quantization(model,
-                                                                               representative_data_gen,
-                                                                               n_iter=10)
+                                                                              representative_data_gen,
+                                                                              n_iter=10)
