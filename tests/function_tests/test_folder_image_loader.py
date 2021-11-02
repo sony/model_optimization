@@ -50,6 +50,14 @@ class TestLogger(unittest.TestCase):
         self.assertTrue(isinstance(s, np.ndarray))
         self.assertTrue(s.shape == (sample_batch,) + img_shape)
 
+    def test_empty_folder(self):
+        os.remove(os.path.abspath(img_path))
+        folder = os.path.dirname(img_path)
+        with self.assertRaises(Exception):
+            FolderImageLoader(folder=folder,
+                              preprocessing=[],
+                              batch_size=sample_batch)
+
 
 if __name__ == '__main__':
     unittest.main()

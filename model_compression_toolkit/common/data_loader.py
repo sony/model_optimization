@@ -40,7 +40,8 @@ class FolderImageLoader(object):
         """ Initialize a FolderImageLoader object.
 
         Args:
-            folder: Path of folder with images to load.
+            folder: Path of folder with images to load. The path have to be exist, and have to contain at
+            least one image.
             preprocessing: List of functions to use when processing the images before retrieving them.
             batch_size: Number of images to retrieve each sample.
             file_types: Files types to scan in the folder. Default list is :data:`~model_compression_toolkit.common.data_loader.FILETYPES`
@@ -71,6 +72,7 @@ class FolderImageLoader(object):
                 if file_type in file_types:
                     self.image_list.append(os.path.join(root, file))
         self.n_files = len(self.image_list)
+        assert self.n_files > 0, f'Folder to load can not be empty.'
         print(f"Finished Disk Scanning: Found {self.n_files} files")
         self.preprocessing = preprocessing
         self.batch_size = batch_size
