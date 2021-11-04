@@ -1,4 +1,4 @@
-name: Run Tests Suite
+name: Run Tests
 on:
   pull_request:
     branches:
@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      COVERAGE_THRESHOlD: 80
     steps:
       - uses: actions/checkout@v2
       - name: Install Python 3
@@ -17,5 +19,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install coverage
       - name: Run unittests
-        run: python -m unittest tests/test_suite.py -v
+        run: coverage run -m --omit "./tests*,*__init__.py" unittest tests/feature_networks_tests/test_features_runner.py -v
+      - name: Run Coverage
+        run: coverage report -i --skip-covered --fail-under $COVERAGE_THRESHOlD
