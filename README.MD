@@ -72,6 +72,8 @@ quantized_model, quantization_info = mct.keras_post_training_quantization(model,
 ```
 For more example please see the tutorials' directory.
 
+For more information, please visit out [project website](https://sony.github.io/model_optimization/).
+
 ## Supported Features
 
 Quantization:
