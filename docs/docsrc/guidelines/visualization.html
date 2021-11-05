@@ -1,0 +1,176 @@
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Visualization within TensorBoard &#8212; MCT Documentation: ver 0.0.1</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="MCT Quickstart Guideline" href="quickstart_keras.html" />
+    <link rel="prev" title="Model Compression Toolkit User Guide" href="../index.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="quickstart_keras.html" title="MCT Quickstart Guideline"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Model Compression Toolkit User Guide"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 0.0.1</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Visualization within TensorBoard</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="visualization-within-tensorboard">
+<span id="ug-visualization"></span><h1>Visualization within TensorBoard<a class="headerlink" href="#visualization-within-tensorboard" title="Permalink to this headline">¶</a></h1>
+<p>One may log various graphs and data collected in different phases of the model quantization and display them within the Tensorboard UI.
+To use it, all you have to do is to set a logger path. Setting a path is done by calling <a class="reference internal" href="../api/api_docs/methods/set_logger_path.html#ug-set-logger-path"><span class="std std-ref">set_log_folder</span></a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
+<span class="n">mct</span><span class="o">.</span><span class="n">set_logger_folder</span><span class="p">(</span><span class="s1">&#39;/logger/dir/path&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Then, by calling <a class="reference internal" href="../api/api_docs/methods/keras_post_training_quantization.html#ug-keras-post-training-quantization"><span class="std std-ref">keras_post_training_quantization</span></a>, a TensorBoard writer will log graphs of the model at different stages.
+To visualize them, TensorBoard should be launched with:</p>
+<p>tensorboard –logdir=/logger/dir/path</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The graphs representing the model can be seen under the Graphs tab:</p>
+<a class="reference internal image-reference" href="../_images/tbwriter_graphs.png"><img alt="../_images/tbwriter_graphs.png" src="../_images/tbwriter_graphs.png" style="width: 522.0px; height: 357.20000000000005px;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>To observe the model at different stages of the quantization process, change the ‘Run’:</p>
+<a class="reference internal image-reference" href="../_images/tbwriter_stages.png"><img alt="../_images/tbwriter_stages.png" src="../_images/tbwriter_stages.png" style="width: 304.5px; height: 359.0px;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>To display the resources (memory and BOPs) the graph requires at different stages, change the ‘Tag’ from ‘Default’ to ‘Resources’</p>
+<a class="reference internal image-reference" href="../_images/tbwriter_resources.png"><img alt="../_images/tbwriter_resources.png" src="../_images/tbwriter_resources.png" style="width: 391.8px; height: 224.4px;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>By clicking a node, its statistics will show up:</p>
+<a class="reference internal image-reference" href="../_images/tbwriter_resources_node.png"><img alt="../_images/tbwriter_resources_node.png" src="../_images/tbwriter_resources_node.png" style="width: 447.59999999999997px; height: 151.2px;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The #BOPs of a node, is displayed as its ‘compute time’. Each BOP is considered to take a 1 microsecond.
+Thus, in the figure above, this node has approximately 1.02M BOPs.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>During the quantization process, statistics are gathered at some layers’ output: histograms, min/max per channel and mean per channel.
+These statistics can be viewed under ‘Histograms’ (histograms) or ‘Scalars’ (min/max/mean per channel) for each layer that statistics were gathered in its output:</p>
+<a class="reference internal image-reference" href="../_images/tbwriter_histograms.png"><img alt="../_images/tbwriter_histograms.png" src="../_images/tbwriter_histograms.png" style="width: 356.0px; height: 339.0px;" /></a>
+<a class="reference internal image-reference" href="../_images/tbwriter_scalars.png"><img alt="../_images/tbwriter_scalars.png" src="../_images/tbwriter_scalars.png" style="width: 755.5px; height: 423.0px;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="cosine-similarity-comparison">
+<h1>Cosine Similarity Comparison<a class="headerlink" href="#cosine-similarity-comparison" title="Permalink to this headline">¶</a></h1>
+<p>Computing a cosine-similarity is a way to quantify the similarity between two vectors.
+Mathematically, the cosine similarity is the division between the dot product of the vectors and the product of the euclidean norms of each vector.
+Thus, we can use it to measure the two models similarity, by measuring the cosine similarity
+of tensors along the networks in different pairs of points in the networks, where we would expect them to
+output similar tensors.</p>
+<img alt="../_images/cs_compare.png" src="../_images/cs_compare.png" />
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>There are many ways to measure similarity between two models (or tensors). To name a few: MSE, MAE, KL-Divergence, etc.
+As for now, mct uses cosine-similarity to compare the tensors along the models and display its changes within the
+TensorBoard UI.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Several plots comparing the cosine similarity between the original float model and the
+final quantized model at different points can be viewed under ‘Images’.
+More specifically, 20 samples from the provided representative dataset generator, are inserted to both of
+the models, and the cosine similarity at the output of different layers are computed and displayed.</p>
+<a class="reference internal image-reference" href="../_images/tbwriter_cosinesimilarity.png"><img alt="../_images/tbwriter_cosinesimilarity.png" src="../_images/tbwriter_cosinesimilarity.png" style="width: 562.0px; height: 475.0px;" /></a>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Visualization within TensorBoard</a></li>
+<li><a class="reference internal" href="#cosine-similarity-comparison">Cosine Similarity Comparison</a></li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../index.html"
+                        title="previous chapter">Model Compression Toolkit User Guide</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="quickstart_keras.html"
+                        title="next chapter">MCT Quickstart Guideline</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="quickstart_keras.html" title="MCT Quickstart Guideline"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Model Compression Toolkit User Guide"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 0.0.1</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Visualization within TensorBoard</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Sony Semiconductors Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.0.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,177 @@
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>MCT Quickstart Guideline &#8212; MCT Documentation: ver 0.0.1</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API Docs" href="../api/api_docs/index.html" />
+    <link rel="prev" title="Visualization within TensorBoard" href="visualization.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../api/api_docs/index.html" title="API Docs"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="visualization.html" title="Visualization within TensorBoard"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 0.0.1</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">MCT Quickstart Guideline</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <blockquote>
+<div><dl class="field-list simple">
+<dt class="field-odd">orphan</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</div></blockquote>
+<section id="mct-quickstart-guideline">
+<span id="ug-quickstart-keras"></span><h1>MCT Quickstart Guideline<a class="headerlink" href="#mct-quickstart-guideline" title="Permalink to this headline">¶</a></h1>
+<p>Here is an example of a code that shows how to use MCT with Keras models.</p>
+<p>Import MCT and MobileNetV1 from Keras applications:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.applications.mobilenet</span> <span class="kn">import</span> <span class="n">MobileNet</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Data preprocessing functions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">MEAN</span> <span class="o">=</span> <span class="mf">127.5</span>
+<span class="n">STD</span> <span class="o">=</span> <span class="mf">127.5</span>
+<span class="n">RESIZE_SCALE</span> <span class="o">=</span> <span class="mi">256</span> <span class="o">/</span> <span class="mi">224</span>
+<span class="n">SIZE</span> <span class="o">=</span> <span class="mi">224</span>
+
+
+<span class="k">def</span> <span class="nf">resize</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">resize_side</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">RESIZE_SCALE</span> <span class="o">*</span> <span class="n">SIZE</span> <span class="o">/</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">RESIZE_SCALE</span> <span class="o">*</span> <span class="n">SIZE</span> <span class="o">/</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">height_tag</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">resize_side</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">width_tag</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">resize_side</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">resized_img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">width_tag</span><span class="p">,</span> <span class="n">height_tag</span><span class="p">))</span>
+    <span class="n">offset_height</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">height_tag</span> <span class="o">-</span> <span class="n">SIZE</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">offset_width</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">width_tag</span> <span class="o">-</span> <span class="n">SIZE</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">cropped_img</span> <span class="o">=</span> <span class="n">resized_img</span><span class="p">[</span><span class="n">offset_height</span><span class="p">:</span><span class="n">offset_height</span> <span class="o">+</span> <span class="n">SIZE</span><span class="p">,</span> <span class="n">offset_width</span><span class="p">:</span><span class="n">offset_width</span> <span class="o">+</span> <span class="n">SIZE</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">cropped_img</span>
+
+
+<span class="k">def</span> <span class="nf">normalization</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">MEAN</span><span class="p">)</span> <span class="o">/</span> <span class="n">STD</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Initialize data loader:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Set the batch size of the images at each calibration iteration.</span>
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">50</span>
+
+    <span class="c1"># Set the path to the folder of images to load and use for the representative dataset.</span>
+    <span class="c1"># Notice that the folder have to contain at least one image.</span>
+    <span class="n">folder</span> <span class="o">=</span> <span class="s1">&#39;/path/to/images/folder&#39;</span>
+
+    <span class="c1"># Create a representative data generator, which returns a list of images.</span>
+    <span class="c1"># The images can be preprocessed using a list of preprocessing functions.</span>
+    <span class="kn">from</span> <span class="nn">model_compression_toolkit</span> <span class="kn">import</span> <span class="n">FolderImageLoader</span>
+    <span class="n">image_data_loader</span> <span class="o">=</span> <span class="n">FolderImageLoader</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span>
+                                          <span class="n">preprocessing</span><span class="o">=</span><span class="p">[</span><span class="n">resize</span><span class="p">,</span> <span class="n">normalization</span><span class="p">],</span>
+                                          <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+
+    <span class="c1"># The representative data generator to pass to MCT.</span>
+    <span class="k">def</span> <span class="nf">representative_data_gen</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Run Post Training Quantization:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+    <span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
+    <span class="c1"># Set the number of calibration iterations to 10.</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">MobileNet</span><span class="p">()</span>
+    <span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">keras_post_training_quantization</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
+                                                                              <span class="n">representative_data_gen</span><span class="p">,</span>
+</pre></div>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="visualization.html"
+                        title="previous chapter">Visualization within TensorBoard</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../api/api_docs/index.html"
+                        title="next chapter">API Docs</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../api/api_docs/index.html" title="API Docs"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="visualization.html" title="Visualization within TensorBoard"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 0.0.1</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">MCT Quickstart Guideline</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Sony Semiconductors Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.0.
+    </div>
+  </body>
+</html>

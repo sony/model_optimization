@@ -1,0 +1,143 @@
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>FrameworkInfo Class &#8212; MCT Documentation: ver 0.0.1</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 0.0.1</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">FrameworkInfo Class</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="frameworkinfo-class">
+<span id="ug-frameworkinfo"></span><h1>FrameworkInfo Class<a class="headerlink" href="#frameworkinfo-class" title="Permalink to this headline">¶</a></h1>
+<p><strong>The following API can be used to pass MCT framework-related information to use when optimizing the network</strong></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.FrameworkInfo">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">FrameworkInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_ops</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_ops</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_quantization_ops</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_quantizer_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_quantizer_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_channels_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_min_max_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_min_max_mapping</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.FrameworkInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class to wrap all information about a specific framework the library needs to quantize a model.
+Specifically, FrameworkInfo holds lists of layers by how they should be quantized, and multiple mappings such as
+layer to it kernel channels indices, and a layer to its min/max values, etc.
+The layers lists are divided into three groups:
+kernel_ops: Layers that have coefficients and need to get quantized (e.g., Conv2D, Dense, etc.)
+activation_ops: Layers that their outputs should get quantized (e.g., Add, ReLU, etc.)
+no_quantization_ops:Layers that should not get quantized (e.g., Reshape, Transpose, etc.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kernel_ops</strong> (<em>list</em>) – A list of operators that are in the kernel_ops group.</p></li>
+<li><p><strong>activation_ops</strong> (<em>list</em>) – A list of operators that are in the activation_ops group.</p></li>
+<li><p><strong>no_quantization_ops</strong> (<em>list</em>) – A list of operators that are in the no_quantization_ops group.</p></li>
+<li><p><strong>activation_quantizer_mapping</strong> (<em>Dict</em><em>[</em><em>QuantizationMethod</em><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
+<li><p><strong>weights_quantizer_mapping</strong> (<em>Dict</em><em>[</em><em>QuantizationMethod</em><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
+<li><p><strong>kernel_channels_mapping</strong> (<a class="reference internal" href="DefaultDict.html#model_compression_toolkit.DefaultDict" title="model_compression_toolkit.DefaultDict"><em>DefaultDict</em></a>) – Dictionary from a layer to a tuple of its kernel in/out channels indices.</p></li>
+<li><p><strong>activation_min_max_mapping</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>]</em>) – Dictionary from an activation function to its min/max output values.</p></li>
+<li><p><strong>layer_min_max_mapping</strong> (<em>Dict</em><em>[</em><em>Any</em><em>, </em><em>tuple</em><em>]</em>) – Dictionary from a layer to its min/max output values.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>When quantizing a Keras model, if we want to quantize the kernels of Conv2D layers only, we can
+set, and we know it’s kernel out/in channel indices are (3, 2) respectivly:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kernel_ops</span> <span class="o">=</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Conv2D</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kernel_channels_mapping</span> <span class="o">=</span> <span class="n">DefaultDict</span><span class="p">({</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Conv2D</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)})</span>
+</pre></div>
+</div>
+<p>Then, we can create a FrameworkInfo object:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">FrameworkInfo</span><span class="p">(</span><span class="n">kernel_ops</span><span class="p">,</span> <span class="p">[],</span> <span class="p">[],</span> <span class="n">kernel_channels_mapping</span><span class="p">,</span> <span class="p">{},</span> <span class="p">{})</span>
+</pre></div>
+</div>
+<p>and pass it to <a class="reference internal" href="../methods/keras_post_training_quantization.html#model_compression_toolkit.keras_post_training_quantization" title="model_compression_toolkit.keras_post_training_quantization"><code class="xref py py-func docutils literal notranslate"><span class="pre">keras_post_training_quantization()</span></code></a>.</p>
+<p>To quantize the activations of ReLU, we can create a new FrameworkInfo instance:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">activation_ops</span> <span class="o">=</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">ReLU</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">FrameworkInfo</span><span class="p">(</span><span class="n">kernel_ops</span><span class="p">,</span> <span class="n">activation_ops</span><span class="p">,</span> <span class="p">[],</span> <span class="n">kernel_channels_mapping</span><span class="p">,</span> <span class="p">{},</span> <span class="p">{})</span>
+</pre></div>
+</div>
+<p>If we don’t want to quantize a layer (e.g. Reshape), we can add it to the no_no_quantization_ops list:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">no_quantization_ops</span> <span class="o">=</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Reshape</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">FrameworkInfo</span><span class="p">(</span><span class="n">kernel_ops</span><span class="p">,</span> <span class="n">activation_ops</span><span class="p">,</span> <span class="n">no_quantization_ops</span><span class="p">,</span> <span class="n">kernel_channels_mapping</span><span class="p">,</span> <span class="p">{},</span> <span class="p">{})</span>
+</pre></div>
+</div>
+<p>If an activation layer (tf.keras.layers.Activation) should be quantized and we know it’s min/max outputs range in advanced, we can add it to activation_min_max_mapping for saving the statistics collection time. For example:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">activation_min_max_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;softmax&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">FrameworkInfo</span><span class="p">(</span><span class="n">kernel_ops</span><span class="p">,</span> <span class="n">activation_ops</span><span class="p">,</span> <span class="n">no_quantization_ops</span><span class="p">,</span> <span class="n">kernel_channels_mapping</span><span class="p">,</span> <span class="n">activation_min_max_mapping</span><span class="p">,</span> <span class="p">{})</span>
+</pre></div>
+</div>
+<p>If a layer’s activations should be quantized and we know it’s min/max outputs range in advanced, we can add it to layer_min_max_mapping for saving the statistics collection time. For example:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">layer_min_max_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Softmax</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">FrameworkInfo</span><span class="p">(</span><span class="n">kernel_ops</span><span class="p">,</span> <span class="n">activation_ops</span><span class="p">,</span> <span class="n">no_quantization_ops</span><span class="p">,</span> <span class="n">kernel_channels_mapping</span><span class="p">,</span> <span class="n">activation_min_max_mapping</span><span class="p">,</span> <span class="n">layer_min_max_mapping</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 0.0.1</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">FrameworkInfo Class</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Sony Semiconductors Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.0.
+    </div>
+  </body>
+</html>
