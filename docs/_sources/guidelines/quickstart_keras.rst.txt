@@ -11,7 +11,7 @@ Here is an example of a code that shows how to use MCT with Keras models.
 
 Import MCT and MobileNetV1 from Keras applications:
 
-.. literalinclude:: ../../../../tutorials/example_keras_mobilenet.py
+.. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
     :lines: 16-17
 
@@ -19,7 +19,7 @@ Import MCT and MobileNetV1 from Keras applications:
 
 Data preprocessing functions:
 
-.. literalinclude:: ../../../../tutorials/example_keras_mobilenet.py
+.. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
     :lines: 27-48
 
@@ -27,7 +27,7 @@ Data preprocessing functions:
 
 Initialize data loader:
 
-.. literalinclude:: ../../../../tutorials/example_keras_mobilenet.py
+.. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
     :lines: 53-68
 
@@ -35,7 +35,7 @@ Initialize data loader:
 
 Run Post Training Quantization:
 
-.. literalinclude:: ../../../../tutorials/example_keras_mobilenet.py
+.. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
     :lines: 70-75
 

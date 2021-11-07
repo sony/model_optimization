@@ -3,7 +3,7 @@
 
 github:
 	@make html
-	@cp -a build/html/. ../../docs
+	@cp -a build/html/. ../docs
 	@rm -rf build
 
 
