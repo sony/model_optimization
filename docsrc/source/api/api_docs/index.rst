@@ -4,7 +4,7 @@ API Docs
 
 **Init module for MCT API.**
 
-.. literalinclude:: ../../../../../tutorials/example_keras_mobilenet.py
+.. literalinclude:: ../../../../tutorials/example_keras_mobilenet.py
     :language: python
     :lines: 16
 
