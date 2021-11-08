@@ -21,7 +21,7 @@ echo "Releasing version:$1"
 #########################################
 # Making a tag
 #########################################
-git tag $version
+git tag -a $version -m "Release $version"
 git push origin $version
 #########################################
 # Build python package

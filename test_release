@@ -21,7 +21,7 @@ echo "Releasing version:$1"
 #########################################
 # Making a tag
 #########################################
-git tag $version
+git tag -a $version -m "Release $version"
 git push origin $version
 #########################################
 # Build python package
@@ -30,7 +30,7 @@ python setup.py sdist bdist_wheel --new_version $1
 #########################################
 # Upload to pypi server
 #########################################
-twine upload --repository testpypi dist/*
+twine upload --repository testpypi dist/* --verbose
 #########################################
 # Remove tag from local and origin
 #########################################

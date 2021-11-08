@@ -52,6 +52,7 @@ setup_obj = setup(name='model_compression_toolkit',
                       "Programming Language :: Python :: 3",
                       "License :: OSI Approved :: Apache Software License",
                       "Operating System :: OS Independent",
+                      "Topic :: Scientific/Engineering :: Artificial Intelligence"
                   ],
                   install_requires=read_install_requires(),
                   python_requires='>=3.6'
