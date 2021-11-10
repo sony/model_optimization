@@ -22,8 +22,6 @@ import unittest
 import model_compression_toolkit as mct
 from tests.helpers.tensors_compare import cosine_similarity
 from enum import Enum
-from tests.helpers.logs import LOGS_DIR
-import logging
 import random
 
 keras = tf.keras
