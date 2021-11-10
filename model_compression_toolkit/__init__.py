@@ -23,3 +23,5 @@ from model_compression_toolkit.common.data_loader import FolderImageLoader
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.common import network_editors as network_editor
+
+__version__ = "1.0.0"
