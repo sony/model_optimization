@@ -32,7 +32,6 @@ def get_log_description():
 
 def get_release_arguments():
     argparser = argparse.ArgumentParser(add_help=False)
-    argparser.add_argument('--new_version', help='required new version argument for releasing a package', required=True)
     args, unknown = argparser.parse_known_args()
     sys.argv = [sys.argv[0]] + unknown
     return args
@@ -40,7 +39,6 @@ def get_release_arguments():
 
 args = get_release_arguments()
 setup_obj = setup(name='model_compression_toolkit',
-                  version=args.new_version,
                   long_description=get_log_description(),
                   long_description_content_type="text/markdown",
                   description='A Model Compression Toolkit for neural networks',
@@ -52,6 +50,7 @@ setup_obj = setup(name='model_compression_toolkit',
                       "Programming Language :: Python :: 3",
                       "License :: OSI Approved :: Apache Software License",
                       "Operating System :: OS Independent",
+                      "Topic :: Scientific/Engineering :: Artificial Intelligence"
                   ],
                   install_requires=read_install_requires(),
                   python_requires='>=3.6'

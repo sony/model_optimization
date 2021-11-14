@@ -1,0 +1,39 @@
+name: Nightly
+on:
+  workflow_dispatch:  # Allow manual triggers
+  schedule:
+    - cron: 0 0 * * *
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Python 3
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install twine
+      - name: Build nightly
+        run: |
+          version=$(python -c 'import model_compression_toolkit; print(model_compression_toolkit.__version__)')
+          now=$(date +'%d%m%Y')
+          version="${version}.${now}"
+          sed -i "s/attr: model_compression_toolkit.__version__/$version/g" setup.cfg
+          sed -i "s/name='model_compression_toolkit'/name='mct-nightly'/g" setup.py
+          python setup.py sdist bdist_wheel
+      - name: Publish nightly
+        run: |
+          twine upload --repository pypi dist/* --verbose -u __token__ -p ${{ secrets.PYPI_API_KEY }}
+      - name: Prepare env for test
+        run: |
+          rm -rf model_compression_toolkit
+          pip install mct-nightly
+      - name: Run tests suite
+        run: |
+          python -m unittest tests/test_suite.py -v
+
