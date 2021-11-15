@@ -21,5 +21,5 @@ jobs:
           python setup.py sdist bdist_wheel
       - name: Publish package
         run: |
-          twine upload --repository pypi dist/*
+          twine upload --repository pypi dist/* -u __token__ -p ${{ secrets.PYPI_API_KEY }}
 
