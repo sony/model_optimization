@@ -16,11 +16,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install twine
-      - name: Push tag
-        run: |
-          version=$(python -c 'import model_compression_toolkit; print(model_compression_toolkit.__version__)')
-          git tag -a $version -m "Release $version"
-          git push origin $version
       - name: Build package
         run: |
           python setup.py sdist bdist_wheel
