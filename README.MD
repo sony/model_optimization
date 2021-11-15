@@ -31,6 +31,16 @@ See the MCT install guide for the pip package, and build from source.
 git clone https://github.com/sony/model_optimization.git
 python setup.py install
 ```
+#### From PyPi
+```
+pip install model-compression-toolkit
+```
+
+A nightly package is also available:
+```
+pip install mct-nightly
+```
+
 
 ### Example Usage
 Here is a snapshot of a code that shown an example of how to use the post training quantization using keras.

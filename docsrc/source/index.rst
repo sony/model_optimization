@@ -28,6 +28,16 @@ From Source:
     python setup.py install
 
 
+From PyPi:
+::
+
+    pip install model-compression-toolkit
+
+A nightly version is also available:
+::
+
+    pip install mct-nightly
+
 Supported Features
 ====================================
 
