@@ -1,0 +1,29 @@
+name: Publish Release
+on:
+  workflow_dispatch:  # Allow manual triggers
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Python 3
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install twine
+      - name: Push tag
+        run: |
+          version=$(python -c 'import model_compression_toolkit; print(model_compression_toolkit.__version__)')
+          git tag -a $version -m "Release $version"
+          git push origin $version
+      - name: Build package
+        run: |
+          python setup.py sdist bdist_wheel
+      - name: Publish package
+        run: |
+          twine upload --repository pypi dist/*
+
