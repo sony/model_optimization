@@ -30,8 +30,8 @@ class MultipleInputsNodeTests(BaseFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       16, 16, True, False, True)
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
+                                      16, 16, True, False, True)
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 224, 244, 3]]

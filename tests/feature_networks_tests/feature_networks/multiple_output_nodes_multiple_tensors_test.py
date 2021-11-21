@@ -32,8 +32,8 @@ class MultipleOutputNodesMultipleTensors(BaseFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       16, 16, True, True, True)
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
+                                      16, 16, True, True, True)
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 236, 236, 3]]
@@ -46,16 +46,15 @@ class MultipleOutputNodesMultipleTensors(BaseFeatureNetworkTest):
         w = layers.Conv2D(3, 4)(inputs)
         x = layers.BatchNormalization()(x)
         outputs = layers.Activation('swish')(x)
-        return keras.Model(inputs=inputs, outputs=[outputs,y,z,w])
-
+        return keras.Model(inputs=inputs, outputs=[outputs, y, z, w])
 
     def create_feature_network(self, input_shape):
         inputs = layers.Input(shape=input_shape[0][1:])
-        x = layers.Conv2D(3,4)(inputs)
-        x = layers.Conv2D(3,4)(x)
-        x1,y1,z1,w1 = self.inner_functional_model(x.shape)(x)
+        x = layers.Conv2D(3, 4)(inputs)
+        x = layers.Conv2D(3, 4)(x)
+        x1, y1, z1, w1 = self.inner_functional_model(x.shape)(x)
         x2, y2, z2, w2 = self.inner_functional_model(x.shape)(x)
-        model = keras.Model(inputs=inputs, outputs=[z2,x1,y1,z1,w1,x2,y2,w2])
+        model = keras.Model(inputs=inputs, outputs=[z2, x1, y1, z1, w1, x2, y2, w2])
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -64,8 +63,6 @@ class MultipleOutputNodesMultipleTensors(BaseFeatureNetworkTest):
                 self.unit_test.assertFalse(isinstance(l.layer, Functional) or isinstance(l.layer, Sequential))
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)
-        for a,b in zip(y,y_hat):
+        for a, b in zip(y, y_hat):
             cs = cosine_similarity(a, b)
             self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
-
-

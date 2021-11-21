@@ -28,7 +28,7 @@ from model_compression_toolkit.common.graph.node import Node
 from model_compression_toolkit.keras.constants import KERNEL, BIAS, USE_BIAS, LINEAR, ACTIVATION, LAYER_NAME, \
     GAMMA, BETA, EPSILON, \
     MOVING_MEAN, \
-    MOVING_VARIANCE
+    MOVING_VARIANCE, DEPTHWISE_KERNEL
 
 
 class BatchNormalizationFolding(common.BaseSubstitution):
@@ -67,6 +67,12 @@ class BatchNormalizationFolding(common.BaseSubstitution):
         num_edges_before_substition = len(graph.edges)
 
         conv_node = edge_nodes[0]
+		
+        # If the linear operator is part of a reused group (it is the "base" node, or a reused node),
+        # we should skip the substitution.
+        if conv_node.reuse or conv_node.reuse_group is not None:
+            return graph
+
         bn_node = edge_nodes[1]
 
         if len(graph.get_next_nodes(conv_node)) > 1 or len(graph.get_prev_nodes(bn_node)) > 1:
@@ -98,19 +104,23 @@ class BatchNormalizationFolding(common.BaseSubstitution):
         else:
             kernel = kernel * weights_scale.reshape(1, 1, 1, -1)
 
+        if conv_node.layer_class == DepthwiseConv2D:
+            kernel_name = DEPTHWISE_KERNEL
+        else:
+            kernel_name = KERNEL
+
         framework_attr = copy.copy(conv_node.framework_attr)
         framework_attr[USE_BIAS] = True
         framework_attr[LAYER_NAME] = conv_node.name + '_bn'
 
-        weights_dict = {KERNEL: kernel,
+        weights_dict = {kernel_name: kernel,
                         BIAS: bias}
 
-        conv_bn = common.graph.Node(conv_node.name + '_bn',
-                                    framework_attr,
-                                    conv_node.input_shape,
-                                    conv_node.output_shape,
-                                    weights_dict,
-                                    conv_node.layer_class)
+        conv_bn = copy.deepcopy(conv_node)
+        conv_bn_name = conv_node.name + '_bn'
+        conv_bn.name = conv_bn_name
+        conv_bn.framework_attr = framework_attr
+        conv_bn.weights = weights_dict
 
         graph.add_node(conv_bn)
         graph.reconnect_out_edges(current_node=bn_node, new_node=conv_bn)

@@ -32,27 +32,25 @@ class ReusedLayerTest(BaseFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING,
-                                       mct.ThresholdSelectionMethod.NOCLIPPING,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       16, 16, True, True, True)
+                                      mct.ThresholdSelectionMethod.NOCLIPPING,
+                                      mct.QuantizationMethod.POWER_OF_TWO,
+                                      mct.QuantizationMethod.POWER_OF_TWO,
+                                      16, 16, True, True, True)
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 224, 244, 3]]
-
 
     def create_feature_network(self, input_shape):
         conv_layer = layers.Conv2D(3, 4)
         inputs = layers.Input(shape=input_shape[0][1:])
         x = conv_layer(inputs)
         x = conv_layer(x)
-        x = layers.Conv2D(7,8)(x)
+        x = layers.Conv2D(7, 8)(x)
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)
         outputs = layers.ReLU()(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
         return model
-
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         y = float_model.predict(input_x)

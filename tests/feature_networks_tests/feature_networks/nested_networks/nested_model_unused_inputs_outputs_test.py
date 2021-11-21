@@ -22,7 +22,6 @@ import tensorflow as tf
 import numpy as np
 from tests.helpers.tensors_compare import cosine_similarity
 
-
 keras = tf.keras
 layers = keras.layers
 
@@ -31,12 +30,13 @@ class NestedModelUnusedInputsOutputsTest(BaseFeatureNetworkTest):
     """
     Test two inner models when one's some outputs are not connected to any layer.
     """
+
     def __init__(self, unit_test):
         super().__init__(unit_test, num_calibration_iter=1, val_batch_size=32)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
-                                      mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.QuantizationMethod.SYMMETRIC_UNIFORM,
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
                                       16, 16, True, True, True)
 
     def create_inputs_shape(self):
@@ -50,7 +50,7 @@ class NestedModelUnusedInputsOutputsTest(BaseFeatureNetworkTest):
         w = layers.Conv2D(3, 4)(inputs)
         x = layers.BatchNormalization()(x)
         outputs = layers.Activation('swish')(x)
-        return keras.Model(inputs=inputs, outputs=[outputs,y,z,w])
+        return keras.Model(inputs=inputs, outputs=[outputs, y, z, w])
 
     def second_inner_functional_model(self, input_shape):
         inputs = layers.Input(shape=input_shape[1:])
@@ -58,17 +58,16 @@ class NestedModelUnusedInputsOutputsTest(BaseFeatureNetworkTest):
         x = layers.Conv2D(3, 4)(inputs)
         y = layers.Conv2D(3, 4)(inputs2)
         x = layers.BatchNormalization()(x)
-        x = layers.Add()([x,y])
+        x = layers.Add()([x, y])
         outputs = layers.Activation('swish')(x)
-        return keras.Model(inputs=[inputs,inputs2], outputs=outputs)
-
+        return keras.Model(inputs=[inputs, inputs2], outputs=outputs)
 
     def create_feature_network(self, input_shape):
         inputs = layers.Input(shape=input_shape[0][1:])
-        x = layers.Conv2D(3,4)(inputs)
-        x = layers.Conv2D(3,4)(x)
-        x,y,z,w = self.inner_functional_model(x.shape)(x)
-        x = self.second_inner_functional_model(x.shape)([z,y])
+        x = layers.Conv2D(3, 4)(inputs)
+        x = layers.Conv2D(3, 4)(x)
+        x, y, z, w = self.inner_functional_model(x.shape)(x)
+        x = self.second_inner_functional_model(x.shape)([z, y])
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)
         model = keras.Model(inputs=inputs, outputs=x)

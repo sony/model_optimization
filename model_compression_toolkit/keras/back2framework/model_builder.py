@@ -26,7 +26,8 @@ from tensorflow.python.util.object_identity import Reference as TFReference
 
 
 from model_compression_toolkit import common
-from model_compression_toolkit import keras
+from model_compression_toolkit.keras.quantizer.mixed_precision.quantization_config_factory import quantization_config_builder_mixed_precision
+from model_compression_toolkit.keras.quantizer.gradient_ptq.config_factory import quantization_config_builder_gptq
 from model_compression_toolkit.common import Node, Graph
 from model_compression_toolkit.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.keras.back2framework.instance_builder import OperationHandler
@@ -46,12 +47,13 @@ class ModelBuilderMode(Enum):
     in the graph.
     QUANTIZED - Build a quantized model using the nodes' quantization attributes for adding 
     quantization nodes to the model.
-    KNOWLEDGEDISTILLATION - Build a quantized model using the nodes' quantization attributes for wrapping
+    GPTQ - Build a quantized model using the nodes' quantization attributes for wrapping
     layers with QuantizeWrapper and output comparing points.
     """
     FLOAT = 0
     QUANTIZED = 1
-    KNOWLEDGEDISTILLATION = 2
+    GPTQ = 2
+    MIXEDPRECISION = 3
 
 
 def get_node_name_from_layer(layer: Layer) -> str:
@@ -115,7 +117,7 @@ def run_operation(n: Node,
                   input_tensors: List[List[TFReference]],
                   op_func: Layer,
                   input_nodes_to_input_tensors: Dict[Node, Any],
-                  quantized: bool = True) -> List[TFReference]:
+                  mode: ModelBuilderMode = ModelBuilderMode.QUANTIZED) -> List[TFReference]:
     """
     Applying the layer (op_func) to the input tensors (input_tensors).
     If quantized is set to True, and the layer's corresponding node (n) has quantization
@@ -126,6 +128,7 @@ def run_operation(n: Node,
         input_tensors: List of references to Keras tensors that are the layer's inputs.
         op_func: Layer to apply to the input tensors.
         input_nodes_to_input_tensors: A dictionary from an node to its input tensors.
+        mode: model quantiztion mode from ModelBuilderMode
 
     Returns:
         A list of references to Keras tensors. The layer's output tensors after applying the
@@ -134,7 +137,8 @@ def run_operation(n: Node,
 
     if len(input_tensors) == 0:  # Placeholder handling
         out_tensors_of_n = input_nodes_to_input_tensors[n]
-        if quantized:  # Add a fake quant node
+        if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ, ModelBuilderMode.MIXEDPRECISION]:
+            # Adding a fake quant node to Input when in GPTQ mode because quantize_model doesn't quantize the input layer
             assert n.activation_quantization_cfg is not None  # Input layers should always have activation config
             fake_quant = n.activation_quantization_cfg.activation_quantization_fn(n.activation_quantization_cfg.activation_n_bits,
                                                                        n.activation_quantization_cfg.activation_is_signed,
@@ -154,7 +158,7 @@ def run_operation(n: Node,
 
         # Add a fake quant node if the node has an activation threshold.
         if n.activation_quantization_cfg is not None:
-            if quantized and n.activation_quantization_cfg.enable_activation_quantization:
+            if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.MIXEDPRECISION] and n.activation_quantization_cfg.enable_activation_quantization:
                 fake_quant = n.activation_quantization_cfg.activation_quantization_fn(n.activation_quantization_cfg.activation_n_bits,
                                                                            n.activation_quantization_cfg.activation_is_signed,
                                                                            n.activation_quantization_cfg.activation_quantization_params)
@@ -166,7 +170,7 @@ def run_operation(n: Node,
 
 def model_builder(graph: common.Graph,
                   mode: ModelBuilderMode = ModelBuilderMode.QUANTIZED,
-                  append2output=None) -> Tuple[Any, Any]:
+                  append2output=None) -> Tuple[tf.keras.models.Model, Any]:
     """
     Build a Keras model from a graph representing the model.
     The model is built by converting the graph nodes to Keras layers and applying them sequentially to get the model
@@ -223,7 +227,7 @@ def model_builder(graph: common.Graph,
                                          input_tensors,
                                          op_func,
                                          input_nodes_to_input_tensors,
-                                         quantized=mode == ModelBuilderMode.QUANTIZED)
+                                         mode)
 
         if isinstance(out_tensors_of_n, list):
             node_to_output_tensors_dict.update({n: out_tensors_of_n})
@@ -245,20 +249,43 @@ def model_builder(graph: common.Graph,
     # Build the model.
     model = tf.keras.Model(inputs=inputs_list, outputs=model_output_tensors)
 
-    # In KNOWLEDGEDISTILLATION mode, wrap each layer in a QuantizeWrapper containing QuantizeConfig
+    # In GPTQ mode, wrap each layer in a QuantizeWrapper containing QuantizeConfig
     # that's built using the node quantization attributes.
-    if mode == ModelBuilderMode.KNOWLEDGEDISTILLATION:
+    if mode == ModelBuilderMode.GPTQ:
         def _quantize(layer):
             nodes = graph.find_node_by_name(get_node_name_from_layer(layer))
             if len(nodes) == 1:
                 node = nodes[0]
-                return QuantizeWrapper(layer, keras.quantizer.quantization_config_builder_kd(node))
+                return QuantizeWrapper(layer, quantization_config_builder_gptq(node))
+            elif is_layer_fake_quant(layer):
+                return layer
+            else:
+                raise Exception(
+                    f"Mismatch between keras model and graph can't find node named: {get_node_name_from_layer(layer)}")
+
+        # clone each layer in the model and apply _quantize to the layer.
+        model = tf.keras.models.clone_model(model, input_tensors=None, clone_function=_quantize)
+
+    # In MIXEDPRECISION mode, wrap each layer that can be configured with bitwidth
+    # in a QuantizeWrapper containing QuantizeConfig that holds a quantizer that
+    # stores the quantized weights using all possible bitwidths.
+    elif mode == ModelBuilderMode.MIXEDPRECISION:
+        def _quantize_multiple_nbits(layer):
+            nodes = graph.find_node_by_name(get_node_name_from_layer(layer))
+            if len(nodes) == 1:
+                node = nodes[0]
+                # does not need to get wrapped as its weights are not quantized
+                if node.candidates_weights_quantization_cfg is None:
+                    return layer
+                return QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node))
+            elif is_layer_fake_quant(layer):
+                return layer
             else:
                 raise Exception(
                     f'Mismatch between keras model and graph cant find node named: {get_node_name_from_layer(layer)}')
 
         # clone each layer in the model and apply _quantize to the layer.
-        model = tf.keras.models.clone_model(model, input_tensors=None, clone_function=_quantize)
+        model = tf.keras.models.clone_model(model, input_tensors=None, clone_function=_quantize_multiple_nbits)
 
     # Models that were built in float or quantized mode, should not be modified anymore.
     elif mode == ModelBuilderMode.FLOAT or mode == ModelBuilderMode.QUANTIZED:

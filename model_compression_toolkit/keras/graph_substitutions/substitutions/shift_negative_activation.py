@@ -28,9 +28,12 @@ from model_compression_toolkit.common.constants import FLOAT_32, DATA_TYPE, THRE
 from model_compression_toolkit.common.graph.graph_matchers import EdgeMatcher
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, \
     NodeFrameworkAttrMatcher
-from model_compression_toolkit.common.quantization.node_quantization_config import create_node_activation_qc
+
+from model_compression_toolkit.common.quantization.set_node_quantization_config import create_node_activation_qc
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
-from model_compression_toolkit.common.quantization.quantize_model import get_activations_params
+from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_activations_computation \
+    import \
+    get_activations_qparams
 from model_compression_toolkit.keras.constants import KERNEL, BIAS, KERNEL_SIZE, PADDING, \
     STRIDES, ACTIVATION, TRAINABLE, PAD_VALID, LAYER_NAME, SWISH, PAD_SAME, SELU
 
@@ -463,7 +466,7 @@ def shift_negative_function(graph,
     add_node.activation_quantization_cfg.activation_is_signed = False
 
     if non_linear_node.activation_quantization_cfg.shift_negative_threshold_recalculation:
-        activation_param, activation_is_signed = get_activations_params(add_node, graph)
+        activation_param, activation_is_signed = get_activations_qparams(add_node, graph)
         assert activation_is_signed == False
         add_node.activation_quantization_cfg.set_activation_quantization_param(activation_param)
         add_node.activation_quantization_cfg.activation_is_signed = False

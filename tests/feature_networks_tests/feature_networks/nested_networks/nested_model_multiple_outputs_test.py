@@ -32,8 +32,8 @@ class NestedModelMultipleOutputsTest(BaseFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       16, 16, True, True, True)
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
+                                      16, 16, True, True, True)
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 236, 236, 3]]
@@ -55,7 +55,7 @@ class NestedModelMultipleOutputsTest(BaseFeatureNetworkTest):
         x, y, z, w = self.inner_functional_model(x.shape)(x)
         x = layers.BatchNormalization()(y)
         z = layers.Activation('relu')(z)
-        x = layers.Add()([x,z])
+        x = layers.Add()([x, z])
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 

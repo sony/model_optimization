@@ -28,9 +28,9 @@ layers = keras.layers
 class BaseBatchNormalizationFolding(BaseFeatureNetworkTest, ABC):
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       16, 16, False, False, True, enable_weights_quantization=False,
-                                       enable_activation_quantization=False)
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
+                                      16, 16, False, False, True, enable_weights_quantization=False,
+                                      enable_activation_quantization=False)
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 16, 16, 1]]
@@ -106,6 +106,7 @@ class DepthwiseConv2DBNFoldingHighMultiplierTest(BaseBatchNormalizationFolding):
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)
         return tf.keras.models.Model(inputs=inputs, outputs=x)
+
 
 class SeparableConv2DBNFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):

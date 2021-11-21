@@ -32,8 +32,8 @@ class NestedModelMultipleInputsTest(BaseFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       16, 16, True, True, True)
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
+                                      16, 16, True, True, True)
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 236, 236, 3]]
@@ -44,10 +44,9 @@ class NestedModelMultipleInputsTest(BaseFeatureNetworkTest):
         x = layers.Conv2D(3, 4, name='conv3')(inputs)
         y = layers.Conv2D(3, 4, name='conv4')(inputs2)
         x = layers.BatchNormalization()(x)
-        x = layers.Add()([x,y])
+        x = layers.Add()([x, y])
         outputs = layers.Activation('swish')(x)
-        return keras.Model(inputs=[inputs,inputs2], outputs=outputs)
-
+        return keras.Model(inputs=[inputs, inputs2], outputs=outputs)
 
     def create_feature_network(self, input_shape):
         inputs = layers.Input(shape=input_shape[0][1:])
@@ -55,7 +54,7 @@ class NestedModelMultipleInputsTest(BaseFeatureNetworkTest):
         y = layers.Conv2D(3, 4, name='conv2')(inputs)
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)
-        x = self.inner_functional_model(x.shape)([x,y])
+        x = self.inner_functional_model(x.shape)([x, y])
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 

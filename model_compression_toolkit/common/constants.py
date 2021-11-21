@@ -16,13 +16,14 @@
 
 # Minimal threshold to use for quantization ranges:
 MIN_THRESHOLD = (2 ** -28)
+EPS = 1e-8
+MULTIPLIER_N_BITS = 8
 
 # Quantization attributes:
 OUTPUT_SCALE = 'output_scale'
 THRESHOLD = 'threshold'
 CLUSTER_CENTERS = 'cluster_centers'
 SCALE_PER_CHANNEL = 'scale_per_channel'
-MULTIPLIER_N_BITS = 'multiplier_n_bits'
 
 
 # Data types:
@@ -32,3 +33,12 @@ FLOAT_32 = 'float32'
 
 # Number of Tensorboard cosine-similarity plots to add:
 NUM_SAMPLES_CS_TENSORBOARD = 20
+
+
+# In Mixed-Precision, a node can have multiple candidates for weights quantization configuration.
+# In order to display a single view of a node (for example, for logging in TensorBoard) we need to track the attributes
+# that are shared among different candidates:
+WEIGHTS_NBITS_ATTRIBUTE = 'weights_n_bits'
+CORRECTED_BIAS_ATTRIBUTE = 'corrected_bias'
+
+

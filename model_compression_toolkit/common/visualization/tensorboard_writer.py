@@ -176,15 +176,13 @@ class TensorboardWriter(object):
 
     def add_graph(self,
                   graph: Graph,
-                  main_tag_name: str,
-                  node_to_bops: Callable):
+                  main_tag_name: str):
         """
         Add a graph to display on Tensorboard. The graph is tagged with the name main_tag_name.
 
         Args:
             graph: Graph to display on Tensorboard.
             main_tag_name: Tag to attach to the graph.
-            node_to_bops: Function to compute BOPs for a node in the graph.
 
         """
 
@@ -204,8 +202,13 @@ class TensorboardWriter(object):
             attr = deepcopy(n.framework_attr)
             if n.quantization_attr is not None:
                 attr.update(n.quantization_attr)
-            if n.weights_quantization_cfg is not None:
-                attr.update(n.weights_quantization_cfg.__dict__)
+
+            # log final config or unified candidates, not both
+            if n.final_weights_quantization_cfg is not None:
+                attr.update(n.final_weights_quantization_cfg.__dict__)
+            elif n.candidates_weights_quantization_cfg is not None:
+                attr.update(n.get_unified_candidates_dict())
+
             if n.activation_quantization_cfg is not None:
                 attr.update(n.activation_quantization_cfg.__dict__)
             return attr
@@ -222,13 +225,16 @@ class TensorboardWriter(object):
                 A list of tuples where each tuple is an output shape of the node.
             """
 
+            # For nodes with an "empty" output shape.
+            output_shape = (None,) if n.output_shape == () else n.output_shape
+
             dims = []
-            if isinstance(n.output_shape, list):
-                for o in n.output_shape:
+            if isinstance(output_shape, list):
+                for o in output_shape:
                     shape_wo_none = (-1,) + o[1:] if o[0] is None else o
                     dims.append(shape_wo_none)
             else:
-                dims = [(-1,) + n.output_shape[1:] if n.output_shape[0] is None else n.output_shape]
+                dims = [(-1,) + output_shape[1:] if output_shape[0] is None else output_shape]
             return dims
 
         def __create_node_stats(n: Node):
@@ -245,10 +251,8 @@ class TensorboardWriter(object):
             """
 
             return NodeExecStats(node_name=n.name,
-                                 all_start_micros=1,  # needs some positive value
-                                 all_end_rel_micros=node_to_bops(n),  # relative to the positive start value
                                  memory=[AllocatorMemoryUsed(
-                                     total_bytes=n.get_memory_bytes()
+                                     total_bytes=int(n.get_memory_bytes())
                                  )])
 
         graph_def = GraphDef()  # GraphDef to add to Tensorboard

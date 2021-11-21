@@ -30,8 +30,8 @@ class ActivationScalingReLU6Test(BaseFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       16, 16, True, False, True)
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
+                                      16, 16, True, False, True)
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 224, 244, 3]]
@@ -45,13 +45,12 @@ class ActivationScalingReLU6Test(BaseFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         alpha = (quantized_model.layers[2].weights[0] / float_model.layers[1].weights[0]).numpy().mean()
-        beta = (quantized_model.layers[6].weights[0] / float_model.layers[3].weights[0]).numpy().mean()
+        beta = (quantized_model.layers[5].weights[0] / float_model.layers[3].weights[0]).numpy().mean()
 
         self.unit_test.assertTrue(np.allclose(alpha, 8 / 6, atol=1e-1))
         self.unit_test.assertTrue(np.allclose(beta, 6 / 8, atol=1e-1))
-        self.unit_test.assertTrue(quantized_model.layers[4].max_value is None)
+        self.unit_test.assertTrue(quantized_model.layers[3].max_value is None)
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)
         cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
-
+        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check: {cs} != 1')

@@ -117,14 +117,18 @@ def update_linear_nodes(graph:Graph,
                                                                              fw_info.kernel_channels_mapping,
                                                                              in_channels=False)
 
-    b1_fixed = first_op2d_node.get_weights_by_keys(BIAS) * scale_factor
+    if first_op2d_node.get_weights_by_keys(BIAS) is not None:
+        b1_fixed = first_op2d_node.get_weights_by_keys(BIAS) * scale_factor
+        first_op2d_node.set_weights_by_keys(BIAS, b1_fixed)
+
     first_op2d_node.quantization_attr[OUTPUT_SCALE] = scale_factor
     first_op2d_node.set_weights_by_keys(KERNEL, w1_fixed)
-    first_op2d_node.set_weights_by_keys(BIAS, b1_fixed)
     second_op2d_node.set_weights_by_keys(KERNEL, w2_fixed)
 
-    first_op2d_node.weights_quantization_cfg.calculate_and_set_weights_params(w1_fixed)
-    second_op2d_node.weights_quantization_cfg.calculate_and_set_weights_params(w2_fixed)
+    for nqc in first_op2d_node.candidates_weights_quantization_cfg:
+        nqc.calculate_and_set_weights_params(w1_fixed)
+    for nqc in second_op2d_node.candidates_weights_quantization_cfg:
+        nqc.calculate_and_set_weights_params(w2_fixed)
 
 
 def calculate_scale_correction(graph: Graph,

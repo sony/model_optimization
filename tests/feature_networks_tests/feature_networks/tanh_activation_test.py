@@ -30,15 +30,15 @@ class TanhActivationTest(BaseFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       16, 16, True, True, True)
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
+                                      16, 16, True, True, True)
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 224, 244, 3]]
 
     def create_feature_network(self, input_shape):
         inputs = layers.Input(shape=input_shape[0][1:])
-        x = layers.Conv2D(3,4)(inputs)
+        x = layers.Conv2D(3, 4)(inputs)
         x = layers.BatchNormalization()(x)
         outputs = layers.Activation('tanh')(x)
         return keras.Model(inputs=inputs, outputs=outputs)
@@ -48,4 +48,3 @@ class TanhActivationTest(BaseFeatureNetworkTest):
         y_hat = quantized_model.predict(input_x)
         cs = cosine_similarity(y, y_hat)
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
-

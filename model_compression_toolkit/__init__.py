@@ -13,8 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.keras.quantization_facade import keras_post_training_quantization
-from model_compression_toolkit.keras.knowledge_distillation.training_wrapper import KnowledgeDistillationConfig
+from model_compression_toolkit.keras.quantization_facade import keras_post_training_quantization, keras_post_training_quantization_mixed_precision
+from model_compression_toolkit.keras.gradient_ptq.training_wrapper import GradientPTQConfig
 from model_compression_toolkit.common.quantization import quantization_config
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig, \
     ThresholdSelectionMethod, QuantizationMethod, DEFAULTCONFIG
@@ -24,4 +24,4 @@ from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.common import network_editors as network_editor
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

@@ -48,14 +48,14 @@ class QuantizationMethod(Enum):
     """
     Method for quantization function selection:
 
-    SYMMETRIC_UNIFORM - Symmetric uniform quantization.
+    POWER_OF_TWO - Symmetric, uniform, threshold is power of two quantization.
 
     KMEANS - k-means quantization.
 
-    LUT_KMEANS - k-means quantization using a look up table
+    LUT_QUANTIZER - quantization using a look up table
 
     """
-    SYMMETRIC_UNIFORM = 0
+    POWER_OF_TWO = 0
     KMEANS = 1
     LUT_QUANTIZER = 2
 
@@ -65,8 +65,8 @@ class QuantizationConfig(object):
     def __init__(self,
                  activation_threshold_method: ThresholdSelectionMethod = ThresholdSelectionMethod.MSE,
                  weights_threshold_method: ThresholdSelectionMethod = ThresholdSelectionMethod.MSE,
-                 activation_quantization_method: QuantizationMethod = QuantizationMethod.SYMMETRIC_UNIFORM,
-                 weights_quantization_method: QuantizationMethod = QuantizationMethod.SYMMETRIC_UNIFORM,
+                 activation_quantization_method: QuantizationMethod = QuantizationMethod.POWER_OF_TWO,
+                 weights_quantization_method: QuantizationMethod = QuantizationMethod.POWER_OF_TWO,
                  activation_n_bits: int = 8,
                  weights_n_bits: int = 8,
                  relu_unbound_correction: bool = False,
@@ -80,7 +80,7 @@ class QuantizationConfig(object):
                  z_threshold: float = math.inf,
                  min_threshold: float = MIN_THRESHOLD,
                  l_p_value: int = 2,
-                 shift_negative_ratio: float = 0.25,
+                 shift_negative_ratio: float = 0.05,
                  shift_negative_threshold_recalculation: bool = False):
         """
         Class to wrap all different parameters the library quantize the input model according to.
@@ -114,7 +114,7 @@ class QuantizationConfig(object):
             enabling relu_unbound_correction, weights_bias_correction, and quantizing the weights per-channel,
             one can instantiate a quantization configuration:
 
-            >>> qc = QuantizationConfig(activation_n_bits=6, weights_n_bits=7, activation_quantization_method=QuantizationMethod.SYMMETRIC_UNIFORM, weights_quantization_method=QuantizationMethod.SYMMETRIC_UNIFORM, weights_threshold_method=ThresholdSelectionMethod.MSE, activation_threshold_method=ThresholdSelectionMethod.NOCLIPPING, relu_unbound_correction=True, weights_bias_correction=True, weights_per_channel_threshold=True)
+            >>> qc = QuantizationConfig(activation_n_bits=6, weights_n_bits=7, activation_quantization_method=QuantizationMethod.POWER_OF_TWO, weights_quantization_method=QuantizationMethod.POWER_OF_TWO, weights_threshold_method=ThresholdSelectionMethod.MSE, activation_threshold_method=ThresholdSelectionMethod.NOCLIPPING, relu_unbound_correction=True, weights_bias_correction=True, weights_per_channel_threshold=True)
 
             The QuantizationConfig instanse can then be passed to
             :func:`~model_compression_toolkit.keras_post_training_quantization`
@@ -148,8 +148,8 @@ class QuantizationConfig(object):
 # Default quantization configuration the library use.
 DEFAULTCONFIG = QuantizationConfig(ThresholdSelectionMethod.MSE,
                                    ThresholdSelectionMethod.MSE,
-                                   QuantizationMethod.SYMMETRIC_UNIFORM,
-                                   QuantizationMethod.SYMMETRIC_UNIFORM,
+                                   QuantizationMethod.POWER_OF_TWO,
+                                   QuantizationMethod.POWER_OF_TWO,
                                    8,
                                    8,
                                    False,

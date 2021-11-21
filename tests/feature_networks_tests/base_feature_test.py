@@ -17,7 +17,12 @@
 import numpy as np
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
+    MixedPrecisionQuantizationConfig
+
 from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG
+from model_compression_toolkit.common.user_info import UserInformation
+
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 
 
@@ -30,11 +35,17 @@ class BaseFeatureNetworkTest:
     def get_quantization_config(self):
         return DEFAULTCONFIG
 
-    def get_kd_config(self):
+    def get_gptq_config(self):
         return None
 
     def get_network_editor(self):
         return []
+
+    def get_kpi(self):
+        return None
+
+    def get_bit_widths_config(self):
+        return None
 
     def create_inputs_shape(self):
         raise NotImplementedError(f'{self.__class__} did not implement create_feature_network')
@@ -42,7 +53,7 @@ class BaseFeatureNetworkTest:
     def create_feature_network(self, input_shape):
         raise NotImplementedError(f'{self.__class__} did not implement create_feature_network')
 
-    def compare(self, ptq_model, model_float, input_x=None):
+    def compare(self, ptq_model, model_float, input_x=None, quantization_info: UserInformation = None):
         raise NotImplementedError(f'{self.__class__} did not implement compare')
 
     @staticmethod
@@ -57,10 +68,24 @@ class BaseFeatureNetworkTest:
             return x
 
         model_float = self.create_feature_network(input_shapes)
-        ptq_model, quantization_info = mct.keras_post_training_quantization(model_float, representative_data_gen,
-                                                                             n_iter=self.num_calibration_iter,
-                                                                             quant_config=self.get_quantization_config(),
-                                                                             fw_info=DEFAULT_KERAS_INFO,
-                                                                             network_editor=self.get_network_editor(),
-                                                                             knowledge_distillation_config=self.get_kd_config())
+
+        qc = self.get_quantization_config()
+        if isinstance(qc, MixedPrecisionQuantizationConfig):
+            ptq_model, quantization_info = mct.keras_post_training_quantization_mixed_precision(model_float,
+                                                                                                representative_data_gen,
+                                                                                                n_iter=self.num_calibration_iter,
+                                                                                                quant_config=qc,
+                                                                                                fw_info=DEFAULT_KERAS_INFO,
+                                                                                                network_editor=self.get_network_editor(),
+                                                                                                gptq_config=self.get_gptq_config(),
+                                                                                                bit_widths_config=self.get_bit_widths_config(),
+                                                                                                target_kpi=self.get_kpi())
+        else:
+            ptq_model, quantization_info = mct.keras_post_training_quantization(model_float, representative_data_gen,
+                                                                                n_iter=self.num_calibration_iter,
+                                                                                quant_config=qc,
+                                                                                fw_info=DEFAULT_KERAS_INFO,
+                                                                                network_editor=self.get_network_editor(),
+                                                                                gptq_config=self.get_gptq_config())
+
         self.compare(ptq_model, model_float, input_x=x, quantization_info=quantization_info)

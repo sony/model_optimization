@@ -14,7 +14,7 @@
 # ==============================================================================
 
 
-from tensorflow.keras.layers import DepthwiseConv2D, Conv2D, Conv2DTranspose, ReLU, Add, Activation, PReLU, ELU
+from tensorflow.keras.layers import DepthwiseConv2D, Conv2D, Conv2DTranspose, Dense, ReLU, Add, Activation, PReLU, ELU
 from typing import Tuple
 
 from model_compression_toolkit import common
@@ -34,14 +34,15 @@ class MarkActivation(common.BaseSubstitution):
 
     def __init__(self):
         """
-        Matches: (DepthwiseConv2D,Conv2D,Conv2DTranspose)[activation=linear] -> (Activation,Relu)
+        Matches: (DepthwiseConv2D,Conv2D,Conv2DTranspose,Dense)[activation=linear] -> (Activation,Relu)
                 or
                 Add -> (Activation,Relu)
         """
         act_linear = NodeFrameworkAttrMatcher(ACTIVATION, LINEAR)
         source_node = (NodeOperationMatcher(DepthwiseConv2D) |
                        NodeOperationMatcher(Conv2D) |
-                       NodeOperationMatcher(Conv2DTranspose)) & act_linear
+                       NodeOperationMatcher(Conv2DTranspose) |
+                       NodeOperationMatcher(Dense)) & act_linear
 
         activation_node = NodeOperationMatcher(ReLU) | \
                           NodeOperationMatcher(Activation) | \

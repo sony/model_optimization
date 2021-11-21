@@ -31,10 +31,10 @@ class DecomposeSeparableConvTest(BaseFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       16, 16, weights_bias_correction=False,
-                                       weights_per_channel_threshold=True, enable_activation_quantization=True,
-                                       enable_weights_quantization=True, relu_unbound_correction=False)
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
+                                      16, 16, weights_bias_correction=False,
+                                      weights_per_channel_threshold=True, enable_activation_quantization=True,
+                                      enable_weights_quantization=True, relu_unbound_correction=False)
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 4, 5]]

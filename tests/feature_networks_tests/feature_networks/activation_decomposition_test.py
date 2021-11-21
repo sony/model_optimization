@@ -20,26 +20,25 @@ import tensorflow as tf
 import numpy as np
 from tests.helpers.tensors_compare import cosine_similarity
 
-
 keras = tf.keras
 layers = keras.layers
 
 
 class ActivationDecompositionTest(BaseFeatureNetworkTest):
-    def __init__(self, unit_test, activation_function:str):
+    def __init__(self, unit_test, activation_function: str):
         self.activation_function = activation_function
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE,
-                                       mct.ThresholdSelectionMethod.MSE,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       16,
-                                       16,
-                                       False,
-                                       False,
-                                       True)
+                                      mct.ThresholdSelectionMethod.MSE,
+                                      mct.QuantizationMethod.POWER_OF_TWO,
+                                      mct.QuantizationMethod.POWER_OF_TWO,
+                                      16,
+                                      16,
+                                      False,
+                                      False,
+                                      True)
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 224, 244, 3]]

@@ -14,7 +14,8 @@
 # ==============================================================================
 
 from model_compression_toolkit.common.network_editors.actions import ChangeQuantizationParamFunction, \
-    ChangeWeightsQuantConfigAttr, ChangeActivationQuantConfigAttr
+    ChangeActivationQuantConfigAttr, ChangeFinalWeightsQuantConfigAttr, ChangeCandidatesWeightsQuantConfigAttr, \
+    ChangeCandidtaesWeightsQuantizationMethod, ChangeActivationQuantizationMethod, ChangeFinalWeightsQuantizationMethod
 from model_compression_toolkit.common.network_editors.actions import EditRule
 from model_compression_toolkit.common.network_editors.node_filters import NodeTypeFilter, NodeNameScopeFilter, \
     NodeNameFilter

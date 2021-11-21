@@ -22,19 +22,19 @@ import six, abc
 @six.add_metaclass(abc.ABCMeta)
 class BaseTrainableQuantizer(Quantizer):
     """
-    Base trainable quantizer to define extra methods needed by the KD post-processing.
+    Base trainable quantizer to define extra methods needed by the GPTQ post-processing.
     """
 
     @abc.abstractmethod
     def calc_quant_config(self, layer) -> Dict[str, Any]:
         """
-        Returns the config used to edit NodeQuantizationConfig after KD retraining
+        Returns the config used to edit NodeQuantizationConfig after GPTQ retraining
 
         Args:
             layer: quantized layer
 
         Returns:
-            A dictionary of attributes the quantize_config retraining has changed during KD retraining.
+            A dictionary of attributes the quantize_config retraining has changed during GPTQ retraining.
             Keys must match NodeQuantizationConfig attributes
 
         """
@@ -42,7 +42,7 @@ class BaseTrainableQuantizer(Quantizer):
     @abc.abstractmethod
     def get_trainable_parameters(self) -> List[Tensor]:
         """
-        A function to get a list trainable of trainable parameters for KD retraining
+        A function to get a list trainable of trainable parameters for GPTQ retraining
 
         Returns:
             A list of trainable Tensors

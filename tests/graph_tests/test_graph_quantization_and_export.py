@@ -18,13 +18,19 @@ import unittest
 import numpy as np
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
-from model_compression_toolkit.common.quantization.set_node_quantization_config import set_qcs_to_graph_nodes
+from model_compression_toolkit.common.mixed_precision.bit_width_setter import set_bit_widths
+from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import \
+    compute_bias_correction_of_graph
+from model_compression_toolkit.common.quantization.set_node_quantization_config import \
+    set_quantization_configuration_to_graph
 from model_compression_toolkit.keras.reader.reader import model_reader
 from model_compression_toolkit.keras.back2framework.model_collector import ModelCollector
 from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.keras.tensor_marking import get_node_stats_collector
 from model_compression_toolkit.keras.back2framework.model_builder import model_builder
-from model_compression_toolkit.common.quantization.quantize_model import quantize_model, calculate_quantization_params
+from model_compression_toolkit.common.quantization.quantize_graph_weights import quantize_graph_weights
+from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_computation import \
+    calculate_quantization_params
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG
 import tensorflow as tf
@@ -43,13 +49,20 @@ class TestGraphQuantization(unittest.TestCase):
         for i in range(10):
             mi.infer([np.random.randn(1, 224, 224, 3)])
 
-        tg = set_qcs_to_graph_nodes(tg,
-                                    DEFAULTCONFIG,
-                                    DEFAULT_KERAS_INFO)
+        tg = set_quantization_configuration_to_graph(tg,
+                                                     DEFAULTCONFIG,
+                                                     DEFAULT_KERAS_INFO)
         calculate_quantization_params(tg,
                                       DEFAULT_KERAS_INFO)
-        quantize_model(tg,
-                       DEFAULT_KERAS_INFO)
+
+        tg = compute_bias_correction_of_graph(tg, fw_info=DEFAULT_KERAS_INFO)
+
+        tg = set_bit_widths(DEFAULTCONFIG,
+                            tg,
+                            DEFAULT_KERAS_INFO)
+
+        quantize_graph_weights(tg,
+                               DEFAULT_KERAS_INFO)
 
         model, _ = model_builder(tg)
 

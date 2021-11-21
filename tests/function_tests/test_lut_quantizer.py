@@ -17,7 +17,8 @@ import unittest
 
 from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.common.network_editors.actions import EditRule, \
-    ChangeQuantizationMethod
+    ChangeCandidtaesWeightsQuantizationMethod
+
 from tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as cmo
 import tensorflow as tf
@@ -26,9 +27,11 @@ import numpy as np
 keras = tf.keras
 layers = keras.layers
 
+
 def get_uniform_weights(kernel, in_channels, out_channels):
-    return np.array([i - np.round((in_channels * kernel * kernel * out_channels)/2) for i in range(in_channels * kernel * kernel * out_channels)]).reshape(
-            [out_channels, kernel, kernel, in_channels]).transpose(1, 2, 3, 0)
+    return np.array([i - np.round((in_channels * kernel * kernel * out_channels) / 2) for i in
+                     range(in_channels * kernel * kernel * out_channels)]).reshape(
+        [out_channels, kernel, kernel, in_channels]).transpose(1, 2, 3, 0)
 
 
 class LUTQuantizerTest(BaseFeatureNetworkTest):
@@ -36,6 +39,7 @@ class LUTQuantizerTest(BaseFeatureNetworkTest):
     - Check name filter- that only the node with the name changed
     - Check that different quantization methods on the same weights give different results
     '''
+
     def __init__(self, unit_test, weights_n_bits: int = 3):
         self.weights_n_bits = weights_n_bits
         self.node_to_change_name = 'change'
@@ -46,13 +50,13 @@ class LUTQuantizerTest(BaseFeatureNetworkTest):
 
     def get_quantization_config(self):
         return cmo.QuantizationConfig(cmo.ThresholdSelectionMethod.MSE, cmo.ThresholdSelectionMethod.MSE,
-                                      cmo.QuantizationMethod.SYMMETRIC_UNIFORM, cmo.QuantizationMethod.LUT_QUANTIZER, 4, 2,
+                                      cmo.QuantizationMethod.POWER_OF_TWO, cmo.QuantizationMethod.LUT_QUANTIZER, 4, 2,
                                       False, False, True)
 
     def get_network_editor(self):
         return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
-                         action=ChangeQuantizationMethod(weights_quantization_method=cmo.QuantizationMethod.SYMMETRIC_UNIFORM))]
-
+                         action=ChangeCandidtaesWeightsQuantizationMethod(
+                             weights_quantization_method=cmo.QuantizationMethod.POWER_OF_TWO))]
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 224, 244, self.num_conv_channels]]
@@ -70,7 +74,8 @@ class LUTQuantizerTest(BaseFeatureNetworkTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv's weights have different values since they where quantized
         # using different methods (but started as the same value)
-        self.unit_test.assertTrue(np.sum(np.abs(quantized_model.layers[2].weights[0].numpy()) - quantized_model.layers[4].weights[0].numpy()) > 0)
+        self.unit_test.assertTrue(np.sum(
+            np.abs(quantized_model.layers[2].weights[0].numpy()) - quantized_model.layers[4].weights[0].numpy()) > 0)
 
 
 class RunKmeansTest(unittest.TestCase):
