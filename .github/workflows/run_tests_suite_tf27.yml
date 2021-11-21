@@ -1,0 +1,22 @@
+name: Run Tests - Tensorflow 2.7
+on:
+  workflow_dispatch:  # Allow manual triggers
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Python 3
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Edit requirements
+        run: |
+          sed -i "s/tensorflow==2.5/tensorflow==2.7/g" requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run unittests
+        run: python -m unittest tests/test_suite.py -v
