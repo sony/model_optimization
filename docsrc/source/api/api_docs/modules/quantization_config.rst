@@ -16,6 +16,17 @@ ThresholdSelectionMethod
 
 |
 
+QuantizationMethod
+==========================
+**Enum to select a method to use during quantization:**
+
+.. autoclass:: model_compression_toolkit.QuantizationMethod
+
+
+|
+
+
+
 QuantizationConfig
 ==========================
 **Class to configure the quantization process of the model:**

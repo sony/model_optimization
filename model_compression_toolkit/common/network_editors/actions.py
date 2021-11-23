@@ -34,7 +34,7 @@ class EditRule(_EditRule):
         >>> import model_compression_toolkit as mct
         >>> from tensorflow.keras.layers import Conv2D
         >>> er_list = [EditRule(filter=mct.network_editor.NodeTypeFilter(Conv2D),
-        >>> action=mct.network_editor.ChangeWeightsQuantConfigAttr(weights_n_bits=9))]
+        >>> action=mct.network_editor.ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=9))]
 
         Then the rules list can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization`
         to modify the network during the quantization process.
@@ -69,12 +69,12 @@ class BaseAction(ABC):
 
 class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
     """
-    Class ChangeQuantConfigAttr to change attributes in a node's weights quantization configuration.
+    Class ChangeCandidatesWeightsQuantConfigAttr to change attributes in a node's weights quantization configuration.
     """
 
     def __init__(self, **kwargs):
         """
-        Init a ChangeWeightsQuantConfigAttr object.
+        Init a ChangeCandidatesWeightsQuantConfigAttr object.
 
         Args:
             kwargs: dict of attr_name and attr_value to change in the node's weights quantization configuration.
@@ -101,12 +101,12 @@ class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
 
 class ChangeFinalWeightsQuantConfigAttr(BaseAction):
     """
-    Class ChangeQuantConfigAttr to change attributes in a node's quant_config.
+    Class ChangeFinalWeightsQuantConfigAttr to change attributes in a node's quant_config.
     """
 
     def __init__(self, **kwargs):
         """
-        Init a ChangeQuantConfigAttr object.
+        Init a ChangeFinalWeightsQuantConfigAttr object.
 
         Args:
             kwargs: dict of attr_name and attr_value to change in the node's quant_config.
@@ -122,7 +122,7 @@ class ChangeFinalWeightsQuantConfigAttr(BaseAction):
 
 class ChangeActivationQuantConfigAttr(BaseAction):
     """
-    Class ChangeQuantConfigAttr to change attributes in a node's activation quantization configuration.
+    Class ChangeActivationQuantConfigAttr to change attributes in a node's activation quantization configuration.
     """
 
     def __init__(self, **kwargs):
@@ -190,12 +190,12 @@ class ChangeQuantizationParamFunction(BaseAction):
 
 class ChangeActivationQuantizationMethod(BaseAction):
     """
-    Class ChangeQuantizationMethod to change a node's weights/activations quantizer function.
+    Class ChangeQuantizationMethod to change a node's activations quantizer function.
     """
 
     def __init__(self, activation_quantization_method=None):
         """
-        Init a ChangeQuantizationParamFunction object.
+        Init a ChangeActivationQuantizationMethod object.
 
         Args:
             activation_quantization_method: a quantization method for a node's activations.
@@ -204,7 +204,7 @@ class ChangeActivationQuantizationMethod(BaseAction):
 
     def apply(self, node: Node, graph, fw_info):
         """
-        Change the node's weights/activations quantization function.
+        Change the node's activations quantization function.
 
         Args:
             node: Node object to change its threshold selection function.
@@ -239,12 +239,12 @@ class ChangeActivationQuantizationMethod(BaseAction):
 
 class ChangeFinalWeightsQuantizationMethod(BaseAction):
     """
-    Class ChangeQuantizationMethod to change a node's weights/activations quantizer function.
+    Class ChangeFinalWeightsQuantizationMethod to change a node's weights/activations quantizer function.
     """
 
     def __init__(self, weights_quantization_method=None):
         """
-        Init a ChangeQuantizationParamFunction object.
+        Init a ChangeFinalWeightsQuantizationMethod object.
 
         Args:
             weights_quantization_method: a quantization method for a node's weights.
@@ -254,7 +254,7 @@ class ChangeFinalWeightsQuantizationMethod(BaseAction):
 
     def apply(self, node: Node, graph, fw_info):
         """
-        Change the node's weights/activations quantization function.
+        Change the node's weights quantization function.
 
         Args:
             node: Node object to change its threshold selection function.
@@ -282,29 +282,14 @@ class ChangeFinalWeightsQuantizationMethod(BaseAction):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class ChangeCandidtaesWeightsQuantizationMethod(BaseAction):
     """
-    Class ChangeQuantizationMethod to change a node's weights/activations quantizer function.
+    Class ChangeCandidtaesWeightsQuantizationMethod to change a node's weights quantizer function.
     """
 
     def __init__(self, weights_quantization_method=None):
         """
-        Init a ChangeQuantizationParamFunction object.
+        Init a ChangeCandidtaesWeightsQuantizationMethod object.
 
         Args:
             weights_quantization_method: a quantization method for a node's weights.
@@ -313,7 +298,7 @@ class ChangeCandidtaesWeightsQuantizationMethod(BaseAction):
 
     def apply(self, node: Node, graph, fw_info):
         """
-        Change the node's weights/activations quantization function.
+        Change the node's weights quantization function.
 
         Args:
             node: Node object to change its threshold selection function.

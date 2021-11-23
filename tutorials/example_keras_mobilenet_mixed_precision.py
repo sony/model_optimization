@@ -17,8 +17,11 @@ import model_compression_toolkit as mct
 from tensorflow.keras.applications.mobilenet import MobileNet
 
 """
-This tutorial demonstrates how a model (more specifically, MobileNetV1) can be
-quantized and optimized using the Model Compression Toolkit (MCT). 
+Mixed precision is a method for quantizing a model using different bit widths
+for different layers of the model. 
+This tutorial demonstrates how to use mixed-precision in MCT to
+quantize MobileNetV1.
+For now, MCT supports mixed-precision for weights only. 
 """
 
 ####################################
@@ -59,7 +62,8 @@ if __name__ == '__main__':
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
-    from model_compression_toolkit import FolderImageLoader
+    from model_compression_toolkit import FolderImageLoader, MixedPrecisionQuantizationConfig
+
     image_data_loader = FolderImageLoader(folder,
                                           preprocessing=[resize, normalization],
                                           batch_size=batch_size)
@@ -74,9 +78,25 @@ if __name__ == '__main__':
     def representative_data_gen() -> list:
         return [image_data_loader.sample()]
 
-    # Create a model and quantize it using the representative_data_gen as the calibration images.
-    # Set the number of calibration iterations to 10.
+    # Create a model to quantize.
     model = MobileNet()
-    quantized_model, quantization_info = mct.keras_post_training_quantization(model,
-                                                                              representative_data_gen,
-                                                                              n_iter=10)
+
+    # Set the number of calibration iterations to 10.
+    num_iter = 10
+
+    # Create a mixed-precision configuration with possible bit widths. MCT
+    # will search a mixed-precision configuration (namely, bit width for each layer)
+    # and quantize the model according to this configuration.
+    # Here, each layer can be quantized by 2, 4 or 8 bits.
+    configuration = MixedPrecisionQuantizationConfig(weights_n_bits=[2, 8, 4])
+
+    # Create a KPI object to limit our returned model's size. Note that this value affects only coefficients that
+    # should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value, while the bias
+    # will not):
+    kpi = mct.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
+
+    quantized_model, quantization_info = mct.keras_post_training_quantization_mixed_precision(model,
+                                                                                              representative_data_gen,
+                                                                                              n_iter=num_iter,
+                                                                                              quant_config=configuration,
+                                                                                              target_kpi=kpi)

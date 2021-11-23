@@ -119,6 +119,11 @@ class QuantizationConfig(object):
             The QuantizationConfig instanse can then be passed to
             :func:`~model_compression_toolkit.keras_post_training_quantization`
 
+            In order to use a different quantization method (than power-of-two that is used by default),
+            one may pass a desired QuantizationMethod when instantiating a QuantizationConfig. For example:
+
+            >>> qc = QuantizationConfig(activation_quantization_method=QuantizationMethod.LUT_QUANTIZER)
+
         """
 
         self.activation_threshold_method = activation_threshold_method

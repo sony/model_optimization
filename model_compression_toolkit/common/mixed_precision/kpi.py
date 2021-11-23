@@ -26,7 +26,7 @@ class KPI(object):
         """
 
         Args:
-            weights_memory: Memory of a model's weights in bytes.
+            weights_memory: Memory of a model's weights in bytes. Note that this includes only coefficients that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value, while the bias will not).
         """
         self.weights_memory = weights_memory
 

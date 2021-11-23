@@ -33,12 +33,12 @@ See the MCT install guide for the pip package, and build from source.
 git clone https://github.com/sony/model_optimization.git
 python setup.py install
 ```
-#### From PyPi
+#### From PyPi - latest stable release
 ```
 pip install model-compression-toolkit
 ```
 
-A nightly package is also available:
+A nightly package is also available (unstable):
 ```
 pip install mct-nightly
 ```

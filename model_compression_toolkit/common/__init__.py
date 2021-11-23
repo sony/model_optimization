@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
 from model_compression_toolkit.common.quantization import quantization_params_generation
 from model_compression_toolkit.common.base_substitutions import BaseSubstitution
 from model_compression_toolkit.common.framework_info import FrameworkInfo

@@ -21,6 +21,14 @@ from model_compression_toolkit.common.similarity_analyzer import compute_mse
 
 
 class MixedPrecisionMetricsWeighting(Enum):
+    """
+    Method for weighting distances among different layers when computing the total distance of a mixed-precision model from the float model:
+
+    AVERAGE - All layers get the same weight, and the distance of a mixed-precision model from the float model is the average of distances among all layers (between the mixed-precision model and the float model).
+
+    LAST_LAYER - The distance of a mixed-precision model from the float model is the distance between the last layer of the models.
+
+    """
     AVERAGE = 0
     LAST_LAYER = 1
 
@@ -28,7 +36,7 @@ class MixedPrecisionMetricsWeighting(Enum):
 class MixedPrecisionQuantizationConfig(QuantizationConfig):
 
     def __init__(self,
-                 qc: QuantizationConfig,
+                 qc: QuantizationConfig = DEFAULTCONFIG,
                  weights_n_bits: List[int] = None,
                  compute_distance_fn: Callable = compute_mse,
                  distance_weighting_method: MixedPrecisionMetricsWeighting = MixedPrecisionMetricsWeighting.AVERAGE):
@@ -41,9 +49,8 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
         Args:
             qc (QuantizationConfig): QuantizationConfig object containing parameters of how the model should be quantized.
             weights_n_bits (int): List of possible number of bits to quantize the coefficients.
-            compute_distance_fn (Callable): Function to compute a distance between two tensors
-            distance_weighting_method (MixedPrecisionMetricsWeighting): Method to use when weighting the distances among different layers when computing the sensitivity metric.
-
+            compute_distance_fn (Callable): Function to compute a distance between two tensors. We use it to estimate the distance of a mixed-precision model from the float model.
+            distance_weighting_method (MixedPrecisionMetricsWeighting): Method to use when weighting the distances among different layers when computing the distance metric.
         """
 
         super().__init__(**qc.__dict__)
