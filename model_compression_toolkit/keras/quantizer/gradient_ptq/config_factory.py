@@ -24,22 +24,21 @@ from model_compression_toolkit import common
 from model_compression_toolkit import keras
 from model_compression_toolkit.common.constants import THRESHOLD
 from model_compression_toolkit.keras.constants import DEPTHWISE_KERNEL, KERNEL
+from model_compression_toolkit.common.framework_info import FrameworkInfo
 
-KERNEL_NAME = {Conv2DTranspose: KERNEL,
-               DepthwiseConv2D: DEPTHWISE_KERNEL,
-               Conv2D: KERNEL,
-               Dense: KERNEL}
 
 MAX_LSBS_CHANGE = 8
 
 
-def quantization_config_builder_gptq(n: common.Node) -> QuantizeConfig:
+def quantization_config_builder_gptq(n: common.Node,
+                                     fw_info: FrameworkInfo) -> QuantizeConfig:
     """
     Build a QuantizeConfig for a node according to its quantization configuration and
     a global NoOpQuantizeConfig object.
 
     Args:
         n: Node to build its QuantizeConfig.
+        fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
 
     Returns:
         A QuantizeConfig object with the appropriate quantizers (according to the node's
@@ -47,7 +46,7 @@ def quantization_config_builder_gptq(n: common.Node) -> QuantizeConfig:
     """
 
     if n.activation_quantization() and n.weight_quantization():
-        qc = keras.quantizer.gradient_ptq.ActivationAndWeightQuantizeConfig([KERNEL_NAME[n.layer_class]],
+        qc = keras.quantizer.gradient_ptq.ActivationAndWeightQuantizeConfig(fw_info.get_kernel_op_attributes(n.layer_class),
                                                                             n.final_weights_quantization_cfg.weights_quantization_params.get(THRESHOLD),
                                                                             n.final_weights_quantization_cfg.weights_channels_axis,
                                                                             n.final_weights_quantization_cfg.weights_n_bits,
@@ -61,7 +60,7 @@ def quantization_config_builder_gptq(n: common.Node) -> QuantizeConfig:
                                                                    n.activation_quantization_cfg.activation_is_signed,
                                                                    num_bits=n.activation_quantization_cfg.activation_n_bits)
     elif n.weight_quantization():
-        qc = keras.quantizer.gradient_ptq.WeightQuantizeConfig([KERNEL_NAME[n.layer_class]],
+        qc = keras.quantizer.gradient_ptq.WeightQuantizeConfig(fw_info.get_kernel_op_attributes(n.layer_class),
                                                                n.final_weights_quantization_cfg.weights_quantization_params.get(THRESHOLD),
                                                                n.final_weights_quantization_cfg.weights_channels_axis,
                                                                n.final_weights_quantization_cfg.weights_n_bits,

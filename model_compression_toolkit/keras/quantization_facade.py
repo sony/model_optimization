@@ -202,8 +202,8 @@ def keras_post_training_quantization(in_model: Model,
         in_model (Model): Keras model to quantize.
         representative_data_gen (Callable): Dataset used for calibration.
         n_iter (int): Number of calibration iterations to run.
-        quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/common/quantization/quantization_config.py#L163>`_
-        fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/keras/default_framework_info.py#L114>`_
+        quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/common/quantization/quantization_config.py#L154>`_
+        fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/keras/default_framework_info.py#L113>`_
         network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
         gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
         analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
@@ -290,7 +290,7 @@ def keras_post_training_quantization_mixed_precision(in_model: Model,
          representative_data_gen (Callable): Dataset used for calibration.
          n_iter (int): Number of calibration iterations to run.
          quant_config (MixedPrecisionQuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized.
-         fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <http://bitbucket-rh7:7990/projects/DNNQUAN/repos/posttrainingquantization/browse/network_optimization_package/keras/default_framework_info.py#112>`_
+         fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/keras/default_framework_info.py#L100>`_
          network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
          gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
          bit_widths_config (List[int]): Mixed-precision configuration to set bit widths for different layers.
@@ -372,7 +372,8 @@ def keras_post_training_quantization_mixed_precision(in_model: Model,
                                              fw_info,
                                              target_kpi,
                                              partial(get_sensitivity_evaluation,
-                                                     representative_data_gen=representative_data_gen))
+                                                     representative_data_gen=representative_data_gen,
+                                                     fw_info=fw_info))
 
     tg = set_bit_widths(quant_config,
                         tg,

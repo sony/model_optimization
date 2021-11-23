@@ -26,6 +26,8 @@ from tensorflow.python.util.object_identity import Reference as TFReference
 
 
 from model_compression_toolkit import common
+from model_compression_toolkit.common.framework_info import FrameworkInfo
+from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.quantizer.mixed_precision.quantization_config_factory import quantization_config_builder_mixed_precision
 from model_compression_toolkit.keras.quantizer.gradient_ptq.config_factory import quantization_config_builder_gptq
 from model_compression_toolkit.common import Node, Graph
@@ -170,7 +172,8 @@ def run_operation(n: Node,
 
 def model_builder(graph: common.Graph,
                   mode: ModelBuilderMode = ModelBuilderMode.QUANTIZED,
-                  append2output=None) -> Tuple[tf.keras.models.Model, Any]:
+                  append2output=None,
+                  fw_info: FrameworkInfo = DEFAULT_KERAS_INFO) -> Tuple[tf.keras.models.Model, Any]:
     """
     Build a Keras model from a graph representing the model.
     The model is built by converting the graph nodes to Keras layers and applying them sequentially to get the model
@@ -182,6 +185,9 @@ def model_builder(graph: common.Graph,
         mode: Building mode. Read ModelBuilderMode description for more info.
         append2output: List of nodes or OutTensor objects. In float building mode,
         when the list contains nodes, all output tensors of all nodes are set as the model outputs.
+        fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
+        This is needed when using MIXEDPRECISION or GPTQ mode for passing the kernel attributes to
+        the QuanteWrapper we use in both of these cases.
 
     Returns:
         A tuple of the model, and an UserInformation object.
@@ -256,7 +262,7 @@ def model_builder(graph: common.Graph,
             nodes = graph.find_node_by_name(get_node_name_from_layer(layer))
             if len(nodes) == 1:
                 node = nodes[0]
-                return QuantizeWrapper(layer, quantization_config_builder_gptq(node))
+                return QuantizeWrapper(layer, quantization_config_builder_gptq(node, fw_info))
             elif is_layer_fake_quant(layer):
                 return layer
             else:
@@ -277,7 +283,7 @@ def model_builder(graph: common.Graph,
                 # does not need to get wrapped as its weights are not quantized
                 if node.candidates_weights_quantization_cfg is None:
                     return layer
-                return QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node))
+                return QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node, fw_info))
             elif is_layer_fake_quant(layer):
                 return layer
             else:

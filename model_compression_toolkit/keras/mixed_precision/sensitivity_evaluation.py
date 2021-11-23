@@ -19,6 +19,7 @@ from tensorflow.keras.models import Model
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from typing import Callable, List, Any
 
+from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common import Node
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
@@ -32,7 +33,8 @@ import numpy as np
 def get_sensitivity_evaluation(graph: Graph,
                                quant_config: MixedPrecisionQuantizationConfig,
                                metrics_weights: np.ndarray,
-                               representative_data_gen: Callable):
+                               representative_data_gen: Callable,
+                               fw_info: FrameworkInfo):
     """
     Create a function to compute the sensitivity metric of an MP model (the sensitivity
     is computed based on the similarity of the interest points' outputs between the MP model
@@ -47,6 +49,7 @@ def get_sensitivity_evaluation(graph: Graph,
         quant_config: MixedPrecisionQuantizationConfig containing parameters of how the model should be quantized.
         metrics_weights: Weights to compute a weighted average over the distances (per layer).
         representative_data_gen: Dataset used for getting batches for inference.
+        fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
 
     Returns:
         Function to compute the sensitivity metric.
@@ -63,7 +66,8 @@ def get_sensitivity_evaluation(graph: Graph,
     # Build a mixed-precision model which can be configured to use different bitwidth in different layers.
     model_mp, _ = model_builder(graph,
                                 mode=ModelBuilderMode.MIXEDPRECISION,
-                                append2output=interest_points)
+                                append2output=interest_points,
+                                fw_info=fw_info)
 
     # Build a baseline model.
     baseline_model = _build_baseline_model(graph,

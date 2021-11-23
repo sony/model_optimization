@@ -19,23 +19,21 @@ from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.d
     QuantizeConfig
 
 from model_compression_toolkit import common
-from model_compression_toolkit.keras.constants import DEPTHWISE_KERNEL, KERNEL
+from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.keras.quantizer.mixed_precision.selective_weights_quantize_config import \
     SelectiveWeightsQuantizeConfig
 
-KERNEL_NAME = {Conv2DTranspose: KERNEL,
-               DepthwiseConv2D: DEPTHWISE_KERNEL,
-               Conv2D: KERNEL,
-               Dense: KERNEL}
 
 
-def quantization_config_builder_mixed_precision(n: common.Node) -> QuantizeConfig:
+def quantization_config_builder_mixed_precision(n: common.Node,
+                                                fw_info: FrameworkInfo) -> QuantizeConfig:
     """
     Build a QuantizeConfig for layers that should be wrapped in a QuantizeWrapper to
     be part of a mixed-precision model.
 
     Args:
         n: Node to build its QuantizeConfig.
+        fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
 
     Returns:
         QuantizeConfig to wrap the layer so it can work in MP Keras models.
@@ -46,10 +44,10 @@ def quantization_config_builder_mixed_precision(n: common.Node) -> QuantizeConfi
     # sort by decending bit width so using indices would be easier
     node_weights_q_cfg.sort(key=lambda x: x.weights_n_bits, reverse=True)
 
-    float_weights = [n.get_weights_by_keys(KERNEL_NAME[n.layer_class])]
+    float_weights = [n.get_weights_by_keys(attr) for attr in fw_info.get_kernel_op_attributes(n.layer_class)]
 
     # Create a SelectiveWeightsQuantizeConfig that holds the float and quantized weights (every weight is
     # quantized using all possible bitwidhts in the node's candidates weights quantization configurations).
-    return SelectiveWeightsQuantizeConfig([KERNEL_NAME[n.layer_class]],
+    return SelectiveWeightsQuantizeConfig(fw_info.get_kernel_op_attributes(n.layer_class),
                                           float_weights=float_weights,
                                           node_weights_q_cfg=node_weights_q_cfg)
