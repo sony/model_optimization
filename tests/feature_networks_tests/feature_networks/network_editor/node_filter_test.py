@@ -51,7 +51,7 @@ class ScopeFilterTest(BaseFeatureNetworkTest):
         self.num_conv_channels = 4
         self.scope = 'scope'
         self.conv_w = get_uniform_weights(self.kernel, self.num_conv_channels, self.num_conv_channels)
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
+        super().__init__(unit_test)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
@@ -123,7 +123,7 @@ class NameFilterTest(BaseFeatureNetworkTest):
         # -(kernel*kernel*num_conv_channels*num_conv_channels)/2 : +(
         # kernel*kernel*num_conv_channels*num_conv_channels)/2
         self.conv_w = get_uniform_weights(self.kernel, self.num_conv_channels, self.num_conv_channels)
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
+        super().__init__(unit_test)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
@@ -179,7 +179,7 @@ class TypeFilterTest(BaseFeatureNetworkTest):
                                         [self.kernel, self.kernel, self.num_conv_channels, self.num_conv_channels])
         # set a weight above 1
         self.conv_w[0, 0, 0, 0] = 1.1
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
+        super().__init__(unit_test)
 
     def params_fn(self):
         return get_weights_quantization_params_fn(mct.QuantizationMethod.POWER_OF_TWO,
@@ -245,7 +245,7 @@ class FilterLogicTest(BaseFeatureNetworkTest):
                                         [self.kernel, self.kernel, self.num_conv_channels, self.num_conv_channels])
         # set a weight above 1
         self.conv_w[0, 0, 0, 0] = 1.1
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
+        super().__init__(unit_test)
 
     def params_fn(self):
         return get_weights_quantization_params_fn(cmo.QuantizationMethod.POWER_OF_TWO,

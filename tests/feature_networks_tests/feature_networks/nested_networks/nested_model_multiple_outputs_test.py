@@ -28,7 +28,7 @@ layers = keras.layers
 
 class NestedModelMultipleOutputsTest(BaseFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, num_calibration_iter=1, val_batch_size=32)
+        super().__init__(unit_test, val_batch_size=10)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,

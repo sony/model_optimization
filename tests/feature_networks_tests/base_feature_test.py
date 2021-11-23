@@ -27,7 +27,7 @@ from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS
 
 
 class BaseFeatureNetworkTest:
-    def __init__(self, unit_test, num_calibration_iter=1, val_batch_size=50):
+    def __init__(self, unit_test, num_calibration_iter=1, val_batch_size=1):
         self.unit_test = unit_test
         self.val_batch_size = val_batch_size
         self.num_calibration_iter = num_calibration_iter
@@ -48,7 +48,7 @@ class BaseFeatureNetworkTest:
         return None
 
     def create_inputs_shape(self):
-        raise NotImplementedError(f'{self.__class__} did not implement create_feature_network')
+        return [[self.val_batch_size, 16, 16, 3]]
 
     def create_feature_network(self, input_shape):
         raise NotImplementedError(f'{self.__class__} did not implement create_feature_network')

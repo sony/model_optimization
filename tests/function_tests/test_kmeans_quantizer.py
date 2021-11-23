@@ -61,7 +61,7 @@ class KmeansQuantizerTestBase(BaseFeatureNetworkTest):
                                       False, False, True)
 
     def create_inputs_shape(self):
-        return [[self.val_batch_size, 224, 244, self.num_conv_channels]]
+        return [[self.val_batch_size, 16, 16, self.num_conv_channels]]
 
     def create_feature_network(self, input_shape):
         inputs = layers.Input(shape=input_shape[0][1:])

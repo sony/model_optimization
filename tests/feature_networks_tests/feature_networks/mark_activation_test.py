@@ -31,10 +31,7 @@ class MarkActivationTest(BaseFeatureNetworkTest):
                                    layers.Conv2DTranspose], f'layer {kernel_op_layer} not in substitution'
         self.activation_function = activation_function
         self.kernel_op_layer = kernel_op_layer
-        super().__init__(unit_test, num_calibration_iter=1, val_batch_size=32)
-
-    def create_inputs_shape(self):
-        return [[self.val_batch_size, 224, 244, 3]]
+        super().__init__(unit_test)
 
     def create_feature_network(self, input_shape):
         inputs = layers.Input(shape=input_shape[0][1:])

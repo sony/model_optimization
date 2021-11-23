@@ -87,7 +87,8 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         calculate_quantization_params(graph,
                                       fw_info)
         keras_sens_eval = partial(get_sensitivity_evaluation,
-                                  representative_data_gen=lambda: [np.random.random((1, 224, 224, 3))])
+                                  representative_data_gen=lambda: [np.random.random((1, 224, 224, 3))],
+                                  fw_info=fw_info)
 
         cfg = search_bit_width(graph,
                                qc,

@@ -27,15 +27,13 @@ layers = keras.layers
 
 class BaseInputScalingTest(BaseFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, num_calibration_iter=1, val_batch_size=32)
+        super().__init__(unit_test)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
                                       mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
                                       16, 16, False, False, True, input_scaling=True)
 
-    def create_inputs_shape(self):
-        return [[self.val_batch_size, 224, 244, 3]]
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(is_layer_fake_quant(quantized_model.layers[1]))

@@ -32,9 +32,6 @@ class BaseBatchNormalizationFolding(BaseFeatureNetworkTest, ABC):
                                       16, 16, False, False, True, enable_weights_quantization=False,
                                       enable_activation_quantization=False)
 
-    def create_inputs_shape(self):
-        return [[self.val_batch_size, 16, 16, 1]]
-
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)
@@ -44,7 +41,7 @@ class BaseBatchNormalizationFolding(BaseFeatureNetworkTest, ABC):
 
 class Conv2DBNFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
-        super().__init__(unit_test, num_calibration_iter=1, val_batch_size=32)
+        super().__init__(unit_test)
 
     def create_feature_network(self, input_shape):
         inputs = layers.Input(shape=input_shape[0][1:])
@@ -56,7 +53,7 @@ class Conv2DBNFoldingTest(BaseBatchNormalizationFolding):
 
 class Conv2DBNConcatnFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
-        super().__init__(unit_test, num_calibration_iter=1, val_batch_size=32)
+        super().__init__(unit_test)
 
     def create_feature_network(self, input_shape):
         inputs = layers.Input(shape=input_shape[0][1:])
@@ -71,7 +68,7 @@ class Conv2DBNConcatnFoldingTest(BaseBatchNormalizationFolding):
 
 class Conv2DTransposeBNFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
-        super().__init__(unit_test, num_calibration_iter=1, val_batch_size=32)
+        super().__init__(unit_test)
 
     def create_feature_network(self, input_shape):
         inputs = layers.Input(shape=input_shape[0][1:])
@@ -83,7 +80,7 @@ class Conv2DTransposeBNFoldingTest(BaseBatchNormalizationFolding):
 
 class DepthwiseConv2DBNFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
-        super().__init__(unit_test, num_calibration_iter=1, val_batch_size=32)
+        super().__init__(unit_test)
 
     def create_feature_network(self, input_shape):
         inputs = layers.Input(shape=input_shape[0][1:])
@@ -95,10 +92,7 @@ class DepthwiseConv2DBNFoldingTest(BaseBatchNormalizationFolding):
 
 class DepthwiseConv2DBNFoldingHighMultiplierTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
-        super().__init__(unit_test, num_calibration_iter=1, val_batch_size=32)
-
-    def create_inputs_shape(self):
-        return [[self.val_batch_size, 16, 16, 2]]
+        super().__init__(unit_test)
 
     def create_feature_network(self, input_shape):
         inputs = layers.Input(shape=input_shape[0][1:])
@@ -110,7 +104,7 @@ class DepthwiseConv2DBNFoldingHighMultiplierTest(BaseBatchNormalizationFolding):
 
 class SeparableConv2DBNFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
-        super().__init__(unit_test, num_calibration_iter=1, val_batch_size=32)
+        super().__init__(unit_test)
 
     def create_feature_network(self, input_shape):
         inputs = layers.Input(shape=input_shape[0][1:])

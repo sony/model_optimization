@@ -31,7 +31,7 @@ layers = keras.layers
 
 class MixedPercisionBaseTest(BaseFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
+        super().__init__(unit_test)
 
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE,
@@ -157,9 +157,6 @@ class MixedPercisionSearchKPI2BitsAvgTest(MixedPercisionBaseTest):
 class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-
-    def create_inputs_shape(self):
-        return [[self.val_batch_size, 224, 224, 3]]
 
     def get_kpi(self):
         return KPI(np.inf)

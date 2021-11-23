@@ -31,7 +31,7 @@ class ScaleEqualizationTest(BaseFeatureNetworkTest):
         self.second_op2d = second_op2d
         self.mid_act = mid_activation
         self.second_op2d_zero_pad = second_op2d_zero_pad
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
+        super().__init__(unit_test)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE,

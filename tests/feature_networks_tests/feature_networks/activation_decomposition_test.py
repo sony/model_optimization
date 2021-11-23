@@ -27,7 +27,7 @@ layers = keras.layers
 class ActivationDecompositionTest(BaseFeatureNetworkTest):
     def __init__(self, unit_test, activation_function: str):
         self.activation_function = activation_function
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
+        super().__init__(unit_test, val_batch_size=1)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE,
