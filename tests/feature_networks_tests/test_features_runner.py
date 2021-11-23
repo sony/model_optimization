@@ -18,6 +18,9 @@ import logging
 import unittest
 import sys
 from tests.feature_networks_tests.feature_networks.activation_scaling_relu6_test import ActivationScalingReLU6Test
+from tests.feature_networks_tests.feature_networks.mixed_percision_test import MixedPercisionBaseTest, \
+    MixedPercisionSearchTest, MixedPercisionManuallyConfiguredTest, MixedPercisionDepthwiseTest, \
+    MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest
 from tests.feature_networks_tests.feature_networks.multiple_inputs_node_tests import MultipleInputsNodeTests
 from tests.feature_networks_tests.feature_networks.multiple_outputs_node_tests import MultipleOutputsNodeTests
 from tests.feature_networks_tests.feature_networks.decompose_separable_conv_test import DecomposeSeparableConvTest
@@ -26,8 +29,12 @@ from tests.feature_networks_tests.feature_networks.input_scaling_test import Inp
 from tests.feature_networks_tests.feature_networks.bn_folding_test import Conv2DBNFoldingTest, \
     DepthwiseConv2DBNFoldingTest, DepthwiseConv2DBNFoldingHighMultiplierTest, Conv2DTransposeBNFoldingTest, \
     Conv2DBNConcatnFoldingTest, SeparableConv2DBNFoldingTest
+from tests.feature_networks_tests.feature_networks.reused_layer_mixed_precision_test import \
+    ReusedLayerMixedPrecisionTest, ReusedSeparableMixedPrecisionTest
+from tests.feature_networks_tests.feature_networks.reused_separable_test import ReusedSeparableTest
 from tests.feature_networks_tests.feature_networks.shift_neg_activation_test import ShiftNegActivationTest
 from tests.feature_networks_tests.feature_networks.activation_decomposition_test import ActivationDecompositionTest
+from tests.feature_networks_tests.feature_networks.mark_activation_test import MarkActivationTest
 from tests.feature_networks_tests.feature_networks.reused_layer_test import ReusedLayerTest
 from tests.feature_networks_tests.feature_networks.nested_networks.nested_test import NestedTest
 from tests.feature_networks_tests.feature_networks.nested_networks.nested_model_multiple_inputs_test import \
@@ -45,7 +52,8 @@ from tests.feature_networks_tests.feature_networks.output_in_middle_test import 
 from tests.feature_networks_tests.feature_networks.multiple_inputs_model_test import MultipleInputsModelTest
 from tests.feature_networks_tests.feature_networks.scale_equalization_test import ScaleEqualizationTest
 from tests.feature_networks_tests.feature_networks.multi_inputs_to_node_test import MultiInputsToNodeTest
-from tests.feature_networks_tests.feature_networks.kd_test import KnowledgeDistillationTest
+from tests.feature_networks_tests.feature_networks.gptq_test import GradientPTQTest, \
+    GradientPTQWeightsUpdateTest, GradientPTQLearnRateZeroTest
 from tests.feature_networks_tests.feature_networks.add_same_test import AddSameTest
 from tests.feature_networks_tests.feature_networks.split_test import SplitTest
 from tests.feature_networks_tests.feature_networks.network_editor.node_filter_test import NameFilterTest, \
@@ -56,6 +64,22 @@ layers = tf.keras.layers
 
 
 class FeatureNetworkTest(unittest.TestCase):
+
+    def test_reused_separable_mixed_precision(self):
+        ReusedSeparableMixedPrecisionTest(self).run_test()
+
+    def test_reused_layer_mixed_precision(self):
+        ReusedLayerMixedPrecisionTest(self).run_test()
+
+    def test_reuse_separable(self):
+        ReusedSeparableTest(self).run_test()
+
+    def test_mixed_percision(self):
+        MixedPercisionSearchKPI2BitsAvgTest(self).run_test()
+        MixedPercisionSearchKPI4BitsAvgTest(self).run_test()
+        MixedPercisionManuallyConfiguredTest(self).run_test()
+        MixedPercisionSearchTest(self).run_test()
+        MixedPercisionDepthwiseTest(self).run_test()
 
     def test_name_filter(self):
         NameFilterTest(self).run_test()
@@ -201,6 +225,12 @@ class FeatureNetworkTest(unittest.TestCase):
         ActivationDecompositionTest(self, activation_function='tanh').run_test()
         ActivationDecompositionTest(self, activation_function='softmax').run_test()
 
+    def test_mark_activation(self):
+        MarkActivationTest(self, layers.Dense, layers.PReLU()).run_test()
+        MarkActivationTest(self, layers.Conv2D, layers.ReLU()).run_test()
+        MarkActivationTest(self, layers.Conv2DTranspose, layers.Activation('sigmoid')).run_test()
+        MarkActivationTest(self, layers.DepthwiseConv2D, layers.Activation('softmax')).run_test()
+
     def test_conv2d_bn_concant(self):
         Conv2DBNConcatnFoldingTest(self).run_test()
 
@@ -243,8 +273,10 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_multi_input_to_node(self):
         MultiInputsToNodeTest(self).run_test()
 
-    def test_kd(self):
-        KnowledgeDistillationTest(self).run_test()
+    def test_gptq(self):
+        GradientPTQTest(self).run_test()
+        GradientPTQWeightsUpdateTest(self).run_test()
+        GradientPTQLearnRateZeroTest(self).run_test()
 
 
 if __name__ == '__main__':

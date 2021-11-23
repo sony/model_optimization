@@ -8,3 +8,4 @@ scikit-image
 scikit-learn
 tensorflow_model_optimization
 tensorboard
+PuLP

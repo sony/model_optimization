@@ -117,7 +117,9 @@ class ReLUBoundCorrection(common.BaseSubstitution):
             graph.scale_stats_collector(first_op2d_node, 1 / scale_factor)
 
             # After scaling weights may have different thresholds so it needs to be recalculated
-            first_op2d_node.weights_quantization_cfg.calculate_and_set_weights_params(w1_fixed)
-            second_op2d_node.weights_quantization_cfg.calculate_and_set_weights_params(w2_fixed)
+            for nqc in first_op2d_node.candidates_weights_quantization_cfg:
+                nqc.calculate_and_set_weights_params(w1_fixed)
+            for nqc in second_op2d_node.candidates_weights_quantization_cfg:
+                nqc.calculate_and_set_weights_params(w2_fixed)
 
         return graph

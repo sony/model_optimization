@@ -15,7 +15,7 @@
 
 
 from collections import Callable
-from typing import Dict, Any
+from typing import Dict, Any, List
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationMethod
 from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.common.graph.node import Node
@@ -31,7 +31,8 @@ class FrameworkInfo(object):
                  weights_quantizer_mapping: Dict[QuantizationMethod, Callable],
                  kernel_channels_mapping: DefaultDict,
                  activation_min_max_mapping: Dict[str, tuple],
-                 layer_min_max_mapping: Dict[Any, tuple]):
+                 layer_min_max_mapping: Dict[Any, tuple],
+                 kernel_ops_attributes_mapping: DefaultDict):
         """
         A class to wrap all information about a specific framework the library needs to quantize a model.
         Specifically, FrameworkInfo holds lists of layers by how they should be quantized, and multiple mappings such as
@@ -50,6 +51,7 @@ class FrameworkInfo(object):
             kernel_channels_mapping (DefaultDict): Dictionary from a layer to a tuple of its kernel in/out channels indices.
             activation_min_max_mapping (Dict[str, tuple]): Dictionary from an activation function to its min/max output values.
             layer_min_max_mapping (Dict[Any, tuple]): Dictionary from a layer to its min/max output values.
+            kernel_ops_attributes_mapping (DefaultDict): Dictionary from a framework operator to a list of its weights attirbutes to quantize.
 
         Examples:
             When quantizing a Keras model, if we want to quantize the kernels of Conv2D layers only, we can
@@ -95,7 +97,20 @@ class FrameworkInfo(object):
         self.kernel_channels_mapping = kernel_channels_mapping
         self.activation_min_max_mapping = activation_min_max_mapping
         self.layer_min_max_mapping = layer_min_max_mapping
+        self.kernel_ops_attributes_mapping = kernel_ops_attributes_mapping
 
+    def get_kernel_op_attributes(self, layer_class: Any) -> List[str]:
+        """
+        Get a list of attributes of a layer's weights to quantize.
+
+        Args:
+            layer_class: Layer to get its' attributes.
+
+        Returns:
+            A list of attributes the layer has and should be quantized.
+        """
+        attr_list = self.kernel_ops_attributes_mapping.get(layer_class)
+        return attr_list
 
     def layers_has_min_max(self, layer: Any) -> bool:
         """

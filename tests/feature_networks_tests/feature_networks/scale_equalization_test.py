@@ -31,19 +31,19 @@ class ScaleEqualizationTest(BaseFeatureNetworkTest):
         self.second_op2d = second_op2d
         self.mid_act = mid_activation
         self.second_op2d_zero_pad = second_op2d_zero_pad
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
+        super().__init__(unit_test)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE,
-                                       mct.ThresholdSelectionMethod.MSE,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       16,
-                                       16,
-                                       relu_unbound_correction=False,
-                                       weights_bias_correction=False,
-                                       weights_per_channel_threshold=True,
-                                       activation_channel_equalization=True)
+                                      mct.ThresholdSelectionMethod.MSE,
+                                      mct.QuantizationMethod.POWER_OF_TWO,
+                                      mct.QuantizationMethod.POWER_OF_TWO,
+                                      16,
+                                      16,
+                                      relu_unbound_correction=False,
+                                      weights_bias_correction=False,
+                                      weights_per_channel_threshold=True,
+                                      activation_channel_equalization=True)
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 224, 244, 3]]
@@ -63,4 +63,3 @@ class ScaleEqualizationTest(BaseFeatureNetworkTest):
         y_hat = quantized_model.predict(input_x)
         cs = cosine_similarity(y, y_hat)
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
-

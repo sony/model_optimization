@@ -28,6 +28,7 @@ from tensorboard.backend.event_processing import event_file_loader
 def random_datagen():
     return [np.random.random((1, 224, 224, 3))]
 
+
 class TestLogger(unittest.TestCase):
 
     @classmethod
@@ -41,7 +42,7 @@ class TestLogger(unittest.TestCase):
 
     def test_tensorboard_initial_graph_num_of_nodes(self):
         events_dir = os.path.join(mct.common.Logger.LOG_PATH, 'tensorboard_logs/')
-        events_files = glob.glob(events_dir+'initial_graph/*events*')
+        events_files = glob.glob(events_dir + 'initial_graph/*events*')
         self.assertTrue(len(events_files) == 1)  # Make sure there is only event file in 'initial_graph' subdir
 
         event_filepath = events_files[0]

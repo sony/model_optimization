@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
+from typing import List
+
 
 class UserInformation(object):
     """
@@ -24,7 +26,8 @@ class UserInformation(object):
 
     def __init__(self):
         self.input_scale = 1
-        self.kd_info_dict = dict()
+        self.gptq_info_dict = dict()
+        self.mixed_precision_cfg = None
 
     def set_input_scale(self, scale_value: float):
         """
@@ -35,3 +38,7 @@ class UserInformation(object):
 
         """
         self.input_scale = scale_value
+
+    def set_mixed_precision_cfg(self, mp_cfg:List[int]):
+        self.mixed_precision_cfg = mp_cfg
+

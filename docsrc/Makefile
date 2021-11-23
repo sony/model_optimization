@@ -3,8 +3,9 @@
 
 github:
 	@make html
-	@cp -a build/html/. ../docs
-	@rm -rf build
+	@cp -a ../docs/html/. ../docs
+	@rm -rf ../docs/html/
+	@rm -rf ../docs/doctrees/
 
 
 # You can set these variables from the command line, and also
@@ -12,7 +13,7 @@ github:
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
-BUILDDIR      = build
+BUILDDIR      = ../docs
 
 # Put it first so that "make" without argument is like "make help".
 help:

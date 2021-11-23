@@ -27,12 +27,12 @@ layers = keras.layers
 
 class AddSameTest(BaseFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
+        super().__init__(unit_test, val_batch_size=1)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
-                                       mct.QuantizationMethod.SYMMETRIC_UNIFORM, mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                       16, 16, False, True, True, False)
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
+                                      16, 16, False, True, True, False)
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 224, 244, 3]]

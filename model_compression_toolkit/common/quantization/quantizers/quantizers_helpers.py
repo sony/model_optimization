@@ -17,7 +17,7 @@
 from typing import Tuple, List
 import numpy as np
 
-from model_compression_toolkit.common.constants import MIN_THRESHOLD
+from model_compression_toolkit.common.constants import MIN_THRESHOLD, EPS
 
 
 def power_of_two_constraint(x: np.ndarray,
@@ -116,8 +116,55 @@ def quantize_tensor(tensor_data: np.ndarray,
 
 
 def kmeans_assign_clusters(cluster_centers: np.ndarray,
-                           query: np.ndarray) -> List[np.ndarray]:
-    cluster_assignments = []
-    for i in range(query.shape[0]):
-        cluster_assignments.append(np.argmin(np.sum(np.abs(cluster_centers - query[i, :])**2, axis=1)))
-    return cluster_assignments
+                           query: np.ndarray) -> np.ndarray:
+    """
+    Assign each data value in query with its closest cluster center point.
+    Args:
+        cluster_centers: the cluster centers to assign the query values.
+        query: values for which to assign cluster centers.
+
+    Returns: A tensor of indexes to the cluster centers that where assigned to each value in
+             the query tensor.
+
+    """
+    d0 = query.shape[0]
+    d1 = cluster_centers.shape[0]
+    query_ = query.repeat(d1).reshape(d0, d1)
+    cluster_centers_ = cluster_centers.repeat(d0).reshape(d1, d0).transpose(1, 0)
+    return np.argmin(np.abs(query_ - cluster_centers_), axis=1)
+
+
+def int_quantization_with_scale(data: np.ndarray,
+                                scale: np.ndarray,
+                                n_bits: int,
+                                eps: float = EPS) -> np.ndarray:
+    """
+    Divides data by scale and quantizes it to integers in the range [2 ** (n_bits - 1) - 1, -2 ** (n_bits - 1)]
+    Args:
+        data: tensor data.
+        scale: scale to divide the data.
+        n_bits: number of bits that determines the quantization range.
+
+    Returns:
+        Quantized tensor.
+
+    """
+    return np.clip((data) / (scale + eps) * 2 ** (n_bits - 1),
+                   a_max=2 ** (n_bits - 1) - 1, a_min=-2 ** (n_bits - 1))
+
+
+def get_quantized_tensor(centers: np.ndarray,
+                                scale: np.ndarray,
+                                n_bits: int) -> np.ndarray:
+    """
+    Divides data by scale and quantizes it to integers in the range [2 ** (n_bits - 1) - 1, -2 ** (n_bits - 1)]
+    Args:
+        centers: centers points.
+        scale: scale to divide the data.
+        n_bits: number of bits that determines the quantization range.
+
+    Returns:
+        Quantized tensor.
+
+    """
+    return (np.round(centers) / (2 ** (n_bits - 1))) * scale

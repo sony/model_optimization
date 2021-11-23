@@ -60,7 +60,5 @@ class TestHistogramCollector(unittest.TestCase):
         self.assertTrue(True)  # Just check it works
 
 
-
-
 if __name__ == '__main__':
     unittest.main()

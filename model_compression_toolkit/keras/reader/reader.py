@@ -65,10 +65,10 @@ def build_tensors_list(tensors_list) -> List[TFReference]:
     Returns:
         List of tensors' references.
     """
-    return [tensors_list.ref()] if not isinstance(tensors_list, list) else [tensor.ref()
-                                                                            for
-                                                                            tensor in
-                                                                            tensors_list]
+    return [tensors_list.ref()] if not isinstance(tensors_list, (list, tuple)) else [tensor.ref()
+                                                                                     for
+                                                                                     tensor in
+                                                                                     tensors_list]
 
 
 def build_connectivity_handler(model: Model) -> ConnectivityHandler:

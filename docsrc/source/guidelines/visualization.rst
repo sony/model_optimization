@@ -12,7 +12,7 @@ To use it, all you have to do is to set a logger path. Setting a path is done by
 .. code-block:: python
 
    import model_compression_toolkit as mct
-   mct.set_logger_folder('/logger/dir/path')
+   mct.set_log_folder('/logger/dir/path')
 
 Then, by calling :ref:`keras_post_training_quantization<ug-keras_post_training_quantization>`, a TensorBoard writer will log graphs of the model at different stages.
 To visualize them, TensorBoard should be launched with:
@@ -38,7 +38,7 @@ To observe the model at different stages of the quantization process, change the
 |
 
 
-To display the resources (memory and BOPs) the graph requires at different stages, change the 'Tag' from 'Default' to 'Resources'
+To display the required memory (in bytes) of the graph at different stages, change the 'Tag' from 'Default' to 'Resources'
 
 .. image:: ../../images/tbwriter/tbwriter_resources.png
   :scale: 60%
@@ -50,10 +50,6 @@ By clicking a node, its statistics will show up:
 .. image:: ../../images/tbwriter/tbwriter_resources_node.png
   :scale: 60%
 
-|
-
-The #BOPs of a node, is displayed as its 'compute time'. Each BOP is considered to take a 1 microsecond.
-Thus, in the figure above, this node has approximately 1.02M BOPs.
 
 |
 

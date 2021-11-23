@@ -52,6 +52,8 @@ def build_node(node: KerasNode,
     # where i is the input/output index of the layer.
     is_reused = keras_layer.name in node_name_to_node
     if is_reused:
+        # Mark the "base" node with its reused group.
+        node_name_to_node[keras_layer.name].reuse_group = keras_layer.name
         io_index = 1
         while keras_layer.name + REUSED_IDENTIFIER + str(io_index) in node_name_to_node:  # find next unused io index
             io_index = io_index + 1

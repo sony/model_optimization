@@ -54,7 +54,6 @@ class NetworkTest(object):
                                      mode=ModelBuilderMode.FLOAT)
         self.compare(inputs_list, ptq_model)
 
-
     @staticmethod
     def create_inputs(inputs_list):
         return [np.random.randn(*in_shape) for in_shape in inputs_list]
@@ -71,7 +70,7 @@ class FeatureNetworkFloatTest(unittest.TestCase):
         from tensorflow.keras.applications.mobilenet import MobileNet
         self.run_network(MobileNet(), input_shapes)
 
-    def test_mobilenet_v1_kd(self):
+    def test_mobilenet_v1_gptq(self):
         input_shapes = [[16, 224, 224, 3]]
         from tensorflow.keras.applications.mobilenet import MobileNet
         self.run_network(MobileNet(), input_shapes)

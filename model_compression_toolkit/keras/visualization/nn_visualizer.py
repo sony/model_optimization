@@ -12,56 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 
 from model_compression_toolkit.common import Graph
+from model_compression_toolkit.common.similarity_analyzer import compute_cs
 from model_compression_toolkit.keras.back2framework.model_builder import model_builder, ModelBuilderMode
-from model_compression_toolkit.keras.knowledge_distillation.graph_info import get_compare_points
+from model_compression_toolkit.common.graph.node import Node
 
 
-def tensor_norm(x: np.ndarray) -> np.float:
+def get_compare_points(input_graph: Graph) -> Tuple[List[Node], List[str]]:
     """
-    Compute the L2-norm of a tensor x.
+    Create a list of nodes in a graph where we collect their output statistics, and a corresponding list
+    of their names for tensors comparison purposes.
     Args:
-        x: Tensor to compute its norm
+        input_graph: Graph to get its points to compare.
 
     Returns:
-        L2 norm of x.
+        A list of nodes in a graph, and a list of the their names.
     """
-    return np.sqrt(np.power(x.flatten(), 2.0).sum())
+    compare_points = []
+    compare_points_name = []
+    for n in input_graph.nodes():
+        tensors = input_graph.get_out_stats_collector(n)
+        if (not isinstance(tensors, list)) and tensors.require_collection():
+            compare_points.append(n)
+            compare_points_name.append(n.name)
+    return compare_points, compare_points_name
 
 
-def cosine_similarity(a: np.ndarray,
-                      b: np.ndarray,
-                      eps: float = 1e-8) -> np.float:
-    """
-    Compute the cosine similarity between two tensor.
-    Args:
-        a: First tensor to compare.
-        b: Second tensor to compare.
-        eps: Small value to avoid zero division.
-
-    Returns:
-        The cosine similarity between two tensors.
-    """
-
-    if np.all(b == 0) and np.all(a == 0):
-        return 1.0
-    a_flat = a.flatten()
-    b_flat = b.flatten()
-    a_norm = tensor_norm(a)
-    b_norm = tensor_norm(b)
-
-    return np.sum(a_flat * b_flat) / ((a_norm * b_norm) + eps)
-
-
-class KerasNNVisualizer(object):
+class KerasNNVisualizer:
     """
     Class to build two models from two graph: a float and a quantized version.
     KerasNNVisualizer can compare the two models outputs after each layer.
@@ -121,7 +104,7 @@ class KerasNNVisualizer(object):
 
         # Compute cosine similarities between couples of outputs.
         cs_array = np.asarray(
-            [cosine_similarity(t_float.numpy(), t_fxp.numpy()) for t_float, t_fxp in zip(tensors_float, tensors_fxp)])
+            [compute_cs(t_float.numpy(), t_fxp.numpy()) for t_float, t_fxp in zip(tensors_float, tensors_fxp)])
 
         # Display the result: cosine similarity at every layer's output.
         fig = plt.figure()

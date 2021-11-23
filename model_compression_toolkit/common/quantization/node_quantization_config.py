@@ -19,11 +19,13 @@ from typing import Callable
 import numpy as np
 
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
-from model_compression_toolkit.common.logger import Logger
-from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
-    get_activation_quantization_params_fn, get_weights_quantization_params_fn
-from model_compression_toolkit.common.framework_info import FrameworkInfo
 
+
+##########################################
+# Every node holds a quantization configuration
+# for its weights quantization, and a different quantization
+# configuration for its activation quantization configuration.
+##########################################
 
 class BaseNodeNodeQuantizationConfig(object):
     """
@@ -228,58 +230,3 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
         return len(self.weights_quantization_params) > 0
 
 
-def create_node_activation_qc(qc: QuantizationConfig,
-                              fw_info: FrameworkInfo,
-                              use_min_max: bool) -> NodeActivationQuantizationConfig:
-    """
-    Create a activations quantization configuration from a QuantizationConfig object.
-
-    Args:
-        qc: QuantizationConfig to create the node's config from.
-        fw_info: Information about the specific framework the node was created from (e.g., whether or not its weights/activations should be quantized)
-        use_min_max: Whether the collected min/max statistics should be used when the threshold is computed or not.
-
-    Returns:
-        Activation quantization configuration of a node.
-    """
-
-    activation_quantization_fn = fw_info.activation_quantizer_mapping.get(qc.activation_quantization_method)
-    if activation_quantization_fn is None:
-        Logger.critical('Unknown quantization method for activations')
-
-    activation_quantization_params_fn = get_activation_quantization_params_fn(qc.activation_quantization_method,
-                                                                              qc.activation_threshold_method,
-                                                                              use_min_max)
-
-    return NodeActivationQuantizationConfig(qc,
-                                            activation_quantization_fn,
-                                            activation_quantization_params_fn)
-
-
-def create_node_weights_qc(qc: QuantizationConfig,
-                           fw_info: FrameworkInfo,
-                           weight_channel_axis: int) -> NodeWeightsQuantizationConfig:
-    """
-    Create a weights quantization configuration from a QuantizationConfig object.
-
-    Args:
-        qc: QuantizationConfig to create the node's config from.
-        fw_info: Information about the specific framework the node was created from (e.g., whether or not its weights/activations should be quantized)
-        weight_channel_axis: Axis to quantize a node's kernel when quantizing per-channel.
-
-    Returns:
-        Weights quantization configuration of a node.
-    """
-
-    weights_quantization_fn = fw_info.weights_quantizer_mapping.get(qc.weights_quantization_method)
-
-    if weights_quantization_fn is None:
-        Logger.critical('Unknown quantization method for weights')
-
-    weights_quantization_params_fn = get_weights_quantization_params_fn(qc.weights_quantization_method,
-                                                                        qc.weights_threshold_method)
-
-    return NodeWeightsQuantizationConfig(qc,
-                                         weights_quantization_fn,
-                                         weights_quantization_params_fn,
-                                         weight_channel_axis)

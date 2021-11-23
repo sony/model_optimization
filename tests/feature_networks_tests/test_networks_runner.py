@@ -28,34 +28,34 @@ keras = tf.keras
 layers = keras.layers
 
 TWO_BIT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.ThresholdSelectionMethod.MSE,
-                                               weights_threshold_method=mct.ThresholdSelectionMethod.MSE,
-                                               activation_quantization_method=mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                               weights_quantization_method=mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                               activation_n_bits=2,
-                                               weights_n_bits=2,
-                                               weights_bias_correction=False,
-                                               weights_per_channel_threshold=True,
-                                               relu_unbound_correction=False)
+                                              weights_threshold_method=mct.ThresholdSelectionMethod.MSE,
+                                              activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                                              weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                                              activation_n_bits=2,
+                                              weights_n_bits=2,
+                                              weights_bias_correction=False,
+                                              weights_per_channel_threshold=True,
+                                              relu_unbound_correction=False)
 
 EIGHT_BIT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.ThresholdSelectionMethod.MSE,
-                                                 weights_threshold_method=mct.ThresholdSelectionMethod.MSE,
-                                                 activation_quantization_method=mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                                 weights_quantization_method=mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                                 activation_n_bits=8,
-                                                 weights_n_bits=8,
-                                                 weights_bias_correction=False,
-                                                 weights_per_channel_threshold=True,
-                                                 relu_unbound_correction=False)
+                                                weights_threshold_method=mct.ThresholdSelectionMethod.MSE,
+                                                activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                                                weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                                                activation_n_bits=8,
+                                                weights_n_bits=8,
+                                                weights_bias_correction=False,
+                                                weights_per_channel_threshold=True,
+                                                relu_unbound_correction=False)
 
 FLOAT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.ThresholdSelectionMethod.MSE,
-                                             weights_threshold_method=mct.ThresholdSelectionMethod.MSE,
-                                             activation_quantization_method=mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                             weights_quantization_method=mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                             activation_n_bits=16,
-                                             weights_n_bits=16,
-                                             weights_bias_correction=False,
-                                             weights_per_channel_threshold=True,
-                                             relu_unbound_correction=False)
+                                            weights_threshold_method=mct.ThresholdSelectionMethod.MSE,
+                                            activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                                            weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                                            activation_n_bits=16,
+                                            weights_n_bits=16,
+                                            weights_bias_correction=False,
+                                            weights_per_channel_threshold=True,
+                                            relu_unbound_correction=False)
 
 
 class RunMode(Enum):
@@ -74,12 +74,12 @@ def run_mode(qc):
 
 
 class NetworkTest(object):
-    def __init__(self, unit_test, model_float, input_shapes, num_calibration_iter, kd=False):
+    def __init__(self, unit_test, model_float, input_shapes, num_calibration_iter, gptq=False):
         self.unit_test = unit_test
         self.model_float = model_float
         self.input_shapes = input_shapes
         self.num_calibration_iter = num_calibration_iter
-        self.kd = kd
+        self.gptq = gptq
 
     def compare(self, inputs_list, quantized_model, qc):
         output_q = quantized_model.predict(inputs_list)
@@ -108,20 +108,20 @@ class NetworkTest(object):
         def representative_data_gen():
             return inputs_list
 
-        if self.kd:
-            kdc = mct.KnowledgeDistillationConfig(n_iter=2)
+        if self.gptq:
+            arc = mct.GradientPTQConfig(n_iter=2)
             ptq_model, quantization_info = mct.keras_post_training_quantization(self.model_float,
-                                                                                 representative_data_gen,
-                                                                                 quant_config=qc,
-                                                                                 fw_info=DEFAULT_KERAS_INFO,
-                                                                                 n_iter=self.num_calibration_iter,
-                                                                                 knowledge_distillation_config=kdc)
+                                                                                representative_data_gen,
+                                                                                quant_config=qc,
+                                                                                fw_info=DEFAULT_KERAS_INFO,
+                                                                                n_iter=self.num_calibration_iter,
+                                                                                gptq_config=arc)
         else:
             ptq_model, quantization_info = mct.keras_post_training_quantization(self.model_float,
-                                                                                 representative_data_gen,
-                                                                                 quant_config=qc,
-                                                                                 fw_info=DEFAULT_KERAS_INFO,
-                                                                                 n_iter=self.num_calibration_iter)
+                                                                                representative_data_gen,
+                                                                                quant_config=qc,
+                                                                                fw_info=DEFAULT_KERAS_INFO,
+                                                                                n_iter=self.num_calibration_iter)
         self.compare(inputs_list, ptq_model, qc)
 
 
@@ -142,16 +142,16 @@ class FeatureNetworkTest(unittest.TestCase):
     def create_inputs(inputs_list):
         return [np.random.randn(*in_shape) for in_shape in inputs_list]
 
-    def run_network(self, model_float, input_shapes, num_calibration_iter, kd=False):
+    def run_network(self, model_float, input_shapes, num_calibration_iter, gptq=False):
         inputs_list = FeatureNetworkTest.create_inputs(input_shapes)
 
-        NetworkTest(self, model_float, input_shapes, num_calibration_iter, kd=kd).run_network(inputs_list,
-                                                                                              EIGHT_BIT_QUANTIZATION)
-        if not kd:
-            NetworkTest(self, model_float, input_shapes, num_calibration_iter, kd=kd).run_network(inputs_list,
-                                                                                                  TWO_BIT_QUANTIZATION)
-            NetworkTest(self, model_float, input_shapes, num_calibration_iter, kd=kd).run_network(inputs_list,
-                                                                                                  FLOAT_QUANTIZATION)
+        NetworkTest(self, model_float, input_shapes, num_calibration_iter, gptq=gptq).run_network(inputs_list,
+                                                                                                  EIGHT_BIT_QUANTIZATION)
+        if not gptq:
+            NetworkTest(self, model_float, input_shapes, num_calibration_iter, gptq=gptq).run_network(inputs_list,
+                                                                                                      TWO_BIT_QUANTIZATION)
+            NetworkTest(self, model_float, input_shapes, num_calibration_iter, gptq=gptq).run_network(inputs_list,
+                                                                                                      FLOAT_QUANTIZATION)
 
     def test_mobilenet_v1(self):
         input_shapes = [[10, 224, 224, 3]]
@@ -159,11 +159,11 @@ class FeatureNetworkTest(unittest.TestCase):
         from tensorflow.keras.applications.mobilenet import MobileNet
         self.run_network(MobileNet(), input_shapes, num_calibration_iter)
 
-    def test_mobilenet_v1_kd(self):
+    def test_mobilenet_v1_gptq(self):
         input_shapes = [[10, 224, 224, 3]]
         num_calibration_iter = 1
         from tensorflow.keras.applications.mobilenet import MobileNet
-        self.run_network(MobileNet(), input_shapes, num_calibration_iter, kd=True)
+        self.run_network(MobileNet(), input_shapes, num_calibration_iter, gptq=True)
 
     def test_mobilenet_v2(self):
         input_shapes = [[10, 224, 224, 3]]

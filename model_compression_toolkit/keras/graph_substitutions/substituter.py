@@ -42,7 +42,7 @@ from model_compression_toolkit.keras.graph_substitutions.substitutions.shift_neg
     apply_shift_negative_correction
 
 
-def substitute(graph: common.Graph,
+def substitute(graph_to_substitute: common.Graph,
                substitutions_list: List[common.BaseSubstitution]) -> common.Graph:
     """
     Apply a list of substitutions on a graph.
@@ -54,7 +54,7 @@ def substitute(graph: common.Graph,
         Transformed graph after applying all substitutions in substitutions_list.
     """
 
-    # graph = copy.deepcopy(graph)
+    graph = copy.deepcopy(graph_to_substitute)
     for substitution in substitutions_list:
         matched_nodes = graph.filter(substitution.matcher_instance)
         for idn in matched_nodes:

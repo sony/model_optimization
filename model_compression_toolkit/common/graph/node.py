@@ -13,14 +13,15 @@
 # limitations under the License.
 # ==============================================================================
 
-
+import copy
 from typing import Dict, Any, Tuple
 
 import numpy as np
 
+from model_compression_toolkit.common.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE
 
 
-class Node(object):
+class Node:
     """
     Class to represent a node in a graph that represents the model.
     """
@@ -59,12 +60,12 @@ class Node(object):
         self.input_shape = input_shape
         self.output_shape = output_shape
         self.weights = weights
-        self.weights_keys = list(self.weights.keys())
         self.layer_class = layer_class
         self.reuse = reuse
         self.reuse_group = reuse_group
-        self.weights_quantization_cfg = None
         self.activation_quantization_cfg = None
+        self.final_weights_quantization_cfg = None
+        self.candidates_weights_quantization_cfg = None
         self.output_quantization = True
         self.op_call_args = op_call_args
 
@@ -77,9 +78,25 @@ class Node(object):
         return self.activation_quantization_cfg is None or \
                (not self.activation_quantization_cfg.has_activation_quantization_params())
 
-    def activation_weights_quantization(self) -> bool:
-        return self.weights_quantization_cfg is not None and self.weights_quantization_cfg.has_weights_quantization_params()\
-               and self.activation_quantization_cfg is not None and self.activation_quantization_cfg.has_activation_quantization_params()
+    def weight_quantization(self) -> bool:
+        """
+
+        Returns: Whether node weights should be quantized
+
+        """
+        return self.final_weights_quantization_cfg is not None and \
+               self.final_weights_quantization_cfg.has_weights_quantization_params() and \
+               self.final_weights_quantization_cfg.enable_weights_quantization
+
+    def activation_quantization(self) -> bool:
+        """
+
+        Returns: Whether node activation should be quantized
+
+        """
+        return self.activation_quantization_cfg is not None and \
+               self.activation_quantization_cfg.has_activation_quantization_params() and \
+               self.activation_quantization_cfg.enable_activation_quantization
 
     def __repr__(self):
         """
@@ -98,7 +115,7 @@ class Node(object):
         Returns:
             A node's weight (by its name).
         """
-        res = [k for k in self.weights_keys if name in k]
+        res = [k for k in self.weights.keys() if name in k]
         if len(res) == 1:  # Make sure there are no duplicates
             return self.weights[res[0]]
         else:
@@ -114,7 +131,7 @@ class Node(object):
 
         """
 
-        res = [k for k in self.weights_keys if name in k]
+        res = [k for k in self.weights.keys() if name in k]
         if len(res) == 1:
             self.weights[res[0]] = tensor
         else:  # Add if not exist
@@ -127,7 +144,7 @@ class Node(object):
         Returns: A list of all weights the node holds.
 
         """
-        return [self.weights[k] for k in self.weights_keys if self.weights[k] is not None]
+        return [self.weights[k] for k in self.weights.keys() if self.weights[k] is not None]
 
     def get_num_parameters(self) -> int:
         """
@@ -135,20 +152,49 @@ class Node(object):
         Returns: Number of parameters the node holds.
 
         """
-        node_num_params = np.sum([v.flatten().shape[0] for v in self.weights.values()])
+        node_num_params = np.sum([v.flatten().shape[0] for v in self.weights.values() if v is not None])
         assert int(node_num_params) == node_num_params
         return int(node_num_params)
 
-    def get_memory_bytes(self) -> int:
+    def get_memory_bytes(self, by_candidate_idx: int = None) -> float:
         """
 
         Returns: Number of bytes the node's memory requires.
 
         """
         params = self.get_num_parameters()
-        if self.weights_quantization_cfg is None:  # float coefficients
+        if by_candidate_idx is not None:
+            assert type(by_candidate_idx)==int
+            assert by_candidate_idx < len(self.candidates_weights_quantization_cfg)
+            memory = params * self.candidates_weights_quantization_cfg[by_candidate_idx].weights_n_bits / 8 # in bytes
+
+        elif self.final_weights_quantization_cfg is None:  # float coefficients
             memory = params * 4
+
         else:
-            memory = params * self.weights_quantization_cfg.weights_n_bits / 8  # in bytes
-        assert int(memory)==memory
-        return int(memory)
+            memory = params * self.final_weights_quantization_cfg.weights_n_bits / 8  # in bytes
+
+        return memory
+
+    def get_unified_candidates_dict(self):
+        """
+        In Mixed-Precision, a node can have multiple candidates for weights quantization configuration.
+        In order to display a single view of a node (for example, for logging in TensorBoard) we need a way
+        to create a single dictionary from all candidates.
+        This method is aimed to build such an unified dictionary for a node.
+
+        Returns: A dictionary containing information from node's weight quantization configuration candidates.
+
+        """
+        shared_attributes = [CORRECTED_BIAS_ATTRIBUTE, WEIGHTS_NBITS_ATTRIBUTE]
+        attr = dict()
+        if self.candidates_weights_quantization_cfg is not None:
+            attr = copy.deepcopy(self.candidates_weights_quantization_cfg[0].__dict__)
+            for shared_attr in shared_attributes:
+                if shared_attr in attr:
+                    unified_attr = []
+                    for candidate in self.candidates_weights_quantization_cfg:
+                        unified_attr.append(getattr(candidate, shared_attr))
+                    attr[shared_attr] = unified_attr
+        return attr
+

@@ -188,9 +188,6 @@ class TestCollectorsManipulations(unittest.TestCase):
         self.assertTrue(np.allclose(restored_min_pc, min_pc))
         self.assertTrue(np.allclose(restored_max_pc, max_pc))
 
-
-
-
     ########### Test scaling -> shifting -> scaling (same granularity) ###########
     def test_mean_scale_shift_scale_per_channel(self, num_of_input_channels=10):
         sc = init_stats_container(num_of_input_channels)
@@ -213,7 +210,7 @@ class TestCollectorsManipulations(unittest.TestCase):
         final_sc, scaling_factor2 = scale_stats_container(shifted_sc, num_of_input_channels)
 
         final_mean = final_sc.get_mean()
-        restored_mean = (final_mean/scaling_factor2 - shifting_factor) / scaling_factor
+        restored_mean = (final_mean / scaling_factor2 - shifting_factor) / scaling_factor
         self.assertTrue(np.allclose(restored_mean, mean))
 
     def test_histogram_scale_shift_scale_per_channel(self, num_of_input_channels=10):
@@ -236,7 +233,7 @@ class TestCollectorsManipulations(unittest.TestCase):
         final_sc, scaling_factor2 = scale_stats_container(shifted_sc, num_of_input_channels)
 
         final_bins, _ = final_sc.hc.get_histogram()
-        restored_bins = (final_bins/scaling_factor2 - shifting_factor) / scaling_factor
+        restored_bins = (final_bins / scaling_factor2 - shifting_factor) / scaling_factor
         self.assertTrue(np.allclose(restored_bins, bins))
 
     def test_minmax_scale_shift_scale_per_channel(self, num_of_input_channels=10):
@@ -248,8 +245,8 @@ class TestCollectorsManipulations(unittest.TestCase):
         final_sc, scaling_factor2 = scale_stats_container(shifted_sc, num_of_input_channels)
 
         min_pc_final, max_pc_final = final_sc.mpcc.min_per_channel, final_sc.mpcc.max_per_channel
-        restored_min_pc = (min_pc_final/scaling_factor2 - shifting_factor) / scaling_factor
-        restored_max_pc = (max_pc_final/scaling_factor2 - shifting_factor) / scaling_factor
+        restored_min_pc = (min_pc_final / scaling_factor2 - shifting_factor) / scaling_factor
+        restored_max_pc = (max_pc_final / scaling_factor2 - shifting_factor) / scaling_factor
 
         self.assertTrue(np.allclose(restored_min_pc, min_pc))
         self.assertTrue(np.allclose(restored_max_pc, max_pc))
@@ -263,15 +260,14 @@ class TestCollectorsManipulations(unittest.TestCase):
         final_sc, scaling_factor2 = scale_stats_container(shifted_sc, num_of_input_channels)
 
         min_pc_final, max_pc_final = final_sc.mpcc.min_per_channel, final_sc.mpcc.max_per_channel
-        restored_min_pc = (min_pc_final/scaling_factor2 - shifting_factor) / scaling_factor
-        restored_max_pc = (max_pc_final/scaling_factor2 - shifting_factor) / scaling_factor
+        restored_min_pc = (min_pc_final / scaling_factor2 - shifting_factor) / scaling_factor
+        restored_max_pc = (max_pc_final / scaling_factor2 - shifting_factor) / scaling_factor
         self.assertTrue(np.allclose(restored_min_pc, min_pc))
         self.assertTrue(np.allclose(restored_max_pc, max_pc))
 
-
     ########### Test scaling -> shifting (different granularity) ###########
     def test_mean_scale_per_channel_shift_per_tensor(self, num_scale_factors=10, num_shift_factors=1):
-        sc = init_stats_container(max(num_scale_factors,num_shift_factors))
+        sc = init_stats_container(max(num_scale_factors, num_shift_factors))
         mean = sc.get_mean()
 
         scaled_sc, scaling_factor = scale_stats_container(sc, num_scale_factors)
@@ -282,7 +278,7 @@ class TestCollectorsManipulations(unittest.TestCase):
         self.assertTrue(np.allclose(restored_mean, mean))
 
     def test_mean_scale_per_tensor_shift_per_channel(self, num_scale_factors=1, num_shift_factors=10):
-        sc = init_stats_container(max(num_scale_factors,num_shift_factors))
+        sc = init_stats_container(max(num_scale_factors, num_shift_factors))
         mean = sc.get_mean()
 
         scaled_sc, scaling_factor = scale_stats_container(sc, num_scale_factors)
@@ -310,9 +306,8 @@ class TestCollectorsManipulations(unittest.TestCase):
         with self.assertRaises(Exception):
             final_sc.hc.get_histogram()
 
-
     def test_minmax_scale_per_channel_shift_per_tensor(self, num_scale_factors=10, num_shift_factors=1):
-        sc = init_stats_container(max(num_scale_factors,num_shift_factors))
+        sc = init_stats_container(max(num_scale_factors, num_shift_factors))
         min_pc, max_pc = sc.mpcc.min_per_channel, sc.mpcc.max_per_channel
 
         scaled_sc, scaling_factor = scale_stats_container(sc, num_scale_factors)
@@ -325,9 +320,8 @@ class TestCollectorsManipulations(unittest.TestCase):
         self.assertTrue(np.allclose(restored_min_pc, min_pc))
         self.assertTrue(np.allclose(restored_max_pc, max_pc))
 
-
     def test_minmax_scale_per_tensor_shift_per_channel(self, num_scale_factors=1, num_shift_factors=10):
-        sc = init_stats_container(max(num_scale_factors,num_shift_factors))
+        sc = init_stats_container(max(num_scale_factors, num_shift_factors))
         min_pc, max_pc = sc.mpcc.min_per_channel, sc.mpcc.max_per_channel
 
         scaled_sc, scaling_factor = scale_stats_container(sc, num_scale_factors)
@@ -410,7 +404,6 @@ class TestCollectorsManipulations(unittest.TestCase):
         self.assertTrue(np.allclose(restored_min_pc, min_pc))
         self.assertTrue(np.allclose(restored_max_pc, max_pc))
 
-
     ########### Test shifting for collector with init values ###########
     def test_minmax_shift_per_channel_init_min(self, num_of_shifting_factors=10):
         sc = init_stats_container(num_of_shifting_factors, init_min=0)
@@ -476,8 +469,6 @@ class TestCollectorsManipulations(unittest.TestCase):
         self.assertTrue(np.allclose(min_final, np.min(min_pc + shifting_factor)))
         self.assertTrue(np.allclose(max_final, np.max(max_pc + shifting_factor)))
 
-
-
     def test_minmax_shift_per_tensor_init_minmax(self, num_of_shifting_factors=1):
         sc = init_stats_container(num_of_shifting_factors, init_min=0, init_max=99)
         min_pc, max_pc = sc.mpcc.min_per_channel, sc.mpcc.max_per_channel
@@ -487,7 +478,6 @@ class TestCollectorsManipulations(unittest.TestCase):
         restored_max_pc = max_pc_final - shifting_factor
         self.assertTrue(np.allclose(restored_min_pc, min_pc))
         self.assertTrue(np.allclose(restored_max_pc, max_pc))
-
 
     ########### Test scaling for collector with init values ###########
     def test_minmax_scale_per_channel_init_min(self, num_of_scaling_factors=10):
@@ -561,7 +551,6 @@ class TestCollectorsManipulations(unittest.TestCase):
         restored_max_pc = max_pc_final / shifting_factor
         self.assertTrue(np.allclose(restored_min_pc, min_pc))
         self.assertTrue(np.allclose(restored_max_pc, max_pc))
-
 
 
 if __name__ == '__main__':

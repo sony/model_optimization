@@ -74,7 +74,7 @@ class SeparableConvDecomposition(common.BaseSubstitution):
         pw_kernel = separable_node.get_weights_by_keys(POINTWISE_KERNEL)
         pw_bias = separable_node.get_weights_by_keys(BIAS)
 
-        dw_weights_dict = {KERNEL: dw_kernel}
+        dw_weights_dict = {DEPTHWISE_KERNEL: dw_kernel}
         pw_weights_dict = {KERNEL: pw_kernel,
                            BIAS: pw_bias}
 
@@ -109,20 +109,33 @@ class SeparableConvDecomposition(common.BaseSubstitution):
         dw_output_shape = tuple(dw_layer_class(**dw_framework_attr).compute_output_shape(separable_node.input_shape))
         pw_input_shape = dw_output_shape
 
+        # If the SeparableConv2D is reused, we need to keep the depthwise node as reused as well,
+        # so we keep the names convention with adding the suffix of "_reuse_X".
+        dw_node_name = separable_node.name + '_dw' if not separable_node.reuse else '_'.join(separable_node.name.split('_')[:-2]) + '_dw_' + '_'.join(separable_node.name.split('_')[-2:])
+
         # create new nodes
-        dw_node = common.graph.Node(separable_node.name + '_dw',
+        dw_node = common.graph.Node(dw_node_name,
                                     dw_framework_attr,
                                     separable_node.input_shape,
                                     dw_output_shape,
                                     dw_weights_dict,
-                                    dw_layer_class)
+                                    dw_layer_class,
+                                    reuse=separable_node.reuse,
+                                    reuse_group=separable_node.reuse_group)
 
-        pw_node = common.graph.Node(separable_node.name + '_pw',
+        # If the SeparableConv2D is reused, we need to keep the pointwise node as reused as well,
+        # so we keep the names convention with adding the suffix of "_reuse_X".
+        pw_node_name = separable_node.name + '_pw' if not separable_node.reuse else '_'.join(separable_node.name.split('_')[:-2]) + '_pw_' + '_'.join(separable_node.name.split('_')[-2:])
+
+        pw_node = common.graph.Node(pw_node_name,
                                     pw_framework_attr,
                                     pw_input_shape,
                                     separable_node.output_shape,
                                     pw_weights_dict,
-                                    pw_layer_class)
+                                    pw_layer_class,
+                                    reuse=separable_node.reuse,
+                                    reuse_group=separable_node.reuse_group
+                                    )
 
         graph.add_node(dw_node)
         graph.add_node(pw_node)

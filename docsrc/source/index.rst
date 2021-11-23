@@ -28,12 +28,13 @@ From Source:
     python setup.py install
 
 
-From PyPi:
+From PyPi - latest stable release:
 ::
 
     pip install model-compression-toolkit
 
-A nightly version is also available:
+
+A nightly version is also available (unstable):
 ::
 
     pip install mct-nightly
@@ -43,8 +44,9 @@ Supported Features
 
 Quantization:
 
-* Hardware-friendly Post Training Quantization [1]
-* Gradient base post training using knowledge distillation (Experimental)
+* :ref:`Hardware-friendly Post Training Quantization<ug-keras_post_training_quantization>` [1]
+* :ref:`Gradient base post training using knowledge distillation<ug-GradientPTQConfig>` (Experimental)
+* :ref:`Mixed-precision post training quantization<ug-keras_post_training_quantization_mixed_precision>` (Experimental)
 
 Visualization:
 

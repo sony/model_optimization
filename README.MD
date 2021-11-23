@@ -10,6 +10,8 @@ Currently, this project only support hardware friendly post training quantizatio
 
 MCT project is developed by researchers and engineers working on the Sony Semiconductors Israel.
 
+For more information, please visit our [project website](https://sony.github.io/model_optimization/).
+
 ## Table of Contents
 
 - [Getting Started](#getting-started)
@@ -31,12 +33,12 @@ See the MCT install guide for the pip package, and build from source.
 git clone https://github.com/sony/model_optimization.git
 python setup.py install
 ```
-#### From PyPi
+#### From PyPi - latest stable release
 ```
 pip install model-compression-toolkit
 ```
 
-A nightly package is also available:
+A nightly package is also available (unstable):
 ```
 pip install mct-nightly
 ```
@@ -82,14 +84,13 @@ quantized_model, quantization_info = mct.keras_post_training_quantization(model,
 ```
 For more example please see the tutorials' directory.
 
-For more information, please visit out [project website](https://sony.github.io/model_optimization/).
 
 ## Supported Features
 
 Quantization:
 
 	* Post Training Quantization 
-    * Gradient base post training using knowledge distillation (Experimental) 
+    * Gradient base post training (Experimental) 
     
 Tensorboard Visualization (Experimental):
 

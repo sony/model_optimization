@@ -105,7 +105,8 @@ class BaseInputScaling(common.BaseSubstitution):
             graph.scale_stats_collector(input_layer, 1/scale_factor)
 
             # After scaling weights may have different thresholds so it needs to be recalculated
-            linear_layer.weights_quantization_cfg.calculate_and_set_weights_params(w1_fixed)
+            for nqc in linear_layer.candidates_weights_quantization_cfg:
+                nqc.calculate_and_set_weights_params(w1_fixed)
 
         return graph
 

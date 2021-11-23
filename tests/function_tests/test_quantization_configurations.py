@@ -22,7 +22,6 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 
-
 def model_gen():
     inputs = layers.Input(shape=[16, 16, 3])
     x = layers.Conv2D(2, 3, padding='same')(inputs)
@@ -50,8 +49,8 @@ class TestQuantizationConfigurations(unittest.TestCase):
                 for weights_per_channel_threshold in [False, True]:
                     qc = mct.QuantizationConfig(activation_threshold_selection,
                                                 weights_threshold_selection,
-                                                mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                                mct.QuantizationMethod.SYMMETRIC_UNIFORM,
+                                                mct.QuantizationMethod.POWER_OF_TWO,
+                                                mct.QuantizationMethod.POWER_OF_TWO,
                                                 activation_n_bits=8,
                                                 weights_n_bits=16,
                                                 relu_unbound_correction=relu_unbound_correction,
@@ -71,8 +70,8 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                                    mct.ThresholdSelectionMethod.KL]:
                 qc = mct.QuantizationConfig(activation_threshold_selection,
                                             weights_threshold_selection,
-                                            mct.QuantizationMethod.SYMMETRIC_UNIFORM,
-                                            mct.QuantizationMethod.SYMMETRIC_UNIFORM,
+                                            mct.QuantizationMethod.POWER_OF_TWO,
+                                            mct.QuantizationMethod.POWER_OF_TWO,
                                             activation_n_bits=8,
                                             weights_n_bits=16,
                                             relu_unbound_correction=relu_unbound_correction,

@@ -13,7 +13,3 @@
 # limitations under the License.
 # ==============================================================================
 
-
-from model_compression_toolkit.keras.quantizer.configs import ActivationQuantizeConfigKD
-from model_compression_toolkit.keras.quantizer.configs import WeightQuantizeConfigKD
-from model_compression_toolkit.keras.quantizer.quantization_config_factory import quantization_config_builder_kd

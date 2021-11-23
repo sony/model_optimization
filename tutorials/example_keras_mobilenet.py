@@ -64,7 +64,13 @@ if __name__ == '__main__':
                                           preprocessing=[resize, normalization],
                                           batch_size=batch_size)
 
-    # The representative data generator to pass to MCT.
+    # Create a Callable representative dataset for calibration purposes.
+    # The function should be called without any arguments, and should return a list numpy arrays (array for each
+    # model's input).
+    # For example: if the model has two input tensors - one with input shape of 32X32X3 and the second with input
+    # shape of 224X224X3, and we calibrate the model using batches of 20 images,
+    # calling representative_data_gen() should return a list
+    # of two numpy.ndarray objects where the arrays' shapes are [(20, 32, 32, 3), (20, 224, 224, 3)].
     def representative_data_gen() -> list:
         return [image_data_loader.sample()]
 
