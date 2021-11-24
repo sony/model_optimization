@@ -17,9 +17,17 @@
 from enum import Enum
 
 import tensorflow as tf
+
+# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+if tf.__version__ < "2.6":
+    from tensorflow.keras.layers import Input
+    from tensorflow.python.keras.layers.core import TFOpLambda
+else:
+    from keras import Input
+    from keras.layers.core import TFOpLambda
+
 from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
 from tensorflow.python.keras.layers import Layer
-from tensorflow.python.keras.layers.core import TFOpLambda
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from typing import Tuple, Any, Dict, List
 from tensorflow.python.util.object_identity import Reference as TFReference
@@ -214,7 +222,7 @@ def model_builder(graph: common.Graph,
     # Hold a dictionary from an input node to its corresponding input tensor. It is needed for when
     # building the model. Initially input nodes with input tensors are added to the dictionary,
     # as they're not added later.
-    input_nodes_to_input_tensors = {inode: tf.keras.layers.Input(inode.framework_attr[BATCH_INPUT_SHAPE][1:]) for
+    input_nodes_to_input_tensors = {inode: Input(inode.framework_attr[BATCH_INPUT_SHAPE][1:]) for
                                     inode in graph.get_inputs()}
 
     # Build a list of the model's input tensors. Switching from a dictionary to a list
