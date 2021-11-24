@@ -6,6 +6,7 @@ on:
 
 jobs:
   build:
+    if: github.repository == 'sony/model_optimization' # Don't do this in forks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
