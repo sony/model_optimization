@@ -13,13 +13,20 @@
 # limitations under the License.
 # ==============================================================================
 
+import tensorflow as tf
+
+if tf.__version__ < "2.6":
+    print(f'**********  {tf.__version__}  smaller than 2.6 *************')
+    from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
+else:
+    print(f'**********  {tf.__version__}  greater or equal than 2.6 *************')
+    from keras.engine.base_layer import TensorFlowOpLayer
 
 import copy
 
 import numpy as np
 from tensorflow.keras.layers import Activation, Conv2D, Dense, DepthwiseConv2D, ZeroPadding2D, Reshape, \
     GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU
-from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
 from typing import Tuple, Any
 
 from model_compression_toolkit import common

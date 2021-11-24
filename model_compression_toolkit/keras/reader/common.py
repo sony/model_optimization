@@ -15,14 +15,22 @@
 
 
 import tensorflow as tf
+
+# As from Tensorflow 2.6, keras is a separate package and should be imported differently.
+if tf.__version__ < "2.6":
+    from tensorflow.python.keras.engine.node import Node as KerasNode
+    from tensorflow.keras.layers import InputLayer
+else:
+    from keras.engine.input_layer import InputLayer
+    from keras.engine.node import Node as KerasNode
+
+
 from tensorflow.python.keras.engine.functional import Functional
-from tensorflow.python.keras.engine.node import Node as KerasNode
+
 from tensorflow.python.keras.engine.sequential import Sequential
 
 from model_compression_toolkit.common.graph.node import Node
 
-keras = tf.keras
-layers = keras.layers
 
 
 def is_node_an_input_layer(node: Node) -> bool:
@@ -35,12 +43,11 @@ def is_node_an_input_layer(node: Node) -> bool:
         Whether the node represents an input layer or not.
     """
     if isinstance(node, Node):
-        return node.layer_class == layers.InputLayer
+        return node.layer_class == InputLayer
     elif isinstance(node, KerasNode):
-        return isinstance(node.layer, layers.InputLayer)
+        return isinstance(node.layer, InputLayer)
     else:
         raise Exception('Node to check has to be either a graph node or a keras node')
-
 
 def is_node_a_model(node: Node) -> bool:
     """
