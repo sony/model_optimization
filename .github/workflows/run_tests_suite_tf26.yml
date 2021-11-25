@@ -1,4 +1,4 @@
-name: Run Tests - Tensorflow 2.7
+name: Run Tests - Tensorflow 2.6
 on:
   workflow_dispatch: # Allow manual triggers
     schedule:
@@ -15,7 +15,7 @@ jobs:
           python-version: 3.8
       - name: Edit requirements
         run: |
-          sed -i "s/tensorflow==2.5/tensorflow==2.7/g" requirements.txt
+          sed -i "s/tensorflow==2.5/tensorflow==2.6/g" requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip

@@ -13,13 +13,19 @@
 # limitations under the License.
 # ==============================================================================
 
+import tensorflow as tf
+
+# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+if tf.__version__ < "2.6":
+    from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
+else:
+    from keras.engine.base_layer import TensorFlowOpLayer
 
 import copy
 
 import numpy as np
 from tensorflow.keras.layers import Activation, Conv2D, Dense, DepthwiseConv2D, ZeroPadding2D, Reshape, \
     GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU
-from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
 from typing import Tuple, Any
 
 from model_compression_toolkit import common
