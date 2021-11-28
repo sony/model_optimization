@@ -33,7 +33,7 @@ import numpy as np
 
 def get_sensitivity_evaluation(graph: Graph,
                                quant_config: MixedPrecisionQuantizationConfig,
-                               metrics_weights: np.ndarray,
+                               metrics_weights_fn: Callable,
                                representative_data_gen: Callable,
                                fw_info: FrameworkInfo) -> Callable:
     """
@@ -48,7 +48,7 @@ def get_sensitivity_evaluation(graph: Graph,
     Args:
         graph: Graph to get its sensitivity evaluation for changes in bitwidths for different nodes.
         quant_config: MixedPrecisionQuantizationConfig containing parameters of how the model should be quantized.
-        metrics_weights: Weights to compute a weighted average over the distances (per layer).
+        metrics_weights_fn: Function to compute weights for a weighted average over the distances (per layer).
         representative_data_gen: Dataset used for getting batches for inference.
         fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
 
@@ -74,11 +74,6 @@ def get_sensitivity_evaluation(graph: Graph,
     baseline_model = _build_baseline_model(graph,
                                            interest_points)
 
-    # Get a batch of images to infer in both models.
-    inference_batch_input = representative_data_gen()
-
-    # If the model contains only one output we save it a list. If it's a list already, we keep it as a list.
-    baseline_tensors = _tensors_as_list(baseline_model(inference_batch_input))
 
     def _compute_metric(mp_model_configuration: List[int],
                         node_idx: List[int] = None) -> float:
@@ -101,8 +96,43 @@ def get_sensitivity_evaluation(graph: Graph,
                                          mp_model_configuration,
                                          node_idx)
 
-        # when using model.predict(), it does not uses the QuantizeWrapper functionality
-        mp_tensors = _tensors_as_list(model_mp(inference_batch_input))
+        samples_count = 0  # Numer of images we used so far to compute the distance matrix.
+
+        # List of distance matrices. We create a distance matrix for each sample from the representative_data_gen
+        # and merge all of them eventually.
+        distance_matrices = []
+
+        # Compute the distance matrix for num_of_images images.
+        while samples_count < quant_config.num_of_images:
+            # Get a batch of images to infer in both models.
+            inference_batch_input = representative_data_gen()
+            batch_size = inference_batch_input[0].shape[0]
+
+            # If we sampled more images than we should use in the distance matrix,
+            # we take only a subset of these images and use only them for computing the distance matrix.
+            if batch_size > quant_config.num_of_images-samples_count:
+                inference_batch_input = [x[:quant_config.num_of_images-samples_count] for x in inference_batch_input]
+                assert quant_config.num_of_images-samples_count == inference_batch_input[0].shape[0]
+                batch_size = quant_config.num_of_images-samples_count
+
+            samples_count += batch_size
+            # If the model contains only one output we save it a list. If it's a list already, we keep it as a list.
+            baseline_tensors = _tensors_as_list(baseline_model(inference_batch_input))
+
+            # when using model.predict(), it does not uses the QuantizeWrapper functionality
+            mp_tensors = _tensors_as_list(model_mp(inference_batch_input))
+
+            # Build distance matrix: similarity between the baseline model to the float model
+            # in every interest point for every image in the batch.
+            distance_matrices.append(_build_distance_matrix(baseline_tensors,
+                                                            mp_tensors,
+                                                            quant_config.compute_distance_fn))
+
+        # Merge all distance matrices into a single distance matrix.
+        distance_matrix = np.concatenate(distance_matrices, axis=1)
+
+        # Assert we used a correct number of images for computing the distance matrix
+        assert distance_matrix.shape[1] == quant_config.num_of_images
 
         # Configure MP model back to the same configuration as the baseline model
         baseline_mp_configuration = [0] * len(mp_model_configuration)
@@ -111,18 +141,11 @@ def get_sensitivity_evaluation(graph: Graph,
                                          baseline_mp_configuration,
                                          node_idx)
 
-        # Build distance matrix: similarity between the baseline model to the float model
-        # in every interest point for every image in the batch.
-        distance_matrix = _build_distance_matrix(baseline_tensors,
-                                                 mp_tensors,
-                                                 quant_config.compute_distance_fn)
-
         # Compute the distance between the baseline model's outputs and the MP model's outputs.
         # The distance is the mean of distances over all images in the batch that was inferred.
-        mean_distance_per_layer = [np.mean(v) for v in distance_matrix.values()]
-
+        mean_distance_per_layer = distance_matrix.mean(axis=1)
         # Use weights such that every layer's distance is weighted differently (possibly).
-        return np.average(mean_distance_per_layer, weights=metrics_weights)
+        return np.average(mean_distance_per_layer, weights=metrics_weights_fn(distance_matrix))
 
     return _compute_metric
 
@@ -174,13 +197,12 @@ def _build_distance_matrix(baseline_tensors: List[Tensor],
          and the baseline model's output for all images that were inferred.
     """
 
-    distance_matrix = {}
-    for interest_point_idx, batch_infered in enumerate(
-            zip(baseline_tensors, mp_tensors)):  # for each layer's outputs
-        distance_matrix[interest_point_idx] = [compute_distance_fn(baseline_img_infered.numpy(),
-                                                                   mp_img_infered.numpy()) for
-                                               baseline_img_infered, mp_img_infered in
-                                               zip(batch_infered[0], batch_infered[1])]
+    num_interest_points = len(baseline_tensors)
+    num_samples = len(baseline_tensors[0])
+    distance_matrix = np.ndarray((num_interest_points, num_samples))
+    for i in range(num_interest_points):
+        for j in range(num_samples):
+            distance_matrix[i, j] = compute_distance_fn(baseline_tensors[i][j].numpy(), mp_tensors[i][j].numpy())
     return distance_matrix
 
 

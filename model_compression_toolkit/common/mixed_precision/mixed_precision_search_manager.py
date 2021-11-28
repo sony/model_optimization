@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import numpy as np
+
 from typing import Callable
 from typing import Dict, List
 
 from model_compression_toolkit.common.graph.base_graph import Graph
-from model_compression_toolkit.common.mixed_precision.distance_weighting import metric_weighting_dict
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
@@ -47,7 +46,7 @@ class MixedPrecisionSearchManager(object):
         self.qc = qc
         self.fw_info = fw_info
         self.get_sensitivity_evaluation = get_sensitivity_evaluation
-        self.metrics_weights = self.get_metrics_weights()
+        self.metrics_weights = self.qc.distance_weighting_method
         self.layer_to_bitwidth_mapping = self.get_search_space()
         self.compute_metric_fn = self.get_sensitivity_metric()
 
@@ -68,15 +67,6 @@ class MixedPrecisionSearchManager(object):
             indices_mapping[idx] = list(range(len(n.candidates_weights_quantization_cfg)))  # all search_methods space
         return indices_mapping
 
-    def get_metrics_weights(self) -> np.ndarray:
-        """
-
-        Returns: Weights for weighting the sensitivity for each layer.
-
-        """
-        # Get weights for weighting the sensitivity for each layer.
-        metrics_weights_by_node_index = metric_weighting_dict.get(self.qc.distance_weighting_method)
-        return metrics_weights_by_node_index(self.graph)
 
     def get_sensitivity_metric(self) -> Callable:
         """

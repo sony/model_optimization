@@ -84,9 +84,6 @@ def search_bit_width(graph_to_search_cfg: Graph,
     else:
         raise NotImplemented
 
-    # Evaluate the expected KPI for each node and for each bitwidth (in the search_methods space).
-    # layer_to_kpi_mapping = graph.get_node_to_kpi_mapping(search_manager.layer_to_bitwidth_mapping)
-
     # Search for the desired mixed-precision configuration
     result_bit_cfg = search_method_fn(search_manager.layer_to_bitwidth_mapping,
                                       search_manager.compute_metric_fn,

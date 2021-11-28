@@ -16,21 +16,9 @@
 from enum import Enum
 from typing import List, Callable
 
+from model_compression_toolkit.common.mixed_precision.distance_weighting import get_average_weights
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig, DEFAULTCONFIG
 from model_compression_toolkit.common.similarity_analyzer import compute_mse
-
-
-class MixedPrecisionMetricsWeighting(Enum):
-    """
-    Method for weighting distances among different layers when computing the total distance of a mixed-precision model from the float model:
-
-    AVERAGE - All layers get the same weight, and the distance of a mixed-precision model from the float model is the average of distances among all layers (between the mixed-precision model and the float model).
-
-    LAST_LAYER - The distance of a mixed-precision model from the float model is the distance between the last layer of the models.
-
-    """
-    AVERAGE = 0
-    LAST_LAYER = 1
 
 
 class MixedPrecisionQuantizationConfig(QuantizationConfig):
@@ -39,7 +27,8 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
                  qc: QuantizationConfig = DEFAULTCONFIG,
                  weights_n_bits: List[int] = None,
                  compute_distance_fn: Callable = compute_mse,
-                 distance_weighting_method: MixedPrecisionMetricsWeighting = MixedPrecisionMetricsWeighting.AVERAGE):
+                 distance_weighting_method: Callable = get_average_weights,
+                 num_of_images: int = 32):
 
         """
         Class to wrap all different parameters the library quantize the input model according to.
@@ -49,18 +38,21 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
         Args:
             qc (QuantizationConfig): QuantizationConfig object containing parameters of how the model should be quantized.
             weights_n_bits (int): List of possible number of bits to quantize the coefficients.
-            compute_distance_fn (Callable): Function to compute a distance between two tensors. We use it to estimate the distance of a mixed-precision model from the float model.
-            distance_weighting_method (MixedPrecisionMetricsWeighting): Method to use when weighting the distances among different layers when computing the distance metric.
+            compute_distance_fn (Callable): Function to compute a distance between two tensors
+            distance_weighting_method (Callable): Function to use when weighting the distances among different layers when computing the sensitivity metric.
+            num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
+
         """
 
         super().__init__(**qc.__dict__)
         self.weights_n_bits = weights_n_bits if weights_n_bits is not None else [qc.weights_n_bits]
         self.compute_distance_fn = compute_distance_fn
         self.distance_weighting_method = distance_weighting_method
+        self.num_of_images = num_of_images
 
 
 # Default quantization configuration the library use.
 DEFAULT_MIXEDPRECISION_CONFIG = MixedPrecisionQuantizationConfig(DEFAULTCONFIG,
-                                                                 [8],
+                                                                 [2, 4, 8],
                                                                  compute_mse,
-                                                                 MixedPrecisionMetricsWeighting.AVERAGE)
+                                                                 get_average_weights)

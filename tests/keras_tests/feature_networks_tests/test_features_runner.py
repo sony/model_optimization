@@ -78,10 +78,16 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_reuse_separable(self):
         ReusedSeparableTest(self).run_test()
 
-    def test_mixed_percision(self):
+    def test_mixed_precision_search_kpi_2bits_avg(self):
         MixedPercisionSearchKPI2BitsAvgTest(self).run_test()
+
+    def test_mixed_precision_search_kpi_4bits_avg(self):
         MixedPercisionSearchKPI4BitsAvgTest(self).run_test()
+
+    def test_mixed_precision_search(self):
         MixedPercisionSearchTest(self).run_test()
+
+    def test_mixed_precision_dw(self):
         MixedPercisionDepthwiseTest(self).run_test()
 
     def test_name_filter(self):
