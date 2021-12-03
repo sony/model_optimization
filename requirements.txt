@@ -1,4 +1,3 @@
-tensorflow==2.5.*
 networkx==2.5
 tqdm
 Pillow
@@ -6,6 +5,5 @@ numpy
 opencv-python
 scikit-image
 scikit-learn
-tensorflow_model_optimization
 tensorboard
 PuLP

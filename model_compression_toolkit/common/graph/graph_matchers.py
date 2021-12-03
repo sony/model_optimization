@@ -19,9 +19,7 @@ from typing import Any, List
 from tensorflow.keras.layers import Layer
 
 from model_compression_toolkit.common.graph.node import Node
-from model_compression_toolkit.common.matchers import edge_matcher
-from model_compression_toolkit.common.matchers import node_matcher
-from model_compression_toolkit.common.matchers import walk_matcher
+from model_compression_toolkit.common.substitutions.matchers import edge_matcher, node_matcher, walk_matcher
 
 
 class NodeOperationMatcher(node_matcher.BaseNodeMatcher):

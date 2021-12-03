@@ -16,14 +16,15 @@
 import copy
 
 from model_compression_toolkit import common
+from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.quantization.quantize_node import get_quantized_kernel_by_weights_qc
-from model_compression_toolkit.keras.constants import KERNEL
 
 
 def quantize_graph_weights(graph_to_quantize: Graph,
-                           fw_info: FrameworkInfo) -> Graph:
+                           fw_info: FrameworkInfo,
+                           fw_impl: FrameworkImplementation) -> Graph:
     """
     Get a graph representing a model, and quantize its nodes' weights.
     Each node is quantized according to the passed framework info and quantization configuration.
@@ -33,6 +34,7 @@ def quantize_graph_weights(graph_to_quantize: Graph,
     Args:
         graph_to_quantize: Graph to quantize its nodes.
         fw_info: Framework information needed for quantizing the graph's nodes' weights and activations.
+        fw_impl: FrameworkImplementation with specific framework implementations.
 
     """
     graph = copy.deepcopy(graph_to_quantize)
@@ -43,13 +45,14 @@ def quantize_graph_weights(graph_to_quantize: Graph,
         if fw_info.in_kernel_ops(n) and n.final_weights_quantization_cfg.enable_weights_quantization:
             quantized_kernel, io_channels_axes = get_quantized_kernel_by_weights_qc(fw_info,
                                                                                     n,
-                                                                                    n.final_weights_quantization_cfg)
+                                                                                    n.final_weights_quantization_cfg,
+                                                                                    fw_impl=fw_impl)
 
             common.Logger.debug(
                 f'Node name: {n.name} has the following quantization params: '
                 f'{str(n.final_weights_quantization_cfg.weights_quantization_params)}')
 
             # Set the kernel node to be the quantized kernel.
-            n.set_weights_by_keys(KERNEL, quantized_kernel)
+            n.set_weights_by_keys(fw_impl.constants.KERNEL, quantized_kernel)
 
     return graph

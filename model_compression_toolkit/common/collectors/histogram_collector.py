@@ -74,7 +74,7 @@ class HistogramCollector(BaseCollector):
             merged_histogram_min = np.min(bins_stack)
             merged_histogram_max = np.max(bins_stack)
             merged_bin_width = np.min(bins_stack[:, 1] - bins_stack[:, 0])
-            merged_histogram_bins = np.arange(merged_histogram_min, merged_histogram_max, merged_bin_width)
+            merged_histogram_bins = np.arange(merged_histogram_min, merged_histogram_max+merged_bin_width, merged_bin_width)
 
             merged_histogram_counts = None
             for histogram in self.__histogram_per_iteration:  # Iterate all collected histograms and merge them

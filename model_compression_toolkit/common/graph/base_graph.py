@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+from collections import namedtuple
 
 from copy import copy, deepcopy
 from typing import List
@@ -29,8 +29,10 @@ from model_compression_toolkit.common.graph.node import Node
 from model_compression_toolkit.common.statistics_collector import BaseStatsContainer
 from model_compression_toolkit.common.statistics_collector import scale_statistics, shift_statistics
 from model_compression_toolkit.common.user_info import UserInformation
-from model_compression_toolkit.keras.reader.connectivity_handler import OutTensor
 from model_compression_toolkit.common.logger import Logger
+
+OutTensor = namedtuple('OutTensor', 'node node_out_index')
+
 
 class Graph(nx.MultiDiGraph, GraphSearches):
     """
