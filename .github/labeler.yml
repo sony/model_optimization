@@ -6,4 +6,4 @@ common:
 - model_compression_toolkit/common/*
 
 keras:
-- model_compression_toolkit/keras/*
+- model_compression_toolkit/keras_framework/*
