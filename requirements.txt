@@ -7,3 +7,4 @@ scikit-image
 scikit-learn
 tensorboard
 PuLP
+matplotlib
