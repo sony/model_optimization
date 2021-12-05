@@ -27,6 +27,7 @@ from model_compression_toolkit.common.quantization.quantizers.power_of_two_quant
 from model_compression_toolkit.keras.constants import SOFTMAX, LINEAR, RELU, SWISH, SIGMOID, IDENTITY, TANH, SELU, \
     KERNEL, DEPTHWISE_KERNEL
 from model_compression_toolkit.keras.quantizer.fake_quant_builder import constraint_quantization
+
 """
 Division of Keras layers by how they should be quantized.
 KERNEL_OPS: Layers that their coefficients should be quantized.

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from keras.engine.base_layer_v1 import Layer
+from tensorflow.python.layers.base import Layer
 from tensorflow import Tensor
 from tensorflow.keras.models import Model
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
@@ -24,7 +24,8 @@ from model_compression_toolkit.common import Node
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
-from model_compression_toolkit.keras.back2framework.model_builder import ModelBuilderMode, model_builder
+from model_compression_toolkit.keras.back2framework.model_builder import model_builder
+from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.keras.quantizer.mixed_precision.selective_weights_quantize_config import \
     SelectiveWeightsQuantizeConfig
 import numpy as np
@@ -34,7 +35,7 @@ def get_sensitivity_evaluation(graph: Graph,
                                quant_config: MixedPrecisionQuantizationConfig,
                                metrics_weights: np.ndarray,
                                representative_data_gen: Callable,
-                               fw_info: FrameworkInfo):
+                               fw_info: FrameworkInfo) -> Callable:
     """
     Create a function to compute the sensitivity metric of an MP model (the sensitivity
     is computed based on the similarity of the interest points' outputs between the MP model

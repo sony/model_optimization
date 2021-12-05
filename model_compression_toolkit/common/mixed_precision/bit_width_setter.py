@@ -17,6 +17,7 @@ import copy
 
 from typing import Any, List
 
+from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common import Graph, Node
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.logger import Logger
@@ -25,7 +26,7 @@ from model_compression_toolkit.common.mixed_precision.mixed_precision_quantizati
 
 
 
-def set_bit_widths(quant_config: MixedPrecisionQuantizationConfig,
+def set_bit_widths(quant_config: QuantizationConfig,
                    graph_to_set_bit_widths: Graph,
                    fw_info: FrameworkInfo = None,
                    bit_widths_config: List[int] = None) -> Graph:

@@ -19,71 +19,21 @@ import tensorflow as tf
 from tqdm import tqdm
 
 from model_compression_toolkit import common
+from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
 from model_compression_toolkit.common import Graph
-from model_compression_toolkit.keras.back2framework.model_builder import model_builder, ModelBuilderMode
+from model_compression_toolkit.keras.back2framework.model_builder import model_builder
+from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.keras.gradient_ptq.graph_info import get_compare_points, \
     get_trainable_parameters
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.keras.gradient_ptq.graph_update import update_graph_after_gptq
-from model_compression_toolkit.keras.gradient_ptq.gptq_loss import \
-    multiple_tensors_mse_loss
-from tensorflow.python.keras.optimizer_v2.optimizer_v2 import OptimizerV2
 import numpy as np
-
-
-class GradientPTQConfig:
-    """
-    Configuration to use for quantization with GradientPTQ (experimental).
-    """
-
-    def __init__(self,
-                 n_iter: int,
-                 optimizer: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=0.0001),
-                 loss: Callable = multiple_tensors_mse_loss,
-                 log_function: Callable = None,
-                 train_bias: bool = True,
-                 representative_data_gen: Callable = None):
-        """
-        Initialize a GradientPTQConfig.
-
-        Args:
-            n_iter (int): Number of iterations to train.
-            optimizer (OptimizerV2): Optimizer to use.
-            loss (Callable): the loss to use. should accept 2 lists of tf.Tensor. 1st list are the quantized tensors, the 2nd the float tensors
-            log_function (Callable): Function to log information about the GPTQ process.
-            train_bias (bool): Whether to update the bias during the training or not.
-            representative_data_gen (Callable): Dataset generator.
-
-        Examples:
-            Create a GradientPTQConfig to run for 5 iteration and uses a random dataset generator:
-
-            >>> import numpy as np
-            >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
-            >>> gptq_conf = GradientPTQConfig(n_iter=5, representative_data_gen=repr_datagen)
-
-            An optimizer can be passed:
-
-            >>> gptq_conf = GradientPTQConfig(n_iter=5, representative_data_gen=repr_datagen, optimizer=tf.keras.optimizers.Nadam(learning_rate=0.2))
-
-            To disable the biases training, one may set train_bias to False (enabled by default):
-
-            >>> gptq_conf = GradientPTQConfig(n_iter=5, representative_data_gen=repr_datagen, train_bias=False)
-
-            The configuration can then be passed to :func:`~model_compression_toolkit.keras_post_training_quantization`.
-
-        """
-        self.n_iter = n_iter
-        self.optimizer = optimizer
-        self.loss = loss
-        self.log_function = log_function
-        self.train_bias = train_bias
-        self.representative_data_gen = representative_data_gen
 
 
 def gptq_training_wrapper(tg: Graph,
                           representative_data_gen: Callable,
                           gptq_config: GradientPTQConfig,
-                          fw_info: FrameworkInfo):
+                          fw_info: FrameworkInfo) -> Graph:
     """
     Build two models from a graph: A teacher network (float model) and a student network (quantized model).
     Use the dataset generator to pass images through the teacher and student networks to get intermediate
@@ -107,14 +57,17 @@ def gptq_training_wrapper(tg: Graph,
     #########################################
     # Build two models and compare points
     #########################################
+    # TODO: maybe need to add pre_build substitutions here. Ask Elad
     compare_points, _ = get_compare_points(tg)  # get compare points
     n = len(compare_points)
     float_model, float_user_info = model_builder(tg,
                                                  mode=ModelBuilderMode.FLOAT,
-                                                 append2output=compare_points)
+                                                 append2output=compare_points,
+                                                 fw_info=fw_info)
     fxp_model, gptq_user_info = model_builder(tg,
-                                            mode=ModelBuilderMode.GPTQ,
-                                            append2output=compare_points)
+                                              mode=ModelBuilderMode.GPTQ,
+                                              append2output=compare_points,
+                                              fw_info=fw_info)
 
     trainable_weights = get_trainable_parameters(fxp_model,
                                                  fw_info,

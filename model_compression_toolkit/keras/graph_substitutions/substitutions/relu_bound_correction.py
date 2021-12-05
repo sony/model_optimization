@@ -30,26 +30,19 @@ from model_compression_toolkit.keras.constants import KERNEL, BIAS, ACTIVATION, 
 from model_compression_toolkit.keras.constants import RELU
 
 
+
+
+
 class ReLUBoundCorrection(common.BaseSubstitution):
     """
     Substitution to scale the weights of two linear nodes, and the bound of non-linear between them
     (if bounded) in order to use the entire constrained range when activations are quantized.
     """
 
-    def __init__(self,
-                 quant_config: QuantizationConfig,
-                 fw_info: FrameworkInfo):
+    def __init__(self):
         """
         Initialize a ReLUBoundCorrection object.
-
-        Args:
-            quant_config: QuantizationConfig containing parameters of how the model should be quantized.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-            groups of layers by how they should be quantized, etc.)
         """
-
-        self.fw_info = fw_info
-        self.quant_config = quant_config
 
         homogeneous_activation_nodes = NodeOperationMatcher(ReLU) | \
                                        NodeOperationMatcher(Activation) & \

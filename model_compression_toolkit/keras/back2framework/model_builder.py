@@ -14,8 +14,6 @@
 # ==============================================================================
 
 
-from enum import Enum
-
 import tensorflow as tf
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
@@ -26,6 +24,7 @@ else:
     from keras import Input
     from keras.layers.core import TFOpLambda
 
+from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
 from tensorflow.python.keras.layers import Layer
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
@@ -41,29 +40,12 @@ from model_compression_toolkit.keras.quantizer.gradient_ptq.config_factory impor
 from model_compression_toolkit.common import Node, Graph
 from model_compression_toolkit.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.keras.back2framework.instance_builder import OperationHandler
-from model_compression_toolkit.keras.graph_substitutions.substituter import pre_build_substitute
 from model_compression_toolkit.keras.reader.connectivity_handler import OutTensor
 
 # In tf2.3 fake quant node is implemented as TensorFlowOpLayer, while in tf2.4 as TFOpLambda.
 FQ_NODE_OP_V2_3 = 'FakeQuantWithMinMaxVars'
 FQ_NODE_OP_V2_4 = 'quantization.fake_quant_with_min_max_vars'
 BATCH_INPUT_SHAPE = 'batch_input_shape'
-
-
-class ModelBuilderMode(Enum):
-    """
-    Mode for building the model back from a graph:
-    FLOAT - Build model for statistics collection. Model's outputs list contain all output tensors of all nodes
-    in the graph.
-    QUANTIZED - Build a quantized model using the nodes' quantization attributes for adding 
-    quantization nodes to the model.
-    GPTQ - Build a quantized model using the nodes' quantization attributes for wrapping
-    layers with QuantizeWrapper and output comparing points.
-    """
-    FLOAT = 0
-    QUANTIZED = 1
-    GPTQ = 2
-    MIXEDPRECISION = 3
 
 
 def get_node_name_from_layer(layer: Layer) -> str:
@@ -200,11 +182,6 @@ def model_builder(graph: common.Graph,
     Returns:
         A tuple of the model, and an UserInformation object.
     """
-
-    # For quantized models, first apply some substitutions.
-    if mode != ModelBuilderMode.FLOAT:
-        graph = pre_build_substitute(graph)
-
     node_to_output_tensors_dict = dict()
     model_output_tensors = []
 

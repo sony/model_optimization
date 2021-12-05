@@ -20,7 +20,8 @@ from matplotlib.figure import Figure
 
 from model_compression_toolkit.common import Graph
 from model_compression_toolkit.common.similarity_analyzer import compute_cs
-from model_compression_toolkit.keras.back2framework.model_builder import model_builder, ModelBuilderMode
+from model_compression_toolkit.keras.back2framework.model_builder import model_builder
+from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.graph.node import Node
 
 

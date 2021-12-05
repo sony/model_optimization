@@ -14,6 +14,7 @@
 # ==============================================================================
 from typing import List
 
+from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common import Graph, Node, Logger
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_activations_computation \
@@ -21,13 +22,13 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
     get_activations_qparams
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_weights_computation import \
     get_weights_qparams, get_channels_axis
-from model_compression_toolkit.keras.constants import KERNEL
 
 
 def calculate_quantization_params(graph: Graph,
                                   fw_info: FrameworkInfo,
                                   nodes: List[Node] = [],
-                                  specific_nodes: bool = False):
+                                  specific_nodes: bool = False,
+                                  fw_impl: FrameworkImplementation = None):
     """
     For a graph, go over its nodes, compute quantization params (for both weights and activations according
     to the given framework info), and create and attach a NodeQuantizationConfig to each node (containing the
@@ -42,6 +43,7 @@ def calculate_quantization_params(graph: Graph,
         graph: Graph to compute its nodes' thresholds.
         nodes: List of nodes to compute their thresholds instead of computing it for all nodes in the graph.
         specific_nodes: Flag to compute thresholds for only specific nodes.
+        fw_impl: FrameworkImplementation with specific framework implementations.
 
     """
 
@@ -57,7 +59,7 @@ def calculate_quantization_params(graph: Graph,
 
             for candidtae_qc in n.candidates_weights_quantization_cfg:
                 output_channels_axis, _ = get_channels_axis(candidtae_qc, fw_info, n.layer_class)
-                weights_params = get_weights_qparams(n.get_weights_by_keys(KERNEL),
+                weights_params = get_weights_qparams(n.get_weights_by_keys(fw_impl.constants.KERNEL),
                                                      candidtae_qc,
                                                      output_channels_axis)
 
