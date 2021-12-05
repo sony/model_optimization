@@ -18,7 +18,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from model_compression_toolkit.common.graph.base_graph import Graph
-from model_compression_toolkit.common.substitutions.matchers.base_matcher import BaseMatcher
+from model_compression_toolkit.common.matchers.base_matcher import BaseMatcher
 
 class BaseSubstitution(ABC):
     """

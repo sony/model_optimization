@@ -19,12 +19,12 @@ import numpy as np
 from tensorflow.keras.applications.mobilenet import MobileNet
 
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.keras_framework.keras_implementation import KERAS_IMPLEMENTATION
-from model_compression_toolkit.keras_framework.reader.reader import model_reader
+from model_compression_toolkit.keras.keras_implementation import KERAS_IMPLEMENTATION
+from model_compression_toolkit.keras.reader.reader import model_reader
 from model_compression_toolkit.common.model_collector import ModelCollector
 from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
-from model_compression_toolkit.keras_framework.tensor_marking import get_node_stats_collector
-from model_compression_toolkit.keras_framework.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.keras.tensor_marking import get_node_stats_collector
+from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 
 class TestGraphStatisticCollection(unittest.TestCase):
 

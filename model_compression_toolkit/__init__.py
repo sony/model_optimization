@@ -27,16 +27,8 @@ from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.common import network_editors as network_editor
 
-import importlib
-
-tf_spec = importlib.util.find_spec("tensorflow")
-was_tf_found = tf_spec is not None
-
-if was_tf_found:
-    from model_compression_toolkit.keras_framework.quantization_facade import keras_post_training_quantization, \
-        keras_post_training_quantization_mixed_precision
-else:
-    print('Could not find Tensorflow package. Can not optimize Keras\' models.')
+from model_compression_toolkit.keras.quantization_facade import keras_post_training_quantization, \
+    keras_post_training_quantization_mixed_precision
 
 
 __version__ = "1.1.0"

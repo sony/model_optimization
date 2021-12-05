@@ -17,8 +17,8 @@ from abc import ABC
 from typing import List, Any
 
 from model_compression_toolkit.common.graph.node import Node
-from model_compression_toolkit.common.substitutions.matchers import base_graph_filter, edge_matcher, node_matcher
-from model_compression_toolkit.common.substitutions.matchers.walk_matcher import WalkMatcherList
+from model_compression_toolkit.common.matchers import node_matcher, base_graph_filter, edge_matcher
+from model_compression_toolkit.common.matchers.walk_matcher import WalkMatcherList
 
 
 class GraphSearches(base_graph_filter.BaseGraphFilter, ABC):

@@ -18,11 +18,11 @@ import numpy as np
 import tensorflow as tf
 import unittest
 
-from model_compression_toolkit.keras_framework.back2framework.model_builder import model_builder
+from model_compression_toolkit.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.keras_framework.keras_implementation import KerasImplementation
-from model_compression_toolkit.keras_framework.reader.reader import model_reader
+from model_compression_toolkit.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.keras.reader.reader import model_reader
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras

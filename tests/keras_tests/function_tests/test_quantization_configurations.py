@@ -14,7 +14,7 @@
 # ==============================================================================
 
 
-from model_compression_toolkit.keras_framework.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 import unittest
 import numpy as np
 import model_compression_toolkit as mct

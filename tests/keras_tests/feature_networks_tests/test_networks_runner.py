@@ -13,12 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 import model_compression_toolkit.common.gptq.gptq_config
-from model_compression_toolkit.keras_framework.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 import tensorflow as tf
 import numpy as np
 import unittest
 import model_compression_toolkit as mct
-from model_compression_toolkit.keras_framework.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
+from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from enum import Enum
 import random

@@ -18,7 +18,7 @@ from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatu
 import model_compression_toolkit as mct
 import tensorflow as tf
 import numpy as np
-from model_compression_toolkit.keras_framework.back2framework.model_builder import is_layer_fake_quant
+from model_compression_toolkit.keras.back2framework.model_builder import is_layer_fake_quant
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras

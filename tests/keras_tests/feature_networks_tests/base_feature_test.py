@@ -23,7 +23,7 @@ from model_compression_toolkit.common.mixed_precision.mixed_precision_quantizati
 from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG
 from model_compression_toolkit.common.user_info import UserInformation
 
-from model_compression_toolkit.keras_framework.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 
 
 class BaseFeatureNetworkTest:

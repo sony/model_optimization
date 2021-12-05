@@ -18,8 +18,6 @@ import copy
 import os
 from functools import partial
 from typing import Callable, List, Tuple, Any
-
-from tensorflow.keras.models import Model
 from tqdm import tqdm
 
 from model_compression_toolkit import common
@@ -70,7 +68,7 @@ def post_training_quantization(in_model: Any,
                                analyze_similarity: bool = False,
                                target_kpi: KPI = None):
     """
-    Quantize a trained Keras model using post-training quantization. The model is quantized using a
+    Quantize a trained model using post-training quantization. The model is quantized using a
     symmetric constraint quantization thresholds (power of two).
     The model is first optimized using several transformations (e.g. BatchNormalization folding to
     preceding layers). Then, using a given dataset, statistics (e.g. min/max, histogram, etc.) are
@@ -81,16 +79,16 @@ def post_training_quantization(in_model: Any,
     distillation by comparing points between the float and quantized models, and minimizing the observed loss.
 
     Args:
-        in_model (Model): Keras model to quantize.
-        representative_data_gen (Callable): Dataset used for calibration.
-        n_iter (int): Number of calibration iterations to run.
-        quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/common/quantization/quantization_config.py#L163>`_
-        fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/keras/default_framework_info.py#L114>`_
-        fw_impl (FrameworkImplementation): FrameworkImplementation object with a specific framework methods implementation.
-        network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
-        gptq_config (GradientPTQConfig): Configuration for using gradient-based PTQ (e.g. optimizer).
-        analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
-        target_kpi (KPI): KPI to constraint the search of the mixed-precision configuration for the model.
+        in_model: Model to quantize.
+        representative_data_gen: Dataset used for calibration.
+        n_iter: Number of calibration iterations to run.
+        quant_config: QuantizationConfig containing parameters of how the model should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/common/quantization/quantization_config.py#L163>`_
+        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/keras/default_framework_info.py#L114>`_
+        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+        network_editor: List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
+        gptq_config: Configuration for using gradient-based PTQ (e.g. optimizer).
+        analyze_similarity: Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
+        target_kpi: KPI to constraint the search of the mixed-precision configuration for the model.
 
     Returns:
         A quantized model and information the user may need to handle the quantized model.
@@ -163,7 +161,7 @@ def _init_tensorboard_writer() -> TensorboardWriter:
 def _quantize_model(fw_info: FrameworkInfo,
                     tb_w: TensorboardWriter,
                     tg: Graph,
-                    fw_impl: FrameworkImplementation) -> Tuple[Model, UserInformation]:
+                    fw_impl: FrameworkImplementation) -> Tuple[Any, UserInformation]:
     """
     Quantize graph's weights, and build a quantized Keras model from it.
 
@@ -266,7 +264,7 @@ def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
                                      representative_data_gen: Callable,
                                      tb_w: TensorboardWriter,
                                      tg: Graph,
-                                     fw_impl: FrameworkImplementation) -> Tuple[Model, UserInformation]:
+                                     fw_impl: FrameworkImplementation) -> Tuple[Any, UserInformation]:
     """
     Quantize a graph that has final weights candidates quantization configurations.
     Before we quantize the graph weights, we apply GPTQ to get an improved graph.
@@ -314,7 +312,7 @@ def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
 
 
 
-def _prepare_model_for_quantization(in_model: Model,
+def _prepare_model_for_quantization(in_model: Any,
                                     representative_data_gen: Callable,
                                     network_editor: List[EditRule] = [],
                                     n_iter: int = 500,

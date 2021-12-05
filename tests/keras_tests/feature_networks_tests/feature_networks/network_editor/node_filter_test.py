@@ -14,18 +14,17 @@
 # ==============================================================================
 
 
-from model_compression_toolkit.common.substitutions.matchers.node_matcher import NodeAndMatcher
+from model_compression_toolkit.common.matchers.node_matcher import NodeAndMatcher
 from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
     get_weights_quantization_params_fn
 from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
 import numpy as np
-from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, \
     NodeTypeFilter
 from model_compression_toolkit.common.network_editors.actions import ChangeActivationQuantConfigAttr, \
-    ChangeQuantizationParamFunction, EditRule, ChangeCandidatesWeightsQuantConfigAttr, ChangeFinalWeightsQuantConfigAttr
+    ChangeQuantizationParamFunction, EditRule, ChangeCandidatesWeightsQuantConfigAttr
 
 keras = tf.keras
 layers = keras.layers

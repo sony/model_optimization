@@ -14,7 +14,7 @@
 # ==============================================================================
 
 from typing import Any
-from model_compression_toolkit.common.substitutions.matchers.node_matcher import BaseNodeMatcher
+from model_compression_toolkit.common.matchers.node_matcher import BaseNodeMatcher
 
 class NodeTypeFilter(BaseNodeMatcher):
     """
