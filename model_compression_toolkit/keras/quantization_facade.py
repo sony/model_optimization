@@ -29,7 +29,8 @@ from model_compression_toolkit.common.quantization.quantization_config import DE
 
 import importlib
 
-if importlib.util.find_spec("tensorflow") is not None:
+if importlib.util.find_spec("tensorflow") is not None\
+        and importlib.util.find_spec("tensorflow_model_optimization") is not None:
     from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.keras.keras_implementation import KerasImplementation
     from tensorflow.keras.models import Model
@@ -195,13 +196,15 @@ if importlib.util.find_spec("tensorflow") is not None:
                                           target_kpi)
 
 else:
-    # If tensorflow is not installed, we raise an exception when trying to use
-    # these functions.
+    # If tensorflow or tensorflow_model_optimization are not installed,
+    # we raise an exception when trying to use these functions.
     def keras_post_training_quantization(*args, **kwargs):
-        Logger.critical('Installing Tensorflow is mandatory when using keras_post_training_quantization.'
+        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+                        'when using keras_post_training_quantization. '
                         'Could not find Tensorflow package.')
 
     def keras_post_training_quantization_mixed_precision(*args, **kwargs):
-        Logger.critical('Installing Tensorflow is mandatory when using keras_post_training_quantization_mixed_precision.'
+        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+                        'when using keras_post_training_quantization_mixed_precision. '
                         'Could not find Tensorflow package.')
 
