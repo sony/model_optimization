@@ -34,7 +34,7 @@ jobs:
         run: |
           rm -rf model_compression_toolkit
           pip install mct-nightly
-          pip install tensorflow==2.5.*
+          pip install tensorflow==2.7.*
           pip install tensorflow_model_optimization
       - name: Run tests suite
         run: |
