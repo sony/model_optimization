@@ -33,7 +33,7 @@ jobs:
       - name: Prepare env for test
         run: |
           rm -rf model_compression_toolkit
-          pip install mct-nightly
+          pip install mct-nightly -U
           pip install tensorflow==2.5.*
           pip install tensorflow_model_optimization
       - name: Run tests suite
