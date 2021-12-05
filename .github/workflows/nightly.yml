@@ -23,8 +23,8 @@ jobs:
         run: |
           version=$(python -c 'import model_compression_toolkit; print(model_compression_toolkit.__version__)')
           now=$(date +'%d%m%Y_%H%M%S')
-          version="${version}.${now}"
-          sed -i "s/attr: model_compression_toolkit.__version__/$version/g" setup.cfg
+          echo "nightly_version=$version.$now" >> $GITHUB_ENV
+          sed -i "s/attr: model_compression_toolkit.__version__/${{ env.nightly_version }}/g" setup.cfg
           sed -i "s/name='model_compression_toolkit'/name='mct-nightly'/g" setup.py
           python setup.py sdist bdist_wheel
       - name: Publish nightly
@@ -33,7 +33,7 @@ jobs:
       - name: Prepare env for test
         run: |
           rm -rf model_compression_toolkit
-          pip install mct-nightly -U
+          pip install mct-nightly=="${{ env.nightly_version }}"
           pip install tensorflow==2.5.*
           pip install tensorflow_model_optimization
       - name: Run tests suite
