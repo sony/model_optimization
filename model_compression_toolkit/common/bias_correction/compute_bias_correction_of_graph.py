@@ -12,20 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
 import copy
 from typing import Any
 
 import numpy as np
 
+from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common import Node, Logger, Graph
 from model_compression_toolkit.common.quantization.quantize_node import get_quantized_kernel_by_weights_qc
 from model_compression_toolkit.common.statistics_collector import BaseStatsContainer
-from model_compression_toolkit.keras.constants import KERNEL
 
 
 def compute_bias_correction_of_graph(graph_co_compute_bias: Graph,
-                                     fw_info: FrameworkInfo) -> Graph:
+                                     fw_info: FrameworkInfo,
+                                     fw_impl: FrameworkImplementation) -> Graph:
     """
     For each node in a graph, and for each candidate weights quantization configuration,
     compute the bias-correction term, and store it in the candidate weights quantization configuration.
@@ -34,6 +36,7 @@ def compute_bias_correction_of_graph(graph_co_compute_bias: Graph,
         graph_co_compute_bias: Graph with nodes to compute the bias correction for
         each node's weights quantization configuration candidates.
         fw_info: Framework info like lists of nodes their kernel should quantized.
+        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
     Returns:
         Graph with bias correction for each weights quantization configuration candidate
@@ -43,13 +46,17 @@ def compute_bias_correction_of_graph(graph_co_compute_bias: Graph,
     graph = copy.deepcopy(graph_co_compute_bias)
     for n in graph.nodes:
         if fw_info.in_kernel_ops(n):
-            _compute_bias_correction_per_candidate_qc(n, fw_info, graph.get_in_stats_collector(n))
+            _compute_bias_correction_per_candidate_qc(n,
+                                                      fw_info,
+                                                      graph.get_in_stats_collector(n),
+                                                      fw_impl=fw_impl)
     return graph
 
 
 def _compute_bias_correction_per_candidate_qc(node: Node,
                                               fw_info: FrameworkInfo,
-                                              node_in_stats_collector: BaseStatsContainer):
+                                              node_in_stats_collector: BaseStatsContainer,
+                                              fw_impl: FrameworkImplementation):
     """
     For each candidate weights quantization configuration of a given node,
     compute the bias-correction term, and store it in the candidate weights quantization configuration.
@@ -58,6 +65,7 @@ def _compute_bias_correction_per_candidate_qc(node: Node,
         node: Node to compute the bias correction for its different candidates.
         fw_info: Framework info like lists of nodes their kernel should quantized.
         node_in_stats_collector: Statistics collector of the node for the mean per-channel.
+        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
     """
 
@@ -66,7 +74,8 @@ def _compute_bias_correction_per_candidate_qc(node: Node,
             if fw_info.in_kernel_ops(node) and weights_qc.enable_weights_quantization:
                 quantized_kernel, io_channels_axes = get_quantized_kernel_by_weights_qc(fw_info,
                                                                                         node,
-                                                                                        weights_qc)
+                                                                                        weights_qc,
+                                                                                        fw_impl=fw_impl)
 
                 # If a kernel was quantized and weights bias correction is enabled in n.quantization_cfg,
                 # a bias correction term is being calculated and used in the node's bias term.
@@ -75,7 +84,8 @@ def _compute_bias_correction_per_candidate_qc(node: Node,
                                                                              node,
                                                                              node_in_stats_collector,
                                                                              io_channels_axes[1],
-                                                                             quantized_kernel)
+                                                                             quantized_kernel,
+                                                                             fw_impl=fw_impl)
 
                     # Store the correction term to use it later,
                     weights_qc.bias_corrected = bias_correction_term
@@ -125,7 +135,8 @@ def _get_bias_correction_term_of_node(input_channels_axis: int,
                                       n: Node,
                                       node_in_stats_collector: BaseStatsContainer,
                                       output_channels_axis: int,
-                                      quantized_kernel: np.ndarray):
+                                      quantized_kernel: np.ndarray,
+                                      fw_impl: FrameworkImplementation):
     """
     Get the bias correction term for a node, using a quantized kernel (which can be quantized
     using any possible bit width)
@@ -136,6 +147,8 @@ def _get_bias_correction_term_of_node(input_channels_axis: int,
         node_in_stats_collector: Input statistics collector of the node.
         output_channels_axis: Index of output channels of the kernel.
         quantized_kernel: Quantized kernel of the node.
+        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+
 
     Returns:
         Bias-correction term to subtract from the current node's bias.
@@ -150,7 +163,7 @@ def _get_bias_correction_term_of_node(input_channels_axis: int,
             f'Unknown input channel axis for node named: {n.name},'
             f' please update channel mapping function')
     # Compute the bias correction term.
-    correction = _compute_bias_correction(n.get_weights_by_keys(KERNEL),
+    correction = _compute_bias_correction(n.get_weights_by_keys(fw_impl.constants.KERNEL),
                                           quantized_kernel,
                                           node_in_stats_collector,
                                           output_channels_axis,

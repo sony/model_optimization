@@ -13,8 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.keras.quantization_facade import keras_post_training_quantization, keras_post_training_quantization_mixed_precision
-from model_compression_toolkit.keras.gradient_ptq.training_wrapper import GradientPTQConfig
+
+from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
 from model_compression_toolkit.common.quantization import quantization_config
 from model_compression_toolkit.common.mixed_precision import mixed_precision_quantization_config
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig, \
@@ -26,5 +26,9 @@ from model_compression_toolkit.common.data_loader import FolderImageLoader
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.common import network_editors as network_editor
+
+from model_compression_toolkit.keras.quantization_facade import keras_post_training_quantization, \
+    keras_post_training_quantization_mixed_precision
+
 
 __version__ = "1.1.0"

@@ -18,10 +18,10 @@
 import unittest
 
 #  ----------------  Individual test suites
-from tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
-from tests.function_tests.test_histogram_collector import TestHistogramCollector
-from tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
-from tests.function_tests.test_logger import TestLogger
+from tests.common_tests.function_tests.test_histogram_collector import TestHistogramCollector
+from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
+from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
+from tests.common_tests.function_tests.test_logger import TestLogger
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases

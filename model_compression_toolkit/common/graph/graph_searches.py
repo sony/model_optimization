@@ -17,9 +17,7 @@ from abc import ABC
 from typing import List, Any
 
 from model_compression_toolkit.common.graph.node import Node
-from model_compression_toolkit.common.matchers import base_graph_filter
-from model_compression_toolkit.common.matchers import edge_matcher
-from model_compression_toolkit.common.matchers import node_matcher
+from model_compression_toolkit.common.matchers import node_matcher, base_graph_filter, edge_matcher
 from model_compression_toolkit.common.matchers.walk_matcher import WalkMatcherList
 
 

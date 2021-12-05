@@ -20,7 +20,7 @@ from model_compression_toolkit.common.constants import MIN_THRESHOLD
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_search import qparams_selection_tensor_search, qparams_selection_histogram_search
 from model_compression_toolkit.common.similarity_analyzer import compute_lp_norm
 
-from model_compression_toolkit.keras.constants import THRESHOLD
+from model_compression_toolkit.common.constants import THRESHOLD
 
 
 def lp_selection_tensor(tensor_data: np.ndarray,

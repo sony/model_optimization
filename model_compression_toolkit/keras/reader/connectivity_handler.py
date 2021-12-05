@@ -14,21 +14,18 @@
 # ==============================================================================
 
 
-from collections import namedtuple
-
 import tensorflow as tf
 from tensorflow.python.keras.engine.node import Node as KerasNode
 from tensorflow.python.util.object_identity import Reference as TFReference
 from typing import List, Tuple
 
+from model_compression_toolkit.common.graph.base_graph import OutTensor
 from model_compression_toolkit.common.graph.node import Node
 from model_compression_toolkit.keras.reader.common import is_node_an_input_layer
 from model_compression_toolkit.keras.reader.node_builder import build_node
 
 keras = tf.keras
 layers = keras.layers
-
-OutTensor = namedtuple('OutTensor', 'node node_out_index')
 
 
 class ConnectivityHandler(object):

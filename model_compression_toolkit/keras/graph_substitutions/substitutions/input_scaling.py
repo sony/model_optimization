@@ -47,8 +47,6 @@ class BaseInputScaling(common.BaseSubstitution):
     """
 
     def __init__(self,
-                 quantization_config: QuantizationConfig,
-                 fw_info: FrameworkInfo,
                  matcher_instance):
         """
         Matches: InputLayer -> (optional nodes) -> (Dense,Conv2D,DepthwiseConv2D,Conv2DTranspose)
@@ -57,16 +55,9 @@ class BaseInputScaling(common.BaseSubstitution):
         Create a substitution using different params which may affect the way this substitution is made.
         The substitution is looking for edges in the graph which are input layers connected to linear layers.
         Args:
-            quantization_config: QuantizationConfig containing parameters of how the model should be quantized.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-            groups of layers by how they should be quantized, etc.)
             matcher_instance: matcher instance of type WalkMatcher
 
         """
-
-        self.fw_info = fw_info
-        self.qc = quantization_config
-
         super().__init__(matcher_instance=matcher_instance)
 
     def substitute(self,
@@ -89,6 +80,7 @@ class BaseInputScaling(common.BaseSubstitution):
         linear_layer = nodes_list[-1]
 
         threshold = input_layer.activation_quantization_cfg.activation_quantization_params.get(THRESHOLD)
+
         if threshold is None:
             return graph
 
@@ -102,7 +94,7 @@ class BaseInputScaling(common.BaseSubstitution):
             w1_fixed = linear_layer.get_weights_by_keys(KERNEL) * scale_factor
             linear_layer.set_weights_by_keys(KERNEL, w1_fixed)
 
-            graph.scale_stats_collector(input_layer, 1/scale_factor)
+            graph.scale_stats_collector(input_layer, 1 / scale_factor)
 
             # After scaling weights may have different thresholds so it needs to be recalculated
             for nqc in linear_layer.candidates_weights_quantization_cfg:
@@ -116,18 +108,12 @@ class InputScaling(BaseInputScaling):
     Substitution extends BaseInputScaling to the case of Input-->Linear
     """
 
-    def __init__(self,
-                 quant_config: QuantizationConfig,
-                 fw_info: FrameworkInfo):
+    def __init__(self):
         """
         Initialize a ScaleEqualization object.
-        Args:
-            quant_config: QuantizationConfig containing parameters of how the model should be quantized.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-            groups of layers by how they should be quantized, etc.)
         """
 
-        super().__init__(quantization_config=quant_config, fw_info=fw_info, matcher_instance=INPUT_MATCHER)
+        super().__init__(matcher_instance=INPUT_MATCHER)
 
 
 class InputScalingWithPad(BaseInputScaling):
@@ -135,15 +121,9 @@ class InputScalingWithPad(BaseInputScaling):
     Substitution extends BaseInputScaling to the case of Input-->ZeroPadding-->Linear
     """
 
-    def __init__(self,
-                 quant_config: QuantizationConfig,
-                 fw_info: FrameworkInfo):
+    def __init__(self):
         """
         Initialize a ScaleEqualization object.
-        Args:
-            quant_config: QuantizationConfig containing parameters of how the model should be quantized.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-            groups of layers by how they should be quantized, etc.)
         """
 
-        super().__init__(quantization_config=quant_config, fw_info=fw_info, matcher_instance=INPUT_MATCHER_WITH_PAD)
+        super().__init__(matcher_instance=INPUT_MATCHER_WITH_PAD)

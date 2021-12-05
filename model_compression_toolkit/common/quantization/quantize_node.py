@@ -18,17 +18,18 @@ import copy
 
 from model_compression_toolkit import common
 from model_compression_toolkit.common import Logger
+from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.graph.node import Node
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_weights_computation import \
     get_channels_axis
-from model_compression_toolkit.keras.constants import KERNEL
 
 
 def get_quantized_kernel_by_weights_qc(fw_info:FrameworkInfo,
                                        n:Node,
-                                       weights_qc: NodeWeightsQuantizationConfig):
+                                       weights_qc: NodeWeightsQuantizationConfig,
+                                       fw_impl: FrameworkImplementation):
     """
     For a node and a weights quantization configuration, compute
     the quantized kernel of the node and return it and the input/output channels indices.
@@ -37,6 +38,7 @@ def get_quantized_kernel_by_weights_qc(fw_info:FrameworkInfo,
         fw_info: A FrameworkInfo object Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).
         n: Node to quantize its kernel.
         weights_qc: Weight quantization configuration to use for the quantization.
+        fw_impl: FrameworkImplementation with specific framework implementations.
 
     Returns:
         A quantized kernel of the node using a weights quantization configuration.
@@ -53,7 +55,7 @@ def get_quantized_kernel_by_weights_qc(fw_info:FrameworkInfo,
                                                                   n.layer_class)
 
     Logger.debug(f'quantizing {n.name} with {weights_qc.weights_n_bits} bits')
-    quantized_kernel = weights_qc.weights_quantization_fn(n.get_weights_by_keys(KERNEL),
+    quantized_kernel = weights_qc.weights_quantization_fn(n.get_weights_by_keys(fw_impl.constants.KERNEL),
                                                           n_bits=weights_qc.weights_n_bits,
                                                           signed=True,
                                                           quantization_params=weights_qc.weights_quantization_params,

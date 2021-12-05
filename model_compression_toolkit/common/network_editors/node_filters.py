@@ -16,7 +16,6 @@
 from typing import Any
 from model_compression_toolkit.common.matchers.node_matcher import BaseNodeMatcher
 
-
 class NodeTypeFilter(BaseNodeMatcher):
     """
     Class NodeNameFilter to check if a node is of a specific type.

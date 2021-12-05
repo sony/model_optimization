@@ -13,5 +13,3 @@
 # limitations under the License.
 # ==============================================================================
 
-
-from model_compression_toolkit.keras import quantizer

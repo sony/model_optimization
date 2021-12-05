@@ -20,7 +20,6 @@ from typing import Any
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.matchers.base_matcher import BaseMatcher
 
-
 class BaseSubstitution(ABC):
     """
     Base class for all substitution classes.
