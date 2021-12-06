@@ -17,132 +17,150 @@ from typing import Any
 
 import numpy as np
 
+
 #########################
 #  Helpful functions
 #########################
 
 
-def validate_before_compute_similarity(a: Any, b: Any):
+def validate_before_compute_similarity(float_tensor: Any, fxp_tensor: Any):
     """
     Assert different conditions before comparing two tensors (such as dimensionality and type).
     Args:
-        a: First tensor to validate.
-        b: Second tensor to validate.
+        float_tensor: First tensor to validate.
+        fxp_tensor: Second tensor to validate.
 
     """
-    assert isinstance(a, np.ndarray)
-    assert isinstance(b, np.ndarray)
-    assert a.shape == b.shape
+    assert isinstance(float_tensor, np.ndarray)
+    assert isinstance(fxp_tensor, np.ndarray)
+    assert float_tensor.shape == fxp_tensor.shape
 
 
-def tensor_norm(x: np.ndarray) -> np.float:
+def tensor_norm(x: np.ndarray, p: float = 2.0) -> np.float:
     """
-    Compute the L2-norm of a tensor x.
+    Compute the Lp-norm of a tensor x.
     Args:
         x: Tensor to compute its norm
+        p: P to use for the Lp norm computation
 
     Returns:
-        L2 norm of x.
+        Lp norm of x.
     """
-    return np.sqrt(np.power(x.flatten(), 2.0).sum())
+    return np.power(np.power(np.abs(x.flatten()), p).sum(), 1.0/p)
 
 
 #########################
 # Similarity functions
 #########################
 
-
-def compute_mse(a: np.ndarray, b: np.ndarray) -> float:
+def compute_mse(float_tensor: np.ndarray, fxp_tensor: np.ndarray) -> float:
     """
     Compute the mean square error between two numpy arrays.
 
     Args:
-        a: First tensor to compare.
-        b: Second tensor to compare.
+        float_tensor: First tensor to compare.
+        fxp_tensor: Second tensor to compare.
 
     Returns:
         The MSE distance between the two tensors.
     """
-    validate_before_compute_similarity(a, b)
-    return np.power(a - b, 2.0).mean()
+    validate_before_compute_similarity(float_tensor, fxp_tensor)
+    return np.power(float_tensor - fxp_tensor, 2.0).mean()
 
 
-def compute_nmse(a: np.ndarray, b: np.ndarray) -> float:
+def compute_nmse(float_tensor: np.ndarray, fxp_tensor: np.ndarray) -> float:
     """
     Compute the normalized mean square error between two numpy arrays.
 
     Args:
-        a: First tensor to compare.
-        b: Second tensor to compare.
+        float_tensor: First tensor to compare.
+        fxp_tensor: Second tensor to compare.
 
     Returns:
         The NMSE distance between the two tensors.
     """
-    validate_before_compute_similarity(a, b)
-    return np.power(a - b, 2.0).mean() / np.power(tensor_norm(a - a.mean()), 2.0)
+    validate_before_compute_similarity(float_tensor, fxp_tensor)
+    normalized_float_tensor = float_tensor / tensor_norm(float_tensor)
+    normalized_fxp_tensor = fxp_tensor / tensor_norm(fxp_tensor)
+    return np.mean(np.power(normalized_float_tensor - normalized_fxp_tensor, 2.0))
 
 
-def compute_mae(a: np.ndarray, b: np.ndarray) -> float:
+def compute_nmae(float_tensor: np.ndarray, fxp_tensor: np.ndarray) -> float:
+    """
+    Compute the normalized mean average error between two numpy arrays.
+
+    Args:
+        float_tensor: First tensor to compare.
+        fxp_tensor: Second tensor to compare.
+
+    Returns:
+        The NMAE distance between the two tensors.
+    """
+    validate_before_compute_similarity(float_tensor, fxp_tensor)
+    normalized_float_tensor = float_tensor / tensor_norm(float_tensor, 1.0)
+    normalized_fxp_tensor = fxp_tensor / tensor_norm(fxp_tensor, 1.0)
+    return np.mean(np.abs(normalized_float_tensor - normalized_fxp_tensor))
+
+
+def compute_mae(float_tensor: np.ndarray, fxp_tensor: np.ndarray) -> float:
     """
     Compute the mean average error function between two numpy arrays.
 
     Args:
-        a: First tensor to compare.
-        b: Second tensor to compare.
+        float_tensor: First tensor to compare.
+        fxp_tensor: Second tensor to compare.
 
     Returns:
         The mean average distance between the two tensors.
     """
 
-    validate_before_compute_similarity(a, b)
-    return np.abs(a - b).mean()
+    validate_before_compute_similarity(float_tensor, fxp_tensor)
+    return np.abs(float_tensor - fxp_tensor).mean()
 
 
-def compute_cs(a: np.ndarray, b: np.ndarray, eps: float = 1e-8) -> float:
+def compute_cs(float_tensor: np.ndarray, fxp_tensor: np.ndarray, eps: float = 1e-8) -> float:
     """
     Compute the similarity between two tensor using cosine similarity.
     The returned values is between 0 to 1: the smaller returned value,
     the greater similarity there is between the two tensors.
 
     Args:
-        a: First tensor to compare.
-        b: Second tensor to compare.
+        float_tensor: First tensor to compare.
+        fxp_tensor: Second tensor to compare.
         eps: Small value to avoid zero division.
 
     Returns:
         The cosine similarity between two tensors.
     """
 
-    validate_before_compute_similarity(a, b)
-    if np.all(b == 0) and np.all(a == 0):
+    validate_before_compute_similarity(float_tensor, fxp_tensor)
+    if np.all(fxp_tensor == 0) and np.all(float_tensor == 0):
         return 1.0
 
-    a_flat = a.flatten()
-    b_flat = b.flatten()
-    a_norm = tensor_norm(a)
-    b_norm = tensor_norm(b)
+    float_flat = float_tensor.flatten()
+    fxp_flat = fxp_tensor.flatten()
+    float_norm = tensor_norm(float_tensor)
+    fxp_norm = tensor_norm(fxp_tensor)
 
     # -1 <= cs <= 1
-    cs = np.sum(a_flat * b_flat) / ((a_norm * b_norm) + eps)
+    cs = np.sum(float_flat * fxp_flat) / ((float_norm * fxp_norm) + eps)
 
     # Return a non-negative float (smaller value -> more similarity)
-    return (1.0-cs)/2.0
+    return (1.0 - cs) / 2.0
 
 
-def compute_lp_norm(a: np.ndarray, b: np.ndarray, p: int) -> float:
+def compute_lp_norm(float_tensor: np.ndarray, fxp_tensor: np.ndarray, p: int) -> float:
     """
     Compute the error function between two numpy arrays.
     The error is computed based on Lp-norm distance of the tensors.
 
     Args:
-        a: First tensor to compare.
-        b: Second tensor to compare.
+        float_tensor: First tensor to compare.
+        fxp_tensor: Second tensor to compare.
         p: p-norm to use for the Lp-norm distance.
 
     Returns:
         The Lp-norm distance between the two tensors.
     """
-    validate_before_compute_similarity(a, b)
-    return np.power(np.abs(a - b), p).mean()
-
-
+    validate_before_compute_similarity(float_tensor, fxp_tensor)
+    return np.power(np.abs(float_tensor - fxp_tensor), p).mean()
