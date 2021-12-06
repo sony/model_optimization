@@ -70,6 +70,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
     def test_search_engine(self):
         qc = DEFAULT_MIXEDPRECISION_CONFIG
+        qc.weights_n_bits = [8]
         fw_info = DEFAULT_KERAS_INFO
         in_model = MobileNetV2()
         keras_impl = KerasImplementation()
@@ -84,7 +85,8 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         graph = set_quantization_configuration_to_graph(graph, qc, fw_info)
         calculate_quantization_params(graph,
-                                      fw_info)
+                                      fw_info,
+                                      fw_impl=keras_impl)
         keras_sens_eval = partial(keras_impl.get_sensitivity_evaluation_fn,
                                   representative_data_gen=lambda: [np.random.random((1, 224, 224, 3))],
                                   fw_info=fw_info)
