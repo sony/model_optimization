@@ -15,11 +15,11 @@
 import numpy as np
 from typing import Tuple, Dict
 
-from model_compression_toolkit.common import Node, Graph
+from model_compression_toolkit.common import BaseNode, Graph
 from model_compression_toolkit.common.quantization import quantization_params_generation
 
 
-def get_activations_qparams(n: Node,
+def get_activations_qparams(n: BaseNode,
                             graph: Graph) -> Tuple[Dict[str, float], bool]:
     """
     Compute the activations params for a given node in a graph according to a params function.

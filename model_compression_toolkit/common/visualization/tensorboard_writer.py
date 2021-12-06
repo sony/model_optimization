@@ -31,7 +31,7 @@ from tensorboard.compat.proto.tensor_shape_pb2 import TensorShapeProto
 from tensorboard.summary.writer.event_file_writer import EventFileWriter
 from typing import List, Any, Dict, Callable
 
-from model_compression_toolkit.common import Graph, Node
+from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.statistics_collector import BaseStatsContainer
 
 DEVICE_STEP_STATS = "/device:CPU:0"
@@ -186,7 +186,7 @@ class TensorboardWriter(object):
 
         """
 
-        def __get_node_attr(n: Node) -> Dict[str, Any]:
+        def __get_node_attr(n: BaseNode) -> Dict[str, Any]:
             """
             Create a dictionary to display as the node's attributes.
             The dictionary contains information from node's framework attributes, quantization attributes
@@ -213,7 +213,7 @@ class TensorboardWriter(object):
                 attr.update(n.activation_quantization_cfg.__dict__)
             return attr
 
-        def __get_node_output_dims(n: Node) -> List[tuple]:
+        def __get_node_output_dims(n: BaseNode) -> List[tuple]:
             """
             Get node's output shapes. If the first dimension in an output shape is None,
             it means the batch size is dynamic, and it's replaced with -1 to mark it.
@@ -237,7 +237,7 @@ class TensorboardWriter(object):
                 dims = [(-1,) + output_shape[1:] if output_shape[0] is None else output_shape]
             return dims
 
-        def __create_node_stats(n: Node):
+        def __create_node_stats(n: BaseNode):
             """
             Create a NodeExecStats for a node in the graph. A NodeExecStats contains the
             memory and compute time a node requires.

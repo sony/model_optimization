@@ -16,9 +16,11 @@
 
 from collections import Callable
 from typing import Dict, Any, List
+
+from model_compression_toolkit.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationMethod
 from model_compression_toolkit.common.defaultdict import DefaultDict
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 
 
 class FrameworkInfo(object):
@@ -99,6 +101,7 @@ class FrameworkInfo(object):
         self.layer_min_max_mapping = layer_min_max_mapping
         self.kernel_ops_attributes_mapping = kernel_ops_attributes_mapping
 
+
     def get_kernel_op_attributes(self, layer_class: Any) -> List[str]:
         """
         Get a list of attributes of a layer's weights to quantize.
@@ -124,7 +127,7 @@ class FrameworkInfo(object):
 
         return layer in self.layer_min_max_mapping
 
-    def in_kernel_ops(self, n: Node) -> bool:
+    def in_kernel_ops(self, n: BaseNode) -> bool:
         """
         Check whether a node is in the kernel_ops group or not.
 
@@ -137,7 +140,7 @@ class FrameworkInfo(object):
 
         return n.layer_class in self.kernel_ops
 
-    def in_activation_ops(self, n: Node) -> bool:
+    def in_activation_ops(self, n: BaseNode) -> bool:
         """
         Check whether a node is in the activation group or not.
 
@@ -147,10 +150,11 @@ class FrameworkInfo(object):
         Returns:
             Whether the node is in the activation group or not.
         """
-
+        if isinstance(n, FunctionalNode):
+            return n.functional_op in self.activation_ops
         return n.layer_class in self.activation_ops
 
-    def in_no_quantization_ops(self, n: Node) -> bool:
+    def in_no_quantization_ops(self, n: BaseNode) -> bool:
         """
         Check whether a node is in the no quantization group or not.
 
@@ -160,5 +164,6 @@ class FrameworkInfo(object):
         Returns:
             Whether the node is in the no quantization group or not.
         """
-
+        if isinstance(n, FunctionalNode):
+            return n.functional_op in self.no_quantization_ops
         return n.layer_class in self.no_quantization_ops

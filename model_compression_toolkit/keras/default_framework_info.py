@@ -14,6 +14,7 @@
 # ==============================================================================
 
 
+import tensorflow as tf
 from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
     MaxPooling2D, Activation, ReLU, GlobalAveragePooling2D, Add, Multiply, AveragePooling2D, UpSampling2D, InputLayer, \
     Concatenate, Softmax, PReLU, Flatten, Cropping2D
@@ -45,7 +46,8 @@ NO_QUANTIZATION = [Reshape,
                    Cropping2D,
                    ZeroPadding2D,
                    Dropout,
-                   MaxPooling2D] # TODO:  replace with marking
+                   MaxPooling2D,
+                   tf.split]  # TODO:  replace with marking
 
 ACTIVATION = [Activation,
               ReLU,
@@ -57,7 +59,19 @@ ACTIVATION = [Activation,
               UpSampling2D,
               InputLayer,
               Concatenate,
-              PReLU]
+              PReLU,
+              tf.add,
+              tf.multiply,
+              tf.reduce_mean,
+              tf.reduce_min,
+              tf.reduce_sum,
+              tf.reduce_max,
+              tf.image.resize,
+              tf.image.crop_and_resize,
+              tf.concat]
+
+
+
 
 """
 Map each layer to a list of its' weights attributes that should get quantized.

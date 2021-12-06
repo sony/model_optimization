@@ -29,6 +29,12 @@ from tests.keras_tests.feature_networks_tests.feature_networks.input_scaling_tes
 from tests.keras_tests.feature_networks_tests.feature_networks.bn_folding_test import Conv2DBNFoldingTest, \
     DepthwiseConv2DBNFoldingTest, DepthwiseConv2DBNFoldingHighMultiplierTest, Conv2DTransposeBNFoldingTest, \
     Conv2DBNConcatnFoldingTest, SeparableConv2DBNFoldingTest
+from tests.keras_tests.feature_networks_tests.feature_networks.native_add_test import NativeAddTest
+from tests.keras_tests.feature_networks_tests.feature_networks.native_concat_test import NativeConcateTest
+from tests.keras_tests.feature_networks_tests.feature_networks.native_mul_test import NativeMulTest
+from tests.keras_tests.feature_networks_tests.feature_networks.native_reduce_ops_test import NativeReduceOpsTest
+from tests.keras_tests.feature_networks_tests.feature_networks.native_resize_bilinear_test import \
+    NativeResizeBilinearTest
 from tests.keras_tests.feature_networks_tests.feature_networks.remove_upper_bound_test import RemoveUpperBoundTest
 from tests.keras_tests.feature_networks_tests.feature_networks.reused_layer_mixed_precision_test import \
     ReusedLayerMixedPrecisionTest, ReusedSeparableMixedPrecisionTest
@@ -46,8 +52,10 @@ from tests.keras_tests.feature_networks_tests.feature_networks.nested_networks.n
     NestedModelUnusedInputsOutputsTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multiple_output_nodes_multiple_tensors_test import \
     MultipleOutputNodesMultipleTensors
+from tests.keras_tests.feature_networks_tests.feature_networks.slicing_op_lambda_test import SlicingOpLambdaTest
 from tests.keras_tests.feature_networks_tests.feature_networks.split_concatenate_test import SplitConcatenateTest
 from tests.keras_tests.feature_networks_tests.feature_networks.conv_bn_relu_residual_test import ConvBnReluResidualTest
+from tests.keras_tests.feature_networks_tests.feature_networks.split_conv_bug_test import SplitConvBugTest
 from tests.keras_tests.feature_networks_tests.feature_networks.tanh_activation_test import TanhActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.output_in_middle_test import OutputInMiddleTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multiple_inputs_model_test import MultipleInputsModelTest
@@ -60,6 +68,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.split_test import
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.node_filter_test import NameFilterTest, \
     ScopeFilterTest, TypeFilterTest
 import tensorflow as tf
+
+from tests.keras_tests.feature_networks_tests.native_split_test import NativeSplitTest
 
 layers = tf.keras.layers
 
@@ -286,6 +296,40 @@ class FeatureNetworkTest(unittest.TestCase):
         GradientPTQTest(self).run_test()
         GradientPTQWeightsUpdateTest(self).run_test()
         GradientPTQLearnRateZeroTest(self).run_test()
+
+    def test_native_add(self):
+        NativeAddTest(self).run_test()
+
+    def test_native_mul(self):
+        NativeMulTest(self).run_test()
+
+    def test_native_concat(self):
+        NativeConcateTest(self).run_test()
+
+    def test_native_resize(self):
+        NativeResizeBilinearTest(self).run_test()
+
+    def test_slicing_op_lambda(self):
+        SlicingOpLambdaTest(self).run_test()
+
+    def test_native_reduce_ops(self):
+        NativeReduceOpsTest(self).run_test()
+
+    def test_native_split(self):
+        NativeSplitTest(self).run_test()
+
+    def test_native_ops(self):
+        NativeResizeBilinearTest(self).run_test()
+        NativeConcateTest(self).run_test()
+        NativeAddTest(self).run_test()
+        NativeMulTest(self).run_test()
+        NativeReduceOpsTest(self).run_test()
+        NativeSplitTest(self).run_test()
+        SplitConvBugTest(self).run_test()
+        SlicingOpLambdaTest(self).run_test()
+
+    def test_split_conv_bug(self):
+        SplitConvBugTest(self).run_test()
 
 
 if __name__ == '__main__':

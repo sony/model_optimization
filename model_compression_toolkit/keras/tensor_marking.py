@@ -18,12 +18,12 @@ from tensorflow.keras.layers import ReLU, Activation
 
 from model_compression_toolkit import common
 from model_compression_toolkit.common import FrameworkInfo
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.common.statistics_collector import BaseStatsContainer
 from model_compression_toolkit.keras.constants import LINEAR, ACTIVATION, RELU_MAX_VALUE, THRESHOLD, NEGATIVE_SLOPE
 
 
-def get_stats_collector_for_activation_op(n: Node,
+def get_stats_collector_for_activation_op(n: BaseNode,
                                           fw_info: FrameworkInfo) -> common.StatsContainer:
     """
     Create and initial a statistics collector for an activation layer. If the activation function's min/max
@@ -58,7 +58,7 @@ def get_stats_collector_for_activation_op(n: Node,
     return common.StatsContainer()
 
 
-def get_stats_collector_for_kernel_op(n: common.Node,
+def get_stats_collector_for_kernel_op(n: common.BaseNode,
                                       fw_info: FrameworkInfo) -> BaseStatsContainer:
     """
     Create and initial a statistics collector for a linear operator. If the layer has an activation function and
@@ -88,7 +88,7 @@ def get_stats_collector_for_kernel_op(n: common.Node,
     return common.StatsContainer()
 
 
-def get_node_stats_collector(node: common.Node,
+def get_node_stats_collector(node: common.BaseNode,
                              fw_info: common.FrameworkInfo) -> common.statistics_collector.BaseStatsContainer:
     """
     Gets a node and a groups list and create and return a statistics collector for the node

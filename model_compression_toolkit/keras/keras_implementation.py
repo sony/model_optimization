@@ -6,7 +6,7 @@ from tensorflow.keras.models import Model
 
 from model_compression_toolkit import QuantizationConfig, FrameworkInfo, common, GradientPTQConfig, \
     MixedPrecisionQuantizationConfig
-from model_compression_toolkit.common import Graph, Node
+from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.user_info import UserInformation
@@ -118,7 +118,7 @@ class KerasImplementation(FrameworkImplementation):
                                                qc,
                                                fw_info)
 
-    def attach_sc_to_node(self, node: Node,
+    def attach_sc_to_node(self, node: BaseNode,
                           fw_info: FrameworkInfo) -> common.statistics_collector.BaseStatsContainer:
         """
         Return a statistics collector that should be attached to a node's output

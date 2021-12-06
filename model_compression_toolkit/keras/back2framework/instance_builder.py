@@ -21,7 +21,7 @@ from networkx.algorithms.dag import topological_sort
 
 from tensorflow.keras.layers import Layer
 from model_compression_toolkit import common
-from model_compression_toolkit.common import Graph, Node
+from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.keras.constants import LAYER_NAME
 
 
@@ -35,7 +35,7 @@ class OperationHandler(object):
         self.node_to_fw_op_dict = instance_builder(self.node_sort)  # hold dictionary from node to its equivalent
         # Keras layer
 
-    def get_node_op_function(self, n: Node) -> Layer:
+    def get_node_op_function(self, n: BaseNode) -> Layer:
         """
         Get the Keras layer that was built from the passed node.
 
@@ -58,7 +58,7 @@ class OperationHandler(object):
         return op_func
 
 
-def node_builder(n: common.Node) -> Layer:
+def node_builder(n: common.BaseNode) -> Layer:
     """
     Build a Keras layer from a node.
 
@@ -78,7 +78,7 @@ def node_builder(n: common.Node) -> Layer:
     return node_instance
 
 
-def instance_builder(toposort: List[Node]) -> Dict[Node, Layer]:
+def instance_builder(toposort: List[BaseNode]) -> Dict[BaseNode, Layer]:
     """
     Build a dictionary of nodes to their corresponding Keras
     layers, given a list of nodes.

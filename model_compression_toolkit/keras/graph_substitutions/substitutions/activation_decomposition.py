@@ -21,7 +21,7 @@ from model_compression_toolkit.common.constants import FLOAT_32, DATA_TYPE
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, \
     NodeFrameworkAttrMatcher
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.keras.constants import LINEAR, ACTIVATION, TRAINABLE, LAYER_NAME
 
 
@@ -49,7 +49,7 @@ class ActivationDecomposition(common.BaseSubstitution):
 
     def substitute(self,
                    graph: Graph,
-                   op2d_node: Node) -> Graph:
+                   op2d_node: BaseNode) -> Graph:
         """
         Decompose the activation function in a linear node to a new activation layer.
         Set activation function in the linear node to 'linear' (y=x).
@@ -70,12 +70,12 @@ class ActivationDecomposition(common.BaseSubstitution):
             DATA_TYPE: FLOAT_32,
             ACTIVATION: op2d_node.framework_attr.get(ACTIVATION)}
 
-        activation_node = common.graph.Node(activation_node_name,
-                                            activation_fw_attr,
-                                            op2d_node.output_shape,
-                                            op2d_node.output_shape,
-                                            {},
-                                            Activation)
+        activation_node = common.graph.BaseNode(activation_node_name,
+                                                activation_fw_attr,
+                                                op2d_node.output_shape,
+                                                op2d_node.output_shape,
+                                                {},
+                                                Activation)
 
         graph.add_node(activation_node)
         graph.reconnect_out_edges(current_node=op2d_node,

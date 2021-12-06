@@ -24,7 +24,7 @@ from model_compression_toolkit import common
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.graph.graph_matchers import EdgeMatcher, NodeOperationMatcher, \
     NodeFrameworkAttrMatcher
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.keras.constants import KERNEL, BIAS, USE_BIAS, LINEAR, ACTIVATION, LAYER_NAME, \
     GAMMA, BETA, EPSILON, \
     MOVING_MEAN, \
@@ -51,7 +51,7 @@ class BatchNormalizationFolding(common.BaseSubstitution):
 
     def substitute(self,
                    graph: Graph,
-                   edge_nodes: Tuple[Node, Node]) -> Graph:
+                   edge_nodes: Tuple[BaseNode, BaseNode]) -> Graph:
         """
         Fold BatchNormalization into preceding linear layers.
 

@@ -16,7 +16,7 @@ import copy
 
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.framework_info import FrameworkInfo
-from model_compression_toolkit.common import Graph, Node
+from model_compression_toolkit.common import Graph, BaseNode
 
 def apply_bias_correction_to_graph(graph_to_apply_bias_correction: Graph,
                                    fw_info: FrameworkInfo,
@@ -44,7 +44,7 @@ def apply_bias_correction_to_graph(graph_to_apply_bias_correction: Graph,
     return graph
 
 
-def _apply_bias_correction_to_node(node:Node,
+def _apply_bias_correction_to_node(node:BaseNode,
                                    fw_impl: FrameworkImplementation):
     """
     Set new bias to node using the bias-correction term that is stored in the

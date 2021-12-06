@@ -30,7 +30,7 @@ from model_compression_toolkit.common.framework_info import FrameworkInfo
 MAX_LSBS_CHANGE = 8
 
 
-def quantization_config_builder_gptq(n: common.Node,
+def quantization_config_builder_gptq(n: common.BaseNode,
                                      fw_info: FrameworkInfo) -> QuantizeConfig:
     """
     Build a QuantizeConfig for a node according to its quantization configuration and

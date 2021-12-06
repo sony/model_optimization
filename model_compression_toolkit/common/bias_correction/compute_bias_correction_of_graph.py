@@ -20,7 +20,7 @@ import numpy as np
 
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.framework_info import FrameworkInfo
-from model_compression_toolkit.common import Node, Logger, Graph
+from model_compression_toolkit.common import BaseNode, Logger, Graph
 from model_compression_toolkit.common.quantization.quantize_node import get_quantized_kernel_by_weights_qc
 from model_compression_toolkit.common.statistics_collector import BaseStatsContainer
 
@@ -53,7 +53,7 @@ def compute_bias_correction_of_graph(graph_co_compute_bias: Graph,
     return graph
 
 
-def _compute_bias_correction_per_candidate_qc(node: Node,
+def _compute_bias_correction_per_candidate_qc(node: BaseNode,
                                               fw_info: FrameworkInfo,
                                               node_in_stats_collector: BaseStatsContainer,
                                               fw_impl: FrameworkImplementation):
@@ -132,7 +132,7 @@ def _compute_bias_correction(kernel: np.ndarray,
 
 
 def _get_bias_correction_term_of_node(input_channels_axis: int,
-                                      n: Node,
+                                      n: BaseNode,
                                       node_in_stats_collector: BaseStatsContainer,
                                       output_channels_axis: int,
                                       quantized_kernel: np.ndarray,

@@ -22,10 +22,10 @@ from model_compression_toolkit.common import Graph
 from model_compression_toolkit.common.similarity_analyzer import compute_cs
 from model_compression_toolkit.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 
 
-def get_compare_points(input_graph: Graph) -> Tuple[List[Node], List[str]]:
+def get_compare_points(input_graph: Graph) -> Tuple[List[BaseNode], List[str]]:
     """
     Create a list of nodes in a graph where we collect their output statistics, and a corresponding list
     of their names for tensors comparison purposes.

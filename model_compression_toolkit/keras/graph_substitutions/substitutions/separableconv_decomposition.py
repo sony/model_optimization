@@ -19,7 +19,7 @@ from tensorflow.keras.layers import SeparableConv2D, Conv2D, DepthwiseConv2D
 from model_compression_toolkit import common
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.keras.constants import KERNEL, DEPTHWISE_KERNEL, BIAS, KERNEL_SIZE, PADDING, \
     STRIDES, USE_BIAS, LINEAR, ACTIVATION, TRAINABLE, FILTERS, PAD_VALID
 
@@ -57,7 +57,7 @@ class SeparableConvDecomposition(common.BaseSubstitution):
 
     def substitute(self,
                    graph: Graph,
-                   separable_node: Node) -> Graph:
+                   separable_node: BaseNode) -> Graph:
         """
         Remove a SeparableConv2D node from the graph, and replace it with two equivalent nodes: DepthwiseConv2D
         and Conv2D. The SeparableConv2D attributes are split to relevant attributes for each node.
@@ -114,28 +114,28 @@ class SeparableConvDecomposition(common.BaseSubstitution):
         dw_node_name = separable_node.name + '_dw' if not separable_node.reuse else '_'.join(separable_node.name.split('_')[:-2]) + '_dw_' + '_'.join(separable_node.name.split('_')[-2:])
 
         # create new nodes
-        dw_node = common.graph.Node(dw_node_name,
-                                    dw_framework_attr,
-                                    separable_node.input_shape,
-                                    dw_output_shape,
-                                    dw_weights_dict,
-                                    dw_layer_class,
-                                    reuse=separable_node.reuse,
-                                    reuse_group=separable_node.reuse_group)
+        dw_node = common.graph.BaseNode(dw_node_name,
+                                        dw_framework_attr,
+                                        separable_node.input_shape,
+                                        dw_output_shape,
+                                        dw_weights_dict,
+                                        dw_layer_class,
+                                        reuse=separable_node.reuse,
+                                        reuse_group=separable_node.reuse_group)
 
         # If the SeparableConv2D is reused, we need to keep the pointwise node as reused as well,
         # so we keep the names convention with adding the suffix of "_reuse_X".
         pw_node_name = separable_node.name + '_pw' if not separable_node.reuse else '_'.join(separable_node.name.split('_')[:-2]) + '_pw_' + '_'.join(separable_node.name.split('_')[-2:])
 
-        pw_node = common.graph.Node(pw_node_name,
-                                    pw_framework_attr,
-                                    pw_input_shape,
-                                    separable_node.output_shape,
-                                    pw_weights_dict,
-                                    pw_layer_class,
-                                    reuse=separable_node.reuse,
-                                    reuse_group=separable_node.reuse_group
-                                    )
+        pw_node = common.graph.BaseNode(pw_node_name,
+                                        pw_framework_attr,
+                                        pw_input_shape,
+                                        separable_node.output_shape,
+                                        pw_weights_dict,
+                                        pw_layer_class,
+                                        reuse=separable_node.reuse,
+                                        reuse_group=separable_node.reuse_group
+                                        )
 
         graph.add_node(dw_node)
         graph.add_node(pw_node)

@@ -17,7 +17,7 @@
 import numpy as np
 from typing import List
 
-from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit import FrameworkInfo, common
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.logger import Logger
@@ -53,15 +53,17 @@ class ModelCollector(object):
 
         for n in self.graph.nodes():
             out_stats_container = self.graph.get_out_stats_collector(n)
-
             if isinstance(out_stats_container, list):  # If layer has multiple outputs
-                mark2fetch = True
-                for sc in out_stats_container:
-                    # Output only if statistics should be gathered
-                    if sc.require_collection() and mark2fetch:
-                        mark2fetch = False
-                        node2fetch.append(n)  # Append node several times (as number of outputs it has)
-                stats_containers_list.append(out_stats_container)
+                # Append nodes to output and track their statistics only if
+                # they actually collect statistics.
+                if len([x for x in out_stats_container if not isinstance(x, common.NoStatsContainer)]) > 0:
+                    mark2fetch = True
+                    for sc in out_stats_container:
+                        # Output only if statistics should be gathered
+                        if sc.require_collection() and mark2fetch:
+                            mark2fetch = False
+                            node2fetch.append(n)  # Append node several times (as number of outputs it has)
+                    stats_containers_list.append(out_stats_container)
 
             else:  # A single output
                 if out_stats_container.require_collection():
@@ -73,8 +75,8 @@ class ModelCollector(object):
         # Build a float model and output all layers' outputs
         # (that should be collected) as the model's outputs
         self.model, _ = self.fw_impl.model_builder(self.graph,
-                                                      mode=ModelBuilderMode.FLOAT,
-                                                      append2output=node2fetch,
+                                                   mode=ModelBuilderMode.FLOAT,
+                                                   append2output=node2fetch,
                                                    fw_info=self.fw_info)
 
     def infer(self, inputs_list: List[np.ndarray]):

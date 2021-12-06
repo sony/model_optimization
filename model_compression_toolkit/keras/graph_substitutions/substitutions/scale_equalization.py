@@ -21,7 +21,7 @@ import numpy as np
 from tensorflow.keras.layers import DepthwiseConv2D, Conv2D, Dense, Conv2DTranspose, Activation, ReLU, ZeroPadding2D
 
 from model_compression_toolkit import common
-from model_compression_toolkit.common import Graph, Node
+from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.constants import OUTPUT_SCALE, THRESHOLD
 from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.common.framework_info import FrameworkInfo
@@ -59,7 +59,7 @@ MATCHER_MID_WITH_PAD = WalkMatcher([op2d_node, mid_activation_nodes, zeropad_nod
 
 
 def scale_reshaping(scale: np.ndarray,
-                    op2d: common.Node,
+                    op2d: common.BaseNode,
                     kernel_channel_mapping: DefaultDict,
                     in_channels: bool = True) -> np.ndarray:
     """
@@ -87,8 +87,8 @@ def scale_reshaping(scale: np.ndarray,
 def update_linear_nodes(graph:Graph,
                         qc: QuantizationConfig,
                         fw_info: FrameworkInfo,
-                        first_op2d_node: Node,
-                        second_op2d_node: Node,
+                        first_op2d_node: BaseNode,
+                        second_op2d_node: BaseNode,
                         scale_factor: np.ndarray):
     """
     Scale the weights of two linear nodes with a scale factor. Each node is scaled in
@@ -132,7 +132,7 @@ def update_linear_nodes(graph:Graph,
 
 
 def calculate_scale_correction(graph: Graph,
-                               activation_node: Node,
+                               activation_node: BaseNode,
                                eps: float = 1e-6) -> tuple:
     """
     Compute a scale factor by the activation node threshold and its outputs statistics in
@@ -172,9 +172,9 @@ def calculate_scale_correction(graph: Graph,
 def scale_equalization_lnl(graph: Graph,
                            qc: QuantizationConfig,
                            fw_info: FrameworkInfo,
-                           first_op2d_node: Node,
-                           n_node: Node,
-                           second_op2d_node: Node):
+                           first_op2d_node: BaseNode,
+                           n_node: BaseNode,
+                           second_op2d_node: BaseNode):
     """
     Compute a scale factor to scale all activation node's outputs such that
     its maximum per-channel is the constrained threshold of the activation node.
@@ -235,7 +235,7 @@ class BaseScaleEqualization(common.BaseSubstitution):
 
     def substitute(self,
                    graph: Graph,
-                   nodes_list: List[Node]) -> Graph:
+                   nodes_list: List[BaseNode]) -> Graph:
         """
         Scale each channel of the weights of two linear nodes,
         in order to use the entire constrained range when activations are quantized.

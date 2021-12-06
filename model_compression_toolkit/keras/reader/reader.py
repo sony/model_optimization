@@ -24,8 +24,8 @@ from typing import List
 
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.graph.edge import Edge
-from model_compression_toolkit.common.graph.node import Node
-from model_compression_toolkit.keras.reader.common import is_node_a_model
+from model_compression_toolkit.common.graph.base_node import BaseNode
+from model_compression_toolkit.keras.reader.common import is_node_a_model, is_node_an_input_layer
 from model_compression_toolkit.keras.reader.connectivity_handler import ConnectivityHandler
 from model_compression_toolkit.keras.reader.nested_model.nested_model_handler import merge_graphs
 
@@ -70,7 +70,6 @@ def build_tensors_list(tensors_list) -> List[TFReference]:
                                                                                      tensor in
                                                                                      tensors_list]
 
-
 def build_connectivity_handler(model: Model) -> ConnectivityHandler:
     """
     Build a connectivity handler containing all information about connections in the model (nodes and
@@ -85,7 +84,8 @@ def build_connectivity_handler(model: Model) -> ConnectivityHandler:
     connectivity_handler = ConnectivityHandler()
     for nodes in model._nodes_by_depth.values():
         for node in nodes:  # nodes_by depth values are lists (each list for a different depth)
-            input_tensors = build_tensors_list(node.input_tensors)  # build input tensors of the node
+            node_inputs = node.input_tensors if is_node_an_input_layer(node) else node.keras_inputs
+            input_tensors = build_tensors_list(node_inputs)  # build input tensors of the node
             output_tensors = build_tensors_list(node.output_tensors)  # build output tensors of the node
             connectivity_handler.add_node(node,
                                           input_tensors,
@@ -143,7 +143,7 @@ def parse_model(model: Model) -> Graph:
 
 
 def flatten_nested_model(outer_graph: Graph,
-                         inner_model_node: Node,
+                         inner_model_node: BaseNode,
                          outer_keras_model: Model):
     """
     Flat a nested model given two graphs: inner and outer models' graphs.

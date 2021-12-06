@@ -16,7 +16,7 @@
 from abc import ABC, abstractmethod
 from collections import namedtuple
 
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
 
@@ -50,7 +50,7 @@ class BaseAction(ABC):
     """
 
     @abstractmethod
-    def apply(self, node: Node, graph, fw_info):
+    def apply(self, node: BaseNode, graph, fw_info):
         """
         Apply an action on the node after matching the node with a node filter.
 
@@ -81,7 +81,7 @@ class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
         """
         self.kwargs = kwargs
 
-    def apply(self, node: Node, graph, fw_info):
+    def apply(self, node: BaseNode, graph, fw_info):
         """
         Change the attribute 'attr_name' in quant_config with 'attr_value'.
 
@@ -113,7 +113,7 @@ class ChangeFinalWeightsQuantConfigAttr(BaseAction):
         """
         self.kwargs = kwargs
 
-    def apply(self, node: Node, graph, fw_info):
+    def apply(self, node: BaseNode, graph, fw_info):
         if node.final_weights_quantization_cfg is not None:
             for attr_name, attr_value in self.kwargs.items():
                 node.final_weights_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
@@ -134,7 +134,7 @@ class ChangeActivationQuantConfigAttr(BaseAction):
         """
         self.kwargs = kwargs
 
-    def apply(self, node: Node, graph, fw_info):
+    def apply(self, node: BaseNode, graph, fw_info):
         """
         Change the attribute 'attr_name' in quant_config with 'attr_value'.
 
@@ -167,7 +167,7 @@ class ChangeQuantizationParamFunction(BaseAction):
         self.activation_quantization_params_fn = activation_quantization_params_fn
         self.weights_quantization_params_fn = weights_quantization_params_fn
 
-    def apply(self, node: Node, graph, fw_info):
+    def apply(self, node: BaseNode, graph, fw_info):
         """
         Change the node's weights/activations quantization params function.
 
@@ -202,7 +202,7 @@ class ChangeActivationQuantizationMethod(BaseAction):
         """
         self.activation_quantization_method = activation_quantization_method
 
-    def apply(self, node: Node, graph, fw_info):
+    def apply(self, node: BaseNode, graph, fw_info):
         """
         Change the node's activations quantization function.
 
@@ -252,7 +252,7 @@ class ChangeFinalWeightsQuantizationMethod(BaseAction):
 
         self.weights_quantization_method = weights_quantization_method
 
-    def apply(self, node: Node, graph, fw_info):
+    def apply(self, node: BaseNode, graph, fw_info):
         """
         Change the node's weights quantization function.
 
@@ -296,7 +296,7 @@ class ChangeCandidtaesWeightsQuantizationMethod(BaseAction):
         """
         self.weights_quantization_method = weights_quantization_method
 
-    def apply(self, node: Node, graph, fw_info):
+    def apply(self, node: BaseNode, graph, fw_info):
         """
         Change the node's weights quantization function.
 

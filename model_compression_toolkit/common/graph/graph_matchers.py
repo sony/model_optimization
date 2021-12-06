@@ -18,7 +18,7 @@ from typing import Any, List
 
 from tensorflow.keras.layers import Layer
 
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.common.matchers import node_matcher, walk_matcher, edge_matcher
 
 
@@ -92,7 +92,7 @@ class EdgeMatcher(edge_matcher.BaseEdgeMatcher):
     class EdgeMatcher to check if an edge matches an edge that EdgeMatcher contains.
     """
 
-    def __init__(self, source_matcher: Node, target_matcher: Node):
+    def __init__(self, source_matcher: BaseNode, target_matcher: BaseNode):
         """
         Init an EdgeMatcher object.
 
@@ -125,7 +125,7 @@ class WalkMatcher(walk_matcher.WalkMatcherList):
     Class WalkMatcher to check if a list of nodes matches another list of nodes.
     """
 
-    def __init__(self, matcher_list: List[Node]):
+    def __init__(self, matcher_list: List[BaseNode]):
         """
         Init a WalkMatcher object.
 

@@ -20,14 +20,14 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapp
 from typing import Tuple, List
 
 from model_compression_toolkit.common.graph.base_graph import Graph
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.keras.constants import USE_BIAS
 from model_compression_toolkit.keras.quantizer.gradient_ptq import ActivationQuantizeConfig, WeightQuantizeConfig, ActivationAndWeightQuantizeConfig
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from tensorflow.keras.models import Model
 
 
-def get_compare_points(input_graph: Graph) -> Tuple[List[Node], List[str]]:
+def get_compare_points(input_graph: Graph) -> Tuple[List[BaseNode], List[str]]:
     """
     Create a list of nodes with weights in a graph and a corresponding list
     of their names for tensors comparison purposes.

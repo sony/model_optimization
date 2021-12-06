@@ -21,7 +21,7 @@ from model_compression_toolkit import common
 
 
 def create_tensor2node(graph: common.Graph,
-                       node: common.Node):
+                       node: common.BaseNode):
     """
     Force tensor creation and assignment for a node.
     Args:
@@ -30,7 +30,8 @@ def create_tensor2node(graph: common.Graph,
 
     """
     current_tensor = graph.get_out_stats_collector(node)
-    if isinstance(current_tensor, common.NoStatsContainer) or current_tensor is None:
+    is_list_nostat_collectors = isinstance(current_tensor, list) and len([sc for sc in current_tensor if not isinstance(sc, common.NoStatsContainer)]) == 0
+    if isinstance(current_tensor, common.NoStatsContainer) or current_tensor is None or is_list_nostat_collectors:
         graph.set_out_stats_collector_to_node(node, common.StatsContainer())
 
 

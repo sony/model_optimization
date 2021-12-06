@@ -19,11 +19,11 @@ import copy
 from typing import List
 
 from model_compression_toolkit.common.graph.base_graph import Graph
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.keras.reader.connectivity_handler import OutTensor
 
 
-def merge_models_outputs(inner_model_node: Node,
+def merge_models_outputs(inner_model_node: BaseNode,
                          outer_graph: Graph,
                          inner_graph: Graph) -> List[OutTensor]:
     """

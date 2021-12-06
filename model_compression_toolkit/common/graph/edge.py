@@ -16,7 +16,7 @@
 
 from typing import Any, Dict
 
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 
 # Edge attributes:
 EDGE_SOURCE_INDEX = 'source_index'
@@ -29,8 +29,8 @@ class Edge(object):
     """
 
     def __init__(self,
-                 source_node: Node,
-                 sink_node: Node,
+                 source_node: BaseNode,
+                 sink_node: BaseNode,
                  source_index: int,
                  sink_index: int):
         """
