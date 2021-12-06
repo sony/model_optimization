@@ -24,7 +24,7 @@ from model_compression_toolkit.common.bias_correction.compute_bias_correction_of
 from model_compression_toolkit.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.keras.keras_implementation import KERAS_IMPLEMENTATION
+from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.keras.reader.reader import model_reader
 from model_compression_toolkit.common.model_collector import ModelCollector
 from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
@@ -44,9 +44,10 @@ class TestGraphQuantization(unittest.TestCase):
     def test_bn_folding_mbv1(self):
         model = MobileNetV2()
         graph = model_reader(model)  # model pharsing
-        tg = substitute(graph, KERAS_IMPLEMENTATION.pre_collection_substitutions)
-        analyzer_graph(get_node_stats_collector, tg, DEFAULT_KERAS_INFO)  # mark tensors and quantization point
-        mi = ModelCollector(tg, KERAS_IMPLEMENTATION)
+        fw_impl = KerasImplementation()
+        tg = substitute(graph, fw_impl.get_substitutions_pre_statistics_collection())
+        analyzer_graph(fw_impl.attach_sc_to_node, tg, DEFAULT_KERAS_INFO)  # mark tensors and quantization point
+        mi = ModelCollector(tg, fw_impl, DEFAULT_KERAS_INFO)
 
         for i in range(10):
             mi.infer([np.random.randn(1, 224, 224, 3)])
@@ -55,16 +56,18 @@ class TestGraphQuantization(unittest.TestCase):
                                                      DEFAULTCONFIG,
                                                      DEFAULT_KERAS_INFO)
         calculate_quantization_params(tg,
-                                      DEFAULT_KERAS_INFO)
+                                      DEFAULT_KERAS_INFO,
+                                      fw_impl=fw_impl)
 
-        tg = compute_bias_correction_of_graph(tg, fw_info=DEFAULT_KERAS_INFO)
+        tg = compute_bias_correction_of_graph(tg, fw_info=DEFAULT_KERAS_INFO, fw_impl=fw_impl)
 
         tg = set_bit_widths(DEFAULTCONFIG,
                             tg,
                             DEFAULT_KERAS_INFO)
 
         quantize_graph_weights(tg,
-                               DEFAULT_KERAS_INFO)
+                               DEFAULT_KERAS_INFO,
+                               fw_impl=fw_impl)
 
         model, _ = model_builder(tg)
 
