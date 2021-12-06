@@ -2,13 +2,13 @@
 ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite.yml/badge.svg)
 
 
-Model Compression Toolkit (MCT) is an open source project for neural network model optimization under efficient hardware constrained. <br />
-This project enables researchers, developers and engineers an easy way to optimized and deploy state-of-the-art neural network on efficient hardware. <br />
-Specifically this project apply constrained quantization and pruning scheme on a neural network. 
+Model Compression Toolkit (MCT) is an open source project for neural network model optimization under efficient, constrained hardware. <br />
+This project provides researchers, developers and engineers tools for optimizing and deploying state-of-the-art neural network on efficient hardware. <br />
+Specifically, this project applies constrained quantization and pruning schemes on a neural network. 
 
-Currently, this project only support hardware friendly post training quantization (HPTQ) with Tensorflow 2 [1]. 
+Currently, this project only supports hardware friendly post training quantization (HPTQ) with Tensorflow 2 [1]. 
 
-MCT project is developed by researchers and engineers working on the Sony Semiconductors Israel.
+The MCT project is developed by researchers and engineers working at Sony Semiconductors Israel.
 
 For more information, please visit our [project website](https://sony.github.io/model_optimization/).
 
@@ -22,7 +22,7 @@ For more information, please visit our [project website](https://sony.github.io/
 
 ## Getting Started
 
-This section provides a quick starting guide start with installtion via source code or pip server then a short example usage.
+This section provides a quick starting guide. We begin with installtion via source code or pip server. Then, we provide a short usage example.
 
 ### Installation
 See the MCT install guide for the pip package, and build from source.
@@ -44,8 +44,8 @@ pip install mct-nightly
 ```
 
 
-### Example Usage
-Here is a snapshot of a code that shown an example of how to use the post training quantization using keras.
+### Usage Example 
+An example of how to use the post training quantization, using Keras, is shown in the following code snapshot.
 
 ```python
 import model_compression_toolkit as mct
@@ -82,7 +82,7 @@ quantized_model, quantization_info = mct.keras_post_training_quantization(model,
                                                                           representative_data_gen,
                                                                           n_iter=10)
 ```
-For more example please see the tutorials' directory.
+For more examples please see the tutorials' directory.
 
 
 ## Supported Features
@@ -90,20 +90,20 @@ For more example please see the tutorials' directory.
 Quantization:
 
 	* Post Training Quantization 
-    * Gradient base post training (Experimental) 
+    * Gradient based post training (Experimental) 
     
 Tensorboard Visualization (Experimental):
 
-    * CS Analyizer: compare comprased model with orignal model to analysis large accuracy drop.
+    * CS Analyizer: compare a model compressed with the orignal model to analyze large accuracy drops.
     * Activation statisicis and errors
      
 
-Note that currently we only have full support for Keras layers, using the TensorFlow native layer may lead to unexpected behavior. This limitation will be removed in future releases. 
+Note that currently we only have full support for Keras layers. Using the TensorFlow native layers may lead to unexpected behavior. This limitation will be removed in future releases. 
 
-MCT is test with Tensorflow Version 2.5. 
+MCT is tested with Tensorflow Version 2.5. 
 
 ## Tutorials and Results
-As part of the MCT library, we have a set of example network on image classification which can be used as an example while using the package.
+As part of the MCT library, we have a set of example networks on image classification. These networks can be used as examples when using the package.
 
 * Image Classification Example with MobileNet V1 on ImageNet dataset
 
