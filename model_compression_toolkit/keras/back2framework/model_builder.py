@@ -112,8 +112,7 @@ def run_operation(n: BaseNode,
                   input_tensors: List[List[TFReference]],
                   op_func: Layer,
                   input_nodes_to_input_tensors: Dict[BaseNode, Any],
-                  mode: ModelBuilderMode = ModelBuilderMode.QUANTIZED,
-                  fw_info: FrameworkInfo = None) -> List[TFReference]:
+                  mode: ModelBuilderMode = ModelBuilderMode.QUANTIZED) -> List[TFReference]:
     """
     Applying the layer (op_func) to the input tensors (input_tensors).
     If quantized is set to True, and the layer's corresponding node (n) has quantization
@@ -227,8 +226,7 @@ def model_builder(graph: common.Graph,
                                          input_tensors,
                                          op_func,
                                          input_nodes_to_input_tensors,
-                                         mode,
-                                         fw_info)
+                                         mode)
 
         if isinstance(out_tensors_of_n, list):
             node_to_output_tensors_dict.update({n: out_tensors_of_n})
