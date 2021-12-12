@@ -16,7 +16,7 @@ from typing import List
 
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.framework_info import FrameworkInfo
-from model_compression_toolkit.common import Graph, Node, Logger
+from model_compression_toolkit.common import Graph, BaseNode, Logger
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_activations_computation \
     import \
     get_activations_qparams
@@ -26,7 +26,7 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 
 def calculate_quantization_params(graph: Graph,
                                   fw_info: FrameworkInfo,
-                                  nodes: List[Node] = [],
+                                  nodes: List[BaseNode] = [],
                                   specific_nodes: bool = False,
                                   fw_impl: FrameworkImplementation = None):
     """
@@ -48,7 +48,7 @@ def calculate_quantization_params(graph: Graph,
     """
 
     # Create a list of nodes to compute their thresholds
-    nodes_list: List[Node] = nodes if specific_nodes else graph.nodes()
+    nodes_list: List[BaseNode] = nodes if specific_nodes else graph.nodes()
 
     for n in nodes_list:  # iterate only nodes that we should compute their thresholds
 

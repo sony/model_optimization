@@ -20,7 +20,7 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapp
 from typing import Callable, List, Any
 
 from model_compression_toolkit.common.framework_info import FrameworkInfo
-from model_compression_toolkit.common import Node
+from model_compression_toolkit.common import BaseNode
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
@@ -207,7 +207,7 @@ def _build_distance_matrix(baseline_tensors: List[Tensor],
 
 
 def _build_baseline_model(graph: Graph,
-                          interest_points: List[Node]) -> Model:
+                          interest_points: List[BaseNode]) -> Model:
     """
     Build a Keras baseline model to compare inferences of the MP model to.
     The baseline model is the float model we build from the graph.

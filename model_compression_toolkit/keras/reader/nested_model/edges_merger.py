@@ -18,11 +18,11 @@ from typing import List, Dict, Tuple
 
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.graph.edge import Edge, convert_to_edge
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.keras.reader.connectivity_handler import OutTensor
 
 
-def merge_models_edges(inner_model_node: Node,
+def merge_models_edges(inner_model_node: BaseNode,
                        outer_graph: Graph,
                        inner_graph: Graph) -> List[Edge]:
     """
@@ -91,8 +91,8 @@ def rewire_outgoing_edged(inner_model_outputs: List[OutTensor],
                 res_edges.remove(model_node_out_edge)
 
 
-def rewire_incoming_edges(inner_inputs_out_edges: Dict[Node, List[Edge]],
-                          inner_model_inputs_dict: List[Node],
+def rewire_incoming_edges(inner_inputs_out_edges: Dict[BaseNode, List[Edge]],
+                          inner_model_inputs_dict: List[BaseNode],
                           model_node_in_edges: List[Edge],
                           res_edge_list: List[Edge]):
     """
@@ -126,7 +126,7 @@ def rewire_incoming_edges(inner_inputs_out_edges: Dict[Node, List[Edge]],
         res_edge_list.remove(model_node_in_edge)
 
 
-def get_inner_inputs_successors(inner_graph: Graph) -> Dict[Node, List[Edge]]:
+def get_inner_inputs_successors(inner_graph: Graph) -> Dict[BaseNode, List[Edge]]:
     """
     Compute out edges the input nodes of the inner model has.
     Args:
@@ -147,7 +147,7 @@ def get_inner_inputs_successors(inner_graph: Graph) -> Dict[Node, List[Edge]]:
     return inner_inputs_out_edges
 
 
-def get_model_node_edges(model_node: Node,
+def get_model_node_edges(model_node: BaseNode,
                          outer_edge_list: List[Edge]) -> Tuple[List[Edge], List[Edge]]:
     """
     Get incoming and outgoing edges the inner model node has in the outer graph.

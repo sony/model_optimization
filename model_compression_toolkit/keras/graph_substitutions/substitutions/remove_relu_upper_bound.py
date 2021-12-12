@@ -17,7 +17,7 @@
 from tensorflow.keras.layers import ReLU
 
 from model_compression_toolkit import common
-from model_compression_toolkit.common import Graph, Node
+from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher,NodeFrameworkAttrMatcher
 from model_compression_toolkit.keras.constants import RELU_MAX_VALUE
 from model_compression_toolkit.common.constants import THRESHOLD
@@ -40,7 +40,7 @@ class RemoveReLUUpperBound(common.BaseSubstitution):
 
     def substitute(self,
                    graph: Graph,
-                   node: Node) -> Graph:
+                   node: BaseNode) -> Graph:
         """
         Remove ReLU upper bound if its activation threshold bounds it anyway at
         the same value.

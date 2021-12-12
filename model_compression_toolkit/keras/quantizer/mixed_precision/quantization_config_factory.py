@@ -25,7 +25,7 @@ from model_compression_toolkit.keras.quantizer.mixed_precision.selective_weights
 
 
 
-def quantization_config_builder_mixed_precision(n: common.Node,
+def quantization_config_builder_mixed_precision(n: common.BaseNode,
                                                 fw_info: FrameworkInfo) -> QuantizeConfig:
     """
     Build a QuantizeConfig for layers that should be wrapped in a QuantizeWrapper to

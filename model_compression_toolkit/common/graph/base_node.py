@@ -21,7 +21,7 @@ import numpy as np
 from model_compression_toolkit.common.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE
 
 
-class Node:
+class BaseNode:
     """
     Class to represent a node in a graph that represents the model.
     """
@@ -35,7 +35,6 @@ class Node:
                  layer_class: type,
                  reuse: bool = False,
                  reuse_group: str = None,
-                 op_call_args: Dict[str, Any] = {},
                  quantization_attr: Dict[str, Any] = None):
         """
         Init a Node object.
@@ -49,11 +48,8 @@ class Node:
             layer_class: Class path of the layer this node represents.
             reuse: Whether this node was duplicated and represents a reused layer.
             reuse_group: Name of group of nodes from the same reused layer.
-            op_call_args: Arguments dictionary with values to pass when calling the layer.
             quantization_attr: Attributes the node holds regarding how it should be quantized.
         """
-
-
         self.name = name
         self.framework_attr = framework_attr
         self.quantization_attr = quantization_attr if quantization_attr is not None else dict()
@@ -67,7 +63,6 @@ class Node:
         self.final_weights_quantization_cfg = None
         self.candidates_weights_quantization_cfg = None
         self.output_quantization = True
-        self.op_call_args = op_call_args
 
     def no_quantization(self) -> bool:
         """

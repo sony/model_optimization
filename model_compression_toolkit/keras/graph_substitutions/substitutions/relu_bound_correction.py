@@ -20,7 +20,7 @@ import numpy as np
 from tensorflow.keras.layers import ReLU, Activation, DepthwiseConv2D, Conv2DTranspose, Conv2D, Dense
 
 from model_compression_toolkit import common
-from model_compression_toolkit.common import FrameworkInfo, Graph, Node
+from model_compression_toolkit.common import FrameworkInfo, Graph, BaseNode
 from model_compression_toolkit.common.constants import THRESHOLD
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, WalkMatcher, \
     NodeFrameworkAttrMatcher
@@ -61,7 +61,7 @@ class ReLUBoundCorrection(common.BaseSubstitution):
 
     def substitute(self,
                    graph: Graph,
-                   nodes_list: List[Node]) -> Graph:
+                   nodes_list: List[BaseNode]) -> Graph:
         """
         Transform a list of nodes in a graph to use the entire constrained quantized range.
         This is done by scaling two linear nodes with a non-linearity between them, if the non-linearity

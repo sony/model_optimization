@@ -21,7 +21,7 @@ from model_compression_toolkit import common
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, EdgeMatcher, WalkMatcher
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.constants import THRESHOLD
 from model_compression_toolkit.keras.constants import KERNEL
@@ -62,7 +62,7 @@ class BaseInputScaling(common.BaseSubstitution):
 
     def substitute(self,
                    graph: Graph,
-                   nodes_list: List[Node]) -> Graph:
+                   nodes_list: List[BaseNode]) -> Graph:
         """
         Scale activation threshold for input layers, if they are followed by linear nodes. We first
         scale their thresholds to a constrained threshold, and then fix it by scaling the linear op weights

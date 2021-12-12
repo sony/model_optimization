@@ -13,4 +13,4 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode

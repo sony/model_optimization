@@ -29,7 +29,7 @@ from tensorflow.keras.layers import Activation, Conv2D, Dense, DepthwiseConv2D, 
 from typing import Tuple, Any
 
 from model_compression_toolkit import common
-from model_compression_toolkit.common import FrameworkInfo, Graph, Node
+from model_compression_toolkit.common import FrameworkInfo, Graph, BaseNode
 from model_compression_toolkit.common.constants import FLOAT_32, DATA_TYPE, THRESHOLD
 from model_compression_toolkit.common.graph.graph_matchers import EdgeMatcher
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, \
@@ -100,7 +100,7 @@ PAD_NODE = NodeOperationMatcher(ZeroPadding2D)
 
 def create_add_node(add_value: float,
                     prev_node_name: str,
-                    input_shape: tuple) -> Node:
+                    input_shape: tuple) -> BaseNode:
     """
     Create a new Add node, with a constant to add.
     The name of the node is determined by its previous node's name.
@@ -130,13 +130,13 @@ def create_add_node(add_value: float,
         CONSTANTS: {1: np.array([[[[add_value]]]],
                                 dtype=np.float32)}}
 
-    add_node = common.graph.Node(add_node_name,
-                                 fw_attr,
-                                 input_shape,
-                                 input_shape,
-                                 weights={},
-                                 quantization_attr={},
-                                 layer_class=TensorFlowOpLayer)
+    add_node = common.graph.BaseNode(add_node_name,
+                                     fw_attr,
+                                     input_shape,
+                                     input_shape,
+                                     weights={},
+                                     quantization_attr={},
+                                     layer_class=TensorFlowOpLayer)
     return add_node
 
 
@@ -147,7 +147,7 @@ def create_pad_node(next_node_name: str,
                     pad_top: int,
                     pad_btm: int,
                     pad_left: int,
-                    pad_right: int) -> Node:
+                    pad_right: int) -> BaseNode:
     """
     Create a pad node with a constant value to pad its input tensor.
 
@@ -189,17 +189,17 @@ def create_pad_node(next_node_name: str,
     padded_shape = list(input_shape)
     padded_shape[1] += pad_top + pad_btm
     padded_shape[2] += pad_left + pad_right
-    pad_node = common.graph.Node(pad_node_name,
-                                 fw_attr,
-                                 input_shape,
-                                 tuple(padded_shape),
-                                 weights={},
-                                 quantization_attr={},
-                                 layer_class=TensorFlowOpLayer)
+    pad_node = common.graph.BaseNode(pad_node_name,
+                                     fw_attr,
+                                     input_shape,
+                                     tuple(padded_shape),
+                                     weights={},
+                                     quantization_attr={},
+                                     layer_class=TensorFlowOpLayer)
     return pad_node
 
 
-def compute_op2d_padding(op2d_node: Node) -> Tuple[int, int, int, int]:
+def compute_op2d_padding(op2d_node: BaseNode) -> Tuple[int, int, int, int]:
     """
     Compute the padding around an input tensor of a linear node.
     This is needed to replace tensorflow 'same' padding with actual number of elements to pad.
@@ -228,7 +228,7 @@ def compute_op2d_padding(op2d_node: Node) -> Tuple[int, int, int, int]:
     return pad_top, pad_btm, pad_left, pad_right
 
 
-def op2d_bias_correction(op2d_node: common.Node,
+def op2d_bias_correction(op2d_node: common.BaseNode,
                          shift_to_correct: float):
     """
     Compute the correction term to add to the op2d node's bias
@@ -266,9 +266,9 @@ def op2d_bias_correction(op2d_node: common.Node,
 
 
 def insert_node_between_two_nodes(graph: Graph,
-                                  node_to_insert: Node,
-                                  first_node: Node,
-                                  last_node: Node):
+                                  node_to_insert: BaseNode,
+                                  first_node: BaseNode,
+                                  last_node: BaseNode):
     """
     Insert a new node in a graph between two nodes.
 
@@ -290,8 +290,8 @@ def insert_node_between_two_nodes(graph: Graph,
 
 
 def insert_node_after_node(graph: Graph,
-                           node_to_insert: Node,
-                           first_node: Node):
+                           node_to_insert: BaseNode,
+                           first_node: BaseNode):
     """
     Insert a new node to a graph after an existing node in the graph.
     Check before insertion that the node (that we add the new node after) has
@@ -313,8 +313,8 @@ def insert_node_after_node(graph: Graph,
 
 
 def insert_node_before_node(graph: Graph,
-                            node_to_insert: Node,
-                            last_node: Node):
+                            node_to_insert: BaseNode,
+                            last_node: BaseNode):
     """
     Insert a new node to a graph before an existing node in the graph.
     Check before insertion that the node (that we add the new node before) has
@@ -335,9 +335,9 @@ def insert_node_before_node(graph: Graph,
 
 
 def remove_node_between_two_nodes(graph: Graph,
-                                  node_to_remove: Node,
-                                  first_node: Node,
-                                  last_node: Node):
+                                  node_to_remove: BaseNode,
+                                  first_node: BaseNode,
+                                  last_node: BaseNode):
     """
     Remove a node from a graph and connect its previous node to
     its next node after the removal.
@@ -480,9 +480,9 @@ def shift_negative_function(graph,
     return graph
 
 
-def get_next_nodes_to_correct(n: Node,
+def get_next_nodes_to_correct(n: BaseNode,
                               graph: Graph,
-                              pad_node_to_consider: Node = None) -> Tuple[Any, Any]:
+                              pad_node_to_consider: BaseNode = None) -> Tuple[Any, Any]:
     """
     Search for the next linear node of a given node. Go over
     the next nodes of the node and recursively search for a linear node.

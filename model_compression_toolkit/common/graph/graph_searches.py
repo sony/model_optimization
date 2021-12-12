@@ -16,7 +16,7 @@
 from abc import ABC
 from typing import List, Any
 
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.common.matchers import node_matcher, base_graph_filter, edge_matcher
 from model_compression_toolkit.common.matchers.walk_matcher import WalkMatcherList
 
@@ -59,7 +59,7 @@ class GraphSearches(base_graph_filter.BaseGraphFilter, ABC):
 
         return edge_list
 
-    def _walk_filter(self, walk_matcher: WalkMatcherList) -> List[Node]:
+    def _walk_filter(self, walk_matcher: WalkMatcherList) -> List[BaseNode]:
         """
         Search for a list of nodes which match the list in walk_matcher.
         If one the nodes in the list (that was found in the graph) has more than one output,
@@ -72,8 +72,8 @@ class GraphSearches(base_graph_filter.BaseGraphFilter, ABC):
             A list of nodes which match the list in walk_matcher.
         """
 
-        def walk_match(node: Node,
-                       node_list: List[Node],
+        def walk_match(node: BaseNode,
+                       node_list: List[BaseNode],
                        index: int,
                        node_matcher_list: list) -> Any:
             """

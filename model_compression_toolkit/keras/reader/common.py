@@ -29,11 +29,11 @@ from tensorflow.python.keras.engine.functional import Functional
 
 from tensorflow.python.keras.engine.sequential import Sequential
 
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 
 
 
-def is_node_an_input_layer(node: Node) -> bool:
+def is_node_an_input_layer(node: BaseNode) -> bool:
     """
     Checks if a node represents a Keras input layer.
     Args:
@@ -42,14 +42,14 @@ def is_node_an_input_layer(node: Node) -> bool:
     Returns:
         Whether the node represents an input layer or not.
     """
-    if isinstance(node, Node):
+    if isinstance(node, BaseNode):
         return node.layer_class == InputLayer
     elif isinstance(node, KerasNode):
         return isinstance(node.layer, InputLayer)
     else:
         raise Exception('Node to check has to be either a graph node or a keras node')
 
-def is_node_a_model(node: Node) -> bool:
+def is_node_a_model(node: BaseNode) -> bool:
     """
     Checks if a node represents a Keras model.
     Args:
@@ -58,7 +58,7 @@ def is_node_a_model(node: Node) -> bool:
     Returns:
         Whether the node represents a Keras model or not.
     """
-    if isinstance(node, Node):
+    if isinstance(node, BaseNode):
         return node.layer_class in [Functional, Sequential]
     elif isinstance(node, KerasNode):
         return isinstance(node.layer, Functional) or isinstance(node.layer, Sequential)

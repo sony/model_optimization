@@ -16,6 +16,7 @@
 
 import tensorflow as tf
 
+
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Input
@@ -30,14 +31,14 @@ from tensorflow.python.keras.layers import Layer
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from typing import Tuple, Any, Dict, List
 from tensorflow.python.util.object_identity import Reference as TFReference
-
+from model_compression_toolkit.common.graph.functional_node import FunctionalNode
 
 from model_compression_toolkit import common
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.quantizer.mixed_precision.quantization_config_factory import quantization_config_builder_mixed_precision
 from model_compression_toolkit.keras.quantizer.gradient_ptq.config_factory import quantization_config_builder_gptq
-from model_compression_toolkit.common import Node, Graph
+from model_compression_toolkit.common import BaseNode, Graph
 from model_compression_toolkit.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.keras.back2framework.instance_builder import OperationHandler
 from model_compression_toolkit.keras.reader.connectivity_handler import OutTensor
@@ -80,9 +81,9 @@ def is_layer_fake_quant(layer: Layer) -> bool:
             isinstance(layer, TFOpLambda) and layer.symbol == FQ_NODE_OP_V2_4)
 
 
-def build_input_tensors_list(node: Node,
+def build_input_tensors_list(node: BaseNode,
                              graph: Graph,
-                             node_to_output_tensors_dict: Dict[Node, List[TFReference]]) -> List[List[TFReference]]:
+                             node_to_output_tensors_dict: Dict[BaseNode, List[TFReference]]) -> List[List[TFReference]]:
     """
     Given a node, build a list of input tensors the node gets. The list is built
     based on the node's incoming edges and previous nodes' output tensors.
@@ -105,10 +106,12 @@ def build_input_tensors_list(node: Node,
     return input_tensors
 
 
-def run_operation(n: Node,
+
+
+def run_operation(n: BaseNode,
                   input_tensors: List[List[TFReference]],
                   op_func: Layer,
-                  input_nodes_to_input_tensors: Dict[Node, Any],
+                  input_nodes_to_input_tensors: Dict[BaseNode, Any],
                   mode: ModelBuilderMode = ModelBuilderMode.QUANTIZED) -> List[TFReference]:
     """
     Applying the layer (op_func) to the input tensors (input_tensors).
@@ -140,13 +143,18 @@ def run_operation(n: Node,
             
     else:
         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
-        
-        # If operator expects a single input tensor, it cannot be a list as it should
-        # have a dtype field.
-        if len(input_tensors) == 1:
-            out_tensors_of_n = op_func(input_tensors[0], **n.op_call_args)
+        # Build a functional node using its args
+        if isinstance(n, FunctionalNode):
+            if n.inputs_as_list:  # If the first argument should be a list of tensors:
+                out_tensors_of_n = op_func(input_tensors, *n.op_call_args, **n.op_call_kwargs)
+            else:  # If the input tensors should not be a list but iterated:
+                out_tensors_of_n = op_func(*input_tensors, *n.op_call_args, **n.op_call_kwargs)
         else:
-            out_tensors_of_n = op_func(input_tensors, **n.op_call_args)
+            # If operator expects a single input tensor, it cannot be a list as it should
+            # have a dtype field.
+            if len(input_tensors) == 1:
+                input_tensors = input_tensors[0]
+            out_tensors_of_n = op_func(input_tensors)
 
         # Add a fake quant node if the node has an activation threshold.
         if n.activation_quantization_cfg is not None:

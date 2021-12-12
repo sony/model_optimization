@@ -19,7 +19,7 @@ import copy
 from model_compression_toolkit import common
 from model_compression_toolkit.common import Logger
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_weights_computation import \
@@ -27,7 +27,7 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 
 
 def get_quantized_kernel_by_weights_qc(fw_info:FrameworkInfo,
-                                       n:Node,
+                                       n:BaseNode,
                                        weights_qc: NodeWeightsQuantizationConfig,
                                        fw_impl: FrameworkImplementation):
     """

@@ -21,7 +21,7 @@ from model_compression_toolkit import common
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, EdgeMatcher, \
     NodeFrameworkAttrMatcher
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.keras.constants import LINEAR, ACTIVATION
 
 
@@ -55,7 +55,7 @@ class MarkActivation(common.BaseSubstitution):
 
     def substitute(self,
                    graph: Graph,
-                   edge: Tuple[Node, Node]) -> Graph:
+                   edge: Tuple[BaseNode, BaseNode]) -> Graph:
         """
         Mark the first node in an edge that should not be quantized as so.
         This can be done due to the following reasons:

@@ -25,7 +25,7 @@ from model_compression_toolkit import common
 from model_compression_toolkit.common.graph.edge import EDGE_SINK_INDEX, EDGE_SOURCE_INDEX
 from model_compression_toolkit.common.graph.edge import Edge, convert_to_edge
 from model_compression_toolkit.common.graph.graph_searches import GraphSearches
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.common.statistics_collector import BaseStatsContainer
 from model_compression_toolkit.common.statistics_collector import scale_statistics, shift_statistics
 from model_compression_toolkit.common.user_info import UserInformation
@@ -40,8 +40,8 @@ class Graph(nx.MultiDiGraph, GraphSearches):
     """
 
     def __init__(self,
-                 nodes: List[Node],
-                 input_nodes: List[Node],
+                 nodes: List[BaseNode],
+                 input_nodes: List[BaseNode],
                  output_nodes: List[OutTensor],
                  edge_list: List[Edge],
                  **attr):
@@ -80,7 +80,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         return np.unique([n.op for n in self.nodes()])
 
-    def get_inputs(self) -> List[Node]:
+    def get_inputs(self) -> List[BaseNode]:
         """
         Returns: List containing the model input nodes.
         """
@@ -95,7 +95,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return self.output_nodes
 
     def set_inputs(self,
-                   input_nodes: List[Node]):
+                   input_nodes: List[BaseNode]):
         """
         Set the graph inputs dictionary.
         Args:
@@ -115,7 +115,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         self.output_nodes = output_nodes
 
     def set_out_stats_collector_to_node(self,
-                                        n: Node,
+                                        n: BaseNode,
                                         stats_collector: BaseStatsContainer):
         """
         Set an output statistics collector of a node in the graph, and set this statistics collector as an input
@@ -164,7 +164,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                     self.node_to_in_stats_collector.update({oe.sink_node: stats_collector})
 
     def get_out_stats_collector(self,
-                                n: Node) -> BaseStatsContainer:
+                                n: BaseNode) -> BaseStatsContainer:
         """
         Get the output statistics collector of a node containing output statistics of the node.
         Args:
@@ -177,7 +177,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return self.node_to_out_stats_collector.get(n)
 
     def get_in_stats_collector(self,
-                               n: Node) -> BaseStatsContainer:
+                               n: BaseNode) -> BaseStatsContainer:
         """
         Get the input statistics collector of a node containing input statistics of the node.
         Args:
@@ -193,7 +193,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return sc
 
     def scale_stats_collector(self,
-                              node: Node,
+                              node: BaseNode,
                               scale_factor: np.ndarray):
         """
         Scale the output statistics of a node in the graph by a given scaling factor.
@@ -211,7 +211,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         self.set_out_stats_collector_to_node(node, scaled_sc)
 
     def shift_stats_collector(self,
-                              node: Node,
+                              node: BaseNode,
                               shift_value: np.ndarray):
         """
         Shift the output statistics of a node in the graph by a given value.
@@ -229,7 +229,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         self.set_out_stats_collector_to_node(node, shifted_sc)
 
     def find_node_by_name(self,
-                          name: str) -> List[Node]:
+                          name: str) -> List[BaseNode]:
         """
         Find and return a list of nodes by a name.
 
@@ -243,7 +243,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return [n for n in self.nodes if n.name == name]
 
     def get_next_nodes(self,
-                       node_obj: Node) -> List[Node]:
+                       node_obj: BaseNode) -> List[BaseNode]:
         """
         Get next nodes (in a topological order) of a node.
 
@@ -258,7 +258,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return [edges_list.sink_node for edges_list in self.out_edges(node_obj)]
 
     def get_prev_nodes(self,
-                       node_obj: Node) -> List[Node]:
+                       node_obj: BaseNode) -> List[BaseNode]:
         """
         Get previous nodes (in a topological order) of a node.
 
@@ -273,8 +273,8 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return [edges_list.source_node for edges_list in self.incoming_edges(node_obj)]
 
     def reconnect_out_edges(self,
-                            current_node: Node,
-                            new_node: Node):
+                            current_node: BaseNode,
+                            new_node: BaseNode):
         """
         Connect all outgoing edges of a node to be outgoing edges of a different node
         (useful when replacing a node during substitutions).
@@ -289,8 +289,8 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             self.remove_edge(current_node, oe.sink_node)
 
     def reconnect_in_edges(self,
-                           current_node: Node,
-                           new_node: Node):
+                           current_node: BaseNode,
+                           new_node: BaseNode):
         """
         Connect all incoming edges of a node to be incoming edges of a different node
         (useful when replacing a node during substitutions).
@@ -305,8 +305,8 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             self.remove_edge(ie.source_node, current_node)
 
     def replace_output_node(self,
-                            current_node: Node,
-                            new_node: Node):
+                            current_node: BaseNode,
+                            new_node: BaseNode):
         """
         If a node is being substituted with another node and it is an output node, the graph's outputs
         should be updated as well. This function takes care of it by going over the graph's outputs, and
@@ -327,8 +327,8 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         self.set_outputs(new_graph_outputs)
 
     def remove_node(self,
-                    node_to_remove: Node,
-                    new_graph_inputs: List[Node] = None,
+                    node_to_remove: BaseNode,
+                    new_graph_inputs: List[BaseNode] = None,
                     new_graph_outputs: List[OutTensor] = None):
         """
         Remove a node from the graph. A new inputs/outputs lists can be passed in case the node is currently an
@@ -367,7 +367,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         super().remove_node(node_to_remove)
 
     def incoming_edges(self,
-                       n: Node,
+                       n: BaseNode,
                        sort_by_attr: str = None) -> List[Edge]:
         """
         Get a list of incoming edges of a node. If sort_by_attr is passed, the returned list
@@ -388,7 +388,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return input_edges
 
     def out_edges(self,
-                  n: Node,
+                  n: BaseNode,
                   sort_by_attr: str = None) -> List[Edge]:
         """
         Get a list of outgoing edges of a node. If sort_by_attr is passed, the returned list
@@ -434,7 +434,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         sorted_names = [n.name for n in self.get_configurable_sorted_nodes(include_reused_nodes)]
         return sorted_names
 
-    def get_configurable_sorted_nodes(self, include_reused_nodes: bool = False) -> List[Node]:
+    def get_configurable_sorted_nodes(self, include_reused_nodes: bool = False) -> List[BaseNode]:
         """
         Get a list of nodes that can be configured (namely, has one or
         more weight qc candidate). The nodes are sorted according to the topological

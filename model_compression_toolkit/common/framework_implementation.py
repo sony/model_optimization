@@ -18,7 +18,7 @@ from typing import Callable, Any, List, Tuple
 import numpy as np
 
 from model_compression_toolkit import common, GradientPTQConfig, MixedPrecisionQuantizationConfig
-from model_compression_toolkit.common import Node
+from model_compression_toolkit.common import BaseNode
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
@@ -110,7 +110,7 @@ class FrameworkImplementation(ABC):
                              f'framework\'s model_reader method.')
 
     @abstractmethod
-    def attach_sc_to_node(self, node:Node,
+    def attach_sc_to_node(self, node:BaseNode,
                           fw_info:FrameworkInfo) -> common.statistics_collector.BaseStatsContainer:
         """
         Return a statistics collector that should be attached to a node's output

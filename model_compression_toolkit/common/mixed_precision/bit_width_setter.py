@@ -18,7 +18,7 @@ import copy
 from typing import Any, List
 
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
-from model_compression_toolkit.common import Graph, Node
+from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.logger import Logger
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
@@ -82,7 +82,7 @@ def set_bit_widths(quant_config: QuantizationConfig,
     return graph
 
 
-def _get_node_qc_by_bit_widths(node: Node,
+def _get_node_qc_by_bit_widths(node: BaseNode,
                                bit_width_cfg: List[int],
                                node_index_in_graph: int) -> Any:
     """
@@ -108,7 +108,7 @@ def _get_node_qc_by_bit_widths(node: Node,
 
 def _set_node_qc(bit_width_cfg: List[int],
                  fw_info: FrameworkInfo,
-                 node: Node,
+                 node: BaseNode,
                  node_index_in_graph: int):
     """
     Get the node's quantization configuration that

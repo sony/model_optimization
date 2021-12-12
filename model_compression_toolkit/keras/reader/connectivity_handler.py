@@ -20,7 +20,7 @@ from tensorflow.python.util.object_identity import Reference as TFReference
 from typing import List, Tuple
 
 from model_compression_toolkit.common.graph.base_graph import OutTensor
-from model_compression_toolkit.common.graph.node import Node
+from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.keras.reader.common import is_node_an_input_layer
 from model_compression_toolkit.keras.reader.node_builder import build_node
 
@@ -41,7 +41,7 @@ class ConnectivityHandler(object):
         self._nodes2output_tensors = dict()  # Node -> List[Tensor]
         self._output_tensors2nodes = dict()  # Tensor -> Node
 
-    def get_nodes(self) -> List[Node]:
+    def get_nodes(self) -> List[BaseNode]:
         """
         Returns: List of nodes in the connectivity handler.
         """
@@ -60,7 +60,7 @@ class ConnectivityHandler(object):
         return self._input_tensors2nodes.get(tensor) is not None
 
     def input_tensor2nodes(self,
-                           in_tensor: str) -> List[Node]:
+                           in_tensor: str) -> List[BaseNode]:
         """
         Returns a list of nodes that have a given tensor in their input tensors.
         Args:
@@ -84,7 +84,7 @@ class ConnectivityHandler(object):
         return self._output_tensors2nodes[out_tensor] if out_tensor in self._output_tensors2nodes else None
 
     def node2input_tensors(self,
-                           node: Node) -> List[TFReference]:
+                           node: BaseNode) -> List[TFReference]:
         """
         Get a list of input tensors of a node.
         Args:
@@ -96,7 +96,7 @@ class ConnectivityHandler(object):
         return self._nodes2input_tensors[node] if node in self._nodes2input_tensors else []
 
     def node2output_tensors(self,
-                            node: Node) -> List[TFReference]:
+                            node: BaseNode) -> List[TFReference]:
         """
         Get a list of output tensors of a node.
         Args:
@@ -173,8 +173,8 @@ class ConnectivityHandler(object):
             self._output_tensors2nodes[output_t] = node
 
     def get_edge_indices(self,
-                         src_node: Node,
-                         dst_node: Node,
+                         src_node: BaseNode,
+                         dst_node: BaseNode,
                          connecting_tensor: TFReference) -> Tuple[int, int]:
         """
         Get indices of an edge by its source/destination nodes and the connecting tensor which defines the edge.
@@ -193,7 +193,7 @@ class ConnectivityHandler(object):
         return src_index, dst_index
 
     def get_out_edges_params_list(self,
-                                  src_node: Node) -> List[tuple]:
+                                  src_node: BaseNode) -> List[tuple]:
         """
         Compute for a given node, all parameters of its outgoing edges.
         Args:
