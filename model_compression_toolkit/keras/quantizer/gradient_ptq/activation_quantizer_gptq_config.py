@@ -20,7 +20,12 @@ from tensorflow.python.training.tracking.data_structures import ListWrapper
 from model_compression_toolkit.common.constants import THRESHOLD
 from model_compression_toolkit.keras.quantizer.gradient_ptq.activation_quantizer import TrainableQuantizer
 from model_compression_toolkit.keras.quantizer.gradient_ptq.base_quantizer_gptq_config import BaseQuantizeConfig
-from tensorflow.python.keras.layers import Layer
+import tensorflow as tf
+# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+if tf.__version__ < "2.6":
+    from tensorflow.python.keras.layers import Layer
+else:
+    from keras.engine.base_layer import Layer
 from tensorflow import Tensor
 from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
 

@@ -14,8 +14,6 @@
 # ==============================================================================
 
 
-from tensorflow.python.keras.engine.functional import Functional
-from tensorflow.python.keras.engine.sequential import Sequential
 from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf

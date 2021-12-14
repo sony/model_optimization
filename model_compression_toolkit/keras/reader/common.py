@@ -20,14 +20,13 @@ import tensorflow as tf
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.engine.node import Node as KerasNode
     from tensorflow.keras.layers import InputLayer
+    from tensorflow.python.keras.engine.functional import Functional
+    from tensorflow.python.keras.engine.sequential import Sequential
 else:
     from keras.engine.input_layer import InputLayer
     from keras.engine.node import Node as KerasNode
-
-
-from tensorflow.python.keras.engine.functional import Functional
-
-from tensorflow.python.keras.engine.sequential import Sequential
+    from keras.engine.functional import Functional
+    from keras.engine.sequential import Sequential
 
 from model_compression_toolkit.common.graph.base_node import BaseNode
 
@@ -65,4 +64,3 @@ def is_node_a_model(node: BaseNode) -> bool:
     else:
         raise Exception('Node to check has to be either a graph node or a keras node')
 
-    # return node.layer_class in [Functional, Sequential]

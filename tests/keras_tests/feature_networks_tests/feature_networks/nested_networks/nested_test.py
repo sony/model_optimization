@@ -14,11 +14,14 @@
 # ==============================================================================
 
 
-from tensorflow.python.keras.engine.functional import Functional
-from tensorflow.python.keras.engine.sequential import Sequential
 from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+if tf.__version__ < "2.6":
+    from tensorflow.python.keras.engine.functional import Functional
+    from tensorflow.python.keras.engine.sequential import Sequential
+else:
+    from keras.models import Functional, Sequential
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -80,6 +83,13 @@ class NestedTest(BaseFeatureNetworkTest):
                 self.unit_test.assertFalse(isinstance(l.layer, Functional) or isinstance(l.layer, Sequential))
             else:
                 self.unit_test.assertFalse(isinstance(l, Functional) or isinstance(l, Sequential))
+        if self.is_inner_functional:
+            num_layers = 8
+            num_fq_layers = 5
+        else:
+            num_layers = 5
+            num_fq_layers = 3
+        self.unit_test.assertTrue(len(quantized_model.layers) == (num_layers+num_fq_layers))
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)
         cs = cosine_similarity(y, y_hat)

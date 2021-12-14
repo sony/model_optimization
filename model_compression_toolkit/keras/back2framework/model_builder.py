@@ -16,18 +16,20 @@
 
 import tensorflow as tf
 
-
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Input
     from tensorflow.python.keras.layers.core import TFOpLambda
+    from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
+    from tensorflow.python.keras.layers import Layer
 else:
     from keras import Input
     from keras.layers.core import TFOpLambda
+    from keras.engine.base_layer import TensorFlowOpLayer, Layer
+
+
 
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
-from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
-from tensorflow.python.keras.layers import Layer
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from typing import Tuple, Any, Dict, List
 from tensorflow.python.util.object_identity import Reference as TFReference
