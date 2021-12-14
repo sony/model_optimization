@@ -65,6 +65,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.add_same_test imp
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.node_filter_test import NameFilterTest, \
     ScopeFilterTest, TypeFilterTest
 from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTQuantizerTest
+from tests.keras_tests.feature_networks_tests.feature_networks.multi_head_attention_test import MultiHeadAttentionTest
 import tensorflow as tf
 from tensorflow.keras.layers import ReLU, PReLU, ELU
 
@@ -356,6 +357,9 @@ class FeatureNetworkTest(unittest.TestCase):
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.MAE).run_test()
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.LP).run_test()
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.KL).run_test()
+
+    def test_multi_head_attention(self):
+        MultiHeadAttentionTest(self, 5, 8, 12, 3, 4, 6).run_test()
 
 
 if __name__ == '__main__':
