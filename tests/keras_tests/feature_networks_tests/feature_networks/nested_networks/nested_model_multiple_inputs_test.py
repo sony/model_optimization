@@ -14,11 +14,14 @@
 # ==============================================================================
 
 
-from tensorflow.python.keras.engine.functional import Functional
-from tensorflow.python.keras.engine.sequential import Sequential
 from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+if tf.__version__ < "2.6":
+    from tensorflow.python.keras.engine.functional import Functional
+    from tensorflow.python.keras.engine.sequential import Sequential
+else:
+    from keras.models import Functional, Sequential
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -41,19 +44,19 @@ class NestedModelMultipleInputsTest(BaseFeatureNetworkTest):
     def inner_functional_model(self, input_shape):
         inputs = layers.Input(shape=input_shape[1:])
         inputs2 = layers.Input(shape=input_shape[1:])
-        x = layers.Conv2D(3, 4, name='conv3')(inputs)
-        y = layers.Conv2D(3, 4, name='conv4')(inputs2)
+        x = layers.Conv2D(3, 4, name='conv3')(inputs) #fq
+        y = layers.Conv2D(3, 4, name='conv4')(inputs2) #fq
         x = layers.BatchNormalization()(x)
         x = layers.Add()([x, y])
-        outputs = layers.Activation('swish')(x)
+        outputs = layers.Activation('swish')(x) #fq
         return keras.Model(inputs=[inputs, inputs2], outputs=outputs)
 
     def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+        inputs = layers.Input(shape=input_shape[0][1:]) #fq
         x = layers.Conv2D(3, 4, name='conv1')(inputs)
-        y = layers.Conv2D(3, 4, name='conv2')(inputs)
+        y = layers.Conv2D(3, 4, name='conv2')(inputs) #fq
         x = layers.BatchNormalization()(x)
-        x = layers.Activation('relu')(x)
+        x = layers.Activation('relu')(x) #fq
         x = self.inner_functional_model(x.shape)([x, y])
         model = keras.Model(inputs=inputs, outputs=x)
         return model
@@ -64,6 +67,9 @@ class NestedModelMultipleInputsTest(BaseFeatureNetworkTest):
                 self.unit_test.assertFalse(isinstance(l.layer, Functional) or isinstance(l.layer, Sequential))
             else:
                 self.unit_test.assertFalse(isinstance(l, Functional) or isinstance(l, Sequential))
+        num_layers = 8
+        num_fq_layers = 6
+        self.unit_test.assertTrue(len(quantized_model.layers) == (num_layers+num_fq_layers))
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)
         cs = cosine_similarity(y, y_hat)

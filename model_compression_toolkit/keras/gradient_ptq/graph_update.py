@@ -15,8 +15,14 @@
 
 
 import copy
+import tensorflow as tf
 
-from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
+# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+if tf.__version__ < "2.6":
+    from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
+else:
+    from keras.engine.base_layer import TensorFlowOpLayer
+
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 
 from model_compression_toolkit import common

@@ -15,7 +15,13 @@
 
 
 import tensorflow as tf
-from tensorflow.python.keras.engine.node import Node as KerasNode
+# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+if tf.__version__ < "2.6":
+    from tensorflow.python.keras.engine.node import Node as KerasNode
+else:
+    from keras.engine.node import Node as KerasNode
+
+
 from tensorflow.python.util.object_identity import Reference as TFReference
 from typing import List, Tuple
 

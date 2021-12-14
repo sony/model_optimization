@@ -17,7 +17,12 @@ from typing import List, Tuple, Any, Dict
 
 import numpy as np
 from tensorflow import Tensor
-from tensorflow.python.keras.layers import Layer
+import tensorflow as tf
+# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+if tf.__version__ < "2.6":
+    from tensorflow.python.keras.layers import Layer
+else:
+    from keras.engine.base_layer import Layer
 from tensorflow.python.training.tracking.data_structures import ListWrapper
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_config import QuantizeConfig
 

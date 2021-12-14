@@ -19,11 +19,12 @@ import tensorflow as tf
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers.core import TFOpLambda, SlicingOpLambda
     from tensorflow.python.keras.engine.keras_tensor import KerasTensor
+    from tensorflow.python.keras.engine.node import Node as KerasNode
 else:
     from keras.layers.core import TFOpLambda, SlicingOpLambda
     from keras.engine.keras_tensor import KerasTensor
+    from keras.engine.node import Node as KerasNode
 
-from tensorflow.python.keras.engine.node import Node as KerasNode
 from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.common.graph.functional_node import FunctionalNode
 
