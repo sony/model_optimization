@@ -129,6 +129,7 @@ The values are used for tensor min/max values initialization.
 ACTIVATION2MINMAX = {SOFTMAX: (0, 1),
                      SIGMOID: (0, 1),
                      LINEAR: (None, None),
+                     None: (None, None),
                      IDENTITY: (None, None),
                      TANH: (-1, 1),
                      SWISH: (-0.279, None),
