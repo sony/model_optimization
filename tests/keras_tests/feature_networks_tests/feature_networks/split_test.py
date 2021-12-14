@@ -14,9 +14,10 @@
 # ==============================================================================
 
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -24,7 +25,7 @@ keras = tf.keras
 layers = keras.layers
 
 
-class SplitTest(BaseFeatureNetworkTest):
+class SplitTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -34,8 +35,8 @@ class SplitTest(BaseFeatureNetworkTest):
                                       16, 16, True, False, True)
 
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Dense(30)(inputs)
         output_split = tf.split(x, num_or_size_splits=30, axis=-1)
         outputs = layers.Add()([output_split[0], output_split[10]])

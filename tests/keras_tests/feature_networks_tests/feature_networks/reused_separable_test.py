@@ -14,9 +14,10 @@
 # ==============================================================================
 
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -24,7 +25,7 @@ keras = tf.keras
 layers = keras.layers
 
 
-class ReusedSeparableTest(BaseFeatureNetworkTest):
+class ReusedSeparableTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -36,9 +37,9 @@ class ReusedSeparableTest(BaseFeatureNetworkTest):
                                       16, 16, True, True, True)
 
 
-    def create_feature_network(self, input_shape):
+    def create_networks(self):
         reused_layer = layers.SeparableConv2D(3, 3, padding='same')
-        inputs = layers.Input(shape=input_shape[0][1:])
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = reused_layer(inputs)
         outputs = reused_layer(x)
         model = keras.Model(inputs=inputs, outputs=outputs)

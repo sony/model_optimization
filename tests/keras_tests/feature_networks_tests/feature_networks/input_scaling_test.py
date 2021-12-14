@@ -14,9 +14,10 @@
 # ==============================================================================
 
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from model_compression_toolkit.keras.back2framework.model_builder import is_layer_fake_quant
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
@@ -25,7 +26,7 @@ keras = tf.keras
 layers = keras.layers
 
 
-class BaseInputScalingTest(BaseFeatureNetworkTest):
+class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -45,8 +46,8 @@ class BaseInputScalingTest(BaseFeatureNetworkTest):
 
 
 class InputScalingDenseTest(BaseInputScalingTest):
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Dense(20)(inputs)
         x = layers.ReLU()(x)
         outputs = layers.Dense(30)(x)
@@ -54,8 +55,8 @@ class InputScalingDenseTest(BaseInputScalingTest):
 
 
 class InputScalingConvTest(BaseInputScalingTest):
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(2, 3, padding='same')(inputs)
         x = layers.ReLU()(x)
         outputs = layers.Dense(30)(x)
@@ -63,8 +64,8 @@ class InputScalingConvTest(BaseInputScalingTest):
 
 
 class InputScalingDWTest(BaseInputScalingTest):
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.DepthwiseConv2D(1, padding='same')(inputs)
         x = layers.ReLU()(x)
         outputs = layers.Dense(30)(x)
@@ -72,8 +73,8 @@ class InputScalingDWTest(BaseInputScalingTest):
 
 
 class InputScalingZeroPadTest(BaseInputScalingTest):
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.ZeroPadding2D()(inputs)
         x = layers.DepthwiseConv2D(1, padding='same')(x)
         x = layers.ReLU()(x)

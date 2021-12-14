@@ -13,8 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
 if tf.__version__ < "2.6":
@@ -22,6 +20,9 @@ if tf.__version__ < "2.6":
     from tensorflow.python.keras.engine.sequential import Sequential
 else:
     from keras.models import Functional, Sequential
+
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
+
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -29,7 +30,7 @@ keras = tf.keras
 layers = keras.layers
 
 
-class NestedModelMultipleInputsTest(BaseFeatureNetworkTest):
+class NestedModelMultipleInputsTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -38,7 +39,7 @@ class NestedModelMultipleInputsTest(BaseFeatureNetworkTest):
                                       mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
                                       16, 16, True, True, True)
 
-    def create_inputs_shape(self):
+    def get_input_shapes(self):
         return [[self.val_batch_size, 236, 236, 3]]
 
     def inner_functional_model(self, input_shape):
@@ -51,8 +52,13 @@ class NestedModelMultipleInputsTest(BaseFeatureNetworkTest):
         outputs = layers.Activation('swish')(x) #fq
         return keras.Model(inputs=[inputs, inputs2], outputs=outputs)
 
+<<<<<<< HEAD
     def create_feature_network(self, input_shape):
         inputs = layers.Input(shape=input_shape[0][1:]) #fq
+=======
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+>>>>>>> WIP refactor tests
         x = layers.Conv2D(3, 4, name='conv1')(inputs)
         y = layers.Conv2D(3, 4, name='conv2')(inputs) #fq
         x = layers.BatchNormalization()(x)

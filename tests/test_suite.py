@@ -33,4 +33,4 @@ if __name__ == '__main__':
 
     # ----------------   Join them together ane run them
     comboSuite = unittest.TestSuite(suiteList)
-    unittest.TextTestRunner(verbosity=0).run(comboSuite)
+    unittest.TextTestRunner(verbosity=0).run(comboSuite) #TODO: reuven: arrange with envs

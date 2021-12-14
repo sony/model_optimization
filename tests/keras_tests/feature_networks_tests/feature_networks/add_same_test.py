@@ -14,9 +14,10 @@
 # ==============================================================================
 
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG
@@ -25,20 +26,15 @@ keras = tf.keras
 layers = keras.layers
 
 
-class AddSameTest(BaseFeatureNetworkTest):
+class AddSameTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, val_batch_size=1)
 
-    def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, False, True, True, False)
-
-    def create_inputs_shape(self):
+    def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, 3]]
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Dense(30)(inputs)
         x = layers.Conv2D(6, 7)(x)
         x = layers.BatchNormalization()(x)

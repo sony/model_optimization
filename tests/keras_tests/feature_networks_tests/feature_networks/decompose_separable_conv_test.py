@@ -14,9 +14,10 @@
 # ==============================================================================
 
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -24,7 +25,7 @@ keras = tf.keras
 layers = keras.layers
 
 
-class DecomposeSeparableConvTest(BaseFeatureNetworkTest):
+class DecomposeSeparableConvTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, depth=1):
         self.depth_multiplier = depth
         super().__init__(unit_test)
@@ -36,11 +37,11 @@ class DecomposeSeparableConvTest(BaseFeatureNetworkTest):
                                       weights_per_channel_threshold=True, enable_activation_quantization=True,
                                       enable_weights_quantization=True, relu_unbound_correction=False)
 
-    def create_inputs_shape(self):
-        return [[self.val_batch_size, 3, 4, 5]]
+    # def get_input_shapes(self):
+    #     return [[self.val_batch_size, 3, 4, 5]]
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         outputs = layers.SeparableConv2D(1, 2, depth_multiplier=self.depth_multiplier)(inputs)
         return keras.Model(inputs=inputs, outputs=outputs)
 
@@ -48,8 +49,8 @@ class DecomposeSeparableConvTest(BaseFeatureNetworkTest):
         self.unit_test.assertTrue(len(quantized_model.layers) == 6)
         self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.DepthwiseConv2D))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[4], layers.Conv2D))
-        self.unit_test.assertTrue(quantized_model.layers[2].weights[0].shape == (2, 2, 5, 1 * self.depth_multiplier))
-        self.unit_test.assertTrue(quantized_model.layers[4].weights[0].shape == (1, 1, 5 * self.depth_multiplier, 1))
+        self.unit_test.assertTrue(quantized_model.layers[2].weights[0].shape == (2, 2, 3, 1 * self.depth_multiplier))
+        self.unit_test.assertTrue(quantized_model.layers[4].weights[0].shape == (1, 1, 3 * self.depth_multiplier, 1))
         self.unit_test.assertTrue(quantized_model.output_shape == float_model.output_shape)
 
         y = float_model.predict(input_x)

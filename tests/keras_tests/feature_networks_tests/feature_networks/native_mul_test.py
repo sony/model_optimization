@@ -14,9 +14,10 @@
 # ==============================================================================
 
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers.core import TFOpLambda
 else:
@@ -29,7 +30,7 @@ keras = tf.keras
 layers = keras.layers
 
 
-class NativeMulTest(BaseFeatureNetworkTest):
+class NativeMulTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, val_batch_size=1)
 
@@ -44,12 +45,12 @@ class NativeMulTest(BaseFeatureNetworkTest):
                                       False,
                                       True)
 
-    def create_inputs_shape(self):
+    def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, 3], [self.val_batch_size, 16, 16, 3]]
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
-        inputs2 = layers.Input(shape=input_shape[1][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        inputs2 = layers.Input(shape=self.get_input_shapes()[1][1:])
         outputs = tf.multiply(inputs, inputs2, name='just_a_name')
         return keras.Model(inputs=[inputs, inputs2], outputs=outputs)
 

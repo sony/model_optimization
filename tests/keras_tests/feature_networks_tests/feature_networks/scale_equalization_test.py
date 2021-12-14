@@ -16,16 +16,17 @@
 
 import numpy as np
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import model_compression_toolkit as mct
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers
 
 
-class ScaleEqualizationTest(BaseFeatureNetworkTest):
+class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, first_op2d, second_op2d, mid_activation=False, second_op2d_zero_pad=False):
         self.first_op2d = first_op2d
         self.second_op2d = second_op2d
@@ -45,11 +46,11 @@ class ScaleEqualizationTest(BaseFeatureNetworkTest):
                                       weights_per_channel_threshold=True,
                                       activation_channel_equalization=True)
 
-    def create_inputs_shape(self):
+    def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, 3]]
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = self.first_op2d(inputs)
         if self.mid_act:
             x = layers.ReLU()(x)

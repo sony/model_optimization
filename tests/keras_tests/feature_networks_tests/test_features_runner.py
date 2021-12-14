@@ -68,8 +68,6 @@ from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.no
     ScopeFilterTest, TypeFilterTest
 import tensorflow as tf
 
-from tests.keras_tests.feature_networks_tests.native_split_test import NativeSplitTest
-
 layers = tf.keras.layers
 
 
@@ -295,37 +293,6 @@ class FeatureNetworkTest(unittest.TestCase):
         GradientPTQTest(self).run_test()
         GradientPTQWeightsUpdateTest(self).run_test()
         GradientPTQLearnRateZeroTest(self).run_test()
-
-    def test_native_add(self):
-        NativeAddTest(self).run_test()
-
-    def test_native_mul(self):
-        NativeMulTest(self).run_test()
-
-    def test_native_concat(self):
-        NativeConcateTest(self).run_test()
-
-    def test_native_resize(self):
-        NativeResizeBilinearTest(self).run_test()
-
-    def test_slicing_op_lambda(self):
-        SlicingOpLambdaTest(self).run_test()
-
-    def test_native_reduce_ops(self):
-        NativeReduceOpsTest(self).run_test()
-
-    def test_native_split(self):
-        NativeSplitTest(self).run_test()
-
-    def test_native_ops(self):
-        NativeResizeBilinearTest(self).run_test()
-        NativeConcateTest(self).run_test()
-        NativeAddTest(self).run_test()
-        NativeMulTest(self).run_test()
-        NativeReduceOpsTest(self).run_test()
-        NativeSplitTest(self).run_test()
-        SplitConvBugTest(self).run_test()
-        SlicingOpLambdaTest(self).run_test()
 
     def test_split_conv_bug(self):
         SplitConvBugTest(self).run_test()

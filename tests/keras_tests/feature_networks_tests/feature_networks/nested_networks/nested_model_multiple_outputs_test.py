@@ -14,7 +14,6 @@
 # ==============================================================================
 
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
 if tf.__version__ < "2.6":
@@ -22,6 +21,8 @@ if tf.__version__ < "2.6":
     from tensorflow.python.keras.engine.sequential import Sequential
 else:
     from keras.models import Functional, Sequential
+
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -29,7 +30,7 @@ keras = tf.keras
 layers = keras.layers
 
 
-class NestedModelMultipleOutputsTest(BaseFeatureNetworkTest):
+class NestedModelMultipleOutputsTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, val_batch_size=10)
 
@@ -38,7 +39,7 @@ class NestedModelMultipleOutputsTest(BaseFeatureNetworkTest):
                                       mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
                                       16, 16, True, True, True)
 
-    def create_inputs_shape(self):
+    def get_input_shapes(self):
         return [[self.val_batch_size, 236, 236, 3]]
 
     def inner_functional_model(self, input_shape):
@@ -51,8 +52,8 @@ class NestedModelMultipleOutputsTest(BaseFeatureNetworkTest):
         outputs = layers.Activation('swish')(x)
         return keras.Model(inputs=inputs, outputs=[outputs, y, z, w])
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(3, 4)(inputs)
         x = layers.Conv2D(3, 4)(x)
         x, y, z, w = self.inner_functional_model(x.shape)(x)

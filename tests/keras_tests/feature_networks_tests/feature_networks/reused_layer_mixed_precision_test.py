@@ -17,9 +17,10 @@
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -27,7 +28,7 @@ keras = tf.keras
 layers = keras.layers
 
 
-class ReusedLayerMixedPrecisionTest(BaseFeatureNetworkTest):
+class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -45,12 +46,12 @@ class ReusedLayerMixedPrecisionTest(BaseFeatureNetworkTest):
 
         return MixedPrecisionQuantizationConfig(qc, weights_n_bits=[2, 16, 4])
 
-    def create_inputs_shape(self):
+    def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, 3]]
 
-    def create_feature_network(self, input_shape):
+    def create_networks(self):
         layer = layers.Conv2D(3, 4)
-        inputs = layers.Input(shape=input_shape[0][1:])
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layer(inputs)
         y = layer(inputs)
         x = layers.BatchNormalization()(x)
@@ -75,9 +76,9 @@ class ReusedSeparableMixedPrecisionTest(ReusedLayerMixedPrecisionTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def create_feature_network(self, input_shape):
+    def create_networks(self):
         layer = layers.SeparableConv2D(3, 3, padding='same')
-        inputs = layers.Input(shape=input_shape[0][1:])
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layer(inputs)
         y = layer(inputs)
         x = layers.BatchNormalization()(x)

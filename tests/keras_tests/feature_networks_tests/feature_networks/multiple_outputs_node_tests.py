@@ -14,9 +14,10 @@
 # ==============================================================================
 
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -24,7 +25,7 @@ keras = tf.keras
 layers = keras.layers
 
 
-class MultipleOutputsNodeTests(BaseFeatureNetworkTest):
+class MultipleOutputsNodeTests(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -33,11 +34,11 @@ class MultipleOutputsNodeTests(BaseFeatureNetworkTest):
                                       mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
                                       16, 16, True, False, True)
 
-    def create_inputs_shape(self):
+    def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, 3]]
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Dense(20)(inputs)
         x = layers.ReLU(max_value=6.0)(x)
         outputs = layers.Dense(20)(x)
@@ -46,7 +47,7 @@ class MultipleOutputsNodeTests(BaseFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.outputs) == 3)
-        inputs = self.generate_inputs(self.create_inputs_shape())
+        inputs = self.generate_inputs()
         output_q = quantized_model.predict(inputs)
         output_f = float_model.predict(inputs)
         for o_q, o_f in zip(output_q, output_f):

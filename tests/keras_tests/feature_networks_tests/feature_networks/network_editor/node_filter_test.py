@@ -17,9 +17,10 @@
 from model_compression_toolkit.common.matchers.node_matcher import NodeAndMatcher
 from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
     get_weights_quantization_params_fn
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, \
     NodeTypeFilter
@@ -36,7 +37,7 @@ def get_uniform_weights(kernel, in_channels, out_channels):
         [kernel, kernel, in_channels, out_channels])
 
 
-class ScopeFilterTest(BaseFeatureNetworkTest):
+class ScopeFilterTest(BaseKerasFeatureNetworkTest):
     '''
     - Check filter order- that the last filter overrides the one before it
     - Check scope filter
@@ -71,11 +72,11 @@ class ScopeFilterTest(BaseFeatureNetworkTest):
                          action=ChangeCandidatesWeightsQuantConfigAttr(enable_weights_quantization=False))
                 ]
 
-    def create_inputs_shape(self):
+    def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, self.num_conv_channels]]
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name='unchanged')(inputs)
         x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.scope + '_1')(x)
         x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.scope + '_2')(x)
@@ -106,7 +107,7 @@ class ScopeFilterTest(BaseFeatureNetworkTest):
             quantized_model.layers[7].inbound_nodes[0].call_kwargs['num_bits'] == self.activation_n_bits)
 
 
-class NameFilterTest(BaseFeatureNetworkTest):
+class NameFilterTest(BaseKerasFeatureNetworkTest):
     '''
     - Check name filter- that only the node with the name changed
     - Check the attribute change action on num weight bits and activation bits
@@ -136,11 +137,11 @@ class NameFilterTest(BaseFeatureNetworkTest):
                          action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits))
                 ]
 
-    def create_inputs_shape(self):
+    def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, self.num_conv_channels]]
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.node_to_change_name)(inputs)
         outputs = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False)(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
@@ -160,7 +161,7 @@ class NameFilterTest(BaseFeatureNetworkTest):
         self.unit_test.assertTrue(quantized_model.layers[5].inbound_nodes[0].call_kwargs['num_bits'] == 16)
 
 
-class TypeFilterTest(BaseFeatureNetworkTest):
+class TypeFilterTest(BaseKerasFeatureNetworkTest):
     '''
     - Check node type filter
     - Check threshold function action
@@ -199,11 +200,11 @@ class TypeFilterTest(BaseFeatureNetworkTest):
                 EditRule(filter=NodeNameFilter(self.node_to_change_name) and NodeTypeFilter(layers.ReLU),
                          action=ChangeActivationQuantConfigAttr(activation_n_bits=16))]
 
-    def create_inputs_shape(self):
+    def get_input_shapes(self):
         return [[self.val_batch_size, 224, 224, self.num_conv_channels]]
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.node_to_change_name)(inputs)
         outputs = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False)(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
@@ -226,7 +227,7 @@ class TypeFilterTest(BaseFeatureNetworkTest):
             quantized_model.layers[5].inbound_nodes[0].call_kwargs['num_bits'] == self.activation_n_bits)
 
 
-class FilterLogicTest(BaseFeatureNetworkTest):
+class FilterLogicTest(BaseKerasFeatureNetworkTest):
     '''
     - Check "and" and "or" operations between filters
     - Check threshold function action
@@ -265,11 +266,11 @@ class FilterLogicTest(BaseFeatureNetworkTest):
                  ChangeActivationQuantConfigAttr(activation_n_bits=16))
                 ]
 
-    def create_inputs_shape(self):
+    def get_input_shapes(self):
         return [[self.val_batch_size, 224, 224, self.num_conv_channels]]
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.node_to_change_name)(inputs)
         outputs = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False)(x)
         model = keras.Model(inputs=inputs, outputs=outputs)

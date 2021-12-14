@@ -13,9 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers.core import TFOpLambda
 else:
@@ -28,7 +29,7 @@ keras = tf.keras
 layers = keras.layers
 
 
-class NativeReduceOpsTest(BaseFeatureNetworkTest):
+class NativeReduceOpsTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, val_batch_size=1)
 
@@ -44,8 +45,8 @@ class NativeReduceOpsTest(BaseFeatureNetworkTest):
                                       True)
 
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = tf.reduce_sum(inputs, 0, keepdims=True)
         x = tf.reduce_min(x, 0, True)
         x = tf.reduce_max(x, 0, keepdims=True)
