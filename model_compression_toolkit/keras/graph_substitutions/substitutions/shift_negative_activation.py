@@ -16,6 +16,8 @@
 import tensorflow as tf
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
+
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
 else:
@@ -35,7 +37,8 @@ from model_compression_toolkit.common.graph.graph_matchers import EdgeMatcher
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, \
     NodeFrameworkAttrMatcher
 
-from model_compression_toolkit.common.quantization.set_node_quantization_config import create_node_activation_qc
+from model_compression_toolkit.common.quantization.set_node_quantization_config import create_node_activation_qc, \
+    set_quantization_configs_to_node
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_activations_computation \
     import \
@@ -360,12 +363,13 @@ def remove_node_between_two_nodes(graph: Graph,
     graph.remove_node(node_to_remove)
 
 
-def shift_negative_function(graph,
-                            qc,
-                            non_linear_node,
-                            op2d_node,
+def shift_negative_function(graph: Graph,
+                            qc: QuantizationConfig,
+                            non_linear_node: BaseNode,
+                            op2d_node: BaseNode,
                             fw_info: FrameworkInfo,
-                            zero_padding_node=None):
+                            zero_padding_node: BaseNode = None,
+                            fw_impl: FrameworkImplementation = None) -> Graph:
     """
     Shift the output of a non-linear activation by its minimal output value (quantized) such
     that all values after the shifting are positive.
@@ -454,6 +458,16 @@ def shift_negative_function(graph,
                                    add_node.output_shape,
                                    pad_top, pad_btm, pad_left, pad_right)
 
+        # Set quantization configuration to node, even though we do not quantize it:
+        set_quantization_configs_to_node(fw_impl=fw_impl,
+                                         fw_info=fw_info,
+                                         node=pad_node,
+                                         quant_config=qc)
+
+        pad_node.activation_quantization_cfg.enable_activation_quantization = False
+        for weight_qc in pad_node.candidates_weights_quantization_cfg:
+            weight_qc.enable_weights_quantization = False
+
         # Insert a pad node between the add node to the op2d, and create statistics for the pad node
         insert_node_before_node(graph,
                                 node_to_insert=pad_node,
@@ -463,6 +477,15 @@ def shift_negative_function(graph,
                                               add_node_stats_collector)  # We ignore the padding effect on statistics
 
         op2d_node.input_shape = pad_node.output_shape
+
+    set_quantization_configs_to_node(fw_impl=fw_impl,
+                                     fw_info=fw_info,
+                                     node=add_node,
+                                     quant_config=qc)
+
+    add_node.activation_quantization_cfg.enable_activation_quantization = False
+    for weight_qc in add_node.candidates_weights_quantization_cfg:
+        weight_qc.enable_weights_quantization = False
 
     add_node.activation_quantization_cfg = create_node_activation_qc(qc,
                                                                      fw_info,
@@ -525,7 +548,8 @@ def get_next_nodes_to_correct(n: BaseNode,
 
 def apply_shift_negative_correction(graph: Graph,
                                     quant_config: QuantizationConfig,
-                                    fw_info: FrameworkInfo) -> Graph:
+                                    fw_info: FrameworkInfo,
+                                    fw_impl: FrameworkImplementation) -> Graph:
     """
     Apply the substitution even if the linear node is not immediately after
     the non-linear node, but there are intermediate nodes
@@ -548,5 +572,6 @@ def apply_shift_negative_correction(graph: Graph,
                                                 n,
                                                 linear_node,
                                                 fw_info,
-                                                zero_padding_node=pad_node)
+                                                zero_padding_node=pad_node,
+                                                fw_impl=fw_impl)
     return graph

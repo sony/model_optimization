@@ -22,6 +22,7 @@ import numpy as np
 
 from networkx.algorithms.dag import topological_sort
 from model_compression_toolkit import common
+from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.edge import EDGE_SINK_INDEX, EDGE_SOURCE_INDEX
 from model_compression_toolkit.common.graph.edge import Edge, convert_to_edge
 from model_compression_toolkit.common.graph.graph_searches import GraphSearches
@@ -418,7 +419,9 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             memory += n.get_memory_bytes()
         return memory
 
-    def get_configurable_sorted_nodes_names(self, include_reused_nodes: bool = False) -> List[str]:
+    def get_configurable_sorted_nodes_names(self,
+                                            include_reused_nodes: bool = False,
+                                            fw_info: FrameworkInfo = None) -> List[str]:
         """
         Get a list of nodes' names that can be configured (namely, has one or
         more weight qc candidate). The names are sorted according to the topological
@@ -431,14 +434,17 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         more weight qc candidate) sorted topology.
 
         """
-        sorted_names = [n.name for n in self.get_configurable_sorted_nodes(include_reused_nodes)]
+        sorted_names = [n.name for n in self.get_configurable_sorted_nodes(include_reused_nodes=include_reused_nodes,
+                                                                           fw_info=fw_info)]
         return sorted_names
 
-    def get_configurable_sorted_nodes(self, include_reused_nodes: bool = False) -> List[BaseNode]:
+    def get_configurable_sorted_nodes(self,
+                                      include_reused_nodes: bool = False,
+                                      fw_info: FrameworkInfo = None) -> List[BaseNode]:
         """
         Get a list of nodes that can be configured (namely, has one or
-        more weight qc candidate). The nodes are sorted according to the topological
-        order of the graph.
+        more weight qc candidate and their weights should be quantized).
+        The nodes are sorted according to the topological order of the graph.
 
         Args:
             include_reused_nodes: Whether or not to include reused nodes (False by default).
@@ -450,7 +456,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         sorted_configurable_nodes = []
         sorted_nodes = list(topological_sort(self))
         for n in sorted_nodes:
-            if n.candidates_weights_quantization_cfg is not None:
+            if fw_info.in_kernel_ops(n) and n.is_weights_quantization_enabled():
                 if not n.reuse or include_reused_nodes:
                     if len(n.candidates_weights_quantization_cfg) >= 1:
                         sorted_configurable_nodes.append(n)

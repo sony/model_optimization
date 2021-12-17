@@ -116,7 +116,8 @@ class KerasImplementation(FrameworkImplementation):
         """
         return apply_shift_negative_correction(graph,
                                                qc,
-                                               fw_info)
+                                               fw_info,
+                                               self)
 
     def attach_sc_to_node(self, node: BaseNode,
                           fw_info: FrameworkInfo) -> common.statistics_collector.BaseStatsContainer:

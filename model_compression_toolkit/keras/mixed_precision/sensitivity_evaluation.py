@@ -58,7 +58,7 @@ def get_sensitivity_evaluation(graph: Graph,
     """
 
     interest_points = []  # List of graph nodes, the model should output their outputs.
-    sorted_nodes = graph.get_configurable_sorted_nodes()
+    sorted_nodes = graph.get_configurable_sorted_nodes(fw_info=fw_info)
     sorted_configurable_nodes_names = []
     for n in sorted_nodes:
         interest_points.append(n)

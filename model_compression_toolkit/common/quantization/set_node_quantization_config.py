@@ -17,8 +17,8 @@
 import copy
 from typing import List
 
-from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
-from model_compression_toolkit.common import Logger
+from model_compression_toolkit.common import Logger, BaseNode
+from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
@@ -32,7 +32,8 @@ from model_compression_toolkit.common.quantization.quantization_params_fn_select
 
 def set_quantization_configuration_to_graph(graph: Graph,
                                             quant_config: QuantizationConfig,
-                                            fw_info: FrameworkInfo) -> Graph:
+                                            fw_info: FrameworkInfo,
+                                            fw_impl: FrameworkImplementation) -> Graph:
     """
     Add quantization configuration for each graph node.
 
@@ -41,39 +42,42 @@ def set_quantization_configuration_to_graph(graph: Graph,
         quant_config: Quantization configuration containing parameters for how the graph should be quantized.
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         groups of layers by how they should be quantized, etc.)
+        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
     Returns:
         The graph with quantization configurations attached to each node in it.
     """
 
     graph_with_qcs = copy.deepcopy(graph)
-
     for n in graph_with_qcs.nodes:
-        # Set qc only when needed
-        quantize_node_weights = False
-        quantize_node_activations = False
-
-        if fw_info.in_kernel_ops(n):
-            quantize_node_weights = True
-            quantize_node_activations = n.output_quantization
-        elif fw_info.in_activation_ops(n):
-            quantize_node_activations = True
-
-        if quantize_node_activations:
-            # Create activation QC for this node
-            out_sc = graph_with_qcs.get_out_stats_collector(n)
-            sc = out_sc[0] if isinstance(out_sc, list) else out_sc
-            use_min_max = sc.use_min_max
-            n.activation_quantization_cfg = create_node_activation_qc(quant_config,
-                                                                      fw_info,
-                                                                      use_min_max)
-        if quantize_node_weights:
-            # Create weights QC for this node
-            weight_channel_axis = fw_info.kernel_channels_mapping.get(n.layer_class)[0]
-            n.candidates_weights_quantization_cfg = _create_node_candidates_weights_qc(quant_config,
-                                                                                      fw_info,
-                                                                                      weight_channel_axis)
+        set_quantization_configs_to_node(n, quant_config, fw_impl, fw_info)
     return graph_with_qcs
+
+
+def set_quantization_configs_to_node(node: BaseNode,
+                                     quant_config: QuantizationConfig,
+                                     fw_impl: FrameworkImplementation,
+                                     fw_info: FrameworkInfo):
+    """
+    Create and set quantization configurations to a node (for both weights and activation).
+
+    Args:
+        node: Node to set its quantization configurations.
+        quant_config: Quantization configuration to generate the node's configurations from.
+        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+        fw_info: Information needed for quantization about the specific framework.
+
+    """
+    # Create activation QC for this node
+    use_min_max = fw_impl.attach_sc_to_node(node, fw_info).use_min_max
+    node.activation_quantization_cfg = create_node_activation_qc(quant_config,
+                                                                 fw_info,
+                                                                 use_min_max)
+    # Create weights QC for this node
+    weight_channel_axis = fw_info.kernel_channels_mapping.get(node.layer_class)[0]
+    node.candidates_weights_quantization_cfg = _create_node_candidates_weights_qc(quant_config,
+                                                                                  fw_info,
+                                                                                  weight_channel_axis)
 
 
 def create_node_activation_qc(qc: QuantizationConfig,
@@ -135,10 +139,9 @@ def create_node_weights_qc(qc: QuantizationConfig,
                                          weight_channel_axis)
 
 
-
 def _create_node_candidates_weights_qc(qc: QuantizationConfig,
-                                      fw_info: FrameworkInfo,
-                                      weight_channel_axis: int) -> List[NodeWeightsQuantizationConfig]:
+                                       fw_info: FrameworkInfo,
+                                       weight_channel_axis: int) -> List[NodeWeightsQuantizationConfig]:
     """
     Create a list of candidates of weights quantization configurations for a node.
 

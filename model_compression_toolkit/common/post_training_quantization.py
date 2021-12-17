@@ -362,6 +362,19 @@ def _prepare_model_for_quantization(in_model: Any,
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'pre_statistics_collection_substitutions')
 
+
+
+    ######################################
+    # Add quantization configurations
+    ######################################
+    transformed_graph = set_quantization_configuration_to_graph(transformed_graph,
+                                                                quant_config,
+                                                                fw_info,
+                                                                fw_impl)
+
+
+
+
     ######################################
     # Graph marking points
     ######################################
@@ -391,12 +404,6 @@ def _prepare_model_for_quantization(in_model: Any,
     for _ in tqdm(range(n_iter)):
         mi.infer(representative_data_gen())
 
-    ######################################
-    # Add quantization configurations
-    ######################################
-    transformed_graph = set_quantization_configuration_to_graph(transformed_graph,
-                                                                quant_config,
-                                                                fw_info)
 
     ######################################
     # Edit network according to user specific settings

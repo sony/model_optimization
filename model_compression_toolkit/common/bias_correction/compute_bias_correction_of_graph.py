@@ -69,9 +69,9 @@ def _compute_bias_correction_per_candidate_qc(node: BaseNode,
 
     """
 
-    if node.candidates_weights_quantization_cfg is not None:
+    if node.weight_quantization():
         for weights_qc in node.candidates_weights_quantization_cfg:
-            if fw_info.in_kernel_ops(node) and weights_qc.enable_weights_quantization:
+            if fw_info.in_kernel_ops(node):
                 quantized_kernel, io_channels_axes = get_quantized_kernel_by_weights_qc(fw_info,
                                                                                         node,
                                                                                         weights_qc,

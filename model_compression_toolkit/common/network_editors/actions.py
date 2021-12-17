@@ -93,10 +93,9 @@ class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
         Returns:
             The node after its quant_config has been modified.
         """
-        if node.candidates_weights_quantization_cfg is not None:
-            for nqc in node.candidates_weights_quantization_cfg:
-                for attr_name, attr_value in self.kwargs.items():
-                    nqc.set_quant_config_attr(attr_name, attr_value)
+        for nqc in node.candidates_weights_quantization_cfg:
+            for attr_name, attr_value in self.kwargs.items():
+                nqc.set_quant_config_attr(attr_name, attr_value)
 
 
 class ChangeFinalWeightsQuantConfigAttr(BaseAction):
@@ -146,9 +145,8 @@ class ChangeActivationQuantConfigAttr(BaseAction):
         Returns:q
             The node after its quant_config has been modified.
         """
-        if node.activation_quantization_cfg is not None:
-            for attr_name, attr_value in self.kwargs.items():
-                node.activation_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
+        for attr_name, attr_value in self.kwargs.items():
+            node.activation_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
 
 
 class ChangeQuantizationParamFunction(BaseAction):

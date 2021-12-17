@@ -203,7 +203,10 @@ class TensorboardWriter(object):
             if n.quantization_attr is not None:
                 attr.update(n.quantization_attr)
 
-            # log final config or unified candidates, not both
+            # To log quantization configurations we need to check
+            # if they exist at all, as we can log the initial graph,
+            # which its nodes do not have configurations yet.
+            # Log final config or unified candidates, not both
             if n.final_weights_quantization_cfg is not None:
                 attr.update(n.final_weights_quantization_cfg.__dict__)
             elif n.candidates_weights_quantization_cfg is not None:
