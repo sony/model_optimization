@@ -61,8 +61,14 @@ class NetworkTest(object):
                                      mode=ModelBuilderMode.FLOAT)
         self.compare(inputs_list, ptq_model)
 
-        ptq_model, _ = model_builder(substitute(graph,
-                                                fw_impl.get_substitutions_pre_statistics_collection()),
+        graph = substitute(graph,
+                           fw_impl.get_substitutions_pre_statistics_collection())
+        graph = set_quantization_configuration_to_graph(graph,
+                                                        DEFAULTCONFIG,
+                                                        DEFAULT_KERAS_INFO,
+                                                        fw_impl)
+
+        ptq_model, _ = model_builder(graph,
                                      mode=ModelBuilderMode.FLOAT)
         self.compare(inputs_list, ptq_model)
 

@@ -131,7 +131,7 @@ def run_operation(n: BaseNode,
 
     if len(input_tensors) == 0:  # Placeholder handling
         out_tensors_of_n = input_nodes_to_input_tensors[n]
-        if n.activation_quantization_cfg.enable_activation_quantization:
+        if n.is_activation_quantization_enabled():
             if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ, ModelBuilderMode.MIXEDPRECISION]:
                 # Adding a fake quant node to Input when in GPTQ mode because quantize_model doesn't quantize the
                 # input layer
@@ -139,6 +139,7 @@ def run_operation(n: BaseNode,
                     n.activation_quantization_cfg.activation_n_bits,
                     n.activation_quantization_cfg.activation_is_signed,
                     n.activation_quantization_cfg.activation_quantization_params)
+
                 if fake_quant is not None:
                     out_tensors_of_n = fake_quant(out_tensors_of_n)
 
@@ -158,14 +159,15 @@ def run_operation(n: BaseNode,
             out_tensors_of_n = op_func(input_tensors)
 
         # Add a fake quant node if the node has an activation threshold.
-        if n.activation_quantization_cfg.enable_activation_quantization:
+        if n.is_activation_quantization_enabled():
             if mode in [ModelBuilderMode.QUANTIZED,
-                        ModelBuilderMode.MIXEDPRECISION] and \
-                    n.activation_quantization_cfg.enable_activation_quantization:
+                        ModelBuilderMode.MIXEDPRECISION]:
+
                 fake_quant = n.activation_quantization_cfg.activation_quantization_fn(
                     n.activation_quantization_cfg.activation_n_bits,
                     n.activation_quantization_cfg.activation_is_signed,
                     n.activation_quantization_cfg.activation_quantization_params)
+
                 if fake_quant is not None:
                     out_tensors_of_n = fake_quant(out_tensors_of_n)
 
@@ -277,9 +279,8 @@ def model_builder(graph: common.Graph,
             nodes = graph.find_node_by_name(get_node_name_from_layer(layer))
             if len(nodes) == 1:
                 node = nodes[0]
-                # does not need to get wrapped as its weights are not quantized
-                wrap_layer = fw_info.in_kernel_ops(node) and node.weight_quantization()
-                if wrap_layer:
+                # Wrap only if its weights should be quantized
+                if node.is_weights_quantization_enabled():
                     return QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node, fw_info))
                 return layer
 

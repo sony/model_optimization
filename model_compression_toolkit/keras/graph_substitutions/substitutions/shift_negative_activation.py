@@ -488,8 +488,7 @@ def shift_negative_function(graph: Graph,
         weight_qc.enable_weights_quantization = False
 
     add_node.activation_quantization_cfg = create_node_activation_qc(qc,
-                                                                     fw_info,
-                                                                     add_node_stats_collector.use_min_max)
+                                                                     fw_info)
 
     add_node.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold})
     add_node.activation_quantization_cfg.activation_is_signed = False

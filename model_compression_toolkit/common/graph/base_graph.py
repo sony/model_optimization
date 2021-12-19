@@ -174,7 +174,6 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         Returns:
             Tensor containing output statistics of the node.
         """
-
         return self.node_to_out_stats_collector.get(n)
 
     def get_in_stats_collector(self,
@@ -429,6 +428,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         Args:
             include_reused_nodes: Whether or not to include reused nodes (False by default).
+            fw_info: Information needed for quantization about the specific framework.
 
         Returns: List of nodes' names that can be configured (namely, has one or
         more weight qc candidate) sorted topology.
@@ -448,6 +448,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         Args:
             include_reused_nodes: Whether or not to include reused nodes (False by default).
+            fw_info: Information needed for quantization about the specific framework.
 
         Returns:
             A list of nodes that can be configured (namely, has one or more weight qc candidate) sorted topology.

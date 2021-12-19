@@ -56,23 +56,23 @@ def calculate_quantization_params(graph: Graph,
         input_channels_axis, activation_threshold_float = {}, {}, None, None, None, None
 
         if fw_info.in_kernel_ops(n):  # If the node has a kernel to quantize
+            if n.is_weights_quantization_enabled():
+                for candidtae_qc in n.candidates_weights_quantization_cfg:
+                    output_channels_axis, _ = get_channels_axis(candidtae_qc, fw_info, n.layer_class)
+                    weights_params = get_weights_qparams(n.get_weights_by_keys(fw_impl.constants.KERNEL),
+                                                         candidtae_qc,
+                                                         output_channels_axis)
 
-            for candidtae_qc in n.candidates_weights_quantization_cfg:
-                output_channels_axis, _ = get_channels_axis(candidtae_qc, fw_info, n.layer_class)
-                weights_params = get_weights_qparams(n.get_weights_by_keys(fw_impl.constants.KERNEL),
-                                                     candidtae_qc,
-                                                     output_channels_axis)
+                    candidtae_qc.set_weights_quantization_param(weights_params)
+                    candidtae_qc.weights_channels_axis = output_channels_axis
 
-                candidtae_qc.set_weights_quantization_param(weights_params)
-                candidtae_qc.weights_channels_axis = output_channels_axis
-
-            if n.activation_quantization_cfg.enable_activation_quantization:  # If node's activations should be quantized as well, we compute its
+            if n.is_activation_quantization_enabled():  # If node's activations should be quantized as well, we compute its
                 # activation threshold
                 activation_params, activation_is_signed = get_activations_qparams(n=n,
                                                                                   graph=graph)
 
         elif fw_info.in_activation_ops(n):  # If node has no kernel, but its activations should be quantized
-            if n.activation_quantization_cfg.enable_activation_quantization:
+            if n.is_activation_quantization_enabled():
                 activation_params, activation_is_signed = get_activations_qparams(n=n,
                                                                                   graph=graph)
         # If node should not be quantized at all
@@ -84,6 +84,7 @@ def calculate_quantization_params(graph: Graph,
             Logger.warning(f"Warning: unknown layer: {n.layer_class.__name__}")
 
         # Create a NodeQuantizationConfig containing all quantization params and attach it to the node
-        if n.activation_quantization_cfg.enable_activation_quantization:
+        if n.is_activation_quantization_enabled():
+            # TODO: reuven: bug - multiple outputs collectors are mapped to one activation_quantization_cfg.
             n.activation_quantization_cfg.set_activation_quantization_param(activation_params)
             n.activation_quantization_cfg.activation_is_signed = activation_is_signed

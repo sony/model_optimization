@@ -63,15 +63,6 @@ class BaseNode:
         self.final_weights_quantization_cfg = None
         self.candidates_weights_quantization_cfg = None
 
-    def no_quantization(self) -> bool:
-        """
-
-        Returns: Whether NodeQuantizationConfig does not have activation params.
-
-        """
-        return self.activation_quantization_cfg.enable_activation_quantization or \
-               (not self.activation_quantization_cfg.has_activation_quantization_params())
-
     def weight_quantization(self) -> bool:
         """
 
@@ -87,8 +78,8 @@ class BaseNode:
         Returns: Whether node activation should be quantized
 
         """
-        return self.activation_quantization_cfg.has_activation_quantization_params() and \
-               self.activation_quantization_cfg.enable_activation_quantization
+        return self.is_activation_quantization_enabled() and\
+               self.activation_quantization_cfg.has_activation_quantization_params()
 
     def is_activation_quantization_enabled(self) -> bool:
         """

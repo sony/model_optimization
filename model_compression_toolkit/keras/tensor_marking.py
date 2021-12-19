@@ -74,11 +74,11 @@ def get_stats_collector_for_kernel_op(n: common.BaseNode,
         BaseStatsContainer according to statistics that are collected.
     """
 
-    if n.framework_attr[ACTIVATION] == LINEAR:# and n.activation_quantization_cfg.enable_activation_quantization:
+    if n.framework_attr[ACTIVATION] == LINEAR and n.is_activation_quantization_enabled():
         return common.StatsContainer()
 
-    # if n.framework_attr[ACTIVATION] == LINEAR and not n.activation_quantization_cfg.enable_activation_quantization:
-    #     return common.NoStatsContainer()
+    if n.framework_attr[ACTIVATION] == LINEAR and not n.is_activation_quantization_enabled():
+        return common.NoStatsContainer()
 
     if n.framework_attr[ACTIVATION] in fw_info.activation_min_max_mapping.keys():
         min_value, max_value = fw_info.activation_min_max_mapping[n.framework_attr[ACTIVATION]]

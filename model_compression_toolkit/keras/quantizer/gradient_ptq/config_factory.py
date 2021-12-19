@@ -67,7 +67,7 @@ def quantization_config_builder_gptq(n: common.BaseNode,
                                                                max_lsbs_change=MAX_LSBS_CHANGE
                                                                )
 
-    elif n.no_quantization():
+    elif not n.activation_quantization():
         qc = NoOpQuantizeConfig()
 
     else:

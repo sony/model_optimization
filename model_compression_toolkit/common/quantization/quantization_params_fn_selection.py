@@ -23,8 +23,7 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 
 
 def get_activation_quantization_params_fn(activation_quantization_method: QuantizationMethod,
-                                          activation_threshold_method: ThresholdSelectionMethod,
-                                          use_min_max: bool) -> Callable:
+                                          activation_threshold_method: ThresholdSelectionMethod) -> Callable:
     """
     Generate a function for finding activation quantization threshold.
 
@@ -38,7 +37,7 @@ def get_activation_quantization_params_fn(activation_quantization_method: Quanti
     """
     if activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
         # Use min/max as the threshold if we use NOCLIPPING
-        if use_min_max or activation_threshold_method == ThresholdSelectionMethod.NOCLIPPING:
+        if activation_threshold_method == ThresholdSelectionMethod.NOCLIPPING:
             params_fn = quantization_params_generation.no_clipping_selection_min_max
         # Use MSE to search_methods for the optimal threshold.
         elif activation_threshold_method == ThresholdSelectionMethod.MSE:

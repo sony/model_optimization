@@ -69,20 +69,24 @@ def set_quantization_configs_to_node(node: BaseNode,
 
     """
     # Create activation QC for this node
-    use_min_max = fw_impl.attach_sc_to_node(node, fw_info).use_min_max
+    # use_min_max = fw_impl.attach_sc_to_node(node, fw_info).use_min_max
     node.activation_quantization_cfg = create_node_activation_qc(quant_config,
-                                                                 fw_info,
-                                                                 use_min_max)
+                                                                 fw_info)
+    if fw_info.in_no_quantization_ops(node):
+        node.activation_quantization_cfg.enable_activation_quantization = False
+
     # Create weights QC for this node
     weight_channel_axis = fw_info.kernel_channels_mapping.get(node.layer_class)[0]
     node.candidates_weights_quantization_cfg = _create_node_candidates_weights_qc(quant_config,
                                                                                   fw_info,
                                                                                   weight_channel_axis)
+    if not fw_info.in_kernel_ops(node):
+        for qc in node.candidates_weights_quantization_cfg:
+            qc.enable_weights_quantization = False
 
 
 def create_node_activation_qc(qc: QuantizationConfig,
-                              fw_info: FrameworkInfo,
-                              use_min_max: bool) -> NodeActivationQuantizationConfig:
+                              fw_info: FrameworkInfo) -> NodeActivationQuantizationConfig:
     """
     Create a activations quantization configuration from a QuantizationConfig object.
 
@@ -101,8 +105,7 @@ def create_node_activation_qc(qc: QuantizationConfig,
         Logger.critical('Unknown quantization method for activations')
 
     activation_quantization_params_fn = get_activation_quantization_params_fn(qc.activation_quantization_method,
-                                                                              qc.activation_threshold_method,
-                                                                              use_min_max)
+                                                                              qc.activation_threshold_method)
 
     return NodeActivationQuantizationConfig(qc,
                                             activation_quantization_fn,

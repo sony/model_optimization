@@ -16,6 +16,7 @@
 from abc import ABC, abstractmethod
 from collections import namedtuple
 
+from model_compression_toolkit import ThresholdSelectionMethod
 from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
@@ -222,8 +223,7 @@ class ChangeActivationQuantizationMethod(BaseAction):
 
             activation_quantization_params_fn = get_activation_quantization_params_fn(
                 self.activation_quantization_method,
-                node.activation_quantization_cfg.activation_threshold_method,
-                out_stats_container.use_min_max)
+                ThresholdSelectionMethod.NOCLIPPING if out_stats_container.use_min_max else node.activation_quantization_cfg.activation_threshold_method)
 
             node.activation_quantization_cfg.set_activation_quantization_params_fn(activation_quantization_params_fn)
             activation_quantization_fn = fw_info.activation_quantizer_mapping.get(self.activation_quantization_method)
