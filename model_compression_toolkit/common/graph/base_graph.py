@@ -21,14 +21,12 @@ import networkx as nx
 import numpy as np
 
 from networkx.algorithms.dag import topological_sort
-from model_compression_toolkit import common
-from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.edge import EDGE_SINK_INDEX, EDGE_SOURCE_INDEX
 from model_compression_toolkit.common.graph.edge import Edge, convert_to_edge
 from model_compression_toolkit.common.graph.graph_searches import GraphSearches
 from model_compression_toolkit.common.graph.base_node import BaseNode
-from model_compression_toolkit.common.statistics_collector import BaseStatsContainer
-from model_compression_toolkit.common.statistics_collector import scale_statistics, shift_statistics
+from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
+from model_compression_toolkit.common.collectors.statistics_collector import scale_statistics, shift_statistics
 from model_compression_toolkit.common.user_info import UserInformation
 from model_compression_toolkit.common.logger import Logger
 
@@ -117,7 +115,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
     def set_out_stats_collector_to_node(self,
                                         n: BaseNode,
-                                        stats_collector: BaseStatsContainer):
+                                        stats_collector: BaseStatsCollector):
         """
         Set an output statistics collector of a node in the graph, and set this statistics collector as an input
         statistics collector of nodes next to this given node.
@@ -165,7 +163,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                     self.node_to_in_stats_collector.update({oe.sink_node: stats_collector})
 
     def get_out_stats_collector(self,
-                                n: BaseNode) -> BaseStatsContainer:
+                                n: BaseNode) -> BaseStatsCollector:
         """
         Get the output statistics collector of a node containing output statistics of the node.
         Args:
@@ -177,7 +175,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return self.node_to_out_stats_collector.get(n)
 
     def get_in_stats_collector(self,
-                               n: BaseNode) -> BaseStatsContainer:
+                               n: BaseNode) -> BaseStatsCollector:
         """
         Get the input statistics collector of a node containing input statistics of the node.
         Args:
@@ -419,8 +417,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return memory
 
     def get_configurable_sorted_nodes_names(self,
-                                            include_reused_nodes: bool = False,
-                                            fw_info: FrameworkInfo = None) -> List[str]:
+                                            include_reused_nodes: bool = False) -> List[str]:
         """
         Get a list of nodes' names that can be configured (namely, has one or
         more weight qc candidate). The names are sorted according to the topological
@@ -434,13 +431,11 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         more weight qc candidate) sorted topology.
 
         """
-        sorted_names = [n.name for n in self.get_configurable_sorted_nodes(include_reused_nodes=include_reused_nodes,
-                                                                           fw_info=fw_info)]
+        sorted_names = [n.name for n in self.get_configurable_sorted_nodes(include_reused_nodes=include_reused_nodes)]
         return sorted_names
 
     def get_configurable_sorted_nodes(self,
-                                      include_reused_nodes: bool = False,
-                                      fw_info: FrameworkInfo = None) -> List[BaseNode]:
+                                      include_reused_nodes: bool = False) -> List[BaseNode]:
         """
         Get a list of nodes that can be configured (namely, has one or
         more weight qc candidate and their weights should be quantized).
@@ -457,7 +452,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         sorted_configurable_nodes = []
         sorted_nodes = list(topological_sort(self))
         for n in sorted_nodes:
-            if fw_info.in_kernel_ops(n) and n.is_weights_quantization_enabled():
+            if n.is_weights_quantization_enabled():
                 if not n.reuse or include_reused_nodes:
                     if len(n.candidates_weights_quantization_cfg) >= 1:
                         sorted_configurable_nodes.append(n)

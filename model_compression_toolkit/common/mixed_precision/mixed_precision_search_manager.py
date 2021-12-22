@@ -60,7 +60,7 @@ class MixedPrecisionSearchManager(object):
         """
 
         indices_mapping = {}
-        nodes_to_configure = self.graph.get_configurable_sorted_nodes(fw_info=self.fw_info)
+        nodes_to_configure = self.graph.get_configurable_sorted_nodes()
         for idx, n in enumerate(nodes_to_configure):
             # For each node, get all possible bitwidth indices for it
             # (which is a list from 0 to the length of the candidates qc list of the node).
@@ -106,12 +106,12 @@ class MixedPrecisionSearchManager(object):
             weights_memory = 0
 
             # Go over all nodes that shold be taken into consideration when computing the KPI.
-            mp_nodes = self.graph.get_configurable_sorted_nodes_names(fw_info=self.fw_info)
+            mp_nodes = self.graph.get_configurable_sorted_nodes_names()
             for n in self.graph.nodes:
                 if n.name in mp_nodes:
                     node_idx = mp_nodes.index(n.name)
                     node_nbits = n.candidates_weights_quantization_cfg[mp_model_config[node_idx]].weights_n_bits
-                elif n.weight_quantization():
+                elif n.is_weights_quantization_enabled():
                     # The only valid way to get here is if the node is reused (which means that we're not looking
                     # for its configuration), and we ignore it when computing the KPI (as the base node will acount
                     # for it).

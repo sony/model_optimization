@@ -56,7 +56,7 @@ class ModelCollector(object):
             if isinstance(out_stats_container, list):  # If layer has multiple outputs
                 # Append nodes to output and track their statistics only if
                 # they actually collect statistics.
-                if len([x for x in out_stats_container if not isinstance(x, common.NoStatsContainer)]) > 0:
+                if len([x for x in out_stats_container if not isinstance(x, common.NoStatsCollector)]) > 0:
                     mark2fetch = True
                     for sc in out_stats_container:
                         # Output only if statistics should be gathered

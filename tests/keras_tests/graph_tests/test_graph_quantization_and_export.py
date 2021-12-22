@@ -28,7 +28,6 @@ from model_compression_toolkit.keras.keras_implementation import KerasImplementa
 from model_compression_toolkit.keras.reader.reader import model_reader
 from model_compression_toolkit.common.model_collector import ModelCollector
 from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
-from model_compression_toolkit.keras.tensor_marking import get_node_stats_collector
 from model_compression_toolkit.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_computation import \

@@ -127,6 +127,18 @@ class FrameworkInfo(object):
 
         return layer in self.layer_min_max_mapping
 
+    def activation_has_min_max(self, activation_name: str) -> bool:
+        """
+        Check if a layer is in a layer to min/max mapping the FrameworkInfo holds.
+        Args:
+            layer: A layer to check if has a min/max known values.
+
+        Returns:
+            Whether a layer has a min/max known values or not.
+        """
+
+        return activation_name in self.activation_min_max_mapping
+
     def in_kernel_ops(self, n: BaseNode) -> bool:
         """
         Check whether a node is in the kernel_ops group or not.

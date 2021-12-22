@@ -61,7 +61,7 @@ def set_bit_widths(quant_config: QuantizationConfig,
         else:
             Logger.info(f'Set bit widths from configuration: {bit_widths_config}')
             # Get a list of nodes' names we need to finalize (that they have at least one weight qc candidate).
-            sorted_nodes_names = graph.get_configurable_sorted_nodes_names(fw_info=fw_info)
+            sorted_nodes_names = graph.get_configurable_sorted_nodes_names()
             for node in graph.nodes:  # set a specific node qc for each node final weights qc
                 node_name = node.name if not node.reuse else '_'.join(node.name.split('_')[:-2]) # if it's reused, take the configuration that the base node has
                 if node_name in sorted_nodes_names:  # only configurable nodes are in this list

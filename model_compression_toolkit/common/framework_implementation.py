@@ -19,6 +19,8 @@ import numpy as np
 
 from model_compression_toolkit import common, GradientPTQConfig, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common import BaseNode
+from model_compression_toolkit.common.base_node_prior_info import BaseNodePriorInfo
+from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
@@ -110,15 +112,13 @@ class FrameworkImplementation(ABC):
                              f'framework\'s model_reader method.')
 
     @abstractmethod
-    def attach_sc_to_node(self, node:BaseNode,
-                          fw_info:FrameworkInfo) -> common.statistics_collector.BaseStatsContainer:
+    def attach_sc_to_node(self, node: BaseNode) -> BaseStatsCollector:
         """
         Return a statistics collector that should be attached to a node's output
         during statistics collection.
 
         Args:
             node: Node to return its collector.
-            fw_info: FrameworkInfo object with information about the specific framework's model
 
         Returns:
             Statistics collector for the node.
@@ -147,7 +147,6 @@ class FrameworkImplementation(ABC):
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_substitutions_pre_statistics_collection method.')
 
-
     @abstractmethod
     def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:
         """
@@ -159,7 +158,8 @@ class FrameworkImplementation(ABC):
                              f'framework\'s get_substitutions_pre_build method.')
 
     @abstractmethod
-    def get_substitutions_post_statistics_collection(self, quant_config:QuantizationConfig) -> List[common.BaseSubstitution]:
+    def get_substitutions_post_statistics_collection(self, quant_config: QuantizationConfig) -> List[
+        common.BaseSubstitution]:
         """
         Return a list of the framework substitutions used after we collect statistics.
 
@@ -236,4 +236,7 @@ class FrameworkImplementation(ABC):
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_sensitivity_evaluation_fn method.')
 
-
+    def get_node_prior_info(self, node: BaseNode,
+                            fw_info: FrameworkInfo) -> BaseNodePriorInfo:
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_node_prior_info method.')

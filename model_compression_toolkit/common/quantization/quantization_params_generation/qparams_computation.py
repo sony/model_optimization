@@ -85,6 +85,5 @@ def calculate_quantization_params(graph: Graph,
 
         # Create a NodeQuantizationConfig containing all quantization params and attach it to the node
         if n.is_activation_quantization_enabled():
-            # TODO: reuven: bug - multiple outputs collectors are mapped to one activation_quantization_cfg.
             n.activation_quantization_cfg.set_activation_quantization_param(activation_params)
             n.activation_quantization_cfg.activation_is_signed = activation_is_signed

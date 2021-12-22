@@ -16,14 +16,14 @@
 
 import unittest
 import numpy as np
-from model_compression_toolkit.common.statistics_collector import StatsContainer
-from model_compression_toolkit.common.statistics_collector import scale_statistics
-from model_compression_toolkit.common.statistics_collector import shift_statistics
+from model_compression_toolkit.common.collectors.statistics_collector import StatsCollector
+from model_compression_toolkit.common.collectors.statistics_collector import scale_statistics
+from model_compression_toolkit.common.collectors.statistics_collector import shift_statistics
 
 
 def init_stats_container(num_of_input_channels, init_min=None, init_max=None):
     np.random.seed(1)
-    sc = StatsContainer(init_min_value=init_min, init_max_value=init_max)
+    sc = StatsCollector(init_min_value=init_min, init_max_value=init_max)
     # by default stats collecter takes index -1 as index to
     # collect stats per-channel (when it's collected this way)
     x = np.random.rand(1, 2, 3, num_of_input_channels)
