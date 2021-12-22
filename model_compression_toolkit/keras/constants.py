@@ -38,6 +38,9 @@ PAD_SAME = 'same'
 RELU_MAX_VALUE = 'max_value'
 THRESHOLD = 'threshold'
 NEGATIVE_SLOPE = 'negative_slope'
+CHANNELS_FORMAT = 'data_format'
+CHANNELS_FORMAT_FIRST = 'channels_first'
+CHANNELS_FORMAT_LAST = 'channels_last'
 
 # Layers variables names:
 KERNEL = 'kernel'

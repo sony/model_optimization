@@ -112,7 +112,7 @@ class FrameworkImplementation(ABC):
                              f'framework\'s model_reader method.')
 
     @abstractmethod
-    def attach_sc_to_node(self, node: BaseNode) -> BaseStatsCollector:
+    def attach_sc_to_node(self, node: BaseNode, output_channel_index: int) -> BaseStatsCollector:
         """
         Return a statistics collector that should be attached to a node's output
         during statistics collection.

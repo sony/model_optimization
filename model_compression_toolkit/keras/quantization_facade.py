@@ -29,6 +29,8 @@ from model_compression_toolkit.common.quantization.quantization_config import DE
 
 import importlib
 
+from model_compression_toolkit.keras.keras_model_validation import KerasModelValidation
+
 if importlib.util.find_spec("tensorflow") is not None\
         and importlib.util.find_spec("tensorflow_model_optimization") is not None:
     from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -84,7 +86,8 @@ if importlib.util.find_spec("tensorflow") is not None\
             >>> quantized_model, quantization_info = mct.keras_post_training_quantization(model, repr_datagen)
 
         """
-
+        KerasModelValidation(model=in_model,
+                             fw_info=fw_info).validate()
         return post_training_quantization(in_model,
                                           representative_data_gen,
                                           n_iter,
@@ -166,6 +169,8 @@ if importlib.util.find_spec("tensorflow") is not None\
              For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 
          """
+        KerasModelValidation(model=in_model,
+                             fw_info=fw_info).validate()
 
         if target_kpi is None:
             common.Logger.warning("No KPI was passed. Using non mixed-precision compression process...")

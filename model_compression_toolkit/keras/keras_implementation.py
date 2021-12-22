@@ -121,7 +121,9 @@ class KerasImplementation(FrameworkImplementation):
                                                fw_info,
                                                self)
 
-    def attach_sc_to_node(self, node: BaseNode) -> BaseStatsCollector:
+    def attach_sc_to_node(self,
+                          node: BaseNode,
+                          output_channel_index: int) -> BaseStatsCollector:
         """
         Return a statistics collector that should be attached to a node's output
         during statistics collection.
@@ -132,7 +134,8 @@ class KerasImplementation(FrameworkImplementation):
         Returns:
             Statistics collector for the node.
         """
-        return create_stats_collector_for_node(node)
+        return create_stats_collector_for_node(node,
+                                               output_channel_index=output_channel_index)
 
     def get_substitutions_marking(self) -> List[common.BaseSubstitution]:
         """

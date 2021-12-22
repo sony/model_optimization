@@ -399,9 +399,6 @@ def _prepare_model_for_quantization(in_model: Any,
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'after_analyzer_graph')
 
-    # transformed_graph = _set_noclipping_threshold_for_bounded_nodes(transformed_graph,
-    #                                                                 quant_config)
-
 
     ######################################
     # Statistic collection
@@ -474,16 +471,3 @@ def _prepare_model_for_quantization(in_model: Any,
 
     return tg_with_bias
 
-
-# def _set_noclipping_threshold_for_bounded_nodes(transformed_graph:Graph,
-#                                                 quant_config:QuantizationConfig) -> Graph:
-#     graph = copy.deepcopy(transformed_graph)
-#     for node in graph.nodes:
-#         sc = graph.get_out_stats_collector(node)
-#         use_min_max = sc[0].use_min_max if isinstance(sc, list) else sc.use_min_max
-#         if use_min_max:
-#             activation_quantization_params_fn = get_activation_quantization_params_fn(
-#                 quant_config.activation_quantization_method,
-#                 ThresholdSelectionMethod.NOCLIPPING)
-#             node.activation_quantization_cfg.set_activation_quantization_params_fn(activation_quantization_params_fn)
-#     return graph

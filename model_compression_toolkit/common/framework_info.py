@@ -34,7 +34,8 @@ class FrameworkInfo(object):
                  kernel_channels_mapping: DefaultDict,
                  activation_min_max_mapping: Dict[str, tuple],
                  layer_min_max_mapping: Dict[Any, tuple],
-                 kernel_ops_attributes_mapping: DefaultDict):
+                 kernel_ops_attributes_mapping: DefaultDict,
+                 output_channel_index: int):
         """
         A class to wrap all information about a specific framework the library needs to quantize a model.
         Specifically, FrameworkInfo holds lists of layers by how they should be quantized, and multiple mappings such as
@@ -100,6 +101,7 @@ class FrameworkInfo(object):
         self.activation_min_max_mapping = activation_min_max_mapping
         self.layer_min_max_mapping = layer_min_max_mapping
         self.kernel_ops_attributes_mapping = kernel_ops_attributes_mapping
+        self.output_channel_index = output_channel_index
 
 
     def get_kernel_op_attributes(self, layer_class: Any) -> List[str]:

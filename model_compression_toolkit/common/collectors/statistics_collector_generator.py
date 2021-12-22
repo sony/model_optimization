@@ -18,7 +18,8 @@ from model_compression_toolkit import common
 from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 
 
-def create_stats_collector_for_node(node: common.BaseNode) -> BaseStatsCollector:
+def create_stats_collector_for_node(node: common.BaseNode,
+                                    output_channel_index: int) -> BaseStatsCollector:
     """
     Gets a node and a groups list and create and return a statistics collector for a node
     according to whether its statistics should be collected and the prior information we
@@ -32,7 +33,8 @@ def create_stats_collector_for_node(node: common.BaseNode) -> BaseStatsCollector
     """
 
     if node.is_activation_quantization_enabled():
-        stats_collector = common.StatsCollector(*(node.prior_info.get_min_max()))
+        stats_collector = common.StatsCollector(*(node.prior_info.get_min_max()),
+                                                output_channel_index=output_channel_index)
     else:
         stats_collector = common.NoStatsCollector()
 
