@@ -78,6 +78,8 @@ class BaseNode:
         Returns: Whether node weights quantization is enabled or not.
 
         """
+        for qc in self.candidates_weights_quantization_cfg:
+            assert self.candidates_weights_quantization_cfg[0].enable_weights_quantization == qc.enable_weights_quantization
         return self.candidates_weights_quantization_cfg[0].enable_weights_quantization
 
     def __repr__(self):
