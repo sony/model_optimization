@@ -1,6 +1,10 @@
 from typing import Any, Tuple
 
-from keras.layers import Activation, ReLU
+import tensorflow as tf
+if tf.__version__ < "2.6":
+    from tensorflow.keras.layers import Activation, ReLU
+else:
+    from keras.layers import Activation, ReLU
 
 from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.common import BaseNode
