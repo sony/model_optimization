@@ -120,6 +120,7 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
             activation_params: Dictionary that contains weight quantization params.
 
         """
+        assert self.enable_activation_quantization
         for param_name, param_value in activation_params.items():
             self.activation_quantization_params[param_name] = param_value
 
@@ -198,6 +199,7 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
             weights_params: Dictionary that contains weight quantization params.
 
         """
+        assert self.enable_weights_quantization
         for param_name, param_value in weights_params.items():
             self.weights_quantization_params[param_name] = param_value
 
@@ -210,7 +212,7 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
             Recalculated weights quantization params from the kernel and channel axis.
 
         """
-
+        assert self.enable_weights_quantization
         if self.weights_quantization_params_fn is not None:
             self.set_weights_quantization_param(self.weights_quantization_params_fn(tensor_data,
                                                                                     p=self.l_p_value,

@@ -35,11 +35,13 @@ from model_compression_toolkit.common.network_editors.actions import EditRule
 from model_compression_toolkit.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
+from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
+    get_activation_quantization_params_fn
 from model_compression_toolkit.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import compute_bias_correction_of_graph
 
 from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
-from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG
+from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG, ThresholdSelectionMethod
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
@@ -362,6 +364,21 @@ def _prepare_model_for_quantization(in_model: Any,
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'pre_statistics_collection_substitutions')
 
+    #########################################
+    # Set prior info to nodes
+    ##########################################
+    for node in transformed_graph.nodes:
+        node.prior_info = fw_impl.get_node_prior_info(node=node,
+                                                      fw_info=fw_info)
+
+
+    ######################################
+    # Add quantization configurations
+    ######################################
+    transformed_graph = set_quantization_configuration_to_graph(graph=transformed_graph,
+                                                                quant_config=quant_config,
+                                                                fw_info=fw_info)
+
     ######################################
     # Graph marking points
     ######################################
@@ -381,6 +398,7 @@ def _prepare_model_for_quantization(in_model: Any,
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'after_analyzer_graph')
 
+
     ######################################
     # Statistic collection
     ######################################
@@ -391,12 +409,6 @@ def _prepare_model_for_quantization(in_model: Any,
     for _ in tqdm(range(n_iter)):
         mi.infer(representative_data_gen())
 
-    ######################################
-    # Add quantization configurations
-    ######################################
-    transformed_graph = set_quantization_configuration_to_graph(transformed_graph,
-                                                                quant_config,
-                                                                fw_info)
 
     ######################################
     # Edit network according to user specific settings
@@ -457,3 +469,4 @@ def _prepare_model_for_quantization(in_model: Any,
         assert n.final_weights_quantization_cfg is None
 
     return tg_with_bias
+

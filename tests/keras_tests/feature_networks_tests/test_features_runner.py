@@ -14,10 +14,9 @@
 # ==============================================================================
 
 
-import logging
 import unittest
-import sys
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_scaling_relu6_test import ActivationScalingReLU6Test
+
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_percision_test import MixedPercisionBaseTest, \
     MixedPercisionSearchTest, MixedPercisionManuallyConfiguredTest, MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest

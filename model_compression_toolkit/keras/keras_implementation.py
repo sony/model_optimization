@@ -7,8 +7,10 @@ from tensorflow.keras.models import Model
 from model_compression_toolkit import QuantizationConfig, FrameworkInfo, common, GradientPTQConfig, \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common import Graph, BaseNode
+from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
+from model_compression_toolkit.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.common.user_info import UserInformation
 from model_compression_toolkit.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -30,9 +32,10 @@ from model_compression_toolkit.keras.graph_substitutions.substitutions.separable
     SeparableConvDecomposition
 from model_compression_toolkit.keras.graph_substitutions.substitutions.shift_negative_activation import \
     apply_shift_negative_correction
+from model_compression_toolkit.keras.keras_node_prior_info import create_node_prior_info
 from model_compression_toolkit.keras.mixed_precision.sensitivity_evaluation import get_sensitivity_evaluation
 from model_compression_toolkit.keras.reader.reader import model_reader
-from model_compression_toolkit.keras.tensor_marking import get_node_stats_collector
+from model_compression_toolkit.common.collectors.statistics_collector_generator import create_stats_collector_for_node
 import model_compression_toolkit.keras.constants as keras_constants
 
 
@@ -118,21 +121,22 @@ class KerasImplementation(FrameworkImplementation):
                                                qc,
                                                fw_info)
 
-    def attach_sc_to_node(self, node: BaseNode,
-                          fw_info: FrameworkInfo) -> common.statistics_collector.BaseStatsContainer:
+    def attach_sc_to_node(self,
+                          node: BaseNode,
+                          output_channel_index: int) -> BaseStatsCollector:
         """
         Return a statistics collector that should be attached to a node's output
         during statistics collection.
 
         Args:
             node: Node to return its collector.
-            fw_info: FrameworkInfo object with information about the specific framework's model
+            output_channel_index: Index of output channels of layers in the model's framework.
 
         Returns:
             Statistics collector for the node.
         """
-        return get_node_stats_collector(node,
-                                        fw_info)
+        return create_stats_collector_for_node(node,
+                                               output_channel_index=output_channel_index)
 
     def get_substitutions_marking(self) -> List[common.BaseSubstitution]:
         """
@@ -227,7 +231,6 @@ class KerasImplementation(FrameworkImplementation):
                                      gptq_config,
                                      fw_info)
 
-
     def get_sensitivity_evaluation_fn(self,
                                       graph: Graph,
                                       quant_config: MixedPrecisionQuantizationConfig,
@@ -254,3 +257,20 @@ class KerasImplementation(FrameworkImplementation):
                                           metrics_weights,
                                           representative_data_gen,
                                           fw_info)
+
+    def get_node_prior_info(self,
+                            node: BaseNode,
+                            fw_info: FrameworkInfo) -> NodePriorInfo:
+        """
+        Get a NodePriorInfo object for a node that represents a Keras layer.
+
+        Args:
+            node: Node to get its prior info.
+            fw_info: Framework specific information needed to create the prior info of the node.
+
+        Returns:
+            NodePriorInfo with information about the node.
+        """
+
+        return create_node_prior_info(node=node,
+                                      fw_info=fw_info)

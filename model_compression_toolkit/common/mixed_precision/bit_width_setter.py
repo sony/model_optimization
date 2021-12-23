@@ -25,7 +25,6 @@ from model_compression_toolkit.common.mixed_precision.mixed_precision_quantizati
     MixedPrecisionQuantizationConfig
 
 
-
 def set_bit_widths(quant_config: QuantizationConfig,
                    graph_to_set_bit_widths: Graph,
                    fw_info: FrameworkInfo = None,
@@ -37,9 +36,10 @@ def set_bit_widths(quant_config: QuantizationConfig,
     Args:
         quant_config: MixedPrecisionQuantizationConfig the graph was computed according to.
         graph_to_set_bit_widths: A prepared for quantization graph to set its bit widths.
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-        groups of layers by how they should be quantized, etc.)
-        bit_widths_config: MP configuration (a list of indices: one for each node's candidate quantization configuration).
+        fw_info: Information needed for quantization about the specific framework (e.g., kernel
+        channels indices, groups of layers by how they should be quantized, etc.)
+        bit_widths_config: MP configuration (a list of indices: one for each node's candidate
+        quantization configuration).
 
     """
     graph = copy.deepcopy(graph_to_set_bit_widths)
@@ -63,7 +63,8 @@ def set_bit_widths(quant_config: QuantizationConfig,
             # Get a list of nodes' names we need to finalize (that they have at least one weight qc candidate).
             sorted_nodes_names = graph.get_configurable_sorted_nodes_names()
             for node in graph.nodes:  # set a specific node qc for each node final weights qc
-                node_name = node.name if not node.reuse else '_'.join(node.name.split('_')[:-2]) # if it's reused, take the configuration that the base node has
+                # If it's reused, take the configuration that the base node has
+                node_name = node.name if not node.reuse else '_'.join(node.name.split('_')[:-2])
                 if node_name in sorted_nodes_names:  # only configurable nodes are in this list
                     node_index_in_graph = sorted_nodes_names.index(node_name)
                     _set_node_qc(bit_widths_config,
@@ -99,7 +100,7 @@ def _get_node_qc_by_bit_widths(node: BaseNode,
         Node quantization configuration if it was found, or None otherwise.
     """
 
-    if node.candidates_weights_quantization_cfg is not None:
+    if node.is_weights_quantization_enabled():
         bit_index_in_cfg = bit_width_cfg[node_index_in_graph]
         qc = node.candidates_weights_quantization_cfg[bit_index_in_cfg]
         return qc

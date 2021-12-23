@@ -36,17 +36,20 @@ def get_activations_qparams(n: BaseNode,
 
     # If the statistics container collected the histogram, we start by filtering outliers using z threshold
     # filtering, and then computing the threshold based on the filtered histogram.
-    if out_stats_container.collect_histogram:
+    if out_stats_container.require_collection():
         bins_values, bins_counts = out_stats_container.hc.get_histogram()
         bins_counts = quantization_params_generation.z_score_filter(n.activation_quantization_cfg.z_threshold,
                                                                     bins_values,
                                                                     bins_counts)
     min_value, max_value = out_stats_container.get_min_max_values()
 
-    if out_stats_container.use_min_max:
+    if n.prior_info.is_output_bounded():
         signed = min_value < 0
     else:
         signed = np.any(bins_values < 0)
+
+    if n.prior_info.is_output_bounded():
+        n.activation_quantization_cfg.activation_quantization_params_fn = quantization_params_generation.no_clipping_selection_min_max
 
     activation_params = n.activation_quantization_cfg.activation_quantization_params_fn(bins_values,
                                                                                         bins_counts,

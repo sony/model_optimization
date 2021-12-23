@@ -111,7 +111,7 @@ class MixedPrecisionSearchManager(object):
                 if n.name in mp_nodes:
                     node_idx = mp_nodes.index(n.name)
                     node_nbits = n.candidates_weights_quantization_cfg[mp_model_config[node_idx]].weights_n_bits
-                elif n.candidates_weights_quantization_cfg is not None:
+                elif n.is_weights_quantization_enabled():
                     # The only valid way to get here is if the node is reused (which means that we're not looking
                     # for its configuration), and we ignore it when computing the KPI (as the base node will acount
                     # for it).

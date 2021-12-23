@@ -20,20 +20,17 @@ from typing import Any, Tuple
 
 import numpy as np
 
+from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.collectors.histogram_collector import HistogramCollector
 from model_compression_toolkit.common.collectors.mean_collector import MeanCollector
 from model_compression_toolkit.common.collectors.min_max_per_channel_collector import MinMaxPerChannelCollector
 
 
-class BaseStatsContainer(object):
+class BaseStatsCollector(object):
     """
-    Base class for statistics collection container (contain multiple statistics collector such as mean collector,
+    Base class for statistics collection (contains multiple collectors such as mean collector,
     histogram collector, etc.).
     """
-    def __init__(self):
-        # Disable histogram collection. Enable in specific collectors if needed
-        self.collect_histogram = False
-        self.use_min_max = False
 
     def require_collection(self) -> bool:
         """
@@ -53,12 +50,13 @@ class BaseStatsContainer(object):
         raise Exception(f'update_statistics is not implemented in {self.__class__.__name__}')
 
 
-class StatsContainer(BaseStatsContainer):
+class StatsCollector(BaseStatsCollector):
     """
     Class to wrap all statistics that are being collected for an input/output node.
     """
 
     def __init__(self,
+                 output_channel_index: int,
                  init_min_value: float = None,
                  init_max_value: float = None):
         """
@@ -71,13 +69,11 @@ class StatsContainer(BaseStatsContainer):
         """
 
         super().__init__()
-        self.use_min_max = is_number(init_min_value) and is_number(init_max_value)
-        self.collect_histogram = True
-        if self.collect_histogram:
-            self.hc = HistogramCollector()
-        self.mc = MeanCollector()
+        self.hc = HistogramCollector()
+        self.mc = MeanCollector(axis=output_channel_index)
         self.mpcc = MinMaxPerChannelCollector(init_min_value=init_min_value,
-                                              init_max_value=init_max_value)
+                                              init_max_value=init_max_value,
+                                              axis=output_channel_index)
 
     def update_statistics(self, x: Any):
         """
@@ -88,8 +84,7 @@ class StatsContainer(BaseStatsContainer):
         """
 
         x = standardize_tensor(x)
-        if self.collect_histogram:
-            self.hc.update(x)
+        self.hc.update(x)
         self.mc.update(x)
         self.mpcc.update(x)
 
@@ -143,7 +138,7 @@ class StatsContainer(BaseStatsContainer):
         return True
 
 
-class NoStatsContainer(BaseStatsContainer):
+class NoStatsCollector(BaseStatsCollector):
     """
     Class that inherits from base tensor.
     Indicating that for a point in a graph we should not gather statistics.
@@ -211,51 +206,51 @@ def standardize_tensor(x: Any) -> np.ndarray:
     return x
 
 
-def shift_statistics(collector: BaseStatsContainer,
-                     shift_value: np.ndarray) -> BaseStatsContainer:
+def shift_statistics(collector: BaseStatsCollector,
+                     shift_value: np.ndarray) -> BaseStatsCollector:
     """
-    Shift all statistics in collectors of a statistics container by a
+    Shift all statistics in collectors of a statistics collector by a
     value (or a value per-channel).
 
     Args:
-        collector: Statistics container to shift its collectors.
+        collector: Statistics collector to shift its collectors.
         shift_value: Value to shift all statistics by.
 
     Returns:
-        New copy of the container with shifted statistics.
+        New copy of the collector with shifted statistics.
 
     """
 
     shifted_collector = deepcopy(collector)
-    if isinstance(collector, StatsContainer):
+    if isinstance(collector, StatsCollector):
         shifted_collector.mpcc.shift(shift_value)
         shifted_collector.mc.shift(shift_value)
-        if shifted_collector.collect_histogram:
+        if shifted_collector.require_collection():
             shifted_collector.hc.shift(shift_value)
 
     return shifted_collector
 
 
-def scale_statistics(collector: BaseStatsContainer,
-                     scale_value: np.ndarray) -> BaseStatsContainer:
+def scale_statistics(collector: BaseStatsCollector,
+                     scale_value: np.ndarray) -> BaseStatsCollector:
     """
-    Scale all statistics in collectors of a statistics container
+    Scale all statistics in collectors of a statistics collector
     by a factor (or a factor per-channel).
 
     Args:
-        collector: Statistics container to shift its collectors.
+        collector: Statistics collector to shift its collectors.
         scale_value: Value to shift all statistics by.
 
     Returns:
-        New copy of the container with scaled statistics.
+        New copy of the collector with scaled statistics.
 
     """
 
     scaled_collector = deepcopy(collector)
-    if isinstance(collector, StatsContainer):
+    if isinstance(collector, StatsCollector):
         scaled_collector.mpcc.scale(scale_value)
         scaled_collector.mc.scale(scale_value)
-        if scaled_collector.collect_histogram:
+        if scaled_collector.require_collection():
             scaled_collector.hc.scale(scale_value)
 
     return scaled_collector
