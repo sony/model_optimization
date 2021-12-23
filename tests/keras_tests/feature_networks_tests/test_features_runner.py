@@ -361,6 +361,12 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_multi_head_attention(self):
         MultiHeadAttentionTest(self, 5, 8, 12, 3, 4, 6).run_test()
 
+    def test_multi_head_attention_2_inputs(self):
+        MultiHeadAttentionTest(self, 5, 11, 8, 12, 7, 3, 4, 6, separate_key_value=True).run_test()
+
+    def test_multi_head_attention_3_inputs(self):
+        MultiHeadAttentionTest(self, 5, 11, 8, 12, 7, 3, 4, 6).run_test()
+
 
 if __name__ == '__main__':
     unittest.main()
