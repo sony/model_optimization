@@ -26,7 +26,7 @@ class MeanCollector(BaseCollector):
     """
 
     def __init__(self,
-                 axis: int = -1,
+                 axis: int,
                  beta: float = 0.99):
         """
         Instantiate a per channel mean collector using a exponential moving average with bias correction.

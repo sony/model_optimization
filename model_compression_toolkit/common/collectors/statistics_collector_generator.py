@@ -27,13 +27,15 @@ def create_stats_collector_for_node(node: common.BaseNode,
 
     Args:
         node: Node to create its statistics collector.
+        output_channel_index: Index of output channels (for statistics per-channel).
 
     Returns:
         Statistics collector for statistics collection for the node.
     """
 
     if node.is_activation_quantization_enabled():
-        stats_collector = common.StatsCollector(*(node.prior_info.get_min_max()),
+        stats_collector = common.StatsCollector(init_min_value=node.prior_info.min_output,
+                                                init_max_value=node.prior_info.max_output,
                                                 output_channel_index=output_channel_index)
     else:
         stats_collector = common.NoStatsCollector()

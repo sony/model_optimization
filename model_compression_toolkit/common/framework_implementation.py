@@ -19,11 +19,11 @@ import numpy as np
 
 from model_compression_toolkit import common, GradientPTQConfig, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common import BaseNode
-from model_compression_toolkit.common.base_node_prior_info import BaseNodePriorInfo
 from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
+from model_compression_toolkit.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.user_info import UserInformation
 
@@ -119,6 +119,7 @@ class FrameworkImplementation(ABC):
 
         Args:
             node: Node to return its collector.
+            output_channel_index: Index of output channels (for statistics per-channel).
 
         Returns:
             Statistics collector for the node.
@@ -237,6 +238,17 @@ class FrameworkImplementation(ABC):
                              f'framework\'s get_sensitivity_evaluation_fn method.')
 
     def get_node_prior_info(self, node: BaseNode,
-                            fw_info: FrameworkInfo) -> BaseNodePriorInfo:
+                            fw_info: FrameworkInfo) -> NodePriorInfo:
+        """
+        Get a NodePriorInfo object for a node.
+
+        Args:
+            node: Node to get its prior info.
+            fw_info: Framework specific information needed to create the prior info of the node.
+
+        Returns:
+            NodePriorInfo with information about the node.
+        """
+
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_node_prior_info method.')

@@ -14,12 +14,9 @@
 # ==============================================================================
 
 
-import logging
 import unittest
-import sys
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_scaling_relu6_test import ActivationScalingReLU6Test
 
-from tests.keras_tests.feature_networks_tests.feature_networks.input_layer_test import InputLayerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_percision_test import MixedPercisionBaseTest, \
     MixedPercisionSearchTest, MixedPercisionManuallyConfiguredTest, MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest
@@ -77,9 +74,6 @@ layers = tf.keras.layers
 
 
 class FeatureNetworkTest(unittest.TestCase):
-
-    def test_input_layer(self):
-        InputLayerTest(self).run_test()
 
     def test_remove_upper_bound(self):
         RemoveUpperBoundTest(self).run_test()

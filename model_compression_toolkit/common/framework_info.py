@@ -55,6 +55,7 @@ class FrameworkInfo(object):
             activation_min_max_mapping (Dict[str, tuple]): Dictionary from an activation function to its min/max output values.
             layer_min_max_mapping (Dict[Any, tuple]): Dictionary from a layer to its min/max output values.
             kernel_ops_attributes_mapping (DefaultDict): Dictionary from a framework operator to a list of its weights attirbutes to quantize.
+            output_channel_index (int): Index of output channels of the model's layers (for computing statistics per-channel).
 
         Examples:
             When quantizing a Keras model, if we want to quantize the kernels of Conv2D layers only, we can
@@ -131,12 +132,13 @@ class FrameworkInfo(object):
 
     def activation_has_min_max(self, activation_name: str) -> bool:
         """
-        Check if a layer is in a layer to min/max mapping the FrameworkInfo holds.
+        Check if an activation layer has a min/max mapping.
+
         Args:
-            layer: A layer to check if has a min/max known values.
+            activation_name: String of the activation function to check for its min/max values.
 
         Returns:
-            Whether a layer has a min/max known values or not.
+            Whether an activation layer has a min/max known values or not.
         """
 
         return activation_name in self.activation_min_max_mapping

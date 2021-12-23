@@ -28,6 +28,7 @@ def create_tensor2node(graph: common.Graph,
     Args:
         graph: Graph of the node (for retrieving the current tensor).
         node: Node to create a tensor for.
+        fw_info: Specific framework information (for example, output channels index).
 
     """
     current_tensor = graph.get_out_stats_collector(node)

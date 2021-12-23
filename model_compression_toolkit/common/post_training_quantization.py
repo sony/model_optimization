@@ -375,10 +375,9 @@ def _prepare_model_for_quantization(in_model: Any,
     ######################################
     # Add quantization configurations
     ######################################
-    transformed_graph = set_quantization_configuration_to_graph(transformed_graph,
-                                                                quant_config,
-                                                                fw_info,
-                                                                fw_impl)
+    transformed_graph = set_quantization_configuration_to_graph(graph=transformed_graph,
+                                                                quant_config=quant_config,
+                                                                fw_info=fw_info)
 
     ######################################
     # Graph marking points

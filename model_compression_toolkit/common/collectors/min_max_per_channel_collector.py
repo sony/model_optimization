@@ -24,13 +24,15 @@ class MinMaxPerChannelCollector(BaseCollector):
     """
 
     def __init__(self,
+                 axis: int,
                  init_min_value: float = None,
-                 init_max_value: float = None,
-                 axis: int = None):
+                 init_max_value: float = None):
         """
         Instantiate a collector for collecting min/max values of tensor per-channel.
         Args:
             axis: Compute the min/max values with regard to this axis.
+            init_max_value: Initial maximal output value.
+            init_min_value: Initial minimal output value.
         """
         super().__init__()
         self.axis = axis

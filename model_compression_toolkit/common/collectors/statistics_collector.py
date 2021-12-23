@@ -56,9 +56,9 @@ class StatsCollector(BaseStatsCollector):
     """
 
     def __init__(self,
+                 output_channel_index: int,
                  init_min_value: float = None,
-                 init_max_value: float = None,
-                 output_channel_index: int = None):
+                 init_max_value: float = None):
         """
         Instantiate three statistics collectors: histogram, mean and min/max per channel.
         Set initial min/max values if are known.

@@ -18,7 +18,6 @@ import copy
 from typing import List
 
 from model_compression_toolkit.common import Logger, BaseNode
-from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
@@ -32,8 +31,7 @@ from model_compression_toolkit.common.quantization.quantization_params_fn_select
 
 def set_quantization_configuration_to_graph(graph: Graph,
                                             quant_config: QuantizationConfig,
-                                            fw_info: FrameworkInfo,
-                                            fw_impl: FrameworkImplementation) -> Graph:
+                                            fw_info: FrameworkInfo) -> Graph:
     """
     Add quantization configuration for each graph node.
 
@@ -42,7 +40,6 @@ def set_quantization_configuration_to_graph(graph: Graph,
         quant_config: Quantization configuration containing parameters for how the graph should be quantized.
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         groups of layers by how they should be quantized, etc.)
-        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
     Returns:
         The graph with quantization configurations attached to each node in it.
@@ -50,13 +47,14 @@ def set_quantization_configuration_to_graph(graph: Graph,
 
     graph_with_qcs = copy.deepcopy(graph)
     for n in graph_with_qcs.nodes:
-        set_quantization_configs_to_node(n, quant_config, fw_impl, fw_info)
+        set_quantization_configs_to_node(node=n,
+                                         quant_config=quant_config,
+                                         fw_info=fw_info)
     return graph_with_qcs
 
 
 def set_quantization_configs_to_node(node: BaseNode,
                                      quant_config: QuantizationConfig,
-                                     fw_impl: FrameworkImplementation,
                                      fw_info: FrameworkInfo):
     """
     Create and set quantization configurations to a node (for both weights and activation).
@@ -64,7 +62,6 @@ def set_quantization_configs_to_node(node: BaseNode,
     Args:
         node: Node to set its quantization configurations.
         quant_config: Quantization configuration to generate the node's configurations from.
-        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         fw_info: Information needed for quantization about the specific framework.
 
     """
@@ -94,7 +91,6 @@ def create_node_activation_qc(qc: QuantizationConfig,
         qc: QuantizationConfig to create the node's config from.
         fw_info: Information about the specific framework the node was created from (e.g., whether or not its
         weights/activations should be quantized)
-        use_min_max: Whether the collected min/max statistics should be used when the threshold is computed or not.
 
     Returns:
         Activation quantization configuration of a node.

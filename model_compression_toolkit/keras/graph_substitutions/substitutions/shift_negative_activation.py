@@ -368,8 +368,7 @@ def shift_negative_function(graph: Graph,
                             non_linear_node: BaseNode,
                             op2d_node: BaseNode,
                             fw_info: FrameworkInfo,
-                            zero_padding_node: BaseNode = None,
-                            fw_impl: FrameworkImplementation = None) -> Graph:
+                            zero_padding_node: BaseNode = None) -> Graph:
     """
     Shift the output of a non-linear activation by its minimal output value (quantized) such
     that all values after the shifting are positive.
@@ -459,8 +458,7 @@ def shift_negative_function(graph: Graph,
                                    pad_top, pad_btm, pad_left, pad_right)
 
         # Set quantization configuration to node, even though we do not quantize it:
-        set_quantization_configs_to_node(fw_impl=fw_impl,
-                                         fw_info=fw_info,
+        set_quantization_configs_to_node(fw_info=fw_info,
                                          node=pad_node,
                                          quant_config=qc)
 
@@ -478,8 +476,7 @@ def shift_negative_function(graph: Graph,
 
         op2d_node.input_shape = pad_node.output_shape
 
-    set_quantization_configs_to_node(fw_impl=fw_impl,
-                                     fw_info=fw_info,
+    set_quantization_configs_to_node(fw_info=fw_info,
                                      node=add_node,
                                      quant_config=qc)
 
@@ -547,8 +544,7 @@ def get_next_nodes_to_correct(n: BaseNode,
 
 def apply_shift_negative_correction(graph: Graph,
                                     quant_config: QuantizationConfig,
-                                    fw_info: FrameworkInfo,
-                                    fw_impl: FrameworkImplementation) -> Graph:
+                                    fw_info: FrameworkInfo) -> Graph:
     """
     Apply the substitution even if the linear node is not immediately after
     the non-linear node, but there are intermediate nodes
@@ -571,6 +567,5 @@ def apply_shift_negative_correction(graph: Graph,
                                                 n,
                                                 linear_node,
                                                 fw_info,
-                                                zero_padding_node=pad_node,
-                                                fw_impl=fw_impl)
+                                                zero_padding_node=pad_node)
     return graph
