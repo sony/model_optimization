@@ -22,7 +22,7 @@ from model_compression_toolkit.common.framework_implementation import FrameworkI
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common import BaseNode, Logger, Graph
 from model_compression_toolkit.common.quantization.quantize_node import get_quantized_kernel_by_weights_qc
-from model_compression_toolkit.common.statistics_collector import BaseStatsContainer
+from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 
 
 def compute_bias_correction_of_graph(graph_co_compute_bias: Graph,
@@ -55,7 +55,7 @@ def compute_bias_correction_of_graph(graph_co_compute_bias: Graph,
 
 def _compute_bias_correction_per_candidate_qc(node: BaseNode,
                                               fw_info: FrameworkInfo,
-                                              node_in_stats_collector: BaseStatsContainer,
+                                              node_in_stats_collector: BaseStatsCollector,
                                               fw_impl: FrameworkImplementation):
     """
     For each candidate weights quantization configuration of a given node,
@@ -69,9 +69,9 @@ def _compute_bias_correction_per_candidate_qc(node: BaseNode,
 
     """
 
-    if node.candidates_weights_quantization_cfg is not None:
+    if node.is_weights_quantization_enabled():
         for weights_qc in node.candidates_weights_quantization_cfg:
-            if fw_info.in_kernel_ops(node) and weights_qc.enable_weights_quantization:
+            if fw_info.in_kernel_ops(node):
                 quantized_kernel, io_channels_axes = get_quantized_kernel_by_weights_qc(fw_info,
                                                                                         node,
                                                                                         weights_qc,
@@ -93,7 +93,7 @@ def _compute_bias_correction_per_candidate_qc(node: BaseNode,
 
 def _compute_bias_correction(kernel: np.ndarray,
                              quantized_kernel: np.ndarray,
-                             in_statistics_container: BaseStatsContainer,
+                             in_statistics_container: BaseStatsCollector,
                              output_channels_axis: int,
                              input_channels: int) -> Any:
     """
@@ -133,7 +133,7 @@ def _compute_bias_correction(kernel: np.ndarray,
 
 def _get_bias_correction_term_of_node(input_channels_axis: int,
                                       n: BaseNode,
-                                      node_in_stats_collector: BaseStatsContainer,
+                                      node_in_stats_collector: BaseStatsCollector,
                                       output_channels_axis: int,
                                       quantized_kernel: np.ndarray,
                                       fw_impl: FrameworkImplementation):

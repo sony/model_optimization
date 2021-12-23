@@ -57,7 +57,6 @@ def gptq_training_wrapper(tg: Graph,
     #########################################
     # Build two models and compare points
     #########################################
-    # TODO: maybe need to add pre_build substitutions here. Ask Elad
     compare_points, _ = get_compare_points(tg)  # get compare points
     n = len(compare_points)
     float_model, float_user_info = model_builder(tg,

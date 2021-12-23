@@ -23,7 +23,7 @@ from model_compression_toolkit.keras.keras_implementation import KerasImplementa
 from model_compression_toolkit.keras.reader.reader import model_reader
 from model_compression_toolkit.common.model_collector import ModelCollector
 from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
-from model_compression_toolkit.keras.tensor_marking import get_node_stats_collector
+from model_compression_toolkit.common.collectors.statistics_collector_generator import create_stats_collector_for_node
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 
 class TestGraphStatisticCollection(unittest.TestCase):
@@ -33,7 +33,7 @@ class TestGraphStatisticCollection(unittest.TestCase):
         graph = model_reader(model)  # model pharsing
         fw_impl = KerasImplementation()
         tg = substitute(graph, fw_impl.get_substitutions_pre_statistics_collection())  # substition
-        analyzer_graph(get_node_stats_collector, tg, DEFAULT_KERAS_INFO)  # Mark point for collection of statistics
+        analyzer_graph(create_stats_collector_for_node, tg, DEFAULT_KERAS_INFO)  # Mark point for collection of statistics
         mi = ModelCollector(tg, fw_impl, DEFAULT_KERAS_INFO)
         for i in range(10):
             mi.infer([np.random.randn(1, 224, 224, 3)])

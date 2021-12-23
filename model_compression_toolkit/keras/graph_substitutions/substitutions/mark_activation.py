@@ -69,5 +69,5 @@ class MarkActivation(common.BaseSubstitution):
             Graph after applying the substitution.
         """
 
-        edge[0].output_quantization = False
+        edge[0].activation_quantization_cfg.enable_activation_quantization = False
         return graph

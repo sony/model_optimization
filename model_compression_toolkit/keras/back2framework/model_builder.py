@@ -27,8 +27,6 @@ else:
     from keras.layers.core import TFOpLambda
     from keras.engine.base_layer import TensorFlowOpLayer, Layer
 
-
-
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from typing import Tuple, Any, Dict, List
@@ -38,7 +36,8 @@ from model_compression_toolkit.common.graph.functional_node import FunctionalNod
 from model_compression_toolkit import common
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.keras.quantizer.mixed_precision.quantization_config_factory import quantization_config_builder_mixed_precision
+from model_compression_toolkit.keras.quantizer.mixed_precision.quantization_config_factory import \
+    quantization_config_builder_mixed_precision
 from model_compression_toolkit.keras.quantizer.gradient_ptq.config_factory import quantization_config_builder_gptq
 from model_compression_toolkit.common import BaseNode, Graph
 from model_compression_toolkit.common.graph.edge import EDGE_SINK_INDEX
@@ -108,8 +107,6 @@ def build_input_tensors_list(node: BaseNode,
     return input_tensors
 
 
-
-
 def run_operation(n: BaseNode,
                   input_tensors: List[List[TFReference]],
                   op_func: Layer,
@@ -134,15 +131,18 @@ def run_operation(n: BaseNode,
 
     if len(input_tensors) == 0:  # Placeholder handling
         out_tensors_of_n = input_nodes_to_input_tensors[n]
-        if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ, ModelBuilderMode.MIXEDPRECISION]:
-            # Adding a fake quant node to Input when in GPTQ mode because quantize_model doesn't quantize the input layer
-            assert n.activation_quantization_cfg is not None  # Input layers should always have activation config
-            fake_quant = n.activation_quantization_cfg.activation_quantization_fn(n.activation_quantization_cfg.activation_n_bits,
-                                                                       n.activation_quantization_cfg.activation_is_signed,
-                                                                       n.activation_quantization_cfg.activation_quantization_params)
-            if fake_quant is not None:
-                out_tensors_of_n = fake_quant(out_tensors_of_n)
-            
+        if n.is_activation_quantization_enabled():
+            if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ, ModelBuilderMode.MIXEDPRECISION]:
+                # Adding a fake quant node to Input when in GPTQ mode because quantize_model doesn't quantize the
+                # input layer
+                fake_quant = n.activation_quantization_cfg.activation_quantization_fn(
+                    n.activation_quantization_cfg.activation_n_bits,
+                    n.activation_quantization_cfg.activation_is_signed,
+                    n.activation_quantization_cfg.activation_quantization_params)
+
+                if fake_quant is not None:
+                    out_tensors_of_n = fake_quant(out_tensors_of_n)
+
     else:
         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
         # Build a functional node using its args
@@ -159,11 +159,15 @@ def run_operation(n: BaseNode,
             out_tensors_of_n = op_func(input_tensors)
 
         # Add a fake quant node if the node has an activation threshold.
-        if n.activation_quantization_cfg is not None:
-            if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.MIXEDPRECISION] and n.activation_quantization_cfg.enable_activation_quantization:
-                fake_quant = n.activation_quantization_cfg.activation_quantization_fn(n.activation_quantization_cfg.activation_n_bits,
-                                                                           n.activation_quantization_cfg.activation_is_signed,
-                                                                           n.activation_quantization_cfg.activation_quantization_params)
+        if n.is_activation_quantization_enabled():
+            if mode in [ModelBuilderMode.QUANTIZED,
+                        ModelBuilderMode.MIXEDPRECISION]:
+
+                fake_quant = n.activation_quantization_cfg.activation_quantization_fn(
+                    n.activation_quantization_cfg.activation_n_bits,
+                    n.activation_quantization_cfg.activation_is_signed,
+                    n.activation_quantization_cfg.activation_quantization_params)
+
                 if fake_quant is not None:
                     out_tensors_of_n = fake_quant(out_tensors_of_n)
 
@@ -275,10 +279,11 @@ def model_builder(graph: common.Graph,
             nodes = graph.find_node_by_name(get_node_name_from_layer(layer))
             if len(nodes) == 1:
                 node = nodes[0]
-                # does not need to get wrapped as its weights are not quantized
-                if node.candidates_weights_quantization_cfg is None:
-                    return layer
-                return QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node, fw_info))
+                # Wrap only if its weights should be quantized
+                if node.is_weights_quantization_enabled():
+                    return QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node, fw_info))
+                return layer
+
             elif is_layer_fake_quant(layer):
                 return layer
             else:

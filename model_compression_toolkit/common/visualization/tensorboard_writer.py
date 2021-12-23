@@ -29,10 +29,10 @@ from tensorboard.compat.proto.summary_pb2 import HistogramProto
 from tensorboard.compat.proto.summary_pb2 import Summary
 from tensorboard.compat.proto.tensor_shape_pb2 import TensorShapeProto
 from tensorboard.summary.writer.event_file_writer import EventFileWriter
-from typing import List, Any, Dict, Callable
+from typing import List, Any, Dict
 
 from model_compression_toolkit.common import Graph, BaseNode
-from model_compression_toolkit.common.statistics_collector import BaseStatsContainer
+from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 
 DEVICE_STEP_STATS = "/device:CPU:0"
 
@@ -138,7 +138,7 @@ class TensorboardWriter(object):
                                   bucket_limit=bins.tolist(),
                                   bucket=counts.tolist())
 
-        def __create_histo_event(statistics_collector: BaseStatsContainer):
+        def __create_histo_event(statistics_collector: BaseStatsCollector):
             """
             Create an event of histogram, and attach it to a list of events outside
             the scope called 'events'.
@@ -203,7 +203,10 @@ class TensorboardWriter(object):
             if n.quantization_attr is not None:
                 attr.update(n.quantization_attr)
 
-            # log final config or unified candidates, not both
+            # To log quantization configurations we need to check
+            # if they exist at all, as we can log the initial graph,
+            # which its nodes do not have configurations yet.
+            # Log final config or unified candidates, not both
             if n.final_weights_quantization_cfg is not None:
                 attr.update(n.final_weights_quantization_cfg.__dict__)
             elif n.candidates_weights_quantization_cfg is not None:

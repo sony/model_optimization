@@ -62,36 +62,25 @@ class BaseNode:
         self.activation_quantization_cfg = None
         self.final_weights_quantization_cfg = None
         self.candidates_weights_quantization_cfg = None
-        self.output_quantization = True
+        self.prior_info = None
 
-    def no_quantization(self) -> bool:
+    def is_activation_quantization_enabled(self) -> bool:
         """
 
-        Returns: Whether NodeQuantizationConfig does not have activation params.
+        Returns: Whether node activation quantization is enabled or not.
 
         """
-        return self.activation_quantization_cfg is None or \
-               (not self.activation_quantization_cfg.has_activation_quantization_params())
+        return self.activation_quantization_cfg.enable_activation_quantization
 
-    def weight_quantization(self) -> bool:
+    def is_weights_quantization_enabled(self) -> bool:
         """
 
-        Returns: Whether node weights should be quantized
+        Returns: Whether node weights quantization is enabled or not.
 
         """
-        return self.final_weights_quantization_cfg is not None and \
-               self.final_weights_quantization_cfg.has_weights_quantization_params() and \
-               self.final_weights_quantization_cfg.enable_weights_quantization
-
-    def activation_quantization(self) -> bool:
-        """
-
-        Returns: Whether node activation should be quantized
-
-        """
-        return self.activation_quantization_cfg is not None and \
-               self.activation_quantization_cfg.has_activation_quantization_params() and \
-               self.activation_quantization_cfg.enable_activation_quantization
+        for qc in self.candidates_weights_quantization_cfg:
+            assert self.candidates_weights_quantization_cfg[0].enable_weights_quantization == qc.enable_weights_quantization
+        return self.candidates_weights_quantization_cfg[0].enable_weights_quantization
 
     def __repr__(self):
         """
@@ -183,7 +172,7 @@ class BaseNode:
         """
         shared_attributes = [CORRECTED_BIAS_ATTRIBUTE, WEIGHTS_NBITS_ATTRIBUTE]
         attr = dict()
-        if self.candidates_weights_quantization_cfg is not None:
+        if self.is_weights_quantization_enabled():
             attr = copy.deepcopy(self.candidates_weights_quantization_cfg[0].__dict__)
             for shared_attr in shared_attributes:
                 if shared_attr in attr:

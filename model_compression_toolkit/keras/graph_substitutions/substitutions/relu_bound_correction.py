@@ -20,12 +20,11 @@ import numpy as np
 from tensorflow.keras.layers import ReLU, Activation, DepthwiseConv2D, Conv2DTranspose, Conv2D, Dense
 
 from model_compression_toolkit import common
-from model_compression_toolkit.common import FrameworkInfo, Graph, BaseNode
+from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.constants import THRESHOLD
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, WalkMatcher, \
     NodeFrameworkAttrMatcher
-from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
-from model_compression_toolkit.common.statistics_collector import is_number
+from model_compression_toolkit.common.collectors.statistics_collector import is_number
 from model_compression_toolkit.keras.constants import KERNEL, BIAS, ACTIVATION, RELU_MAX_VALUE
 from model_compression_toolkit.keras.constants import RELU
 
