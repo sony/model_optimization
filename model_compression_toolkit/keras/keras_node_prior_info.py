@@ -14,6 +14,16 @@ from model_compression_toolkit.keras.constants import ACTIVATION, RELU_MAX_VALUE
 
 def create_node_prior_info(node: BaseNode,
                            fw_info: FrameworkInfo):
+    """
+    Create a NodePriorInfo object for a given node.
+
+    Args:
+        node: Node to create its prior info.
+        fw_info: Information about a specific framework the node was generated from.
+
+    Returns:
+        NodePriorInfo object with info about the node.
+    """
 
     min_output, max_output = _get_min_max_outputs(node=node,
                                                   fw_info=fw_info)
@@ -23,7 +33,16 @@ def create_node_prior_info(node: BaseNode,
 
 def _get_min_max_outputs(node: BaseNode,
                          fw_info: FrameworkInfo) -> Tuple[Any,Any]:
+    """
+    Return the min/max output values of a node if known.
+    If one of them (or both of them) is unknown - return None instead of a value.
+    Args:
+        node: Node to create its prior info.
+        fw_info: Information about a specific framework the node was generated from.
 
+    Returns:
+        Min/max output values if known.
+    """
     min_output, max_output = None, None
 
     if node.layer_class == ReLU:
