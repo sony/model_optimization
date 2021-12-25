@@ -18,6 +18,9 @@ import unittest
 import numpy as np
 from tensorflow.keras.applications.mobilenet import MobileNet
 
+from model_compression_toolkit import DEFAULTCONFIG
+from model_compression_toolkit.common.quantization.set_node_quantization_config import \
+    set_quantization_configuration_to_graph
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.keras.reader.reader import model_reader
@@ -33,7 +36,18 @@ class TestGraphStatisticCollection(unittest.TestCase):
         graph = model_reader(model)  # model pharsing
         fw_impl = KerasImplementation()
         tg = substitute(graph, fw_impl.get_substitutions_pre_statistics_collection())  # substition
-        analyzer_graph(create_stats_collector_for_node, tg, DEFAULT_KERAS_INFO)  # Mark point for collection of statistics
+        for node in tg.nodes:
+            node.prior_info = fw_impl.get_node_prior_info(node=node,
+                                                          fw_info=DEFAULT_KERAS_INFO)
+
+        tg = set_quantization_configuration_to_graph(graph=tg,
+                                                     quant_config=DEFAULTCONFIG,
+                                                     fw_info=DEFAULT_KERAS_INFO)
+
+        analyzer_graph(create_stats_collector_for_node,
+                       tg,
+                       DEFAULT_KERAS_INFO)  # Mark point for collection of statistics
+
         mi = ModelCollector(tg, fw_impl, DEFAULT_KERAS_INFO)
         for i in range(10):
             mi.infer([np.random.randn(1, 224, 224, 3)])

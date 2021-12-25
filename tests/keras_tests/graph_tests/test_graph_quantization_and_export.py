@@ -45,15 +45,19 @@ class TestGraphQuantization(unittest.TestCase):
         graph = model_reader(model)  # model pharsing
         fw_impl = KerasImplementation()
         tg = substitute(graph, fw_impl.get_substitutions_pre_statistics_collection())
+        for node in tg.nodes:
+            node.prior_info = fw_impl.get_node_prior_info(node=node,
+                                                          fw_info=DEFAULT_KERAS_INFO)
+
+        tg = set_quantization_configuration_to_graph(graph=tg,
+                                                     quant_config=DEFAULTCONFIG,
+                                                     fw_info=DEFAULT_KERAS_INFO)
         analyzer_graph(fw_impl.attach_sc_to_node, tg, DEFAULT_KERAS_INFO)  # mark tensors and quantization point
         mi = ModelCollector(tg, fw_impl, DEFAULT_KERAS_INFO)
 
         for i in range(10):
             mi.infer([np.random.randn(1, 224, 224, 3)])
 
-        tg = set_quantization_configuration_to_graph(tg,
-                                                     DEFAULTCONFIG,
-                                                     DEFAULT_KERAS_INFO)
         calculate_quantization_params(tg,
                                       DEFAULT_KERAS_INFO,
                                       fw_impl=fw_impl)

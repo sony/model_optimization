@@ -75,6 +75,12 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         in_model = MobileNetV2()
         keras_impl = KerasImplementation()
         graph = keras_impl.model_reader(in_model)  # model reading
+        graph = set_quantization_configuration_to_graph(graph=graph,
+                                                        quant_config=qc,
+                                                        fw_info=fw_info)
+        for node in graph.nodes:
+            node.prior_info = keras_impl.get_node_prior_info(node=node,
+                                                             fw_info=fw_info)
         analyzer_graph(keras_impl.attach_sc_to_node,
                        graph,
                        fw_info)
@@ -83,7 +89,6 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         for i in range(10):
             mi.infer([np.random.randn(1, 224, 224, 3)])
 
-        graph = set_quantization_configuration_to_graph(graph, qc, fw_info)
         calculate_quantization_params(graph,
                                       fw_info,
                                       fw_impl=keras_impl)
