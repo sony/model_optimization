@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import importlib
+import os
 import pkgutil
 import unittest
 from tests.keras_tests.layer_tests.base_keras_layer_test import BaseKerasLayerTest
@@ -25,7 +26,7 @@ layers_pkg_rel_path = 'layers/'
 
 class LayerTest(unittest.TestCase):
 
-    def test_tf_layers(self):
+    def test_keras_layers(self):
         # Import all test cases from package 'layers':
         for (module_loader, name, ispkg) in pkgutil.iter_modules([layers_pkg_rel_path]):
             importlib.import_module(layers_pkg_rel_path.replace('/', '.') + name, __package__)

@@ -29,11 +29,6 @@ class OutputInMiddleTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, True, True, True)
-
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -45,8 +40,5 @@ class OutputInMiddleTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.outputs) == 2)
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        for f_o, q_o in zip(y, y_hat):
-            cs = cosine_similarity(f_o, q_o)
-            self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.Conv2D))
+        self.unit_test.assertTrue(quantized_model.layers[2].output.ref() in [t.ref() for t in quantized_model.outputs])

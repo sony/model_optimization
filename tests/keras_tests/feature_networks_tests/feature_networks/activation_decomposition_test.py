@@ -14,9 +14,7 @@
 # ==============================================================================
 
 
-import model_compression_toolkit as mct
 import tensorflow as tf
-from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -44,7 +42,3 @@ class ActivationDecompositionTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(
             quantized_model.layers[base_layer + 2].get_config().get('activation') == self.activation_function)
 
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')

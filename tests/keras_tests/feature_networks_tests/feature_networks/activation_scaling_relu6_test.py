@@ -49,7 +49,3 @@ class ActivationScalingReLU6Test(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(np.allclose(alpha, 8 / 6, atol=1e-1))
         self.unit_test.assertTrue(np.allclose(beta, 6 / 8, atol=1e-1))
         self.unit_test.assertTrue(quantized_model.layers[3].max_value is None)
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check: {cs} != 1')

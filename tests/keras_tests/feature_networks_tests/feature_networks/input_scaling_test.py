@@ -33,16 +33,21 @@ class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
                                       mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, False, False, True, input_scaling=True)
+                                      16, 16, input_scaling=True)
 
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        qi = 3 if isinstance(quantized_model.layers[2], layers.ZeroPadding2D) else 2
+        fi = 2 if isinstance(float_model.layers[1], layers.ZeroPadding2D) else 1
         self.unit_test.assertTrue(is_layer_fake_quant(quantized_model.layers[1]))
         self.unit_test.assertTrue(quantization_info.input_scale != 1)
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
+        alpha = (float_model.layers[fi].weights[0] / quantized_model.layers[qi].weights[0]).numpy().mean()
+        self.unit_test.assertTrue(np.allclose(alpha, quantization_info.input_scale, atol=1e-3))
+
+        # y = float_model.predict(input_x)
+        # y_hat = quantized_model.predict(input_x)
+        # cs = cosine_similarity(y, y_hat)
+        # self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
 
 
 class InputScalingDenseTest(BaseInputScalingTest):

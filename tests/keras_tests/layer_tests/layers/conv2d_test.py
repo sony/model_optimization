@@ -25,5 +25,8 @@ class Conv2DTest(BaseKerasLayerTest):
 
     def get_layers(self):
         return [Conv2D(3, 4),
-                Conv2D(4, 5, name="conv2d_layer_test"),
-                Conv2D(3, 4, padding='same')]
+                Conv2D(4, 5, strides=2),
+                Conv2D(3, 4, padding='same'),
+                Conv2D(3, 4, use_bias=False),
+                Conv2D(3, 4, dilation_rate=2),
+                Conv2D(3, 4, padding='same', strides=2, use_bias=False)]

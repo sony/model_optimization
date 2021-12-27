@@ -28,21 +28,15 @@ layers = keras.layers
 
 class AddSameTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, val_batch_size=1)
-
-    def get_input_shapes(self):
-        return [[self.val_batch_size, 224, 244, 3]]
+        super().__init__(unit_test)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Dense(30)(inputs)
-        x = layers.Conv2D(6, 7)(x)
+        x = layers.Conv2D(6, 7)(inputs)
         x = layers.BatchNormalization()(x)
         outputs = layers.Add()([x, x])
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
+        self.unit_test.assertTrue(len(quantized_model.layers[4].input) == 2)
+        self.unit_test.assertTrue(quantized_model.layers[4].input[0].ref()==quantized_model.layers[4].input[1].ref())

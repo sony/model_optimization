@@ -31,13 +31,9 @@ class DecomposeSeparableConvTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, weights_bias_correction=False,
-                                      weights_per_channel_threshold=True, enable_activation_quantization=True,
-                                      enable_weights_quantization=True, relu_unbound_correction=False)
+        return mct.QuantizationConfig(weights_bias_correction=False)
 
-    # def get_input_shapes(self):
+    # def create_inputs_shape(self):
     #     return [[self.val_batch_size, 3, 4, 5]]
 
     def create_networks(self):
@@ -53,7 +49,3 @@ class DecomposeSeparableConvTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(quantized_model.layers[4].weights[0].shape == (1, 1, 3 * self.depth_multiplier, 1))
         self.unit_test.assertTrue(quantized_model.output_shape == float_model.output_shape)
 
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')

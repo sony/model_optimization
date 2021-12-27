@@ -52,13 +52,8 @@ class NestedModelMultipleInputsTest(BaseKerasFeatureNetworkTest):
         outputs = layers.Activation('swish')(x) #fq
         return keras.Model(inputs=[inputs, inputs2], outputs=outputs)
 
-<<<<<<< HEAD
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:]) #fq
-=======
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
->>>>>>> WIP refactor tests
         x = layers.Conv2D(3, 4, name='conv1')(inputs)
         y = layers.Conv2D(3, 4, name='conv2')(inputs) #fq
         x = layers.BatchNormalization()(x)

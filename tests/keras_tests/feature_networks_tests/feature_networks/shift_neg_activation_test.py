@@ -30,15 +30,21 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
         assert type(linear_op_to_test) in [layers.Conv2D, layers.Dense, layers.DepthwiseConv2D]
         self.linear_op_to_test = linear_op_to_test
         self.use_pad_layer = use_pad_layer
-        super().__init__(unit_test, num_calibration_iter=1, val_batch_size=32)
+        super().__init__(unit_test)
 
     def get_quantization_config(self):
-        qc = super(ShiftNegActivationTest, self).get_quantization_config()
-        qc.shift_negative_activation_correction = True
-        return qc
+        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE,
+                                      mct.ThresholdSelectionMethod.MSE,
+                                      mct.QuantizationMethod.POWER_OF_TWO,
+                                      mct.QuantizationMethod.POWER_OF_TWO,
+                                      16,
+                                      16,
+                                      False,
+                                      False,
+                                      True,
+                                      shift_negative_activation_correction=True,
+                                      shift_negative_ratio=np.inf)
 
-    def get_input_shapes(self):
-        return [(self.val_batch_size, 224, 244, 3)]
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -66,7 +72,3 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
         else:
             raise NotImplementedError
 
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')

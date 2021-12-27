@@ -47,7 +47,8 @@ NO_QUANTIZATION = [Reshape,
                    ZeroPadding2D,
                    Dropout,
                    MaxPooling2D,
-                   tf.split]  # TODO:  replace with marking
+                   tf.split,
+                   tf.quantization.fake_quant_with_min_max_vars]  # TODO:  replace with marking
 
 ACTIVATION = [Activation,
               ReLU,

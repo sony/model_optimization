@@ -14,12 +14,8 @@
 # ==============================================================================
 
 
-from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
-import model_compression_toolkit as mct
 import tensorflow as tf
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-import numpy as np
-from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers
@@ -28,12 +24,6 @@ layers = keras.layers
 class ConvBnReluResidualTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-
-    def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, True, True, True)
-
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -45,8 +35,9 @@ class ConvBnReluResidualTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[4], layers.BatchNormalization))
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.Conv2D))
+        self.unit_test.assertTrue(quantized_model.layers[3].function == tf.quantization.fake_quant_with_min_max_vars)
+        self.unit_test.assertTrue(quantized_model.layers[3].input.ref() == quantized_model.layers[2].output.ref())
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[7], layers.Add))
+        self.unit_test.assertTrue(quantized_model.layers[3].output.ref() in [t.ref() for t in quantized_model.layers[7].input])
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[4], layers.BatchNormalization)) # assert not folding

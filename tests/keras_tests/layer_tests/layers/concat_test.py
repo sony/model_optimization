@@ -15,8 +15,8 @@
 from functools import partial
 
 import tensorflow as tf
-from tests.keras_tests.layer_tests.base_keras_layer_test import BaseKerasLayerTest
 
+from tests.keras_tests.layer_tests.base_keras_layer_test import BaseKerasLayerTest
 
 
 class ConcatTest(BaseKerasLayerTest):
