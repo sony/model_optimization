@@ -31,6 +31,7 @@ if __name__ == '__main__':
 
     # Add TF tests only if tensorflow is installed
     found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec("tensorflow_model_optimization") is not None
+    print(f'Seeking for TF packages... Tensorflow: {importlib.util.find_spec("tensorflow") is not None}. TF model optimization: {importlib.util.find_spec("tensorflow_model_optimization") is not None}.')
     if found_tf:
         import tensorflow as tf
         from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
