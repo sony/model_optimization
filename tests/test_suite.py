@@ -32,15 +32,15 @@ if __name__ == '__main__':
     # Add TF tests only if tensorflow is installed
     found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec("tensorflow_model_optimization") is not None
     print(f'Seeking for TF packages... Tensorflow: {importlib.util.find_spec("tensorflow") is not None}. TF model optimization: {importlib.util.find_spec("tensorflow_model_optimization") is not None}.')
-    if found_tf:
-        import tensorflow as tf
-        from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
-        from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
-        from tests.keras_tests.layer_tests.test_layers_runner import LayerTest
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureNetworkTest))
-        if tf.__version__ >= "2.6":
-            suiteList.append(unittest.TestLoader().loadTestsFromTestCase(LayerTest))
+    # if found_tf:
+    import tensorflow as tf
+    from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
+    from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
+    from tests.keras_tests.layer_tests.test_layers_runner import LayerTest
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureNetworkTest))
+    if tf.__version__ >= "2.6":
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(LayerTest))
 
     # ----------------   Join them together ane run them
     comboSuite = unittest.TestSuite(suiteList)
