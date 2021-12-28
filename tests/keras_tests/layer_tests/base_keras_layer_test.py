@@ -4,6 +4,8 @@ import tensorflow as tf
 
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers.core import TFOpLambda
+    from tensorflow.keras.models import Model
+    from tensorflow.keras.layers import Input
 else:
     from keras.layers.core import TFOpLambda
     from keras import Input, Model

@@ -55,7 +55,6 @@ class BaseLayerTest(BaseTest):
         for model_float in feature_networks:
             for mode in self.quantization_modes:
                 self.current_mode = mode
-                print(f'Mode: {self.current_mode}')
                 qc = self.get_quantization_config()
                 if isinstance(qc, MixedPrecisionQuantizationConfig):
                     ptq_model, quantization_info = self.get_mixed_precision_ptq_facade()(model_float,

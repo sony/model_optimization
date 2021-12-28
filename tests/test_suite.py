@@ -15,24 +15,32 @@
 
 
 #  ----------------- Unit test framework
+import importlib
 import unittest
 
 #  ----------------  Individual test suites
 from tests.common_tests.function_tests.test_histogram_collector import TestHistogramCollector
-from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
-from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
 from tests.common_tests.function_tests.test_logger import TestLogger
-from tests.keras_tests.layer_tests.test_layers_runner import LayerTest
+
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases
     suiteList = []
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureNetworkTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHistogramCollector))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLogger))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(LayerTest))
+
+    # Add TF tests only if tensorflow is installed
+    found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec("tensorflow_model_optimization") is not None
+    if found_tf:
+        import tensorflow as tf
+        from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
+        from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
+        from tests.keras_tests.layer_tests.test_layers_runner import LayerTest
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureNetworkTest))
+        if tf.__version__ >= "2.6":
+            suiteList.append(unittest.TestLoader().loadTestsFromTestCase(LayerTest))
 
     # ----------------   Join them together ane run them
     comboSuite = unittest.TestSuite(suiteList)
-    unittest.TextTestRunner(verbosity=0).run(comboSuite) #TODO: reuven: arrange with envs
+    unittest.TextTestRunner(verbosity=0).run(comboSuite)

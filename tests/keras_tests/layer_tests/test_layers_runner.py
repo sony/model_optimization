@@ -20,6 +20,7 @@ from tests.keras_tests.layer_tests.base_keras_layer_test import BaseKerasLayerTe
 
 # If empty -> Run all layer tests
 # If not -> Run just these tests (e.g. layers=[DenseTest, ConcatTest])
+
 layers = []
 
 layers_pkg_rel_path = 'keras_tests/layer_tests/layers/'

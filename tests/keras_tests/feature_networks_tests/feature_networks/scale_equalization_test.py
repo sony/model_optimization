@@ -65,6 +65,5 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
 
         alpha = (quantized_model.layers[q_first_linear_op_index].weights[0] / float_model.layers[f_first_linear_op_index].weights[0]).numpy().mean()
         beta = (float_model.layers[f_second_linear_op_index].weights[0] / quantized_model.layers[q_second_linear_op_index].weights[0]).numpy().mean()
-
         self.unit_test.assertTrue(np.allclose(alpha, beta, atol=1e-1))
 
