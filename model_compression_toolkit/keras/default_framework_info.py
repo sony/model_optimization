@@ -66,6 +66,18 @@ ACTIVATION = [Activation,
               InputLayer,
               Concatenate,
               PReLU,
+              tf.nn.silu,
+              tf.nn.swish,
+              tf.nn.sigmoid,
+              tf.nn.tanh,
+              tf.nn.relu,
+              tf.nn.relu6,
+              tf.nn.leaky_relu,
+              tf.nn.gelu,
+              tf.nn.elu,
+              tf.nn.selu,
+              tf.nn.softplus,
+              tf.nn.softmax,
               tf.add,
               tf.multiply,
               tf.reduce_mean,
@@ -110,15 +122,28 @@ ACTIVATION2MINMAX = {SOFTMAX: (0, 1),
                      TANH: (-1, 1),
                      SWISH: (-0.279, None),
                      RELU: (0, None),
-                     SELU: (None, None)}
+                     SELU: (None, None),
+                     }
 
 """
 Map from an Keras layer to its min/max output values (if known).
 The values are used for tensor min/max values initialization.
 """
 LAYER2MINMAX = {Softmax: (0, 1),
-                ReLU: (0, None)}
-
+                ReLU: (0, None),
+                tf.nn.silu: (-0.279, None),
+                tf.nn.swish: (-0.279, None),
+                tf.nn.sigmoid: (0, 1),
+                tf.nn.tanh: (-1, 1),
+                tf.nn.relu: (0, None),
+                tf.nn.relu6: (0, 6),
+                tf.nn.leaky_relu: (None, None),
+                tf.nn.gelu: (-0.17, None),
+                tf.nn.elu: (-1, None),
+                tf.nn.selu: (-1.76, None),
+                tf.nn.softplus: (0, None),
+                tf.nn.softmax: (0, 1),
+                }
 """
 Mapping from a QuantizationMethod to an activation quantizer function.
 """

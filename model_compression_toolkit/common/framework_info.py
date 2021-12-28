@@ -17,7 +17,6 @@
 from collections import Callable
 from typing import Dict, Any, List
 
-from model_compression_toolkit.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationMethod
 from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.common.graph.base_node import BaseNode
@@ -105,17 +104,17 @@ class FrameworkInfo(object):
         self.output_channel_index = output_channel_index
 
 
-    def get_kernel_op_attributes(self, layer_class: Any) -> List[str]:
+    def get_kernel_op_attributes(self, node_type: Any) -> List[str]:
         """
         Get a list of attributes of a layer's weights to quantize.
 
         Args:
-            layer_class: Layer to get its' attributes.
+            node_type: Layer to get its' attributes.
 
         Returns:
             A list of attributes the layer has and should be quantized.
         """
-        attr_list = self.kernel_ops_attributes_mapping.get(layer_class)
+        attr_list = self.kernel_ops_attributes_mapping.get(node_type)
         return attr_list
 
     def layers_has_min_max(self, layer: Any) -> bool:
@@ -154,7 +153,7 @@ class FrameworkInfo(object):
             Whether the node is in the kernel_ops group or not.
         """
 
-        return n.layer_class in self.kernel_ops
+        return n.type in self.kernel_ops
 
     def in_activation_ops(self, n: BaseNode) -> bool:
         """
@@ -166,9 +165,7 @@ class FrameworkInfo(object):
         Returns:
             Whether the node is in the activation group or not.
         """
-        if isinstance(n, FunctionalNode):
-            return n.functional_op in self.activation_ops
-        return n.layer_class in self.activation_ops
+        return n.type in self.activation_ops
 
     def in_no_quantization_ops(self, n: BaseNode) -> bool:
         """
@@ -180,6 +177,4 @@ class FrameworkInfo(object):
         Returns:
             Whether the node is in the no quantization group or not.
         """
-        if isinstance(n, FunctionalNode):
-            return n.functional_op in self.no_quantization_ops
-        return n.layer_class in self.no_quantization_ops
+        return n.type in self.no_quantization_ops

@@ -45,14 +45,14 @@ def _get_min_max_outputs(node: BaseNode,
     """
     min_output, max_output = None, None
 
-    if node.layer_class == ReLU:
+    if node.type == ReLU:
         min_output = node.framework_attr[THRESHOLD] if node.framework_attr[NEGATIVE_SLOPE] == 0 else None
         max_output = node.framework_attr[RELU_MAX_VALUE]
 
-    elif fw_info.layers_has_min_max(node.layer_class):
-        min_output, max_output = fw_info.layer_min_max_mapping[node.layer_class]
+    elif fw_info.layers_has_min_max(node.type):
+        min_output, max_output = fw_info.layer_min_max_mapping[node.type]
 
-    elif node.layer_class == Activation and fw_info.activation_has_min_max(node.framework_attr[ACTIVATION]):
+    elif node.type == Activation and fw_info.activation_has_min_max(node.framework_attr[ACTIVATION]):
         min_output, max_output = fw_info.activation_min_max_mapping[node.framework_attr[ACTIVATION]]
 
     return min_output, max_output

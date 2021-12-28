@@ -61,6 +61,9 @@ class ActivationDecomposition(common.BaseSubstitution):
         Returns:
             Graph after applying the substitution.
         """
+        # if op2d_node.framework_attr.get(ACTIVATION) in [None, LINEAR]:
+        #     # skip substitution if there's no activation
+        #     return graph
 
         activation_node_name = op2d_node.name + '_post_activation'
 
@@ -76,8 +79,6 @@ class ActivationDecomposition(common.BaseSubstitution):
                                                 op2d_node.output_shape,
                                                 {},
                                                 Activation)
-
-
 
         graph.add_node(activation_node)
         graph.reconnect_out_edges(current_node=op2d_node,

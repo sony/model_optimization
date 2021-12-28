@@ -35,6 +35,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.reused_separable_
 from tests.keras_tests.feature_networks_tests.feature_networks.shift_neg_activation_test import ShiftNegActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import ActivationDecompositionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mark_activation_test import MarkActivationTest
+from tests.keras_tests.feature_networks_tests.feature_networks.tfoplambda_activation_test import TFOpLambdaActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.reused_layer_test import ReusedLayerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.nested_networks.nested_test import NestedTest
 from tests.keras_tests.feature_networks_tests.feature_networks.nested_networks.nested_model_multiple_inputs_test import \
@@ -225,6 +226,26 @@ class FeatureNetworkTest(unittest.TestCase):
         ActivationDecompositionTest(self, activation_function='relu').run_test()
         ActivationDecompositionTest(self, activation_function='tanh').run_test()
         ActivationDecompositionTest(self, activation_function='softmax').run_test()
+
+    def test_tfoplambda_actiovation(self):
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.swish).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.swish, shift_negative_activation_correction=True).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.silu).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.silu, shift_negative_activation_correction=True).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.sigmoid).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.tanh).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.relu).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.relu6).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.leaky_relu).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.gelu).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.gelu, shift_negative_activation_correction=True).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.elu).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.elu, shift_negative_activation_correction=True).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.selu).run_test()
+        # selu with shift negative fails because it's negative_rate (0.44) is much larger the default shift_negative_ratio (0.05)
+        # TFOpLambdaActivationTest(self, activation_function=tf.nn.selu, shift_negative_activation_correction=True).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.softplus).run_test()
+        TFOpLambdaActivationTest(self, activation_function=tf.nn.softmax).run_test()
 
     def test_mark_activation(self):
         MarkActivationTest(self, layers.Dense, layers.PReLU()).run_test()

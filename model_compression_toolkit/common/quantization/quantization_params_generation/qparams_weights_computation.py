@@ -83,7 +83,7 @@ def _get_kernel_channels_mapping(fw_info:FrameworkInfo,
 
 def get_channels_axis(weights_quant_config: NodeWeightsQuantizationConfig,
                       fw_info: FrameworkInfo,
-                      layer_class: type) -> Tuple[Any, Any]:
+                      node_type: type) -> Tuple[Any, Any]:
     """
     Get the layer's kernel channels input/output indices.
 
@@ -91,7 +91,7 @@ def get_channels_axis(weights_quant_config: NodeWeightsQuantizationConfig,
         weights_quant_config: NodeWeightsQuantizationConfig object of the node we would like get
         channels axis for. This is needed for whether to use dummy mapping or not.
         fw_info: Framework info contains the kernel channels mapping.
-        layer_class: Class to get its kernel's channels indices.
+        node_type: Class to get its kernel's channels indices.
 
     Returns:
         Class's kernel input/output channels indices.
@@ -104,6 +104,6 @@ def get_channels_axis(weights_quant_config: NodeWeightsQuantizationConfig,
     use_dummy = not weights_quant_config.weights_per_channel_threshold and not \
         weights_quant_config.weights_bias_correction
     kernel_channels_mapping = _get_kernel_channels_mapping(fw_info, use_dummy)
-    output_channels_axis, input_channels_axis = kernel_channels_mapping.get(layer_class)
+    output_channels_axis, input_channels_axis = kernel_channels_mapping.get(node_type)
     return output_channels_axis, input_channels_axis
 

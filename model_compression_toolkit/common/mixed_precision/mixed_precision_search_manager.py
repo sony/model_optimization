@@ -123,7 +123,7 @@ class MixedPrecisionSearchManager(object):
                 node_num_params = 0
 
                 # Consider only the weights that should be quantized.
-                for attr in self.fw_info.get_kernel_op_attributes(n.layer_class):
+                for attr in self.fw_info.get_kernel_op_attributes(n.type):
                     if attr is not None:
                         node_num_params += n.get_weights_by_keys(attr).flatten().shape[0]
 
