@@ -42,12 +42,8 @@ class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(is_layer_fake_quant(quantized_model.layers[1]))
         self.unit_test.assertTrue(quantization_info.input_scale != 1)
         alpha = (float_model.layers[fi].weights[0] / quantized_model.layers[qi].weights[0]).numpy().mean()
-        self.unit_test.assertTrue(np.allclose(alpha, quantization_info.input_scale, atol=1e-3))
+        self.unit_test.assertTrue(np.allclose(alpha, quantization_info.input_scale, atol=1e-1))
 
-        # y = float_model.predict(input_x)
-        # y_hat = quantized_model.predict(input_x)
-        # cs = cosine_similarity(y, y_hat)
-        # self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
 
 
 class InputScalingDenseTest(BaseInputScalingTest):

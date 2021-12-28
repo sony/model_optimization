@@ -34,15 +34,11 @@ class NestedModelUnusedInputsOutputsTest(BaseKerasFeatureNetworkTest):
     """
 
     def __init__(self, unit_test):
-        super().__init__(unit_test, val_batch_size=5)
+        super().__init__(unit_test, input_shape=(16,16,3))
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, True, True, True)
-
-    def get_input_shapes(self):
-        return [[self.val_batch_size, 64, 64, 3]]
+        return mct.QuantizationConfig(enable_activation_quantization=False,
+                                      enable_weights_quantization=False)
 
     def inner_functional_model(self, input_shape):
         inputs = layers.Input(shape=input_shape[1:])

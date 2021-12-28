@@ -22,6 +22,7 @@ from tests.common_tests.function_tests.test_histogram_collector import TestHisto
 from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
 from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
 from tests.common_tests.function_tests.test_logger import TestLogger
+from tests.keras_tests.layer_tests.test_layers_runner import LayerTest
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases
@@ -30,6 +31,7 @@ if __name__ == '__main__':
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHistogramCollector))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLogger))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(LayerTest))
 
     # ----------------   Join them together ane run them
     comboSuite = unittest.TestSuite(suiteList)

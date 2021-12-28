@@ -48,7 +48,6 @@ from tests.keras_tests.feature_networks_tests.feature_networks.multiple_output_n
 from tests.keras_tests.feature_networks_tests.feature_networks.split_concatenate_test import SplitConcatenateTest
 from tests.keras_tests.feature_networks_tests.feature_networks.conv_bn_relu_residual_test import ConvBnReluResidualTest
 from tests.keras_tests.feature_networks_tests.feature_networks.split_conv_bug_test import SplitConvBugTest
-from tests.keras_tests.feature_networks_tests.feature_networks.tanh_activation_test import TanhActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.output_in_middle_test import OutputInMiddleTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multiple_inputs_model_test import MultipleInputsModelTest
 from tests.keras_tests.feature_networks_tests.feature_networks.scale_equalization_test import ScaleEqualizationTest
@@ -137,9 +136,6 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_output_in_middle(self):
         OutputInMiddleTest(self).run_test()
-
-    def test_tanh_activation(self):
-        TanhActivationTest(self).run_test()
 
     def test_conv_bn_relu_residual(self):
         ConvBnReluResidualTest(self).run_test()
