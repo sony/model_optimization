@@ -69,7 +69,10 @@ class TestLpSearchBitwidth(unittest.TestCase):
 class TestSearchBitwidthConfiguration(unittest.TestCase):
 
     def test_search_engine(self):
-        qc = DEFAULT_MIXEDPRECISION_CONFIG
+        # qc = DEFAULT_MIXEDPRECISION_CONFIG
+        import copy
+        qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
+        qc.num_of_images=1
         qc.weights_n_bits = [8]
         fw_info = DEFAULT_KERAS_INFO
         in_model = MobileNetV2()

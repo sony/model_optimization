@@ -17,9 +17,10 @@
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -27,7 +28,7 @@ keras = tf.keras
 layers = keras.layers
 
 
-class ReusedLayerMixedPrecisionTest(BaseFeatureNetworkTest):
+class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -45,18 +46,11 @@ class ReusedLayerMixedPrecisionTest(BaseFeatureNetworkTest):
 
         return MixedPrecisionQuantizationConfig(qc, weights_n_bits=[2, 16, 4])
 
-    def create_inputs_shape(self):
-        return [[self.val_batch_size, 224, 244, 3]]
-
-    def create_feature_network(self, input_shape):
+    def create_networks(self):
         layer = layers.Conv2D(3, 4)
-        inputs = layers.Input(shape=input_shape[0][1:])
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layer(inputs)
-        y = layer(inputs)
-        x = layers.BatchNormalization()(x)
-        y = layers.BatchNormalization()(y)
-        x = layers.ReLU()(x)
-        x = layers.Add()([x, y])
+        x = layer(x)
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 
@@ -64,10 +58,14 @@ class ReusedLayerMixedPrecisionTest(BaseFeatureNetworkTest):
         return KPI(np.inf)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
+        if isinstance(float_model.layers[1], layers.Conv2D):
+            self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.Conv2D))
+            self.unit_test.assertFalse(hasattr(quantized_model.layers[2], 'input_shape'))  # assert it's reused
+        if isinstance(float_model.layers[1], layers.SeparableConv2D):
+            self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.DepthwiseConv2D))
+            self.unit_test.assertFalse(hasattr(quantized_model.layers[2], 'input_shape'))  # assert it's reused
+            self.unit_test.assertTrue(isinstance(quantized_model.layers[4], layers.Conv2D))
+            self.unit_test.assertFalse(hasattr(quantized_model.layers[4], 'input_shape'))  # assert it's reused
 
 
 class ReusedSeparableMixedPrecisionTest(ReusedLayerMixedPrecisionTest):
@@ -75,14 +73,10 @@ class ReusedSeparableMixedPrecisionTest(ReusedLayerMixedPrecisionTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def create_feature_network(self, input_shape):
-        layer = layers.SeparableConv2D(3, 3, padding='same')
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        layer = layers.SeparableConv2D(3, 3)
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layer(inputs)
-        y = layer(inputs)
-        x = layers.BatchNormalization()(x)
-        y = layers.BatchNormalization()(y)
-        x = layers.ReLU()(x)
-        x = layers.Add()([x, y])
+        x = layer(x)
         model = keras.Model(inputs=inputs, outputs=x)
         return model

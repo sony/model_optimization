@@ -13,8 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
 if tf.__version__ < "2.6":
@@ -22,6 +20,7 @@ if tf.__version__ < "2.6":
     from tensorflow.python.keras.engine.sequential import Sequential
 else:
     from keras.models import Functional, Sequential
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -29,21 +28,17 @@ keras = tf.keras
 layers = keras.layers
 
 
-class NestedModelUnusedInputsOutputsTest(BaseFeatureNetworkTest):
+class NestedModelUnusedInputsOutputsTest(BaseKerasFeatureNetworkTest):
     """
     Test two inner models when one's some outputs are not connected to any layer.
     """
 
     def __init__(self, unit_test):
-        super().__init__(unit_test, val_batch_size=5)
+        super().__init__(unit_test, input_shape=(16,16,3))
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, True, True, True)
-
-    def create_inputs_shape(self):
-        return [[self.val_batch_size, 64, 64, 3]]
+        return mct.QuantizationConfig(enable_activation_quantization=False,
+                                      enable_weights_quantization=False)
 
     def inner_functional_model(self, input_shape):
         inputs = layers.Input(shape=input_shape[1:])
@@ -65,8 +60,8 @@ class NestedModelUnusedInputsOutputsTest(BaseFeatureNetworkTest):
         outputs = layers.Activation('swish')(x)
         return keras.Model(inputs=[inputs, inputs2], outputs=outputs)
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(3, 4)(inputs)
         x = layers.Conv2D(3, 4)(x)
         x, y, z, w = self.inner_functional_model(x.shape)(x)

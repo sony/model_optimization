@@ -19,10 +19,11 @@ from model_compression_toolkit.common.network_editors.node_filters import NodeNa
 from model_compression_toolkit.common.network_editors.actions import EditRule, \
     ChangeCandidtaesWeightsQuantizationMethod
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as cmo
 import tensorflow as tf
 import numpy as np
+
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
 layers = keras.layers
@@ -34,7 +35,7 @@ def get_uniform_weights(kernel, in_channels, out_channels):
         [out_channels, kernel, kernel, in_channels]).transpose(1, 2, 3, 0)
 
 
-class LUTQuantizerTest(BaseFeatureNetworkTest):
+class LUTQuantizerTest(BaseKerasFeatureNetworkTest):
     '''
     - Check name filter- that only the node with the name changed
     - Check that different quantization methods on the same weights give different results
@@ -58,11 +59,11 @@ class LUTQuantizerTest(BaseFeatureNetworkTest):
                          action=ChangeCandidtaesWeightsQuantizationMethod(
                              weights_quantization_method=cmo.QuantizationMethod.POWER_OF_TWO))]
 
-    def create_inputs_shape(self):
+    def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, self.num_conv_channels]]
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.node_to_change_name)(inputs)
         outputs = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False)(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
