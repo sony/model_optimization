@@ -12,30 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
 layers = keras.layers
 
 
-class ActivationScalingReLU6Test(BaseFeatureNetworkTest):
+class ActivationScalingReLU6Test(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, True, False, True)
+        qc = super(ActivationScalingReLU6Test, self).get_quantization_config()
+        qc.relu_unbound_correction = True
+        return qc
 
-
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Dense(20)(inputs)
         x = layers.ReLU(max_value=6)(x)
         outputs = layers.Dense(30)(x)
@@ -48,7 +49,3 @@ class ActivationScalingReLU6Test(BaseFeatureNetworkTest):
         self.unit_test.assertTrue(np.allclose(alpha, 8 / 6, atol=1e-1))
         self.unit_test.assertTrue(np.allclose(beta, 6 / 8, atol=1e-1))
         self.unit_test.assertTrue(quantized_model.layers[3].max_value is None)
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check: {cs} != 1')

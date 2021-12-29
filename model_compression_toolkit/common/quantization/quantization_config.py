@@ -155,12 +155,12 @@ DEFAULTCONFIG = QuantizationConfig(ThresholdSelectionMethod.MSE,
                                    ThresholdSelectionMethod.MSE,
                                    QuantizationMethod.POWER_OF_TWO,
                                    QuantizationMethod.POWER_OF_TWO,
-                                   8,
-                                   8,
-                                   False,
-                                   True,
-                                   True,
-                                   False)
+                                   weights_n_bits=8,
+                                   activation_n_bits=8,
+                                   relu_unbound_correction=False,
+                                   weights_bias_correction=True,
+                                   weights_per_channel_threshold=True,
+                                   input_scaling=False)
 
 
 

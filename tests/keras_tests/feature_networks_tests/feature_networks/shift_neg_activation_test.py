@@ -14,9 +14,10 @@
 # ==============================================================================
 
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -24,12 +25,12 @@ keras = tf.keras
 layers = keras.layers
 
 
-class ShiftNegActivationTest(BaseFeatureNetworkTest):
+class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, linear_op_to_test, use_pad_layer=False):
         assert type(linear_op_to_test) in [layers.Conv2D, layers.Dense, layers.DepthwiseConv2D]
         self.linear_op_to_test = linear_op_to_test
         self.use_pad_layer = use_pad_layer
-        super().__init__(unit_test, num_calibration_iter=1, val_batch_size=32)
+        super().__init__(unit_test)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE,
@@ -41,13 +42,12 @@ class ShiftNegActivationTest(BaseFeatureNetworkTest):
                                       False,
                                       False,
                                       True,
-                                      shift_negative_activation_correction=True)
+                                      shift_negative_activation_correction=True,
+                                      shift_negative_ratio=np.inf)
 
-    def create_inputs_shape(self):
-        return [[self.val_batch_size, 224, 244, 3]]
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Activation('swish')(inputs)
         if self.use_pad_layer:
             x = layers.ZeroPadding2D(((3, 4), (5, 6)))(x)
@@ -72,7 +72,3 @@ class ShiftNegActivationTest(BaseFeatureNetworkTest):
         else:
             raise NotImplementedError
 
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')

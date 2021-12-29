@@ -14,9 +14,10 @@
 # ==============================================================================
 
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -24,36 +25,21 @@ keras = tf.keras
 layers = keras.layers
 
 
-class MultipleInputsModelTest(BaseFeatureNetworkTest):
+class MultipleInputsModelTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, num_of_inputs=3)
 
-    def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, True, True, True)
 
-    def create_inputs_shape(self):
-        return [[self.val_batch_size, 16, 16, 3], [self.val_batch_size, 16, 16, 3],
-                [self.val_batch_size, 16, 16, 3]]
-
-    def create_feature_network(self, input_shape):
-        inputs_1 = layers.Input(shape=input_shape[0][1:])
-        inputs_2 = layers.Input(shape=input_shape[0][1:])
-        inputs_3 = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs_1 = layers.Input(shape=self.get_input_shapes()[0][1:])
+        inputs_2 = layers.Input(shape=self.get_input_shapes()[0][1:])
+        inputs_3 = layers.Input(shape=self.get_input_shapes()[0][1:])
         x1 = layers.Conv2D(3, 4)(inputs_1)
         x2 = layers.Conv2D(3, 4)(inputs_2)
         x3 = layers.Conv2D(3, 4)(inputs_3)
-
-        x = layers.BatchNormalization()(x1)
-        x = layers.Activation('relu')(x)
-        outputs = layers.Concatenate()([x, x2, x3])
+        outputs = layers.Concatenate()([x1, x2, x3])
         model = keras.Model(inputs=[inputs_1, inputs_2, inputs_3], outputs=outputs)
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.inputs) == 3)
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')

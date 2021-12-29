@@ -15,9 +15,12 @@
 
 
 from abc import ABC
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+
+from tests.common_tests.base_layer_test import LayerTestMode
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -25,7 +28,11 @@ keras = tf.keras
 layers = keras.layers
 
 
-class BaseBatchNormalizationFolding(BaseFeatureNetworkTest, ABC):
+class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
+
+    def __init__(self, unit_test):
+        super(BaseBatchNormalizationFolding, self).__init__(unit_test=unit_test)
+
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
                                       mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
@@ -43,8 +50,8 @@ class Conv2DBNFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(2, 3, padding='same')(inputs)
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)
@@ -55,8 +62,8 @@ class Conv2DBNConcatnFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(2, 3, padding='same')(inputs)
         x_bn = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x_bn)
@@ -70,8 +77,8 @@ class Conv2DTransposeBNFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2DTranspose(2, 3, padding='same')(inputs)
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)
@@ -82,8 +89,8 @@ class DepthwiseConv2DBNFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.DepthwiseConv2D(1, padding='same')(inputs)
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)
@@ -94,8 +101,8 @@ class DepthwiseConv2DBNFoldingHighMultiplierTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.DepthwiseConv2D(1, padding='same', depth_multiplier=3)(inputs)
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)
@@ -106,8 +113,8 @@ class SeparableConv2DBNFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.SeparableConv2D(1, 3, padding='same')(inputs)
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)

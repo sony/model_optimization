@@ -16,20 +16,21 @@
 
 import numpy as np
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.user_info import UserInformation
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers
 
 
-class MixedPercisionBaseTest(BaseFeatureNetworkTest):
+class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -49,11 +50,11 @@ class MixedPercisionBaseTest(BaseFeatureNetworkTest):
     def get_bit_widths_config(self):
         return None
 
-    def create_inputs_shape(self):
+    def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, 3]]
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(30, 40)(inputs)
         x = layers.BatchNormalization()(x)
         x = layers.Conv2D(50, 40)(x)
@@ -161,8 +162,8 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
     def get_kpi(self):
         return KPI(np.inf)
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.DepthwiseConv2D(30)(inputs)
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)

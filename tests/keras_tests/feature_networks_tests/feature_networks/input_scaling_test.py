@@ -14,9 +14,10 @@
 # ==============================================================================
 
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from model_compression_toolkit.keras.back2framework.model_builder import is_layer_fake_quant
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
@@ -25,28 +26,29 @@ keras = tf.keras
 layers = keras.layers
 
 
-class BaseInputScalingTest(BaseFeatureNetworkTest):
+class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
                                       mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, False, False, True, input_scaling=True)
+                                      16, 16, input_scaling=True)
 
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        qi = 3 if isinstance(quantized_model.layers[2], layers.ZeroPadding2D) else 2
+        fi = 2 if isinstance(float_model.layers[1], layers.ZeroPadding2D) else 1
         self.unit_test.assertTrue(is_layer_fake_quant(quantized_model.layers[1]))
         self.unit_test.assertTrue(quantization_info.input_scale != 1)
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
+        alpha = (float_model.layers[fi].weights[0] / quantized_model.layers[qi].weights[0]).numpy().mean()
+        self.unit_test.assertTrue(np.allclose(alpha, quantization_info.input_scale, atol=1e-1))
+
 
 
 class InputScalingDenseTest(BaseInputScalingTest):
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Dense(20)(inputs)
         x = layers.ReLU()(x)
         outputs = layers.Dense(30)(x)
@@ -54,8 +56,8 @@ class InputScalingDenseTest(BaseInputScalingTest):
 
 
 class InputScalingConvTest(BaseInputScalingTest):
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(2, 3, padding='same')(inputs)
         x = layers.ReLU()(x)
         outputs = layers.Dense(30)(x)
@@ -63,8 +65,8 @@ class InputScalingConvTest(BaseInputScalingTest):
 
 
 class InputScalingDWTest(BaseInputScalingTest):
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.DepthwiseConv2D(1, padding='same')(inputs)
         x = layers.ReLU()(x)
         outputs = layers.Dense(30)(x)
@@ -72,8 +74,8 @@ class InputScalingDWTest(BaseInputScalingTest):
 
 
 class InputScalingZeroPadTest(BaseInputScalingTest):
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.ZeroPadding2D()(inputs)
         x = layers.DepthwiseConv2D(1, padding='same')(x)
         x = layers.ReLU()(x)

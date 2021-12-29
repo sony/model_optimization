@@ -15,9 +15,14 @@
 
 
 import tensorflow as tf
-from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
-    MaxPooling2D, Activation, ReLU, GlobalAveragePooling2D, Add, Multiply, AveragePooling2D, UpSampling2D, InputLayer, \
-    Concatenate, Softmax, PReLU, Flatten, Cropping2D
+if tf.__version__ < "2.6":
+    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
+        MaxPooling2D, Activation, ReLU, GlobalAveragePooling2D, Add, Multiply, AveragePooling2D, UpSampling2D, InputLayer, \
+        Concatenate, Softmax, PReLU, Flatten, Cropping2D
+else:
+    from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
+        Dropout, MaxPooling2D, Activation, ReLU, GlobalAveragePooling2D, Add, Multiply, AveragePooling2D, UpSampling2D, \
+        InputLayer, Concatenate, Softmax, PReLU, Flatten, Cropping2D
 
 from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.common.framework_info import FrameworkInfo
@@ -47,7 +52,8 @@ NO_QUANTIZATION = [Reshape,
                    ZeroPadding2D,
                    Dropout,
                    MaxPooling2D,
-                   tf.split]  # TODO:  replace with marking
+                   tf.split,
+                   tf.quantization.fake_quant_with_min_max_vars]  # TODO:  replace with marking
 
 ACTIVATION = [Activation,
               ReLU,

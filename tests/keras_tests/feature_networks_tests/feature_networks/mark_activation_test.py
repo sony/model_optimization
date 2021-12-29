@@ -14,14 +14,15 @@
 # ==============================================================================
 
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
 layers = keras.layers
 
 
-class MarkActivationTest(BaseFeatureNetworkTest):
+class MarkActivationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, kernel_op_layer, activation_function):
         assert kernel_op_layer in [layers.Conv2D,
                                    layers.DepthwiseConv2D,
@@ -31,8 +32,8 @@ class MarkActivationTest(BaseFeatureNetworkTest):
         self.kernel_op_layer = kernel_op_layer
         super().__init__(unit_test)
 
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         if self.kernel_op_layer is layers.Dense:
             outputs = self.activation_function(self.kernel_op_layer(3)(inputs))
         else:
