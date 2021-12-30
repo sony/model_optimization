@@ -14,8 +14,11 @@
 # ==============================================================================
 
 
-from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import tensorflow as tf
+if tf.__version__ < "2.6":
+    from tensorflow.python.keras.layers.core import TFOpLambda
+else:
+    from keras.layers.core import TFOpLambda
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
@@ -44,6 +47,10 @@ class MarkActivationTest(BaseKerasFeatureNetworkTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         kernel_op_layer_index = 2
         self.unit_test.assertTrue(isinstance(quantized_model.layers[kernel_op_layer_index], self.kernel_op_layer))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[kernel_op_layer_index + 1], (layers.ReLU,
-                                                                                                 layers.Activation,
-                                                                                                 layers.PReLU)))
+        activation_layer = quantized_model.layers[kernel_op_layer_index + 1]
+        if isinstance(activation_layer, TFOpLambda):
+            self.unit_test.assertTrue(activation_layer.function is self.activation_function)
+        else:
+            self.unit_test.assertTrue(isinstance(activation_layer, (layers.ReLU,
+                                                                    layers.Activation,
+                                                                    layers.PReLU)))
