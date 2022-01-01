@@ -34,15 +34,12 @@ layers = keras.layers
 class NestedTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, is_inner_functional=True):
         self.is_inner_functional = is_inner_functional
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         input_shape=(16,16,3))
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, True, True, True)
-
-    def get_input_shapes(self):
-        return [[self.val_batch_size, 236, 236, 3]]
+        return mct.QuantizationConfig(enable_activation_quantization=False,
+                                      enable_weights_quantization=False)
 
     # Dummy model to test reader's recursively model parsing
     def dummy_model(self, input_shape):
@@ -87,11 +84,9 @@ class NestedTest(BaseKerasFeatureNetworkTest):
                 self.unit_test.assertFalse(isinstance(l, Functional) or isinstance(l, Sequential))
         if self.is_inner_functional:
             num_layers = 8
-            num_fq_layers = 5
         else:
             num_layers = 5
-            num_fq_layers = 3
-        self.unit_test.assertTrue(len(quantized_model.layers) == (num_layers+num_fq_layers))
+        self.unit_test.assertTrue(len(quantized_model.layers) == num_layers)
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)
         cs = cosine_similarity(y, y_hat)
