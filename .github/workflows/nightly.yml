@@ -30,13 +30,4 @@ jobs:
       - name: Publish nightly
         run: |
           twine upload --repository pypi dist/* --verbose -u __token__ -p ${{ secrets.PYPI_API_KEY }}
-      - name: Prepare env for test
-        run: |
-          rm -rf model_compression_toolkit
-          pip install mct-nightly=="${{ env.nightly_version }}"
-          pip install tensorflow==2.5.*
-          pip install tensorflow_model_optimization
-      - name: Run tests suite
-        run: |
-          python -m unittest tests/test_suite.py -v
 
