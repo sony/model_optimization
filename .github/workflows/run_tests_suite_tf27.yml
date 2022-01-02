@@ -3,11 +3,16 @@ on:
   workflow_dispatch: # Allow manual triggers
   schedule:
     - cron: 0 0 * * *
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      COVERAGE_THRESHOlD: 80
     steps:
       - uses: actions/checkout@v2
       - name: Install Python 3
@@ -20,5 +25,8 @@ jobs:
           pip install -r requirements.txt
           pip install tensorflow==2.7.*
           pip install tensorflow_model_optimization
+          pip install coverage
       - name: Run unittests
-        run: python -m unittest tests/test_suite.py -v
+        run: coverage run -m --omit "./tests*,*__init__.py" unittest tests/test_suite.py -v
+      - name: Run Coverage
+        run: coverage report -i --skip-covered --fail-under $COVERAGE_THRESHOlD

@@ -100,7 +100,7 @@ Tensorboard Visualization (Experimental):
 
 Note that currently we only have full support for Keras layers. Using the TensorFlow native layers may lead to unexpected behavior. This limitation will be removed in future releases. 
 
-MCT is tested with Tensorflow Version 2.5. 
+MCT is tested with Tensorflow Version 2.7. 
 
 ## Tutorials and Results
 As part of the MCT library, we have a set of example networks on image classification. These networks can be used as examples when using the package.
