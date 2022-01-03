@@ -32,7 +32,7 @@ from typing import Tuple, Any
 
 from model_compression_toolkit import common
 from model_compression_toolkit.common import FrameworkInfo, Graph, BaseNode
-from model_compression_toolkit.common.constants import FLOAT_32, DATA_TYPE, THRESHOLD
+from model_compression_toolkit.common.constants import FLOAT_32, DATA_TYPE, THRESHOLD, SIGNED
 from model_compression_toolkit.common.graph.graph_matchers import EdgeMatcher
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, \
     NodeFrameworkAttrMatcher
@@ -481,20 +481,20 @@ def shift_negative_function(graph: Graph,
                                      quant_config=qc)
 
     add_node.activation_quantization_cfg.enable_activation_quantization = False
+
     for weight_qc in add_node.candidates_weights_quantization_cfg:
         weight_qc.enable_weights_quantization = False
 
     add_node.activation_quantization_cfg = create_node_activation_qc(qc,
                                                                      fw_info)
 
-    add_node.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold})
-    add_node.activation_quantization_cfg.activation_is_signed = False
+    add_node.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
+                                                                            SIGNED: False})
 
     if non_linear_node.activation_quantization_cfg.shift_negative_threshold_recalculation:
-        activation_param, activation_is_signed = get_activations_qparams(add_node, graph)
-        assert activation_is_signed == False
+        activation_param = get_activations_qparams(add_node, graph)
+        assert activation_param.get(SIGNED) == False
         add_node.activation_quantization_cfg.set_activation_quantization_param(activation_param)
-        add_node.activation_quantization_cfg.activation_is_signed = False
 
     return graph
 
