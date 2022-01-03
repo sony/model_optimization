@@ -62,8 +62,7 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
     def __init__(self,
                  qc: QuantizationConfig,
                  activation_quantization_fn: Callable,
-                 activation_quantization_params_fn: Callable,
-                 activation_is_signed: bool = None
+                 activation_quantization_params_fn: Callable
                  ):
         """
 
@@ -71,11 +70,10 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
             qc: QuantizationConfig to create the node's config from.
             activation_quantization_fn: Function to use when quantizing the node's activations.
             activation_quantization_params_fn: Function to use when computing the threshold for quantizing a node's activations.
-            activation_is_signed: Signedness of the activation quantized range.
         """
+
         self.activation_quantization_fn = activation_quantization_fn
         self.activation_quantization_params_fn = activation_quantization_params_fn
-        self.activation_is_signed = activation_is_signed
         self.activation_quantization_params = {}
         self.activation_threshold_method = qc.activation_threshold_method
         self.activation_quantization_method = qc.activation_quantization_method
@@ -90,6 +88,14 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.z_threshold = qc.z_threshold
         self.shift_negative_ratio = qc.shift_negative_ratio
         self.shift_negative_threshold_recalculation = qc.shift_negative_threshold_recalculation
+
+    def generate_quantization_node(self) -> Callable:
+        """
+        Returns: Quantization function to use for quantizing the node's activations,
+        with the node's quantization configuration properties.
+        """
+        return self.activation_quantization_fn(self.activation_n_bits,
+                                               self.activation_quantization_params)
 
     def set_activation_quantization_fn(self, activation_quantization_fn: Callable):
         """

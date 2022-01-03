@@ -16,11 +16,12 @@ import numpy as np
 from typing import Tuple, Dict
 
 from model_compression_toolkit.common import BaseNode, Graph
+from model_compression_toolkit.common.constants import SIGNED
 from model_compression_toolkit.common.quantization import quantization_params_generation
 
 
 def get_activations_qparams(n: BaseNode,
-                            graph: Graph) -> Tuple[Dict[str, float], bool]:
+                            graph: Graph) -> Dict[str, float]:
     """
     Compute the activations params for a given node in a graph according to a params function.
 
@@ -29,8 +30,9 @@ def get_activations_qparams(n: BaseNode,
         graph: Graph the node is in.
 
     Returns:
-        Tuple of the computed quantization params and sign for the node's activations quantization.
+        The computed activation quantization params.
     """
+
     out_stats_container = graph.get_out_stats_collector(n)
     bins_values, bins_counts = None, None
 
@@ -58,5 +60,6 @@ def get_activations_qparams(n: BaseNode,
                                                                                         min_value,
                                                                                         max_value,
                                                                                         min_threshold=n.activation_quantization_cfg.min_threshold)
+    activation_params.update({SIGNED: signed})
 
-    return activation_params, signed
+    return activation_params

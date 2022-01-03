@@ -25,7 +25,7 @@ else:
         InputLayer, Concatenate, Softmax, PReLU, Flatten, Cropping2D
 
 from model_compression_toolkit.common.defaultdict import DefaultDict
-from model_compression_toolkit.common.framework_info import FrameworkInfo
+from model_compression_toolkit.common.framework_info import FrameworkInfo, ChannelAxis
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationMethod
 from model_compression_toolkit.common.quantization.quantizers.kmeans_quantizer import kmeans_quantizer
 from model_compression_toolkit.common.quantization.quantizers.lut_kmeans_quantizer import lut_kmeans_quantizer
@@ -134,7 +134,7 @@ WEIGHTS_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quant
 """
 Output channel index of the model's layers
 """
-OUTPUT_CHANNEL_INDEX = -1
+OUTPUT_CHANNEL_INDEX = ChannelAxis.NHWC
 
 DEFAULT_KERAS_INFO = FrameworkInfo(KERNEL_OPS,
                                    ACTIVATION,

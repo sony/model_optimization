@@ -1,6 +1,7 @@
 from tensorflow.keras.models import Model
 
 from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.common.framework_info import ChannelAxis
 from model_compression_toolkit.common.model_validation import ModelValidation
 from model_compression_toolkit.keras.constants import CHANNELS_FORMAT, CHANNELS_FORMAT_LAST, CHANNELS_FORMAT_FIRST
 
@@ -32,6 +33,6 @@ class KerasModelValidation(ModelValidation):
         for layer in self.model.layers:
             data_format = layer.get_config().get(CHANNELS_FORMAT)
             if data_format is not None:
-                assert (data_format == CHANNELS_FORMAT_LAST and self.fw_info.output_channel_index == -1
-                        or data_format == CHANNELS_FORMAT_FIRST and self.fw_info.output_channel_index == 1), \
+                assert (data_format == CHANNELS_FORMAT_LAST and self.fw_info.output_channel_index == ChannelAxis.NHWC
+                        or data_format == CHANNELS_FORMAT_FIRST and self.fw_info.output_channel_index == ChannelAxis.NCHW), \
                     f'Model can not have layers with different data formats.'
