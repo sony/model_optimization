@@ -16,6 +16,7 @@
 import numpy as np
 
 from model_compression_toolkit.common.collectors.base_collector import BaseCollector
+from model_compression_toolkit.common.framework_info import ChannelAxis
 
 
 class MinMaxPerChannelCollector(BaseCollector):
@@ -24,7 +25,7 @@ class MinMaxPerChannelCollector(BaseCollector):
     """
 
     def __init__(self,
-                 axis: int,
+                 axis: ChannelAxis,
                  init_min_value: float = None,
                  init_max_value: float = None):
         """
@@ -129,7 +130,7 @@ class MinMaxPerChannelCollector(BaseCollector):
             x: Tensor that goes through the collector and needs to be considered in the min/max computation.
         """
 
-        axis = (len(x.shape) - 1) if self.axis == -1 else self.axis  # convert
+        axis = (len(x.shape) - 1) if self.axis == ChannelAxis.NHWC else self.axis.NCHW.value  # convert
         n = x.shape[axis]
         transpose_index = [axis, *[i for i in range(len(x.shape)) if i != axis]]
         x_reshape = np.reshape(np.transpose(x, transpose_index), [n, -1])

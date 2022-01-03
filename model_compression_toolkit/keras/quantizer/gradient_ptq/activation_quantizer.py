@@ -23,7 +23,7 @@ from model_compression_toolkit.keras.quantizer.base_quantizer import BaseTrainab
 from model_compression_toolkit.keras.quantizer.gradient_ptq.utils import symmetric_quantizer
 from model_compression_toolkit.keras.quantizer.gradient_ptq.utils import ste_round
 from model_compression_toolkit import common
-from model_compression_toolkit.common.constants import THRESHOLD
+from model_compression_toolkit.common.constants import THRESHOLD, SIGNED
 
 
 class TrainableQuantizer(BaseTrainableQuantizer):
@@ -171,7 +171,8 @@ class TrainableQuantizer(BaseTrainableQuantizer):
 
         threshold_change = np.asarray(new_threshold / old_threshold).flatten()
         common.Logger.info(f"Layer '{layer.layer.name}' has total threshold change of {str(threshold_change)}")
-        return {THRESHOLD: new_threshold.numpy().reshape(self.threshold_shape)}
+        return {THRESHOLD: new_threshold.numpy().reshape(self.threshold_shape),
+                SIGNED: self.signed}
 
     def get_trainable_parameters(self):
         """

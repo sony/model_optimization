@@ -17,7 +17,7 @@ from typing import List, Any, Dict
 
 from tensorflow.python.training.tracking.data_structures import ListWrapper
 
-from model_compression_toolkit.common.constants import THRESHOLD
+from model_compression_toolkit.common.constants import THRESHOLD, SIGNED
 from model_compression_toolkit.keras.quantizer.gradient_ptq.activation_quantizer import TrainableQuantizer
 from model_compression_toolkit.keras.quantizer.gradient_ptq.base_quantizer_gptq_config import BaseQuantizeConfig
 import tensorflow as tf
@@ -37,17 +37,16 @@ class ActivationQuantizeConfig(BaseQuantizeConfig):
 
     def __init__(self,
                  activation_quantization_params: dict,
-                 signed: bool,
                  num_bits: int = 8):
         """
         Initialize a TrainableQuantizer and set as the activation quantizer.
 
         Args:
             activation_quantization_params: Parameters to use for quantization.
-            signed: Quantization range is signed or unsigned.
             num_bits: Number of bits to use for quantization.
         """
         threshold_values = activation_quantization_params.get(THRESHOLD)
+        signed = activation_quantization_params.get(SIGNED)
         self.activation_quantizer = TrainableQuantizer(num_bits=num_bits,
                                                        per_axis=False,
                                                        threshold_values=threshold_values,

@@ -68,13 +68,11 @@ def calculate_quantization_params(graph: Graph,
 
             if n.is_activation_quantization_enabled():  # If node's activations should be quantized as well, we compute its
                 # activation threshold
-                activation_params, activation_is_signed = get_activations_qparams(n=n,
-                                                                                  graph=graph)
+                activation_params = get_activations_qparams(n=n, graph=graph)
 
         elif fw_info.in_activation_ops(n):  # If node has no kernel, but its activations should be quantized
             if n.is_activation_quantization_enabled():
-                activation_params, activation_is_signed = get_activations_qparams(n=n,
-                                                                                  graph=graph)
+                activation_params = get_activations_qparams(n=n, graph=graph)
         # If node should not be quantized at all
         elif fw_info.in_no_quantization_ops(n):
             pass  # pragma: no cover
@@ -86,4 +84,3 @@ def calculate_quantization_params(graph: Graph,
         # Create a NodeQuantizationConfig containing all quantization params and attach it to the node
         if n.is_activation_quantization_enabled():
             n.activation_quantization_cfg.set_activation_quantization_param(activation_params)
-            n.activation_quantization_cfg.activation_is_signed = activation_is_signed

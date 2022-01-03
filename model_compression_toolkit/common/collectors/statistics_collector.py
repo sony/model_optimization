@@ -20,7 +20,7 @@ from typing import Any, Tuple
 
 import numpy as np
 
-from model_compression_toolkit.common.framework_info import FrameworkInfo
+from model_compression_toolkit.common.framework_info import FrameworkInfo, ChannelAxis
 from model_compression_toolkit.common.collectors.histogram_collector import HistogramCollector
 from model_compression_toolkit.common.collectors.mean_collector import MeanCollector
 from model_compression_toolkit.common.collectors.min_max_per_channel_collector import MinMaxPerChannelCollector
@@ -56,7 +56,7 @@ class StatsCollector(BaseStatsCollector):
     """
 
     def __init__(self,
-                 output_channel_index: int,
+                 output_channel_index: ChannelAxis,
                  init_min_value: float = None,
                  init_max_value: float = None):
         """
@@ -64,6 +64,7 @@ class StatsCollector(BaseStatsCollector):
         Set initial min/max values if are known.
 
         Args:
+            output_channel_index: Index of output channels.
             init_min_value: Initial min value for min/max stored values.
             init_max_value: Initial max value for min/max stored values.
         """

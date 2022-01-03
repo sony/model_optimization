@@ -25,7 +25,7 @@ else:
 from tensorflow.python.training.tracking.data_structures import ListWrapper
 from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
 
-from model_compression_toolkit.common.constants import THRESHOLD
+from model_compression_toolkit.common.constants import THRESHOLD, SIGNED
 from model_compression_toolkit.keras.quantizer.gradient_ptq.weight_quantizer import TrainableWeightQuantizer
 from model_compression_toolkit.keras.quantizer.gradient_ptq.activation_quantizer import TrainableQuantizer
 from model_compression_toolkit.keras.quantizer.gradient_ptq.base_quantizer_gptq_config import BaseQuantizeConfig
@@ -44,7 +44,6 @@ class ActivationAndWeightQuantizeConfig(BaseQuantizeConfig):
                  weight_channel_axis: int,
                  weight_num_bits: int,
                  activation_quantization_params: dict,
-                 activation_signed: bool,
                  activation_num_bits: int = 8,
                  max_lsbs_change: int = 8):
         """
@@ -55,12 +54,13 @@ class ActivationAndWeightQuantizeConfig(BaseQuantizeConfig):
             weight_channel_axis: Channel index to quantize when quantizing the weight per-channel.
             weight_num_bits: Number of bits to use for weight quantization.
             activation_quantization_params: Parameters to use for the activation quantization.
-            activation_signed: Quantization range is signed or unsigned.
             activation_num_bits: Number of bits to use for quantization of the activation.
 
         """
 
         activation_threshold_values = activation_quantization_params.get(THRESHOLD)
+        activation_signed = activation_quantization_params.get(SIGNED)
+
         self.activation_quantizer = TrainableQuantizer(num_bits=activation_num_bits,
                                                        per_axis=False,
                                                        threshold_values=activation_threshold_values,
