@@ -66,20 +66,21 @@ def set_quantization_configs_to_node(node: BaseNode,
 
     """
     # Create activation QC for this node
-    # use_min_max = fw_impl.attach_sc_to_node(node, fw_info).use_min_max
     node.activation_quantization_cfg = create_node_activation_qc(quant_config,
                                                                  fw_info)
-    if fw_info.in_no_quantization_ops(node):
-        node.activation_quantization_cfg.enable_activation_quantization = False
+
+    enable_activation_quantization = quant_config.enable_activation_quantization and (fw_info.in_activation_ops(node) or fw_info.in_kernel_ops(node))
+    node.activation_quantization_cfg.enable_activation_quantization = enable_activation_quantization
 
     # Create weights QC for this node
     weight_channel_axis = fw_info.kernel_channels_mapping.get(node.layer_class)[0]
     node.candidates_weights_quantization_cfg = _create_node_candidates_weights_qc(quant_config,
                                                                                   fw_info,
                                                                                   weight_channel_axis)
-    if not fw_info.in_kernel_ops(node):
-        for qc in node.candidates_weights_quantization_cfg:
-            qc.enable_weights_quantization = False
+
+    enable_weights_quantization = quant_config.enable_weights_quantization and fw_info.in_kernel_ops(node)
+    for qc in node.candidates_weights_quantization_cfg:
+        qc.enable_weights_quantization = enable_weights_quantization
 
 
 def create_node_activation_qc(qc: QuantizationConfig,
