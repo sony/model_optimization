@@ -21,7 +21,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.python.util.object_identity import Reference as TFReference
 
-from model_compression_toolkit.common.constants import THRESHOLD
+from model_compression_toolkit.common.constants import THRESHOLD, SIGNED
 
 
 def quantizer_min_max_calculator(threshold: np.ndarray,
@@ -52,7 +52,6 @@ def quantizer_min_max_calculator(threshold: np.ndarray,
 
 
 def constraint_quantization(activation_n_bits: int,
-                            activation_is_signed: bool,
                             quantization_params: dict) -> Callable:
     """
     Use a NodeQuantizationConfig to compute a quantizer min/max values, and use it to
@@ -60,14 +59,15 @@ def constraint_quantization(activation_n_bits: int,
 
     Args:
         activation_n_bits: Number of bits to use for quantization.
-        activation_is_signed: Whether the quantization range should include negative values or not.
         quantization_params: Dictionary of specific parameters for this quantization function.
 
     Returns:
         A fake quantization node.
     """
     activation_threshold = quantization_params.get(THRESHOLD)
-    if activation_threshold is None:
+    activation_is_signed = quantization_params.get(SIGNED)
+
+    if activation_threshold is None or activation_is_signed is None:
         return None
 
     min_value, max_value = quantizer_min_max_calculator(activation_threshold,

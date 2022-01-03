@@ -22,6 +22,7 @@ MULTIPLIER_N_BITS = 8
 # Quantization attributes:
 OUTPUT_SCALE = 'output_scale'
 THRESHOLD = 'threshold'
+SIGNED = 'is_signed'
 CLUSTER_CENTERS = 'cluster_centers'
 SCALE_PER_CHANNEL = 'scale_per_channel'
 

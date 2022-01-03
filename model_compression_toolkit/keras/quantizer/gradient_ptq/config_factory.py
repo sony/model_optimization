@@ -51,14 +51,12 @@ def quantization_config_builder_gptq(n: common.BaseNode,
                                                                             n.final_weights_quantization_cfg.weights_channels_axis,
                                                                             n.final_weights_quantization_cfg.weights_n_bits,
                                                                             n.activation_quantization_cfg.activation_quantization_params,
-                                                                            n.activation_quantization_cfg.activation_is_signed,
                                                                             activation_num_bits=n.activation_quantization_cfg.activation_n_bits,
                                                                             max_lsbs_change=MAX_LSBS_CHANGE
                                                                             )
 
     elif n.is_activation_quantization_enabled() and not n.is_weights_quantization_enabled():
         qc = keras.quantizer.gradient_ptq.ActivationQuantizeConfig(n.activation_quantization_cfg.activation_quantization_params,
-                                                                   n.activation_quantization_cfg.activation_is_signed,
                                                                    num_bits=n.activation_quantization_cfg.activation_n_bits)
 
     elif n.is_weights_quantization_enabled() and not n.is_activation_quantization_enabled():
@@ -66,8 +64,7 @@ def quantization_config_builder_gptq(n: common.BaseNode,
                                                                n.final_weights_quantization_cfg.weights_quantization_params.get(THRESHOLD),
                                                                n.final_weights_quantization_cfg.weights_channels_axis,
                                                                n.final_weights_quantization_cfg.weights_n_bits,
-                                                               max_lsbs_change=MAX_LSBS_CHANGE
-                                                               )
+                                                               max_lsbs_change=MAX_LSBS_CHANGE)
 
     elif not n.is_weights_quantization_enabled() and not n.is_activation_quantization_enabled():
         qc = NoOpQuantizeConfig()
