@@ -28,7 +28,7 @@ img_shape = (224, 224, 3)
 sample_batch = 5
 
 
-class TestLogger(unittest.TestCase):
+class TestFolderLoader(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
