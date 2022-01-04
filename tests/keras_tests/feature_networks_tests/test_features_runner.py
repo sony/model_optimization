@@ -15,14 +15,17 @@
 
 
 import unittest
-from tests.keras_tests.feature_networks_tests.feature_networks.activation_scaling_relu6_test import ActivationScalingReLU6Test
+from tests.keras_tests.feature_networks_tests.feature_networks.activation_scaling_relu6_test import \
+    ActivationScalingReLU6Test
 
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_percision_test import MixedPercisionBaseTest, \
     MixedPercisionSearchTest, MixedPercisionManuallyConfiguredTest, MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multiple_inputs_node_tests import MultipleInputsNodeTests
-from tests.keras_tests.feature_networks_tests.feature_networks.multiple_outputs_node_tests import MultipleOutputsNodeTests
-from tests.keras_tests.feature_networks_tests.feature_networks.decompose_separable_conv_test import DecomposeSeparableConvTest
+from tests.keras_tests.feature_networks_tests.feature_networks.multiple_outputs_node_tests import \
+    MultipleOutputsNodeTests
+from tests.keras_tests.feature_networks_tests.feature_networks.decompose_separable_conv_test import \
+    DecomposeSeparableConvTest
 from tests.keras_tests.feature_networks_tests.feature_networks.input_scaling_test import InputScalingDenseTest, \
     InputScalingConvTest, InputScalingDWTest, InputScalingZeroPadTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bn_folding_test import Conv2DBNFoldingTest, \
@@ -33,7 +36,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.reused_layer_mixe
     ReusedLayerMixedPrecisionTest, ReusedSeparableMixedPrecisionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.reused_separable_test import ReusedSeparableTest
 from tests.keras_tests.feature_networks_tests.feature_networks.shift_neg_activation_test import ShiftNegActivationTest
-from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import ActivationDecompositionTest
+from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
+    ActivationDecompositionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mark_activation_test import MarkActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.reused_layer_test import ReusedLayerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.nested_networks.nested_test import NestedTest
@@ -57,12 +61,16 @@ from tests.keras_tests.feature_networks_tests.feature_networks.gptq_test import 
 from tests.keras_tests.feature_networks_tests.feature_networks.add_same_test import AddSameTest
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.node_filter_test import NameFilterTest, \
     ScopeFilterTest, TypeFilterTest
+from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTQuantizerTest
 import tensorflow as tf
 
 layers = tf.keras.layers
 
 
 class FeatureNetworkTest(unittest.TestCase):
+
+    def test_lut_quantizer(self):
+        LUTQuantizerTest(self).run_test()
 
     def test_remove_upper_bound(self):
         RemoveUpperBoundTest(self).run_test()

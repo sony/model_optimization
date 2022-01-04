@@ -18,17 +18,12 @@ import random
 import unittest
 import numpy as np
 
-from model_compression_toolkit.common.constants import CLUSTER_CENTERS, MULTIPLIER_N_BITS, SCALE_PER_CHANNEL
+from model_compression_toolkit.common.constants import CLUSTER_CENTERS, SCALE_PER_CHANNEL
 from model_compression_toolkit.common.quantization.quantization_params_generation.lut_kmeans_params import \
     lut_kmeans_tensor
-# from tests.keras.feature_networks_tests.test_networks_runner import set_seed
 
 
 class TestLUTQuantizerParams(unittest.TestCase):
-
-    # @classmethod
-    # def setUpClass(cls):
-    #     set_seed()
 
     def test_properties(self):
         channel_axis = random.choice([0, 1, 2, 3])

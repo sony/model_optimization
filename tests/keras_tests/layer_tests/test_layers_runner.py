@@ -12,35 +12,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import importlib
-import os
-import pkgutil
 import unittest
-from tests.keras_tests.layer_tests.base_keras_layer_test import BaseKerasLayerTest
+from tests.keras_tests.layer_tests.layers.activation_test import ActivationTest
+from tests.keras_tests.layer_tests.layers.concat_test import ConcatTest
+from tests.keras_tests.layer_tests.layers.conv2d_test import Conv2DTest
+from tests.keras_tests.layer_tests.layers.crop_and_resize_test import CropAndResizeTest
+from tests.keras_tests.layer_tests.layers.dense_test import DenseTest
+from tests.keras_tests.layer_tests.layers.math_add_test import MathAddTest
+from tests.keras_tests.layer_tests.layers.math_mul_test import MathMulTest
+from tests.keras_tests.layer_tests.layers.reduce_mean_test import ReduceMeanTest
+from tests.keras_tests.layer_tests.layers.reduce_max_test import ReduceMaxTest
+from tests.keras_tests.layer_tests.layers.reduce_min_test import ReduceMinTest
+from tests.keras_tests.layer_tests.layers.reduce_sum_test import ReduceSumTest
+from tests.keras_tests.layer_tests.layers.relu_test import ReLUTest
+from tests.keras_tests.layer_tests.layers.reshape_test import ReshapeTest
+from tests.keras_tests.layer_tests.layers.resize_test import ResizeTest
+from tests.keras_tests.layer_tests.layers.split_test import SplitTest
 
-# If empty -> Run all layer tests
-# If not -> Run just these tests (e.g. layers=[DenseTest, ConcatTest])
-
-layers = []
-
-LAYERS_DIR_NAME = 'layers/'
-
-# Look for modules relative to current working directory
-layers_pkg_rel_path = LAYERS_DIR_NAME if os.path.dirname(__file__) in os.getcwd() else f'keras_tests/layer_tests/{LAYERS_DIR_NAME}'
 
 class LayerTest(unittest.TestCase):
+    LAYERS2RUN = [ActivationTest, ConcatTest, Conv2DTest, CropAndResizeTest, DenseTest, MathAddTest, MathMulTest,
+                  ReLUTest,
+                  ReduceMeanTest,
+                  ReduceMaxTest,
+                  ReduceMinTest,
+                  ResizeTest,
+                  ReshapeTest,
+                  ReduceSumTest,
+                  SplitTest]
 
     def test_keras_layers(self):
-        # Import all test cases from package 'layers':
-        for (module_loader, name, ispkg) in pkgutil.iter_modules([layers_pkg_rel_path]):
-            importlib.import_module(layers_pkg_rel_path.replace('/', '.') + name, __package__)
-        # Get all layer tests as they subclasses of BaseKerasLayerTest
-        keras_layer_tests = {cls.__name__: cls for cls in BaseKerasLayerTest.__subclasses__()}
+        keras_layer_tests = {cls.__name__: cls for cls in self.LAYERS2RUN}
         for k, v in keras_layer_tests.items():
-            if len(layers) == 0 or k in [l.__name__ for l in layers]:
-                # Test each one of them independently:
-                with self.subTest(msg=k):
-                    v(unittest.TestCase()).run_test()
+            # Test each one of them independently:
+            with self.subTest(msg=k):
+                v(unittest.TestCase()).run_test()
 
 
 if __name__ == '__main__':
