@@ -23,7 +23,10 @@ from tests.keras_tests.layer_tests.base_keras_layer_test import BaseKerasLayerTe
 
 layers = []
 
-layers_pkg_rel_path = 'keras_tests/layer_tests/layers/'
+LAYERS_DIR_NAME = 'layers/'
+
+# Look for modules relative to current working directory
+layers_pkg_rel_path = LAYERS_DIR_NAME if os.path.dirname(__file__) in os.getcwd() else f'keras_tests/layer_tests/{LAYERS_DIR_NAME}'
 
 class LayerTest(unittest.TestCase):
 
