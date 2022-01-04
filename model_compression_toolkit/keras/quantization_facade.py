@@ -29,12 +29,11 @@ from model_compression_toolkit.common.quantization.quantization_config import DE
 
 import importlib
 
-from model_compression_toolkit.keras.keras_model_validation import KerasModelValidation
-
 if importlib.util.find_spec("tensorflow") is not None\
         and importlib.util.find_spec("tensorflow_model_optimization") is not None:
     from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.keras.keras_implementation import KerasImplementation
+    from model_compression_toolkit.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
 
     def keras_post_training_quantization(in_model: Model,
