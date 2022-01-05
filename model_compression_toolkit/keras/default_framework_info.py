@@ -18,11 +18,12 @@ import tensorflow as tf
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
         MaxPooling2D, Activation, ReLU, GlobalAveragePooling2D, Add, Multiply, AveragePooling2D, UpSampling2D, InputLayer, \
-        Concatenate, Softmax, PReLU, Flatten, Cropping2D, ELU
+        Concatenate, Softmax, PReLU, Flatten, Cropping2D, ELU, Dot, LeakyReLU
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
-        Dropout, MaxPooling2D, Activation, ReLU, GlobalAveragePooling2D, Add, Multiply, AveragePooling2D, UpSampling2D, \
-        InputLayer, Concatenate, Softmax, PReLU, Flatten, Cropping2D, ELU
+    Dropout, MaxPooling2D, Activation, ReLU, GlobalAveragePooling2D, Add, Multiply, AveragePooling2D, UpSampling2D, \
+    InputLayer, Concatenate, Softmax, PReLU, Flatten, Cropping2D, Dot, ELU, LeakyReLU
+
 
 from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.common.framework_info import FrameworkInfo, ChannelAxis
@@ -47,6 +48,7 @@ KERNEL_OPS = [Conv2D,
               Conv2DTranspose]
 
 NO_QUANTIZATION = [Reshape,
+                   tf.reshape,
                    Flatten,
                    Cropping2D,
                    ZeroPadding2D,
@@ -57,6 +59,9 @@ NO_QUANTIZATION = [Reshape,
 
 ACTIVATION = [Activation,
               ReLU,
+              tf.nn.relu,
+              tf.nn.relu6,
+              tf.nn.leaky_relu,
               Softmax,
               GlobalAveragePooling2D,
               Add,
@@ -74,6 +79,8 @@ ACTIVATION = [Activation,
               tf.nn.relu,
               tf.nn.relu6,
               tf.nn.leaky_relu,
+              LeakyReLU,
+              tf.nn.softsign,
               tf.nn.gelu,
               tf.nn.elu,
               tf.nn.selu,
@@ -87,7 +94,8 @@ ACTIVATION = [Activation,
               tf.reduce_max,
               tf.image.resize,
               tf.image.crop_and_resize,
-              tf.concat]
+              tf.concat,
+              Dot]
 
 
 
