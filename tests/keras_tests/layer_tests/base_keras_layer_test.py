@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Any, Tuple
 
 import tensorflow as tf
 
@@ -11,7 +11,7 @@ else:
     from keras import Input, Model
 
 from model_compression_toolkit import FrameworkInfo, keras_post_training_quantization, \
-    keras_post_training_quantization_mixed_precision, MixedPrecisionQuantizationConfig
+    keras_post_training_quantization_mixed_precision
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.keras.back2framework.model_builder import is_layer_fake_quant
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -23,20 +23,24 @@ import numpy as np
 class BaseKerasLayerTest(BaseLayerTest):
     def __init__(self,
                  unit_test,
-                 val_batch_size=1,
-                 num_calibration_iter=1,
-                 num_of_inputs=1,
-                 input_shape=(8, 8, 3),
+                 layers: List[Any],
+                 val_batch_size: int = 1,
+                 num_calibration_iter: int = 1,
+                 num_of_inputs: int = 1,
+                 input_shape: Tuple[int, int, int] = (8, 8, 3),
                  quantization_modes: List[LayerTestMode] = [LayerTestMode.FLOAT, LayerTestMode.QUANTIZED_8_BITS],
-                 is_inputs_a_list=False):
+                 is_inputs_a_list: bool = False,
+                 use_cpu: bool = False):
 
         super().__init__(unit_test=unit_test,
+                         layers=layers,
                          val_batch_size=val_batch_size,
                          num_calibration_iter=num_calibration_iter,
                          num_of_inputs=num_of_inputs,
                          input_shape=input_shape,
                          quantization_modes=quantization_modes,
-                         is_inputs_a_list=is_inputs_a_list)
+                         is_inputs_a_list=is_inputs_a_list,
+                         use_cpu=use_cpu)
 
     def get_fw_info(self) -> FrameworkInfo:
         return DEFAULT_KERAS_INFO
@@ -50,11 +54,16 @@ class BaseKerasLayerTest(BaseLayerTest):
     def get_mixed_precision_ptq_facade(self):
         return keras_post_training_quantization_mixed_precision
 
+    # def predict(self, model: Model, input: List[np.ndarray]):
+    #     if self.use_cpu:
+    #         with tf.device('/cpu:0'):
+    #             return model.predict(input)
+    #     return model.predict(input)
+
     def create_networks(self):
         layers = self.get_layers()
         networks = []
         for i, layer in enumerate(layers):
-            print(f'Test layer {i}: {self.__class__.__name__}')
             inputs = [Input(shape=s[1:]) for s in self.get_input_shapes()]
             if self.is_inputs_a_list:
                 outputs = layer(inputs)
@@ -63,6 +72,7 @@ class BaseKerasLayerTest(BaseLayerTest):
             m = Model(inputs=inputs, outputs=outputs)
             networks.append(m)
         return networks
+
 
     def compare(self, quantized_model: Model, float_model: Model, input_x=None, quantization_info=None):
         # Assert things that should happen when using FLOAT quantization mode
@@ -80,6 +90,7 @@ class BaseKerasLayerTest(BaseLayerTest):
         self.unit_test.assertTrue(len(quantized_model.inputs) == len(float_model.inputs))
 
         # Check inference is possible
+        # self.predict(quantized_model, self.generate_inputs())
         quantized_model.predict(self.generate_inputs())
 
         # Check equal output shapes for both models:
@@ -118,7 +129,9 @@ class BaseKerasLayerTest(BaseLayerTest):
                     self.unit_test.assertTrue(np.sum(np.abs(w - float_model.layers[layer_index].weights[i])) == 0.0)
 
             input_tensors = self.generate_inputs()
+            # y = self.predict(float_model, input_tensors)
             y = float_model.predict(input_tensors)
+            # y_hat = self.predict(quantized_model, input_tensors)
             y_hat = quantized_model.predict(input_tensors)
             if isinstance(y, list):
                 for fo, qo in zip(y, y_hat):
