@@ -63,6 +63,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.no
     ScopeFilterTest, TypeFilterTest
 from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTQuantizerTest
 import tensorflow as tf
+from tensorflow.keras.layers import ReLU, PReLU, ELU
 
 layers = tf.keras.layers
 
@@ -171,62 +172,87 @@ class FeatureNetworkTest(unittest.TestCase):
         NestedTest(self, is_inner_functional=False).run_test()
 
     def test_shift_neg_activation_conv2d(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, 4)).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, 4, strides=3)).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (3, 4), strides=2)).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, 4),
+                               activation_op_to_test=layers.Activation('swish')).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, 4, strides=3),
+                               activation_op_to_test=layers.Activation('swish')).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (3, 4), strides=2),
+                               activation_op_to_test=layers.Activation('swish')).run_test()
 
     def test_shift_neg_activation_conv2d_pad_same(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7), padding='same')).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7), padding='same', strides=3)).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (7, 5), padding='same', strides=4)).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (8, 10), padding='same', strides=5)).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (10, 8), padding='same', strides=6)).run_test()
-        ShiftNegActivationTest(self,
-                               linear_op_to_test=layers.Conv2D(3, (5, 7), padding='same', strides=(4, 6))).run_test()
-        ShiftNegActivationTest(self,
-                               linear_op_to_test=layers.Conv2D(3, (7, 5), padding='same', strides=(6, 4))).run_test()
-        ShiftNegActivationTest(self,
-                               linear_op_to_test=layers.Conv2D(3, (8, 10), padding='same', strides=(5, 7))).run_test()
-        ShiftNegActivationTest(self,
-                               linear_op_to_test=layers.Conv2D(3, (10, 8), padding='same', strides=(7, 5))).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7), padding='same'),
+                               activation_op_to_test=layers.Activation('swish')).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7), padding='same', strides=3),
+                               activation_op_to_test=layers.Activation('swish')).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (7, 5), padding='same', strides=4),
+                               activation_op_to_test=layers.Activation('swish')).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (8, 10), padding='same', strides=5),
+                               activation_op_to_test=layers.Activation('swish')).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (10, 8), padding='same', strides=6),
+                               activation_op_to_test=layers.Activation('swish')).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7), padding='same', strides=(4, 6)),
+                               activation_op_to_test=layers.Activation('swish')).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (7, 5), padding='same', strides=(6, 4)),
+                               activation_op_to_test=layers.Activation('swish')).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (8, 10), padding='same', strides=(5, 7)),
+                               activation_op_to_test=layers.Activation('swish')).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (10, 8), padding='same', strides=(7, 5)),
+                               activation_op_to_test=layers.Activation('swish')).run_test()
 
     def test_shift_neg_activation_pad_conv2d(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7)), use_pad_layer=True).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7)),
+                               activation_op_to_test=layers.Activation('swish'),
+                               use_pad_layer=True).run_test()
         ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7), strides=3),
+                               activation_op_to_test=layers.Activation('swish'),
                                use_pad_layer=True).run_test()
         ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (7, 5), strides=4),
+                               activation_op_to_test=layers.Activation('swish'),
                                use_pad_layer=True).run_test()
         ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (8, 10), strides=5),
+                               activation_op_to_test=layers.Activation('swish'),
                                use_pad_layer=True).run_test()
         ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (10, 8), strides=6),
+                               activation_op_to_test=layers.Activation('swish'),
                                use_pad_layer=True).run_test()
 
     def test_shift_neg_activation_dense(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(3)).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(4)).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(3),
+                               activation_op_to_test=tf.nn.leaky_relu).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(4),
+                               activation_op_to_test=layers.ReLU(negative_slope=0.1)).run_test()
 
     def test_shift_neg_activation_pad_dense(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(3), use_pad_layer=True).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(4), use_pad_layer=True).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(3),
+                               activation_op_to_test=PReLU(alpha_initializer='ones'), use_pad_layer=True).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(4),
+                               activation_op_to_test=ELU(), use_pad_layer=True).run_test()
 
     def test_shift_neg_activation_depthwise(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((4, 5))).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(5, strides=3)).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((5, 4), strides=4)).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((4, 5)),
+                               activation_op_to_test=tf.nn.silu).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(5, strides=3),
+                               activation_op_to_test=tf.nn.elu).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((5, 4), strides=4),
+                               activation_op_to_test=tf.nn.leaky_relu).run_test()
 
     def test_shift_neg_activation_depthwise_pad_same(self):
         ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(depth_multiplier=1, kernel_size=(7, 8),
-                                                                              padding='same', strides=5)).run_test()
+                                                                              padding='same', strides=5),
+                               activation_op_to_test=layers.Activation('swish')).run_test()
         ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(depth_multiplier=3, kernel_size=(8, 7),
-                                                                              padding='same', strides=6)).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(kernel_size=4, padding='same')).run_test()
+                                                                              padding='same', strides=6),
+                               activation_op_to_test=layers.Activation('gelu')).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(kernel_size=4, padding='same'),
+                               activation_op_to_test=layers.Activation('selu')).run_test()
 
     def test_shift_neg_activation_pad_depthwise(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((4, 5)), use_pad_layer=True).run_test()
+        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((4, 5)),
+                               activation_op_to_test=tf.nn.gelu, use_pad_layer=True).run_test()
         ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(5, strides=3),
-                               use_pad_layer=True).run_test()
+                               activation_op_to_test=tf.nn.selu, use_pad_layer=True).run_test()
         ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((5, 4), strides=4),
-                               use_pad_layer=True).run_test()
+                               activation_op_to_test=tf.nn.swish, use_pad_layer=True).run_test()
 
     def test_activation_decomposition(self):
         ActivationDecompositionTest(self, activation_function='swish').run_test()
@@ -235,10 +261,26 @@ class FeatureNetworkTest(unittest.TestCase):
         ActivationDecompositionTest(self, activation_function='softmax').run_test()
 
     def test_mark_activation(self):
+        MarkActivationTest(self, layers.Dense, ELU()).run_test()
         MarkActivationTest(self, layers.Dense, layers.PReLU()).run_test()
         MarkActivationTest(self, layers.Conv2D, layers.ReLU()).run_test()
         MarkActivationTest(self, layers.Conv2DTranspose, layers.Activation('sigmoid')).run_test()
         MarkActivationTest(self, layers.DepthwiseConv2D, layers.Activation('softmax')).run_test()
+        tfoplambda_activations = [tf.nn.swish,
+                                  tf.nn.silu,
+                                  tf.nn.sigmoid,
+                                  tf.nn.tanh,
+                                  tf.nn.relu,
+                                  tf.nn.relu6,
+                                  tf.nn.leaky_relu,
+                                  tf.nn.gelu,
+                                  tf.nn.elu,
+                                  tf.nn.selu,
+                                  tf.nn.softplus,
+                                  tf.nn.softmax,
+                                  ]
+        for act_op in tfoplambda_activations:
+            MarkActivationTest(self, layers.Conv2D, act_op).run_test()
 
     def test_conv2d_bn_concant(self):
         Conv2DBNConcatnFoldingTest(self).run_test()

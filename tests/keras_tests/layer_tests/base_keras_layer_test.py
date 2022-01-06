@@ -64,7 +64,6 @@ class BaseKerasLayerTest(BaseLayerTest):
             networks.append(m)
         return networks
 
-
     def compare(self, quantized_model: Model, float_model: Model, input_x=None, quantization_info=None):
         # Assert things that should happen when using FLOAT quantization mode
         if self.current_mode == LayerTestMode.FLOAT:

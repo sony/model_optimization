@@ -33,6 +33,7 @@ from typing import Tuple, Any
 from model_compression_toolkit import common
 from model_compression_toolkit.common import FrameworkInfo, Graph, BaseNode
 from model_compression_toolkit.common.constants import FLOAT_32, DATA_TYPE, THRESHOLD, SIGNED
+from model_compression_toolkit.keras.constants import NEGATIVE_SLOPE
 from model_compression_toolkit.common.graph.graph_matchers import EdgeMatcher
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, \
     NodeFrameworkAttrMatcher
@@ -44,7 +45,7 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
     import \
     get_activations_qparams
 from model_compression_toolkit.keras.constants import KERNEL, BIAS, KERNEL_SIZE, PADDING, \
-    STRIDES, ACTIVATION, TRAINABLE, PAD_VALID, LAYER_NAME, SWISH, PAD_SAME, SELU
+    STRIDES, ACTIVATION, TRAINABLE, PAD_VALID, LAYER_NAME, SWISH, PAD_SAME, SELU, GELU
 
 # Tensorflow Op layer attributes:
 NODE_DEF = 'node_def'
@@ -64,10 +65,11 @@ NODE_PAD_OPERATOR = 'PadV2'
 # NodeDef padding input variables names:
 NODE_PAD_SIZE_NAME = 'padding'
 NODE_PAD_VALUE_NAME = 'constant_values'
-ALPHA = 'alpha'
 NODE_CONSTANTS_TYPE = 'type'
 NODE_CONSTANTS_DT_FLOAT = 'DT_FLOAT'
 NODE_CONSTANTS_DT_INT32 = 'DT_INT32'
+
+SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS = 16
 
 """
 This substitution aims to solve an issue of activation with negative outputs where
@@ -80,11 +82,18 @@ If the linear node pads the input tensor with zeros, we modify the padded value 
 """
 
 # Match activation nodes with negative outputs.
-SNC_NODE = (NodeOperationMatcher(Activation) & (NodeFrameworkAttrMatcher(ACTIVATION, SWISH) |
+SNC_NODE = NodeOperationMatcher(tf.nn.silu) | \
+           NodeOperationMatcher(tf.nn.swish) | \
+           NodeOperationMatcher(tf.nn.leaky_relu) | \
+           NodeOperationMatcher(tf.nn.selu) | \
+           NodeOperationMatcher(tf.nn.gelu) | \
+           NodeOperationMatcher(tf.nn.elu) | \
+           (NodeOperationMatcher(Activation) & (NodeFrameworkAttrMatcher(ACTIVATION, SWISH) |
+                                                NodeFrameworkAttrMatcher(ACTIVATION, GELU) |
                                                 NodeFrameworkAttrMatcher(ACTIVATION, SELU))) | \
            NodeOperationMatcher(PReLU) | \
            NodeOperationMatcher(ELU) | \
-           (NodeOperationMatcher(ReLU) & NodeFrameworkAttrMatcher(ALPHA, 0.0).logic_not())  # Leaky ReLU
+           (NodeOperationMatcher(ReLU) & NodeFrameworkAttrMatcher(NEGATIVE_SLOPE, 0.0).logic_not())  # Leaky ReLU
 
 # Match linear layers where we can add a correction.
 LINEAR_NODE = NodeOperationMatcher(Conv2D) | \
@@ -252,15 +261,15 @@ def op2d_bias_correction(op2d_node: common.BaseNode,
     # Each node adds a different noise due to the shifting. It depends on the
     # dimensions of the kernel, thus the correction term is a function of
     # the layer type.
-    if op2d_node.layer_class == Conv2D:
+    if op2d_node.type == Conv2D:
         bias_correction = shift_to_correct * np.sum(kernel, axis=(0, 1, 2))
         op2d_node.set_weights_by_keys(BIAS, bias - bias_correction)
 
-    elif op2d_node.layer_class == Dense:
+    elif op2d_node.type == Dense:
         bias_correction = shift_to_correct * np.sum(kernel, axis=(0))
         op2d_node.set_weights_by_keys(BIAS, bias - bias_correction)
 
-    elif op2d_node.layer_class == DepthwiseConv2D:
+    elif op2d_node.type == DepthwiseConv2D:
         bias_correction = shift_to_correct * np.sum(kernel, axis=(0, 1))
         op2d_node.set_weights_by_keys(BIAS, bias - bias_correction.flatten())
 
@@ -444,7 +453,7 @@ def shift_negative_function(graph: Graph,
     nl_stats_collector = graph.get_out_stats_collector(non_linear_node)
 
     # The non-linear node's output should be float, so we approximate it by using 16bits quantization.
-    non_linear_node.activation_quantization_cfg.activation_n_bits = 16
+    non_linear_node.activation_quantization_cfg.activation_n_bits = SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 
     add_node_stats_collector = copy.copy(nl_stats_collector)
     graph.set_out_stats_collector_to_node(add_node, add_node_stats_collector)

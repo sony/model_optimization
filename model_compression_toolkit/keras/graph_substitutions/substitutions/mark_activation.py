@@ -15,6 +15,7 @@
 
 
 from tensorflow.keras.layers import DepthwiseConv2D, Conv2D, Conv2DTranspose, Dense, ReLU, Add, Activation, PReLU, ELU
+import tensorflow as tf
 from typing import Tuple
 
 from model_compression_toolkit import common
@@ -46,7 +47,20 @@ class MarkActivation(common.BaseSubstitution):
 
         activation_node = NodeOperationMatcher(ReLU) | \
                           NodeOperationMatcher(Activation) | \
-                          NodeOperationMatcher(PReLU)
+                          NodeOperationMatcher(PReLU) | \
+                          NodeOperationMatcher(ELU) | \
+                          NodeOperationMatcher(tf.nn.silu) | \
+                          NodeOperationMatcher(tf.nn.swish) | \
+                          NodeOperationMatcher(tf.nn.sigmoid) | \
+                          NodeOperationMatcher(tf.nn.tanh) | \
+                          NodeOperationMatcher(tf.nn.relu) | \
+                          NodeOperationMatcher(tf.nn.relu6) | \
+                          NodeOperationMatcher(tf.nn.leaky_relu) | \
+                          NodeOperationMatcher(tf.nn.gelu) | \
+                          NodeOperationMatcher(tf.nn.elu) | \
+                          NodeOperationMatcher(tf.nn.selu) | \
+                          NodeOperationMatcher(tf.nn.softplus) | \
+                          NodeOperationMatcher(tf.nn.softmax)
 
         source_node_add = NodeOperationMatcher(Add)
 

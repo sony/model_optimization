@@ -39,7 +39,7 @@ class NodeTypeFilter(BaseNodeMatcher):
         Returns:
             True if the node if of the type that was passed during the initialization of NodeTypeFilter.
         """
-        if input_object.layer_class == self.node_type:
+        if input_object.type == self.node_type:
             return True
 
 

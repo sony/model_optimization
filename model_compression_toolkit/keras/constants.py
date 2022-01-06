@@ -23,6 +23,7 @@ TANH = 'tanh'
 SWISH = 'swish'
 RELU = 'relu'
 SELU = 'selu'
+GELU = 'gelu'
 
 # Layers attributes constants:
 PADDING = 'padding'

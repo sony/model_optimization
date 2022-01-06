@@ -14,7 +14,8 @@
 # ==============================================================================
 
 
-from keras.layers import Conv2D, Activation
+from keras.layers import Activation
+from tensorflow import nn
 
 from tests.keras_tests.layer_tests.base_keras_layer_test import BaseKerasLayerTest
 
@@ -29,4 +30,17 @@ class ActivationTest(BaseKerasLayerTest):
                 Activation('linear'),
                 Activation('tanh'),
                 Activation('relu'),
-                Activation('swish')]
+                Activation('swish'),
+                nn.swish,
+                nn.silu,
+                nn.sigmoid,
+                nn.tanh,
+                nn.relu,
+                nn.relu6,
+                nn.leaky_relu,
+                nn.gelu,
+                nn.elu,
+                nn.selu,
+                nn.softplus,
+                nn.softmax,
+                ]

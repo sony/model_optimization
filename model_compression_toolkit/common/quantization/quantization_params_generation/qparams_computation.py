@@ -58,7 +58,7 @@ def calculate_quantization_params(graph: Graph,
         if fw_info.in_kernel_ops(n):  # If the node has a kernel to quantize
             if n.is_weights_quantization_enabled():
                 for candidtae_qc in n.candidates_weights_quantization_cfg:
-                    output_channels_axis, _ = get_channels_axis(candidtae_qc, fw_info, n.layer_class)
+                    output_channels_axis, _ = get_channels_axis(candidtae_qc, fw_info, n.type)
                     weights_params = get_weights_qparams(n.get_weights_by_keys(fw_impl.constants.KERNEL),
                                                          candidtae_qc,
                                                          output_channels_axis)
@@ -79,7 +79,7 @@ def calculate_quantization_params(graph: Graph,
 
         # If layer type is not in framework info, log a warning.
         else:
-            Logger.warning(f"Warning: unknown layer: {n.layer_class.__name__}")
+            Logger.warning(f"Warning: unknown layer: {n.type.__name__}")
 
         # Create a NodeQuantizationConfig containing all quantization params and attach it to the node
         if n.is_activation_quantization_enabled():

@@ -80,7 +80,7 @@ def scale_reshaping(scale: np.ndarray,
 
     op_ndims = op2d.get_weights_by_keys(KERNEL).ndim
     reshape_target = np.ones(op_ndims, dtype=np.int)
-    reshape_target[kernel_channel_mapping.get(op2d.layer_class)[int(in_channels)]] = -1
+    reshape_target[kernel_channel_mapping.get(op2d.type)[int(in_channels)]] = -1
     return np.reshape(scale, reshape_target)
 
 
@@ -162,7 +162,7 @@ def calculate_scale_correction(graph: Graph,
     graph.scale_stats_collector(activation_node, scale_factor)
 
     # scale relu bound so f(ax)==af(x)
-    if activation_node.layer_class == ReLU and \
+    if activation_node.type == ReLU and \
             activation_node.framework_attr.get(RELU_MAX_VALUE) is not None:
         activation_node.framework_attr[RELU_MAX_VALUE] = threshold
 

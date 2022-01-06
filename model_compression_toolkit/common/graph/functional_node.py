@@ -3,6 +3,7 @@ from typing import Dict, Any, Tuple, List
 from model_compression_toolkit.common.graph.base_node import BaseNode
 import numpy as np
 
+
 class FunctionalNode(BaseNode):
     """
     Node that represents function ops with arguments to pass when building back the model.
@@ -57,3 +58,10 @@ class FunctionalNode(BaseNode):
         self.functional_op = functional_op
         self.inputs_as_list = inputs_as_list
 
+    @property
+    def type(self):
+        """
+        A function to get the node's function op for convenient comparison (instead of the layer_class)
+        :return: the node's functional_op
+        """
+        return self.functional_op

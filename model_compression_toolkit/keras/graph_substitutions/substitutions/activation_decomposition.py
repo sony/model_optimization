@@ -77,8 +77,6 @@ class ActivationDecomposition(common.BaseSubstitution):
                                                 {},
                                                 Activation)
 
-
-
         graph.add_node(activation_node)
         graph.reconnect_out_edges(current_node=op2d_node,
                                   new_node=activation_node)
