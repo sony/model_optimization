@@ -30,6 +30,7 @@ from tests.keras_tests.layer_tests.layers.resize_test import ResizeTest
 from tests.keras_tests.layer_tests.layers.split_test import SplitTest
 
 
+
 class LayerTest(unittest.TestCase):
     LAYERS2RUN = [ActivationTest, ConcatTest, Conv2DTest, CropAndResizeTest, DenseTest, MathAddTest, MathMulTest,
                   ReLUTest,
