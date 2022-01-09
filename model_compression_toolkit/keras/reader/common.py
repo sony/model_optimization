@@ -42,11 +42,12 @@ def is_node_an_input_layer(node: BaseNode) -> bool:
         Whether the node represents an input layer or not.
     """
     if isinstance(node, BaseNode):
-        return node.layer_class == InputLayer
+        return node.type == InputLayer
     elif isinstance(node, KerasNode):
         return isinstance(node.layer, InputLayer)
     else:
         raise Exception('Node to check has to be either a graph node or a keras node')
+
 
 def is_node_a_model(node: BaseNode) -> bool:
     """
@@ -58,7 +59,7 @@ def is_node_a_model(node: BaseNode) -> bool:
         Whether the node represents a Keras model or not.
     """
     if isinstance(node, BaseNode):
-        return node.layer_class in [Functional, Sequential]
+        return node.type in [Functional, Sequential]
     elif isinstance(node, KerasNode):
         return isinstance(node.layer, Functional) or isinstance(node.layer, Sequential)
     else:

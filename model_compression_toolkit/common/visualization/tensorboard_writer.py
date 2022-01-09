@@ -265,8 +265,8 @@ class TensorboardWriter(object):
             node_properties = get_node_properties(__get_node_attr(n), __get_node_output_dims(n))
             node_def = NodeDef(attr=node_properties)
             node_def.name = n.name
-            node_def.device = n.layer_class.__name__  # For coloring different ops differently
-            node_def.op = n.layer_class.__name__
+            node_def.device = n.type.__name__  # For coloring different ops differently
+            node_def.op = n.type.__name__
             for e in graph.incoming_edges(n):  # Connect node to its incoming nodes
                 i_tensor = f'{e.source_node.name}:{e.source_index}'
                 node_def.input.append(i_tensor)

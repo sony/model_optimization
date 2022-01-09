@@ -97,14 +97,14 @@ class BatchNormalizationFolding(common.BaseSubstitution):
         bias = beta + (bias - moving_mean) * weights_scale
 
         # Update Kernel
-        if conv_node.layer_class == DepthwiseConv2D:
+        if conv_node.type == DepthwiseConv2D:
             kernel = kernel * weights_scale.reshape(1, 1, kernel.shape[-2], kernel.shape[-1])
-        elif conv_node.layer_class == Conv2DTranspose:
+        elif conv_node.type == Conv2DTranspose:
             kernel = kernel * weights_scale.reshape(1, 1, -1, 1)
         else:
             kernel = kernel * weights_scale.reshape(1, 1, 1, -1)
 
-        if conv_node.layer_class == DepthwiseConv2D:
+        if conv_node.type == DepthwiseConv2D:
             kernel_name = DEPTHWISE_KERNEL
         else:
             kernel_name = KERNEL

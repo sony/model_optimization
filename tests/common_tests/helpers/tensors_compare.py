@@ -43,8 +43,10 @@ def norm_similarity(a, b):
     return tensor_norm(a) / tensor_norm(b)
 
 
-def normalized_mse(a, b, norm_factor):
-    lsb_error = (np.abs(a - b) / norm_factor)
+def normalized_mse(a, b, norm_factor=None):
+    if norm_factor is None:
+        norm_factor = np.square(np.abs(a)).mean()
+    lsb_error = (np.abs(a - b)**2 / norm_factor)
     return np.mean(lsb_error), np.std(lsb_error), np.max(lsb_error), np.min(lsb_error)
 
 

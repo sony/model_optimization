@@ -49,7 +49,7 @@ class NodeOperationMatcher(node_matcher.BaseNodeMatcher):
             return nothing.
         """
 
-        if input_node_object.layer_class == self.operation:
+        if input_node_object.type == self.operation:
             return True
 
 

@@ -64,6 +64,14 @@ class BaseNode:
         self.candidates_weights_quantization_cfg = None
         self.prior_info = None
 
+    @property
+    def type(self):
+        """
+        A function to get the node's layer_class op for convenient comparison
+        :return: the node's layer_class
+        """
+        return self.layer_class
+
     def is_activation_quantization_enabled(self) -> bool:
         """
 
@@ -88,7 +96,7 @@ class BaseNode:
         Returns: String that represents the node.
 
         """
-        return f'{self.layer_class.__name__}:{self.name}'
+        return f'{self.type.__name__}:{self.name}'
 
     def get_weights_by_keys(self, name: str) -> np.ndarray:
         """

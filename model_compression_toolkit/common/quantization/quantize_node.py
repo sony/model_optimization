@@ -52,7 +52,7 @@ def get_quantized_kernel_by_weights_qc(fw_info:FrameworkInfo,
             'does not contain one')
     output_channels_axis, input_channels_axis = get_channels_axis(weights_qc,
                                                                   fw_info,
-                                                                  n.layer_class)
+                                                                  n.type)
 
     Logger.debug(f'quantizing {n.name} with {weights_qc.weights_n_bits} bits')
     quantized_kernel = weights_qc.weights_quantization_fn(n.get_weights_by_keys(fw_impl.constants.KERNEL),
