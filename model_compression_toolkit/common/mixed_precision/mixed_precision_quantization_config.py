@@ -37,8 +37,8 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
 
         Args:
             qc (QuantizationConfig): QuantizationConfig object containing parameters of how the model should be quantized.
-            weights_n_bits (int): List of possible number of bits to quantize the coefficients.
-            compute_distance_fn (Callable): Function to compute a distance between two tensors
+            weights_n_bits (List[int]): List of possible number of bits to quantize the coefficients.
+            compute_distance_fn (Callable): Function to compute a distance between two tensors.
             distance_weighting_method (Callable): Function to use when weighting the distances among different layers when computing the sensitivity metric.
             num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
 

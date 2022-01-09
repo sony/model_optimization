@@ -11,3 +11,13 @@ FrameworkInfo Class
 
 .. autoclass:: model_compression_toolkit.FrameworkInfo
 
+
+|
+
+
+ChannelAxis
+==========================
+**Enum to select the output channels format in the model:**
+
+.. autoclass:: model_compression_toolkit.ChannelAxis
+

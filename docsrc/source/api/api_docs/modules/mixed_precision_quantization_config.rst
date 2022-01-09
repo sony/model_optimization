@@ -7,18 +7,10 @@
 mixed_precision_quantization_config Module
 ===========================================
 
-MixedPrecisionMetricsWeighting
-================================
-**Enum to select a method for quantization threshold selection:**
-
-.. autoclass:: model_compression_toolkit.MixedPrecisionMetricsWeighting
-
-
-|
 
 KPI
 ================================
-**Enum to select a method for quantization threshold selection:**
+**Object to configure resources to use when searching for a mixed-precision configuration for a model:**
 
 .. autoclass:: model_compression_toolkit.KPI
 
@@ -28,7 +20,7 @@ KPI
 
 MixedPrecisionQuantizationConfig
 =================================
-**Class to configure the quantization process of the model:**
+**Class to configure the quantization process of the model when quantizing in mixed-precision:**
 
 .. autoclass:: model_compression_toolkit.MixedPrecisionQuantizationConfig
 

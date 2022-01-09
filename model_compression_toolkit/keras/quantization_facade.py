@@ -118,10 +118,10 @@ if importlib.util.find_spec("tensorflow") is not None\
          for each layer. The model is then quantized (both coefficients and activations by default).
          In order to limit the maximal model's size, a target KPI can be passed after weights_memory
          is set (in bytes).
-         For now, mixed precision is supported for weights only.
          If a gptq configuration is passed, the quantized weights are optimized using gradient based post
          training quantization by comparing points between the float and quantized models, and minimizing the observed loss.
          Notice that this feature is experimental.
+         **For now, mixed precision is supported for weights only.**
 
          Args:
              in_model (Model): Keras model to quantize.

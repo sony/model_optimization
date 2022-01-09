@@ -25,9 +25,13 @@ from model_compression_toolkit.common.graph.base_node import BaseNode
 
 class ChannelAxis(Enum):
     """
-    Index of output channel axis:
-    NHWC - Channels index is last.
-    NCHW - Channels index is 1.
+
+    Index of output channels axis:
+
+    NHWC - Output channels index is last.
+
+    NCHW - Output channels index is 1.
+
     """
     NHWC = -1
     NCHW = 1
