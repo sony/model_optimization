@@ -96,9 +96,6 @@ Tensorboard Visualization (Experimental):
 
     * CS Analyizer: compare a model compressed with the orignal model to analyze large accuracy drops.
     * Activation statisicis and errors
-     
-
-Note that currently we only have full support for Keras layers. Using the TensorFlow native layers may lead to unexpected behavior. This limitation will be removed in future releases. 
 
 MCT is tested with Tensorflow Version 2.7. 
 
