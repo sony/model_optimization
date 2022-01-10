@@ -31,4 +31,4 @@ from model_compression_toolkit.keras.quantization_facade import keras_post_train
     keras_post_training_quantization_mixed_precision
 
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
