@@ -48,13 +48,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <blockquote>
-<div><dl class="field-list simple">
-<dt class="field-odd">orphan</dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
-</div></blockquote>
-<section id="mct-quickstart-guideline">
+  <section id="mct-quickstart-guideline">
 <span id="ug-quickstart-keras"></span><h1>MCT Quickstart Guideline<a class="headerlink" href="#mct-quickstart-guideline" title="Permalink to this headline">¶</a></h1>
 <p>Here is an example of a code that shows how to use MCT with Keras models.</p>
 <p>Import MCT and MobileNetV1 from Keras applications:</p>
@@ -108,20 +102,27 @@
                                           <span class="n">preprocessing</span><span class="o">=</span><span class="p">[</span><span class="n">resize</span><span class="p">,</span> <span class="n">normalization</span><span class="p">],</span>
                                           <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
 
-    <span class="c1"># The representative data generator to pass to MCT.</span>
+    <span class="c1"># Create a Callable representative dataset for calibration purposes.</span>
+    <span class="c1"># The function should be called without any arguments, and should return a list numpy arrays (array for each</span>
+    <span class="c1"># model&#39;s input).</span>
+    <span class="c1"># For example: if the model has two input tensors - one with input shape of 32X32X3 and the second with input</span>
+    <span class="c1"># shape of 224X224X3, and we calibrate the model using batches of 20 images,</span>
+    <span class="c1"># calling representative_data_gen() should return a list</span>
+    <span class="c1"># of two numpy.ndarray objects where the arrays&#39; shapes are [(20, 32, 32, 3), (20, 224, 224, 3)].</span>
     <span class="k">def</span> <span class="nf">representative_data_gen</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">image_data_loader</span><span class="o">.</span><span class="n">sample</span><span class="p">()]</span>
 </pre></div>
 </div>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
 <p>Run Post Training Quantization:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-    <span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
     <span class="c1"># Set the number of calibration iterations to 10.</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">MobileNet</span><span class="p">()</span>
     <span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">keras_post_training_quantization</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
                                                                               <span class="n">representative_data_gen</span><span class="p">,</span>
+                                                                              <span class="n">n_iter</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -171,7 +172,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

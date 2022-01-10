@@ -47,7 +47,7 @@
 <h2>EditRule<a class="headerlink" href="#editrule" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.network_editor.EditRule">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">EditRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.EditRule" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">EditRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.EditRule" title="Permalink to this definition">¶</a></dt>
 <dd><p>A tuple of a node filter and an action. The filter matches nodes in the graph which represents the model,
 and the action is applied on these nodes during the quantization process.</p>
 <p class="rubric">Examples</p>
@@ -55,7 +55,7 @@ and the action is applied on these nodes during the quantization process.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">tensorflow.keras.layers</span> <span class="kn">import</span> <span class="n">Conv2D</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">er_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">EditRule</span><span class="p">(</span><span class="nb">filter</span><span class="o">=</span><span class="n">mct</span><span class="o">.</span><span class="n">network_editor</span><span class="o">.</span><span class="n">NodeTypeFilter</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">),</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">action</span><span class="o">=</span><span class="n">mct</span><span class="o">.</span><span class="n">network_editor</span><span class="o">.</span><span class="n">ChangeWeightsQuantConfigAttr</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">9</span><span class="p">))]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">action</span><span class="o">=</span><span class="n">mct</span><span class="o">.</span><span class="n">network_editor</span><span class="o">.</span><span class="n">ChangeCandidatesWeightsQuantConfigAttr</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">9</span><span class="p">))]</span>
 </pre></div>
 </div>
 <p>Then the rules list can be passed to <a class="reference internal" href="../methods/keras_post_training_quantization.html#model_compression_toolkit.keras_post_training_quantization" title="model_compression_toolkit.keras_post_training_quantization"><code class="xref py py-func docutils literal notranslate"><span class="pre">keras_post_training_quantization()</span></code></a>
@@ -68,7 +68,7 @@ to modify the network during the quantization process.</p>
 <h2>Filters<a class="headerlink" href="#filters" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.network_editor.NodeTypeFilter">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">NodeTypeFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.NodeTypeFilter" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">NodeTypeFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.NodeTypeFilter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class NodeNameFilter to check if a node is of a specific type.</p>
 <p>Init a NodeTypeFilter object.</p>
 <dl class="field-list simple">
@@ -83,7 +83,7 @@ to modify the network during the quantization process.</p>
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.network_editor.NodeNameFilter">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">NodeNameFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.NodeNameFilter" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">NodeNameFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.NodeNameFilter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class NodeNameFilter to check if a node’s name has a specific value.</p>
 <p>Init a NodeNameFilter object.</p>
 <dl class="field-list simple">
@@ -98,7 +98,7 @@ to modify the network during the quantization process.</p>
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.network_editor.NodeNameScopeFilter">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">NodeNameScopeFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_name_scope</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.NodeNameScopeFilter" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">NodeNameScopeFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_name_scope</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.NodeNameScopeFilter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class NodeNameFilter to check if a string is in a node’s name.</p>
 <p>Init a NodeNameScopeFilter object.</p>
 <dl class="field-list simple">
@@ -112,10 +112,10 @@ to modify the network during the quantization process.</p>
 <section id="actions">
 <h2>Actions<a class="headerlink" href="#actions" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="model_compression_toolkit.network_editor.ChangeWeightsQuantConfigAttr">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">ChangeWeightsQuantConfigAttr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.ChangeWeightsQuantConfigAttr" title="Permalink to this definition">¶</a></dt>
-<dd><p>Class ChangeQuantConfigAttr to change attributes in a node’s weights quantization configuration.</p>
-<p>Init a ChangeWeightsQuantConfigAttr object.</p>
+<dt class="sig sig-object py" id="model_compression_toolkit.network_editor.ChangeCandidatesWeightsQuantConfigAttr">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">ChangeCandidatesWeightsQuantConfigAttr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.ChangeCandidatesWeightsQuantConfigAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class ChangeCandidatesWeightsQuantConfigAttr to change attributes in a node’s weights quantization configuration.</p>
+<p>Init a ChangeCandidatesWeightsQuantConfigAttr object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>kwargs</strong> – dict of attr_name and attr_value to change in the node’s weights quantization configuration.</p>
@@ -128,12 +128,75 @@ to modify the network during the quantization process.</p>
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.network_editor.ChangeActivationQuantConfigAttr">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">ChangeActivationQuantConfigAttr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.ChangeActivationQuantConfigAttr" title="Permalink to this definition">¶</a></dt>
-<dd><p>Class ChangeQuantConfigAttr to change attributes in a node’s activation quantization configuration.</p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">ChangeActivationQuantConfigAttr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.ChangeActivationQuantConfigAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class ChangeActivationQuantConfigAttr to change attributes in a node’s activation quantization configuration.</p>
 <p>Init a ChangeActivationQuantConfigAttr object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>kwargs</strong> – dict of attr_name and attr_value to change in the node’s activation quantization configuration.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.network_editor.ChangeQuantizationParamFunction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">ChangeQuantizationParamFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">activation_quantization_params_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_quantization_params_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.ChangeQuantizationParamFunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class ChangeQuantizationParamFunction to change a node’s weights/activations quantization params function.</p>
+<p>Init a ChangeQuantizationParamFunction object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>activation_quantization_params_fn</strong> – a params function for a node’s activations.</p></li>
+<li><p><strong>weights_quantization_params_fn</strong> – a params function for a node’s weights.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.network_editor.ChangeActivationQuantizationMethod">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">ChangeActivationQuantizationMethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">activation_quantization_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.ChangeActivationQuantizationMethod" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class ChangeQuantizationMethod to change a node’s activations quantizer function.</p>
+<p>Init a ChangeActivationQuantizationMethod object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>activation_quantization_method</strong> – a quantization method for a node’s activations.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.network_editor.ChangeFinalWeightsQuantizationMethod">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">ChangeFinalWeightsQuantizationMethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights_quantization_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.ChangeFinalWeightsQuantizationMethod" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class ChangeFinalWeightsQuantizationMethod to change a node’s weights/activations quantizer function.</p>
+<p>Init a ChangeFinalWeightsQuantizationMethod object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>weights_quantization_method</strong> – a quantization method for a node’s weights.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.network_editor.ChangeCandidtaesWeightsQuantizationMethod">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.network_editor.</span></span><span class="sig-name descname"><span class="pre">ChangeCandidtaesWeightsQuantizationMethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights_quantization_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.network_editor.ChangeCandidtaesWeightsQuantizationMethod" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class ChangeCandidtaesWeightsQuantizationMethod to change a node’s weights quantizer function.</p>
+<p>Init a ChangeCandidtaesWeightsQuantizationMethod object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>weights_quantization_method</strong> – a quantization method for a node’s weights.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -184,7 +247,7 @@ to modify the network during the quantization process.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

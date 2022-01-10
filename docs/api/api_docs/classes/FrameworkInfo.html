@@ -45,7 +45,7 @@
 <p><strong>The following API can be used to pass MCT framework-related information to use when optimizing the network</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.FrameworkInfo">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">FrameworkInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_ops</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_ops</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_quantization_ops</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_quantizer_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_quantizer_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_channels_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_min_max_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_min_max_mapping</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.FrameworkInfo" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">FrameworkInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_ops</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_ops</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_quantization_ops</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_quantizer_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_quantizer_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_channels_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_min_max_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_min_max_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_ops_attributes_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_channel_index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.FrameworkInfo" title="Permalink to this definition">¶</a></dt>
 <dd><p>A class to wrap all information about a specific framework the library needs to quantize a model.
 Specifically, FrameworkInfo holds lists of layers by how they should be quantized, and multiple mappings such as
 layer to it kernel channels indices, and a layer to its min/max values, etc.
@@ -59,11 +59,13 @@ no_quantization_ops:Layers that should not get quantized (e.g., Reshape, Transpo
 <li><p><strong>kernel_ops</strong> (<em>list</em>) – A list of operators that are in the kernel_ops group.</p></li>
 <li><p><strong>activation_ops</strong> (<em>list</em>) – A list of operators that are in the activation_ops group.</p></li>
 <li><p><strong>no_quantization_ops</strong> (<em>list</em>) – A list of operators that are in the no_quantization_ops group.</p></li>
-<li><p><strong>activation_quantizer_mapping</strong> (<em>Dict</em><em>[</em><em>QuantizationMethod</em><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
-<li><p><strong>weights_quantizer_mapping</strong> (<em>Dict</em><em>[</em><em>QuantizationMethod</em><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
+<li><p><strong>activation_quantizer_mapping</strong> (<em>Dict</em><em>[</em><a class="reference internal" href="../modules/quantization_config.html#model_compression_toolkit.QuantizationMethod" title="model_compression_toolkit.QuantizationMethod"><em>QuantizationMethod</em></a><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
+<li><p><strong>weights_quantizer_mapping</strong> (<em>Dict</em><em>[</em><a class="reference internal" href="../modules/quantization_config.html#model_compression_toolkit.QuantizationMethod" title="model_compression_toolkit.QuantizationMethod"><em>QuantizationMethod</em></a><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
 <li><p><strong>kernel_channels_mapping</strong> (<a class="reference internal" href="DefaultDict.html#model_compression_toolkit.DefaultDict" title="model_compression_toolkit.DefaultDict"><em>DefaultDict</em></a>) – Dictionary from a layer to a tuple of its kernel in/out channels indices.</p></li>
 <li><p><strong>activation_min_max_mapping</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>]</em>) – Dictionary from an activation function to its min/max output values.</p></li>
 <li><p><strong>layer_min_max_mapping</strong> (<em>Dict</em><em>[</em><em>Any</em><em>, </em><em>tuple</em><em>]</em>) – Dictionary from a layer to its min/max output values.</p></li>
+<li><p><strong>kernel_ops_attributes_mapping</strong> (<a class="reference internal" href="DefaultDict.html#model_compression_toolkit.DefaultDict" title="model_compression_toolkit.DefaultDict"><em>DefaultDict</em></a>) – Dictionary from a framework operator to a list of its weights attirbutes to quantize.</p></li>
+<li><p><strong>output_channel_index</strong> (<a class="reference internal" href="#model_compression_toolkit.ChannelAxis" title="model_compression_toolkit.ChannelAxis"><em>ChannelAxis</em></a>) – Index of output channels of the model’s layers (for computing statistics per-channel).</p></li>
 </ul>
 </dd>
 </dl>
@@ -102,6 +104,21 @@ set, and we know it’s kernel out/in channel indices are (3, 2) respectivly:</p
 </div>
 </dd></dl>
 
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<section id="channelaxis">
+<h2>ChannelAxis<a class="headerlink" href="#channelaxis" title="Permalink to this headline">¶</a></h2>
+<p><strong>Enum to select the output channels format in the model:</strong></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.ChannelAxis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">ChannelAxis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.ChannelAxis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Index of output channels axis:</p>
+<p>NHWC - Output channels index is last.</p>
+<p>NCHW - Output channels index is 1.</p>
+</dd></dl>
+
+</section>
 </section>
 
 
@@ -111,6 +128,14 @@ set, and we know it’s kernel out/in channel indices are (3, 2) respectivly:</p
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="../../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">FrameworkInfo Class</a><ul>
+<li><a class="reference internal" href="#channelaxis">ChannelAxis</a></li>
+</ul>
+</li>
+</ul>
+
 <div id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
@@ -137,7 +162,7 @@ set, and we know it’s kernel out/in channel indices are (3, 2) respectivly:</p
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>
