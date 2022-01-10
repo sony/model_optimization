@@ -19,11 +19,12 @@ sys.path.insert(0, os.path.abspath('../../'))
 # -- Project information -----------------------------------------------------
 
 project = 'MCT'
-copyright = '2021, Sony Semiconductors Israel'
+copyright = '2022, Sony Semiconductors Israel'
 author = 'Sony Semiconductors Israel'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
+import model_compression_toolkit as mct
+release = mct.__version__
 
 
 # Add any Sphinx extension module names here, as strings. They can be
