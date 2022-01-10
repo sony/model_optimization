@@ -61,11 +61,11 @@ This project enables researchers, developers and engineers an easily way to opti
 <span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
 </pre></div>
 </div>
-<p>From PyPi:</p>
+<p>From PyPi - latest stable release:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">model</span><span class="o">-</span><span class="n">compression</span><span class="o">-</span><span class="n">toolkit</span>
 </pre></div>
 </div>
-<p>A nightly version is also available:</p>
+<p>A nightly version is also available (unstable):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">mct</span><span class="o">-</span><span class="n">nightly</span>
 </pre></div>
 </div>
@@ -74,8 +74,9 @@ This project enables researchers, developers and engineers an easily way to opti
 <h2>Supported Features<a class="headerlink" href="#supported-features" title="Permalink to this headline">¶</a></h2>
 <p>Quantization:</p>
 <ul class="simple">
-<li><p>Hardware-friendly Post Training Quantization [1]</p></li>
-<li><p>Gradient base post training using knowledge distillation (Experimental)</p></li>
+<li><p><a class="reference internal" href="api/api_docs/methods/keras_post_training_quantization.html#ug-keras-post-training-quantization"><span class="std std-ref">Hardware-friendly Post Training Quantization</span></a> [1]</p></li>
+<li><p><a class="reference internal" href="api/api_docs/classes/GradientPTQConfig.html#ug-gradientptqconfig"><span class="std std-ref">Gradient base post training using knowledge distillation</span></a> (Experimental)</p></li>
+<li><p><a class="reference internal" href="api/api_docs/methods/keras_post_training_quantization_mixed_precision.html#ug-keras-post-training-quantization-mixed-precision"><span class="std std-ref">Mixed-precision post training quantization</span></a> (Experimental)</p></li>
 </ul>
 <p>Visualization:</p>
 <div class="toctree-wrapper compound">
@@ -161,7 +162,7 @@ This project enables researchers, developers and engineers an easily way to opti
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>

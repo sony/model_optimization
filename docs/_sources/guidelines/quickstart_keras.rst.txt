@@ -1,4 +1,4 @@
- :orphan:
+:orphan:
 
 .. _ug-quickstart-keras:
 
@@ -29,7 +29,7 @@ Initialize data loader:
 
 .. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
-    :lines: 53-68
+    :lines: 53-75
 
 |
 
@@ -37,5 +37,5 @@ Run Post Training Quantization:
 
 .. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
-    :lines: 70-75
+    :lines: 77-82
 

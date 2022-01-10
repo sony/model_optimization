@@ -50,23 +50,25 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
 </pre></div>
 </div>
-<section id="methods">
-<h2>Methods<a class="headerlink" href="#methods" title="Permalink to this headline">¶</a></h2>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="methods/keras_post_training_quantization.html#ug-keras-post-training-quantization"><span class="std std-ref">keras_post_training_quantization</span></a>: Method to use for post training quantization of Keras models.</p></li>
+<li><p><a class="reference internal" href="methods/keras_post_training_quantization.html#ug-keras-post-training-quantization"><span class="std std-ref">keras_post_training_quantization</span></a>: Function to use for post training quantization of Keras models.</p></li>
+<li><p><a class="reference internal" href="methods/keras_post_training_quantization_mixed_precision.html#ug-keras-post-training-quantization-mixed-precision"><span class="std std-ref">keras_post_training_quantization_mixed_precision</span></a>: Function to use for mixed-precision post training quantization of Keras models (experimental).</p></li>
 </ul>
 </section>
 <section id="modules">
 <h2>Modules<a class="headerlink" href="#modules" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="modules/quantization_config.html#ug-quantization-config"><span class="std std-ref">quantization_config</span></a>: Module to configure the quantization process.</p></li>
+<li><p><a class="reference internal" href="modules/mixed_precision_quantization_config.html#ug-mixed-precision-quantization-config"><span class="std std-ref">mixed_precision_quantization_config</span></a>: Module to configure the quantization process when using mixed-precision PTQ.</p></li>
 <li><p><a class="reference internal" href="modules/network_editor.html#ug-network-editor"><span class="std std-ref">network_editor</span></a>: Module to edit your model during the quantization process.</p></li>
 </ul>
 </section>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="classes/KnowledgeDistillationConfig.html#ug-knowledgedistillationconfig"><span class="std std-ref">KnowledgeDistillationConfig</span></a>: Class to configure KnowledgeDistillation options for post training quantization.</p></li>
+<li><p><a class="reference internal" href="classes/GradientPTQConfig.html#ug-gradientptqconfig"><span class="std std-ref">GradientPTQConfig</span></a>: Class to configure GradientPTQC options for gradient based post training quantization.</p></li>
 <li><p><a class="reference internal" href="classes/FolderImageLoader.html#ug-folderimageloader"><span class="std std-ref">FolderImageLoader</span></a>: Class to use an images directory as a representative dataset.</p></li>
 <li><p><a class="reference internal" href="classes/FrameworkInfo.html#ug-frameworkinfo"><span class="std std-ref">FrameworkInfo</span></a>: Class to wrap framework information to be used by MCT when optimizing models.</p></li>
 </ul>
@@ -95,7 +97,7 @@
   <h3><a href="../../index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">API Docs</a><ul>
-<li><a class="reference internal" href="#methods">Methods</a></li>
+<li><a class="reference internal" href="#functions">Functions</a></li>
 <li><a class="reference internal" href="#modules">Modules</a></li>
 <li><a class="reference internal" href="#classes">Classes</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
@@ -135,7 +137,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
     </div>
   </body>
 </html>
