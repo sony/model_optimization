@@ -21,4 +21,6 @@ jobs:
           pip install tensorflow==2.6.*
           pip install tensorflow_model_optimization
       - name: Run unittests
-        run: python -m unittest tests/test_suite.py -v
+        run: |
+          export PYTHONPATH=$PYTHONPATH:"tests"
+          python tests/test_suite.py -v

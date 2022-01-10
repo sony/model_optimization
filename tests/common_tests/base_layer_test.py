@@ -1,6 +1,7 @@
 import copy
 from enum import Enum
-from typing import List
+from typing import List, Any
+import numpy as np
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, DEFAULTCONFIG
 from tests.common_tests.base_test import BaseTest
@@ -14,12 +15,14 @@ class LayerTestMode(Enum):
 class BaseLayerTest(BaseTest):
     def __init__(self,
                  unit_test,
+                 layers,
                  val_batch_size=1,
                  num_calibration_iter=1,
                  num_of_inputs=1,
                  input_shape=(8, 8, 3),
                  quantization_modes: List[LayerTestMode] = [LayerTestMode.QUANTIZED_8_BITS, LayerTestMode.FLOAT],
-                 is_inputs_a_list=False):
+                 is_inputs_a_list=False,
+                 use_cpu=False):
 
         super().__init__(unit_test,
                          val_batch_size=val_batch_size,
@@ -27,13 +30,19 @@ class BaseLayerTest(BaseTest):
                          num_of_inputs=num_of_inputs,
                          input_shape=input_shape)
 
+        self.use_cpu = use_cpu
         self.is_inputs_a_list = is_inputs_a_list
         assert isinstance(quantization_modes, list) and len(quantization_modes) > 0
         self.quantization_modes = quantization_modes
         self.current_mode = None
+        assert isinstance(layers, list) and len(layers) > 0, f'Layers list can not be empty'
+        self.layers = layers
+
+    def predict(self, model: Any, input: List[np.ndarray]):
+        raise Exception(f'Predict should be implemented in framework layer test.')
 
     def get_layers(self):
-        raise Exception('Implement it')
+        return self.layers
 
     def get_quantization_config(self):
         qc = copy.deepcopy(DEFAULTCONFIG)
@@ -71,3 +80,4 @@ class BaseLayerTest(BaseTest):
 
                 self.compare(ptq_model, model_float, input_x=self.representative_data_gen(),
                              quantization_info=quantization_info)
+
