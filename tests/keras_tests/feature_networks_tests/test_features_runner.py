@@ -359,13 +359,29 @@ class FeatureNetworkTest(unittest.TestCase):
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.KL).run_test()
 
     def test_multi_head_attention(self):
-        MultiHeadAttentionTest(self, 5, 8, 12, 3, 4, 6).run_test()
-
-    def test_multi_head_attention_2_inputs(self):
-        MultiHeadAttentionTest(self, 5, 11, 8, 12, 7, 3, 4, 6, separate_key_value=True).run_test()
-
-    def test_multi_head_attention_3_inputs(self):
-        MultiHeadAttentionTest(self, 5, 11, 8, 12, 7, 3, 4, 6).run_test()
+        q_seq_len, kv_seq_len = 5, 6
+        q_dim, k_dim, v_dim = 11, 12, 13
+        num_heads, qk_proj_dim, v_proj_dim = 3, 4, 7
+        attention_axes = [1, 3]
+        num_iterations = 9
+        for separate_key_value in [False, True]:
+            MultiHeadAttentionTest(self, [(q_seq_len, q_dim),
+                                          (kv_seq_len, k_dim),
+                                          (kv_seq_len, v_dim)],
+                                   num_heads, qk_proj_dim, v_proj_dim, None,
+                                   separate_key_value=separate_key_value, output_dim=15).run_test()
+            input_shapes = [(2, num_iterations, q_seq_len, q_dim),
+                            (2, num_iterations, kv_seq_len, k_dim),
+                            (2, num_iterations, kv_seq_len, v_dim)]
+            MultiHeadAttentionTest(self, input_shapes,
+                                   num_heads, qk_proj_dim, v_proj_dim, attention_axes,
+                                   separate_key_value=separate_key_value, output_dim=14).run_test()
+            MultiHeadAttentionTest(self, input_shapes,
+                                   num_heads, qk_proj_dim, v_proj_dim, attention_axes,
+                                   separate_key_value=separate_key_value, output_dim=14).run_test()
+            MultiHeadAttentionTest(self, input_shapes,
+                                   num_heads, qk_proj_dim, v_proj_dim, None,
+                                   separate_key_value=separate_key_value, output_dim=14).run_test()
 
 
 if __name__ == '__main__':
