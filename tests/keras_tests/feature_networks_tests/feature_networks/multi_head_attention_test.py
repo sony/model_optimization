@@ -14,7 +14,7 @@
 # ==============================================================================
 
 
-from tests.keras_tests.feature_networks_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig,\
     ThresholdSelectionMethod
 import model_compression_toolkit as mct
@@ -28,19 +28,22 @@ keras = tf.keras
 layers = keras.layers
 
 
-class MultiHeadAttentionTest(BaseFeatureNetworkTest):
-    def __init__(self, unit_test, q_sequence_length, kv_sequence_length, d_model_q, d_model_k, d_model_v,
-                 num_heads, query_key_dim, value_dim, separate_key_value=False):
+class MultiHeadAttentionTest(BaseKerasFeatureNetworkTest):
+    def __init__(self, unit_test, input_shapes, num_heads, query_key_dim, value_dim,
+                 attention_axes=None, separate_key_value=False, output_dim=None):
         super().__init__(unit_test)
-        self.q_sequence_length = q_sequence_length
-        self.kv_sequence_length = kv_sequence_length
-        self.separate_key_value = separate_key_value
-        self.d_model_q = d_model_q
-        self.d_model_k = 0 if separate_key_value else d_model_k
-        self.d_model_v = d_model_v
+        self.num_calibration_iter = 100
+
+        query_input_shape, key_input_shape, value_input_shape = input_shapes
+        self.query_input_shape = query_input_shape
+        self.key_input_shape = key_input_shape
+        self.value_input_shape = value_input_shape
         self.num_heads = num_heads
         self.query_key_dim = query_key_dim
         self.value_dim = value_dim
+        self.attention_axes=attention_axes
+        self.separate_key_value = separate_key_value
+        self.output_dim = output_dim
 
     def get_quantization_config(self):
         return QuantizationConfig(activation_threshold_method=ThresholdSelectionMethod.NOCLIPPING,
@@ -48,27 +51,37 @@ class MultiHeadAttentionTest(BaseFeatureNetworkTest):
                                   activation_n_bits=16, weights_n_bits=16,
                                   )
 
-    def create_inputs_shape(self):
-        return [[self.val_batch_size, self.q_sequence_length + self.kv_sequence_length,
-                 self.d_model_q + self.d_model_k + self.d_model_v]]
-
-    def create_feature_network(self, input_shape):
-        inputs = layers.Input(shape=input_shape[0][1:])
-        mha_layer = layers.MultiHeadAttention(self.num_heads, self.query_key_dim, value_dim=self.value_dim,
-                                              kernel_initializer="glorot_uniform",
-                                              bias_initializer="glorot_uniform")
+    def get_input_shapes(self):
         if self.separate_key_value:
-            outputs = mha_layer(inputs[:, :self.q_sequence_length, :self.d_model_q],
-                                inputs[:, self.q_sequence_length:, self.d_model_q:self.d_model_q + self.d_model_v])
+            return [[self.val_batch_size] + list(self.query_input_shape),
+                    [self.val_batch_size] + list(self.key_input_shape),
+                    [self.val_batch_size] + list(self.value_input_shape)]
         else:
-            outputs = mha_layer(inputs[:, :self.q_sequence_length, :self.d_model_q],
-                                inputs[:, self.q_sequence_length:, self.d_model_q:self.d_model_q+self.d_model_v],
-                                key=inputs[:, self.q_sequence_length:, self.d_model_q+self.d_model_v:])
-        model = keras.Model(inputs=inputs, outputs=outputs)
-        return model
+            return [[self.val_batch_size] + list(self.query_input_shape),
+                    [self.val_batch_size] + list(self.value_input_shape)]
+
+    def create_networks(self):
+        if self.separate_key_value:
+            query_input_shape, key_input_shape, value_input_shape = self.get_input_shapes()
+        else:
+            query_input_shape, value_input_shape = self.get_input_shapes()
+            key_input_shape = None
+        q_input = layers.Input(shape=query_input_shape[1:])
+        k_input = layers.Input(shape=key_input_shape[1:]) if self.separate_key_value else None
+        v_input = layers.Input(shape=value_input_shape[1:])
+
+        mha_layer = layers.MultiHeadAttention(self.num_heads, self.query_key_dim, value_dim=self.value_dim,
+                                              attention_axes=self.attention_axes, output_shape=self.output_dim,
+                                              kernel_initializer="glorot_uniform",
+                                              bias_initializer="glorot_uniform",
+                                              )
+        outputs = mha_layer(q_input, v_input, key=k_input)
+        inputs_list = [q_input, k_input, v_input] if self.separate_key_value else [q_input, v_input]
+        return keras.Model(inputs=inputs_list, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        out_quantized = quantized_model(input_x[0]).numpy().flatten()
-        out_float = float_model(input_x[0]).numpy().flatten()
+        out_quantized = quantized_model(input_x).numpy()
+        out_float = float_model(input_x).numpy()
+        self.unit_test.assertTrue(out_quantized.shape == out_float.shape)
         nmse = np.mean(np.abs((out_quantized - out_float)) ** 2) / np.mean(np.abs(out_float) ** 2)
         self.unit_test.assertTrue(np.isclose(nmse, 0))
