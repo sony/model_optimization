@@ -15,6 +15,8 @@
 
 from typing import Callable, List
 
+from keras.optimizer_v2.optimizer_v2 import OptimizerV2
+
 from model_compression_toolkit import common
 from model_compression_toolkit.common import Logger
 from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
@@ -31,10 +33,53 @@ import importlib
 
 if importlib.util.find_spec("tensorflow") is not None\
         and importlib.util.find_spec("tensorflow_model_optimization") is not None:
+    import tensorflow as tf
     from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
+    from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
+
+    def get_keras_gptq_config(n_iter: int,
+                              optimizer: OptimizerV2 = tf.keras.optimizers.Adam(),
+                              loss: Callable = multiple_tensors_mse_loss,
+                              log_function: Callable = None,
+                              train_bias: bool = True):
+        """
+        Create a GradientPTQConfig instance for Keras models.
+
+        args:
+            n_iter (int): Number of iterations to fine-tune.
+            optimizer (OptimizerV2): Keras optimizer to use for fine-tuning.
+            loss (Callable): loss to use during fine-tuning. Should accept 2 lists of Tensorflow tensors. 1st list of quantized tensors, the 2nd list is the float tensors.
+            log_function (Callable): Function to log information about the gptq process.
+            train_bias (bool): Whether to update the bias during the the fine-tuning or not.
+
+        returns:
+            a GradientPTQConfig object to use when fine-tuning the quantized model using gptq.
+
+        examples:
+            Create a GradientPTQConfig to run for 5 iteration:
+
+            >>> gptq_conf = get_keras_gptq_config(n_iter=5)
+
+            To disable the biases training, one may set train_bias to false (enabled by default):
+
+            >>> gptq_conf = get_keras_gptq_config(n_iter=5, train_bias=false)
+
+            Other Tensorflow optimizers can be passed:
+
+            >>> gptq_conf = get_keras_gptq_config(n_iter=3, optimizer=tf.keras.optimizers.Nadam())
+
+            The configuration can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization` in order to quantize a keras model using gptq.
+
+        """
+
+        return GradientPTQConfig(n_iter,
+                                 optimizer,
+                                 loss=loss,
+                                 log_function=log_function,
+                                 train_bias=train_bias)
 
     def keras_post_training_quantization(in_model: Model,
                                          representative_data_gen: Callable,
@@ -82,7 +127,7 @@ if importlib.util.find_spec("tensorflow") is not None\
             Import mct and pass the model with the representative dataset generator to get a quantized model:
 
             >>> import model_compression_toolkit as mct
-            >>> quantized_model, quantization_info = mct.keras_post_training_quantization(model, repr_datagen)
+            >>> quantized_model, quantization_info = mct.keras_post_training_quantization(model, repr_datagen, n_iter=1)
 
         """
         KerasModelValidation(model=in_model,
@@ -208,6 +253,11 @@ else:
                         'Could not find Tensorflow package.')
 
     def keras_post_training_quantization_mixed_precision(*args, **kwargs):
+        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+                        'when using keras_post_training_quantization_mixed_precision. '
+                        'Could not find Tensorflow package.')
+
+    def get_keras_gptq_config(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                         'when using keras_post_training_quantization_mixed_precision. '
                         'Could not find Tensorflow package.')

@@ -59,7 +59,7 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         q_first_linear_op_index = 2
-        q_second_linear_op_index = 4 + int(self.second_op2d_zero_pad) + int(self.mid_act)
+        q_second_linear_op_index = 4 + int(self.second_op2d_zero_pad) + int(self.mid_act) + int(isinstance(self.first_op2d, (layers.Dense, layers.Conv2DTranspose)) and self.mid_act)
         f_first_linear_op_index = 1
         f_second_linear_op_index = 2 + int(self.second_op2d_zero_pad) + int(self.mid_act)
 

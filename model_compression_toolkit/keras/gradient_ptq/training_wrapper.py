@@ -52,8 +52,6 @@ def gptq_training_wrapper(tg: Graph,
     """
 
     input_scale = 1
-    gptq_representative_data_gen = gptq_config.representative_data_gen if gptq_config.representative_data_gen is not None \
-        else representative_data_gen
     #########################################
     # Build two models and compare points
     #########################################
@@ -107,7 +105,7 @@ def gptq_training_wrapper(tg: Graph,
 
     loss_list = []
     for _ in tqdm(range(gptq_config.n_iter)):
-        data = gptq_representative_data_gen()
+        data = representative_data_gen()
         loss_value_step, grads = update_step([d * input_scale for d in data])
         if gptq_config.log_function is not None:
             gptq_config.log_function(loss_value_step, grads, trainable_weights, compare_points)

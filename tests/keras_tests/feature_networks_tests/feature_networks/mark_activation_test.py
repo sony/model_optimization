@@ -15,6 +15,10 @@
 
 
 import tensorflow as tf
+
+from model_compression_toolkit.keras.back2framework.model_builder import is_layer_fake_quant
+from model_compression_toolkit.keras.constants import ACTIVATION
+
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers.core import TFOpLambda
 else:
@@ -28,20 +32,14 @@ layers = keras.layers
 class MarkActivationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, kernel_op_layer, activation_function):
         assert kernel_op_layer in [layers.Conv2D,
-                                   layers.DepthwiseConv2D,
-                                   layers.Dense,
-                                   layers.Conv2DTranspose], f'layer {kernel_op_layer} not in substitution'
+                                   layers.DepthwiseConv2D], f'layer {kernel_op_layer} not in substitution'
         self.activation_function = activation_function
         self.kernel_op_layer = kernel_op_layer
         super().__init__(unit_test)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        if self.kernel_op_layer is layers.Dense:
-            outputs = self.activation_function(self.kernel_op_layer(3)(inputs))
-        else:
-            outputs = self.activation_function(self.kernel_op_layer(3, 4)(inputs))
-
+        outputs = self.activation_function(self.kernel_op_layer(3, 4)(inputs))
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -55,3 +53,29 @@ class MarkActivationTest(BaseKerasFeatureNetworkTest):
                                                                     layers.Activation,
                                                                     layers.PReLU,
                                                                     layers.ELU)))
+
+
+class AssertNoMarkActivationTest(BaseKerasFeatureNetworkTest):
+    def __init__(self, unit_test, kernel_op_layer, activation_function):
+        self.activation_function = activation_function
+        self.kernel_op_layer = kernel_op_layer
+        super().__init__(unit_test)
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        if self.kernel_op_layer is layers.Dense:
+            outputs = self.activation_function(self.kernel_op_layer(3)(inputs))
+        else:
+            outputs = self.activation_function(self.kernel_op_layer(3, 4)(inputs))
+        return keras.Model(inputs=inputs, outputs=outputs)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        kernel_op_layer_index = 2
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[kernel_op_layer_index], self.kernel_op_layer))
+        fq_layer = quantized_model.layers[kernel_op_layer_index + 1]
+        self.unit_test.assertTrue(is_layer_fake_quant(fq_layer))
+        activation_layer = quantized_model.layers[kernel_op_layer_index + 2]
+        if isinstance(activation_layer, TFOpLambda):
+            self.unit_test.assertTrue(activation_layer.function is self.activation_function)
+        else:
+            self.unit_test.assertTrue(activation_layer.get_config().get(ACTIVATION)==self.activation_function.get_config().get(ACTIVATION))

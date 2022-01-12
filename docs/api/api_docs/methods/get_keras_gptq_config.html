@@ -1,0 +1,117 @@
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Get GradientPTQConfig for Keras Models &#8212; MCT Documentation: ver 1.1.1</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.1.1</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Get GradientPTQConfig for Keras Models</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="get-gradientptqconfig-for-keras-models">
+<span id="ug-get-keras-gptq-config"></span><h1>Get GradientPTQConfig for Keras Models<a class="headerlink" href="#get-gradientptqconfig-for-keras-models" title="Permalink to this headline">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_compression_toolkit.get_keras_gptq_config">
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">get_keras_gptq_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tf.keras.optimizers.Adam()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">multiple_tensors_mse_loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.get_keras_gptq_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a GradientPTQConfig instance for Keras models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_iter</strong> (<em>int</em>) – Number of iterations to fine-tune.</p></li>
+<li><p><strong>optimizer</strong> (<em>OptimizerV2</em>) – Keras optimizer to use for fine-tuning.</p></li>
+<li><p><strong>loss</strong> (<em>Callable</em>) – loss to use during fine-tuning. Should accept 2 lists of Tensorflow tensors. 1st list of quantized tensors, the 2nd list is the float tensors.</p></li>
+<li><p><strong>log_function</strong> (<em>Callable</em>) – Function to log information about the gptq process.</p></li>
+<li><p><strong>train_bias</strong> (<em>bool</em>) – Whether to update the bias during the the fine-tuning or not.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a GradientPTQConfig object to use when fine-tuning the quantized model using gptq.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Create a GradientPTQConfig to run for 5 iteration:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gptq_conf</span> <span class="o">=</span> <span class="n">get_keras_gptq_config</span><span class="p">(</span><span class="n">n_iter</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To disable the biases training, one may set train_bias to false (enabled by default):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gptq_conf</span> <span class="o">=</span> <span class="n">get_keras_gptq_config</span><span class="p">(</span><span class="n">n_iter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">train_bias</span><span class="o">=</span><span class="n">false</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Other Tensorflow optimizers can be passed:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gptq_conf</span> <span class="o">=</span> <span class="n">get_keras_gptq_config</span><span class="p">(</span><span class="n">n_iter</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">Nadam</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>The configuration can be passed to <a class="reference internal" href="keras_post_training_quantization.html#model_compression_toolkit.keras_post_training_quantization" title="model_compression_toolkit.keras_post_training_quantization"><code class="xref py py-func docutils literal notranslate"><span class="pre">keras_post_training_quantization()</span></code></a> in order to quantize a keras model using gptq.</p>
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.1.1</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Get GradientPTQConfig for Keras Models</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Sony Semiconductors Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    </div>
+  </body>
+</html>
