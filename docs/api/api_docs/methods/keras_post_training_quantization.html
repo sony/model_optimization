@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Keras Post Training Quantization &#8212; MCT Documentation: ver 1.1.0</title>
+    <title>Keras Post Training Quantization &#8212; MCT Documentation: ver 1.1.1</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
@@ -30,7 +30,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.1.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.1.1</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Keras Post Training Quantization</a></li> 
       </ul>
     </div>  
@@ -84,7 +84,7 @@ training quantization by comparing points between the float and quantized models
 </div>
 <p>Import mct and pass the model with the representative dataset generator to get a quantized model:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">keras_post_training_quantization</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">repr_datagen</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">keras_post_training_quantization</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">repr_datagen</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -118,7 +118,7 @@ training quantization by comparing points between the float and quantized models
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.1.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.1.1</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Keras Post Training Quantization</a></li> 
       </ul>
     </div>
