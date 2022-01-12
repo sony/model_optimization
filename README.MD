@@ -91,6 +91,7 @@ Quantization:
 
 	* Post Training Quantization 
     * Gradient based post training (Experimental) 
+    * Mixed-precision post taining quantization (Experimental)
     
 Tensorboard Visualization (Experimental):
 

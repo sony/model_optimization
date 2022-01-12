@@ -44,8 +44,8 @@ class ActivationScalingReLU6Test(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         alpha = (quantized_model.layers[2].weights[0] / float_model.layers[1].weights[0]).numpy().mean()
-        beta = (quantized_model.layers[5].weights[0] / float_model.layers[3].weights[0]).numpy().mean()
+        beta = (quantized_model.layers[6].weights[0] / float_model.layers[3].weights[0]).numpy().mean()
 
         self.unit_test.assertTrue(np.allclose(alpha, 8 / 6, atol=1e-1))
         self.unit_test.assertTrue(np.allclose(beta, 6 / 8, atol=1e-1))
-        self.unit_test.assertTrue(quantized_model.layers[3].max_value is None)
+        self.unit_test.assertTrue(quantized_model.layers[4].max_value is None)

@@ -23,7 +23,7 @@ from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, EdgeMatcher, \
     NodeFrameworkAttrMatcher
 from model_compression_toolkit.common.graph.base_node import BaseNode
-from model_compression_toolkit.keras.constants import LINEAR, ACTIVATION
+from model_compression_toolkit.keras.constants import LINEAR, ACTIVATION, SOFTMAX
 
 
 class MarkActivation(common.BaseSubstitution):
@@ -41,12 +41,10 @@ class MarkActivation(common.BaseSubstitution):
         """
         act_linear = NodeFrameworkAttrMatcher(ACTIVATION, LINEAR)
         source_node = (NodeOperationMatcher(DepthwiseConv2D) |
-                       NodeOperationMatcher(Conv2D) |
-                       NodeOperationMatcher(Conv2DTranspose) |
-                       NodeOperationMatcher(Dense)) & act_linear
+                       NodeOperationMatcher(Conv2D)) & act_linear
 
+        act_softmax = NodeFrameworkAttrMatcher(ACTIVATION, SOFTMAX)
         activation_node = NodeOperationMatcher(ReLU) | \
-                          NodeOperationMatcher(Activation) | \
                           NodeOperationMatcher(PReLU) | \
                           NodeOperationMatcher(ELU) | \
                           NodeOperationMatcher(tf.nn.silu) | \
@@ -60,7 +58,7 @@ class MarkActivation(common.BaseSubstitution):
                           NodeOperationMatcher(tf.nn.elu) | \
                           NodeOperationMatcher(tf.nn.selu) | \
                           NodeOperationMatcher(tf.nn.softplus) | \
-                          NodeOperationMatcher(tf.nn.softmax)
+                          (NodeOperationMatcher(Activation) & act_softmax.logic_not())
 
         source_node_add = NodeOperationMatcher(Add)
 
