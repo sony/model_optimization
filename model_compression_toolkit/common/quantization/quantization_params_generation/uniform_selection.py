@@ -27,7 +27,7 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 from model_compression_toolkit.common.quantization.quantization_params_generation.mse_selection import \
     _mse_error_histogram
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_search import \
-    uniform_qparams_tensor_minimization
+    uniform_qparams_tensor_minimization, uniform_qparams_histogram_minimization
 from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import get_tensor_max, \
     uniform_quantize_tensor, get_tensor_min, reshape_tensor_for_per_channel_search, fix_range_to_include_zero
 from scipy.optimize import minimize
@@ -138,43 +138,10 @@ def uniform_selection_histogram(bins: np.ndarray,
         error_function = get_range_selection_histogram_error_function(threshold_method, p)
 
         # returned 'x' here is an array with min and max range values
-        res = minimize(
-            fun=lambda min_max_range: _uniform_error_function(error_function, bins, min_max_range, n_bits, counts),
-            x0=tensor_min_max).x
+        res = uniform_qparams_histogram_minimization(bins, tensor_min_max, n_bits, counts, error_function).x
+
     fixed_res = fix_range_to_include_zero(res, n_bits)
     return {RANGE_MIN: fixed_res[0], RANGE_MAX: fixed_res[1]}
-
-
-def _uniform_error_function(error_function: Callable,
-                            bins: np.ndarray,
-                            min_max_range: np.ndarray,
-                            n_bits: int,
-                            counts: np.ndarray):
-    """
-    Calculates the error according to the given error function, to be used in the threshold optimization process
-    for symmetric quantization.
-    Args:
-        error_function:
-        bins: Bins values of the histogram.
-        min_max_range: an array containing minimum and maximum values (arrays as well) for the quantization range.
-        n_bits: Number of bits to quantize the tensor.
-        counts: Bins counts of the original histogram.
-
-    Returns: the error between the original and quantized histogram.
-
-    """
-    # TODO: argument 'q_bins' is only relevant for 'kl_selection' but still needs to be provided to all others.
-    #       consider remove its calculation if unnecessary (and then this method is not needed, can just
-    #       pass 'error_function' on 'quantize_tensor' result to the lambda in the selection method above).
-
-    min_max_range = fix_range_to_include_zero(min_max_range, n_bits)
-
-    q_bins = uniform_quantize_tensor(bins, range_min=min_max_range[0], range_max=min_max_range[1],
-                                     n_bits=n_bits)  # compute the quantized values of the bins.
-    # compute the number of elements between quantized bin values.
-    q_count, _ = np.histogram(q_bins, bins=bins, weights=np.concatenate([counts.flatten(), np.asarray([0])]))
-    error = error_function(q_bins, q_count, bins, counts)  # compute the error
-    return error
 
 
 # TODO: need to move both "get" methods to a shared location for both uniform and symmetric selectors
