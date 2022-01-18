@@ -20,6 +20,10 @@ from model_compression_toolkit.common.quantization.quantization_config import Th
     QuantizationMethod
 from model_compression_toolkit.common.quantization.quantization_params_generation.kmeans_params import kmeans_tensor
 from model_compression_toolkit.common.quantization.quantization_params_generation.lut_kmeans_params import lut_kmeans_tensor
+from model_compression_toolkit.common.quantization.quantization_params_generation.symmetric_selection import \
+    symmetric_selection_tensor, symmetric_selection_histogram
+from model_compression_toolkit.common.quantization.quantization_params_generation.uniform_selection import \
+    uniform_selection_histogram, uniform_selection_tensor
 
 
 def get_activation_quantization_params_fn(activation_quantization_method: QuantizationMethod,
@@ -53,6 +57,10 @@ def get_activation_quantization_params_fn(activation_quantization_method: Quanti
             params_fn = quantization_params_generation.kl_selection_histogram
         else:
             params_fn = None
+    elif activation_quantization_method == QuantizationMethod.SYMMETRIC:
+        params_fn = symmetric_selection_histogram
+    elif activation_quantization_method == QuantizationMethod.UNIFORM:
+        params_fn = uniform_selection_histogram
     else:
         raise Exception(
             f'No params function for the configuration of quantization method {activation_quantization_method} and '
@@ -90,6 +98,10 @@ def get_weights_quantization_params_fn(weights_quantization_method: Quantization
             params_fn = quantization_params_generation.lp_selection_tensor
         else:
             params_fn = None
+    elif weights_quantization_method == QuantizationMethod.SYMMETRIC:
+        params_fn = symmetric_selection_tensor
+    elif weights_quantization_method == QuantizationMethod.UNIFORM:
+        params_fn = uniform_selection_tensor
     elif weights_quantization_method == QuantizationMethod.KMEANS:
         params_fn = kmeans_tensor
     elif weights_quantization_method == QuantizationMethod.LUT_QUANTIZER:

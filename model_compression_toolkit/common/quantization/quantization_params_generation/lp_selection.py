@@ -15,8 +15,8 @@
 
 import numpy as np
 
+import model_compression_toolkit.common.quantization.quantization_config as qc
 from model_compression_toolkit.common.constants import MIN_THRESHOLD
-
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_search import qparams_selection_tensor_search, qparams_selection_histogram_search
 from model_compression_toolkit.common.similarity_analyzer import compute_lp_norm
 
@@ -29,7 +29,8 @@ def lp_selection_tensor(tensor_data: np.ndarray,
                         per_channel: bool = False,
                         channel_axis: int = 1,
                         n_iter: int = 10,
-                        min_threshold: float = MIN_THRESHOLD) -> dict:
+                        min_threshold: float = MIN_THRESHOLD,
+                        threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.LP) -> dict:
     """
     Compute the optimal threshold based on Lp-norm distance to quantize a tensor.
     The error is computed as the distance in Lp-norm between the tensor and its quantized
@@ -43,6 +44,7 @@ def lp_selection_tensor(tensor_data: np.ndarray,
         channel_axis: Output channel index.
         n_iter: Number of iterations to search for the optimal threshold.
         min_threshold: Minimal threshold to chose when the computed one is smaller.
+        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
 
     Returns:
         Optimal threshold to quantize the tensor based on Lp-norm distance.
@@ -81,7 +83,8 @@ def lp_selection_histogram(bins: np.ndarray,
                            max_value: float,
                            constrained=True,
                            n_iter=10,
-                           min_threshold=MIN_THRESHOLD) -> dict:
+                           min_threshold=MIN_THRESHOLD,
+                           threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.LP) -> dict:
     """
     Compute the optimal threshold based on Lp-norm distance to quantize a histogram.
     The quantization error is the Euclidean distance between two points in the Lp-norm
@@ -97,6 +100,7 @@ def lp_selection_histogram(bins: np.ndarray,
         constrained: Whether the threshold should be constrained or not.
         n_iter: Number of iteration ot search for the threshold.
         min_threshold: Minimal threshold to use if threshold is too small.
+        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
 
     Returns:
         Optimal threshold to quantize the histogram based on Lp-norm distance.

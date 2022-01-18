@@ -15,13 +15,15 @@
 
 from collections import Callable
 from typing import Any
+from scipy import optimize
 
 import numpy as np
 
 from model_compression_toolkit.common.constants import MIN_THRESHOLD, THRESHOLD
-from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import quantize_tensor
-from model_compression_toolkit.common.quantization.quantization_params_generation.no_clipping import no_clipping_selection_tensor, \
-    no_clipping_selection_histogram
+from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import quantize_tensor, \
+    reshape_tensor_for_per_channel_search, uniform_quantize_tensor
+from model_compression_toolkit.common.quantization.quantization_params_generation.no_clipping import \
+    no_clipping_selection_tensor, no_clipping_selection_histogram
 
 
 def qparams_selection_tensor_search(error_function: Callable,
@@ -66,12 +68,7 @@ def qparams_selection_tensor_search(error_function: Callable,
     # If the threshold is computed per-channel, we rearrange the tensor such that each sub-tensor
     # is flattened, and we iterate over each one of them when searching for the threshold.
     if per_channel:
-        # rearrange the shape indices for transposing the tensor
-        shape_index = [channel_axis, *[i for i in range(len(tensor_data.shape)) if i is not channel_axis]]
-        # New shape of the tensor after transposing it and reshape it
-        new_shape = [tensor_data.shape[channel_axis], -1]
-        tensor_data_t = np.transpose(tensor_data, shape_index)
-        tensor_data_r = np.reshape(tensor_data_t, new_shape)
+        tensor_data_r = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
 
     error_list = []  # init an empty error list
     # On each iteration a new constrained threshold which equal to half of the previous tested threshold
@@ -142,11 +139,85 @@ def qparams_selection_histogram_search(error_function: Callable,
     # is used for quantizing the histogram and computing the error. The error is appended to an error list, which
     # eventually used to select the threshold with the minimal error.
     for threshold in threshold_list:
-        q_bins = quantize_tensor(bins, threshold, n_bits, signed)  # compute the quantized values of the bins.
-        # compute the number of elements between qantized bin values.
-        q_count, _ = np.histogram(q_bins, bins=bins, weights=np.concatenate([counts.flatten(), np.asarray([0])]))
-        error = error_function(q_bins, q_count, bins, counts)  # compute the error
+        error = qparams_selection_histogram_search_error_function(error_function, bins, threshold, n_bits,
+                                                                  signed, counts)
         error_list.append(error)
 
     # Return the threshold with the minimal error.
     return np.maximum(threshold_list[np.argmin(error_list)], min_threshold)
+
+
+def qparams_selection_histogram_search_error_function(error_function: Callable,
+                                                      bins: np.ndarray,
+                                                      threshold: np.ndarray,
+                                                      n_bits: int,
+                                                      signed: bool,
+                                                      counts: np.ndarray):
+    """
+    Calculates the error according to the given error function, to be used in the threshold optimization process
+    for symmetric and power-of-two quantization.
+    Args:
+        error_function: Function to compute the error between the original and quantized histograms.
+        bins: Bins values of the histogram.
+        threshold: Threshold for quantization ranges.
+        n_bits: Number of bits to quantize the tensor.
+        signed: Whether the tensor contains negative values or not.
+        counts: Bins counts of the original histogram.
+
+    Returns: the error between the original and quantized histogram.
+
+    """
+    q_bins = quantize_tensor(bins, threshold, n_bits, signed)  # compute the quantized values of the bins.
+    # compute the number of elements between quantized bin values.
+    q_count, _ = np.histogram(q_bins, bins=bins, weights=np.concatenate([counts.flatten(), np.asarray([0])]))
+    error = error_function(q_bins, q_count, bins, counts)  # compute the error
+    return error
+
+
+def symmetric_qparams_tensor_minimization(x, x0, n_bits, signed, error_function):
+    """
+    Search for an optimal threshold to quantize a tensor.
+    Uses scipy.optimization.minimize method to search through the space of possible
+    unconstrained thresholds for symmetric quantization.
+
+    Args:
+        x: Numpy array with tensor's content.
+        x0: An initial solution guess for the minimization process.
+        n_bits: Number of bits to quantize the tensor.
+        signed: Whether the tensor contains negative values or not.
+        error_function: Function to compute the error between the original and quantized tensors.
+
+    Returns:
+        Optimal threshold to quantize the tensor.
+
+    """
+    return optimize.minimize(fun=lambda threshold: error_function(x, quantize_tensor(x, threshold, n_bits, signed)),
+                             x0=x0)
+
+
+def symmetric_qparams_histogram_minimization(x, x0, n_bits, signed, counts, error_function):
+    return optimize.minimize(
+        fun=lambda threshold: qparams_selection_histogram_search_error_function(error_function, x, threshold,
+                                                                                n_bits, signed, counts),
+        x0=x0)
+
+
+def uniform_qparams_tensor_minimization(x, x0, n_bits, error_function):
+    """
+        Search for an optimal quantization range to quantize a tensor.
+        Uses scipy.optimization.minimize method to search through the space of possible ranges for uniform quantization.
+
+        Args:
+            x: Numpy array with tensor's content.
+            x0: An initial solution guess for the minimization process.
+            n_bits: Number of bits to quantize the tensor.
+            error_function: Function to compute the error between the original and quantized tensors.
+
+        Returns:
+            Optimal quantization range to quantize the tensor.
+
+    """
+    return optimize.minimize(
+        fun=lambda min_max_range:
+        error_function(x, uniform_quantize_tensor(x, min_max_range[0], min_max_range[1], n_bits,)),
+        x0=x0)

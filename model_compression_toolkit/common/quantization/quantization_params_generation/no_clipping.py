@@ -15,8 +15,10 @@
 
 import numpy as np
 
+import model_compression_toolkit.common.quantization.quantization_config as qc
 from model_compression_toolkit.common.constants import MIN_THRESHOLD, THRESHOLD
-from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import power_of_two_constraint
+from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import power_of_two_constraint, \
+    get_tensor_max
 
 
 def no_clipping_selection_tensor(tensor_data: np.ndarray,
@@ -24,7 +26,8 @@ def no_clipping_selection_tensor(tensor_data: np.ndarray,
                                  n_bits: int,
                                  per_channel: bool = False,
                                  channel_axis: int = 1,
-                                 min_threshold: float = MIN_THRESHOLD) -> dict:
+                                 min_threshold: float = MIN_THRESHOLD,
+                                 threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.NOCLIPPING) -> dict:
     """
     Compute the constrained threshold of a tensor using the tensor's maximal value.
     If per_channel is True, multiple constrained thresholds will return.
@@ -37,6 +40,7 @@ def no_clipping_selection_tensor(tensor_data: np.ndarray,
         channel_axis: Output channel index.
         n_iter: Number of iterations to search for the optimal threshold.
         min_threshold: Minimal threshold to chose when the computed one is smaller.
+        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
 
     Returns:
         Constrained no-clipping threshold to quantize the tensor.
@@ -44,17 +48,7 @@ def no_clipping_selection_tensor(tensor_data: np.ndarray,
     """
 
     tensor_data = np.abs(tensor_data)
-    if per_channel:
-        output_shape = [-1 if i is channel_axis else 1 for i in range(len(tensor_data.shape))]
-        # rearrange the shape indices for transposing the tensor
-        shape_index = [channel_axis, *[i for i in range(len(tensor_data.shape)) if i is not channel_axis]]
-        # New shape of the tensor after transposing it and reshape it
-        new_shape = [tensor_data.shape[channel_axis], -1]
-        tensor_data_t = np.transpose(tensor_data, shape_index)
-        tensor_data = np.reshape(tensor_data_t, new_shape)
-        tensor_max = np.reshape(np.max(tensor_data, axis=-1), output_shape)
-    else:
-        tensor_max = np.max(tensor_data)
+    tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis)
 
     return {THRESHOLD: power_of_two_constraint(tensor_max, min_threshold)}
 
@@ -67,7 +61,8 @@ def no_clipping_selection_histogram(bins: np.ndarray,
                                     max_value: float,
                                     constrained: bool = True,
                                     n_iter: int = 10,
-                                    min_threshold: float = MIN_THRESHOLD) -> np.ndarray:
+                                    min_threshold: float = MIN_THRESHOLD,
+                                    threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.NOCLIPPING) -> np.ndarray:
     """
     Compute a threshold based on a histogram. The threshold can be either constrained or unconstrained.
     If computed threshold is less than min_threshold, min_threshold is returned.
@@ -82,6 +77,7 @@ def no_clipping_selection_histogram(bins: np.ndarray,
         constrained: Whether the threshold should be constrained or not.
         n_iter: Number of iteration ot search for the threshold (not used for this method).
         min_threshold: Minimal threshold to use if threshold is too small.
+        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
 
     Returns:
         Threshold of a histogram.
@@ -102,7 +98,8 @@ def no_clipping_selection_min_max(bins: np.ndarray,
                                   max_value: float,
                                   constrained: bool = True,
                                   n_iter: int = 10,
-                                  min_threshold: float = MIN_THRESHOLD) -> dict:
+                                  min_threshold: float = MIN_THRESHOLD,
+                                  threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.NOCLIPPING) -> dict:
     """
     Get a constrained threshold between min and max numbers.
     If computed threshold is less than min_threshold, min_threshold is returned.
@@ -117,6 +114,7 @@ def no_clipping_selection_min_max(bins: np.ndarray,
         constrained: Whether the threshold should be constrained or not (not used for this method).
         n_iter: Number of iteration ot search for the threshold (not used for this method).
         min_threshold: Minimal threshold to use if threshold is too small.
+        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
 
     Returns:
         A constrained threshold of the min/max values.

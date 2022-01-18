@@ -21,7 +21,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.python.util.object_identity import Reference as TFReference
 
-from model_compression_toolkit.common.constants import THRESHOLD, SIGNED
+from model_compression_toolkit.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
 
 
 def quantizer_min_max_calculator(threshold: np.ndarray,
@@ -73,6 +73,42 @@ def constraint_quantization(activation_n_bits: int,
     min_value, max_value = quantizer_min_max_calculator(activation_threshold,
                                                         activation_n_bits,
                                                         activation_is_signed)
+
+    def q(x: TFReference) -> TFReference:
+        """
+        Fake-quantize the input tensor x, using a tensorflow fake-quantization node.
+
+        Args:
+            x: Input tensor to quantize.
+
+        Returns:
+            The fake-quantized input tensor.
+        """
+        return tf.quantization.fake_quant_with_min_max_vars(x,
+                                                            min=min_value,
+                                                            max=max_value,
+                                                            num_bits=activation_n_bits)
+
+    return q
+
+
+def uniform_quantization(activation_n_bits: int,
+                         quantization_params: dict) -> Callable:
+    """
+    Use a NodeQuantizationConfig to compute a quantizer min/max values, and use it to
+    build and return a fake-quantization node.
+
+    Args:
+        activation_n_bits: Number of bits to use for quantization.
+        quantization_params: Dictionary of specific parameters for this quantization function.
+
+    Returns:
+        A fake quantization node.
+    """
+    min_value, max_value = quantization_params.get(RANGE_MIN), quantization_params.get(RANGE_MAX)
+
+    if min_value is None or max_value is None:
+        return None
 
     def q(x: TFReference) -> TFReference:
         """

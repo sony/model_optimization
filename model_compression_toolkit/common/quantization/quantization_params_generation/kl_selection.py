@@ -19,6 +19,7 @@ from typing import Tuple
 
 import numpy as np
 
+import model_compression_toolkit.common.quantization.quantization_config as qc
 from model_compression_toolkit.common.constants import FLOAT_32, THRESHOLD
 from model_compression_toolkit.common.constants import MIN_THRESHOLD
 from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import quantize_tensor
@@ -33,7 +34,8 @@ def kl_selection_tensor(tensor_data: np.ndarray,
                         per_channel: bool = False,
                         channel_axis: int = 1,
                         n_iter: int = 10,
-                        min_threshold: float = MIN_THRESHOLD) -> dict:
+                        min_threshold: float = MIN_THRESHOLD,
+                        threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.KL) -> dict:
     """
     Compute the optimal threshold based on KL-divergence to quantize the tensor.
     The error computation is based on KL-divergence to quantify the distributions
@@ -48,6 +50,7 @@ def kl_selection_tensor(tensor_data: np.ndarray,
         channel_axis: Output channel index.
         n_iter: Number of iterations to search for the optimal threshold.
         min_threshold: Minimal threshold to chose when the computed one is smaller.
+        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
 
     Returns:
         Optimal threshold to quantize the tensor based on KL-divergence.
@@ -86,7 +89,8 @@ def kl_selection_histogram(bins: np.ndarray,
                            max_value: float,
                            constrained: bool = True,
                            n_iter: int = 10,
-                           min_threshold: float = MIN_THRESHOLD) -> dict:
+                           min_threshold: float = MIN_THRESHOLD,
+                           threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.KL) -> dict:
     """
     Compute the optimal threshold based on KL-divergence to quantize a histogram.
     The error computation is based on KL-divergence to quantify the distributions
@@ -102,6 +106,7 @@ def kl_selection_histogram(bins: np.ndarray,
         constrained: Whether the threshold should be constrained or not.
         n_iter: Number of iteration ot search for the threshold.
         min_threshold: Minimal threshold to use if threshold is too small.
+        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
 
     Returns:
         Optimal threshold to quantize the histogram based on KL-divergence.

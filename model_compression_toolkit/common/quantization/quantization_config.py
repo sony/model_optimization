@@ -52,12 +52,18 @@ class QuantizationMethod(Enum):
 
     KMEANS - k-means quantization.
 
-    LUT_QUANTIZER - quantization using a look up table
+    LUT_QUANTIZER - quantization using a look up table.
+
+    SYMMETRIC - Symmetric, uniform, quantization.
+
+    UNIFORM - uniform quantization,
 
     """
     POWER_OF_TWO = 0
     KMEANS = 1
     LUT_QUANTIZER = 2
+    SYMMETRIC = 3
+    UNIFORM = 4
 
 
 class QuantizationConfig(object):

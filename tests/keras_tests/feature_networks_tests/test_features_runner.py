@@ -15,6 +15,8 @@
 
 
 import unittest
+
+from model_compression_toolkit import ThresholdSelectionMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_scaling_relu6_test import \
     ActivationScalingReLU6Test
 
@@ -38,8 +40,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.reused_separable_
 from tests.keras_tests.feature_networks_tests.feature_networks.shift_neg_activation_test import ShiftNegActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
     ActivationDecompositionTest
-from tests.keras_tests.feature_networks_tests.feature_networks.mark_activation_test import MarkActivationTest, \
-    AssertNoMarkActivationTest
+from tests.keras_tests.feature_networks_tests.feature_networks.mark_activation_test import MarkActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.reused_layer_test import ReusedLayerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.nested_networks.nested_test import NestedTest
 from tests.keras_tests.feature_networks_tests.feature_networks.nested_networks.nested_model_multiple_inputs_test import \
@@ -65,6 +66,11 @@ from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.no
 from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTQuantizerTest
 import tensorflow as tf
 from tensorflow.keras.layers import ReLU, PReLU, ELU
+
+from tests.keras_tests.feature_networks_tests.feature_networks.symmetric_threshold_selection_activation_test import \
+    SymmetricThresholdSelectionActivationTest
+from tests.keras_tests.feature_networks_tests.feature_networks.uniform_range_selection_activation_test import \
+    UniformRangeSelectionActivationTest
 
 layers = tf.keras.layers
 
@@ -262,8 +268,11 @@ class FeatureNetworkTest(unittest.TestCase):
         ActivationDecompositionTest(self, activation_function='softmax').run_test()
 
     def test_mark_activation(self):
+        MarkActivationTest(self, layers.Dense, ELU()).run_test()
+        MarkActivationTest(self, layers.Dense, layers.PReLU()).run_test()
         MarkActivationTest(self, layers.Conv2D, layers.ReLU()).run_test()
-        MarkActivationTest(self, layers.DepthwiseConv2D, layers.Activation('relu')).run_test()
+        MarkActivationTest(self, layers.Conv2DTranspose, layers.Activation('sigmoid')).run_test()
+        MarkActivationTest(self, layers.DepthwiseConv2D, layers.Activation('softmax')).run_test()
         tfoplambda_activations = [tf.nn.swish,
                                   tf.nn.silu,
                                   tf.nn.sigmoid,
@@ -275,15 +284,10 @@ class FeatureNetworkTest(unittest.TestCase):
                                   tf.nn.elu,
                                   tf.nn.selu,
                                   tf.nn.softplus,
+                                  tf.nn.softmax,
                                   ]
         for act_op in tfoplambda_activations:
             MarkActivationTest(self, layers.Conv2D, act_op).run_test()
-        AssertNoMarkActivationTest(self, layers.Dense, layers.Activation('softmax'))
-        AssertNoMarkActivationTest(self, layers.DepthwiseConv2D, layers.Activation('softmax')).run_test()
-        AssertNoMarkActivationTest(self, layers.Conv2D, layers.Activation('softmax')).run_test()
-        AssertNoMarkActivationTest(self, layers.Dense, tf.nn.softmax)
-        AssertNoMarkActivationTest(self, layers.DepthwiseConv2D, tf.nn.softmax)
-        AssertNoMarkActivationTest(self, layers.Conv2D, tf.nn.softmax)
 
     def test_conv2d_bn_concant(self):
         Conv2DBNConcatnFoldingTest(self).run_test()
@@ -334,6 +338,20 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_split_conv_bug(self):
         SplitConvBugTest(self).run_test()
+
+    def test_symmetric_threshold_selection_activation(self):
+        SymmetricThresholdSelectionActivationTest(self, ThresholdSelectionMethod.NOCLIPPING).run_test()
+        SymmetricThresholdSelectionActivationTest(self, ThresholdSelectionMethod.MSE).run_test()
+        SymmetricThresholdSelectionActivationTest(self, ThresholdSelectionMethod.MAE).run_test()
+        SymmetricThresholdSelectionActivationTest(self, ThresholdSelectionMethod.LP).run_test()
+        SymmetricThresholdSelectionActivationTest(self, ThresholdSelectionMethod.KL).run_test()
+
+    def test_uniform_range_selection_activation(self):
+        UniformRangeSelectionActivationTest(self, ThresholdSelectionMethod.NOCLIPPING).run_test()
+        UniformRangeSelectionActivationTest(self, ThresholdSelectionMethod.MSE).run_test()
+        UniformRangeSelectionActivationTest(self, ThresholdSelectionMethod.MAE).run_test()
+        UniformRangeSelectionActivationTest(self, ThresholdSelectionMethod.LP).run_test()
+        UniformRangeSelectionActivationTest(self, ThresholdSelectionMethod.KL).run_test()
 
 
 if __name__ == '__main__':

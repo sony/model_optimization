@@ -16,6 +16,7 @@
 
 import numpy as np
 
+import model_compression_toolkit.common.quantization.quantization_config as qc
 from model_compression_toolkit.common.constants import MIN_THRESHOLD, THRESHOLD
 
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_search import qparams_selection_tensor_search, qparams_selection_histogram_search
@@ -31,7 +32,8 @@ def mae_selection_tensor(tensor_data: np.ndarray,
                          per_channel: bool = False,
                          channel_axis: int = 1,
                          n_iter: int = 10,
-                         min_threshold: float = MIN_THRESHOLD) -> dict:
+                         min_threshold: float = MIN_THRESHOLD,
+                         threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.MAE) -> dict:
     """
     Compute the optimal threshold based on mean absolute error (MAE) to quantize the tensor.
     The threshold is constrained and the search is done iteratively over n_iter thresholds.
@@ -65,7 +67,8 @@ def mae_selection_histogram(bins: np.ndarray,
                             max_value: float,
                             constrained: bool = True,
                             n_iter: int = 10,
-                            min_threshold: float = MIN_THRESHOLD) -> dict:
+                            min_threshold: float = MIN_THRESHOLD,
+                            threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.MAE) -> dict:
     """
     Compute the optimal threshold based on the mean absolute error (MAE) to quantize a histogram.
     The threshold is either constrained or unconstrained and the search is done iteratively over

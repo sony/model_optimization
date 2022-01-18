@@ -16,16 +16,18 @@
 import numpy as np
 from sklearn.cluster import KMeans
 
+import model_compression_toolkit.common.quantization.quantization_config as qc
 from model_compression_toolkit.common.constants import CLUSTER_CENTERS, SCALE_PER_CHANNEL, MIN_THRESHOLD, EPS
 
 
 def kmeans_tensor(tensor_data: np.ndarray,
-                 p: int,
-                 n_bits: int,
-                 per_channel: bool = False,
-                 channel_axis: int = 1,
-                 n_iter: int = 10,
-                 min_threshold: float = MIN_THRESHOLD) -> dict:
+                  p: int,
+                  n_bits: int,
+                  per_channel: bool = False,
+                  channel_axis: int = 1,
+                  n_iter: int = 10,
+                  min_threshold: float = MIN_THRESHOLD,
+                  threshold_method: qc.ThresholdSelectionMethod = None) -> dict:
     """
     Compute the 2^nbit cluster assignments for the given tensor according to the k-means algorithm.
 
@@ -37,6 +39,7 @@ def kmeans_tensor(tensor_data: np.ndarray,
         channel_axis: Output channel index.
         n_iter: Number of iterations to search_methods for the optimal threshold.
         min_threshold: Minimal threshold to chose when the computed one is smaller.
+        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
 
     Returns:
         A dictionary containing the cluster assignments according to the k-means algorithm and the scales per channel.

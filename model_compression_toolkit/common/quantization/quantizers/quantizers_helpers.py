@@ -55,6 +55,7 @@ def calculate_delta(threshold: np.ndarray,
         Step size of quantized values according to a threshold, signedness and number of bits.
     """
 
+
     return threshold / (2 ** (n_bits - int(signed)))
 
 
@@ -115,6 +116,38 @@ def quantize_tensor(tensor_data: np.ndarray,
                    a_max=threshold - delta)
 
 
+def uniform_quantize_tensor(tensor_data: np.ndarray,
+                            range_min: np.ndarray,
+                            range_max: np.ndarray,
+                            n_bits: int) -> np.ndarray:
+    """
+    Quantize a tensor according to given range (min, max) and number of bits.
+
+    Args:
+        tensor_data: Tensor values to quantize.
+        range_min: minimum bound of the range for quantization (or array of min values per channel).
+        range_max: maximum bound of the range for quantization (or array of max values per channel).
+        n_bits: Number of bits to quantize the tensor.
+
+    Returns:
+        Quantized data.
+    """
+
+    # a, b = min_max_range
+    a = range_min
+    b = range_max
+
+    # Compute the step size of quantized values.
+    delta = (b - a) / (2 ** n_bits - 1)
+
+    # Clip data in range
+    clipped_tensor = np.clip(tensor_data, a_min=a, a_max=b)
+
+    # Quantize the data between min/max of quantization range.
+    q = delta * np.round((clipped_tensor - a) / delta) + a
+    return q
+
+
 def kmeans_assign_clusters(cluster_centers: np.ndarray,
                            query: np.ndarray) -> np.ndarray:
     """
@@ -168,3 +201,88 @@ def get_quantized_tensor(centers: np.ndarray,
 
     """
     return (np.round(centers) / (2 ** (n_bits - 1))) * scale
+
+
+def get_tensor_max(tensor_data: np.ndarray,
+                   per_channel: bool,
+                   channel_axis: int):
+    """
+    Returns the maximal value in the given tensor, or in each channel (if per_channel is True).
+    Args:
+        tensor_data: Tensor values to quantize.
+        per_channel: Whether the quantization should be per-channel or not.
+        channel_axis: Output channel index.
+
+    Returns: maximal value (or values).
+
+    """
+    if per_channel:
+        output_shape = [-1 if i is channel_axis else 1 for i in range(len(tensor_data.shape))]
+        tensor_data = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
+        tensor_max = np.reshape(np.max(tensor_data, axis=-1), output_shape)
+    else:
+        tensor_max = np.max(tensor_data)
+    return tensor_max
+
+
+def get_tensor_min(tensor_data: np.ndarray,
+                   per_channel: bool,
+                   channel_axis: int):
+    """
+    Returns the minimal value in the given tensor, or in each channel (if per_channel is True).
+    Args:
+        tensor_data: Tensor values to quantize.
+        per_channel: Whether the quantization should be per-channel or not.
+        channel_axis: Output channel index.
+
+    Returns: minimal value (or values).
+
+    """
+    if per_channel:
+        output_shape = [-1 if i is channel_axis else 1 for i in range(len(tensor_data.shape))]
+        tensor_data = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
+        tensor_min = np.reshape(np.min(tensor_data, axis=-1), output_shape)
+    else:
+        tensor_min = np.min(tensor_data)
+    return tensor_min
+
+
+def reshape_tensor_for_per_channel_search(tensor_data, channel_axis):
+    """
+    Reshapes the given data to be compatible for search of quantization parameters for per-channel quantization.
+    Args:
+        tensor_data: Tensor values to quantize.
+        channel_axis: Output channel index.
+
+    Returns: A reshaped tensor.
+
+    """
+    # rearrange the shape indices for transposing the tensor
+    shape_index = [channel_axis, *[i for i in range(len(tensor_data.shape)) if i is not channel_axis]]
+    # New shape of the tensor after transposing it and reshape it
+    new_shape = [tensor_data.shape[channel_axis], -1]
+    tensor_data_t = np.transpose(tensor_data, shape_index)
+    tensor_data_r = np.reshape(tensor_data_t, new_shape)
+    return tensor_data_r
+
+
+def fix_range_to_include_zero(min_max_range, n_bits):
+    """
+    Adjusting the quantization range to include representation of 0.0 in the quantization grid.
+    Args:
+        min_max_range: quantization range (before adjustment)
+        n_bits: Number of bits to quantize the tensor.
+
+    Returns: adjusted quantization range
+
+    """
+    a, b = min_max_range
+    if a > 0:
+        return min_max_range - a
+    elif b < 0:
+        return min_max_range - b
+    else:
+        scale = (b - a) / (2 ** n_bits - 1)
+        min_max_range = scale * np.round(a / scale), b
+        min_max_range = min_max_range[0], b + min_max_range[0] - a
+    return min_max_range
