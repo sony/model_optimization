@@ -134,7 +134,6 @@ def uniform_selection_histogram(bins: np.ndarray,
     if threshold_method == qc.ThresholdSelectionMethod.NOCLIPPING:
         res = tensor_min_max
     else:
-        # TODO: what happens with z-filter?
         error_function = get_range_selection_histogram_error_function(threshold_method, p)
 
         # returned 'x' here is an array with min and max range values

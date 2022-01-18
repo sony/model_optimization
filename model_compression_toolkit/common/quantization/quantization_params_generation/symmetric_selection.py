@@ -126,7 +126,6 @@ def symmetric_selection_histogram(bins: np.ndarray,
     if threshold_method == qc.ThresholdSelectionMethod.NOCLIPPING:
         return {THRESHOLD: tensor_max}
     else:
-        # TODO: what happens with z-filter?
         error_function = get_threshold_selection_histogram_error_function(threshold_method, p)
         res = symmetric_qparams_histogram_minimization(bins, tensor_max, n_bits, signed, counts, error_function)
         return {THRESHOLD: res.x[0]}

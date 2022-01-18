@@ -21,6 +21,7 @@ from keras.layers import Conv2D, Conv2DTranspose
 from model_compression_toolkit import QuantizationConfig, QuantizationMethod, ThresholdSelectionMethod
 from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import \
     compute_bias_correction_of_graph
+from model_compression_toolkit.common.constants import THRESHOLD
 from model_compression_toolkit.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.common.post_training_quantization import _quantize_fixed_bit_widths_graph
 from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
@@ -118,8 +119,8 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
                                                                       keras_impl)
 
         nodes_list = list(graph.nodes)
-        conv1_threshold = nodes_list[0].candidates_weights_quantization_cfg[0].weights_quantization_params['threshold']
-        conv2_threshold = nodes_list[1].candidates_weights_quantization_cfg[0].weights_quantization_params['threshold']
+        conv1_threshold = nodes_list[0].candidates_weights_quantization_cfg[0].weights_quantization_params[THRESHOLD]
+        conv2_threshold = nodes_list[1].candidates_weights_quantization_cfg[0].weights_quantization_params[THRESHOLD]
         conv1_threshold_log = np.log2(conv1_threshold)
         conv2_threshold_log = np.log2(conv2_threshold)
         self.assertFalse(np.array_equal(conv1_threshold_log, conv1_threshold_log.astype(int)),
