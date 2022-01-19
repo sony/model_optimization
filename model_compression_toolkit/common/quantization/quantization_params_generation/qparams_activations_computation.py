@@ -15,6 +15,7 @@
 import numpy as np
 from typing import Tuple, Dict
 
+from model_compression_toolkit import QuantizationMethod
 from model_compression_toolkit.common import BaseNode, Graph
 from model_compression_toolkit.common.constants import SIGNED
 from model_compression_toolkit.common.quantization import quantization_params_generation
@@ -50,7 +51,8 @@ def get_activations_qparams(n: BaseNode,
     else:
         signed = np.any(bins_values < 0)
 
-    if n.prior_info.is_output_bounded():
+    if n.prior_info.is_output_bounded() and \
+            n.activation_quantization_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
         n.activation_quantization_cfg.activation_quantization_params_fn = quantization_params_generation.no_clipping_selection_min_max
 
     activation_params = n.activation_quantization_cfg.activation_quantization_params_fn(bins_values,
