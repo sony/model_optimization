@@ -101,6 +101,8 @@ def quantize_tensor(tensor_data: np.ndarray,
         threshold: Threshold for quantization ranges.
         n_bits: Number of bits to quantize the tensor.
         signed: Whether the tensor contains negative values or not.
+        per_channel: Whether the quantization should be per-channel or not.
+        channel_axis: Output channel index.
 
     Returns:
         Quantized data.
@@ -137,6 +139,8 @@ def uniform_quantize_tensor(tensor_data: np.ndarray,
         range_min: minimum bound of the range for quantization (or array of min values per channel).
         range_max: maximum bound of the range for quantization (or array of max values per channel).
         n_bits: Number of bits to quantize the tensor.
+        per_channel: Whether the quantization should be per-channel or not.
+        channel_axis: Output channel index.
 
     Returns:
         Quantized data.
@@ -276,9 +280,15 @@ def reshape_tensor_for_per_channel_search(tensor_data, channel_axis):
 def fix_range_to_include_zero(range_min, range_max, n_bits, per_channel, channel_axis):
     """
     Adjusting the quantization range to include representation of 0.0 in the quantization grid.
+    If quantization per-channel, then range_min and range_max should be tensors in the specific shape that allows
+    quantization along the channel_axis.
+
     Args:
-        min_max_range: quantization range (before adjustment)
+        range_min: min bound of the quantization range (before adjustment).
+        range_max: max bound of the quantization range (before adjustment).
         n_bits: Number of bits to quantize the tensor.
+        per_channel: Whether the quantization should be per-channel or not.
+        channel_axis: Output channel index.
 
     Returns: adjusted quantization range
 
@@ -299,6 +309,15 @@ def fix_range_to_include_zero(range_min, range_max, n_bits, per_channel, channel
 
 
 def adjust_range(min_max_range, n_bits):
+    """
+    Adjusting a specific quantization range to representation of 0.0 in the quantization grid.
+    Args:
+        min_max_range: quantization range (before adjustment)
+        n_bits: Number of bits to quantize the tensor.
+
+    Returns: adjusted quantization min bound and max bound
+
+    """
     a, b = min_max_range
     if a > 0:
         return min_max_range - a
