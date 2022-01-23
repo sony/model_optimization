@@ -35,8 +35,8 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        qc = mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE,
-                                    mct.ThresholdSelectionMethod.MSE,
+        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                    mct.QuantizationErrorMethod.MSE,
                                     mct.QuantizationMethod.POWER_OF_TWO,
                                     mct.QuantizationMethod.POWER_OF_TWO,
                                     weights_bias_correction=True,
@@ -71,8 +71,8 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
 class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
 
     def get_quantization_config(self):
-        qc = mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE,
-                                    mct.ThresholdSelectionMethod.MSE,
+        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                    mct.QuantizationErrorMethod.MSE,
                                     mct.QuantizationMethod.POWER_OF_TWO,
                                     mct.QuantizationMethod.POWER_OF_TWO,
                                     weights_bias_correction=True,
@@ -177,8 +177,8 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
 
     def get_quantization_config(self):
-        qc = mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE,
-                                    mct.ThresholdSelectionMethod.MSE,
+        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                    mct.QuantizationErrorMethod.MSE,
                                     mct.QuantizationMethod.POWER_OF_TWO,
                                     mct.QuantizationMethod.POWER_OF_TWO,
                                     weights_bias_correction=False,

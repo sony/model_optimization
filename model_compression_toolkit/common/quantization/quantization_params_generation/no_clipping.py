@@ -27,7 +27,7 @@ def no_clipping_selection_tensor(tensor_data: np.ndarray,
                                  per_channel: bool = False,
                                  channel_axis: int = 1,
                                  min_threshold: float = MIN_THRESHOLD,
-                                 threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.NOCLIPPING) -> dict:
+                                 threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.NOCLIPPING) -> dict:
     """
     Compute the constrained threshold of a tensor using the tensor's maximal value.
     If per_channel is True, multiple constrained thresholds will return.
@@ -62,7 +62,7 @@ def no_clipping_selection_histogram(bins: np.ndarray,
                                     constrained: bool = True,
                                     n_iter: int = 10,
                                     min_threshold: float = MIN_THRESHOLD,
-                                    threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.NOCLIPPING) -> np.ndarray:
+                                    threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.NOCLIPPING) -> np.ndarray:
     """
     Compute a threshold based on a histogram. The threshold can be either constrained or unconstrained.
     If computed threshold is less than min_threshold, min_threshold is returned.
@@ -99,7 +99,7 @@ def no_clipping_selection_min_max(bins: np.ndarray,
                                   constrained: bool = True,
                                   n_iter: int = 10,
                                   min_threshold: float = MIN_THRESHOLD,
-                                  threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.NOCLIPPING) -> dict:
+                                  threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.NOCLIPPING) -> dict:
     """
     Get a constrained threshold between min and max numbers.
     If computed threshold is less than min_threshold, min_threshold is returned.

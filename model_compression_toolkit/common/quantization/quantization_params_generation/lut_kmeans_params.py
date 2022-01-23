@@ -32,7 +32,7 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
                       channel_axis: int = 1,
                       n_iter: int = 10,
                       min_threshold: float = MIN_THRESHOLD,
-                      threshold_method: qc.ThresholdSelectionMethod = None) -> dict:
+                      threshold_method: qc.QuantizationErrorMethod = None) -> dict:
     """
     The quantizer first finds the closest power-of-two number to the max value per channel of tensor_data.
     Now, we divide tensor_data with the scale vector per channel. In addition, we scale the result to the range

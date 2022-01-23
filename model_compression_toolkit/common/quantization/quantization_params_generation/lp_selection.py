@@ -30,7 +30,7 @@ def lp_selection_tensor(tensor_data: np.ndarray,
                         channel_axis: int = 1,
                         n_iter: int = 10,
                         min_threshold: float = MIN_THRESHOLD,
-                        threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.LP) -> dict:
+                        threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.LP) -> dict:
     """
     Compute the optimal threshold based on Lp-norm distance to quantize a tensor.
     The error is computed as the distance in Lp-norm between the tensor and its quantized
@@ -84,7 +84,7 @@ def lp_selection_histogram(bins: np.ndarray,
                            constrained=True,
                            n_iter=10,
                            min_threshold=MIN_THRESHOLD,
-                           threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.LP) -> dict:
+                           threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.LP) -> dict:
     """
     Compute the optimal threshold based on Lp-norm distance to quantize a histogram.
     The quantization error is the Euclidean distance between two points in the Lp-norm

@@ -26,8 +26,8 @@ import random
 keras = tf.keras
 layers = keras.layers
 
-TWO_BIT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.ThresholdSelectionMethod.MSE,
-                                              weights_threshold_method=mct.ThresholdSelectionMethod.MSE,
+TWO_BIT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.QuantizationErrorMethod.MSE,
+                                              weights_threshold_method=mct.QuantizationErrorMethod.MSE,
                                               activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                                               weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                                               activation_n_bits=2,
@@ -36,8 +36,8 @@ TWO_BIT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.Th
                                               weights_per_channel_threshold=True,
                                               relu_unbound_correction=False)
 
-EIGHT_BIT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.ThresholdSelectionMethod.MSE,
-                                                weights_threshold_method=mct.ThresholdSelectionMethod.MSE,
+EIGHT_BIT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.QuantizationErrorMethod.MSE,
+                                                weights_threshold_method=mct.QuantizationErrorMethod.MSE,
                                                 activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                                                 weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                                                 activation_n_bits=8,
@@ -46,8 +46,8 @@ EIGHT_BIT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.
                                                 weights_per_channel_threshold=True,
                                                 relu_unbound_correction=False)
 
-FLOAT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.ThresholdSelectionMethod.MSE,
-                                            weights_threshold_method=mct.ThresholdSelectionMethod.MSE,
+FLOAT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.QuantizationErrorMethod.MSE,
+                                            weights_threshold_method=mct.QuantizationErrorMethod.MSE,
                                             activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                                             weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                                             activation_n_bits=16,

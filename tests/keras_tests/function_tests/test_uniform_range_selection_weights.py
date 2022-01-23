@@ -18,7 +18,7 @@ import unittest
 from keras import Input, Model
 from keras.layers import Conv2D, Conv2DTranspose
 
-from model_compression_toolkit import QuantizationConfig, QuantizationMethod, ThresholdSelectionMethod
+from model_compression_toolkit import QuantizationConfig, QuantizationMethod, QuantizationErrorMethod
 from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import \
     compute_bias_correction_of_graph
 from model_compression_toolkit.common.constants import RANGE_MIN, RANGE_MAX
@@ -57,16 +57,16 @@ def create_network():
 class TestUniformRangeSelectionWeights(unittest.TestCase):
 
     def test_weights_uniform_range_selection_no_clipping(self):
-        self.run_test_for_threshold_method(ThresholdSelectionMethod.NOCLIPPING)
+        self.run_test_for_threshold_method(QuantizationErrorMethod.NOCLIPPING)
 
     def test_weights_uniform_range_selection_mse(self):
-        self.run_test_for_threshold_method(ThresholdSelectionMethod.MSE)
+        self.run_test_for_threshold_method(QuantizationErrorMethod.MSE)
 
     def test_weights_uniform_range_selection_mae(self):
-        self.run_test_for_threshold_method(ThresholdSelectionMethod.MAE)
+        self.run_test_for_threshold_method(QuantizationErrorMethod.MAE)
 
     def test_weights_uniform_range_selection_lp(self):
-        self.run_test_for_threshold_method(ThresholdSelectionMethod.LP)
+        self.run_test_for_threshold_method(QuantizationErrorMethod.LP)
 
     def run_test_for_threshold_method(self, threshold_method, per_channel=True):
         qc = QuantizationConfig(

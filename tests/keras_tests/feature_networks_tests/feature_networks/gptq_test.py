@@ -33,7 +33,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                          input_shape=(1,16,16,3))
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
                                       mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
                                       16, 16, True, False, True)
 

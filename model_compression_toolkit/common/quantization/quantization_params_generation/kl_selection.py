@@ -35,7 +35,7 @@ def kl_selection_tensor(tensor_data: np.ndarray,
                         channel_axis: int = 1,
                         n_iter: int = 10,
                         min_threshold: float = MIN_THRESHOLD,
-                        threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.KL) -> dict:
+                        threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.KL) -> dict:
     """
     Compute the optimal threshold based on KL-divergence to quantize the tensor.
     The error computation is based on KL-divergence to quantify the distributions
@@ -90,7 +90,7 @@ def kl_selection_histogram(bins: np.ndarray,
                            constrained: bool = True,
                            n_iter: int = 10,
                            min_threshold: float = MIN_THRESHOLD,
-                           threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.KL) -> dict:
+                           threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.KL) -> dict:
     """
     Compute the optimal threshold based on KL-divergence to quantize a histogram.
     The error computation is based on KL-divergence to quantify the distributions

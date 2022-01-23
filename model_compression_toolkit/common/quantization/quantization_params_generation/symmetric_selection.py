@@ -40,10 +40,10 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
                                channel_axis: int = 1,
                                n_iter: int = 10,
                                min_threshold: float = MIN_THRESHOLD,
-                               threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.MSE) -> dict:
+                               threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
     """
-    Compute the optimal threshold based on the provided ThresholdSelectionMethod to quantize the tensor.
-    Different search is applied, depends on the value of the selected ThresholdSelectionMethod.
+    Compute the optimal threshold based on the provided QuantizationErrorMethod to quantize the tensor.
+    Different search is applied, depends on the value of the selected QuantizationErrorMethod.
 
     Args:
         tensor_data: Tensor content as Numpy array.
@@ -63,9 +63,9 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
     unsigned_tensor_data = np.abs(tensor_data)
     tensor_max = get_tensor_max(unsigned_tensor_data, per_channel, channel_axis)
 
-    if threshold_method == qc.ThresholdSelectionMethod.NOCLIPPING:
+    if threshold_method == qc.QuantizationErrorMethod.NOCLIPPING:
         return {THRESHOLD: tensor_max}
-    elif threshold_method == qc.ThresholdSelectionMethod.KL:
+    elif threshold_method == qc.QuantizationErrorMethod.KL:
         # TODO: what about per_channel?
         return {THRESHOLD: minimize(
                 fun=lambda threshold: _kl_error_function(quantize_tensor(tensor_data, threshold, n_bits, signed),
@@ -101,10 +101,10 @@ def symmetric_selection_histogram(bins: np.ndarray,
                                   constrained: bool = True,
                                   n_iter: int = 10,
                                   min_threshold: float = MIN_THRESHOLD,
-                                  threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.MSE) -> dict:
+                                  threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
     """
-    Compute the optimal threshold based on the provided ThresholdSelectionMethod to quantize a histogram.
-    Different search is applied, depends on the value of the selected ThresholdSelectionMethod.
+    Compute the optimal threshold based on the provided QuantizationErrorMethod to quantize a histogram.
+    Different search is applied, depends on the value of the selected QuantizationErrorMethod.
 
     Args:
         bins: Bins values of the histogram.
@@ -123,7 +123,7 @@ def symmetric_selection_histogram(bins: np.ndarray,
     """
     tensor_max = np.max(np.abs(bins))
     signed = np.any(bins < 0)  # check if tensor is singed
-    if threshold_method == qc.ThresholdSelectionMethod.NOCLIPPING:
+    if threshold_method == qc.QuantizationErrorMethod.NOCLIPPING:
         return {THRESHOLD: tensor_max}
     else:
         error_function = get_threshold_selection_histogram_error_function(threshold_method, p)
@@ -144,9 +144,9 @@ def get_threshold_selection_tensor_error_function(threshold_method, p):
 
     """
     threshold_method_error_function_mapping = {
-        qc.ThresholdSelectionMethod.MSE: compute_mse,
-        qc.ThresholdSelectionMethod.MAE: compute_mae,
-        qc.ThresholdSelectionMethod.LP: lambda x, y: compute_lp_norm(x, y, p),
+        qc.QuantizationErrorMethod.MSE: compute_mse,
+        qc.QuantizationErrorMethod.MAE: compute_mae,
+        qc.QuantizationErrorMethod.LP: lambda x, y: compute_lp_norm(x, y, p),
     }
 
     return threshold_method_error_function_mapping[threshold_method]
@@ -164,11 +164,11 @@ def get_threshold_selection_histogram_error_function(threshold_method, p):
 
     """
     threshold_method_error_function_mapping = {
-        qc.ThresholdSelectionMethod.MSE: _mse_error_histogram,
-        qc.ThresholdSelectionMethod.MAE: _mae_error_histogram,
-        qc.ThresholdSelectionMethod.LP: lambda q_bins, q_count, bins, counts:
+        qc.QuantizationErrorMethod.MSE: _mse_error_histogram,
+        qc.QuantizationErrorMethod.MAE: _mae_error_histogram,
+        qc.QuantizationErrorMethod.LP: lambda q_bins, q_count, bins, counts:
             _lp_error_histogram(q_bins, q_count, bins, counts, p=p),
-        qc.ThresholdSelectionMethod.KL: _kl_error_histogram
+        qc.QuantizationErrorMethod.KL: _kl_error_histogram
     }
 
     return threshold_method_error_function_mapping[threshold_method]

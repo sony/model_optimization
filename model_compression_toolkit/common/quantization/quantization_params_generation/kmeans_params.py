@@ -27,7 +27,7 @@ def kmeans_tensor(tensor_data: np.ndarray,
                   channel_axis: int = 1,
                   n_iter: int = 10,
                   min_threshold: float = MIN_THRESHOLD,
-                  threshold_method: qc.ThresholdSelectionMethod = None) -> dict:
+                  threshold_method: qc.QuantizationErrorMethod = None) -> dict:
     """
     Compute the 2^nbit cluster assignments for the given tensor according to the k-means algorithm.
 

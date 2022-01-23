@@ -20,8 +20,7 @@ from enum import Enum
 from model_compression_toolkit.common.constants import MIN_THRESHOLD
 
 
-
-class ThresholdSelectionMethod(Enum):
+class QuantizationErrorMethod(Enum):
     """
     Method for quantization threshold selection:
 
@@ -69,8 +68,8 @@ class QuantizationMethod(Enum):
 class QuantizationConfig(object):
 
     def __init__(self,
-                 activation_threshold_method: ThresholdSelectionMethod = ThresholdSelectionMethod.MSE,
-                 weights_threshold_method: ThresholdSelectionMethod = ThresholdSelectionMethod.MSE,
+                 activation_threshold_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE,
+                 weights_threshold_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE,
                  activation_quantization_method: QuantizationMethod = QuantizationMethod.POWER_OF_TWO,
                  weights_quantization_method: QuantizationMethod = QuantizationMethod.POWER_OF_TWO,
                  activation_n_bits: int = 8,
@@ -92,8 +91,8 @@ class QuantizationConfig(object):
         Class to wrap all different parameters the library quantize the input model according to.
 
         Args:
-            activation_threshold_method (ThresholdSelectionMethod): Which method to use from ThresholdSelectionMethod for activation quantization threshold selection.
-            weights_threshold_method (ThresholdSelectionMethod): Which method to use from ThresholdSelectionMethod for activation quantization threshold selection.
+            activation_threshold_method (QuantizationErrorMethod): Which method to use from ThresholdSelectionMethod for activation quantization threshold selection.
+            weights_threshold_method (QuantizationErrorMethod): Which method to use from ThresholdSelectionMethod for activation quantization threshold selection.
             activation_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for activation quantization.
             weights_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for weights quantization.
             activation_n_bits (int): Number of bits to quantize the activations.
@@ -120,7 +119,7 @@ class QuantizationConfig(object):
             enabling relu_unbound_correction, weights_bias_correction, and quantizing the weights per-channel,
             one can instantiate a quantization configuration:
 
-            >>> qc = QuantizationConfig(activation_n_bits=6, weights_n_bits=7, activation_quantization_method=QuantizationMethod.POWER_OF_TWO, weights_quantization_method=QuantizationMethod.POWER_OF_TWO, weights_threshold_method=ThresholdSelectionMethod.MSE, activation_threshold_method=ThresholdSelectionMethod.NOCLIPPING, relu_unbound_correction=True, weights_bias_correction=True, weights_per_channel_threshold=True)
+            >>> qc = QuantizationConfig(activation_n_bits=6, weights_n_bits=7, activation_quantization_method=QuantizationMethod.POWER_OF_TWO, weights_quantization_method=QuantizationMethod.POWER_OF_TWO, weights_threshold_method=QuantizationErrorMethod.MSE, activation_threshold_method=QuantizationErrorMethod.NOCLIPPING, relu_unbound_correction=True, weights_bias_correction=True, weights_per_channel_threshold=True)
 
             The QuantizationConfig instanse can then be passed to
             :func:`~model_compression_toolkit.keras_post_training_quantization`
@@ -157,8 +156,8 @@ class QuantizationConfig(object):
 
 
 # Default quantization configuration the library use.
-DEFAULTCONFIG = QuantizationConfig(ThresholdSelectionMethod.MSE,
-                                   ThresholdSelectionMethod.MSE,
+DEFAULTCONFIG = QuantizationConfig(QuantizationErrorMethod.MSE,
+                                   QuantizationErrorMethod.MSE,
                                    QuantizationMethod.POWER_OF_TWO,
                                    QuantizationMethod.POWER_OF_TWO,
                                    weights_n_bits=8,

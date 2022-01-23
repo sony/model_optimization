@@ -30,11 +30,11 @@ class RemoveUpperBoundTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=1, val_batch_size=32)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING,
-                                       mct.ThresholdSelectionMethod.NOCLIPPING,
-                                       mct.QuantizationMethod.POWER_OF_TWO,
-                                       mct.QuantizationMethod.POWER_OF_TWO,
-                                       16, 16, False, False, False)
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
+                                      mct.QuantizationErrorMethod.NOCLIPPING,
+                                      mct.QuantizationMethod.POWER_OF_TWO,
+                                      mct.QuantizationMethod.POWER_OF_TWO,
+                                      16, 16, False, False, False)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, 3]]

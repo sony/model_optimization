@@ -31,7 +31,7 @@ def mse_selection_tensor(tensor_data: np.ndarray,
                          channel_axis: int = 1,
                          n_iter: int = 10,
                          min_threshold: float = MIN_THRESHOLD,
-                         threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.MSE) -> dict:
+                         threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
     """
     Compute the optimal threshold based on mean square error (MSE) to quantize the tensor.
     The threshold is constrained and the search is done iteratively over n_iter thresholds.
@@ -69,7 +69,7 @@ def mse_selection_histogram(bins: np.ndarray,
                             constrained: bool = True,
                             n_iter: int = 10,
                             min_threshold: float = MIN_THRESHOLD,
-                            threshold_method: qc.ThresholdSelectionMethod = qc.ThresholdSelectionMethod.MSE) -> dict:
+                            threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
     """
     Compute the optimal threshold based on the mean square error (MAE) to quantize a histogram.
     The threshold is either constrained or unconstrained and the search is done iteratively over

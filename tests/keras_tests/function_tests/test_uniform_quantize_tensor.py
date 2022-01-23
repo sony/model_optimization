@@ -18,7 +18,7 @@ import unittest
 from keras import Input, Model
 from keras.layers import Conv2D, Conv2DTranspose
 
-from model_compression_toolkit import QuantizationConfig, QuantizationMethod, ThresholdSelectionMethod
+from model_compression_toolkit import QuantizationConfig, QuantizationMethod, QuantizationErrorMethod
 from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import \
     compute_bias_correction_of_graph
 from model_compression_toolkit.common.constants import THRESHOLD

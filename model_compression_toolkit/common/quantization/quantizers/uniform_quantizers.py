@@ -20,6 +20,14 @@ from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers
     quantize_tensor
 
 
+def threshold_is_power_of_two(threshold, per_channel):
+    if per_channel:
+        thresholds_per_channel = threshold.flatten()
+        return (np.log2(thresholds_per_channel) == list(map(int, np.log2(thresholds_per_channel)))).all()
+
+    return np.log2(threshold) == int(np.log2(threshold))
+
+
 def power_of_two_quantizer(tensor_data: np.ndarray,
                            n_bits: int,
                            signed: bool,
@@ -44,7 +52,7 @@ def power_of_two_quantizer(tensor_data: np.ndarray,
     threshold = quantization_params.get(THRESHOLD)
     if threshold is None:
         raise Exception("'weights_threshold' parameter must be defined in 'quantization_params'")
-    if not (np.log2(threshold) == int(np.log2(threshold))):
+    if not threshold_is_power_of_two(threshold, per_channel):
         raise Exception(f"Expects 'weights_threshold' parameter to be a power of two, but got {threshold}")
 
     return quantize_tensor(tensor_data,

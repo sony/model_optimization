@@ -33,8 +33,8 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        qc = mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE,
-                                    mct.ThresholdSelectionMethod.MSE,
+        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                    mct.QuantizationErrorMethod.MSE,
                                     mct.QuantizationMethod.POWER_OF_TWO,
                                     mct.QuantizationMethod.POWER_OF_TWO,
                                     weights_bias_correction=True,

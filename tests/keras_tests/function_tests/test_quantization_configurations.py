@@ -39,13 +39,13 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         relu_unbound_correction = False
-        activation_threshold_selection = mct.ThresholdSelectionMethod.NOCLIPPING
+        activation_threshold_selection = mct.QuantizationErrorMethod.NOCLIPPING
         for bias_correction in [True, False]:
-            for weights_threshold_selection in [mct.ThresholdSelectionMethod.MSE,
-                                                mct.ThresholdSelectionMethod.NOCLIPPING,
-                                                mct.ThresholdSelectionMethod.MAE,
-                                                mct.ThresholdSelectionMethod.LP,
-                                                mct.ThresholdSelectionMethod.KL]:
+            for weights_threshold_selection in [mct.QuantizationErrorMethod.MSE,
+                                                mct.QuantizationErrorMethod.NOCLIPPING,
+                                                mct.QuantizationErrorMethod.MAE,
+                                                mct.QuantizationErrorMethod.LP,
+                                                mct.QuantizationErrorMethod.KL]:
                 for weights_per_channel_threshold in [False, True]:
                     qc = mct.QuantizationConfig(activation_threshold_selection,
                                                 weights_threshold_selection,
@@ -63,11 +63,11 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                                                                       fw_info=DEFAULT_KERAS_INFO)
 
         for relu_unbound_correction in [True, False]:
-            for activation_threshold_selection in [mct.ThresholdSelectionMethod.MSE,
-                                                   mct.ThresholdSelectionMethod.NOCLIPPING,
-                                                   mct.ThresholdSelectionMethod.MAE,
-                                                   mct.ThresholdSelectionMethod.LP,
-                                                   mct.ThresholdSelectionMethod.KL]:
+            for activation_threshold_selection in [mct.QuantizationErrorMethod.MSE,
+                                                   mct.QuantizationErrorMethod.NOCLIPPING,
+                                                   mct.QuantizationErrorMethod.MAE,
+                                                   mct.QuantizationErrorMethod.LP,
+                                                   mct.QuantizationErrorMethod.KL]:
                 qc = mct.QuantizationConfig(activation_threshold_selection,
                                             weights_threshold_selection,
                                             mct.QuantizationMethod.POWER_OF_TWO,
