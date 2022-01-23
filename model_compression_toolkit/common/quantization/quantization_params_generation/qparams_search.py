@@ -21,7 +21,7 @@ import numpy as np
 
 from model_compression_toolkit.common.constants import MIN_THRESHOLD, THRESHOLD
 from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import quantize_tensor, \
-    reshape_tensor_for_per_channel_search, uniform_quantize_tensor, fix_range_to_include_zero
+    reshape_tensor_for_per_channel_search, uniform_quantize_tensor
 from model_compression_toolkit.common.quantization.quantization_params_generation.no_clipping import \
     no_clipping_selection_tensor, no_clipping_selection_histogram
 
@@ -192,12 +192,6 @@ def uniform_qparams_selection_histogram_search_error_function(error_function: Ca
     Returns: the error between the original and quantized histogram.
 
     """
-    # TODO: argument 'q_bins' is only relevant for 'kl_selection' but still needs to be provided to all others.
-    #       consider remove its calculation if unnecessary (and then this method is not needed, can just
-    #       pass 'error_function' on 'quantize_tensor' result to the lambda in the selection method above).
-
-    min_max_range = fix_range_to_include_zero(min_max_range, n_bits)
-
     q_bins = uniform_quantize_tensor(bins, range_min=min_max_range[0], range_max=min_max_range[1],
                                      n_bits=n_bits)  # compute the quantized values of the bins.
     # compute the number of elements between quantized bin values.

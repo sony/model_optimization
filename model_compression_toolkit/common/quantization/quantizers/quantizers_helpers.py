@@ -89,7 +89,9 @@ def calculate_min_max_values(threshold: np.ndarray,
 def quantize_tensor(tensor_data: np.ndarray,
                     threshold: np.ndarray,
                     n_bits: int,
-                    signed: bool) -> np.ndarray:
+                    signed: bool,
+                    per_channel: bool = False,
+                    channel_axis: int = 1) -> np.ndarray:
     """
     Quantize a tensor according to given: threshold, number of bits, and whether
     quantization range is sign or unsigned.
@@ -109,17 +111,24 @@ def quantize_tensor(tensor_data: np.ndarray,
                             n_bits,
                             signed=signed)
 
+    range_min = -threshold * int(signed)
+    range_max = threshold - delta
+
     # Quantize the data between min/max of quantization range.
-    q = delta * np.round(tensor_data / delta)
-    return np.clip(q,
-                   a_min=-threshold * int(signed),
-                   a_max=threshold - delta)
+    return uniform_quantize_tensor(tensor_data,
+                                   range_min=range_min,
+                                   range_max=range_max,
+                                   n_bits=n_bits,
+                                   per_channel=per_channel,
+                                   channel_axis=channel_axis)
 
 
 def uniform_quantize_tensor(tensor_data: np.ndarray,
                             range_min: np.ndarray,
                             range_max: np.ndarray,
-                            n_bits: int) -> np.ndarray:
+                            n_bits: int,
+                            per_channel: bool = False,
+                            channel_axis: int = 1) -> np.ndarray:
     """
     Quantize a tensor according to given range (min, max) and number of bits.
 
@@ -133,9 +142,7 @@ def uniform_quantize_tensor(tensor_data: np.ndarray,
         Quantized data.
     """
 
-    # a, b = min_max_range
-    a = range_min
-    b = range_max
+    a, b = fix_range_to_include_zero(range_min, range_max, n_bits, per_channel, channel_axis)
 
     # Compute the step size of quantized values.
     delta = (b - a) / (2 ** n_bits - 1)
@@ -266,7 +273,7 @@ def reshape_tensor_for_per_channel_search(tensor_data, channel_axis):
     return tensor_data_r
 
 
-def fix_range_to_include_zero(min_max_range, n_bits):
+def fix_range_to_include_zero(range_min, range_max, n_bits, per_channel, channel_axis):
     """
     Adjusting the quantization range to include representation of 0.0 in the quantization grid.
     Args:
@@ -276,6 +283,22 @@ def fix_range_to_include_zero(min_max_range, n_bits):
     Returns: adjusted quantization range
 
     """
+    if per_channel:
+        output_shape = [-1 if i is channel_axis else 1 for i in range(len(range_min.shape))]
+        # tensor_max = np.reshape(np.max(tensor_data, axis=-1), output_shape)
+        res_min, res_max = [], []
+        for a_b_range in np.column_stack((range_min.flatten(), range_max.flatten())):
+            curr_a, curr_b = adjust_range(a_b_range, n_bits)
+            res_min.append(curr_a)
+            res_max.append(curr_b)
+        res_min = np.reshape(np.array(res_min), output_shape)
+        res_max = np.reshape(np.array(res_max), output_shape)
+        return res_min, res_max
+    else:
+        return adjust_range([range_min, range_max], n_bits)
+
+
+def adjust_range(min_max_range, n_bits):
     a, b = min_max_range
     if a > 0:
         return min_max_range - a

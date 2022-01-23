@@ -29,8 +29,8 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_search import \
     uniform_qparams_tensor_minimization, uniform_qparams_histogram_minimization
 from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import get_tensor_max, \
-    uniform_quantize_tensor, get_tensor_min, reshape_tensor_for_per_channel_search, fix_range_to_include_zero
-from scipy.optimize import minimize
+    get_tensor_min, reshape_tensor_for_per_channel_search
+
 
 from model_compression_toolkit.common.similarity_analyzer import compute_mse, compute_mae, compute_lp_norm
 
@@ -139,8 +139,7 @@ def uniform_selection_histogram(bins: np.ndarray,
         # returned 'x' here is an array with min and max range values
         res = uniform_qparams_histogram_minimization(bins, tensor_min_max, n_bits, counts, error_function).x
 
-    fixed_res = fix_range_to_include_zero(res, n_bits)
-    return {RANGE_MIN: fixed_res[0], RANGE_MAX: fixed_res[1]}
+    return {RANGE_MIN: res[0], RANGE_MAX: res[1]}
 
 
 # TODO: need to move both "get" methods to a shared location for both uniform and symmetric selectors

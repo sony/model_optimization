@@ -31,9 +31,8 @@ from model_compression_toolkit.common.framework_info import FrameworkInfo, Chann
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationMethod
 from model_compression_toolkit.common.quantization.quantizers.kmeans_quantizer import kmeans_quantizer
 from model_compression_toolkit.common.quantization.quantizers.lut_kmeans_quantizer import lut_kmeans_quantizer
-from model_compression_toolkit.common.quantization.quantizers.power_of_two_quantizer import power_of_two_quantizer
-from model_compression_toolkit.common.quantization.quantizers.symmetric_quantizer import symmetric_quantizer
-from model_compression_toolkit.common.quantization.quantizers.uniform_quantizer import uniform_quantizer
+from model_compression_toolkit.common.quantization.quantizers.uniform_quantizers import power_of_two_quantizer, \
+    symmetric_quantizer, uniform_quantizer
 from model_compression_toolkit.keras.constants import SOFTMAX, LINEAR, RELU, SWISH, SIGMOID, IDENTITY, TANH, SELU, \
     KERNEL, DEPTHWISE_KERNEL
 from model_compression_toolkit.keras.quantizer.fake_quant_builder import constraint_quantization, uniform_quantization

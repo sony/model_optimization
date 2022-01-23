@@ -46,19 +46,14 @@ class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify quantization range contains zero
         fake_layer_input_args = quantized_model.layers[1].inbound_nodes[0].call_kwargs
-        fake_layer_relu_args = quantized_model.layers[3].inbound_nodes[0].call_kwargs
         fake_layer_add_args = quantized_model.layers[5].inbound_nodes[0].call_kwargs
 
         input_layer_min, input_layer_max = fake_layer_input_args['min'], fake_layer_input_args['max']
-        relu_layer_min, relu_layer_max = fake_layer_relu_args['min'], fake_layer_relu_args['max']
         add_layer_min, add_layer_max = fake_layer_add_args['min'], fake_layer_add_args['max']
 
         self.unit_test.assertTrue(input_layer_min <= 0.0 <= input_layer_max,
                                   msg=f"0.0 is not within the quantization range ({input_layer_min}, {input_layer_max}) "
                                       f"for Input layer.")
-        self.unit_test.assertTrue(relu_layer_min <= 0.0 <= relu_layer_max,
-                                  msg=f"0.0 is not within the quantization range ({relu_layer_min}, {relu_layer_max}) "
-                                      f"for Relu layer.")
         self.unit_test.assertTrue(add_layer_min <= 0.0 <= add_layer_max,
                                   msg=f"0.0 is not within the quantization range ({add_layer_min}, {add_layer_max}) "
                                       f"for Relu layer.")
