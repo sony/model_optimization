@@ -30,7 +30,7 @@ def lp_selection_tensor(tensor_data: np.ndarray,
                         channel_axis: int = 1,
                         n_iter: int = 10,
                         min_threshold: float = MIN_THRESHOLD,
-                        threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.LP) -> dict:
+                        quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.LP) -> dict:
     """
     Compute the optimal threshold based on Lp-norm distance to quantize a tensor.
     The error is computed as the distance in Lp-norm between the tensor and its quantized
@@ -44,7 +44,7 @@ def lp_selection_tensor(tensor_data: np.ndarray,
         channel_axis: Output channel index.
         n_iter: Number of iterations to search for the optimal threshold.
         min_threshold: Minimal threshold to chose when the computed one is smaller.
-        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
+        quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
 
     Returns:
         Optimal threshold to quantize the tensor based on Lp-norm distance.
@@ -84,7 +84,7 @@ def lp_selection_histogram(bins: np.ndarray,
                            constrained=True,
                            n_iter=10,
                            min_threshold=MIN_THRESHOLD,
-                           threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.LP) -> dict:
+                           quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.LP) -> dict:
     """
     Compute the optimal threshold based on Lp-norm distance to quantize a histogram.
     The quantization error is the Euclidean distance between two points in the Lp-norm
@@ -100,7 +100,7 @@ def lp_selection_histogram(bins: np.ndarray,
         constrained: Whether the threshold should be constrained or not.
         n_iter: Number of iteration ot search for the threshold.
         min_threshold: Minimal threshold to use if threshold is too small.
-        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
+        quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
 
     Returns:
         Optimal threshold to quantize the histogram based on Lp-norm distance.

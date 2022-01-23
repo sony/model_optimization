@@ -62,7 +62,7 @@ def get_activations_qparams(n: BaseNode,
                                                                                         min_value,
                                                                                         max_value,
                                                                                         min_threshold=n.activation_quantization_cfg.min_threshold,
-                                                                                        threshold_method=n.activation_quantization_cfg.activation_threshold_method)
+                                                                                        quant_error_method=n.activation_quantization_cfg.activation_error_method)
     activation_params.update({SIGNED: signed})
 
     return activation_params

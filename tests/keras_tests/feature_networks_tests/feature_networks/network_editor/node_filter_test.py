@@ -187,8 +187,8 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, False, False, False)
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+                                      False, False, False)
 
     def get_network_editor(self):
         return [EditRule(filter=NodeTypeFilter(self.type_to_change),
@@ -253,8 +253,7 @@ class FilterLogicTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16,
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
                                       False, False, False)
 
     def get_network_editor(self):

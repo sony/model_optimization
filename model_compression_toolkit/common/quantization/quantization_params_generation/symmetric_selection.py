@@ -40,7 +40,7 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
                                channel_axis: int = 1,
                                n_iter: int = 10,
                                min_threshold: float = MIN_THRESHOLD,
-                               threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
+                               quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
     """
     Compute the optimal threshold based on the provided QuantizationErrorMethod to quantize the tensor.
     Different search is applied, depends on the value of the selected QuantizationErrorMethod.
@@ -53,7 +53,7 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
         channel_axis: Output channel index.
         n_iter: Number of iterations to search for the optimal threshold (not used for this method).
         min_threshold: Minimal threshold to use if threshold is too small (not used for this method).
-        threshold_method: an error function to optimize the threshold selection accordingly.
+        quant_error_method: an error function to optimize the parameters' selection accordingly.
 
     Returns:
         Optimal threshold to quantize the tensor in a symmetric manner.
@@ -63,16 +63,16 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
     unsigned_tensor_data = np.abs(tensor_data)
     tensor_max = get_tensor_max(unsigned_tensor_data, per_channel, channel_axis)
 
-    if threshold_method == qc.QuantizationErrorMethod.NOCLIPPING:
+    if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         return {THRESHOLD: tensor_max}
-    elif threshold_method == qc.QuantizationErrorMethod.KL:
+    elif quant_error_method == qc.QuantizationErrorMethod.KL:
         # TODO: what about per_channel?
         return {THRESHOLD: minimize(
                 fun=lambda threshold: _kl_error_function(quantize_tensor(tensor_data, threshold, n_bits, signed),
                                                          tensor_data, threshold, n_bits=n_bits),
                 x0=tensor_max).x}
     else:
-        error_function = get_threshold_selection_tensor_error_function(threshold_method, p)
+        error_function = get_threshold_selection_tensor_error_function(quant_error_method, p)
         if per_channel:
             tensor_data_r = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
             output_shape = [-1 if i is channel_axis else 1 for i in range(len(tensor_data.shape))]
@@ -101,7 +101,7 @@ def symmetric_selection_histogram(bins: np.ndarray,
                                   constrained: bool = True,
                                   n_iter: int = 10,
                                   min_threshold: float = MIN_THRESHOLD,
-                                  threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
+                                  quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
     """
     Compute the optimal threshold based on the provided QuantizationErrorMethod to quantize a histogram.
     Different search is applied, depends on the value of the selected QuantizationErrorMethod.
@@ -116,54 +116,54 @@ def symmetric_selection_histogram(bins: np.ndarray,
         constrained: Whether the threshold should be constrained or not (not used for this method).
         n_iter: Number of iteration ot search for the threshold (not used for this method).
         min_threshold: Minimal threshold to use if threshold is too small (used only for kl threshold selection).
-        threshold_method: an error function to optimize the threshold selection accordingly.
+        quant_error_method: an error function to optimize the parameters' selection accordingly.
 
     Returns:
         Optimal threshold to quantize the histogram a symmetric manner.
     """
     tensor_max = np.max(np.abs(bins))
     signed = np.any(bins < 0)  # check if tensor is singed
-    if threshold_method == qc.QuantizationErrorMethod.NOCLIPPING:
+    if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         return {THRESHOLD: tensor_max}
     else:
-        error_function = get_threshold_selection_histogram_error_function(threshold_method, p)
+        error_function = get_threshold_selection_histogram_error_function(quant_error_method, p)
         res = symmetric_qparams_histogram_minimization(bins, tensor_max, n_bits, signed, counts, error_function)
         return {THRESHOLD: res.x[0]}
 
 
-def get_threshold_selection_tensor_error_function(threshold_method, p):
+def get_threshold_selection_tensor_error_function(quant_error_method, p):
     """
     Returns the error function compatible to the provided threshold method,
     to be used in the threshold optimization search for tensor quantization.
     Args:
-        threshold_method: the requested error function type.
+        quant_error_method: the requested error function type.
         p: p-norm to use for the Lp-norm distance.
 
 
     Returns: a Callable method that calculates the error between a tensor and a quantized tensor.
 
     """
-    threshold_method_error_function_mapping = {
+    quant_method_error_function_mapping = {
         qc.QuantizationErrorMethod.MSE: compute_mse,
         qc.QuantizationErrorMethod.MAE: compute_mae,
         qc.QuantizationErrorMethod.LP: lambda x, y: compute_lp_norm(x, y, p),
     }
 
-    return threshold_method_error_function_mapping[threshold_method]
+    return quant_method_error_function_mapping[quant_error_method]
 
 
-def get_threshold_selection_histogram_error_function(threshold_method, p):
+def get_threshold_selection_histogram_error_function(quant_error_method, p):
     """
     Returns the error function compatible to the provided threshold method,
     to be used in the threshold optimization search for histogram quantization.
     Args:
-        threshold_method: the requested error function type.
+        quant_error_method: the requested error function type.
         p: p-norm to use for the Lp-norm distance.
 
     Returns: a Callable method that calculates the error between a tensor and a quantized tensor.
 
     """
-    threshold_method_error_function_mapping = {
+    quant_method_error_function_mapping = {
         qc.QuantizationErrorMethod.MSE: _mse_error_histogram,
         qc.QuantizationErrorMethod.MAE: _mae_error_histogram,
         qc.QuantizationErrorMethod.LP: lambda q_bins, q_count, bins, counts:
@@ -171,4 +171,4 @@ def get_threshold_selection_histogram_error_function(threshold_method, p):
         qc.QuantizationErrorMethod.KL: _kl_error_histogram
     }
 
-    return threshold_method_error_function_mapping[threshold_method]
+    return quant_method_error_function_mapping[quant_error_method]

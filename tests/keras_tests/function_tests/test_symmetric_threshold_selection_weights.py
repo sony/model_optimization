@@ -73,12 +73,9 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
         self.run_test_for_threshold_method(QuantizationErrorMethod.KL, per_channel=False)
 
     def run_test_for_threshold_method(self, threshold_method, per_channel=True):
-        qc = QuantizationConfig(
-            weights_threshold_method=threshold_method,
-            weights_quantization_method=QuantizationMethod.SYMMETRIC,
-            weights_n_bits=8,
-            weights_per_channel_threshold=per_channel
-        )
+        qc = QuantizationConfig(weights_error_method=threshold_method,
+                                weights_quantization_method=QuantizationMethod.SYMMETRIC, weights_n_bits=8,
+                                weights_per_channel_threshold=per_channel)
 
         fw_info = DEFAULT_KERAS_INFO
         in_model = create_network()

@@ -32,8 +32,8 @@ class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, input_scaling=True)
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+                                      input_scaling=True)
 
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):

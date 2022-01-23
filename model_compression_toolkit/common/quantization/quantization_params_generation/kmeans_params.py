@@ -27,7 +27,7 @@ def kmeans_tensor(tensor_data: np.ndarray,
                   channel_axis: int = 1,
                   n_iter: int = 10,
                   min_threshold: float = MIN_THRESHOLD,
-                  threshold_method: qc.QuantizationErrorMethod = None) -> dict:
+                  quant_error_method: qc.QuantizationErrorMethod = None) -> dict:
     """
     Compute the 2^nbit cluster assignments for the given tensor according to the k-means algorithm.
 
@@ -39,7 +39,7 @@ def kmeans_tensor(tensor_data: np.ndarray,
         channel_axis: Output channel index.
         n_iter: Number of iterations to search_methods for the optimal threshold.
         min_threshold: Minimal threshold to chose when the computed one is smaller.
-        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
+        quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
 
     Returns:
         A dictionary containing the cluster assignments according to the k-means algorithm and the scales per channel.

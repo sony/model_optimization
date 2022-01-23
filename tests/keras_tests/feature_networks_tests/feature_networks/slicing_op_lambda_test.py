@@ -35,15 +35,9 @@ class SlicingOpLambdaTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, val_batch_size=1)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO,
-                                      mct.QuantizationMethod.POWER_OF_TWO,
-                                      16,
-                                      16,
-                                      False,
-                                      False,
-                                      True)
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+                                      False, False, True)
 
 
     def create_networks(self):

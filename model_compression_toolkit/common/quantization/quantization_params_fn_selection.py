@@ -27,13 +27,13 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 
 
 def get_activation_quantization_params_fn(activation_quantization_method: QuantizationMethod,
-                                          activation_threshold_method: QuantizationErrorMethod) -> Callable:
+                                          activation_error_method: QuantizationErrorMethod) -> Callable:
     """
     Generate a function for finding activation quantization threshold.
 
     Args:
         activation_quantization_method: Which quantization method to use for activations.
-        activation_threshold_method: Method for finding the threshold for activation quantization.
+        activation_error_method: Method for optimizing the parameters' search for activation quantization.
 
     Returns:
         A function to find the quantization threshold.
@@ -41,19 +41,19 @@ def get_activation_quantization_params_fn(activation_quantization_method: Quanti
     """
     if activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
         # Use min/max as the threshold if we use NOCLIPPING
-        if activation_threshold_method == QuantizationErrorMethod.NOCLIPPING:
+        if activation_error_method == QuantizationErrorMethod.NOCLIPPING:
             params_fn = quantization_params_generation.no_clipping_selection_min_max
         # Use MSE to search_methods for the optimal threshold.
-        elif activation_threshold_method == QuantizationErrorMethod.MSE:
+        elif activation_error_method == QuantizationErrorMethod.MSE:
             params_fn = quantization_params_generation.mse_selection_histogram
         # Use MAE to search_methods for the optimal threshold.
-        elif activation_threshold_method == QuantizationErrorMethod.MAE:
+        elif activation_error_method == QuantizationErrorMethod.MAE:
             params_fn = quantization_params_generation.mae_selection_histogram
         # Use Lp distance to search_methods for the optimal threshold.
-        elif activation_threshold_method == QuantizationErrorMethod.LP:
+        elif activation_error_method == QuantizationErrorMethod.LP:
             params_fn = quantization_params_generation.lp_selection_histogram
         # Use KL-divergence to search_methods for the optimal threshold.
-        elif activation_threshold_method == QuantizationErrorMethod.KL:
+        elif activation_error_method == QuantizationErrorMethod.KL:
             params_fn = quantization_params_generation.kl_selection_histogram
         else:
             params_fn = None
@@ -64,37 +64,37 @@ def get_activation_quantization_params_fn(activation_quantization_method: Quanti
     else:
         raise Exception(
             f'No params function for the configuration of quantization method {activation_quantization_method} and '
-            f'threshold selection method {activation_threshold_method}')
+            f'threshold selection method {activation_error_method}')
     return params_fn
 
 
 def get_weights_quantization_params_fn(weights_quantization_method: QuantizationMethod,
-                                       weights_threshold_method: QuantizationErrorMethod) -> Callable:
+                                       weights_error_method: QuantizationErrorMethod) -> Callable:
     """
     Generate a function for finding weights quantization threshold.
 
     Args:
         weights_quantization_method: Which quantization method to use for weights.
-        weights_threshold_method: Method for finding the threshold for weight quantization.
+        weights_error_method: Method for optimizing the parameters' search for weight quantization.
 
     Returns:
         A function to find the quantization threshold.
 
     """
     if weights_quantization_method == QuantizationMethod.POWER_OF_TWO:
-        if weights_threshold_method == QuantizationErrorMethod.NOCLIPPING:
+        if weights_error_method == QuantizationErrorMethod.NOCLIPPING:
             params_fn = quantization_params_generation.no_clipping_selection_tensor
         # Use MSE to search_methods for the optimal weights thresholds.
-        elif weights_threshold_method == QuantizationErrorMethod.MSE:
+        elif weights_error_method == QuantizationErrorMethod.MSE:
             params_fn = quantization_params_generation.mse_selection_tensor
         # Use MAE to search_methods for the optimal weights thresholds.
-        elif weights_threshold_method == QuantizationErrorMethod.MAE:
+        elif weights_error_method == QuantizationErrorMethod.MAE:
             params_fn = quantization_params_generation.mae_selection_tensor
         # Use KL-divergence to search_methods for the optimal weights thresholds.
-        elif weights_threshold_method == QuantizationErrorMethod.KL:
+        elif weights_error_method == QuantizationErrorMethod.KL:
             params_fn = quantization_params_generation.kl_selection_tensor
         # Use Lp distance to search_methods for the optimal weights thresholds.
-        elif weights_threshold_method == QuantizationErrorMethod.LP:
+        elif weights_error_method == QuantizationErrorMethod.LP:
             params_fn = quantization_params_generation.lp_selection_tensor
         else:
             params_fn = None
@@ -109,5 +109,5 @@ def get_weights_quantization_params_fn(weights_quantization_method: Quantization
     else:
         raise Exception(
             f'No params function for the configuration of quantization method {weights_quantization_method} and '
-            f'threshold selection method {weights_threshold_method}')
+            f'threshold selection method {weights_error_method}')
     return params_fn

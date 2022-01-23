@@ -32,10 +32,9 @@ class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
         return [np.random.uniform(low=-7, high=7, size=in_shape) for in_shape in self.get_input_shapes()]
 
     def get_quantization_config(self):
-        return cmo.QuantizationConfig(
-            activation_threshold_method=self.activation_threshold_method,
-            activation_quantization_method=cmo.QuantizationMethod.UNIFORM,
-            activation_n_bits=8)
+        return cmo.QuantizationConfig(activation_error_method=self.activation_threshold_method,
+                                      activation_quantization_method=cmo.QuantizationMethod.UNIFORM,
+                                      activation_n_bits=8)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

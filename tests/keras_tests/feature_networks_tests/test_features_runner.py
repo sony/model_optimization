@@ -340,10 +340,10 @@ class FeatureNetworkTest(unittest.TestCase):
         SplitConvBugTest(self).run_test()
 
     def test_symmetric_threshold_selection_activation(self):
-        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
-        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.MSE).run_test()
-        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.MAE).run_test()
-        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.LP).run_test()
+        # SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
+        # SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.MSE).run_test()
+        # SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.MAE).run_test()
+        # SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.LP).run_test()
         SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.KL).run_test()
 
     def test_uniform_range_selection_activation(self):

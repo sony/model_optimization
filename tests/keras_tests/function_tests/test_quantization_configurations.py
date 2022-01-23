@@ -47,13 +47,10 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                                 mct.QuantizationErrorMethod.LP,
                                                 mct.QuantizationErrorMethod.KL]:
                 for weights_per_channel_threshold in [False, True]:
-                    qc = mct.QuantizationConfig(activation_threshold_selection,
-                                                weights_threshold_selection,
+                    qc = mct.QuantizationConfig(activation_threshold_selection, weights_threshold_selection,
                                                 mct.QuantizationMethod.POWER_OF_TWO,
-                                                mct.QuantizationMethod.POWER_OF_TWO,
-                                                activation_n_bits=8,
-                                                weights_n_bits=16,
-                                                relu_unbound_correction=relu_unbound_correction,
+                                                mct.QuantizationMethod.POWER_OF_TWO, activation_n_bits=8,
+                                                weights_n_bits=16, relu_unbound_correction=relu_unbound_correction,
                                                 weights_bias_correction=bias_correction,
                                                 weights_per_channel_threshold=weights_per_channel_threshold)
                     q_model, quantization_info = mct.keras_post_training_quantization(model,
@@ -68,12 +65,9 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                                    mct.QuantizationErrorMethod.MAE,
                                                    mct.QuantizationErrorMethod.LP,
                                                    mct.QuantizationErrorMethod.KL]:
-                qc = mct.QuantizationConfig(activation_threshold_selection,
-                                            weights_threshold_selection,
-                                            mct.QuantizationMethod.POWER_OF_TWO,
-                                            mct.QuantizationMethod.POWER_OF_TWO,
-                                            activation_n_bits=8,
-                                            weights_n_bits=16,
+                qc = mct.QuantizationConfig(activation_threshold_selection, weights_threshold_selection,
+                                            mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
+                                            activation_n_bits=8, weights_n_bits=16,
                                             relu_unbound_correction=relu_unbound_correction,
                                             weights_bias_correction=bias_correction,
                                             weights_per_channel_threshold=weights_per_channel_threshold)

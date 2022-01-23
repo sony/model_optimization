@@ -27,7 +27,7 @@ def no_clipping_selection_tensor(tensor_data: np.ndarray,
                                  per_channel: bool = False,
                                  channel_axis: int = 1,
                                  min_threshold: float = MIN_THRESHOLD,
-                                 threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.NOCLIPPING) -> dict:
+                                 quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.NOCLIPPING) -> dict:
     """
     Compute the constrained threshold of a tensor using the tensor's maximal value.
     If per_channel is True, multiple constrained thresholds will return.
@@ -40,7 +40,7 @@ def no_clipping_selection_tensor(tensor_data: np.ndarray,
         channel_axis: Output channel index.
         n_iter: Number of iterations to search for the optimal threshold.
         min_threshold: Minimal threshold to chose when the computed one is smaller.
-        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
+        quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
 
     Returns:
         Constrained no-clipping threshold to quantize the tensor.
@@ -62,7 +62,7 @@ def no_clipping_selection_histogram(bins: np.ndarray,
                                     constrained: bool = True,
                                     n_iter: int = 10,
                                     min_threshold: float = MIN_THRESHOLD,
-                                    threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.NOCLIPPING) -> np.ndarray:
+                                    quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.NOCLIPPING) -> np.ndarray:
     """
     Compute a threshold based on a histogram. The threshold can be either constrained or unconstrained.
     If computed threshold is less than min_threshold, min_threshold is returned.
@@ -77,7 +77,7 @@ def no_clipping_selection_histogram(bins: np.ndarray,
         constrained: Whether the threshold should be constrained or not.
         n_iter: Number of iteration ot search for the threshold (not used for this method).
         min_threshold: Minimal threshold to use if threshold is too small.
-        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
+        quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
 
     Returns:
         Threshold of a histogram.
@@ -99,7 +99,7 @@ def no_clipping_selection_min_max(bins: np.ndarray,
                                   constrained: bool = True,
                                   n_iter: int = 10,
                                   min_threshold: float = MIN_THRESHOLD,
-                                  threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.NOCLIPPING) -> dict:
+                                  quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.NOCLIPPING) -> dict:
     """
     Get a constrained threshold between min and max numbers.
     If computed threshold is less than min_threshold, min_threshold is returned.
@@ -114,7 +114,7 @@ def no_clipping_selection_min_max(bins: np.ndarray,
         constrained: Whether the threshold should be constrained or not (not used for this method).
         n_iter: Number of iteration ot search for the threshold (not used for this method).
         min_threshold: Minimal threshold to use if threshold is too small.
-        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
+        quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
 
     Returns:
         A constrained threshold of the min/max values.
