@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+from scipy import optimize
 
 import model_compression_toolkit.common.quantization.quantization_config as qc
 from model_compression_toolkit.common.constants import MIN_THRESHOLD, THRESHOLD
@@ -25,10 +26,9 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 from model_compression_toolkit.common.quantization.quantization_params_generation.mse_selection import \
     _mse_error_histogram
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_search import \
-    symmetric_qparams_histogram_minimization, symmetric_qparams_tensor_minimization
-from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import get_tensor_max, quantize_tensor,\
-    reshape_tensor_for_per_channel_search
-from scipy.optimize import minimize
+    kl_symmetric_qparams_selection_histogram_search_error_function, \
+    qparams_histogram_minimization, qparams_tensor_minimization, symmetric_qparams_selection_per_channel_search
+from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import get_tensor_max, quantize_tensor
 
 from model_compression_toolkit.common.similarity_analyzer import compute_mse, compute_mae, compute_lp_norm
 
@@ -64,32 +64,38 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
     tensor_max = get_tensor_max(unsigned_tensor_data, per_channel, channel_axis)
 
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
-        return {THRESHOLD: tensor_max}
+        res = tensor_max
     elif quant_error_method == qc.QuantizationErrorMethod.KL:
-        # TODO: what about per_channel?
-        return {THRESHOLD: minimize(
-                fun=lambda threshold: _kl_error_function(quantize_tensor(tensor_data, threshold, n_bits, signed),
-                                                         tensor_data, threshold, n_bits=n_bits),
-                x0=tensor_max).x}
+        if per_channel:
+            # Using search per-channel wrapper for kl based minimization
+            res = symmetric_qparams_selection_per_channel_search(
+                tensor_data, tensor_max, channel_axis,
+                search_function=lambda x, x0:
+                optimize.minimize(fun=lambda threshold:
+                                  _kl_error_function(x, range_min=-threshold, range_max=threshold, n_bits=n_bits),
+                                  x0=x0)
+            )
+        else:
+            res = optimize.minimize(
+                    fun=lambda threshold: _kl_error_function(tensor_data, range_min=-threshold, range_max=threshold, n_bits=n_bits),
+                    x0=tensor_max)
+            res = res.x
     else:
         error_function = get_threshold_selection_tensor_error_function(quant_error_method, p)
         if per_channel:
-            tensor_data_r = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
-            output_shape = [-1 if i is channel_axis else 1 for i in range(len(tensor_data.shape))]
-            res = []
-
-            for j in range(tensor_data_r.shape[0]):  # iterate all channels of the tensor.
-                channel_data = tensor_data_r[j, :]
-                channel_threshold = tensor_max.flatten()[j]
-                channel_res = symmetric_qparams_tensor_minimization(channel_data, channel_threshold,
-                                                            n_bits, signed, error_function)
-                res.append(channel_res.x)
-            res = np.reshape(np.array(res), output_shape)
+            # Using search per-channel wrapper for minimization
+            res = symmetric_qparams_selection_per_channel_search(
+                tensor_data, tensor_max, channel_axis,
+                search_function=lambda x, x0: qparams_tensor_minimization(x, x0, error_function,
+                                                                          quant_function=lambda threshold:
+                                                                          quantize_tensor(x, threshold, n_bits, signed))
+            )
         else:
-            # returned 'x' here is the value of the optimal threshold
-            res = symmetric_qparams_tensor_minimization(tensor_data, tensor_max, n_bits, signed, error_function)
+            res = qparams_tensor_minimization(tensor_data, tensor_max, error_function,
+                                              quant_function=lambda threshold:
+                                              quantize_tensor(tensor_data, threshold, n_bits, signed))
             res = res.x
-        return {THRESHOLD: res}
+    return {THRESHOLD: res}
 
 
 def symmetric_selection_histogram(bins: np.ndarray,
@@ -124,11 +130,22 @@ def symmetric_selection_histogram(bins: np.ndarray,
     tensor_max = np.max(np.abs(bins))
     signed = np.any(bins < 0)  # check if tensor is singed
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
-        return {THRESHOLD: tensor_max}
+        res = tensor_max
+    elif quant_error_method == qc.QuantizationErrorMethod.KL:
+        res = optimize.minimize(
+            fun=lambda threshold:
+            kl_symmetric_qparams_selection_histogram_search_error_function(_kl_error_histogram, bins, threshold,
+                                                                           n_bits, signed, counts),
+            x0=tensor_max)
+        res = res.x[0]
+
     else:
         error_function = get_threshold_selection_histogram_error_function(quant_error_method, p)
-        res = symmetric_qparams_histogram_minimization(bins, tensor_max, n_bits, signed, counts, error_function)
-        return {THRESHOLD: res.x[0]}
+        res = qparams_histogram_minimization(bins, tensor_max, counts, error_function,
+                                             quant_function=lambda threshold:
+                                             quantize_tensor(bins, threshold, n_bits, signed))
+        res = res.x[0]
+    return {THRESHOLD: res}
 
 
 def get_threshold_selection_tensor_error_function(quant_error_method, p):
@@ -168,7 +185,6 @@ def get_threshold_selection_histogram_error_function(quant_error_method, p):
         qc.QuantizationErrorMethod.MAE: _mae_error_histogram,
         qc.QuantizationErrorMethod.LP: lambda q_bins, q_count, bins, counts:
             _lp_error_histogram(q_bins, q_count, bins, counts, p=p),
-        qc.QuantizationErrorMethod.KL: _kl_error_histogram
     }
 
     return quant_method_error_function_mapping[quant_error_method]

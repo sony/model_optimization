@@ -22,10 +22,10 @@ import numpy as np
 import model_compression_toolkit.common.quantization.quantization_config as qc
 from model_compression_toolkit.common.constants import FLOAT_32, THRESHOLD
 from model_compression_toolkit.common.constants import MIN_THRESHOLD
-from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import quantize_tensor
+from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import quantize_tensor, \
+    uniform_quantize_tensor
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_search import \
     qparams_selection_tensor_search, qparams_selection_histogram_search
-
 
 
 def kl_selection_tensor(tensor_data: np.ndarray,
@@ -35,7 +35,7 @@ def kl_selection_tensor(tensor_data: np.ndarray,
                         channel_axis: int = 1,
                         n_iter: int = 10,
                         min_threshold: float = MIN_THRESHOLD,
-                        threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.KL) -> dict:
+                        quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.KL) -> dict:
     """
     Compute the optimal threshold based on KL-divergence to quantize the tensor.
     The error computation is based on KL-divergence to quantify the distributions
@@ -50,7 +50,7 @@ def kl_selection_tensor(tensor_data: np.ndarray,
         channel_axis: Output channel index.
         n_iter: Number of iterations to search for the optimal threshold.
         min_threshold: Minimal threshold to chose when the computed one is smaller.
-        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
+        quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
 
     Returns:
         Optimal threshold to quantize the tensor based on KL-divergence.
@@ -70,7 +70,7 @@ def kl_selection_tensor(tensor_data: np.ndarray,
         Returns:
             The KL-divergence between the two tensors histograms.
         """
-        return _kl_error_function(x, y, threshold, n_bits=n_bits)
+        return _kl_error_function(y, range_min=-threshold, range_max=threshold, n_bits=n_bits)
 
     return {THRESHOLD: qparams_selection_tensor_search(_loss,
                                                        tensor_data,
@@ -90,7 +90,7 @@ def kl_selection_histogram(bins: np.ndarray,
                            constrained: bool = True,
                            n_iter: int = 10,
                            min_threshold: float = MIN_THRESHOLD,
-                           threshold_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.KL) -> dict:
+                           quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.KL) -> dict:
     """
     Compute the optimal threshold based on KL-divergence to quantize a histogram.
     The error computation is based on KL-divergence to quantify the distributions
@@ -106,7 +106,7 @@ def kl_selection_histogram(bins: np.ndarray,
         constrained: Whether the threshold should be constrained or not.
         n_iter: Number of iteration ot search for the threshold.
         min_threshold: Minimal threshold to use if threshold is too small.
-        threshold_method: an error function to optimize the threshold selection accordingly (not used for this method).
+        quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
 
     Returns:
         Optimal threshold to quantize the histogram based on KL-divergence.
@@ -133,7 +133,7 @@ def kl_selection_histogram(bins: np.ndarray,
                                    q_count,
                                    bins,
                                    counts,
-                                   min_threshold=min_threshold)
+                                   minimal_range_max=min_threshold)
 
     return {THRESHOLD: qparams_selection_histogram_search(_loss,
                                                           bins,
@@ -144,10 +144,9 @@ def kl_selection_histogram(bins: np.ndarray,
                                                           min_threshold=min_threshold)}
 
 
-
-def _kl_error_function(x_q: np.ndarray,
-                       x: np.ndarray,
-                       threshold: float,
+def _kl_error_function(x: np.ndarray,
+                       range_min: float,
+                       range_max: float,
                        n_bins: int = 2048,
                        n_bits: int = 8) -> np.float:
     """
@@ -158,7 +157,6 @@ def _kl_error_function(x_q: np.ndarray,
     histograms boundaries and the number of quantized bins.
 
     Args:
-        x_q: Quantized tensor.
         x: Float tensor.
         threshold: Threshold the quantized tensor was quantized by.
         n_bins: Number of bins for the float histogram.
@@ -169,20 +167,22 @@ def _kl_error_function(x_q: np.ndarray,
 
     """
 
-    assert threshold > 0
+    assert range_min < range_max
 
     # Compute the float histogram
     bc, bv = np.histogram(x, bins=n_bins)
 
     # If no bins are within the range return infinity.
-    if not _is_threshold_valid(bv, threshold):
+    if not _is_range_valid(bv, range_min, range_max):
         return np.inf
 
     # Compute bins values of quantized histogram.
-    q_bins = quantize_tensor(bv,
-                             threshold,
-                             n_bits,
-                             (bv < 0).any())
+    # TODO: note that we always do uniform quantization here, since we no longer have threshold, only range
+    q_bins = uniform_quantize_tensor(bv,
+                                     range_min,
+                                     range_max,
+                                     n_bits,
+                                     (bv < 0).any())
 
     # Sum all quantized values to a single bin of that value. Other bins of the same value
     # are zero.
@@ -195,15 +195,17 @@ def _kl_error_function(x_q: np.ndarray,
                                bcq,
                                bv,
                                bc,
-                               threshold=threshold)
+                               range_min=range_min,
+                               range_max=range_max,)
 
 
 def _kl_error_histogram(q_bins: np.ndarray,
                         q_count: np.ndarray,
                         bins: np.ndarray,
                         counts: np.ndarray,
-                        threshold: float = None,
-                        min_threshold: float = MIN_THRESHOLD) -> np.float:
+                        range_min: float = None,
+                        range_max: float = None,
+                        minimal_range_max: float = MIN_THRESHOLD) -> np.float:
     """
     Compute the error function between a histogram to its quantized version.
     The error is computed based on the KL-divergence the distributions have.
@@ -222,14 +224,17 @@ def _kl_error_histogram(q_bins: np.ndarray,
         KL-divergence score between the two histograms.
     """
 
-    if threshold is None:
-        threshold = np.max(np.abs(q_bins))
-        threshold = np.maximum(threshold, min_threshold)
+    if range_max is None:
+        range_max = np.max(np.abs(q_bins))
+        range_max = np.maximum(range_max, minimal_range_max)
 
-    if not _is_threshold_valid(bins, threshold):
+    if range_min is None:
+        range_min = -range_max
+
+    if not _is_range_valid(bins, range_min, range_max):
         return np.inf
 
-    first_bin_idx, last_bin_idx = _get_bins_indices_from_threshold(bins, threshold)
+    first_bin_idx, last_bin_idx = _get_bins_indices_from_range(bins, range_min, range_max)
 
     if first_bin_idx == last_bin_idx:
         return 0.0
@@ -269,8 +274,9 @@ def _kl_error_histogram(q_bins: np.ndarray,
     return np.sum(p_float * np.log(p_float / p_fxp))
 
 
-def _get_bins_indices_from_threshold(bins: np.ndarray,
-                                     threshold: float) -> Tuple[int, int]:
+def _get_bins_indices_from_range(bins: np.ndarray,
+                                 range_min: float,
+                                 range_max: float) -> Tuple[int, int]:
     """
     For bins and a threshold, compute the first and last bins in between the threshold
     ranges.
@@ -282,14 +288,14 @@ def _get_bins_indices_from_threshold(bins: np.ndarray,
     Returns:
         First and last bins indices that are in a range.
     """
-    assert threshold > 0
-    first_bin_idx = max(np.where(bins >= -threshold)[0].min() - 1, 0)
-    last_bin_idx = np.where(bins < threshold)[0].max()
+    assert range_min < range_max
+    first_bin_idx = max(np.where(bins >= range_min)[0].min() - 1, 0)
+    last_bin_idx = np.where(bins < range_max)[0].max()
     assert first_bin_idx <= last_bin_idx
     return first_bin_idx, last_bin_idx
 
 
-def _is_threshold_valid(bins: np.ndarray, threshold: float) -> bool:
+def _is_range_valid(bins: np.ndarray, range_min: float, range_max: float) -> bool:
     """
     Check whether there are some bins from a numpy array of bins that are in between
     a threshold range or not.
@@ -300,9 +306,9 @@ def _is_threshold_valid(bins: np.ndarray, threshold: float) -> bool:
     Returns:
         Whether there are bins in the range or not.
     """
-    gt_threshold_bins = np.where(bins >= -threshold)[0]
-    st_threshold_bins = np.where(bins < threshold)[0]
-    return not (len(gt_threshold_bins) == 0 or len(st_threshold_bins) == 0)
+    gt_range_bins = np.where(bins >= range_min)[0]
+    st_range_bins = np.where(bins < range_max)[0]
+    return not (len(gt_range_bins) == 0 or len(st_range_bins) == 0)
 
 
 def _smooth_distribution(probability: np.ndarray) -> np.ndarray:

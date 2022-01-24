@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,17 +56,35 @@ def create_network():
 
 class TestUniformRangeSelectionWeights(unittest.TestCase):
 
-    def test_weights_uniform_range_selection_no_clipping(self):
+    def test_per_channel_weights_uniform_range_selection_no_clipping(self):
         self.run_test_for_threshold_method(QuantizationErrorMethod.NOCLIPPING)
 
-    def test_weights_uniform_range_selection_mse(self):
+    def test_weights_uniform_range_selection_no_clipping(self):
+        self.run_test_for_threshold_method(QuantizationErrorMethod.NOCLIPPING, per_channel=False)
+
+    def test_per_channel_weights_uniform_range_selection_mse(self):
         self.run_test_for_threshold_method(QuantizationErrorMethod.MSE)
 
-    def test_weights_uniform_range_selection_mae(self):
+    def test_weights_uniform_range_selection_mse(self):
+        self.run_test_for_threshold_method(QuantizationErrorMethod.MSE, per_channel=False)
+
+    def test_per_channel_weights_uniform_range_selection_mae(self):
         self.run_test_for_threshold_method(QuantizationErrorMethod.MAE)
 
-    def test_weights_uniform_range_selection_lp(self):
+    def test_weights_uniform_range_selection_mae(self):
+        self.run_test_for_threshold_method(QuantizationErrorMethod.MAE, per_channel=False)
+
+    def test_per_channel_weights_uniform_range_selection_lp(self):
         self.run_test_for_threshold_method(QuantizationErrorMethod.LP)
+
+    def test_weights_uniform_range_selection_lp(self):
+        self.run_test_for_threshold_method(QuantizationErrorMethod.LP, per_channel=False)
+
+    def test_per_channel_weights_uniform_range_selection_kl(self):
+        self.run_test_for_threshold_method(QuantizationErrorMethod.LP)
+
+    def test_weights_uniform_range_selection_kl(self):
+        self.run_test_for_threshold_method(QuantizationErrorMethod.LP, per_channel=False)
 
     def run_test_for_threshold_method(self, threshold_method, per_channel=True):
         qc = QuantizationConfig(weights_error_method=threshold_method,
