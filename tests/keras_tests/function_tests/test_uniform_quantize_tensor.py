@@ -15,24 +15,7 @@
 import numpy as np
 import unittest
 
-from keras import Input, Model
-from keras.layers import Conv2D, Conv2DTranspose
-
-from model_compression_toolkit import QuantizationConfig, QuantizationMethod, QuantizationErrorMethod
-from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import \
-    compute_bias_correction_of_graph
-from model_compression_toolkit.common.constants import THRESHOLD
-from model_compression_toolkit.common.mixed_precision.bit_width_setter import set_bit_widths
-from model_compression_toolkit.common.post_training_quantization import _quantize_fixed_bit_widths_graph
-from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
-from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_computation import \
-    calculate_quantization_params
 from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import calculate_delta, quantize_tensor
-from model_compression_toolkit.common.quantization.set_node_quantization_config import \
-    set_quantization_configuration_to_graph
-from model_compression_toolkit.common.model_collector import ModelCollector
-from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 
 
 def ground_truth_quantize_tensor(tensor_data, threshold, n_bits, signed):

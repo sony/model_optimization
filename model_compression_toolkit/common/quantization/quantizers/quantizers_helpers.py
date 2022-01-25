@@ -328,3 +328,16 @@ def adjust_range(min_max_range, n_bits):
         min_max_range = scale * np.round(a / scale), b
         min_max_range = min_max_range[0], b + min_max_range[0] - a
     return min_max_range
+
+
+def get_output_shape(tensor_shape, channel_axis):
+    """
+    Returns shape vector with the number of channels in the given channel_axis location and 1 at all other locations.
+    Args:
+        tensor_shape: A shape vector of a tensor.
+        channel_axis: Output channel index.
+
+    Returns: A shape vector of a tensor.
+
+    """
+    return [-1 if i is channel_axis else 1 for i in range(len(tensor_shape))]

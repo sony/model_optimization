@@ -88,7 +88,8 @@ def mse_selection_histogram(bins: np.ndarray,
     Returns:
         Optimal threshold to quantize the histogram based on the MSE.
     """
-    return {THRESHOLD: qparams_selection_histogram_search(_mse_error_histogram,
+    return {THRESHOLD: qparams_selection_histogram_search(lambda q_bins, q_count, _bins, _counts, threshold:
+                                                          _mse_error_histogram(q_bins, q_count, _bins, _counts),
                                                           bins,
                                                           counts,
                                                           n_bits,

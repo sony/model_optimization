@@ -81,10 +81,10 @@ class TestUniformRangeSelectionWeights(unittest.TestCase):
         self.run_test_for_threshold_method(QuantizationErrorMethod.LP, per_channel=False)
 
     def test_per_channel_weights_uniform_range_selection_kl(self):
-        self.run_test_for_threshold_method(QuantizationErrorMethod.LP)
+        self.run_test_for_threshold_method(QuantizationErrorMethod.KL)
 
     def test_weights_uniform_range_selection_kl(self):
-        self.run_test_for_threshold_method(QuantizationErrorMethod.LP, per_channel=False)
+        self.run_test_for_threshold_method(QuantizationErrorMethod.KL, per_channel=False)
 
     def run_test_for_threshold_method(self, threshold_method, per_channel=True):
         qc = QuantizationConfig(weights_error_method=threshold_method,

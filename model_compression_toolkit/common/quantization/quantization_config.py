@@ -91,8 +91,8 @@ class QuantizationConfig(object):
         Class to wrap all different parameters the library quantize the input model according to.
 
         Args:
-            activation_error_method (QuantizationErrorMethod): Which method to use from ThresholdSelectionMethod for activation quantization threshold selection.
-            weights_error_method (QuantizationErrorMethod): Which method to use from ThresholdSelectionMethod for activation quantization threshold selection.
+            activation_error_method (QuantizationErrorMethod): Which method to use from QuantizationErrorMethod for activation quantization threshold selection.
+            weights_error_method (QuantizationErrorMethod): Which method to use from QuantizationErrorMethod for activation quantization threshold selection.
             activation_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for activation quantization.
             weights_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for weights quantization.
             activation_n_bits (int): Number of bits to quantize the activations.

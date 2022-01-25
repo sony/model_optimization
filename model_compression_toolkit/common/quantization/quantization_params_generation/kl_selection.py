@@ -70,7 +70,9 @@ def kl_selection_tensor(tensor_data: np.ndarray,
         Returns:
             The KL-divergence between the two tensors histograms.
         """
-        return _kl_error_function(y, range_min=-threshold, range_max=threshold, n_bits=n_bits)
+        signed = np.any(y < 0)
+        range_min = 0 if not signed else -threshold
+        return _kl_error_function(y, range_min=range_min, range_max=threshold, n_bits=n_bits)
 
     return {THRESHOLD: qparams_selection_tensor_search(_loss,
                                                        tensor_data,
@@ -114,16 +116,18 @@ def kl_selection_histogram(bins: np.ndarray,
 
     def _loss(q_bins: np.ndarray,
               q_count: np.ndarray,
-              bins: np.ndarray,
-              counts: np.ndarray) -> dict:
+              _bins: np.ndarray,
+              _counts: np.ndarray,
+              threshold) -> np.float:
         """
         Compute the KL-divergence between two histograms.
 
         Args:
             q_bins: Bins values of the quantized histogram.
             q_count: Bins counts of the quantized histogram.
-            bins: Bins values of the original histogram.
-            counts: Bins counts of the original histogram.
+            _bins: Bins values of the original histogram.
+            _counts: Bins counts of the original histogram.
+            threshold: Threshold bins was quantized by.
 
         Returns:
             The KL-divergence between the two tensors histograms.
@@ -131,9 +135,10 @@ def kl_selection_histogram(bins: np.ndarray,
 
         return _kl_error_histogram(q_bins,
                                    q_count,
-                                   bins,
-                                   counts,
-                                   minimal_range_max=min_threshold)
+                                   _bins,
+                                   _counts,
+                                   range_min=-threshold,
+                                   range_max=threshold)
 
     return {THRESHOLD: qparams_selection_histogram_search(_loss,
                                                           bins,
@@ -158,7 +163,8 @@ def _kl_error_function(x: np.ndarray,
 
     Args:
         x: Float tensor.
-        threshold: Threshold the quantized tensor was quantized by.
+        range_min: min bound on the quantization range.
+        range_max: max bound on the quantization range.
         n_bins: Number of bins for the float histogram.
         n_bits: Number of bits the quantized tensor was quantized by.
 
@@ -166,7 +172,6 @@ def _kl_error_function(x: np.ndarray,
         The KL-divergence of the float histogram and the quantized histogram of the tensors.
 
     """
-
     assert range_min < range_max
 
     # Compute the float histogram
@@ -196,16 +201,15 @@ def _kl_error_function(x: np.ndarray,
                                bv,
                                bc,
                                range_min=range_min,
-                               range_max=range_max,)
+                               range_max=range_max)
 
 
 def _kl_error_histogram(q_bins: np.ndarray,
                         q_count: np.ndarray,
                         bins: np.ndarray,
                         counts: np.ndarray,
-                        range_min: float = None,
-                        range_max: float = None,
-                        minimal_range_max: float = MIN_THRESHOLD) -> np.float:
+                        range_min: float,
+                        range_max: float) -> np.float:
     """
     Compute the error function between a histogram to its quantized version.
     The error is computed based on the KL-divergence the distributions have.
@@ -217,19 +221,12 @@ def _kl_error_histogram(q_bins: np.ndarray,
         q_count: Bins counts of the quantized histogram.
         bins: Bins values of the histogram.
         counts: Bins counts of the histogram.
-        threshold: Threshold the histogram was quantized by.
-        min_threshold: Minimal threshold to use if threshold is too small.
+        range_min: min bound on the quantization range.
+        range_max: max bound on the quantization range.
 
     Returns:
         KL-divergence score between the two histograms.
     """
-
-    if range_max is None:
-        range_max = np.max(np.abs(q_bins))
-        range_max = np.maximum(range_max, minimal_range_max)
-
-    if range_min is None:
-        range_min = -range_max
 
     if not _is_range_valid(bins, range_min, range_max):
         return np.inf
@@ -283,7 +280,8 @@ def _get_bins_indices_from_range(bins: np.ndarray,
 
     Args:
         bins: Bins to look for its first and last bins in the range.
-        threshold: Threshold to determine the first and last bins indices.
+        range_min: min bound on the quantization range.
+        range_max: max bound on the quantization range.
 
     Returns:
         First and last bins indices that are in a range.
@@ -301,7 +299,8 @@ def _is_range_valid(bins: np.ndarray, range_min: float, range_max: float) -> boo
     a threshold range or not.
     Args:
         bins: Bins to check.
-        threshold: Threshold to determine if there are bins in the range or not.
+        range_min: min bound on the quantization range.
+        range_max: max bound on the quantization range.
 
     Returns:
         Whether there are bins in the range or not.
@@ -324,7 +323,7 @@ def _smooth_distribution(probability: np.ndarray) -> np.ndarray:
         Numpy array of the smoothed distribution.
     """
 
-    # make sure the subtract value is smaller than all current probabilities.
+    # make sure the subtracted value is smaller than all current probabilities.
     smoothing_term = np.min(probability[probability != 0]) / (2.0 * len(probability))
     assert smoothing_term > 0
 
@@ -396,3 +395,36 @@ def _get_sliced_histogram(bins: np.ndarray,
     counts_subset = deepcopy(counts[first_bin_idx:last_bin_idx])
 
     return bins_subset, counts_subset
+
+
+def _kl_batch_error_function(x: np.ndarray,
+                             q_x: np.ndarray,  # dummy
+                             range_min: np.ndarray,
+                             range_max: np.ndarray,
+                             n_bins: int = 2048,
+                             n_bits: int = 8) -> np.float:
+    """
+    Vectorized implementation for the KL error function,
+    to allow vectorized per-channel computation (for weights quantization).
+    Input tensor x is expected to be reshaped before passed to this method,
+    such that axis 0 contains the number of channels and the tensor values are placed along axis 1.
+    Note that the quantized value of x is not directly used in this method,
+    but rather being calculated during the process of gathering the distribution statistics
+    within the _kl_error_function.
+
+    Args:
+        x:
+        q_x: Fake-quant quantized tensor of x (not used in this method)
+        range_min: min bound on the quantization range.
+        range_max: max bound on the quantization range.
+        n_bins: Number of bins for the float histogram.
+        n_bits: Number of bits the quantized tensor was quantized by.
+
+    Returns: The KL-divergence between the two tensors.
+
+    """
+    error_res = []
+    for i in range(x.shape[0]):
+        curr_error = _kl_error_function(x[i, :], range_min[i], range_max[i], n_bins, n_bits)
+        error_res.append(curr_error)
+    return np.mean(error_res)

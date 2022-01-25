@@ -18,7 +18,7 @@ from scipy import optimize
 import model_compression_toolkit.common.quantization.quantization_config as qc
 from model_compression_toolkit.common.constants import MIN_THRESHOLD, THRESHOLD
 from model_compression_toolkit.common.quantization.quantization_params_generation.kl_selection import \
-    _kl_error_histogram, _kl_error_function
+    _kl_error_histogram, _kl_batch_error_function
 from model_compression_toolkit.common.quantization.quantization_params_generation.lp_selection import \
     _lp_error_histogram
 from model_compression_toolkit.common.quantization.quantization_params_generation.mae_selection import \
@@ -26,9 +26,10 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 from model_compression_toolkit.common.quantization.quantization_params_generation.mse_selection import \
     _mse_error_histogram
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_search import \
-    kl_symmetric_qparams_selection_histogram_search_error_function, \
-    qparams_histogram_minimization, qparams_tensor_minimization, symmetric_qparams_selection_per_channel_search
-from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import get_tensor_max, quantize_tensor
+    qparams_histogram_minimization, \
+    symmetric_quantization_loss, kl_symmetric_qparams_histogram_minimization, kl_symmetric_quantization_loss
+from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import \
+    get_tensor_max, quantize_tensor, get_output_shape
 
 from model_compression_toolkit.common.similarity_analyzer import compute_mse, compute_mae, compute_lp_norm
 
@@ -66,35 +67,33 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         res = tensor_max
     elif quant_error_method == qc.QuantizationErrorMethod.KL:
-        if per_channel:
-            # Using search per-channel wrapper for kl based minimization
-            res = symmetric_qparams_selection_per_channel_search(
-                tensor_data, tensor_max, channel_axis,
-                search_function=lambda x, x0:
-                optimize.minimize(fun=lambda threshold:
-                                  _kl_error_function(x, range_min=-threshold, range_max=threshold, n_bits=n_bits),
-                                  x0=x0)
-            )
-        else:
-            res = optimize.minimize(
-                    fun=lambda threshold: _kl_error_function(tensor_data, range_min=-threshold, range_max=threshold, n_bits=n_bits),
-                    x0=tensor_max)
-            res = res.x
+        # search for KL error is separated because the error method signature is different from the other error methods.
+        # we use _kl_batch_error_function to allow calculation per_channel in a vectorized manner if necessary,
+        # we pass it as argument to avoid exposing protected package member inside kl_symmetric_quantization_loss.
+        res = optimize.minimize(fun=lambda threshold: kl_symmetric_quantization_loss(_kl_batch_error_function,
+                                                                                     tensor_data,
+                                                                                     threshold,
+                                                                                     signed,
+                                                                                     per_channel,
+                                                                                     channel_axis),
+                                x0=tensor_max)
+        # res.x contains the actual optimized parameters result from optimize.minimize
+        res = res.x if not per_channel else \
+            np.reshape(res.x, get_output_shape(tensor_data.shape, channel_axis))
     else:
         error_function = get_threshold_selection_tensor_error_function(quant_error_method, p)
-        if per_channel:
-            # Using search per-channel wrapper for minimization
-            res = symmetric_qparams_selection_per_channel_search(
-                tensor_data, tensor_max, channel_axis,
-                search_function=lambda x, x0: qparams_tensor_minimization(x, x0, error_function,
-                                                                          quant_function=lambda threshold:
-                                                                          quantize_tensor(x, threshold, n_bits, signed))
-            )
-        else:
-            res = qparams_tensor_minimization(tensor_data, tensor_max, error_function,
-                                              quant_function=lambda threshold:
-                                              quantize_tensor(tensor_data, threshold, n_bits, signed))
-            res = res.x
+        res = optimize.minimize(fun=lambda threshold: symmetric_quantization_loss(error_function,
+                                                                                  tensor_data,
+                                                                                  threshold,
+                                                                                  n_bits,
+                                                                                  signed,
+                                                                                  per_channel,
+                                                                                  channel_axis),
+                                x0=tensor_max)
+        # res.x contains the actual optimized parameters result from optimize.minimize
+        res = res.x if not per_channel else \
+            np.reshape(res.x, get_output_shape(tensor_data.shape, channel_axis))
+
     return {THRESHOLD: res}
 
 
@@ -132,18 +131,29 @@ def symmetric_selection_histogram(bins: np.ndarray,
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         res = tensor_max
     elif quant_error_method == qc.QuantizationErrorMethod.KL:
-        res = optimize.minimize(
-            fun=lambda threshold:
-            kl_symmetric_qparams_selection_histogram_search_error_function(_kl_error_histogram, bins, threshold,
-                                                                           n_bits, signed, counts),
-            x0=tensor_max)
+        # search for KL error is separated because the error method signature is different from the other error methods.
+        # we pass it as argument to avoid exposing protected package member inside kl_symmetric_quantization_loss.
+        res = kl_symmetric_qparams_histogram_minimization(bins,
+                                                          tensor_max,
+                                                          counts,
+                                                          n_bits,
+                                                          signed,
+                                                          error_function=_kl_error_histogram)
+        # res.x contains the actual optimized parameters result from optimize.minimize.
+        # It is a vector with single element, therefore, we are taking res.x[0]
         res = res.x[0]
 
     else:
         error_function = get_threshold_selection_histogram_error_function(quant_error_method, p)
-        res = qparams_histogram_minimization(bins, tensor_max, counts, error_function,
+        res = qparams_histogram_minimization(bins,
+                                             tensor_max,
+                                             counts,
+                                             error_function=error_function,
                                              quant_function=lambda threshold:
                                              quantize_tensor(bins, threshold, n_bits, signed))
+
+        # res.x contains the actual optimized parameters result from optimize.minimize.
+        # It is a vector with single element, therefore, we are taking res.x[0].
         res = res.x[0]
     return {THRESHOLD: res}
 
@@ -181,9 +191,11 @@ def get_threshold_selection_histogram_error_function(quant_error_method, p):
 
     """
     quant_method_error_function_mapping = {
-        qc.QuantizationErrorMethod.MSE: _mse_error_histogram,
-        qc.QuantizationErrorMethod.MAE: _mae_error_histogram,
-        qc.QuantizationErrorMethod.LP: lambda q_bins, q_count, bins, counts:
+        qc.QuantizationErrorMethod.MSE: lambda q_bins, q_count, bins, counts, threshold:
+            _mse_error_histogram(q_bins, q_count, bins, counts),
+        qc.QuantizationErrorMethod.MAE: lambda q_bins, q_count, bins, counts, threshold:
+            _mae_error_histogram(q_bins, q_count, bins, counts),
+        qc.QuantizationErrorMethod.LP: lambda q_bins, q_count, bins, counts, threshold:
             _lp_error_histogram(q_bins, q_count, bins, counts, p=p),
     }
 

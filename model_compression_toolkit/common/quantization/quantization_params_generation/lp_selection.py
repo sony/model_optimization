@@ -108,16 +108,18 @@ def lp_selection_histogram(bins: np.ndarray,
 
     def _loss(q_bins: np.ndarray,
               q_count: np.ndarray,
-              bins: np.ndarray,
-              counts: np.ndarray) -> np.float:
+              _bins: np.ndarray,
+              _counts: np.ndarray,
+              threshold: np.ndarray  # dummy
+              ) -> np.float:
         """
         Compute the Lp-norm distance between two histograms.
 
         Args:
             q_bins: Bins values of the quantized histogram.
             q_count: Bins counts of the quantized histogram.
-            bins: Bins values of the original histogram.
-            counts: Bins counts of the original histogram.
+            _bins: Bins values of the original histogram.
+            _counts: Bins counts of the original histogram.
 
         Returns:
             The Lp-norm distance between the two tensors histograms.
