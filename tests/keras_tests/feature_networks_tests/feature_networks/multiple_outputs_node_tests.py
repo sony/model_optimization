@@ -30,12 +30,8 @@ class MultipleOutputsNodeTests(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING, mct.ThresholdSelectionMethod.NOCLIPPING,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, True, False, True)
-
-    def get_input_shapes(self):
-        return [[self.val_batch_size, 224, 244, 3]]
+        return mct.QuantizationConfig(enable_activation_quantization=False,
+                                      enable_weights_quantization=False)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -51,5 +47,4 @@ class MultipleOutputsNodeTests(BaseKerasFeatureNetworkTest):
         output_q = quantized_model.predict(inputs)
         output_f = float_model.predict(inputs)
         for o_q, o_f in zip(output_q, output_f):
-            cs = cosine_similarity(o_f, o_q)
-            self.unit_test.assertTrue(np.isclose(cs, 1))
+            self.unit_test.assertTrue(np.sum(np.abs(o_q-o_f))==0)
