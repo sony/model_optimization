@@ -13,9 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 from model_compression_toolkit.pytorch.utils import to_torch_tensor
-from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchTest
+from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
-IMG_NET_VAL_PREPROCESSED_IMAGE_00000003 = 'img_net_val_preprocessed_image_00000003.pickle'
 
 class BaseModelTest(BasePytorchTest):
     def __init__(self,
@@ -27,17 +26,6 @@ class BaseModelTest(BasePytorchTest):
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 224, 224]]
-
-    @staticmethod
-    def generate_inputs(input_shapes):
-        import pickle
-        from pathlib import Path
-
-        base_path = Path(__file__).parent
-        file_path = (base_path / IMG_NET_VAL_PREPROCESSED_IMAGE_00000003).resolve()
-        with open(file_path, 'rb') as p:
-            input_batch = pickle.load(p)
-        return [to_torch_tensor(input_batch)]
 
     def create_feature_network(self, input_shape):
         return self.model(pretrained=True)

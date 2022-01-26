@@ -135,12 +135,7 @@ def run_operation(n: BaseNode,
             if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ, ModelBuilderMode.MIXEDPRECISION]:
                 # Adding a fake quant node to Input when in GPTQ mode because quantize_model doesn't quantize the
                 # input layer
-                fake_quant = n.activation_quantization_cfg.generate_quantization_node()
-
-                if fake_quant is None:
-                    raise Exception(f'{n.name} should be quantized, but activation quantization function is None')
-
-                out_tensors_of_n = fake_quant(out_tensors_of_n)
+                out_tensors_of_n = n.activation_quantization_cfg.quantize_node_output(out_tensors_of_n)
 
     else:
         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
@@ -161,13 +156,7 @@ def run_operation(n: BaseNode,
         if n.is_activation_quantization_enabled():
             if mode in [ModelBuilderMode.QUANTIZED,
                         ModelBuilderMode.MIXEDPRECISION]:
-
-                fake_quant = n.activation_quantization_cfg.generate_quantization_node()
-
-                if fake_quant is None:
-                    raise Exception(f'{n.name} should be quantized, but activation quantization function is None')
-
-                out_tensors_of_n = fake_quant(out_tensors_of_n)
+                out_tensors_of_n = n.activation_quantization_cfg.quantize_node_output(out_tensors_of_n)
 
     return out_tensors_of_n
 

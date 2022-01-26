@@ -19,7 +19,7 @@ from model_compression_toolkit.common.network_editors.node_filters import NodeNa
 from model_compression_toolkit.common.network_editors.actions import EditRule, \
     ChangeCandidtaesWeightsQuantizationMethod
 from model_compression_toolkit.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
-from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchTest
+from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
 This test checks multiple features:

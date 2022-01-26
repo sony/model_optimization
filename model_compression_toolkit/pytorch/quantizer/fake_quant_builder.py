@@ -19,8 +19,8 @@ from model_compression_toolkit.common.constants import THRESHOLD, SIGNED
 from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import calculate_min_max_values
 
 
-def constraint_quantization(activation_n_bits: int,
-                            quantization_params: dict) -> Callable:
+def power_of_two_quantization(activation_n_bits: int,
+                              quantization_params: dict) -> Callable:
     """
     Use a NodeQuantizationConfig to compute a quantizer min/max values, and use it to
     build and return a fake-quantization node.
@@ -39,8 +39,8 @@ def constraint_quantization(activation_n_bits: int,
         return None
 
     min_value, max_value = calculate_min_max_values(activation_threshold,
-                                                        activation_n_bits,
-                                                        activation_is_signed)
+                                                    activation_n_bits,
+                                                    activation_is_signed)
 
     def q(x: torch.Tensor) -> torch.Tensor:
         """

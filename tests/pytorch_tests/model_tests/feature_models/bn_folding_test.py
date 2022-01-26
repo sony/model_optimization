@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import torch
-from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchTest
+from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
 This test checks the BatchNorm folding feature, plus adding a residual connection.
@@ -39,7 +39,7 @@ class BNFoldingNetTest(BasePytorchTest):
         super().__init__(unit_test, float_reconstruction_error)
 
     def create_inputs_shape(self):
-        return [[self.val_batch_size, 3, 224, 224]]
+        return [[self.val_batch_size, 3, 32, 32]]
 
     def create_feature_network(self, input_shape):
         return BNFoldingNet()

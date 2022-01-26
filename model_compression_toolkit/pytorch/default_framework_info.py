@@ -32,7 +32,7 @@ from model_compression_toolkit.common.quantization.quantizers.kmeans_quantizer i
 from model_compression_toolkit.common.quantization.quantizers.lut_kmeans_quantizer import lut_kmeans_quantizer
 from model_compression_toolkit.common.quantization.quantizers.power_of_two_quantizer import power_of_two_quantizer
 from model_compression_toolkit.pytorch.constants import KERNEL
-from model_compression_toolkit.pytorch.quantizer.fake_quant_builder import constraint_quantization
+from model_compression_toolkit.pytorch.quantizer.fake_quant_builder import power_of_two_quantization
 from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder
 
 """
@@ -70,7 +70,10 @@ Map a layer to its kernel's output and input channels indices.
 Map's values are tuples of (output_channel_index, input_channel_index).
 Default value is returned for layers that are not included.
 """
-DEFAULT_CHANNEL_AXIS_DICT = DefaultDict({Conv2d: (0, 1), Linear: (0, 1)}, lambda: (None, None))
+DEFAULT_CHANNEL_AXIS_DICT = DefaultDict({Conv2d: (0, 1),
+                                         Linear: (0, 1),
+                                         ConvTranspose2d: (1, 0)},
+                                        lambda: (None, None))
 
 """
 Map from an activation function to its min/max output values (if known).
@@ -96,7 +99,7 @@ LAYER2MINMAX = {Softmax: (0, 1),
 """
 Mapping from a QuantizationMethod to an activation quantizer function.
 """
-ACTIVATION_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: constraint_quantization}
+ACTIVATION_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quantization}
 
 """
 Mapping from a QuantizationMethod to an weights quantizer function.

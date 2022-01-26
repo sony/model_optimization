@@ -118,26 +118,25 @@ def  _compute_bias_correction(kernel: np.ndarray,
     eps = np.sum(quantization_error,
                  axis=tuple([i for i in range(len(quantization_error.shape)) if
                              i not in [output_channels_axis, input_channels_axis]]))
-    m = min(input_channels_axis, output_channels_axis)
-    input_channels_axis -= m
-    output_channels_axis -= m
-    num_groups = int(mu.shape[0] / eps.shape[input_channels_axis])
-    num_out_channels = eps.shape[output_channels_axis]
-    num_channels_per_group = int(num_out_channels / num_groups)
+
     if output_channels_axis == input_channels_axis:
         correction_term = mu * eps.flatten()
     else:
-        if output_channels_axis > input_channels_axis :
+        if output_channels_axis > input_channels_axis:
             eps = np.transpose(eps)
+        num_groups = int(mu.shape[0] / eps.shape[1])# 1 is always the output channel axis in eps
+        num_out_channels = eps.shape[0]# 0 is always the output channel axis in eps
+        num_out_channels_per_group = int(num_out_channels / num_groups)
+
         # In Pytorch the output of group conv is separated into respective groups is
         # viewed as follows: (batch, channel, ngroups, h, w),
         # i.e each group is consistently viewed one after the other
         # For an example, check out: https://discuss.pytorch.org/t/group-convolution-output-order/88258
         mu_split = np.split(mu, num_groups)
-        eps_split = np.split(eps, num_groups, 0) # output channel axis of eps should be 0
+        eps_split = np.split(eps, num_groups, 0)
         correction_term = np.zeros(num_out_channels)
         for i, (mu_s, eps_s) in enumerate(zip(mu_split, eps_split)):
-            correction_term[i * num_channels_per_group:(i + 1) * num_channels_per_group] = np.matmul(eps_s, mu_s)
+            correction_term[i * num_out_channels_per_group:(i + 1) * num_out_channels_per_group] = np.matmul(eps_s, mu_s)
 
     return correction_term
 

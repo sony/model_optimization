@@ -16,13 +16,13 @@
 import unittest
 from torchvision.models import mobilenet_v2, mobilenet_v3_large, efficientnet_b0, resnet18, mnasnet1_0, alexnet, \
     densenet121, googlenet, inception_v3, regnet_x_1_6gf, resnext50_32x4d, squeezenet1_0, vgg16, wide_resnet50_2
-from tests.pytorch_tests.model_tests.model_zoo_tests.model_tests import BaseModelTest
+from tests.pytorch_tests.model_tests.model_zoo_tests.base_model_test import BaseModelTest
 
 
 class ModelTest(unittest.TestCase):
 
     def test_mobilenet_v2(self):
-        BaseModelTest(self, mobilenet_v2).run_test()
+        BaseModelTest(self, mobilenet_v2, float_reconstruction_error=1e-4).run_test()
 
     def test_mobilenet_v3(self):
         BaseModelTest(self, mobilenet_v3_large, float_reconstruction_error=1e-4).run_test()

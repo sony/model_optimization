@@ -25,14 +25,17 @@ from model_compression_toolkit.common.collectors.statistics_collector_generator 
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.node_prior_info import NodePriorInfo
+from model_compression_toolkit.common.substitutions.shift_negative_activation import apply_shift_negative_correction
 from model_compression_toolkit.common.user_info import UserInformation
+from model_compression_toolkit.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
+    compute_op2d_padding, create_pad_node
 from model_compression_toolkit.pytorch.back2framework.model_builder import model_builder
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
     BatchNormalizationFolding
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.mark_activation import MarkActivation
-from model_compression_toolkit.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
-    apply_shift_negative_correction
+from model_compression_toolkit.pytorch.graph_substitutions.substitutions.shift_negative_activation import SNC_NODE, \
+    LINEAR_NODE, BYPASS_NODE, PAD_NODE, create_add_node
 from model_compression_toolkit.pytorch.pytorch_node_prior_info import create_node_prior_info
 from model_compression_toolkit.pytorch.reader.reader import model_reader
 import model_compression_toolkit.pytorch.constants as pytorch_constants
@@ -128,9 +131,9 @@ class PytorchImplementation(FrameworkImplementation):
             input_list: List of inputs for the model.
 
         Returns:
-            The Pytorch model's output.
+            The Pytorch model's output in numpy format.
         """
-        return model(*input_list)
+        return torch_tensor_to_numpy(model(*to_torch_tensor(input_list)))
 
     def shift_negative_correction(self,
                                   graph: Graph,
@@ -149,7 +152,16 @@ class PytorchImplementation(FrameworkImplementation):
         """
         return apply_shift_negative_correction(graph,
                                                qc,
-                                               fw_info)
+                                               fw_info,
+                                               SNC_NODE,
+                                               LINEAR_NODE,
+                                               BYPASS_NODE,
+                                               PAD_NODE,
+                                               create_add_node,
+                                               compute_op2d_padding,
+                                               create_pad_node,
+                                               pytorch_constants.USE_BIAS
+                                               )
 
     def attach_sc_to_node(self,
                           node: BaseNode,
@@ -212,6 +224,8 @@ class PytorchImplementation(FrameworkImplementation):
         Returns:
             A list of the framework substitutions used after we collect statistics.
         """
+        if quant_config.activation_channel_equalization:
+            raise Exception('Activation channel equalization is currently not supported for Pytorch.')
         substitutions_list = []
         return substitutions_list
 

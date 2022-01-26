@@ -27,6 +27,12 @@ LAYER_NAME = 'name'
 USE_BIAS = 'bias'
 TENSOR_META = 'tensor_meta'
 TYPE = 'type'
+PAD = 'pad'
+VALUE = 'value'
+FUNCTIONAL_OP = 'functional_op'
+OP_CALL_ARGS = 'op_call_args'
+OP_CALL_KWARGS = 'op_call_kwargs'
+INPUTS_AS_LIST = 'inputs_as_list'
 
 # # Layers variables names:
 KERNEL = 'weight'
@@ -37,5 +43,6 @@ MOVING_MEAN = 'running_mean'
 MOVING_VARIANCE = 'running_var'
 EPSILON = 'eps'
 
-
-SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS = 16
+# torch devices
+CUDA = 'cuda'
+CPU = 'cpu'

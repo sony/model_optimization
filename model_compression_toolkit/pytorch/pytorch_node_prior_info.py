@@ -31,7 +31,7 @@ def create_node_prior_info(node: BaseNode,
     """
 
     min_output, max_output = None, None
-    if fw_info.layers_has_min_max(node.layer_class):
-        min_output, max_output = fw_info.layer_min_max_mapping[node.layer_class]
+    if fw_info.layers_has_min_max(node.type):
+        min_output, max_output = fw_info.layer_min_max_mapping[node.type]
     return NodePriorInfo(min_output=min_output,
                          max_output=max_output)

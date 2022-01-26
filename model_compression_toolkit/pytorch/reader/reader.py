@@ -38,8 +38,8 @@ def generate_module_dict(model: torch.nn.Module) -> Dict:
         A dictionary of the Pyotrch model's named modules.
     """
     module_dict = dict()
-    for m in model.named_modules():
-        module_dict[m[0]] = m[1]
+    for name, module in model.named_modules():
+        module_dict[name] = module
     return module_dict
 
 

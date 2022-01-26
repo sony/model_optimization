@@ -28,17 +28,6 @@ from tests.common_tests.base_layer_test import BaseLayerTest, LayerTestMode
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
 
-# class LayerTestModel(torch.nn.Module):
-#     def __init__(self, layer):
-#         super(LayerTestModel, self).__init__()
-#         self.layer = layer
-#         self.num_layer_inputs = len(inspect.getfullargspec(self.layer).args)
-#
-#     def forward(self, *args):
-#         inputs = []
-#         for i in range(self.num_layer_inputs):
-#             inputs.append(args[i])
-#         return self.layer(*inputs)
 class LayerTestModel(torch.nn.Module):
     def __init__(self, layer):
         super(LayerTestModel, self).__init__()
@@ -76,13 +65,14 @@ def get_node_operation(node, model):
         op = None
     return op
 
+
 def get_layer_weights(layer):
     # extract layer weights and named buffers
     weights = {}
-    named_parameters_weights = {parameter[0]: torch_tensor_to_numpy(parameter[1]) for parameter in
+    named_parameters_weights = {name: torch_tensor_to_numpy(parameter) for name, parameter in
                                 layer.named_parameters()}
-    named_buffer_weights = {parameter[0]: torch_tensor_to_numpy(parameter[1]) for parameter in
-                            layer.named_buffers() if len(parameter[1].shape) > 0}
+    named_buffer_weights = {name: torch_tensor_to_numpy(parameter) for name, parameter in
+                            layer.named_buffers() if len(parameter.shape) > 0}
     weights.update(named_parameters_weights)
     weights.update(named_buffer_weights)
     return weights

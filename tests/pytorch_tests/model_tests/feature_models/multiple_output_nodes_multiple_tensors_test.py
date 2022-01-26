@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import torch
-from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchTest
+from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
 This test checks that we support the connecting the input tensor to several layers
@@ -23,7 +23,7 @@ class MultipleOutputsMultipleTensorsNet(torch.nn.Module):
     def __init__(self):
         super(MultipleOutputsMultipleTensorsNet, self).__init__()
         self.conv1 = torch.nn.Conv2d(3, 3, kernel_size=1, stride=1)
-        self.linear = torch.nn.Linear(3*224*224, 3)
+        self.linear = torch.nn.Linear(3*32*32, 3)
         self.conv2 = torch.nn.Conv2d(3, 3, kernel_size=1, stride=1)
 
     def forward(self, x):
@@ -44,7 +44,7 @@ class MultipleOutputsMultipleTensorsNetTest(BasePytorchTest):
         super().__init__(unit_test)
 
     def create_inputs_shape(self):
-        return [[self.val_batch_size, 3, 224, 224]]
+        return [[self.val_batch_size, 3, 32, 32]]
 
     def create_feature_network(self, input_shape):
         return MultipleOutputsMultipleTensorsNet()

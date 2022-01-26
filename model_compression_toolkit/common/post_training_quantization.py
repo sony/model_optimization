@@ -437,7 +437,7 @@ def _prepare_model_for_quantization(in_model: Any,
     # Channel equalization
     ######################################
     transformed_graph = substitute(transformed_graph,
-                                   fw_impl.get_substitutions_channel_equalization(quant_config,
+                               fw_impl.get_substitutions_channel_equalization(quant_config,
                                                                                   fw_info))
 
     ######################################

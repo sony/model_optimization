@@ -22,15 +22,18 @@ from model_compression_toolkit.common.graph.base_graph import OutTensor
 from model_compression_toolkit.common.graph.edge import Edge
 from model_compression_toolkit.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.pytorch.constants import OUTPUT, PLACEHOLDER, TENSOR_META, CALL_FUNCTION, TYPE, \
-    CALL_METHOD, BIAS
+    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST
 
 
-class DummyPlaceHolder(object):
+class DummyPlaceHolder(torch.nn.Module):
     """
     Class for PlaceHolder operator since a Pytorch model doesn't have one but FX does.
     """
     def __name__(self):
         return PLACEHOLDER
+
+    def forward(self, x):
+        return x
 
 
 def nodes_builder(model: GraphModule,
@@ -79,10 +82,10 @@ def nodes_builder(model: GraphModule,
         # extract layer weights and named buffers
         weights = {}
         if node.target in module_dict.keys():
-            named_parameters_weights = {parameter[0]: to_numpy(parameter[1]) for parameter in
+            named_parameters_weights = {name: to_numpy(parameter) for name, parameter in
                                         module_dict[node.target].named_parameters()}
-            named_buffer_weights = {parameter[0]: to_numpy(parameter[1]) for parameter in
-                                    module_dict[node.target].named_buffers() if len(parameter[1].shape) > 0}
+            named_buffer_weights = {name: to_numpy(parameter) for name, parameter in
+                                    module_dict[node.target].named_buffers() if len(parameter.shape) > 0}
             weights.update(named_parameters_weights)
             weights.update(named_buffer_weights)
 
@@ -91,10 +94,10 @@ def nodes_builder(model: GraphModule,
         if node.op != PLACEHOLDER:
             for input_node in node.all_input_nodes:
                 tensor_meta = input_node.meta
-                if input_node.meta[TYPE] == torch.Tensor:
-                    input_shape += [list(input_node.meta[TENSOR_META].shape)]
-                elif input_node.meta[TYPE] == tuple:
-                    input_shape += [list(n.shape) for n in input_node.meta[TENSOR_META]]
+                if tensor_meta[TYPE] == torch.Tensor:
+                    input_shape += [list(tensor_meta[TENSOR_META].shape)]
+                elif tensor_meta[TYPE] == tuple:
+                    input_shape += [list(n.shape) for n in tensor_meta[TENSOR_META]]
 
         # extract output shapes
         if node.meta[TYPE] == torch.Tensor:
@@ -103,11 +106,6 @@ def nodes_builder(model: GraphModule,
             output_shape = [list(m.shape) for m in node.meta[TENSOR_META]]
         else:
             output_shape = []
-
-        # if isinstance(node.meta[TENSOR_META], torch.fx.passes.shape_prop.TensorMetadata):
-        #     output_shape = [list(node.meta[TENSOR_META].shape)]
-        # else:
-        #     output_shape = [list(m.shape) for m in node.meta[TENSOR_META]]
 
         # initiate graph nodes
         if node.op in [CALL_METHOD, CALL_FUNCTION]:
@@ -126,10 +124,10 @@ def nodes_builder(model: GraphModule,
                             input_counter += 1
                 num_inputs = max(len(node.all_input_nodes), input_counter)
             op_call_args = list(node.args[num_inputs:])
-            kwargs = {'functional_op': node_type,
-                      'op_call_args': op_call_args,
-                      'op_call_kwargs': node.kwargs,
-                      'inputs_as_list': inputs_as_list}
+            kwargs = {FUNCTIONAL_OP: node_type,
+                      OP_CALL_ARGS: op_call_args,
+                      OP_CALL_KWARGS: node.kwargs,
+                      INPUTS_AS_LIST: inputs_as_list}
         else:
             graph_node_type = BaseNode
             kwargs = {}

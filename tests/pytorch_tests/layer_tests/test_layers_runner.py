@@ -109,7 +109,7 @@ class LayerTest(unittest.TestCase):
                              ],
                              num_of_inputs=2).run_test()
 
-    def test_kernel_ops(self):
+    def test_conv2d_ops(self):
         BasePytorchLayerTest(self,
                              [
                                  Conv2d(8, 12, 1, bias=False),
@@ -118,12 +118,22 @@ class LayerTest(unittest.TestCase):
                                  Conv2d(8, 8, 3, bias=True, groups=8),# dw conv
                                  Conv2d(8, 8, 1, bias=False, groups=4),# group conv
                                  Conv2d(8, 12, 3, bias=True, groups=2),# group conv
+                             ], input_shape=(8, 10, 10)).run_test()
+
+    def test_conv_transpose2d_ops(self):
+        BasePytorchLayerTest(self,
+                             [
                                  ConvTranspose2d(8, 8, 3, bias=True),
                                  ConvTranspose2d(8, 12, 3, bias=False),
-                                 Linear(10, 12, bias=True),
-                                 Linear(10, 10, bias=False),
                                  BatchNorm2d(8)
                              ], input_shape=(8, 10, 10)).run_test()
+
+    def test_linear_ops(self):
+        BasePytorchLayerTest(self,
+                             [
+                                 Linear(10, 12, bias=True),
+                                 Linear(10, 8, bias=False),
+                             ], input_shape=(10,)).run_test()
 
     def test_more_layers(self):
         BasePytorchLayerTest(self,

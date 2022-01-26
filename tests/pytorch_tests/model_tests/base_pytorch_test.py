@@ -57,7 +57,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         }
 
     def create_inputs_shape(self):
-        return [[self.val_batch_size, 3, 224, 224]]
+        return [[self.val_batch_size, 3, 32, 32]]
 
     @staticmethod
     def generate_inputs(input_shapes):
@@ -77,7 +77,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                     # Check if we have a BatchNorm layer in the model. If so, the outputs will not be the same,
                     # since the sqrt function in the BatchNorm folding is not exactly like the sqrt in the C
                     # implementation of BatchNorm.
-                    if torch.nn.BatchNorm2d in [type(m[1]) for m in float_model.named_modules()]:
+                    if torch.nn.BatchNorm2d in [type(module) for name, module in float_model.named_modules()]:
                         self.unit_test.assertTrue(np.all(np.isclose(torch_tensor_to_numpy(f), torch_tensor_to_numpy(q),
                                                                     atol=self.float_reconstruction_error)))
                     else:

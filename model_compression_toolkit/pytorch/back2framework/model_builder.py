@@ -46,8 +46,8 @@ def build_input_tensors_list(node: BaseNode,
     Returns:
         A list of the node's input tensors.
     """
-    if node.layer_class == DummyPlaceHolder:
-        input_tensors = inputs[graph.get_inputs().index(node)]
+    if node.type == DummyPlaceHolder:
+        input_tensors = [inputs[graph.get_inputs().index(node)]]
     else:
         input_tensors = []
         # Go over a sorted list of the node's incoming edges, and for each source node get its output tensors.
@@ -55,6 +55,7 @@ def build_input_tensors_list(node: BaseNode,
         for ie in graph.incoming_edges(node, sort_by_attr=EDGE_SINK_INDEX):
             _input_tensors = node_to_output_tensors_dict[ie.source_node]
             input_tensors.append(_input_tensors)
+        input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
     return input_tensors
 
 
@@ -78,26 +79,40 @@ def run_operation(n: BaseNode,
         Module/functional to the input tensors.
     """
 
-    if n.layer_class == DummyPlaceHolder:  # Placeholder handling
-        out_tensors_of_n = input_tensors
+    op_call_args = n.op_call_args if isinstance(n, FunctionalNode) else []
+    functional_kwargs = n.op_call_kwargs if isinstance(n, FunctionalNode) else {}
+    if isinstance(n, FunctionalNode) and n.inputs_as_list:
+        out_tensors_of_n = op_func(input_tensors, *op_call_args, **functional_kwargs)
     else:
-        input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
-        op_call_args = n.op_call_args if isinstance(n, FunctionalNode) else []
-        functional_kwargs = n.op_call_kwargs if isinstance(n, FunctionalNode) else {}
-        if isinstance(n, FunctionalNode) and n.inputs_as_list:
-            out_tensors_of_n = op_func(input_tensors, *op_call_args, **functional_kwargs)
-        else:
-            out_tensors_of_n = op_func(*input_tensors + op_call_args, **functional_kwargs)
+        out_tensors_of_n = op_func(*input_tensors + op_call_args, **functional_kwargs)
 
     # Add a fake quant node if the node has an activation threshold.
     if mode == ModelBuilderMode.QUANTIZED and n.is_activation_quantization_enabled():
-        fake_quant = n.activation_quantization_cfg.generate_quantization_node()
-
-        if fake_quant is None:
-            raise Exception('Layer is meant to be quantized but fake_quant function is None')
-        out_tensors_of_n = fake_quant(out_tensors_of_n)
+        out_tensors_of_n = n.activation_quantization_cfg.quantize_node_output(out_tensors_of_n)
 
     return out_tensors_of_n
+
+
+def generate_outputs(
+        out_nodes: List[BaseNode],
+        node_to_output_tensors_dict: dict):
+    """
+
+    Args:
+        out_nodes: List of output nodes.
+        node_to_output_tensors_dict: A dictionary from a node to its output tensors.
+
+    Returns: List of output tensor/s for the model
+
+    """
+    output = []
+    for n in out_nodes:
+        out_tensors_of_n = node_to_output_tensors_dict.get(n)
+        if len(out_tensors_of_n) > 1:
+            output.append(out_tensors_of_n)
+        else:
+            output += out_tensors_of_n
+    return output
 
 
 class PytorchModelBuilder(torch.nn.Module):
@@ -121,16 +136,15 @@ class PytorchModelBuilder(torch.nn.Module):
         self.nodes_dict = {}
         self.append2output = append2output
         for n in self.node_sort:
-            if inspect.isclass(n.layer_class) and issubclass(n.layer_class, torch.nn.Module):
+            if not isinstance(n, FunctionalNode):
                 self.add_module(n.name, node_builder(n))
-                # setattr(self, n.name, node_builder(n))
 
     def forward(self,
                 *args: Any) -> Any:
         """
 
         Args:
-            inputs: list of input tensors to model
+            args: argument input tensors to model.
 
         Returns:
             torch Tensor/s which is/are the output of the model logic.
@@ -144,31 +158,22 @@ class PytorchModelBuilder(torch.nn.Module):
                                                      node_to_output_tensors_dict)
             out_tensors_of_n = run_operation(n,  # Run node operation and fetch outputs
                                              input_tensors,
-                                             op_func=getattr(self, n.name) if hasattr(self, n.name) else n.layer_class,
+                                             op_func=n.type if isinstance(n, FunctionalNode) else getattr(self, n.name),
                                              mode=self.mode)
             if isinstance(out_tensors_of_n, list):
                 node_to_output_tensors_dict.update({n: out_tensors_of_n})
             else:
                 node_to_output_tensors_dict.update({n: [out_tensors_of_n]})
 
-        output = []
         if self.append2output:
-            for n in self.append2output:
-                out_tensors_of_n = node_to_output_tensors_dict.get(n)
-                if len(out_tensors_of_n) > 1:
-                    output.append(out_tensors_of_n)
-                else:
-                    output += out_tensors_of_n
+            outputs = generate_outputs(self.append2output,
+                                       node_to_output_tensors_dict)
         else:
-            for ot in self.graph.get_outputs():
-                out_tensors_of_n = node_to_output_tensors_dict[ot.node]
-                if len(out_tensors_of_n) > 1:
-                    output.append(out_tensors_of_n)
-                else:
-                    output += out_tensors_of_n
-            if len(output) == 1:
-                output = output[0]
-        return output
+            outputs = generate_outputs([ot.node for ot in self.graph.get_outputs()],
+                                       node_to_output_tensors_dict)
+            if len(outputs) == 1:
+                outputs = outputs[0]
+        return outputs
 
 
 def model_builder(graph: common.Graph,

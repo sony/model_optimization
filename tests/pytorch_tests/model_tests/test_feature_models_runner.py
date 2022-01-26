@@ -24,6 +24,7 @@ from tests.pytorch_tests.model_tests.feature_models.multiple_output_nodes_multip
 from tests.pytorch_tests.model_tests.feature_models.multiple_outputs_node_test import MultipleOutputsNetTest
 from tests.pytorch_tests.model_tests.feature_models.output_in_the_middle_test import OutputInTheMiddleNetTest
 from tests.pytorch_tests.model_tests.feature_models.reuse_layer_net_test import ReuseLayerNetTest
+from tests.pytorch_tests.model_tests.feature_models.shift_negative_activation_test import ShiftNegaviteActivationNetTest
 from tests.pytorch_tests.model_tests.feature_models.split_concat_net_test import SplitConcatNetTest
 
 
@@ -96,6 +97,12 @@ class FeatureModelsTestRunner(unittest.TestCase):
         The reuse of a layer in a model.
         """
         ReuseLayerNetTest(self).run_test()
+
+    def test_shift_negative_activation_net(self):
+        """
+        This test checks the shift negative activation feature.
+        """
+        ShiftNegaviteActivationNetTest(self).run_test(seed=3)
 
     def test_split_concat_net(self):
         """

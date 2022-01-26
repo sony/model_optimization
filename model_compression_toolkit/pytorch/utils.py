@@ -15,16 +15,18 @@
 import torch
 import numpy as np
 
+from model_compression_toolkit.pytorch.constants import CUDA, CPU
+
 
 def get_working_device() -> str:
     """
     Get the working device of the environment
 
     Returns:
-        "cuda" is GPU is available, else "cpu"
+        Device "cuda" if GPU is available, else "cpu"
 
     """
-    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    return torch.device(CUDA if torch.cuda.is_available() else CPU)
 
 
 def set_model(model: torch.nn.Module):
