@@ -233,10 +233,10 @@ class KerasImplementation(FrameworkImplementation):
         """
         substitutions_list = []
         if quant_config.activation_channel_equalization:
-        substitutions_list.extend([ScaleEqualization(quant_config, fw_info),
-                                   ScaleEqualizationWithPad(quant_config, fw_info),
-                                   ScaleEqualizationMidActivation(quant_config, fw_info),
-                                   ScaleEqualizationMidActivationWithPad(quant_config, fw_info)])
+            substitutions_list.extend([ScaleEqualization(quant_config, fw_info),
+                                       ScaleEqualizationWithPad(quant_config, fw_info),
+                                       ScaleEqualizationMidActivation(quant_config, fw_info),
+                                       ScaleEqualizationMidActivationWithPad(quant_config, fw_info)])
         return substitutions_list
 
     def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:

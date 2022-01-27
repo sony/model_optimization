@@ -91,7 +91,7 @@ def _compute_bias_correction_per_candidate_qc(node: BaseNode,
                     weights_qc.bias_corrected = bias_correction_term
 
 
-def  _compute_bias_correction(kernel: np.ndarray,
+def _compute_bias_correction(kernel: np.ndarray,
                              quantized_kernel: np.ndarray,
                              in_statistics_container: BaseStatsCollector,
                              output_channels_axis: int,
@@ -115,10 +115,9 @@ def  _compute_bias_correction(kernel: np.ndarray,
 
     quantization_error = quantized_kernel - kernel
     mu = in_statistics_container.get_mean()
-    eps = np.sum(quantization_error,
-                 axis=tuple([i for i in range(len(quantization_error.shape)) if
-                             i not in [output_channels_axis, input_channels_axis]]))
-
+    axis_not_input_output_channel = tuple(
+        [i for i in range(len(quantization_error.shape)) if i not in [output_channels_axis, input_channels_axis]])
+    eps = np.sum(quantization_error, axis=axis_not_input_output_channel)
     if output_channels_axis == input_channels_axis:
         correction_term = mu * eps.flatten()
     else:
