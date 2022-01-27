@@ -18,7 +18,7 @@ from scipy import optimize
 import model_compression_toolkit.common.quantization.quantization_config as qc
 from model_compression_toolkit.common.constants import MIN_THRESHOLD, RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.common.quantization.quantization_params_generation.kl_selection import \
-    _kl_error_histogram, _kl_batch_error_function
+    _kl_error_histogram, _kl_error_function
 from model_compression_toolkit.common.quantization.quantization_params_generation.lp_selection import \
     _lp_error_histogram
 from model_compression_toolkit.common.quantization.quantization_params_generation.mae_selection import \
@@ -26,10 +26,10 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 from model_compression_toolkit.common.quantization.quantization_params_generation.mse_selection import \
     _mse_error_histogram
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_search import \
-    qparams_histogram_minimization, uniform_quantization_loss, \
-    kl_uniform_qparams_histogram_minimization, kl_uniform_quantization_loss
+    qparams_histogram_minimization, kl_uniform_qparams_histogram_minimization, \
+    uniform_qparams_selection_per_channel_search, qparams_tensor_minimization
 from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import get_tensor_max, \
-    get_tensor_min, uniform_quantize_tensor, get_output_shape
+    get_tensor_min, uniform_quantize_tensor
 
 from model_compression_toolkit.common.similarity_analyzer import compute_mse, compute_mae, compute_lp_norm
 
@@ -69,34 +69,48 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
         # search for KL error is separated because the error method signature is different from the other error methods.
         # we use _kl_batch_error_function to allow calculation per_channel in a vectorized manner if necessary,
         # we pass it as argument to avoid exposing protected package member inside kl_uniform_quantization_loss.
-        init_min_max_range = np.array([tensor_min, tensor_max]) if not per_channel else \
-            np.concatenate([tensor_min, tensor_max], axis=channel_axis)
-
-        res = optimize.minimize(fun=lambda min_max_range: kl_uniform_quantization_loss(_kl_batch_error_function,
-                                                                                       tensor_data,
-                                                                                       min_max_range,
-                                                                                       per_channel,
-                                                                                       channel_axis),
-                                x0=init_min_max_range)
-        # res.x contains the actual optimized parameters result from optimize.minimize
-        res = res.x if not per_channel else \
-            np.split(np.reshape(res.x, get_output_shape(tensor_data.shape, channel_axis)), 2, channel_axis)
+        if per_channel:
+            # Using search per-channel wrapper for kl based minimization
+            res = uniform_qparams_selection_per_channel_search(tensor_data, tensor_min, tensor_max, channel_axis,
+                                                               search_function=lambda _x, _x0:
+                                                               optimize.minimize(fun=lambda min_max_range: _kl_error_function(_x,
+                                                                                                                              range_min=min_max_range[0],
+                                                                                                                              range_max=min_max_range[1],
+                                                                                                                              n_bits=n_bits),
+                                                                                 x0=_x0)
+                                                               )
+        else:
+            x0 = np.array([tensor_min, tensor_max])
+            res = optimize.minimize(fun=lambda min_max_range: _kl_error_function(tensor_data,
+                                                                                 range_min=min_max_range[0],
+                                                                                 range_max=min_max_range[1],
+                                                                                 n_bits=n_bits),
+                                    x0=x0)
+            # returned 'x' here is an array with min and max range values
+            res = res.x[0], res.x[1]
     else:
         error_function = get_range_selection_tensor_error_function(quant_error_method, p)
-
-        init_min_max_range = np.array([tensor_min, tensor_max]) if not per_channel else \
-            np.concatenate([tensor_min, tensor_max], axis=channel_axis)
-
-        res = optimize.minimize(fun=lambda min_max_range: uniform_quantization_loss(error_function,
-                                                                                    tensor_data,
-                                                                                    min_max_range,
-                                                                                    n_bits,
-                                                                                    per_channel,
-                                                                                    channel_axis),
-                                x0=init_min_max_range)
-        # res.x contains the actual optimized parameters result from optimize.minimize
-        res = res.x if not per_channel else \
-            np.split(np.reshape(res.x, get_output_shape(tensor_data.shape, channel_axis)), 2, channel_axis)
+        if per_channel:
+            # Using search per-channel wrapper for minimization
+            res = uniform_qparams_selection_per_channel_search(tensor_data, tensor_min, tensor_max, channel_axis,
+                                                               search_function=lambda _x, _x0:
+                                                               qparams_tensor_minimization(_x, _x0, error_function,
+                                                                                           quant_function=lambda min_max_range:
+                                                                                           uniform_quantize_tensor(_x,
+                                                                                                                   min_max_range[0],
+                                                                                                                   min_max_range[1],
+                                                                                                                   n_bits))
+                                                               )
+        else:
+            x0 = np.array([tensor_min, tensor_max])
+            res = qparams_tensor_minimization(tensor_data, x0, error_function,
+                                              quant_function=lambda min_max_range: uniform_quantize_tensor(tensor_data,
+                                                                                                           min_max_range[0],
+                                                                                                           min_max_range[1],
+                                                                                                           n_bits)
+                                              )
+            # returned 'x' here is an array with min and max range values
+            res = res.x[0], res.x[1]
 
     return {RANGE_MIN: res[0],
             RANGE_MAX: res[1]}
@@ -152,13 +166,13 @@ def uniform_selection_histogram(bins: np.ndarray,
 
     else:
         error_function = get_range_selection_histogram_error_function(quant_error_method, p)
-        # returned 'x' here is an array with min and max range values
         res = qparams_histogram_minimization(bins,
                                              tensor_min_max,
                                              counts,
                                              error_function,
                                              quant_function=lambda min_max_range:
                                              uniform_quantize_tensor(bins, min_max_range[0], min_max_range[1], n_bits))
+        # returned 'x' here is an array with min and max range values
         res = res.x
 
     return {RANGE_MIN: res[0], RANGE_MAX: res[1]}

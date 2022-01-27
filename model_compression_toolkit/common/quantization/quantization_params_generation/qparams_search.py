@@ -21,7 +21,7 @@ import numpy as np
 
 from model_compression_toolkit.common.constants import MIN_THRESHOLD, THRESHOLD
 from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import quantize_tensor, \
-    reshape_tensor_for_per_channel_search, uniform_quantize_tensor
+    reshape_tensor_for_per_channel_search, uniform_quantize_tensor, get_output_shape
 from model_compression_toolkit.common.quantization.quantization_params_generation.no_clipping import \
     no_clipping_selection_tensor, no_clipping_selection_histogram
 
@@ -55,7 +55,7 @@ def qparams_selection_tensor_search(error_function: Callable,
     """
 
     signed = np.any(tensor_data < 0)  # check if tensor is singed
-    output_shape = [-1 if i is channel_axis else 1 for i in range(len(tensor_data.shape))]
+    output_shape = get_output_shape(tensor_data.shape, channel_axis)
 
     # First threshold to check is the constrained threshold based on the tensor's maximal value.
     threshold = 2 * no_clipping_selection_tensor(tensor_data,
@@ -145,6 +145,26 @@ def qparams_selection_histogram_search(error_function: Callable,
 
     # Return the threshold with the minimal error.
     return np.maximum(threshold_list[np.argmin(error_list)], min_threshold)
+
+
+def qparams_tensor_minimization(x, x0, error_function, quant_function):
+    """
+        Search for an optimal quantization parameters to quantize a tensor.
+        Uses scipy.optimization.minimize method to search through the space of possible parameters
+        to quantize the tensor according to the given quantization function.
+
+        Args:
+            x: Numpy array with tensor's content.
+            x0: An initial solution guess for the minimization process.
+            error_function: Function to compute the error between the original and quantized tensors.
+            quant_function: Function to quantize the tensor.
+
+        Returns:
+            Optimal quantization range to quantize the tensor.
+
+        """
+    return optimize.minimize(fun=lambda qparam: error_function(x, quant_function(qparam)),
+                             x0=x0)
 
 
 def qparams_histogram_minimization(x, x0, counts, error_function, quant_function):
@@ -283,112 +303,62 @@ def kl_qparams_selection_histogram_search_error_function(error_function: Callabl
     return error
 
 
-def symmetric_quantization_loss(error_function, tensor_data, threshold, n_bits, signed, per_channel, channel_axis):
+def symmetric_qparams_selection_per_channel_search(tensor_data, tensor_max, channel_axis, search_function):
     """
-    Vectorized implementation of the error function calculation for symmetric quantization (threshold based).
-    The reshaping process is ment to allow error calculation for both per-tensor and per-channel.
+    A wrapper function for running a search for optimal threshold per channel of a tensor,
+    to be used in symmetric quantization.
 
     Args:
-        error_function: Function to compute the error between the original and quantized histograms.
         tensor_data: Numpy array with tensor's content.
-        threshold: The threshold the tensor was quantized by.
-        n_bits: Number of bits to quantize the tensor.
-        signed: Whether the quantization range should include negative values or not.
-        per_channel: Whether the tensor should be quantized per-channel or per-tensor.
+        tensor_max: The maximal values per channel.
         channel_axis: Index of output channels dimension.
+        search_function: Function to preform the parameters' optimization for a given channel.
 
-    Returns: The value of the error according to the given error_function.
+    Returns: ndarray with the optimal threshold for each channel, shaped according to the channels_axis.
 
     """
-    tensor_data_r = tensor_data.reshape([1, -1]) if not per_channel \
-        else reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
+    tensor_data_r = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
+    output_shape = get_output_shape(tensor_data.shape, channel_axis)
+    res = []
 
-    return error_function(tensor_data_r,
-                          quantize_tensor(tensor_data_r,
-                                          threshold.reshape([-1, 1]), n_bits, signed, per_channel, channel_axis=0))
+    for j in range(tensor_data_r.shape[0]):  # iterate all channels of the tensor.
+        channel_data = tensor_data_r[j, :]
+        channel_threshold = tensor_max.flatten()[j]
+        channel_res = search_function(channel_data, channel_threshold)
+        res.append(channel_res.x)
+    return np.reshape(np.array(res), output_shape)
 
 
-def uniform_quantization_loss(error_function, tensor_data, min_max_range, n_bits, per_channel, channel_axis):
+def uniform_qparams_selection_per_channel_search(tensor_data, tensor_min, tensor_max, channel_axis, search_function):
     """
-    Vectorized implementation of the error function calculation for uniform quantization (range based).
-    The reshaping process is ment to allow error calculation for both per-tensor and per-channel.
+    A wrapper function for running a search for optimal range per channel of a tensor,
+    to be used in symuniform metric quantization.
 
     Args:
-        error_function: Function to compute the error between the original and quantized histograms.
         tensor_data: Numpy array with tensor's content.
-        min_max_range: The quantization range the tensor was quantized by.
-        n_bits: Number of bits to quantize the tensor.
-        per_channel: Whether the tensor should be quantized per-channel or per-tensor.
+        tensor_min: The minimal values per channel.
+        tensor_max: The maximal values per channel.
         channel_axis: Index of output channels dimension.
+        search_function: Function to preform the parameters' optimization for a given channel.
 
-    Returns: The value of the error according to the given error_function.
-
-    """
-    tensor_data_r = tensor_data.reshape([1, -1]) if not per_channel \
-        else reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
-
-    # expects first half of the array min_max_range to include min_range bounds
-    # and second half to include max_range bounds
-    min_range, max_range = np.split(min_max_range, 2)
-    return error_function(tensor_data_r,
-                          uniform_quantize_tensor(tensor_data_r,
-                                                  min_range.reshape([-1, 1]),
-                                                  max_range.reshape([-1, 1]), n_bits, per_channel, channel_axis=0))
-
-
-def kl_symmetric_quantization_loss(error_function, tensor_data, threshold, signed, per_channel, channel_axis):
-    """
-    Vectorized implementation of the KL-divergence error function calculation for uniform quantization (threshold based).
-    The reshaping process is ment to allow error calculation for both per-tensor and per-channel.
-
-    Args:
-        error_function: Function to compute the error between the original and quantized histograms.
-        tensor_data: Numpy array with tensor's content.
-        threshold: The threshold the tensor was quantized by.
-        signed: Whether the quantization range should include negative values or not.
-        per_channel: Whether the tensor should be quantized per-channel or per-tensor.
-        channel_axis: Index of output channels dimension.
-
-    Returns: The value of the error according to the KL-divergence error function.
+    Returns: ndarray with the optimal threshold for each channel, shaped according to the channels_axis.
 
     """
-    tensor_data_r = tensor_data.reshape([1, -1]) if not per_channel \
-        else reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
+    tensor_data_r = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
+    output_shape = get_output_shape(tensor_data.shape, channel_axis)
+    res_min, res_max = [], []
 
-    range_min = np.zeros_like(threshold) if not signed else np.negative(threshold)
+    for j in range(tensor_data_r.shape[0]):  # iterate all channels of the tensor.
+        channel_data = tensor_data_r[j, :]
+        channel_range_min = tensor_min.flatten()[j]
+        channel_range_max = tensor_max.flatten()[j]
+        channel_min_max = np.array([channel_range_min, channel_range_max])
 
-    # the given error function should be _kl_batch_error_function
-    return error_function(tensor_data_r,
-                          None,  # q_x is a dummy input for _kl_batch_error_function, therefore, no need to pass it here
-                          range_min=range_min,
-                          range_max=threshold
-                          )
+        channel_res = search_function(channel_data, channel_min_max)
 
+        res_min.append(channel_res.x[0])
+        res_max.append(channel_res.x[1])
 
-def kl_uniform_quantization_loss(error_function, tensor_data, min_max_range, per_channel, channel_axis):
-    """
-    Vectorized implementation of the KL-divergence error function calculation for uniform quantization (range based).
-    The reshaping process is ment to allow error calculation for both per-tensor and per-channel.
-
-    Args:
-        error_function: Function to compute the error between the original and quantized histograms.
-        tensor_data: Numpy array with tensor's content.
-        min_max_range: The quantization range the tensor was quantized by.
-        per_channel: Whether the tensor should be quantized per-channel or per-tensor.
-        channel_axis: Index of output channels dimension.
-
-    Returns: The value of the error according to the KL-divergence error function.
-
-    """
-    tensor_data_r = tensor_data.reshape([1, -1]) if not per_channel \
-        else reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
-
-    # expects first half of the array min_max_range to include min_range bounds
-    # and second half to include max_range bounds
-    min_range, max_range = np.split(min_max_range, 2)
-
-    # the given error function should be _kl_batch_error_function
-    return error_function(tensor_data_r,
-                          None,  # q_x is a dummy input for _kl_batch_error_function, therefore, no need to pass it here
-                          range_min=min_range,
-                          range_max=max_range)
+    res_min = np.reshape(np.array(res_min), output_shape)
+    res_max = np.reshape(np.array(res_max), output_shape)
+    return res_min, res_max

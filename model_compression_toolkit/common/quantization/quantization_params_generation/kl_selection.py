@@ -395,36 +395,3 @@ def _get_sliced_histogram(bins: np.ndarray,
     counts_subset = deepcopy(counts[first_bin_idx:last_bin_idx])
 
     return bins_subset, counts_subset
-
-
-def _kl_batch_error_function(x: np.ndarray,
-                             q_x: np.ndarray,  # dummy
-                             range_min: np.ndarray,
-                             range_max: np.ndarray,
-                             n_bins: int = 2048,
-                             n_bits: int = 8) -> np.float:
-    """
-    Vectorized implementation for the KL error function,
-    to allow vectorized per-channel computation (for weights quantization).
-    Input tensor x is expected to be reshaped before passed to this method,
-    such that axis 0 contains the number of channels and the tensor values are placed along axis 1.
-    Note that the quantized value of x is not directly used in this method,
-    but rather being calculated during the process of gathering the distribution statistics
-    within the _kl_error_function.
-
-    Args:
-        x:
-        q_x: Fake-quant quantized tensor of x (not used in this method)
-        range_min: min bound on the quantization range.
-        range_max: max bound on the quantization range.
-        n_bins: Number of bins for the float histogram.
-        n_bits: Number of bits the quantized tensor was quantized by.
-
-    Returns: The KL-divergence between the two tensors.
-
-    """
-    error_res = []
-    for i in range(x.shape[0]):
-        curr_error = _kl_error_function(x[i, :], range_min[i], range_max[i], n_bins, n_bits)
-        error_res.append(curr_error)
-    return np.mean(error_res)
