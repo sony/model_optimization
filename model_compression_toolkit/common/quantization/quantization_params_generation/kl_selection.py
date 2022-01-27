@@ -172,7 +172,9 @@ def _kl_error_function(x: np.ndarray,
         The KL-divergence of the float histogram and the quantized histogram of the tensors.
 
     """
-    assert range_min < range_max
+    if range_max <= range_min:
+        # invalid range
+        return np.inf
 
     # Compute the float histogram
     bc, bv = np.histogram(x, bins=n_bins)

@@ -228,7 +228,7 @@ def get_tensor_max(tensor_data: np.ndarray,
 
     """
     if per_channel:
-        output_shape = [-1 if i is channel_axis else 1 for i in range(len(tensor_data.shape))]
+        output_shape = get_output_shape(tensor_data.shape, channel_axis)
         tensor_data = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
         tensor_max = np.reshape(np.max(tensor_data, axis=-1), output_shape)
     else:
@@ -250,7 +250,7 @@ def get_tensor_min(tensor_data: np.ndarray,
 
     """
     if per_channel:
-        output_shape = [-1 if i is channel_axis else 1 for i in range(len(tensor_data.shape))]
+        output_shape = get_output_shape(tensor_data.shape, channel_axis)
         tensor_data = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
         tensor_min = np.reshape(np.min(tensor_data, axis=-1), output_shape)
     else:
@@ -294,8 +294,7 @@ def fix_range_to_include_zero(range_min, range_max, n_bits, per_channel, channel
 
     """
     if per_channel:
-        output_shape = [-1 if i is channel_axis else 1 for i in range(len(range_min.shape))]
-        # tensor_max = np.reshape(np.max(tensor_data, axis=-1), output_shape)
+        output_shape = get_output_shape(range_min.shape, channel_axis)
         res_min, res_max = [], []
         for a_b_range in np.column_stack((range_min.flatten(), range_max.flatten())):
             curr_a, curr_b = adjust_range(a_b_range, n_bits)

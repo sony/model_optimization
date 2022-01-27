@@ -71,14 +71,16 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
         # we pass it as argument to avoid exposing protected package member inside kl_uniform_quantization_loss.
         if per_channel:
             # Using search per-channel wrapper for kl based minimization
+            error_function = lambda _x, _y, min_max_range: \
+                _kl_error_function(_x, range_min=min_max_range[0], range_max=min_max_range[1], n_bits=n_bits)
             res = uniform_qparams_selection_per_channel_search(tensor_data, tensor_min, tensor_max, channel_axis,
                                                                search_function=lambda _x, _x0:
-                                                               optimize.minimize(fun=lambda min_max_range: _kl_error_function(_x,
-                                                                                                                              range_min=min_max_range[0],
-                                                                                                                              range_max=min_max_range[1],
-                                                                                                                              n_bits=n_bits),
-                                                                                 x0=_x0)
-                                                               )
+                                                               qparams_tensor_minimization(_x, _x0, error_function,
+                                                                                           quant_function=lambda min_max_range:
+                                                                                           uniform_quantize_tensor(_x,
+                                                                                                                   min_max_range[0],
+                                                                                                                   min_max_range[1],
+                                                                                                                   n_bits)))
         else:
             x0 = np.array([tensor_min, tensor_max])
             res = optimize.minimize(fun=lambda min_max_range: _kl_error_function(tensor_data,
@@ -89,7 +91,8 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
             # returned 'x' here is an array with min and max range values
             res = res.x[0], res.x[1]
     else:
-        error_function = get_range_selection_tensor_error_function(quant_error_method, p)
+        _error_function = get_range_selection_tensor_error_function(quant_error_method, p)
+        error_function = lambda _x, _y, _r: np.inf if _r[1] <= _r[0] else _error_function(_x, _y)
         if per_channel:
             # Using search per-channel wrapper for minimization
             res = uniform_qparams_selection_per_channel_search(tensor_data, tensor_min, tensor_max, channel_axis,
@@ -99,16 +102,14 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
                                                                                            uniform_quantize_tensor(_x,
                                                                                                                    min_max_range[0],
                                                                                                                    min_max_range[1],
-                                                                                                                   n_bits))
-                                                               )
+                                                                                                                   n_bits)))
         else:
             x0 = np.array([tensor_min, tensor_max])
             res = qparams_tensor_minimization(tensor_data, x0, error_function,
                                               quant_function=lambda min_max_range: uniform_quantize_tensor(tensor_data,
                                                                                                            min_max_range[0],
                                                                                                            min_max_range[1],
-                                                                                                           n_bits)
-                                              )
+                                                                                                           n_bits))
             # returned 'x' here is an array with min and max range values
             res = res.x[0], res.x[1]
 

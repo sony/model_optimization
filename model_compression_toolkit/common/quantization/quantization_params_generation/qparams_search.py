@@ -147,7 +147,7 @@ def qparams_selection_histogram_search(error_function: Callable,
     return np.maximum(threshold_list[np.argmin(error_list)], min_threshold)
 
 
-def qparams_tensor_minimization(x, x0, error_function, quant_function):
+def qparams_tensor_minimization(x, x0, error_function, quant_function, bounds=None):
     """
         Search for an optimal quantization parameters to quantize a tensor.
         Uses scipy.optimization.minimize method to search through the space of possible parameters
@@ -163,11 +163,12 @@ def qparams_tensor_minimization(x, x0, error_function, quant_function):
             Optimal quantization range to quantize the tensor.
 
         """
-    return optimize.minimize(fun=lambda qparam: error_function(x, quant_function(qparam)),
-                             x0=x0)
+    return optimize.minimize(fun=lambda qparam: error_function(x, quant_function(qparam), qparam),
+                             x0=x0,
+                             bounds=bounds)
 
 
-def qparams_histogram_minimization(x, x0, counts, error_function, quant_function):
+def qparams_histogram_minimization(x, x0, counts, error_function, quant_function, bounds=None):
     """
         Search for an optimal parameters to quantize a histogram.
         Uses scipy.optimization.minimize method to search through the space of possible
@@ -191,10 +192,11 @@ def qparams_histogram_minimization(x, x0, counts, error_function, quant_function
                                                                                bins=x,
                                                                                q_bins=quant_function(qparam),
                                                                                counts=counts),
-                             x0=x0)
+                             x0=x0,
+                             bounds=bounds)
 
 
-def kl_symmetric_qparams_histogram_minimization(x, x0, counts, n_bits, signed, error_function):
+def kl_symmetric_qparams_histogram_minimization(x, x0, counts, n_bits, signed, error_function, bounds):
     """
     Search for an optimal threshold to quantize a histogram, using the KL error method.
     Uses scipy.optimization.minimize method to search through the space of possible
@@ -220,8 +222,9 @@ def kl_symmetric_qparams_histogram_minimization(x, x0, counts, n_bits, signed, e
                                                                                                          n_bits,
                                                                                                          signed),
                                                                                   counts=counts,
-                                                                                  min_max_range=np.array([-threshold, threshold])),
-                             x0=x0)
+                                                                                  min_max_range=np.array([0, threshold]) if not signed else np.array([-threshold, threshold])),
+                             x0=x0,
+                             bounds=bounds)
 
 
 def kl_uniform_qparams_histogram_minimization(x, x0, counts, n_bits, error_function):
@@ -257,7 +260,8 @@ def qparams_selection_histogram_search_error_function(error_function: Callable,
                                                       bins: np.ndarray,
                                                       q_bins: np.ndarray,
                                                       counts: np.ndarray,
-                                                      threshold: np.ndarray = None):
+                                                      threshold: np.ndarray = None,
+                                                      range: np.ndarray = None):
     """
     Computes the error according to the given error function, to be used in the parameters' selection process
     for quantization.
@@ -271,6 +275,10 @@ def qparams_selection_histogram_search_error_function(error_function: Callable,
     Returns: the error between the original and quantized histogram.
 
     """
+    if range and range[1] >= range[0]:
+        # invalid range
+        return np.inf
+
     # computes the number of elements between quantized bin values.
     q_count, _ = np.histogram(q_bins, bins=bins, weights=np.concatenate([counts.flatten(), np.asarray([0])]))
     # threshold is only used for KL error method calculations.
@@ -303,7 +311,7 @@ def kl_qparams_selection_histogram_search_error_function(error_function: Callabl
     return error
 
 
-def symmetric_qparams_selection_per_channel_search(tensor_data, tensor_max, channel_axis, search_function):
+def symmetric_qparams_selection_per_channel_search(tensor_data, tensor_max, channel_axis, search_function, min_threshold):
     """
     A wrapper function for running a search for optimal threshold per channel of a tensor,
     to be used in symmetric quantization.
@@ -323,8 +331,9 @@ def symmetric_qparams_selection_per_channel_search(tensor_data, tensor_max, chan
 
     for j in range(tensor_data_r.shape[0]):  # iterate all channels of the tensor.
         channel_data = tensor_data_r[j, :]
-        channel_threshold = tensor_max.flatten()[j]
-        channel_res = search_function(channel_data, channel_threshold)
+        channel_threshold = max(min_threshold, tensor_max.flatten()[j])
+        bounds = [(min_threshold, 2 * channel_threshold)]
+        channel_res = search_function(channel_data, channel_threshold, bounds)
         res.append(channel_res.x)
     return np.reshape(np.array(res), output_shape)
 
