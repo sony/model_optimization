@@ -24,12 +24,23 @@ from model_compression_toolkit.common.quantization.set_node_quantization_config 
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
-from model_compression_toolkit.keras.constants import BIAS, KERNEL_SIZE, PADDING, PAD_VALID, PAD_SAME
+from model_compression_toolkit.keras.constants import PADDING
+
+"""
+This substitution aims to solve an issue of activation with negative outputs where
+the portion of the negative range is relatively small. In a symmetric quantization this causes 
+of bit loosing as the entire negative quantization range does not contain
+any values. To solve it, we shift the output of the activation by the minimal output value (quantized) such
+that all values after the shifting are positive. To correct the impact of such shifting, a correction
+to the next linear node is computed and added to its bias term.
+If the linear node pads the input tensor with zeros, we modify the padded value as well.  
+"""
 
 
 def op2d_bias_correction(op2d_node: BaseNode,
                          shift_to_correct: float,
                          fw_info: FrameworkInfo,
+                         bias_str: str,
                          bias_flag_str: str):
     """
     Compute the correction term to add to the op2d node's bias
@@ -40,10 +51,11 @@ def op2d_bias_correction(op2d_node: BaseNode,
         shift_to_correct: Value that was used to shift the output tensor of
         the non-linear node.
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
+        bias_str:
         bias_flag_str: The framework specific attribute name of the bias flag.
     """
 
-    bias = op2d_node.get_weights_by_keys(BIAS)
+    bias = op2d_node.get_weights_by_keys(bias_str)
     if bias is None:
         bias = 0.0
         op2d_node.framework_attr[bias_flag_str] = True
@@ -62,7 +74,7 @@ def op2d_bias_correction(op2d_node: BaseNode,
             axis_not_output_channel.remove(3) # 3 is the depth multiplier index
 
         bias_correction = shift_to_correct * np.sum(kernel, axis=tuple(axis_not_output_channel))
-        op2d_node.set_weights_by_keys(BIAS, bias - bias_correction.flatten())
+        op2d_node.set_weights_by_keys(bias_str, bias - bias_correction.flatten())
     else:
         raise NotImplementedError
 
@@ -168,8 +180,10 @@ def shift_negative_function(graph: Graph,
                             op2d_node: BaseNode,
                             fw_info: FrameworkInfo,
                             create_add_node: Callable,
-                            compute_op2d_padding: Callable,
+                            get_padding_values: Callable,
                             create_pad_node: Callable,
+                            padding_str: str,
+                            bias_str: str,
                             bias_flag_str: str,
                             zero_padding_node: BaseNode = None,
                             ) -> Graph:
@@ -191,8 +205,10 @@ def shift_negative_function(graph: Graph,
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         groups of layers by how they should be quantized, etc.)
         create_add_node: Function to create an add node.
-        compute_op2d_padding: Function to compute the op2d node's padding
+        get_padding_values: Function to compute the op2d node's padding values
         create_pad_node: Function to create an pad node.
+        padding_str: The framework specific attribute name of the padding.
+        bias_str: The framework specific attribute name of the bias.
         bias_flag_str: The framework specific attribute name of the bias flag.
         zero_padding_node: ZeroPadding2D node that may be in the graph before the linear layer.
 
@@ -222,29 +238,19 @@ def shift_negative_function(graph: Graph,
     delta[delta < 0] = np.inf
     shift_value = q_points[np.argmin(delta)]
 
-    padding = None
     if zero_padding_node is not None:
         # Remove zero padding layer and save padding values for creating new pad layer
-        padding = zero_padding_node.framework_attr.get(PADDING)
+        padding = zero_padding_node.framework_attr.get(padding_str)
         pad_top, pad_btm, pad_left, pad_right = padding[0][0], padding[0][1], padding[1][0], padding[1][1]
         remove_node_between_two_nodes(graph,
                                       node_to_remove=zero_padding_node,
                                       first_node=non_linear_node,
                                       last_node=op2d_node)
 
-    elif op2d_node.framework_attr.get(PADDING) == PAD_SAME and not (
-            op2d_node.framework_attr.get(KERNEL_SIZE)[0] == 1 and op2d_node.framework_attr.get(KERNEL_SIZE)[1] == 1):
-        padding = compute_op2d_padding(op2d_node)
-        pad_top, pad_btm, pad_left, pad_right = padding[0], padding[1], padding[2], padding[3]
-        op2d_node.framework_attr[PADDING] = PAD_VALID
-    elif isinstance(op2d_node.framework_attr.get(PADDING), int):
-        padding = op2d_node.framework_attr.get(PADDING)
-        pad_top, pad_btm, pad_left, pad_right = padding, padding, padding, padding
-        op2d_node.framework_attr[PADDING] = 0
-    elif isinstance(op2d_node.framework_attr.get(PADDING), tuple):
-        padding = op2d_node.framework_attr.get(PADDING)
-        pad_top, pad_btm, pad_left, pad_right = padding[0], padding[0], padding[1], padding[1]
-        op2d_node.framework_attr[PADDING] = 0
+    else:
+        padding, padding_values = get_padding_values(op2d_node)
+        if padding_values is not None:
+            pad_top, pad_btm, pad_left, pad_right = padding_values
 
     # Insert Add node between non linear node to op2d, and fix op2d bias
     add_node = create_add_node(shift_value,
@@ -256,6 +262,7 @@ def shift_negative_function(graph: Graph,
     op2d_bias_correction(op2d_node,
                          shift_value,
                          fw_info,
+                         bias_str,
                          bias_flag_str)
 
     # Use non linear statistics to create statistics for the Add node according to the shifting
@@ -322,6 +329,7 @@ def get_next_nodes_to_correct(n: BaseNode,
                               linear_node_types: NodeOperationMatcher,
                               bypass_node_types: NodeOperationMatcher,
                               pad_node_types: NodeOperationMatcher,
+                              is_padding_node_and_node_has_padding: Callable,
                               pad_node_to_consider: BaseNode = None) -> Tuple[Any, Any]:
     """
     Search for the next linear node of a given node. Go over
@@ -333,6 +341,8 @@ def get_next_nodes_to_correct(n: BaseNode,
         linear_node_types: Types of linear nodes to consider.
         bypass_node_types: Types of nodes for bypassing to consider.
         pad_node_types: Types of padding nodes to consider.
+        is_padding_node_and_node_has_padding: Function to check whether a padding node exists and
+         the next node is a linear node with padding.
         pad_node_to_consider: Pad node between the non-linear and linear nodes to consider when
         correcting the expected shift.
 
@@ -350,7 +360,7 @@ def get_next_nodes_to_correct(n: BaseNode,
 
     if linear_node_types.apply(next_node):
         # Correction is not supported when there are both padding node and a linear node with padding.
-        if pad_node_to_consider is not None and next_node.framework_attr.get(PADDING) == PAD_SAME:
+        if is_padding_node_and_node_has_padding(pad_node_to_consider, next_node):
             return None, None
         return next_node, pad_node_to_consider
 
@@ -360,6 +370,7 @@ def get_next_nodes_to_correct(n: BaseNode,
                                          linear_node_types,
                                          bypass_node_types,
                                          pad_node_types,
+                                         is_padding_node_and_node_has_padding,
                                          pad_node_to_consider)
 
     if pad_node_types.apply(next_node):
@@ -371,6 +382,7 @@ def get_next_nodes_to_correct(n: BaseNode,
                                              linear_node_types,
                                              bypass_node_types,
                                              pad_node_types,
+                                             is_padding_node_and_node_has_padding,
                                              next_node)
 
     return None, None  # If none of the above were found, it means the correction can not be applied
@@ -384,8 +396,11 @@ def apply_shift_negative_correction(graph: Graph,
                                     bypass_node_types: NodeOperationMatcher,
                                     pad_node_types: NodeOperationMatcher,
                                     create_add_node: Callable,
-                                    compute_op2d_padding: Callable,
+                                    get_padding_values: Callable,
                                     create_pad_node: Callable,
+                                    is_padding_node_and_node_has_padding: Callable,
+                                    padding_str: str,
+                                    bias_str: str,
                                     bias_flag_str: str) -> Graph:
     """
     Apply the substitution even if the linear node is not immediately after
@@ -401,8 +416,12 @@ def apply_shift_negative_correction(graph: Graph,
         bypass_node_types: Types of nodes for bypassing to consider.
         pad_node_types: Types of padding nodes to consider.
         create_add_node: Function to create an add node.
-        compute_op2d_padding: Function to compute the op2d node's padding
+        get_padding_values: Function to compute the op2d node's padding values.
         create_pad_node: Function to create an pad node.
+        is_padding_node_and_node_has_padding: Function to check whether a padding node exists and
+         the next node is a linear node with padding.
+        padding_str: The framework specific attribute name of the padding.
+        bias_str: The framework specific attribute name of the bias.
         bias_flag_str: The framework specific attribute name of the bias flag.
     Returns:
         Graph after applying shift negative on selected activations.
@@ -414,7 +433,8 @@ def apply_shift_negative_correction(graph: Graph,
                                                               graph,
                                                               linear_node_types,
                                                               bypass_node_types,
-                                                              pad_node_types
+                                                              pad_node_types,
+                                                              is_padding_node_and_node_has_padding
                                                               )
             if linear_node is not None:
                 graph = shift_negative_function(graph,
@@ -423,8 +443,10 @@ def apply_shift_negative_correction(graph: Graph,
                                                 linear_node,
                                                 fw_info,
                                                 create_add_node,
-                                                compute_op2d_padding,
+                                                get_padding_values,
                                                 create_pad_node,
+                                                padding_str,
+                                                bias_str,
                                                 bias_flag_str,
                                                 zero_padding_node=pad_node)
     return graph

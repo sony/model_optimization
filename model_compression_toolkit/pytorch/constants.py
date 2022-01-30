@@ -25,6 +25,7 @@ CALL_METHOD = 'call_method'
 # # Layers attributes constants:
 LAYER_NAME = 'name'
 USE_BIAS = 'bias'
+PADDING = 'padding'
 TENSOR_META = 'tensor_meta'
 TYPE = 'type'
 PAD = 'pad'

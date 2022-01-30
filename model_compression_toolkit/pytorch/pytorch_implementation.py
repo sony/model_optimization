@@ -25,21 +25,18 @@ from model_compression_toolkit.common.collectors.statistics_collector_generator 
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.node_prior_info import NodePriorInfo
-from model_compression_toolkit.common.substitutions.shift_negative_activation import apply_shift_negative_correction
 from model_compression_toolkit.common.user_info import UserInformation
-from model_compression_toolkit.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
-    compute_op2d_padding, create_pad_node
 from model_compression_toolkit.pytorch.back2framework.model_builder import model_builder
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
     BatchNormalizationFolding
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.mark_activation import MarkActivation
-from model_compression_toolkit.pytorch.graph_substitutions.substitutions.shift_negative_activation import SNC_NODE, \
-    LINEAR_NODE, BYPASS_NODE, PAD_NODE, create_add_node
+from model_compression_toolkit.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
+    pytorch_apply_shift_negative_correction
 from model_compression_toolkit.pytorch.pytorch_node_prior_info import create_node_prior_info
 from model_compression_toolkit.pytorch.reader.reader import model_reader
 import model_compression_toolkit.pytorch.constants as pytorch_constants
-from model_compression_toolkit.pytorch.utils import get_working_device, to_torch_tensor, torch_tensor_to_numpy
+from model_compression_toolkit.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 
 
 class PytorchImplementation(FrameworkImplementation):
@@ -150,18 +147,9 @@ class PytorchImplementation(FrameworkImplementation):
         Returns:
             Graph after SNC.
         """
-        return apply_shift_negative_correction(graph,
-                                               qc,
-                                               fw_info,
-                                               SNC_NODE,
-                                               LINEAR_NODE,
-                                               BYPASS_NODE,
-                                               PAD_NODE,
-                                               create_add_node,
-                                               compute_op2d_padding,
-                                               create_pad_node,
-                                               pytorch_constants.USE_BIAS
-                                               )
+        return pytorch_apply_shift_negative_correction(graph,
+                                                       qc,
+                                                       fw_info)
 
     def attach_sc_to_node(self,
                           node: BaseNode,
@@ -209,6 +197,11 @@ class PytorchImplementation(FrameworkImplementation):
             A list of the framework substitutions used after we collect statistics.
         """
         substitutions_list = []
+        if quant_config.input_scaling:
+            raise Exception('Input scaling is currently not supported for Pytorch.')
+
+        if quant_config.relu_unbound_correction:
+            raise Exception('Relu unbound correction is currently not supported for Pytorch.')
         return substitutions_list
 
     def get_substitutions_channel_equalization(self,

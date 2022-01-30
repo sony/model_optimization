@@ -13,17 +13,20 @@
 # limitations under the License.
 # ==============================================================================
 import operator
+from typing import Tuple, Any
+
 import torch.nn.functional
 from torch.nn import Conv2d, Linear, PReLU, ELU, Hardswish, Dropout, ZeroPad2d, SiLU
 from torch import reshape
 from torch.nn.functional import hardswish, silu, prelu, elu
 from torch.nn.functional import avg_pool2d
 
-from model_compression_toolkit import common
-from model_compression_toolkit.common import BaseNode
+from model_compression_toolkit import common, QuantizationConfig, FrameworkInfo
+from model_compression_toolkit.common import BaseNode, Graph
 from model_compression_toolkit.common.graph.graph_matchers import EdgeMatcher
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher
-from model_compression_toolkit.pytorch.constants import PAD, VALUE
+from model_compression_toolkit.common.substitutions.shift_negative_activation import apply_shift_negative_correction
+from model_compression_toolkit.pytorch.constants import PAD, VALUE, PADDING, BIAS, USE_BIAS
 
 """
 This substitution aims to solve an issue of activation with negative outputs where
@@ -35,28 +38,32 @@ to the next linear node is computed and added to its bias term.
 If the linear node pads the input tensor with zeros, we modify the padded value as well.  
 """
 
-# Match activation nodes with negative outputs.
-SNC_NODE = NodeOperationMatcher(PReLU) | \
-           NodeOperationMatcher(prelu) | \
-           NodeOperationMatcher(ELU) | \
-           NodeOperationMatcher(elu) | \
-           NodeOperationMatcher(Hardswish) | \
-           NodeOperationMatcher(hardswish) | \
-           NodeOperationMatcher(SiLU) | \
-           NodeOperationMatcher(silu)
 
-# Match linear layers where we can add a correction.
-LINEAR_NODE = NodeOperationMatcher(Conv2d) | \
-              NodeOperationMatcher(Linear)
+def shift_negative_activation_node_matchers():
+    # Match activation nodes with negative outputs.
+    snc_node = NodeOperationMatcher(PReLU) | \
+               NodeOperationMatcher(prelu) | \
+               NodeOperationMatcher(ELU) | \
+               NodeOperationMatcher(elu) | \
+               NodeOperationMatcher(Hardswish) | \
+               NodeOperationMatcher(hardswish) | \
+               NodeOperationMatcher(SiLU) | \
+               NodeOperationMatcher(silu)
 
-# Match nodes that can be in between the non-linear node to the linear node,
-# and still the substitution can be applied correctly.
-BYPASS_NODE = NodeOperationMatcher(reshape) | \
-              NodeOperationMatcher(avg_pool2d) | \
-              NodeOperationMatcher(Dropout)
+    # Match linear layers where we can add a correction.
+    linear_node = NodeOperationMatcher(Conv2d) | \
+                  NodeOperationMatcher(Linear)
 
-# Match a pad node that can be in between the non-linear node to the linear node.
-PAD_NODE = NodeOperationMatcher(ZeroPad2d)
+    # Match nodes that can be in between the non-linear node to the linear node,
+    # and still the substitution can be applied correctly.
+    bypass_node = NodeOperationMatcher(reshape) | \
+                  NodeOperationMatcher(avg_pool2d) | \
+                  NodeOperationMatcher(Dropout)
+
+    # Match a pad node that can be in between the non-linear node to the linear node.
+    pad_node = NodeOperationMatcher(ZeroPad2d)
+
+    return snc_node, linear_node, bypass_node, pad_node
 
 
 def create_add_node(add_value: float,
@@ -143,3 +150,73 @@ def compute_op2d_padding():
         None
     """
     return None
+
+
+def get_padding_values(op2d_node: BaseNode) -> Tuple[Any, Any]:
+    """
+
+    Args:
+        op2d_node: convolution type node from which to extract the padding values.
+
+    Returns:
+        A tuple of containing the padding attribute and padding values.
+    """
+    padding, padding_values = None, None
+    if isinstance(op2d_node.framework_attr.get(PADDING), int):
+        padding = op2d_node.framework_attr.get(PADDING)
+        padding_values = padding, padding, padding, padding
+        op2d_node.framework_attr[PADDING] = 0
+    elif isinstance(op2d_node.framework_attr.get(PADDING), tuple):
+        padding = op2d_node.framework_attr.get(PADDING)
+        padding_values = padding[0], padding[0], padding[1], padding[1]
+        op2d_node.framework_attr[PADDING] = 0
+    return padding, padding_values
+
+
+def is_padding_node_and_node_has_padding(pad_node_to_consider: BaseNode,
+                                         next_node: BaseNode) -> bool:
+    """
+
+    Args:
+        pad_node_to_consider: Pad node between the non-linear and linear nodes to consider when
+        correcting the expected shift.
+        next_node: The next node after the node in check for correction.
+
+    Returns:
+        Whether a padding node exists and the next node is a linear node with padding.
+    """
+    padding = next_node.framework_attr.get(PADDING)
+    return pad_node_to_consider is not None and (
+                (isinstance(padding, int) and padding > 0) or (isinstance(padding, tuple) and sum(padding) > 0))
+
+
+def pytorch_apply_shift_negative_correction(graph: Graph,
+                                            quant_config: QuantizationConfig,
+                                            fw_info: FrameworkInfo) -> Graph:
+    """
+    Apply shift negative correction (SNC) on a graph built from a Pytorch model.
+
+    Args:
+        graph: Graph to apply SNC on.
+        quant_config: Quantization configuration.
+        fw_info: FrameworkInfo object with information about the specific framework's module.
+
+    Returns:
+        Graph after SNC.
+    """
+    snc_node, linear_node, bypass_node, pad_node = shift_negative_activation_node_matchers()
+    return apply_shift_negative_correction(graph,
+                                           quant_config,
+                                           fw_info,
+                                           snc_node,
+                                           linear_node,
+                                           bypass_node,
+                                           pad_node,
+                                           create_add_node,
+                                           get_padding_values,
+                                           create_pad_node,
+                                           is_padding_node_and_node_has_padding,
+                                           PADDING,
+                                           BIAS,
+                                           USE_BIAS
+                                           )

@@ -46,9 +46,9 @@ class BaseLayerTest(BaseTest):
 
     def get_quantization_config(self):
         qc = copy.deepcopy(DEFAULTCONFIG)
+        qc.weights_bias_correction = False
         if self.current_mode == LayerTestMode.FLOAT:
             # Disable all features that are enabled by default:
-            qc.weights_bias_correction = False
             qc.enable_activation_quantization = False
             qc.enable_weights_quantization = False
         elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:

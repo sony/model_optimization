@@ -16,6 +16,10 @@
 import tensorflow as tf
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+from graphviz import Graph
+
+from model_compression_toolkit.common.substitutions.shift_negative_activation import apply_shift_negative_correction
+
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
 else:
@@ -24,12 +28,12 @@ else:
 import numpy as np
 from tensorflow.keras.layers import Activation, Conv2D, Dense, DepthwiseConv2D, ZeroPadding2D, Reshape, \
     GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU
-from typing import Tuple
+from typing import Tuple, Any
 
-from model_compression_toolkit import common
+from model_compression_toolkit import common, QuantizationConfig, FrameworkInfo
 from model_compression_toolkit.common import BaseNode
 from model_compression_toolkit.common.constants import FLOAT_32, DATA_TYPE
-from model_compression_toolkit.keras.constants import NEGATIVE_SLOPE
+from model_compression_toolkit.keras.constants import NEGATIVE_SLOPE, PADDING, PAD_SAME, PAD_VALID, BIAS, USE_BIAS
 from model_compression_toolkit.common.graph.graph_matchers import EdgeMatcher
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, \
     NodeFrameworkAttrMatcher
@@ -71,33 +75,38 @@ to the next linear node is computed and added to its bias term.
 If the linear node pads the input tensor with zeros, we modify the padded value as well.  
 """
 
-# Match activation nodes with negative outputs.
-SNC_NODE = NodeOperationMatcher(tf.nn.silu) | \
-           NodeOperationMatcher(tf.nn.swish) | \
-           NodeOperationMatcher(tf.nn.leaky_relu) | \
-           NodeOperationMatcher(tf.nn.selu) | \
-           NodeOperationMatcher(tf.nn.gelu) | \
-           NodeOperationMatcher(tf.nn.elu) | \
-           (NodeOperationMatcher(Activation) & (NodeFrameworkAttrMatcher(ACTIVATION, SWISH) |
-                                                NodeFrameworkAttrMatcher(ACTIVATION, GELU) |
-                                                NodeFrameworkAttrMatcher(ACTIVATION, SELU))) | \
-           NodeOperationMatcher(PReLU) | \
-           NodeOperationMatcher(ELU) | \
-           (NodeOperationMatcher(ReLU) & NodeFrameworkAttrMatcher(NEGATIVE_SLOPE, 0.0).logic_not())  # Leaky ReLU
 
-# Match linear layers where we can add a correction.
-LINEAR_NODE = NodeOperationMatcher(Conv2D) | \
-              NodeOperationMatcher(Dense) | \
-              NodeOperationMatcher(DepthwiseConv2D)
+def shift_negative_activation_node_matchers():
+    # Match activation nodes with negative outputs.
+    snc_node = NodeOperationMatcher(tf.nn.silu) | \
+               NodeOperationMatcher(tf.nn.swish) | \
+               NodeOperationMatcher(tf.nn.leaky_relu) | \
+               NodeOperationMatcher(tf.nn.selu) | \
+               NodeOperationMatcher(tf.nn.gelu) | \
+               NodeOperationMatcher(tf.nn.elu) | \
+               (NodeOperationMatcher(Activation) & (NodeFrameworkAttrMatcher(ACTIVATION, SWISH) |
+                                                    NodeFrameworkAttrMatcher(ACTIVATION, GELU) |
+                                                    NodeFrameworkAttrMatcher(ACTIVATION, SELU))) | \
+               NodeOperationMatcher(PReLU) | \
+               NodeOperationMatcher(ELU) | \
+               (NodeOperationMatcher(ReLU) & NodeFrameworkAttrMatcher(NEGATIVE_SLOPE, 0.0).logic_not())  # Leaky ReLU
 
-# Match nodes that can be in between the non-linear node to the linear node,
-# and still the substitution can be applied correctly.
-BYPASS_NODE = NodeOperationMatcher(Reshape) | \
-              NodeOperationMatcher(GlobalAveragePooling2D) | \
-              NodeOperationMatcher(Dropout)
+    # Match linear layers where we can add a correction.
+    linear_node = NodeOperationMatcher(Conv2D) | \
+                  NodeOperationMatcher(Dense) | \
+                  NodeOperationMatcher(DepthwiseConv2D)
 
-# Match a pad node that can be in between the non-linear node to the linear node.
-PAD_NODE = NodeOperationMatcher(ZeroPadding2D)
+    # Match nodes that can be in between the non-linear node to the linear node,
+    # and still the substitution can be applied correctly.
+    bypass_node = NodeOperationMatcher(Reshape) | \
+                  NodeOperationMatcher(GlobalAveragePooling2D) | \
+                  NodeOperationMatcher(Dropout)
+
+    # Match a pad node that can be in between the non-linear node to the linear node.
+    pad_node = NodeOperationMatcher(ZeroPadding2D)
+
+    return snc_node, linear_node, bypass_node, pad_node
+
 
 
 def create_add_node(add_value: float,
@@ -228,3 +237,68 @@ def compute_op2d_padding(op2d_node: BaseNode) -> Tuple[int, int, int, int]:
     pad_right = pad_along_w - (pad_along_w // 2)
 
     return pad_top, pad_btm, pad_left, pad_right
+
+
+def get_padding_values(op2d_node) -> Tuple[Any, Any]:
+    """
+
+    Args:
+        op2d_node: convolution type node from which to extract the padding values.
+
+    Returns:
+        A tuple of containing the padding attribute and padding values.
+    """
+    padding, padding_values = None, None
+    if op2d_node.framework_attr.get(PADDING) == PAD_SAME and not (
+            op2d_node.framework_attr.get(KERNEL_SIZE)[0] == 1 and op2d_node.framework_attr.get(KERNEL_SIZE)[1] == 1):
+        padding = compute_op2d_padding(op2d_node)
+        padding_values = padding[0], padding[1], padding[2], padding[3]
+        op2d_node.framework_attr[PADDING] = PAD_VALID
+    return padding, padding_values
+
+
+def is_padding_node_and_node_has_padding(pad_node_to_consider: BaseNode,
+                                         next_node: BaseNode) -> bool:
+    """
+
+    Args:
+        pad_node_to_consider: Pad node between the non-linear and linear nodes to consider when
+        correcting the expected shift.
+        next_node: The next node after the node in check for correction.
+
+    Returns:
+        Whether a padding node exists and the next node is a linear node with padding.
+    """
+    return pad_node_to_consider is not None and next_node.framework_attr.get(PADDING) == PAD_SAME
+
+
+def keras_apply_shift_negative_correction(graph: Graph,
+                                          quant_config: QuantizationConfig,
+                                          fw_info: FrameworkInfo) -> Graph:
+    """
+    Apply shift negative correction (SNC) on a graph built from a Keras model.
+
+    Args:
+        graph: Graph to apply SNC on.
+        quant_config: Quantization configuration.
+        fw_info: FrameworkInfo object with information about the specific framework's module.
+
+    Returns:
+        Graph after SNC.
+    """
+    snc_node, linear_node, bypass_node, pad_node = shift_negative_activation_node_matchers()
+    return apply_shift_negative_correction(graph,
+                                           quant_config,
+                                           fw_info,
+                                           snc_node,
+                                           linear_node,
+                                           bypass_node,
+                                           pad_node,
+                                           create_add_node,
+                                           get_padding_values,
+                                           create_pad_node,
+                                           is_padding_node_and_node_has_padding,
+                                           PADDING,
+                                           BIAS,
+                                           USE_BIAS
+                                           )

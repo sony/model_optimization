@@ -31,15 +31,13 @@ from model_compression_toolkit.keras.graph_substitutions.substitutions.scale_equ
 from model_compression_toolkit.keras.graph_substitutions.substitutions.separableconv_decomposition import \
     SeparableConvDecomposition
 from model_compression_toolkit.keras.graph_substitutions.substitutions.shift_negative_activation import \
-    SNC_NODE, create_add_node, compute_op2d_padding, create_pad_node, LINEAR_NODE, BYPASS_NODE, \
-    PAD_NODE
-from model_compression_toolkit.common.substitutions.shift_negative_activation import apply_shift_negative_correction
+    keras_apply_shift_negative_correction
 from model_compression_toolkit.keras.keras_node_prior_info import create_node_prior_info
 from model_compression_toolkit.keras.mixed_precision.sensitivity_evaluation import get_sensitivity_evaluation
 from model_compression_toolkit.keras.reader.reader import model_reader
 from model_compression_toolkit.common.collectors.statistics_collector_generator import create_stats_collector_for_node
 import model_compression_toolkit.keras.constants as keras_constants
-from model_compression_toolkit.keras.utils import tf_tensor_to_numpy, to_tf_tensor
+from model_compression_toolkit.keras.tf_tensor_numpy import tf_tensor_to_numpy, to_tf_tensor
 
 
 class KerasImplementation(FrameworkImplementation):
@@ -149,18 +147,9 @@ class KerasImplementation(FrameworkImplementation):
         Returns:
             Graph after SNC.
         """
-        return apply_shift_negative_correction(graph,
-                                               qc,
-                                               fw_info,
-                                               SNC_NODE,
-                                               LINEAR_NODE,
-                                               BYPASS_NODE,
-                                               PAD_NODE,
-                                               create_add_node,
-                                               compute_op2d_padding,
-                                               create_pad_node,
-                                               keras_constants.USE_BIAS
-                                               )
+        return keras_apply_shift_negative_correction(graph,
+                                                     qc,
+                                                     fw_info)
 
     def attach_sc_to_node(self,
                           node: BaseNode,
