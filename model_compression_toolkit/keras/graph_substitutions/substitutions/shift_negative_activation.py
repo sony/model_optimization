@@ -16,8 +16,6 @@
 import tensorflow as tf
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
-from graphviz import Graph
-
 from model_compression_toolkit.common.substitutions.shift_negative_activation import apply_shift_negative_correction
 
 if tf.__version__ < "2.6":
@@ -31,7 +29,7 @@ from tensorflow.keras.layers import Activation, Conv2D, Dense, DepthwiseConv2D, 
 from typing import Tuple, Any
 
 from model_compression_toolkit import common, QuantizationConfig, FrameworkInfo
-from model_compression_toolkit.common import BaseNode
+from model_compression_toolkit.common import BaseNode, Graph
 from model_compression_toolkit.common.constants import FLOAT_32, DATA_TYPE
 from model_compression_toolkit.keras.constants import NEGATIVE_SLOPE, PADDING, PAD_SAME, PAD_VALID, BIAS, USE_BIAS
 from model_compression_toolkit.common.graph.graph_matchers import EdgeMatcher
