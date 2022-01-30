@@ -351,7 +351,7 @@ def _prepare_model_for_quantization(in_model: Any,
     ######################################
     # Represent model in a graph
     ######################################
-    graph = fw_impl.model_reader(in_model)  # model reading
+    graph = fw_impl.model_reader(in_model, representative_data_gen)  # model reading
 
     if tb_w is not None:
         tb_w.add_graph(graph, 'initial_graph')
@@ -437,7 +437,7 @@ def _prepare_model_for_quantization(in_model: Any,
     # Channel equalization
     ######################################
     transformed_graph = substitute(transformed_graph,
-                                   fw_impl.get_substitutions_channel_equalization(quant_config,
+                               fw_impl.get_substitutions_channel_equalization(quant_config,
                                                                                   fw_info))
 
     ######################################

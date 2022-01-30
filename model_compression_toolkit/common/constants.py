@@ -35,6 +35,8 @@ FLOAT_32 = 'float32'
 # Number of Tensorboard cosine-similarity plots to add:
 NUM_SAMPLES_CS_TENSORBOARD = 20
 
+# num bits for shift negative non linear node
+SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS = 16
 
 # In Mixed-Precision, a node can have multiple candidates for weights quantization configuration.
 # In order to display a single view of a node (for example, for logging in TensorBoard) we need to track the attributes

@@ -91,7 +91,7 @@ class ModelCollector(object):
 
         # TODO: Thinking about delegating collections to framework
         # TODO: migrate datasets to framework datasets
-        tensor_data = self.model(list(inputs_list))
+        tensor_data = self.fw_impl.run_model_inference(self.model, inputs_list)
         for td, sc in zip(tensor_data, self.stats_containers_list):
             if isinstance(sc, (list, tuple)):
                 if not isinstance(td, (list, tuple)):

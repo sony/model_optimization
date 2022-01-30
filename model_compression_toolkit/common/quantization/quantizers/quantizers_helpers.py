@@ -79,7 +79,7 @@ def calculate_min_max_values(threshold: np.ndarray,
                             signed=signed)
 
     # If unsigned: min=0, otherwise its -threshold
-    min_value = -(1 - int(signed)) * threshold
+    min_value = int(signed) * -threshold
     max_value = threshold - delta
 
     return min_value, max_value

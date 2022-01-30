@@ -77,7 +77,11 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         fw_info = DEFAULT_KERAS_INFO
         in_model = MobileNetV2()
         keras_impl = KerasImplementation()
-        graph = keras_impl.model_reader(in_model)  # model reading
+
+        def dummy_representative_dataset():
+            return None
+
+        graph = keras_impl.model_reader(in_model, dummy_representative_dataset)  # model reading
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=qc,
                                                         fw_info=fw_info)

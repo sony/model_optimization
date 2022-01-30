@@ -14,7 +14,7 @@
 # ==============================================================================
 
 
-from typing import Callable
+from typing import Callable, Any
 
 import numpy as np
 
@@ -89,13 +89,23 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.shift_negative_ratio = qc.shift_negative_ratio
         self.shift_negative_threshold_recalculation = qc.shift_negative_threshold_recalculation
 
-    def generate_quantization_node(self) -> Callable:
+    def quantize_node_output(self,
+                             tensors: Any) -> Any:
         """
-        Returns: Quantization function to use for quantizing the node's activations,
-        with the node's quantization configuration properties.
+
+        Args:
+            tensors: framework tensor/s
+
+        Returns:
+            Framework tensor/s after applying fake quantization.
+
         """
-        return self.activation_quantization_fn(self.activation_n_bits,
+        fake_quant = self.activation_quantization_fn(self.activation_n_bits,
                                                self.activation_quantization_params)
+
+        if fake_quant is None:
+            raise Exception('Layer is meant to be quantized but fake_quant function is None')
+        return fake_quant(tensors)
 
     def set_activation_quantization_fn(self, activation_quantization_fn: Callable):
         """
