@@ -29,7 +29,7 @@ from model_compression_toolkit.common.user_info import UserInformation
 from model_compression_toolkit.pytorch.back2framework.model_builder import model_builder
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
-    BatchNormalizationFolding
+    pytorch_batchnorm_folding
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.mark_activation import MarkActivation
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
     pytorch_apply_shift_negative_correction
@@ -183,7 +183,7 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: A list of the framework substitutions used before we build a quantized module.
 
         """
-        return [BatchNormalizationFolding()]
+        return [pytorch_batchnorm_folding()]
 
     def get_substitutions_post_statistics_collection(self,
                                                      quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
