@@ -18,7 +18,7 @@ from model_compression_toolkit.keras.gradient_ptq.training_wrapper import gptq_t
 from model_compression_toolkit.keras.graph_substitutions.substitutions.activation_decomposition import \
     ActivationDecomposition
 from model_compression_toolkit.keras.graph_substitutions.substitutions.batchnorm_folding import \
-    BatchNormalizationFolding
+    keras_batchnorm_folding
 from model_compression_toolkit.keras.graph_substitutions.substitutions.input_scaling import InputScaling, \
     InputScalingWithPad
 from model_compression_toolkit.keras.graph_substitutions.substitutions.mark_activation import MarkActivation
@@ -185,7 +185,7 @@ class KerasImplementation(FrameworkImplementation):
         """
         return [SeparableConvDecomposition(),
                 ActivationDecomposition(),
-                BatchNormalizationFolding()]
+                keras_batchnorm_folding()]
 
     def get_substitutions_post_statistics_collection(self, quant_config: QuantizationConfig) -> List[
         common.BaseSubstitution]:
