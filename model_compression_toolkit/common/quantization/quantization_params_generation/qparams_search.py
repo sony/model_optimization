@@ -21,7 +21,8 @@ import numpy as np
 
 from model_compression_toolkit.common.constants import MIN_THRESHOLD, THRESHOLD
 from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import quantize_tensor, \
-    reshape_tensor_for_per_channel_search, uniform_quantize_tensor, get_output_shape
+    reshape_tensor_for_per_channel_search, uniform_quantize_tensor, get_output_shape, get_range_bounds, \
+    get_threshold_bounds
 from model_compression_toolkit.common.quantization.quantization_params_generation.no_clipping import \
     no_clipping_selection_tensor, no_clipping_selection_histogram
 
@@ -151,13 +152,17 @@ def qparams_tensor_minimization(x, x0, error_function, quant_function, bounds=No
     """
         Search for an optimal quantization parameters to quantize a tensor.
         Uses scipy.optimization.minimize method to search through the space of possible parameters
-        to quantize the tensor according to the given quantization function.
+        to quantize the tensor according to the given quantization function and possible parameters bounds.
+        Used for parameters' selection search for Symmetric and Uniform quantization
+        (depends on quant_function argument).
 
         Args:
             x: Numpy array with tensor's content.
             x0: An initial solution guess for the minimization process.
             error_function: Function to compute the error between the original and quantized tensors.
             quant_function: Function to quantize the tensor.
+            bounds: Lower and upper bounds for the quantization parameters' values
+            (threshold for symmetric quantization and range for uniform quantization).
 
         Returns:
             Optimal quantization range to quantize the tensor.
@@ -172,7 +177,7 @@ def qparams_histogram_minimization(x, x0, counts, error_function, quant_function
     """
         Search for an optimal parameters to quantize a histogram.
         Uses scipy.optimization.minimize method to search through the space of possible
-        parameters for quantization according to the given quantization method.
+        parameters for quantization according to the given quantization method and possible parameters bounds.
         Used for parameters' selection search for Symmetric and Uniform quantization
         (depends on quant_function argument).
 
@@ -182,6 +187,9 @@ def qparams_histogram_minimization(x, x0, counts, error_function, quant_function
             counts: Number of elements in the bins to search_methods for a threshold.
             error_function: Function to compute the error between the original and quantized tensors.
             quant_function: Function to quantize the tensor.
+            bounds: Lower and upper bounds for the quantization parameters' values
+            (threshold for symmetric quantization and range for uniform quantization).
+
 
         Returns:
             OptimizeResult object containing the optimal parameters to quantize the histogram by.
@@ -209,6 +217,9 @@ def kl_symmetric_qparams_histogram_minimization(x, x0, counts, n_bits, signed, e
         n_bits: Number of bits to quantize the tensor.
         signed: Whether the quantization range should include negative values or not.
         error_function: Function to compute the error between the original and quantized tensors.
+        bounds: Lower and upper bounds for the quantization parameters' values
+            (threshold for symmetric quantization and range for uniform quantization).
+
 
     Returns:
         OptimizeResult object containing the optimal threshold to quantize the histogram by.
@@ -227,7 +238,7 @@ def kl_symmetric_qparams_histogram_minimization(x, x0, counts, n_bits, signed, e
                              bounds=bounds)
 
 
-def kl_uniform_qparams_histogram_minimization(x, x0, counts, n_bits, error_function):
+def kl_uniform_qparams_histogram_minimization(x, x0, counts, n_bits, error_function, bounds=None):
     """
     Search for an optimal range to quantize a histogram, using the KL error method.
     Uses scipy.optimization.minimize method to search through the space of possible
@@ -239,6 +250,9 @@ def kl_uniform_qparams_histogram_minimization(x, x0, counts, n_bits, error_funct
         counts: Number of elements in the bins to search_methods for a threshold.
         n_bits: Number of bits to quantize the tensor.
         error_function: Function to compute the error between the original and quantized tensors.
+        bounds: Lower and upper bounds for the quantization parameters' values
+            (threshold for symmetric quantization and range for uniform quantization).
+
 
     Returns:
         OptimizeResult object containing the optimal threshold to quantize the histogram by.
@@ -253,7 +267,8 @@ def kl_uniform_qparams_histogram_minimization(x, x0, counts, n_bits, error_funct
                                                                                                                  n_bits=n_bits),
                                                                                   counts=counts,
                                                                                   min_max_range=min_max_range),
-                             x0=x0)
+                             x0=x0,
+                             bounds=bounds)
 
 
 def qparams_selection_histogram_search_error_function(error_function: Callable,
@@ -275,7 +290,7 @@ def qparams_selection_histogram_search_error_function(error_function: Callable,
     Returns: the error between the original and quantized histogram.
 
     """
-    if range and range[1] >= range[0]:
+    if range and range[1] <= range[0]:
         # invalid range
         return np.inf
 
@@ -313,7 +328,7 @@ def kl_qparams_selection_histogram_search_error_function(error_function: Callabl
 
 def symmetric_qparams_selection_per_channel_search(tensor_data, tensor_max, channel_axis, search_function, min_threshold):
     """
-    A wrapper function for running a search for optimal threshold per channel of a tensor,
+    A wrapper function for running a search for optimal threshold per-channel of a tensor,
     to be used in symmetric quantization.
 
     Args:
@@ -321,6 +336,7 @@ def symmetric_qparams_selection_per_channel_search(tensor_data, tensor_max, chan
         tensor_max: The maximal values per channel.
         channel_axis: Index of output channels dimension.
         search_function: Function to preform the parameters' optimization for a given channel.
+        min_threshold: Threshold to return if the computed threshold is smaller that min_threshold.
 
     Returns: ndarray with the optimal threshold for each channel, shaped according to the channels_axis.
 
@@ -332,7 +348,8 @@ def symmetric_qparams_selection_per_channel_search(tensor_data, tensor_max, chan
     for j in range(tensor_data_r.shape[0]):  # iterate all channels of the tensor.
         channel_data = tensor_data_r[j, :]
         channel_threshold = max(min_threshold, tensor_max.flatten()[j])
-        bounds = [(min_threshold, 2 * channel_threshold)]
+
+        bounds = get_threshold_bounds(min_threshold, channel_threshold)
         channel_res = search_function(channel_data, channel_threshold, bounds)
         res.append(channel_res.x)
     return np.reshape(np.array(res), output_shape)
@@ -341,7 +358,7 @@ def symmetric_qparams_selection_per_channel_search(tensor_data, tensor_max, chan
 def uniform_qparams_selection_per_channel_search(tensor_data, tensor_min, tensor_max, channel_axis, search_function):
     """
     A wrapper function for running a search for optimal range per channel of a tensor,
-    to be used in symuniform metric quantization.
+    to be used in uniform quantization.
 
     Args:
         tensor_data: Numpy array with tensor's content.
@@ -363,7 +380,8 @@ def uniform_qparams_selection_per_channel_search(tensor_data, tensor_min, tensor
         channel_range_max = tensor_max.flatten()[j]
         channel_min_max = np.array([channel_range_min, channel_range_max])
 
-        channel_res = search_function(channel_data, channel_min_max)
+        bounds = get_range_bounds(channel_range_min, channel_range_max)
+        channel_res = search_function(channel_data, channel_min_max, bounds)
 
         res_min.append(channel_res.x[0])
         res_max.append(channel_res.x[1])

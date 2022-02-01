@@ -146,6 +146,7 @@ def uniform_quantize_tensor(tensor_data: np.ndarray,
         Quantized data.
     """
 
+    # adjusts the quantization rage so the quantization grid include zero.
     a, b = fix_range_to_include_zero(range_min, range_max, n_bits, per_channel, channel_axis)
 
     # Compute the step size of quantized values.
@@ -291,17 +292,21 @@ def fix_range_to_include_zero(range_min, range_max, n_bits, per_channel, channel
         channel_axis: Output channel index.
 
     Returns: adjusted quantization range
-
     """
     if per_channel:
         output_shape = get_output_shape(range_min.shape, channel_axis)
-        res_min, res_max = [], []
-        for a_b_range in np.column_stack((range_min.flatten(), range_max.flatten())):
-            curr_a, curr_b = adjust_range(a_b_range, n_bits)
-            res_min.append(curr_a)
-            res_max.append(curr_b)
-        res_min = np.reshape(np.array(res_min), output_shape)
-        res_max = np.reshape(np.array(res_max), output_shape)
+        min_max_pairs_per_channel = np.column_stack((range_min.flatten(), range_max.flatten()))
+        # signature='(n)->(),()' makes the vectorized operation to except an array (instead of a scalar)
+        # and return a tuple of scalars.
+        # in this case it operates on pairs of values and the outcome when applying on min_max_pairs_per_channel
+        # is a tuple of two arrays (min_ranges and max_ranges).
+        v_adjust = np.vectorize(lambda min_max_range: adjust_range(min_max_range, n_bits=n_bits),
+                                signature='(n)->(),()')
+
+        res_min_max_pairs = v_adjust(min_max_pairs_per_channel)
+
+        res_min = np.reshape(res_min_max_pairs[0], output_shape)
+        res_max = np.reshape(res_min_max_pairs[1], output_shape)
         return res_min, res_max
     else:
         return adjust_range([range_min, range_max], n_bits)
@@ -319,9 +324,9 @@ def adjust_range(min_max_range, n_bits):
     """
     a, b = min_max_range
     if a > 0:
-        return min_max_range - a
+        return min_max_range[0] - a, min_max_range[1]
     elif b < 0:
-        return min_max_range - b
+        return min_max_range[0], min_max_range[1] - b
     else:
         scale = (b - a) / (2 ** n_bits - 1)
         min_max_range = scale * np.round(a / scale), b
@@ -340,3 +345,40 @@ def get_output_shape(tensor_shape, channel_axis):
 
     """
     return [-1 if i is channel_axis else 1 for i in range(len(tensor_shape))]
+
+
+def get_range_bounds(tensor_min, tensor_max):
+    """
+    Gets bounds on the quantization range limits for the minimization process.
+    Calculates the bounds in a way that would leave a gap between the possible optimized values
+    and the tensor min-max values.
+
+    Args:
+        tensor_min: min value of a tensor.
+        tensor_max: max value of a tensor.
+
+    Returns: An array with (lbound, ubound) pairs on the quantization range limit values.
+
+    """
+    # choosing bounds that have some gap from the original tensor min/max values.
+    l_bound = tensor_min / 2 if tensor_min > 0 else tensor_min * 2
+    u_bound = tensor_max * 2 if tensor_max > 0 else tensor_min / 2
+    return [(l_bound, u_bound), (l_bound, u_bound)]
+
+
+def get_threshold_bounds(min_threshold, max_threshold):
+    """
+    Gets bounds on the threshold for the minimization process.
+    Calculates the bounds in a way that would leave a gap between the possible optimized threshold
+    and the tensor max values. We use min_threshold as lower-bound to prevent the selected threshold
+    from being zero or negative.
+
+    Args:
+        min_threshold: minimal threshold to use if threshold is too small (not used for this method).
+        max_threshold: maximal threshold to be used in quantization.
+
+    Returns: An array with a pair of (lbound, ubound) on the quantization threshold limit values.
+
+    """
+    max_threshold = max(min_threshold, max_threshold)
+    return [(min_threshold, 2 * max_threshold)]

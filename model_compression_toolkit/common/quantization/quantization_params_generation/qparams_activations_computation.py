@@ -51,9 +51,16 @@ def get_activations_qparams(n: BaseNode,
     else:
         signed = np.any(bins_values < 0)
 
-    if n.prior_info.is_output_bounded() and \
-            n.activation_quantization_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
-        n.activation_quantization_cfg.activation_quantization_params_fn = quantization_params_generation.no_clipping_selection_min_max
+    if n.prior_info.is_output_bounded():
+        if n.activation_quantization_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
+            n.activation_quantization_cfg.activation_quantization_params_fn = \
+                quantization_params_generation.no_clipping_selection_min_max
+        elif n.activation_quantization_cfg.activation_quantization_method == QuantizationMethod.SYMMETRIC:
+            n.activation_quantization_cfg.activation_quantization_params_fn = \
+                quantization_params_generation.symmetric_no_clipping_selection_min_max
+        elif n.activation_quantization_cfg.activation_quantization_method == QuantizationMethod.UNIFORM:
+            n.activation_quantization_cfg.activation_quantization_params_fn = \
+                quantization_params_generation.uniform_no_clipping_selection_min_max
 
     activation_params = n.activation_quantization_cfg.activation_quantization_params_fn(bins_values,
                                                                                         bins_counts,
