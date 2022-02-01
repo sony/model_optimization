@@ -18,7 +18,7 @@ from model_compression_toolkit.keras.gradient_ptq.training_wrapper import gptq_t
 from model_compression_toolkit.keras.graph_substitutions.substitutions.activation_decomposition import \
     ActivationDecomposition
 from model_compression_toolkit.keras.graph_substitutions.substitutions.batchnorm_folding import \
-    BatchNormalizationFolding
+    keras_batchnorm_folding
 from model_compression_toolkit.keras.graph_substitutions.substitutions.input_scaling import InputScaling, \
     InputScalingWithPad
 from model_compression_toolkit.keras.graph_substitutions.substitutions.mark_activation import MarkActivation
@@ -31,12 +31,13 @@ from model_compression_toolkit.keras.graph_substitutions.substitutions.scale_equ
 from model_compression_toolkit.keras.graph_substitutions.substitutions.separableconv_decomposition import \
     SeparableConvDecomposition
 from model_compression_toolkit.keras.graph_substitutions.substitutions.shift_negative_activation import \
-    apply_shift_negative_correction
+    keras_apply_shift_negative_correction
 from model_compression_toolkit.keras.keras_node_prior_info import create_node_prior_info
 from model_compression_toolkit.keras.mixed_precision.sensitivity_evaluation import get_sensitivity_evaluation
 from model_compression_toolkit.keras.reader.reader import model_reader
 from model_compression_toolkit.common.collectors.statistics_collector_generator import create_stats_collector_for_node
 import model_compression_toolkit.keras.constants as keras_constants
+from model_compression_toolkit.keras.tf_tensor_numpy import tf_tensor_to_numpy, to_tf_tensor
 
 
 class KerasImplementation(FrameworkImplementation):
@@ -56,11 +57,14 @@ class KerasImplementation(FrameworkImplementation):
         """
         return keras_constants
 
-    def model_reader(self, model: Model) -> Graph:
+    def model_reader(self,
+                     model: Model,
+                     representative_data_gen: Callable) -> Graph:
         """
         Convert a framework's model into a graph.
         Args:
             model: Framework's model.
+            representative_data_gen (Callable): Dataset used for calibration.
 
         Returns:
             Graph representing the input model.
@@ -76,7 +80,18 @@ class KerasImplementation(FrameworkImplementation):
         Returns:
             Numpy array converted from the input tensor.
         """
-        return tensor.numpy()
+        return tf_tensor_to_numpy(tensor)
+
+    def to_tensor(self, tensor: np.ndarray) -> np.ndarray:
+        """
+        Convert a Numpy array to a framework's tensor.
+        Args:
+            tensor: Numpy array.
+
+        Returns:
+            Framework's tensor converted from the input Numpy array.
+        """
+        return to_tf_tensor(tensor)
 
     def model_builder(self,
                       graph: Graph,
@@ -102,6 +117,21 @@ class KerasImplementation(FrameworkImplementation):
                              append2output,
                              fw_info)
 
+    def run_model_inference(self,
+                            model: Any,
+                            input_list: List[Any]) -> Tuple[Any]:
+        """
+        Run the model logic on the given the inputs.
+
+        Args:
+            model: Keras model.
+            input_list: List of inputs for the model.
+
+        Returns:
+            The Keras model's output.
+        """
+        return model(input_list)
+
     def shift_negative_correction(self,
                                   graph: Graph,
                                   qc: QuantizationConfig,
@@ -117,9 +147,9 @@ class KerasImplementation(FrameworkImplementation):
         Returns:
             Graph after SNC.
         """
-        return apply_shift_negative_correction(graph,
-                                               qc,
-                                               fw_info)
+        return keras_apply_shift_negative_correction(graph,
+                                                     qc,
+                                                     fw_info)
 
     def attach_sc_to_node(self,
                           node: BaseNode,
@@ -155,7 +185,7 @@ class KerasImplementation(FrameworkImplementation):
         """
         return [SeparableConvDecomposition(),
                 ActivationDecomposition(),
-                BatchNormalizationFolding()]
+                keras_batchnorm_folding()]
 
     def get_substitutions_post_statistics_collection(self, quant_config: QuantizationConfig) -> List[
         common.BaseSubstitution]:

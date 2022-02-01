@@ -44,6 +44,48 @@ class FrameworkImplementation(ABC):
         raise Exception(f'{self.__class__.__name__} did not supply a constants module.')
 
     @abstractmethod
+    def to_numpy(self, tensor: Any) -> np.ndarray:
+        """
+        Convert framework's tensor to a Numpy array.
+        Args:
+            tensor: Framework's tensor.
+
+        Returns:
+            Numpy array converted from the input tensor.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s to_numpy method.')    \
+
+    @abstractmethod
+    def to_tensor(self, tensor: np.ndarray) -> Any:
+        """
+        Convert a Numpy array to a framework's tensor.
+        Args:
+            tensor: Numpy array.
+
+        Returns:
+            Framework's tensor converted from the input Numpy array.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s to_tensor method.')
+
+    @abstractmethod
+    def model_reader(self,
+                     model: Any,
+                     representative_data_gen: Callable) -> Graph:
+        """
+        Convert a framework's model into a graph.
+        Args:
+            model: Framework's model.
+            representative_data_gen (Callable): Dataset used for calibration.
+
+        Returns:
+            Graph representing the input model.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s model_reader method.')
+
+    @abstractmethod
     def model_builder(self,
                       graph: Graph,
                       mode: ModelBuilderMode,
@@ -67,6 +109,23 @@ class FrameworkImplementation(ABC):
                              f'framework\'s model_builder method.')
 
     @abstractmethod
+    def run_model_inference(self,
+                            model: Any,
+                            input_list: List[Any]) -> Tuple[Any]:
+        """
+        Run the model logic on the given the inputs.
+
+        Args:
+            model: Framework's model.
+            input_list: List of inputs for the model.
+
+        Returns:
+            The frameworks model's output.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s run_model_inference method.')
+
+    @abstractmethod
     def shift_negative_correction(self,
                                   graph: Graph,
                                   qc: QuantizationConfig,
@@ -84,32 +143,6 @@ class FrameworkImplementation(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s apply_shift_negative_correction method.')
-
-    @abstractmethod
-    def to_numpy(self, tensor: Any) -> np.ndarray:
-        """
-        Convert framework's tensor to a Numpy array.
-        Args:
-            tensor: Framework's tensor.
-
-        Returns:
-            Numpy array converted from the input tensor.
-        """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s to_numpy method.')
-
-    @abstractmethod
-    def model_reader(self, model: Any) -> Graph:
-        """
-        Convert a framework's model into a graph.
-        Args:
-            model: Framework's model.
-
-        Returns:
-            Graph representing the input model.
-        """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s model_reader method.')
 
     @abstractmethod
     def attach_sc_to_node(self, node: BaseNode, output_channel_index: int) -> BaseStatsCollector:

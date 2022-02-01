@@ -15,8 +15,6 @@
 
 from typing import Callable, List
 
-from keras.optimizer_v2.optimizer_v2 import OptimizerV2
-
 from model_compression_toolkit import common
 from model_compression_toolkit.common import Logger
 from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
@@ -39,6 +37,7 @@ if importlib.util.find_spec("tensorflow") is not None\
     from model_compression_toolkit.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
     from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
+    from keras.optimizer_v2.optimizer_v2 import OptimizerV2
 
     def get_keras_gptq_config(n_iter: int,
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(),

@@ -34,10 +34,10 @@ class BaseTest:
         return [self.input_shape for _ in range(self.num_of_inputs)]
 
     def get_quantization_config(self):
-        return DEFAULTCONFIG
+        return copy.deepcopy(DEFAULTCONFIG)
 
     def get_mixed_precision_quantization_config(self):
-        return DEFAULT_MIXEDPRECISION_CONFIG
+        return copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
 
     def get_fw_impl(self) -> FrameworkImplementation:
         raise Exception('get_fw_impl is not implemented')
