@@ -165,7 +165,6 @@ def symmetric_selection_histogram(bins: np.ndarray,
                                                           bounds=get_threshold_bounds(min_threshold, init_threshold))
         # res.x contains the actual optimized parameters result from optimize.minimize.
         # It is a vector with single element, therefore, we are taking res.x[0]
-        print(init_threshold, res.x[0], res.nit)
         res = res.x[0]
 
     else:

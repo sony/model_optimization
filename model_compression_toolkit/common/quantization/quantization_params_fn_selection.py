@@ -29,14 +29,14 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 def get_activation_quantization_params_fn(activation_quantization_method: QuantizationMethod,
                                           activation_error_method: QuantizationErrorMethod) -> Callable:
     """
-    Generate a function for finding activation quantization threshold.
+    Generate a function for finding activation quantization parameters.
 
     Args:
         activation_quantization_method: Which quantization method to use for activations.
         activation_error_method: Method for optimizing the parameters' search for activation quantization.
 
     Returns:
-        A function to find the quantization threshold.
+        A function to find the quantization parameters.
 
     """
     if activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
@@ -64,21 +64,21 @@ def get_activation_quantization_params_fn(activation_quantization_method: Quanti
     else:
         raise Exception(
             f'No params function for the configuration of quantization method {activation_quantization_method} and '
-            f'threshold selection method {activation_error_method}')
+            f'quantization error method {activation_error_method}')
     return params_fn
 
 
 def get_weights_quantization_params_fn(weights_quantization_method: QuantizationMethod,
                                        weights_error_method: QuantizationErrorMethod) -> Callable:
     """
-    Generate a function for finding weights quantization threshold.
+    Generate a function for finding weights quantization parameters.
 
     Args:
         weights_quantization_method: Which quantization method to use for weights.
         weights_error_method: Method for optimizing the parameters' search for weight quantization.
 
     Returns:
-        A function to find the quantization threshold.
+        A function to find the quantization parameters.
 
     """
     if weights_quantization_method == QuantizationMethod.POWER_OF_TWO:
@@ -109,5 +109,5 @@ def get_weights_quantization_params_fn(weights_quantization_method: Quantization
     else:
         raise Exception(
             f'No params function for the configuration of quantization method {weights_quantization_method} and '
-            f'threshold selection method {weights_error_method}')
+            f'quantization error method {weights_error_method}')
     return params_fn
