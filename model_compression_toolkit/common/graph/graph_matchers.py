@@ -16,7 +16,6 @@
 
 from typing import Any, List
 
-from tensorflow.keras.layers import Layer
 
 from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.common.matchers import node_matcher, walk_matcher, edge_matcher
@@ -27,7 +26,7 @@ class NodeOperationMatcher(node_matcher.BaseNodeMatcher):
     Class NodeOperationMatcher to check if the layer class of a node matches a specific layer.
     """
 
-    def __init__(self, operation: Layer):
+    def __init__(self, operation: Any):
         """
         Init for class NodeOperationMathcer.
 
