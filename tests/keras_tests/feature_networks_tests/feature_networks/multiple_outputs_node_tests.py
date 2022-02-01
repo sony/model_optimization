@@ -51,5 +51,4 @@ class MultipleOutputsNodeTests(BaseKerasFeatureNetworkTest):
         output_q = quantized_model.predict(inputs)
         output_f = float_model.predict(inputs)
         for o_q, o_f in zip(output_q, output_f):
-            cs = cosine_similarity(o_f, o_q)
-            self.unit_test.assertTrue(np.isclose(cs, 1))
+            self.unit_test.assertTrue(np.sum(np.abs(o_q-o_f))==0)
