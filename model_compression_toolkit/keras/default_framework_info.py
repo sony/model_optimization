@@ -35,7 +35,7 @@ from model_compression_toolkit.common.quantization.quantizers.uniform_quantizers
     symmetric_quantizer, uniform_quantizer
 from model_compression_toolkit.keras.constants import SOFTMAX, LINEAR, RELU, SWISH, SIGMOID, IDENTITY, TANH, SELU, \
     KERNEL, DEPTHWISE_KERNEL
-from model_compression_toolkit.keras.quantizer.fake_quant_builder import constraint_quantization, uniform_quantization
+from model_compression_toolkit.keras.quantizer.fake_quant_builder import power_of_two_quantization, symmetric_quantization, uniform_quantization
 
 """
 Division of Keras layers by how they should be quantized.
@@ -157,9 +157,8 @@ LAYER2MINMAX = {Softmax: (0, 1),
 """
 Mapping from a QuantizationMethod to an activation quantizer function.
 """
-# TODO: create methods for each constraint and check the received params accordingly
-ACTIVATION_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: constraint_quantization,
-                                QuantizationMethod.SYMMETRIC: constraint_quantization,
+ACTIVATION_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quantization,
+                                QuantizationMethod.SYMMETRIC: symmetric_quantization,
                                 QuantizationMethod.UNIFORM: uniform_quantization}
 
 """

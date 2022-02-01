@@ -30,12 +30,8 @@ class MultipleOutputsNodeTests(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
-                                      True, False, True)
-
-    def get_input_shapes(self):
-        return [[self.val_batch_size, 224, 244, 3]]
+        return mct.QuantizationConfig(enable_activation_quantization=False,
+                                      enable_weights_quantization=False)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
