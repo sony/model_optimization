@@ -50,7 +50,7 @@ For using with Tensorflow please install the packages:
 [tensorflow-model-optimization](https://www.tensorflow.org/model_optimization/guide/install)
 
 For using with Pytorch please install the packages: 
-[torch, torchvision](https://pytorch.org/)
+[torch](https://pytorch.org/)
 ### Usage Example 
 For an example of how to use the post training quantization, using Keras,
 please use this [link](tutorials/example_keras_mobilenet.py).

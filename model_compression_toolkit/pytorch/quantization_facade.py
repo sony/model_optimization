@@ -28,8 +28,7 @@ from model_compression_toolkit.common.quantization.quantization_config import DE
 
 import importlib
 
-if importlib.util.find_spec("torch") is not None\
-        and importlib.util.find_spec("torchvision") is not None:
+if importlib.util.find_spec("torch") is not None:
     from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
     from torch.nn import Module
@@ -96,10 +95,10 @@ if importlib.util.find_spec("torch") is not None\
                                           analyze_similarity)
 
 else:
-    # If torch or torchvision are not installed,
+    # If torch is not installed,
     # we raise an exception when trying to use these functions.
     def pytorch_post_training_quantization(*args, **kwargs):
         Logger.critical('Installing Pytorch is mandatory '
                         'when using pytorch_post_training_quantization. '
-                        'Could not find torch or torchvision packages.')
+                        'Could not find the torch package.')
 
