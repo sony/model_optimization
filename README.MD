@@ -49,13 +49,13 @@ For using with Tensorflow please install the packages:
 [tensorflow](https://www.tensorflow.org/install), 
 [tensorflow-model-optimization](https://www.tensorflow.org/model_optimization/guide/install)
 
-For using with Pytorch please install the packages: 
+For using with Pytorch (experimental) please install the packages: 
 [torch](https://pytorch.org/)
 ### Usage Example 
 For an example of how to use the post training quantization, using Keras,
 please use this [link](tutorials/example_keras_mobilenet.py).
 
-For an example using Pytorch, please use this [link](tutorials/example_pytorch_mobilenet_v2.py).
+For an example using Pytorch (experimental), please use this [link](tutorials/example_pytorch_mobilenet_v2.py).
 
 For more examples please see the [tutorials' directory](tutorials).
 
@@ -64,9 +64,10 @@ For more examples please see the [tutorials' directory](tutorials).
 
 Quantization:
 
-	* Post Training Quantization 
-    * Gradient based post training (Experimental, Keras only) 
-    * Mixed-precision post training quantization (Experimental, Keras only)
+	* Post Training Quantization for Keras models.
+	* Post Training Quantization for Pytorch models (experimental).
+    * Gradient based post training (Experimental, Keras only).
+    * Mixed-precision post training quantization (Experimental, Keras only).
     
 Tensorboard Visualization (Experimental):
 
