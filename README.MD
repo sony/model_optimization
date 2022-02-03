@@ -95,19 +95,8 @@ In the following table we present the ImageNet validation results for these mode
 | Network Name              | Float Accuracy  | 8Bit Accuracy   | 
 | --------------------------| ---------------:| ---------------:| 
 | MobileNet V2 [3]          | 71.886          | 71.804          |                                      
-| MobileNet V3 Large [3]    | 74.056          | 73.686          |                                      
-| EfficientNet-B0 [3]       | 77.678          | 77.494          |                                      
 | ResNet-18 [3]             | 69.86           | 69.74           |                                      
-| MNASNet 1.0 [3]           | 73.412          | 73.262          |                                      
-| AlexNet [3]               | 56.486          | 56.402          |                                      
-| Densenet-121 [3]          | 74.382          | 73.98           |                                      
-| GoogleNet [3]             | 69.758          | 69.796          |                                      
-| Inception v3 [3]          | 77.186          | 77.23           |                                      
-| regnet_x_1_6gf [3]        | 77.03           | 76.848          |                                      
-| ResNeXt-50-32x4d [3]      | 77.62           | 77.56           |                                      
-| Wide ResNet-50-2 [3]      | 78.474          | 78.382          |                                      
 | SqueezeNet 1.1 [3]        | 58.128          | 57.848          |                                      
-| VGG-16 [3]                | 71.59           | 71.18           |                                      
 
 
 
