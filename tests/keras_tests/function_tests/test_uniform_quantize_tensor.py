@@ -31,7 +31,7 @@ def ground_truth_quantize_tensor(tensor_data, threshold, n_bits, signed):
                    a_max=threshold - delta)
 
 
-class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
+class TestUniformQuantizeTensor(unittest.TestCase):
 
     def test_uniform_quantize_tensor_function(self):
         num_channels = 32

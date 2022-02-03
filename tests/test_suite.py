@@ -38,6 +38,10 @@ if found_tf:
     from tests.keras_tests.graph_tests.test_graph_reading import TestGraphReading
     from tests.keras_tests.graph_tests.test_graph_quantization_and_export import TestTFLiteExport
     from tests.keras_tests.layer_tests.test_layers_runner import LayerTest
+    from tests.keras_tests.function_tests.test_symmetric_threshold_selection_weights import \
+        TestSymmetricThresholdSelectionWeights
+    from tests.keras_tests.function_tests.test_uniform_quantize_tensor import TestUniformQuantizeTensor
+    from tests.keras_tests.function_tests.test_uniform_range_selection_weights import TestUniformRangeSelectionWeights
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases
@@ -57,6 +61,9 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLUTQuantizerParams))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphReading))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestTFLiteExport))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSymmetricThresholdSelectionWeights))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformQuantizeTensor))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformRangeSelectionWeights))
         # Keras test layers are supported in TF2.6 or higher versions
         if tf.__version__ >= "2.6":
             suiteList.append(unittest.TestLoader().loadTestsFromTestCase(LayerTest))
