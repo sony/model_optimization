@@ -95,9 +95,8 @@ In the following table we present the ImageNet validation results for these mode
 
 | Network Name              | Float Accuracy  | 8Bit Accuracy   | 
 | --------------------------| ---------------:| ---------------:| 
-| MobileNet V2 [3]          | 71.886          | 71.804          |                                      
-| ResNet-18 [3]             | 69.86           | 69.74           |                                      
-| SqueezeNet 1.1 [3]        | 58.128          | 57.848          |                                      
+| ResNet-18 [3]             | 69.86           | 69.63           |                                      
+| SqueezeNet 1.1 [3]        | 58.128          | 57.678          |                                      
 
 
 
