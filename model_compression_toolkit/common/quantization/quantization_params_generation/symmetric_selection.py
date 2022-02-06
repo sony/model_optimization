@@ -245,11 +245,11 @@ def get_threshold_selection_histogram_error_function(quant_error_method, p):
     Returns: a Callable method that calculates the error between a tensor and a quantized tensor.
     """
     quant_method_error_function_mapping = {
-        qc.QuantizationErrorMethod.MSE: lambda q_bins, q_count, bins, counts, threshold:
+        qc.QuantizationErrorMethod.MSE: lambda q_bins, q_count, bins, counts, threshold, _range:
             _mse_error_histogram(q_bins, q_count, bins, counts),
-        qc.QuantizationErrorMethod.MAE: lambda q_bins, q_count, bins, counts, threshold:
+        qc.QuantizationErrorMethod.MAE: lambda q_bins, q_count, bins, counts, threshold, _range:
             _mae_error_histogram(q_bins, q_count, bins, counts),
-        qc.QuantizationErrorMethod.LP: lambda q_bins, q_count, bins, counts, threshold:
+        qc.QuantizationErrorMethod.LP: lambda q_bins, q_count, bins, counts, threshold, _range:
             _lp_error_histogram(q_bins, q_count, bins, counts, p=p),
     }
 

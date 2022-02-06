@@ -168,8 +168,10 @@ def uniform_selection_histogram(bins: np.ndarray,
         # returned 'x' here is an array with min and max range values
         res = res.x
     else:
-        # range validation for histogram search is implemented inside the minimization's error function wrapper
-        error_function = get_range_selection_histogram_error_function(quant_error_method, p)
+        # using error_function wrapper to be able to except range as third parameter for invalid range validation
+        _error_function = get_range_selection_histogram_error_function(quant_error_method, p)
+        error_function = lambda q_x, _q_count, _x, _counts, _t, _r: np.inf if _r[1] <= _r[0] else \
+            _error_function(q_x, _q_count, _x, _counts, _t)
         res = qparams_histogram_minimization(bins,
                                              tensor_min_max,
                                              counts,

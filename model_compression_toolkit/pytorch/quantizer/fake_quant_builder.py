@@ -17,7 +17,7 @@ import torch
 
 from model_compression_toolkit.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import \
-    calculate_min_max_values, calculate_delta
+    calculate_min_max_values, calculate_delta, fix_range_to_include_zero
 from model_compression_toolkit.common.quantization.quantizers.uniform_quantizers import threshold_is_power_of_two
 
 
@@ -39,6 +39,8 @@ def power_of_two_quantization(activation_n_bits: int,
 
     if activation_threshold is None or activation_is_signed is None:
         return None
+    if not threshold_is_power_of_two(activation_threshold, per_channel=False):
+        return None
 
     min_value, max_value = calculate_min_max_values(activation_threshold,
                                                     activation_n_bits,
@@ -47,7 +49,7 @@ def power_of_two_quantization(activation_n_bits: int,
     # TODO: doesn't the scale need to have threshold (or 2*threshold) in the numerator? depend on signed/unsigned?
     #  consider using calculate_delta function from quantizers_helper
     scale = 1 / 2 ** (activation_n_bits - 1)
-    return lambda x: q(x, min_value, max_value, scale)
+    return lambda x: q(x, min_value, max_value, scale, activation_n_bits)
 
 
 def symmetric_quantization(activation_n_bits: int,
@@ -68,8 +70,6 @@ def symmetric_quantization(activation_n_bits: int,
 
     if activation_threshold is None or activation_is_signed is None:
         return None
-    if not threshold_is_power_of_two(activation_threshold, per_channel=False):
-        return None
 
     min_value, max_value = calculate_min_max_values(activation_threshold,
                                                     activation_n_bits,
@@ -78,7 +78,8 @@ def symmetric_quantization(activation_n_bits: int,
     scale = calculate_delta(activation_threshold,
                             activation_n_bits,
                             activation_is_signed)
-    return lambda x: q(x, min_value, max_value, scale)
+    # scale = 1 / 2 ** (activation_n_bits - 1)
+    return lambda x: q(x, min_value, max_value, scale, activation_n_bits)
 
 
 def uniform_quantization(activation_n_bits: int,
@@ -100,10 +101,10 @@ def uniform_quantization(activation_n_bits: int,
         return None
 
     scale = (max_value - min_value) / (2 ** activation_n_bits - 1)
-    return lambda x: q(x, min_value, max_value, scale)
+    return lambda x: q(x, min_value, max_value, scale, activation_n_bits)
 
 
-def q(x: torch.Tensor, min_value, max_value, scale) -> torch.Tensor:
+def q(x: torch.Tensor, min_value, max_value, scale, activation_n_bits) -> torch.Tensor:
     """
     Fake-quantize the input tensor x, using a pytorch fake-quantization node.
 
@@ -112,10 +113,19 @@ def q(x: torch.Tensor, min_value, max_value, scale) -> torch.Tensor:
         min_value: quantization range lower bound.
         max_value: quantization range upper bound.
         scale: quantization range scale.
+        activation_n_bits: number of bits to use for quantization.
 
     Returns:
         The fake-quantized input tensor.
     """
+
+    # fixing range to include zero since pytorch's fake quant doesn't take care of it
+    min_value, max_value = fix_range_to_include_zero(min_value,
+                                                     max_value,
+                                                     activation_n_bits,
+                                                     per_channel=False,
+                                                     channel_axis=1  # dummy
+                                                     )
 
     return torch.fake_quantize_per_tensor_affine(x,
                                                  scale=scale,

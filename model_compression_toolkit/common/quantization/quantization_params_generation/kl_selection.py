@@ -118,7 +118,9 @@ def kl_selection_histogram(bins: np.ndarray,
               q_count: np.ndarray,
               _bins: np.ndarray,
               _counts: np.ndarray,
-              threshold) -> np.float:
+              threshold,
+              min_max_range  # dummy
+              ) -> np.float:
         """
         Compute the KL-divergence between two histograms.
 

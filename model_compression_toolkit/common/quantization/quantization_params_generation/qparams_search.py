@@ -199,7 +199,8 @@ def qparams_histogram_minimization(x, x0, counts, error_function, quant_function
                              qparams_selection_histogram_search_error_function(error_function=error_function,
                                                                                bins=x,
                                                                                q_bins=quant_function(qparam),
-                                                                               counts=counts),
+                                                                               counts=counts,
+                                                                               min_max_range=qparam),
                              x0=x0,
                              bounds=bounds)
 
@@ -276,7 +277,7 @@ def qparams_selection_histogram_search_error_function(error_function: Callable,
                                                       q_bins: np.ndarray,
                                                       counts: np.ndarray,
                                                       threshold: np.ndarray = None,
-                                                      range: np.ndarray = None):
+                                                      min_max_range=None):
     """
     Computes the error according to the given error function, to be used in the parameters' selection process
     for quantization.
@@ -286,19 +287,17 @@ def qparams_selection_histogram_search_error_function(error_function: Callable,
         q_bins: Bins values of the quantized histogram.
         counts: Bins counts of the original histogram.
         threshold: Threshold bins were quantized by (used only for kl error function).
+        min_max_range: quantization parameter, used in uniform parameters' selection for quantization range validation
+        (not used for symmetric parameters' selection)
 
     Returns: the error between the original and quantized histogram.
 
     """
-    if range and range[1] <= range[0]:
-        # invalid range
-        return np.inf
-
     # computes the number of elements between quantized bin values.
     q_count, _ = np.histogram(q_bins, bins=bins, weights=np.concatenate([counts.flatten(), np.asarray([0])]))
     # threshold is only used for KL error method calculations.
     # other error methods are passed with a wrapper that accepts a threshold argument but does not use it.
-    error = error_function(q_bins, q_count, bins, counts, threshold=threshold)  # computes the error
+    error = error_function(q_bins, q_count, bins, counts, threshold, min_max_range)  # computes the error
     return error
 
 

@@ -110,7 +110,8 @@ def lp_selection_histogram(bins: np.ndarray,
               q_count: np.ndarray,
               _bins: np.ndarray,
               _counts: np.ndarray,
-              threshold: np.ndarray  # dummy
+              threshold: np.ndarray,  # dummy
+              min_max_range: np.ndarray  # dummy
               ) -> np.float:
         """
         Compute the Lp-norm distance between two histograms.
