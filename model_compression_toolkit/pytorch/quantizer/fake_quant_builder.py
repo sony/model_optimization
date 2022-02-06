@@ -38,9 +38,14 @@ def power_of_two_quantization(activation_n_bits: int,
     if activation_threshold is None or activation_is_signed is None:
         return None
 
-    min_value, max_value = calculate_min_max_values(activation_threshold,
-                                                    activation_n_bits,
-                                                    activation_is_signed)
+    if activation_is_signed:
+        min_value = -2 ** (activation_n_bits - 1)
+        max_value = 2 ** (activation_n_bits - 1) - 1
+        scale = activation_threshold / 2 ** (activation_n_bits - 1)
+    else:
+        min_value = 0
+        max_value = (2 ** activation_n_bits) - 1
+        scale = activation_threshold / 2 ** activation_n_bits
 
     def q(x: torch.Tensor) -> torch.Tensor:
         """
@@ -52,11 +57,11 @@ def power_of_two_quantization(activation_n_bits: int,
         Returns:
             The fake-quantized input tensor.
         """
-        scale = 1 / 2**(activation_n_bits - 1)
+
         return torch.fake_quantize_per_tensor_affine(x,
                                                      scale=scale,
                                                      zero_point=0,
-                                                     quant_min=int(min_value / scale),
-                                                     quant_max=int(max_value / scale))
+                                                     quant_min=min_value,
+                                                     quant_max=max_value)
 
     return q
