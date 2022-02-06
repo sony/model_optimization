@@ -28,8 +28,7 @@ from model_compression_toolkit.common.quantization.quantization_config import DE
 
 import importlib
 
-if importlib.util.find_spec("torch") is not None\
-        and importlib.util.find_spec("torchvision") is not None:
+if importlib.util.find_spec("torch") is not None:
     from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
     from torch.nn import Module
@@ -95,116 +94,11 @@ if importlib.util.find_spec("torch") is not None\
                                           gptq_config,
                                           analyze_similarity)
 
-
-    def pytorch_post_training_quantization_mixed_precision(in_module: Module,
-                                                         representative_data_gen: Callable,
-                                                         n_iter: int = 500,
-                                                         quant_config: MixedPrecisionQuantizationConfig = DEFAULT_MIXEDPRECISION_CONFIG,
-                                                         fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
-                                                         network_editor: List[EditRule] = [],
-                                                         gptq_config: GradientPTQConfig = None,
-                                                         analyze_similarity: bool = False,
-                                                         target_kpi: KPI = None):
-        """
-         Quantize a trained Pytorch module using post-training quantization. The module is quantized using a
-         symmetric constraint quantization thresholds (power of two).
-         The module is first optimized using several transformations (e.g. BatchNormalization folding to
-         preceding layers). Then, using a given dataset, statistics (e.g. min/max, histogram, etc.) are
-         being collected for each layer's output (and input, depends on the quantization configuration).
-         For each possible bit width (per layer) a threshold is then being calculated using the collected
-         statistics. Then, using an ILP solver we find a mixed-precision configuration, and set a bit width
-         for each layer. The module is then quantized (both coefficients and activations by default).
-         In order to limit the maximal module's size, a target KPI can be passed after weights_memory
-         is set (in bytes).
-         For now, mixed precision is supported for weights only.
-         If a gptq configuration is passed, the quantized weights are optimized using gradient based post
-         training quantization by comparing points between the float and quantized modules, and minimizing the observed loss.
-         Notice that this feature is experimental.
-
-         Args:
-             in_module (Module): Pytorch module to quantize.
-             representative_data_gen (Callable): Dataset used for calibration.
-             n_iter (int): Number of calibration iterations to run.
-             quant_config (MixedPrecisionQuantizationConfig): QuantizationConfig containing parameters of how the module should be quantized.
-             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Pytorch info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pytorch/default_framework_info.py#L100>`_
-             network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
-             gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
-             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
-             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
-
-         Returns:
-             A quantized module and information the user may need to handle the quantized module.
-
-         Examples:
-             Import MCT:
-
-             >>> import model_compression_toolkit as mct
-
-             Import a Pytorch module:
-
-            >>> import torchvision.models.mobilenet_v2 as models
-            >>> module = models.mobilenet_v2()
-
-             Create a random dataset generator:
-
-             >>> import numpy as np
-             >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
-
-             Create a mixed-precision configuration, to quantize a module with different bitwidths for different layers.
-             Here, each layer can be quantized by 2, 4 or 8 bits:
-
-             >>> config = mct.MixedPrecisionQuantizationConfig(weights_n_bits=[4, 2, 8])
-
-             Create a KPI object to limit our returned module's size. Note that this value affects only coefficients that should be quantized (for example, the kernel of Conv2D in Pytorch will be affected by this value, while the bias will not):
-
-             >>> kpi = mct.KPI(module.count_params() * 0.75)  # About 0.75 of the module size when quantized with 8 bits.
-
-             Pass the module, the representative dataset generator, the configuration and the target KPI to get a quantized module:
-
-             >>> quantized_module, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(module, repr_datagen, n_iter=10, quant_config=config, target_kpi=kpi)
-
-             For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
-
-         """
-
-        if target_kpi is None:
-            common.Logger.warning("No KPI was passed. Using non mixed-precision compression process...")
-            # Before starting non-mixed-precision process, we need to set only single bit width, so we take the best
-            # option which is the maximal number of bits.
-            quant_config.weights_n_bits = [max(quant_config.weights_n_bits)]
-            return pytorch_post_training_quantization(in_module,
-                                                    representative_data_gen,
-                                                    n_iter,
-                                                    quant_config,
-                                                    fw_info,
-                                                    network_editor,
-                                                    gptq_config,
-                                                    analyze_similarity)
-
-        common.Logger.info("Using experimental mixed-precision quantization. "
-                           "If you encounter an issue please file a bug.")
-
-        return post_training_quantization(in_module,
-                                          representative_data_gen,
-                                          n_iter,
-                                          quant_config,
-                                          fw_info,
-                                          PytorchImplementation(),
-                                          network_editor,
-                                          gptq_config,
-                                          analyze_similarity,
-                                          target_kpi)
-
 else:
-    # If torch or torchvision are not installed,
+    # If torch is not installed,
     # we raise an exception when trying to use these functions.
     def pytorch_post_training_quantization(*args, **kwargs):
         Logger.critical('Installing Pytorch is mandatory '
                         'when using pytorch_post_training_quantization. '
-                        'Could not find torch or torchvision packages.')
-
-    def pytorch_post_training_quantization_mixed_precision(*args, **kwargs):
-        Logger.critical('Installing Pytorch is mandatory '
-                        'when using pytorch_post_training_quantization_mixed_precision. '
-                        'Could not find torch or torchvision packages.')
+                        'Could not find the torch package.')
 

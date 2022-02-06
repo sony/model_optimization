@@ -43,55 +43,31 @@ A nightly package is also available (unstable):
 pip install mct-nightly
 ```
 
+To run MCT, one of the supported frameworks, Tenosflow/Pytorch, needs to be installed.
 
+For using with Tensorflow please install the packages: 
+[tensorflow](https://www.tensorflow.org/install), 
+[tensorflow-model-optimization](https://www.tensorflow.org/model_optimization/guide/install)
+
+For using with Pytorch (experimental) please install the packages: 
+[torch](https://pytorch.org/)
 ### Usage Example 
-An example of how to use the post training quantization, using Keras, is shown in the following code snapshot.
+For an example of how to use the post training quantization, using Keras,
+please use this [link](tutorials/example_keras_mobilenet.py).
 
-```python
-import model_compression_toolkit as mct
+For an example using Pytorch (experimental), please use this [link](tutorials/example_pytorch_mobilenet_v2.py).
 
-# Set the batch size of the images at each calibration iteration.
-batch_size = 50
-
-# Create a representative data generator, which returns a list of images.
-# Load a folder of images. 
-folder = '/path/to/images/folder'
-
-# The images can be preprocessed using a list of preprocessing functions.
-def normalization(x):
-    return (x - 127.5) / 127.5
-
-# Create a FolderImageLoader instance which loads the images, preprocess them and enables you to sample batches of them.
-image_data_loader = mct.FolderImageLoader(folder,
-                                          preprocessing=[normalization],
-                                          batch_size=batch_size)
-
-# Create a Callable representative dataset for calibration purposes.
-# The function should be called without any arguments, and should return a list numpy arrays (array for each model's input).
-# For example: if the model has two input tensors - one with input shape of 32X32X3 and the second with input 
-# shape of 224X224X3, and we calibrate the model using batches of 20 images,
-# calling representative_data_gen() should return a list 
-# of two numpy.ndarray objects where the arrays' shapes are [(20, 32, 32, 3), (20, 224, 224, 3)].
-def representative_data_gen() -> list:
-        return [image_data_loader.sample()]
-
-
-# Create a model and quantize it using the representative_data_gen as the calibration images.
-# Set the number of calibration iterations to 10.
-quantized_model, quantization_info = mct.keras_post_training_quantization(model,
-                                                                          representative_data_gen,
-                                                                          n_iter=10)
-```
-For more examples please see the tutorials' directory.
+For more examples please see the [tutorials' directory](tutorials).
 
 
 ## Supported Features
 
 Quantization:
 
-	* Post Training Quantization 
-    * Gradient based post training (Experimental) 
-    * Mixed-precision post training quantization (Experimental)
+	* Post Training Quantization for Keras models.
+	* Post Training Quantization for Pytorch models (experimental).
+    * Gradient based post training (Experimental, Keras only).
+    * Mixed-precision post training quantization (Experimental, Keras only).
     
 Tensorboard Visualization (Experimental):
 
@@ -100,7 +76,8 @@ Tensorboard Visualization (Experimental):
 
 MCT is tested with Tensorflow Version 2.7. 
 
-## Tutorials and Results
+## Results
+### Keras
 As part of the MCT library, we have a set of example networks on image classification. These networks can be used as examples when using the package.
 
 * Image Classification Example with MobileNet V1 on ImageNet dataset
@@ -112,6 +89,18 @@ As part of the MCT library, we have a set of example networks on image classific
 
 For more results please see [1]
 
+### Pytorch
+We quantized classification networks from the torchvision library. 
+In the following table we present the ImageNet validation results for these models:
+
+| Network Name              | Float Accuracy  | 8Bit Accuracy   | 
+| --------------------------| ---------------:| ---------------:| 
+| MobileNet V2 [3]          | 71.886          | 71.804          |                                      
+| ResNet-18 [3]             | 69.86           | 69.74           |                                      
+| SqueezeNet 1.1 [3]        | 58.128          | 57.848          |                                      
+
+
+
 ## Contributions
 MCT aims at keeping a more up-to-date fork and welcomes contributions from anyone.
 
@@ -121,8 +110,10 @@ MCT aims at keeping a more up-to-date fork and welcomes contributions from anyon
 ## License
 [Apache License 2.0](LICENSE).
 
-## Refernce 
+## References 
 
 [1] Habi, H.V., Peretz, R., Cohen, E., Dikstein, L., Dror, O., Diamant, I., Jennings, R.H. and Netzer, A., 2021. [HPTQ: Hardware-Friendly Post Training Quantization. arXiv preprint](https://arxiv.org/abs/2109.09113).
 
 [2] [MobilNet](https://keras.io/api/applications/mobilenet/#mobilenet-function) from Keras applications.
+
+[3] [TORCHVISION.MODELS](https://pytorch.org/vision/stable/models.html) 

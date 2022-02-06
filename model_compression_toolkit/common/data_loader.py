@@ -40,7 +40,7 @@ class FolderImageLoader(object):
         """ Initialize a FolderImageLoader object.
 
         Args:
-            folder: Path of folder with images to load. The path have to be exist, and have to contain at
+            folder: Path of folder with images to load. The path has to exist, and has to contain at
             least one image.
             preprocessing: List of functions to use when processing the images before retrieving them.
             batch_size: Number of images to retrieve each sample.
