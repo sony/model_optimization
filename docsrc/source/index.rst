@@ -39,14 +39,27 @@ A nightly version is also available (unstable):
 
     pip install mct-nightly
 
+For using with Tensorflow please install the packages:
+`tensorflow <https://www.tensorflow.org/install>`_
+`tensorflow-model-optimization <https://www.tensorflow.org/model_optimization/guide/install>`_
+
+For using with Pytorch please install the package:
+`torch <https://pytorch.org/>`_
+
 Supported Features
 ====================================
 
 Quantization:
 
+Keras:
+
 * :ref:`Hardware-friendly Post Training Quantization<ug-keras_post_training_quantization>` [1]
 * :ref:`Gradient base post training using knowledge distillation<ug-GradientPTQConfig>` (Experimental)
 * :ref:`Mixed-precision post training quantization<ug-keras_post_training_quantization_mixed_precision>` (Experimental)
+
+Pytorch (Experimental):
+
+* :ref:`Hardware-friendly Post Training Quantization<ug-pytorch_post_training_quantization>` [1]
 
 Visualization:
 
@@ -66,6 +79,7 @@ Take a look of how you can start using MCT in just a few minutes
     :maxdepth: 1
 
     Quick start tutorial for Keras Post Training Quantization<../guidelines/quickstart_keras>
+    Quick start tutorial for Pytorch Post Training Quantization<../guidelines/quickstart_pytorch>
 
 
 

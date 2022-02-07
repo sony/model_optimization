@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Model Compression Toolkit User Guide &#8212; MCT Documentation: ver 1.1.1</title>
+    <title>Model Compression Toolkit User Guide &#8212; MCT Documentation: ver 1.2.0</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
@@ -34,7 +34,7 @@
         <li class="right" >
           <a href="guidelines/visualization.html" title="Visualization within TensorBoard"
              accesskey="N">next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">MCT Documentation: ver 1.1.1</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">MCT Documentation: ver 1.2.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Model Compression Toolkit User Guide</a></li> 
       </ul>
     </div>  
@@ -69,14 +69,24 @@ This project enables researchers, developers and engineers an easily way to opti
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">mct</span><span class="o">-</span><span class="n">nightly</span>
 </pre></div>
 </div>
+<p>For using with Tensorflow please install the packages:
+<a class="reference external" href="https://www.tensorflow.org/install">tensorflow</a>
+<a class="reference external" href="https://www.tensorflow.org/model_optimization/guide/install">tensorflow-model-optimization</a></p>
+<p>For using with Pytorch please install the package:
+<a class="reference external" href="https://pytorch.org/">torch</a></p>
 </section>
 <section id="supported-features">
 <h2>Supported Features<a class="headerlink" href="#supported-features" title="Permalink to this headline">¶</a></h2>
 <p>Quantization:</p>
+<p>Keras:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="api/api_docs/methods/keras_post_training_quantization.html#ug-keras-post-training-quantization"><span class="std std-ref">Hardware-friendly Post Training Quantization</span></a> [1]</p></li>
 <li><p><a class="reference internal" href="api/api_docs/classes/GradientPTQConfig.html#ug-gradientptqconfig"><span class="std std-ref">Gradient base post training using knowledge distillation</span></a> (Experimental)</p></li>
 <li><p><a class="reference internal" href="api/api_docs/methods/keras_post_training_quantization_mixed_precision.html#ug-keras-post-training-quantization-mixed-precision"><span class="std std-ref">Mixed-precision post training quantization</span></a> (Experimental)</p></li>
+</ul>
+<p>Pytorch (Experimental):</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="api/api_docs/methods/pytorch_post_training_quantization.html#ug-pytorch-post-training-quantization"><span class="std std-ref">Hardware-friendly Post Training Quantization</span></a> [1]</p></li>
 </ul>
 <p>Visualization:</p>
 <div class="toctree-wrapper compound">
@@ -92,6 +102,7 @@ This project enables researchers, developers and engineers an easily way to opti
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="guidelines/quickstart_keras.html">Quick start tutorial for Keras Post Training Quantization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guidelines/quickstart_pytorch.html">Quick start tutorial for Pytorch Post Training Quantization</a></li>
 </ul>
 </div>
 </section>
@@ -117,8 +128,9 @@ This project enables researchers, developers and engineers an easily way to opti
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="#">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="#">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Model Compression Toolkit User Guide</a><ul>
 <li><a class="reference internal" href="#overview">Overview</a></li>
 <li><a class="reference internal" href="#install">Install</a></li>
@@ -130,9 +142,12 @@ This project enables researchers, developers and engineers an easily way to opti
 </li>
 </ul>
 
-  <h4>Next topic</h4>
-  <p class="topless"><a href="guidelines/visualization.html"
-                        title="next chapter">Visualization within TensorBoard</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="guidelines/visualization.html"
+                          title="next chapter">Visualization within TensorBoard</a></p>
+  </div>
 <div id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
@@ -156,13 +171,13 @@ This project enables researchers, developers and engineers an easily way to opti
         <li class="right" >
           <a href="guidelines/visualization.html" title="Visualization within TensorBoard"
              >next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">MCT Documentation: ver 1.1.1</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">MCT Documentation: ver 1.2.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Model Compression Toolkit User Guide</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>

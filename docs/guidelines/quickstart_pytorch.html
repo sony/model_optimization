@@ -1,0 +1,180 @@
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>MCT Quickstart Guideline for Pytorch models &#8212; MCT Documentation: ver 1.2.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API Docs" href="../api/api_docs/index.html" />
+    <link rel="prev" title="MCT Quickstart Guideline for Keras models" href="quickstart_keras.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../api/api_docs/index.html" title="API Docs"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="quickstart_keras.html" title="MCT Quickstart Guideline for Keras models"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">MCT Quickstart Guideline for Pytorch models</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="mct-quickstart-guideline-for-pytorch-models">
+<span id="ug-quickstart-pytorch"></span><h1>MCT Quickstart Guideline for Pytorch models<a class="headerlink" href="#mct-quickstart-guideline-for-pytorch-models" title="Permalink to this headline">¶</a></h1>
+<p>Here is an example of a code that shows how to use MCT with Pytorch models.</p>
+<p>Import MCT and mobilenet_v2 from torchvision.models:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchvision.models</span> <span class="kn">import</span> <span class="n">mobilenet_v2</span>
+<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Data preprocessing functions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchvision</span> <span class="kn">import</span> <span class="n">transforms</span>
+<span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This tutorial demonstrates how a model (more specifically, MobileNetV2) can be</span>
+<span class="sd">quantized and optimized using the Model Compression Toolkit (MCT). </span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span> <span class="nf">np_to_pil</span><span class="p">(</span><span class="n">img</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Initialize data loader:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Set the batch size of the images at each calibration iteration.</span>
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">50</span>
+
+    <span class="c1"># Set the path to the folder of images to load and use for the representative dataset.</span>
+    <span class="c1"># Notice that the folder have to contain at least one image.</span>
+    <span class="n">folder</span> <span class="o">=</span> <span class="s1">&#39;/path/to/images/folder&#39;</span>
+
+    <span class="c1"># Create a representative data generator, which returns a list of images.</span>
+    <span class="c1"># The images can be preprocessed using a list of preprocessing functions.</span>
+    <span class="kn">from</span> <span class="nn">model_compression_toolkit</span> <span class="kn">import</span> <span class="n">FolderImageLoader</span>
+
+    <span class="n">image_data_loader</span> <span class="o">=</span> <span class="n">FolderImageLoader</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span>
+                                          <span class="n">preprocessing</span><span class="o">=</span><span class="p">[</span><span class="n">np_to_pil</span><span class="p">,</span>
+                                                         <span class="n">transforms</span><span class="o">.</span><span class="n">Compose</span><span class="p">([</span>
+                                                             <span class="n">transforms</span><span class="o">.</span><span class="n">Resize</span><span class="p">(</span><span class="mi">256</span><span class="p">),</span>
+                                                             <span class="n">transforms</span><span class="o">.</span><span class="n">CenterCrop</span><span class="p">(</span><span class="mi">224</span><span class="p">),</span>
+                                                             <span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
+                                                             <span class="n">transforms</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="p">[</span><span class="mf">0.485</span><span class="p">,</span> <span class="mf">0.456</span><span class="p">,</span> <span class="mf">0.406</span><span class="p">],</span>
+                                                                                  <span class="n">std</span><span class="o">=</span><span class="p">[</span><span class="mf">0.229</span><span class="p">,</span> <span class="mf">0.224</span><span class="p">,</span> <span class="mf">0.225</span><span class="p">]),</span>
+                                                         <span class="p">])</span>
+                                                         <span class="p">],</span>
+                                          <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+
+    <span class="c1"># Create a Callable representative dataset for calibration purposes.</span>
+    <span class="c1"># The function should be called without any arguments, and should return a list numpy arrays (array for each</span>
+    <span class="c1"># model&#39;s input).</span>
+    <span class="c1"># For example: A model has two input tensors - one with input shape of [3 X 32 X 32] and the second with</span>
+    <span class="c1"># an input shape of [3 X 224 X 224]. We calibrate the model using batches of 20 images.</span>
+    <span class="c1"># Calling representative_data_gen() should return a list</span>
+    <span class="c1"># of two numpy.ndarray objects where the arrays&#39; shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].</span>
+    <span class="k">def</span> <span class="nf">representative_data_gen</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">image_data_loader</span><span class="o">.</span><span class="n">sample</span><span class="p">()]</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Run Post Training Quantization:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
+    <span class="c1"># Set the number of calibration iterations to 10.</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">mobilenet_v2</span><span class="p">(</span><span class="n">pretrained</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">pytorch_post_training_quantization</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
+                                                                              <span class="n">representative_data_gen</span><span class="p">,</span>
+                                                                              <span class="n">n_iter</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="quickstart_keras.html"
+                          title="previous chapter">MCT Quickstart Guideline for Keras models</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../api/api_docs/index.html"
+                          title="next chapter">API Docs</a></p>
+  </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../api/api_docs/index.html" title="API Docs"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="quickstart_keras.html" title="MCT Quickstart Guideline for Keras models"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">MCT Quickstart Guideline for Pytorch models</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Sony Semiconductors Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

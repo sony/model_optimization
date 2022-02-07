@@ -36,6 +36,6 @@ $(window).resize(function(){
         $("li.nav-item-0 a").text("Top");
     }
     else {
-        $("li.nav-item-0 a").text("MCT Documentation: ver 1.1.1");
+        $("li.nav-item-0 a").text("MCT Documentation: ver 1.2.0");
     }
 });
