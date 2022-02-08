@@ -149,7 +149,7 @@ def symmetric_selection_histogram(bins: np.ndarray,
     Returns:
         Optimal threshold to quantize the histogram a symmetric manner.
     """
-    tensor_max = np.max(np.abs(bins))
+    tensor_max = np.max(np.abs(bins)[1:][counts > 0])
     signed = np.any(bins < 0)  # check if tensor is singed
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         res = get_init_threshold(min_threshold, tensor_max)
@@ -203,7 +203,7 @@ def symmetric_no_clipping_selection_min_max(bins: np.ndarray,
         A constrained threshold of the min/max values.
     """
     return symmetric_selection_histogram(np.asarray([min_value, max_value]),  # histogram with min-max values only
-                                         counts,
+                                         np.asarray([1]),  # passing dummy counts just to make the dimensions work
                                          p,
                                          n_bits,
                                          min_value,

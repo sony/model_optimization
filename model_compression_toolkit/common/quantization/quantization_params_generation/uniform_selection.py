@@ -149,8 +149,8 @@ def uniform_selection_histogram(bins: np.ndarray,
     Returns:
         Optimal quantization range to quantize the histogram uniformly.
     """
-    tensor_min = np.min(bins)
-    tensor_max = np.max(bins)
+    tensor_min = np.min(bins[:-1][counts > 0])
+    tensor_max = np.max(bins[1:][counts > 0])
     tensor_min_max = np.array([tensor_min, tensor_max])
 
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
@@ -203,7 +203,7 @@ def uniform_no_clipping_selection_min_max(bins: np.ndarray,
         A constrained threshold of the min/max values.
     """
     return uniform_selection_histogram(np.asarray([min_value, max_value]),  # histogram with min-max values only
-                                       counts,
+                                       np.asarray([1]),  # passing dummy counts just to make the dimensions work
                                        p,
                                        n_bits,
                                        min_value,
