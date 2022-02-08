@@ -1,13 +1,16 @@
-name: Run Tests - Tensorflow 2.7
+name: Run Tests - All Latest Frameworks
 on:
   workflow_dispatch: # Allow manual triggers
   schedule:
     - cron: 0 0 * * *
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       COVERAGE_THRESHOlD: 80
     steps:
@@ -20,8 +23,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install tensorflow==2.7.*
+          pip install tensorflow
           pip install tensorflow_model_optimization
+          pip install torch torchvision
           pip install coverage
       - name: Run unittests
         run: coverage run -m --omit "./tests*,*__init__.py" unittest tests/test_suite.py -v
