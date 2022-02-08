@@ -16,8 +16,6 @@ from typing import Tuple, Callable
 import torch
 
 from model_compression_toolkit.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
-from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import \
-    calculate_min_max_values, calculate_delta, fix_range_to_include_zero
 from model_compression_toolkit.common.quantization.quantizers.uniform_quantizers import threshold_is_power_of_two
 
 
@@ -114,13 +112,20 @@ def uniform_quantization(activation_n_bits: int,
     Returns:
         A fake quantization node.
     """
-    min_value, max_value = quantization_params.get(RANGE_MIN), quantization_params.get(RANGE_MAX)
+    a, b = quantization_params.get(RANGE_MIN), quantization_params.get(RANGE_MAX)
 
-    if min_value is None or max_value is None:
+    if a is None or b is None:
         return None
 
-    scale = (max_value - min_value) / ((2 ** activation_n_bits) - 1)
-    zero_point = int(min_value / scale)
+    # fixing quantization range to include 0
+    a = 0 if a > 0 else a
+    b = 0 if b < 0 else b
+
+    min_value = 0
+    max_value = 2 ** activation_n_bits - 1
+    scale = (b - a) / ((2 ** activation_n_bits) - 1)
+    zero_point = -int(a / scale)  # zp has to be positive, and a <=0, so we multiply by -1
+
     return lambda x: q(x, min_value, max_value, scale, zero_point)
 
 
