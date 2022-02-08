@@ -37,5 +37,5 @@ Run Post Training Quantization:
 
 .. literalinclude:: ../../../tutorials/example_pytorch_mobilenet_v2.py
     :language: python
-    :lines: 65-70
+    :lines: 65-75
 
