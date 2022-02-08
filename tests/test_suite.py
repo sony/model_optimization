@@ -25,8 +25,12 @@ from tests.common_tests.function_tests.test_collectors_manipulation import TestC
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 
+
 found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
     "tensorflow_model_optimization") is not None
+found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util.find_spec(
+    "torchvision") is not None
+
 if found_tf:
     import tensorflow as tf
     from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
@@ -37,11 +41,17 @@ if found_tf:
         TestSearchBitwidthConfiguration
     from tests.keras_tests.graph_tests.test_graph_reading import TestGraphReading
     from tests.keras_tests.graph_tests.test_graph_quantization_and_export import TestTFLiteExport
-    from tests.keras_tests.layer_tests.test_layers_runner import LayerTest
+    from tests.keras_tests.layer_tests.test_layers_runner import LayerTest as TFLayerTest
     from tests.keras_tests.function_tests.test_symmetric_threshold_selection_weights import \
         TestSymmetricThresholdSelectionWeights
     from tests.keras_tests.function_tests.test_uniform_quantize_tensor import TestUniformQuantizeTensor
     from tests.keras_tests.function_tests.test_uniform_range_selection_weights import TestUniformRangeSelectionWeights
+
+if found_pytorch:
+    from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
+    from tests.pytorch_tests.model_tests.test_feature_models_runner import FeatureModelsTestRunner
+    from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
+
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases
@@ -66,7 +76,12 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformRangeSelectionWeights))
         # Keras test layers are supported in TF2.6 or higher versions
         if tf.__version__ >= "2.6":
-            suiteList.append(unittest.TestLoader().loadTestsFromTestCase(LayerTest))
+            suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLayerTest))
+
+    if found_pytorch:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TorchLayerTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureModelsTestRunner))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ModelTest))
 
     # ----------------   Join them together ane run them
     comboSuite = unittest.TestSuite(suiteList)
