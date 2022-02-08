@@ -2,9 +2,9 @@
 
 .. _ug-quickstart-keras:
 
-==========================
-MCT Quickstart Guideline
-==========================
+=================================================
+MCT Quickstart Guideline for Keras models
+=================================================
 
 Here is an example of a code that shows how to use MCT with Keras models.
 

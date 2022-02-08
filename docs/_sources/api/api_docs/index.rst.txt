@@ -10,6 +10,7 @@ API Docs
 
 Functions
 =========
+- :ref:`pytorch_post_training_quantization<ug-pytorch_post_training_quantization>`: Function to use for post training quantization of Pytorch models.
 - :ref:`keras_post_training_quantization<ug-keras_post_training_quantization>`: Function to use for post training quantization of Keras models.
 - :ref:`keras_post_training_quantization_mixed_precision<ug-keras_post_training_quantization_mixed_precision>`: Function to use for mixed-precision post training quantization of Keras models (experimental).
 - :ref:`get_keras_gptq_config<ug-get_keras_gptq_config>`: Function to create a GradientPTQConfig instance to use for Keras models when using GPTQ (experimental).
