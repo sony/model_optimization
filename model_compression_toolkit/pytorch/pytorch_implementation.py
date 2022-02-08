@@ -30,6 +30,8 @@ from model_compression_toolkit.pytorch.back2framework.model_builder import model
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
     pytorch_batchnorm_folding
+from model_compression_toolkit.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
+    ReLUBoundToPowerOfTwo
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.mark_activation import MarkActivation
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
     pytorch_apply_shift_negative_correction
@@ -171,11 +173,15 @@ class PytorchImplementation(FrameworkImplementation):
         """
         return []
 
-    def get_substitutions_pre_statistics_collection(self) -> List[common.BaseSubstitution]:
+    def get_substitutions_pre_statistics_collection(self,
+                                                    quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
         """
         Returns: A list of the framework substitutions used before we build a quantized module.
         """
-        return [pytorch_batchnorm_folding()]
+        substitutions_list = [pytorch_batchnorm_folding()]
+        if quant_config.relu_bound_to_power_of_2:
+            substitutions_list.append(ReLUBoundToPowerOfTwo())
+        return substitutions_list
 
     def get_substitutions_post_statistics_collection(self,
                                                      quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
@@ -189,9 +195,6 @@ class PytorchImplementation(FrameworkImplementation):
         substitutions_list = []
         if quant_config.input_scaling:
             raise Exception('Input scaling is currently not supported for Pytorch.')
-
-        if quant_config.relu_unbound_correction:
-            raise Exception('Relu unbound correction is currently not supported for Pytorch.')
         return substitutions_list
 
     def get_substitutions_channel_equalization(self,

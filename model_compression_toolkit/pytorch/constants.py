@@ -36,6 +36,9 @@ FUNCTIONAL_OP = 'functional_op'
 OP_CALL_ARGS = 'op_call_args'
 OP_CALL_KWARGS = 'op_call_kwargs'
 INPUTS_AS_LIST = 'inputs_as_list'
+INPLACE = 'inplace'
+HARDTANH_MIN_VAL = 'min_val'
+HARDTANH_MAX_VAL = 'max_val'
 
 # # Layers variables names:
 KERNEL = 'weight'

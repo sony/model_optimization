@@ -18,8 +18,7 @@ import logging
 from typing import List, Dict, Tuple
 
 import numpy as np
-from tensorflow.keras.layers import DepthwiseConv2D, Conv2D, Dense, Conv2DTranspose, Activation, ReLU, ZeroPadding2D
-
+from torch.nn import Conv2d, ReLU, Linear, ConvTranspose2d, ZeroPad2d
 from model_compression_toolkit import common
 from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.constants import OUTPUT_SCALE, THRESHOLD
@@ -28,27 +27,23 @@ from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, WalkMatcher, \
     NodeFrameworkAttrMatcher
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
-from model_compression_toolkit.keras.constants import KERNEL, BIAS, LINEAR, ACTIVATION, RELU_MAX_VALUE
-from model_compression_toolkit.keras.constants import RELU
+from model_compression_toolkit.pytorch.constants import KERNEL, BIAS
 
 
 # Match linear layers.
-op2d_node = NodeOperationMatcher(DepthwiseConv2D) | \
-            NodeOperationMatcher(Conv2D) | \
-            NodeOperationMatcher(Conv2DTranspose) | \
-            NodeOperationMatcher(Dense)
+op2d_node = NodeOperationMatcher(Conv2d) | \
+            NodeOperationMatcher(ConvTranspose2d) | \
+            NodeOperationMatcher(Linear)
 
 # Match Conv2D where its activation function keeps f(ax)==af(x)
-homogeneous_activation_nodes = op2d_node & (NodeFrameworkAttrMatcher(ACTIVATION, RELU) |
-                                            NodeFrameworkAttrMatcher(ACTIVATION, LINEAR))
+homogeneous_activation_nodes = op2d_node & (NodeOperationMatcher(ReLU) |
+                                            NodeOperationMatcher(Linear))
 
-zeropad_node = NodeOperationMatcher(ZeroPadding2D)
+zeropad_node = NodeOperationMatcher(ZeroPad2d)
 
 # The substitution is also possible for cases when there's a non-linearity
 # between the two linear layers which keeps f(ax)==af(x)
-mid_activation_nodes = (NodeOperationMatcher(Activation) &
-                        NodeFrameworkAttrMatcher(ACTIVATION, RELU)) | \
-                       NodeOperationMatcher(ReLU)
+mid_activation_nodes = NodeOperationMatcher(ReLU)
 
 # Two cases to match: linear_op -> linear_op, linear_op -> non_linearity -> linear_op
 # Two substitutions do the same thing but match different patterns.
@@ -84,7 +79,7 @@ def scale_reshaping(scale: np.ndarray,
     return np.reshape(scale, reshape_target)
 
 
-def update_linear_nodes(graph:Graph,
+def update_linear_nodes(graph: Graph,
                         qc: QuantizationConfig,
                         fw_info: FrameworkInfo,
                         first_op2d_node: BaseNode,
@@ -125,10 +120,12 @@ def update_linear_nodes(graph:Graph,
     first_op2d_node.set_weights_by_keys(KERNEL, w1_fixed)
     second_op2d_node.set_weights_by_keys(KERNEL, w2_fixed)
 
-    for nqc in first_op2d_node.candidates_weights_quantization_cfg:
-        nqc.calculate_and_set_weights_params(w1_fixed)
-    for nqc in second_op2d_node.candidates_weights_quantization_cfg:
-        nqc.calculate_and_set_weights_params(w2_fixed)
+    if first_op2d_node.is_weights_quantization_enabled():
+        for nqc in first_op2d_node.candidates_weights_quantization_cfg:
+            nqc.calculate_and_set_weights_params(w1_fixed)
+    if second_op2d_node.is_weights_quantization_enabled():
+        for nqc in second_op2d_node.candidates_weights_quantization_cfg:
+            nqc.calculate_and_set_weights_params(w2_fixed)
 
 
 def calculate_scale_correction(graph: Graph,
@@ -158,13 +155,7 @@ def calculate_scale_correction(graph: Graph,
     scale_factor[max_vector <= 0] = 1
     activation_node.quantization_attr[OUTPUT_SCALE] = scale_factor
     scale_factor = np.maximum(scale_factor, 1)  # Making sure all scale factor are above 1
-
     graph.scale_stats_collector(activation_node, scale_factor)
-
-    # scale relu bound so f(ax)==af(x)
-    if activation_node.type == ReLU and \
-            activation_node.framework_attr.get(RELU_MAX_VALUE) is not None:
-        activation_node.framework_attr[RELU_MAX_VALUE] = threshold
 
     return scale_factor, threshold, tensor_stat.mpcc.state
 

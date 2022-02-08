@@ -38,7 +38,7 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
                                       mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
-                                      relu_unbound_correction=False, weights_bias_correction=False,
+                                      relu_bound_to_power_of_2=False, weights_bias_correction=False,
                                       weights_per_channel_threshold=True, activation_channel_equalization=True)
 
     def create_networks(self):

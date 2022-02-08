@@ -37,7 +37,7 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
                                     mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                    relu_unbound_correction=True, weights_bias_correction=True,
+                                    relu_bound_to_power_of_2=True, weights_bias_correction=True,
                                     weights_per_channel_threshold=True, input_scaling=True,
                                     activation_channel_equalization=True)
 
@@ -69,7 +69,7 @@ class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
                                     mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                    relu_unbound_correction=True, weights_bias_correction=True,
+                                    relu_bound_to_power_of_2=True, weights_bias_correction=True,
                                     weights_per_channel_threshold=False, input_scaling=True,
                                     activation_channel_equalization=True)
 
@@ -171,7 +171,7 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
                                     mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                    activation_n_bits=16, relu_unbound_correction=False, weights_bias_correction=False,
+                                    activation_n_bits=16, relu_bound_to_power_of_2=False, weights_bias_correction=False,
                                     weights_per_channel_threshold=True, input_scaling=False,
                                     activation_channel_equalization=False)
 

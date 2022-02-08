@@ -18,8 +18,7 @@ import logging
 from typing import List, Dict, Tuple
 
 import numpy as np
-from tensorflow.keras.layers import DepthwiseConv2D, Conv2D, Dense, Conv2DTranspose, Activation, ReLU, ZeroPadding2D
-
+from torch.nn import Conv2d, ReLU, Linear, ConvTranspose2d, ZeroPad2d
 from model_compression_toolkit import common
 from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.constants import OUTPUT_SCALE, THRESHOLD
@@ -28,27 +27,23 @@ from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, WalkMatcher, \
     NodeFrameworkAttrMatcher
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
-from model_compression_toolkit.keras.constants import KERNEL, BIAS, LINEAR, ACTIVATION, RELU_MAX_VALUE
-from model_compression_toolkit.keras.constants import RELU
+from model_compression_toolkit.pytorch.constants import KERNEL, BIAS
 
 
 # Match linear layers.
-op2d_node = NodeOperationMatcher(DepthwiseConv2D) | \
-            NodeOperationMatcher(Conv2D) | \
-            NodeOperationMatcher(Conv2DTranspose) | \
-            NodeOperationMatcher(Dense)
+op2d_node = NodeOperationMatcher(Conv2d) | \
+            NodeOperationMatcher(ConvTranspose2d) | \
+            NodeOperationMatcher(Linear)
 
 # Match Conv2D where its activation function keeps f(ax)==af(x)
-homogeneous_activation_nodes = op2d_node & (NodeFrameworkAttrMatcher(ACTIVATION, RELU) |
-                                            NodeFrameworkAttrMatcher(ACTIVATION, LINEAR))
+homogeneous_activation_nodes = op2d_node & (NodeOperationMatcher(ReLU) |
+                                            NodeOperationMatcher(Linear))
 
-zeropad_node = NodeOperationMatcher(ZeroPadding2D)
+zeropad_node = NodeOperationMatcher(ZeroPad2d)
 
 # The substitution is also possible for cases when there's a non-linearity
 # between the two linear layers which keeps f(ax)==af(x)
-mid_activation_nodes = (NodeOperationMatcher(Activation) &
-                        NodeFrameworkAttrMatcher(ACTIVATION, RELU)) | \
-                       NodeOperationMatcher(ReLU)
+mid_activation_nodes = NodeOperationMatcher(ReLU)
 
 # Two cases to match: linear_op -> linear_op, linear_op -> non_linearity -> linear_op
 # Two substitutions do the same thing but match different patterns.
@@ -125,14 +120,11 @@ def update_linear_nodes(graph:Graph,
     first_op2d_node.set_weights_by_keys(KERNEL, w1_fixed)
     second_op2d_node.set_weights_by_keys(KERNEL, w2_fixed)
 
-    for nqc in first_op2d_node.candidates_weights_quantization_cfg:
-        nqc.calculate_and_set_weights_params(w1_fixed)
-    for nqc in second_op2d_node.candidates_weights_quantization_cfg:
-        nqc.calculate_and_set_weights_params(w2_fixed)
-
 
 def calculate_scale_correction(graph: Graph,
                                activation_node: BaseNode,
+                               first_op2d_node: BaseNode,
+                               bn_const: float,
                                eps: float = 1e-6) -> tuple:
     """
     Compute a scale factor by the activation node threshold and its outputs statistics in
@@ -147,26 +139,19 @@ def calculate_scale_correction(graph: Graph,
     Returns:
         Tuple of: scaling factor, activation node constrained threshold, outputs maximal value per-channel.
     """
+    std_vector = first_op2d_node.prior_info.std_output
+    if bn_const ==0:
+        std_const = np.mean(std_vector)
+    else:
+        std_const = bn_const
+    std_vector_filtered = np.maximum(std_vector, std_const)  # Making sure all scale factor are above the std_mean
+    scale_factor = np.float32(1.0 / (std_vector_filtered + eps))
 
-    tensor_stat = graph.get_out_stats_collector(activation_node)
-    threshold = activation_node.activation_quantization_cfg.activation_quantization_params.get(THRESHOLD)
-
-    max_vector = np.max(np.stack([tensor_stat.mpcc.max_per_channel, np.abs(tensor_stat.mpcc.min_per_channel)], axis=-1),
-                        axis=-1)
-
-    scale_factor = threshold / (max_vector + eps)
-    scale_factor[max_vector <= 0] = 1
     activation_node.quantization_attr[OUTPUT_SCALE] = scale_factor
-    scale_factor = np.maximum(scale_factor, 1)  # Making sure all scale factor are above 1
 
     graph.scale_stats_collector(activation_node, scale_factor)
 
-    # scale relu bound so f(ax)==af(x)
-    if activation_node.type == ReLU and \
-            activation_node.framework_attr.get(RELU_MAX_VALUE) is not None:
-        activation_node.framework_attr[RELU_MAX_VALUE] = threshold
-
-    return scale_factor, threshold, tensor_stat.mpcc.state
+    return scale_factor
 
 
 def scale_equalization_lnl(graph: Graph,
@@ -191,11 +176,7 @@ def scale_equalization_lnl(graph: Graph,
         second_op2d_node: Node to divide its kernel by the scale factor.
 
     """
-    scale_factor, threshold, max_array = calculate_scale_correction(graph, n_node)
-
-    common.Logger.debug(f"{first_op2d_node.name} -> output Max Per Channel:{max_array}")
-    common.Logger.debug(f'{first_op2d_node.name} -> Threshold value: {threshold}')
-    common.Logger.debug(f'{first_op2d_node.name} -> Scale Factor: {scale_factor}')
+    scale_factor = calculate_scale_correction(graph, n_node, first_op2d_node, fw_info.bn_const)
 
     update_linear_nodes(graph,
                         qc,
@@ -205,7 +186,7 @@ def scale_equalization_lnl(graph: Graph,
                         scale_factor)
 
 
-class BaseScaleEqualization(common.BaseSubstitution):
+class BaseScaleEqualizationByBN(common.BaseSubstitution):
     """
     Substitution to scale the weights of two linear nodes in order to use the entire
     constrained range when activations are quantized.
@@ -252,16 +233,17 @@ class BaseScaleEqualization(common.BaseSubstitution):
         first_op2d_node = nodes_list[0]
         nl_node = nodes_list[self.nl_index]
         second_op2d_node = nodes_list[-1]
-        scale_equalization_lnl(graph,
-                               self.quant_config,
-                               self.fw_info,
-                               first_op2d_node,
-                               nl_node,
-                               second_op2d_node)
+        if first_op2d_node.prior_info.std_output is not None:
+            scale_equalization_lnl(graph,
+                                   self.quant_config,
+                                   self.fw_info,
+                                   first_op2d_node,
+                                   nl_node,
+                                   second_op2d_node)
         return graph
 
 
-class ScaleEqualization(BaseScaleEqualization):
+class ScaleEqualizationByBN(BaseScaleEqualizationByBN):
     """
     Substitution extends BaseScaleEqualization to the case of Linear-->Linear
     """
@@ -280,7 +262,7 @@ class ScaleEqualization(BaseScaleEqualization):
         super().__init__(quant_config=quant_config, fw_info=fw_info, matcher_instance=MATCHER)
 
 
-class ScaleEqualizationWithPad(BaseScaleEqualization):
+class ScaleEqualizationWithPadByBN(BaseScaleEqualizationByBN):
     """
     Substitution extends BaseScaleEqualization to the case of Linear-->ZeroPadding-->Linear
     """
@@ -299,7 +281,7 @@ class ScaleEqualizationWithPad(BaseScaleEqualization):
         super().__init__(quant_config=quant_config, fw_info=fw_info, matcher_instance=MATCHER_WITH_PAD)
 
 
-class ScaleEqualizationMidActivation(BaseScaleEqualization):
+class ScaleEqualizationMidActivationByBN(BaseScaleEqualizationByBN):
     """
     Substitution extends BaseScaleEqualization to the case of Linear-->Non-Lnear-->Linear
     """
@@ -323,7 +305,7 @@ class ScaleEqualizationMidActivation(BaseScaleEqualization):
         super().__init__(quant_config=quant_config, fw_info=fw_info, matcher_instance=MATCHER_MID, nl_index=1)
 
 
-class ScaleEqualizationMidActivationWithPad(BaseScaleEqualization):
+class ScaleEqualizationMidActivationWithPadByBN(BaseScaleEqualizationByBN):
     """
     Substitution extends BaseScaleEqualization to the case of Linear-->Non-linear-->ZeroPadding-->Linear
     """
