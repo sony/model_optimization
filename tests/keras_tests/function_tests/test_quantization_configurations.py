@@ -38,7 +38,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
             return [x]
 
         model = model_gen()
-        relu_unbound_correction = False
+        relu_2_power_of_2 = False
         activation_threshold_selection = mct.ThresholdSelectionMethod.NOCLIPPING
         for bias_correction in [True, False]:
             for weights_threshold_selection in [mct.ThresholdSelectionMethod.MSE,
@@ -53,7 +53,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                                 mct.QuantizationMethod.POWER_OF_TWO,
                                                 activation_n_bits=8,
                                                 weights_n_bits=16,
-                                                relu_unbound_correction=relu_unbound_correction,
+                                                relu_2_power_of_2=relu_2_power_of_2,
                                                 weights_bias_correction=bias_correction,
                                                 weights_per_channel_threshold=weights_per_channel_threshold)
                     q_model, quantization_info = mct.keras_post_training_quantization(model,
@@ -62,7 +62,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                                                                       quant_config=qc,
                                                                                       fw_info=DEFAULT_KERAS_INFO)
 
-        for relu_unbound_correction in [True, False]:
+        for relu_2_power_of_2 in [True, False]:
             for activation_threshold_selection in [mct.ThresholdSelectionMethod.MSE,
                                                    mct.ThresholdSelectionMethod.NOCLIPPING,
                                                    mct.ThresholdSelectionMethod.MAE,
@@ -74,7 +74,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                             mct.QuantizationMethod.POWER_OF_TWO,
                                             activation_n_bits=8,
                                             weights_n_bits=16,
-                                            relu_unbound_correction=relu_unbound_correction,
+                                            relu_2_power_of_2=relu_2_power_of_2,
                                             weights_bias_correction=bias_correction,
                                             weights_per_channel_threshold=weights_per_channel_threshold)
                 q_model, quantization_info = mct.keras_post_training_quantization(model,

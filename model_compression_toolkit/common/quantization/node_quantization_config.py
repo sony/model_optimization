@@ -78,7 +78,7 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.activation_threshold_method = qc.activation_threshold_method
         self.activation_quantization_method = qc.activation_quantization_method
         self.activation_n_bits = qc.activation_n_bits
-        self.relu_unbound_correction = qc.relu_unbound_correction
+        self.relu_2_power_of_2 = qc.relu_2_power_of_2
         self.enable_activation_quantization = qc.enable_activation_quantization
         self.activation_channel_equalization = qc.activation_channel_equalization
         self.input_scaling = qc.input_scaling

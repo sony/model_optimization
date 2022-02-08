@@ -359,7 +359,7 @@ def _prepare_model_for_quantization(in_model: Any,
     ######################################
     # Graph substitution (pre statistics collection)
     ######################################
-    transformed_graph = substitute(graph, fw_impl.get_substitutions_pre_statistics_collection())
+    transformed_graph = substitute(graph, fw_impl.get_substitutions_pre_statistics_collection(quant_config))
 
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'pre_statistics_collection_substitutions')

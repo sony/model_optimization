@@ -34,7 +34,7 @@ TWO_BIT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.Th
                                               weights_n_bits=2,
                                               weights_bias_correction=False,
                                               weights_per_channel_threshold=True,
-                                              relu_unbound_correction=False)
+                                              relu_2_power_of_2=False)
 
 EIGHT_BIT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.ThresholdSelectionMethod.MSE,
                                                 weights_threshold_method=mct.ThresholdSelectionMethod.MSE,
@@ -44,7 +44,7 @@ EIGHT_BIT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.
                                                 weights_n_bits=8,
                                                 weights_bias_correction=False,
                                                 weights_per_channel_threshold=True,
-                                                relu_unbound_correction=False)
+                                                relu_2_power_of_2=False)
 
 FLOAT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.ThresholdSelectionMethod.MSE,
                                             weights_threshold_method=mct.ThresholdSelectionMethod.MSE,
@@ -54,7 +54,7 @@ FLOAT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.Thre
                                             weights_n_bits=16,
                                             weights_bias_correction=False,
                                             weights_per_channel_threshold=True,
-                                            relu_unbound_correction=False)
+                                            relu_2_power_of_2=False)
 
 
 class RunMode(Enum):

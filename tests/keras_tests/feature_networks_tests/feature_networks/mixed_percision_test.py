@@ -42,7 +42,7 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
                                     weights_bias_correction=True,
                                     weights_per_channel_threshold=True,
                                     activation_channel_equalization=True,
-                                    relu_unbound_correction=True,
+                                    relu_2_power_of_2=True,
                                     input_scaling=True)
 
         return MixedPrecisionQuantizationConfig(qc, weights_n_bits=[2, 8, 4], num_of_images=1)
@@ -78,7 +78,7 @@ class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
                                     weights_bias_correction=True,
                                     weights_per_channel_threshold=False,
                                     activation_channel_equalization=True,
-                                    relu_unbound_correction=True,
+                                    relu_2_power_of_2=True,
                                     input_scaling=True)
 
         return MixedPrecisionQuantizationConfig(qc, weights_n_bits=[8, 2, 3])
@@ -184,7 +184,7 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
                                     weights_bias_correction=False,
                                     weights_per_channel_threshold=True,
                                     activation_channel_equalization=False,
-                                    relu_unbound_correction=False,
+                                    relu_2_power_of_2=False,
                                     input_scaling=False,
                                     activation_n_bits=16)
 

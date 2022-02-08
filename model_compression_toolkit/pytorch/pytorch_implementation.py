@@ -200,8 +200,8 @@ class PytorchImplementation(FrameworkImplementation):
         if quant_config.input_scaling:
             raise Exception('Input scaling is currently not supported for Pytorch.')
 
-        if quant_config.relu_unbound_correction:
-            raise Exception('Relu unbound correction is currently not supported for Pytorch.')
+        if quant_config.relu_2_power_of_2:
+            raise Exception('Relu bound correction is currently not supported for Pytorch.')
         return substitutions_list
 
     def get_substitutions_channel_equalization(self,

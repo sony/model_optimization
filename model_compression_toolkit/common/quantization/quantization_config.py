@@ -69,7 +69,7 @@ class QuantizationConfig(object):
                  weights_quantization_method: QuantizationMethod = QuantizationMethod.POWER_OF_TWO,
                  activation_n_bits: int = 8,
                  weights_n_bits: int = 8,
-                 relu_unbound_correction: bool = False,
+                 relu_2_power_of_2: bool = False,
                  weights_bias_correction: bool = True,
                  weights_per_channel_threshold: bool = True,
                  input_scaling: bool = False,
@@ -92,7 +92,7 @@ class QuantizationConfig(object):
             weights_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for weights quantization.
             activation_n_bits (int): Number of bits to quantize the activations.
             weights_n_bits (int): Number of bits to quantize the coefficients.
-            relu_unbound_correction (bool): Whether to use relu unbound scaling correction or not.
+            relu_2_power_of_2 (bool): Whether to use relu to power of 2 scaling correction or not.
             weights_bias_correction (bool): Whether to use weights bias correction or not.
             weights_per_channel_threshold (bool): Whether to quantize the weights per-channel or not (per-tensor).
             input_scaling (bool): Whether to use input scaling or not.
@@ -111,10 +111,10 @@ class QuantizationConfig(object):
             For example, to quantize a model using 6 bits for activation, 7 bits for weights,
             weights and activation quantization method is symetric uniform,
             weights threshold selection using MSE, activation threshold selection using NOCLIPPING,
-            enabling relu_unbound_correction, weights_bias_correction, and quantizing the weights per-channel,
+            enabling relu_2_power_of_2, weights_bias_correction, and quantizing the weights per-channel,
             one can instantiate a quantization configuration:
 
-            >>> qc = QuantizationConfig(activation_n_bits=6, weights_n_bits=7, activation_quantization_method=QuantizationMethod.POWER_OF_TWO, weights_quantization_method=QuantizationMethod.POWER_OF_TWO, weights_threshold_method=ThresholdSelectionMethod.MSE, activation_threshold_method=ThresholdSelectionMethod.NOCLIPPING, relu_unbound_correction=True, weights_bias_correction=True, weights_per_channel_threshold=True)
+            >>> qc = QuantizationConfig(activation_n_bits=6, weights_n_bits=7, activation_quantization_method=QuantizationMethod.POWER_OF_TWO, weights_quantization_method=QuantizationMethod.POWER_OF_TWO, weights_threshold_method=ThresholdSelectionMethod.MSE, activation_threshold_method=ThresholdSelectionMethod.NOCLIPPING, relu_2_power_of_2=True, weights_bias_correction=True, weights_per_channel_threshold=True)
 
             The QuantizationConfig instanse can then be passed to
             :func:`~model_compression_toolkit.keras_post_training_quantization`
@@ -132,7 +132,7 @@ class QuantizationConfig(object):
         self.weights_quantization_method = weights_quantization_method
         self.activation_n_bits = activation_n_bits
         self.weights_n_bits = weights_n_bits
-        self.relu_unbound_correction = relu_unbound_correction
+        self.relu_2_power_of_2 = relu_2_power_of_2
         self.weights_bias_correction = weights_bias_correction
         self.weights_per_channel_threshold = weights_per_channel_threshold
         self.enable_weights_quantization = enable_weights_quantization
@@ -157,7 +157,7 @@ DEFAULTCONFIG = QuantizationConfig(ThresholdSelectionMethod.MSE,
                                    QuantizationMethod.POWER_OF_TWO,
                                    weights_n_bits=8,
                                    activation_n_bits=8,
-                                   relu_unbound_correction=False,
+                                   relu_2_power_of_2=False,
                                    weights_bias_correction=True,
                                    weights_per_channel_threshold=True,
                                    input_scaling=False)

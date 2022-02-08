@@ -61,7 +61,7 @@ class NetworkTest(object):
         self.compare(inputs_list, ptq_model)
 
         graph = substitute(graph,
-                           fw_impl.get_substitutions_pre_statistics_collection())
+                           fw_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         graph = set_quantization_configuration_to_graph(graph,
                                                         DEFAULTCONFIG,
                                                         DEFAULT_KERAS_INFO)

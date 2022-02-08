@@ -40,7 +40,7 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
                                     weights_bias_correction=True,
                                     weights_per_channel_threshold=True,
                                     activation_channel_equalization=True,
-                                    relu_unbound_correction=True,
+                                    relu_2_power_of_2=True,
                                     input_scaling=True,
                                     activation_n_bits=16)
 

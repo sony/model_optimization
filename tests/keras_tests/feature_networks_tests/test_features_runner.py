@@ -15,9 +15,8 @@
 
 
 import unittest
-from tests.keras_tests.feature_networks_tests.feature_networks.activation_scaling_relu6_test import \
-    ActivationScalingReLU6Test
-
+from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_2_power_of_2_test import \
+    ActivationReLUPowerOfTwoTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_percision_test import MixedPercisionBaseTest, \
     MixedPercisionSearchTest, MixedPercisionManuallyConfiguredTest, MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest
@@ -289,7 +288,7 @@ class FeatureNetworkTest(unittest.TestCase):
         Conv2DBNConcatnFoldingTest(self).run_test()
 
     def test_activation_scaling_relu6(self):
-        ActivationScalingReLU6Test(self).run_test()
+        ActivationReLUPowerOfTwoTest(self).run_test()
 
     def test_multiple_inputs_node(self):
         MultipleInputsNodeTests(self).run_test()

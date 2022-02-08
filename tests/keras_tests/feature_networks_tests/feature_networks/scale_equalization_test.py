@@ -42,7 +42,7 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
                                       mct.QuantizationMethod.POWER_OF_TWO,
                                       16,
                                       16,
-                                      relu_unbound_correction=False,
+                                      relu_2_power_of_2=False,
                                       weights_bias_correction=False,
                                       weights_per_channel_threshold=True,
                                       activation_channel_equalization=True)

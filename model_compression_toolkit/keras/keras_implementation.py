@@ -22,8 +22,8 @@ from model_compression_toolkit.keras.graph_substitutions.substitutions.batchnorm
 from model_compression_toolkit.keras.graph_substitutions.substitutions.input_scaling import InputScaling, \
     InputScalingWithPad
 from model_compression_toolkit.keras.graph_substitutions.substitutions.mark_activation import MarkActivation
-from model_compression_toolkit.keras.graph_substitutions.substitutions.relu_bound_correction import \
-    ReLUBoundCorrection
+from model_compression_toolkit.keras.graph_substitutions.substitutions.relu_2_power_of_2 import \
+    ReLU2PowerOfTwo
 from model_compression_toolkit.keras.graph_substitutions.substitutions.remove_relu_upper_bound import \
     RemoveReLUUpperBound
 from model_compression_toolkit.keras.graph_substitutions.substitutions.scale_equalization import \
@@ -177,15 +177,18 @@ class KerasImplementation(FrameworkImplementation):
         """
         return [MarkActivation()]
 
-    def get_substitutions_pre_statistics_collection(self) -> List[common.BaseSubstitution]:
+    def get_substitutions_pre_statistics_collection(self, quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
         """
 
         Returns: A list of the framework substitutions used before we build a quantized model.
 
         """
-        return [SeparableConvDecomposition(),
-                ActivationDecomposition(),
-                keras_batchnorm_folding()]
+        substitutions_list = [SeparableConvDecomposition(),
+                              ActivationDecomposition(),
+                              keras_batchnorm_folding()]
+        if quant_config.relu_2_power_of_2:
+            substitutions_list.append(ReLU2PowerOfTwo())
+        return substitutions_list
 
     def get_substitutions_post_statistics_collection(self, quant_config: QuantizationConfig) -> List[
         common.BaseSubstitution]:
@@ -202,9 +205,6 @@ class KerasImplementation(FrameworkImplementation):
         if quant_config.input_scaling:
             substitutions_list.append(InputScaling())
             substitutions_list.append(InputScalingWithPad())
-
-        if quant_config.relu_unbound_correction:
-            substitutions_list.append(ReLUBoundCorrection())
         return substitutions_list
 
     def get_substitutions_channel_equalization(self,
