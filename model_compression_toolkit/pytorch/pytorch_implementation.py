@@ -33,6 +33,7 @@ from model_compression_toolkit.pytorch.graph_substitutions.substitutions.batchno
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.mark_activation import MarkActivation
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
     pytorch_apply_shift_negative_correction
+from model_compression_toolkit.pytorch.mixed_precision.sensitivity_evaluation import get_sensitivity_evaluation
 from model_compression_toolkit.pytorch.pytorch_node_prior_info import create_node_prior_info
 from model_compression_toolkit.pytorch.reader.reader import model_reader
 import model_compression_toolkit.pytorch.constants as pytorch_constants
@@ -270,7 +271,11 @@ class PytorchImplementation(FrameworkImplementation):
         Returns:
             A function that computes the metric.
         """
-        raise Exception('This feature is currently not yet available for Pytorch models. Work in progress.')
+        return get_sensitivity_evaluation(graph,
+                                          quant_config,
+                                          metrics_weights,
+                                          representative_data_gen,
+                                          fw_info)
 
     def get_node_prior_info(self,
                             node: BaseNode,

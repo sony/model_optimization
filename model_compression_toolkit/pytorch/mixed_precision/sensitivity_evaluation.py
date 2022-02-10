@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,18 @@
 # limitations under the License.
 # ==============================================================================
 
-from tensorflow.python.layers.base import Layer
-from tensorflow import Tensor
-from tensorflow.keras.models import Model
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
+# from tensorflow.python.layers.base import Layer
+# from tensorflow import Tensor
+# from tensorflow.keras.models import Model
+# from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
+
+# from model_compression_toolkit.keras.back2framework.model_builder import model_builder
+# from model_compression_toolkit.keras.quantizer.mixed_precision.selective_weights_quantize_config import \
+#     SelectiveWeightsQuantizeConfig
+
+from torch import Tensor
+from torch.nn import Module
+
 from typing import Callable, List, Any
 
 from model_compression_toolkit.common.framework_info import FrameworkInfo
@@ -24,11 +32,12 @@ from model_compression_toolkit.common import BaseNode
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
-from model_compression_toolkit.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
-from model_compression_toolkit.keras.quantizer.mixed_precision.selective_weights_quantize_config import \
-    SelectiveWeightsQuantizeConfig
+
 import numpy as np
+
+from model_compression_toolkit.pytorch.back2framework.model_builder import model_builder
+from model_compression_toolkit.pytorch.mixed_precision.mixed_precision_wrapper import PytorchMixedPrecisionWrapper
 
 
 def get_sensitivity_evaluation(graph: Graph,
@@ -74,7 +83,6 @@ def get_sensitivity_evaluation(graph: Graph,
     baseline_model = _build_baseline_model(graph,
                                            interest_points)
 
-
     def _compute_metric(mp_model_configuration: List[int],
                         node_idx: List[int] = None) -> float:
         """
@@ -90,12 +98,16 @@ def get_sensitivity_evaluation(graph: Graph,
             The sensitivity metric of the MP model for a given configuration.
         """
 
-        # Configure MP model with the given configuration.  # TODO (OFIR): all it does is to set the index of the relevent bitwidth inside the layer's config wrapper
-        _configure_bitwidths_keras_model(model_mp,
-                                         sorted_configurable_nodes_names,
-                                         mp_model_configuration,
-                                         node_idx)
+        # Configure MP model with the given configuration.
+        _configure_bitwidths_pytorch_model(model_mp,
+                                           sorted_configurable_nodes_names,
+                                           mp_model_configuration,
+                                           node_idx)
 
+        # TODO: from here until the end of the while loop the implementation is framework agnostic
+        #  Actually, the entire method is framework agnostic, except the calls to _configure_bitwidth
+        #  (and model_builder in the outer scope).
+        #  many of the helper methods below are also common.
         samples_count = 0  # Numer of images we used so far to compute the distance matrix.
 
         # List of distance matrices. We create a distance matrix for each sample from the representative_data_gen
@@ -121,9 +133,6 @@ def get_sensitivity_evaluation(graph: Graph,
 
             # when using model.predict(), it does not uses the QuantizeWrapper functionality
             mp_tensors = _tensors_as_list(model_mp(inference_batch_input))
-            # TODO (OFIR): what the call to model on inference_batch does?
-            #  How does the bitwidth index that we set before manifested in this call?
-            #  Where does the actual quantization happens? is it TF quantization or uses our weights quantization?
 
             # Build distance matrix: similarity between the baseline model to the float model
             # in every interest point for every image in the batch.
@@ -139,10 +148,12 @@ def get_sensitivity_evaluation(graph: Graph,
 
         # Configure MP model back to the same configuration as the baseline model
         baseline_mp_configuration = [0] * len(mp_model_configuration)
-        _configure_bitwidths_keras_model(model_mp,
-                                         sorted_configurable_nodes_names,
-                                         baseline_mp_configuration,
-                                         node_idx)
+        # TODO: from here - continues to be framework specific
+
+        _configure_bitwidths_pytorch_model(model_mp,
+                                           sorted_configurable_nodes_names,
+                                           baseline_mp_configuration,
+                                           node_idx)
 
         # Compute the distance between the baseline model's outputs and the MP model's outputs.
         # The distance is the mean of distances over all images in the batch that was inferred.
@@ -153,10 +164,10 @@ def get_sensitivity_evaluation(graph: Graph,
     return _compute_metric
 
 
-def _configure_bitwidths_keras_model(model_mp: Model,
-                                     sorted_configurable_nodes_names: List[str],
-                                     mp_model_configuration: List[int],
-                                     node_idx: List[int]):
+def _configure_bitwidths_pytorch_model(model_mp: Module,
+                                       sorted_configurable_nodes_names: List[str],
+                                       mp_model_configuration: List[int],
+                                       node_idx: List[int]):
     """
     Configure a dynamic Keras model (namely, model with layers that their weights
     bitwidth can be configured using SelectiveWeightsQuantizeConfig) using a MP
@@ -169,17 +180,16 @@ def _configure_bitwidths_keras_model(model_mp: Model,
         node_idx: List of nodes' indices to configure (the rest layers are configured as the baseline model).
 
     """
+    # TODO: note that the mp_model is a PytorchModelBuilder which composed of MPWrappers layers! (add in description)
     # Configure model
     if node_idx is not None:  # configure specific layers in the mp model
         for node_idx_to_configure in node_idx:
-            current_layer = model_mp.get_layer(
-                name=f'quant_{sorted_configurable_nodes_names[node_idx_to_configure]}')
+            current_layer = model_mp.get_submodule(target=f'{sorted_configurable_nodes_names[node_idx_to_configure]}')
             _set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
 
     else:  # use the entire mp_model_configuration to configure the model
         for node_idx_to_configure, bitwidth_idx in enumerate(mp_model_configuration):
-            current_layer = model_mp.get_layer(
-                name=f'quant_{sorted_configurable_nodes_names[node_idx_to_configure]}')
+            current_layer = model_mp.get_submodule(target=f'{sorted_configurable_nodes_names[node_idx_to_configure]}')
             _set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
 
 
@@ -210,7 +220,7 @@ def _build_distance_matrix(baseline_tensors: List[Tensor],
 
 
 def _build_baseline_model(graph: Graph,
-                          interest_points: List[BaseNode]) -> Model:
+                          interest_points: List[BaseNode]) -> Module:
     """
     Build a Keras baseline model to compare inferences of the MP model to.
     The baseline model is the float model we build from the graph.
@@ -246,7 +256,7 @@ def _tensors_as_list(tensors: Any) -> List[Any]:
     return tensors
 
 
-def _set_layer_to_bitwidth(wrapped_layer: Layer,
+def _set_layer_to_bitwidth(wrapped_layer: Module,
                            bitwidth_idx: int):
     """
     Configure a layer (which is wrapped in a QuantizeWrapper and holds a
@@ -258,8 +268,7 @@ def _set_layer_to_bitwidth(wrapped_layer: Layer,
         bitwidth_idx: Index of the bitwidth the layer should work with.
 
     """
-    assert isinstance(wrapped_layer, QuantizeWrapper) and isinstance(wrapped_layer.quantize_config,
-                                                                     SelectiveWeightsQuantizeConfig)
+    assert isinstance(wrapped_layer, PytorchMixedPrecisionWrapper) and isinstance(wrapped_layer.layer, Module)
     # Configure the quantize_config to use a different bitwidth
     # (in practice, to use a different already quantized kernel).
-    wrapped_layer.quantize_config.set_bit_width_index(bitwidth_idx)
+    wrapped_layer.set_active_weights(bitwidth_idx)

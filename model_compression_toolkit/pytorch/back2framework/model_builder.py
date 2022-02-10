@@ -27,6 +27,8 @@ from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.pytorch.back2framework.instance_builder import node_builder
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder
+from model_compression_toolkit.pytorch.mixed_precision.mixed_precision_wrapper import PytorchMixedPrecisionWrapper
+
 
 
 def build_input_tensors_list(node: BaseNode,
@@ -121,7 +123,8 @@ class PytorchModelBuilder(torch.nn.Module):
     """
     def __init__(self, graph: Graph,
                  mode: ModelBuilderMode = ModelBuilderMode.QUANTIZED,
-                 append2output: List[Any] = None):
+                 append2output: List[Any] = None,
+                 fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO):
         """
         Construct a Pytorch model.
         Args:
@@ -135,9 +138,21 @@ class PytorchModelBuilder(torch.nn.Module):
         self.node_sort = list(topological_sort(graph))
         self.nodes_dict = {}
         self.append2output = append2output
-        for n in self.node_sort:
-            if not isinstance(n, FunctionalNode):
-                self.add_module(n.name, node_builder(n))
+
+        if mode == ModelBuilderMode.MIXEDPRECISION:
+            for n in self.node_sort:
+                if not isinstance(n, FunctionalNode):
+                    if n.type is DummyPlaceHolder:
+                        # DummyPlaceHolder node always exists, and we just need to initiate it
+                        # but it's not relevant for MP
+                        self.add_module(n.name, node_builder(n))
+                    else:
+                        self.add_module(n.name, PytorchMixedPrecisionWrapper(n, fw_info))
+                        # TODO: need to call set_model here as well? (called inside for the actual layer model)
+        else:
+            for n in self.node_sort:
+                if not isinstance(n, FunctionalNode):
+                    self.add_module(n.name, node_builder(n))
 
     def forward(self,
                 *args: Any) -> Any:
@@ -196,6 +211,6 @@ def model_builder(graph: common.Graph,
         A tuple of the model, and an UserInformation object.
     """
 
-    model = PytorchModelBuilder(graph, mode, append2output)
+    model = PytorchModelBuilder(graph, mode, append2output, fw_info)
 
     return model, graph.user_info
