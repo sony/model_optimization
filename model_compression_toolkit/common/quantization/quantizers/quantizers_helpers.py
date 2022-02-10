@@ -199,8 +199,8 @@ def int_quantization_with_scale(data: np.ndarray,
 
 
 def get_quantized_tensor(centers: np.ndarray,
-                                scale: np.ndarray,
-                                n_bits: int) -> np.ndarray:
+                         scale: np.ndarray,
+                         n_bits: int) -> np.ndarray:
     """
     Divides data by scale and quantizes it to integers in the range [2 ** (n_bits - 1) - 1, -2 ** (n_bits - 1)]
     Args:
@@ -217,7 +217,7 @@ def get_quantized_tensor(centers: np.ndarray,
 
 def get_tensor_max(tensor_data: np.ndarray,
                    per_channel: bool,
-                   channel_axis: int):
+                   channel_axis: int) -> np.ndarray:
     """
     Returns the maximal value in the given tensor, or in each channel (if per_channel is True).
     Args:
@@ -239,7 +239,7 @@ def get_tensor_max(tensor_data: np.ndarray,
 
 def get_tensor_min(tensor_data: np.ndarray,
                    per_channel: bool,
-                   channel_axis: int):
+                   channel_axis: int) -> np.ndarray:
     """
     Returns the minimal value in the given tensor, or in each channel (if per_channel is True).
     Args:
@@ -259,7 +259,7 @@ def get_tensor_min(tensor_data: np.ndarray,
     return tensor_min
 
 
-def reshape_tensor_for_per_channel_search(tensor_data, channel_axis):
+def reshape_tensor_for_per_channel_search(tensor_data: np.ndarray, channel_axis: int) -> np.ndarray:
     """
     Reshapes the given data to be compatible for search of quantization parameters for per-channel quantization.
     Args:
@@ -278,7 +278,11 @@ def reshape_tensor_for_per_channel_search(tensor_data, channel_axis):
     return tensor_data_r
 
 
-def fix_range_to_include_zero(range_min, range_max, n_bits, per_channel, channel_axis):
+def fix_range_to_include_zero(range_min: np.ndarray,
+                              range_max: np.ndarray,
+                              n_bits: int,
+                              per_channel: bool,
+                              channel_axis: int) -> Tuple[np.ndarray, np.ndarray]:
     """
     Adjusting the quantization range to include representation of 0.0 in the quantization grid.
     If quantization per-channel, then range_min and range_max should be tensors in the specific shape that allows
@@ -312,7 +316,7 @@ def fix_range_to_include_zero(range_min, range_max, n_bits, per_channel, channel
         return adjust_range([range_min, range_max], n_bits)
 
 
-def adjust_range(min_max_range, n_bits):
+def adjust_range(min_max_range: List[np.ndarray], n_bits: int) -> Tuple[np.ndarray, np.ndarray]:
     """
     Adjusting a specific quantization range to representation of 0.0 in the quantization grid.
     Args:

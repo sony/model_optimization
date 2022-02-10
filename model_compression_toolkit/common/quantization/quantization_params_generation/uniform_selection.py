@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Callable
+
 import numpy as np
 from scipy import optimize
 
@@ -214,7 +216,9 @@ def uniform_no_clipping_selection_min_max(bins: np.ndarray,
                                        quant_error_method=qc.QuantizationErrorMethod.NOCLIPPING)
 
 
-def get_range_selection_tensor_error_function(quant_error_method, p, norm=False):
+def get_range_selection_tensor_error_function(quant_error_method: qc.QuantizationErrorMethod,
+                                              p: int,
+                                              norm: bool = False) -> Callable:
     """
     Returns the error function compatible to the provided threshold method,
     to be used in the threshold optimization search for tensor quantization.
@@ -236,7 +240,8 @@ def get_range_selection_tensor_error_function(quant_error_method, p, norm=False)
     return quant_method_error_function_mapping[quant_error_method]
 
 
-def get_range_selection_histogram_error_function(quant_error_method, p):
+def get_range_selection_histogram_error_function(quant_error_method: qc.QuantizationErrorMethod,
+                                                 p: int) -> Callable:
     """
     Returns the error function compatible to the provided threshold method,
     to be used in the threshold optimization search for histogram quantization.
