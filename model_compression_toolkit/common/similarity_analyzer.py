@@ -53,19 +53,24 @@ def tensor_norm(x: np.ndarray, p: float = 2.0) -> np.float:
 # Similarity functions
 #########################
 
-def compute_mse(float_tensor: np.ndarray, fxp_tensor: np.ndarray) -> float:
+def compute_mse(float_tensor: np.ndarray, fxp_tensor: np.ndarray, norm: bool = False, norm_eps: float = 1e-8) -> float:
     """
     Compute the mean square error between two numpy arrays.
 
     Args:
         float_tensor: First tensor to compare.
         fxp_tensor: Second tensor to compare.
+        norm: whether to normalize the error function result.
+        norm_eps: epsilon value for error normalization stability.
 
     Returns:
         The MSE distance between the two tensors.
     """
     validate_before_compute_similarity(float_tensor, fxp_tensor)
-    return np.power(float_tensor - fxp_tensor, 2.0).mean()
+    error = np.power(float_tensor - fxp_tensor, 2.0).mean()
+    if norm:
+        error /= (np.power(float_tensor, 2.0).mean() + norm_eps)
+    return error
 
 
 def compute_nmse(float_tensor: np.ndarray, fxp_tensor: np.ndarray) -> float:
@@ -102,20 +107,25 @@ def compute_nmae(float_tensor: np.ndarray, fxp_tensor: np.ndarray) -> float:
     return np.mean(np.abs(normalized_float_tensor - normalized_fxp_tensor))
 
 
-def compute_mae(float_tensor: np.ndarray, fxp_tensor: np.ndarray) -> float:
+def compute_mae(float_tensor: np.ndarray, fxp_tensor: np.ndarray, norm: bool = False, norm_eps: float = 1e-8) -> float:
     """
     Compute the mean average error function between two numpy arrays.
 
     Args:
         float_tensor: First tensor to compare.
         fxp_tensor: Second tensor to compare.
+        norm: whether to normalize the error function result.
+        norm_eps: epsilon value for error normalization stability.
 
     Returns:
         The mean average distance between the two tensors.
     """
 
     validate_before_compute_similarity(float_tensor, fxp_tensor)
-    return np.abs(float_tensor - fxp_tensor).mean()
+    error = np.abs(float_tensor - fxp_tensor).mean()
+    if norm:
+        error /= (np.abs(float_tensor).mean() + norm_eps)
+    return error
 
 
 def compute_cs(float_tensor: np.ndarray, fxp_tensor: np.ndarray, eps: float = 1e-8) -> float:
@@ -149,7 +159,8 @@ def compute_cs(float_tensor: np.ndarray, fxp_tensor: np.ndarray, eps: float = 1e
     return (1.0 - cs) / 2.0
 
 
-def compute_lp_norm(float_tensor: np.ndarray, fxp_tensor: np.ndarray, p: int) -> float:
+def compute_lp_norm(float_tensor: np.ndarray, fxp_tensor: np.ndarray, p: int, norm: bool = False,
+                    norm_eps: float = 1e-8) -> float:
     """
     Compute the error function between two numpy arrays.
     The error is computed based on Lp-norm distance of the tensors.
@@ -158,9 +169,14 @@ def compute_lp_norm(float_tensor: np.ndarray, fxp_tensor: np.ndarray, p: int) ->
         float_tensor: First tensor to compare.
         fxp_tensor: Second tensor to compare.
         p: p-norm to use for the Lp-norm distance.
+        norm: whether to normalize the error function result.
+        norm_eps: epsilon value for error normalization stability.
 
     Returns:
         The Lp-norm distance between the two tensors.
     """
     validate_before_compute_similarity(float_tensor, fxp_tensor)
-    return np.power(np.abs(float_tensor - fxp_tensor), p).mean()
+    error = np.power(np.abs(float_tensor - fxp_tensor), p).mean()
+    if norm:
+        error /= (np.power(np.abs(float_tensor), p).mean() + norm_eps)
+    return error

@@ -56,10 +56,9 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
     def get_quantization_config(self):
-        return cmo.QuantizationConfig(cmo.ThresholdSelectionMethod.MSE, cmo.ThresholdSelectionMethod.MSE,
+        return cmo.QuantizationConfig(cmo.QuantizationErrorMethod.MSE, cmo.QuantizationErrorMethod.MSE,
                                       cmo.QuantizationMethod.POWER_OF_TWO, self.quantization_method, 4,
-                                      self.weights_n_bits,
-                                      False, False, True)
+                                      self.weights_n_bits, False, False, True)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, self.num_conv_channels]]

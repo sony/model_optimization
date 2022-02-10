@@ -34,16 +34,9 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE,
-                                      mct.ThresholdSelectionMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO,
-                                      mct.QuantizationMethod.POWER_OF_TWO,
-                                      16,
-                                      16,
-                                      False,
-                                      False,
-                                      True,
-                                      shift_negative_activation_correction=True,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+                                      False, False, True, shift_negative_activation_correction=True,
                                       shift_negative_ratio=np.inf)
 
 

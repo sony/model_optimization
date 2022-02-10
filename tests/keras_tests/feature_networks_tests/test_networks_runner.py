@@ -26,35 +26,26 @@ import random
 keras = tf.keras
 layers = keras.layers
 
-TWO_BIT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.ThresholdSelectionMethod.MSE,
-                                              weights_threshold_method=mct.ThresholdSelectionMethod.MSE,
+TWO_BIT_QUANTIZATION = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.MSE,
+                                              weights_error_method=mct.QuantizationErrorMethod.MSE,
                                               activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                                               weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
-                                              activation_n_bits=2,
-                                              weights_n_bits=2,
-                                              weights_bias_correction=False,
-                                              weights_per_channel_threshold=True,
-                                              relu_unbound_correction=False)
+                                              activation_n_bits=2, weights_n_bits=2, relu_unbound_correction=False,
+                                              weights_bias_correction=False, weights_per_channel_threshold=True)
 
-EIGHT_BIT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.ThresholdSelectionMethod.MSE,
-                                                weights_threshold_method=mct.ThresholdSelectionMethod.MSE,
+EIGHT_BIT_QUANTIZATION = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.MSE,
+                                                weights_error_method=mct.QuantizationErrorMethod.MSE,
                                                 activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                                                 weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
-                                                activation_n_bits=8,
-                                                weights_n_bits=8,
-                                                weights_bias_correction=False,
-                                                weights_per_channel_threshold=True,
-                                                relu_unbound_correction=False)
+                                                activation_n_bits=8, weights_n_bits=8, relu_unbound_correction=False,
+                                                weights_bias_correction=False, weights_per_channel_threshold=True)
 
-FLOAT_QUANTIZATION = mct.QuantizationConfig(activation_threshold_method=mct.ThresholdSelectionMethod.MSE,
-                                            weights_threshold_method=mct.ThresholdSelectionMethod.MSE,
+FLOAT_QUANTIZATION = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.MSE,
+                                            weights_error_method=mct.QuantizationErrorMethod.MSE,
                                             activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                                             weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
-                                            activation_n_bits=16,
-                                            weights_n_bits=16,
-                                            weights_bias_correction=False,
-                                            weights_per_channel_threshold=True,
-                                            relu_unbound_correction=False)
+                                            activation_n_bits=16, weights_n_bits=16, relu_unbound_correction=False,
+                                            weights_bias_correction=False, weights_per_channel_threshold=True)
 
 
 class RunMode(Enum):

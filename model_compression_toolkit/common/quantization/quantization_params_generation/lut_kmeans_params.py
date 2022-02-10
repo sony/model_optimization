@@ -18,6 +18,7 @@ from typing import List
 import numpy as np
 from sklearn.cluster import KMeans
 
+import model_compression_toolkit.common.quantization.quantization_config as qc
 from model_compression_toolkit.common.constants import CLUSTER_CENTERS, MIN_THRESHOLD, SCALE_PER_CHANNEL, \
     MULTIPLIER_N_BITS
 from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import kmeans_assign_clusters, \
@@ -30,7 +31,8 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
                       per_channel: bool = False,
                       channel_axis: int = 1,
                       n_iter: int = 10,
-                      min_threshold: float = MIN_THRESHOLD) -> dict:
+                      min_threshold: float = MIN_THRESHOLD,
+                      quant_error_method: qc.QuantizationErrorMethod = None) -> dict:
     """
     The quantizer first finds the closest power-of-two number to the max value per channel of tensor_data.
     Now, we divide tensor_data with the scale vector per channel. In addition, we scale the result to the range
@@ -45,6 +47,7 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
         channel_axis: Output channel index.
         n_iter: Number of iterations to search_methods for the optimal threshold.
         min_threshold: Minimal threshold to chose when the computed one is smaller.
+        quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
 
     Returns:
         A dictionary containing the cluster assignments according to the k-means algorithm,

@@ -7,11 +7,11 @@
 quantization_config Module
 =================================
 
-ThresholdSelectionMethod
+QuantizationErrorMethod
 ==========================
-**Enum to select a method for quantization threshold selection:**
+**Enum to select a method for quantization parameters' selection:**
 
-.. autoclass:: model_compression_toolkit.ThresholdSelectionMethod
+.. autoclass:: model_compression_toolkit.QuantizationErrorMethod
 
 
 |

@@ -38,8 +38,7 @@ class NestedTest(BaseKerasFeatureNetworkTest):
                          input_shape=(16,16,3))
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(enable_activation_quantization=False,
-                                      enable_weights_quantization=False)
+        return mct.QuantizationConfig(enable_weights_quantization=False, enable_activation_quantization=False)
 
     # Dummy model to test reader's recursively model parsing
     def dummy_model(self, input_shape):

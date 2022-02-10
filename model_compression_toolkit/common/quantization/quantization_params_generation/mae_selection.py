@@ -16,6 +16,7 @@
 
 import numpy as np
 
+import model_compression_toolkit.common.quantization.quantization_config as qc
 from model_compression_toolkit.common.constants import MIN_THRESHOLD, THRESHOLD
 
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_search import qparams_selection_tensor_search, qparams_selection_histogram_search
@@ -31,7 +32,8 @@ def mae_selection_tensor(tensor_data: np.ndarray,
                          per_channel: bool = False,
                          channel_axis: int = 1,
                          n_iter: int = 10,
-                         min_threshold: float = MIN_THRESHOLD) -> dict:
+                         min_threshold: float = MIN_THRESHOLD,
+                         quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MAE) -> dict:
     """
     Compute the optimal threshold based on mean absolute error (MAE) to quantize the tensor.
     The threshold is constrained and the search is done iteratively over n_iter thresholds.
@@ -44,6 +46,7 @@ def mae_selection_tensor(tensor_data: np.ndarray,
         channel_axis: Output channel index.
         n_iter: Number of iterations to search for the optimal threshold.
         min_threshold: Minimal threshold to chose when the computed one is smaller.
+        quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
 
     Returns:
         Optimal threshold to quantize the tensor based on MAE.
@@ -65,7 +68,8 @@ def mae_selection_histogram(bins: np.ndarray,
                             max_value: float,
                             constrained: bool = True,
                             n_iter: int = 10,
-                            min_threshold: float = MIN_THRESHOLD) -> dict:
+                            min_threshold: float = MIN_THRESHOLD,
+                            quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MAE) -> dict:
     """
     Compute the optimal threshold based on the mean absolute error (MAE) to quantize a histogram.
     The threshold is either constrained or unconstrained and the search is done iteratively over
@@ -81,12 +85,14 @@ def mae_selection_histogram(bins: np.ndarray,
         constrained: Whether the threshold should be constrained or not.
         n_iter: Number of iteration ot search for the threshold.
         min_threshold: Minimal threshold to use if threshold is too small.
+        quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
 
     Returns:
         Optimal threshold to quantize the histogram based on the MAE.
     """
 
-    return {THRESHOLD: qparams_selection_histogram_search(_mae_error_histogram,
+    return {THRESHOLD: qparams_selection_histogram_search(lambda q_bins, q_count, _bins, _counts, threshold, _range:
+                                                          _mae_error_histogram(q_bins, q_count, _bins, _counts),
                                                           bins,
                                                           counts,
                                                           n_bits,

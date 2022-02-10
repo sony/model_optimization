@@ -48,7 +48,8 @@ def get_weights_qparams(kernel: np.ndarray,
                                                                              n_bits=weights_quant_config.weights_n_bits,
                                                                              per_channel=weights_quant_config.weights_per_channel_threshold and output_channels_axis is not None,
                                                                              channel_axis=output_channels_axis,
-                                                                             min_threshold=weights_quant_config.min_threshold)
+                                                                             min_threshold=weights_quant_config.min_threshold,
+                                                                             quant_error_method=weights_quant_config.weights_error_method)
     else:
         weights_params = {}
 

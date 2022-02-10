@@ -50,7 +50,7 @@ class LUTQuantizerTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
     def get_quantization_config(self):
-        return cmo.QuantizationConfig(cmo.ThresholdSelectionMethod.MSE, cmo.ThresholdSelectionMethod.MSE,
+        return cmo.QuantizationConfig(cmo.QuantizationErrorMethod.MSE, cmo.QuantizationErrorMethod.MSE,
                                       cmo.QuantizationMethod.POWER_OF_TWO, cmo.QuantizationMethod.LUT_QUANTIZER, 4, 2,
                                       False, False, True)
 

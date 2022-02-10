@@ -15,6 +15,8 @@
 
 
 import unittest
+
+from model_compression_toolkit import QuantizationErrorMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_scaling_relu6_test import \
     ActivationScalingReLU6Test
 
@@ -65,6 +67,11 @@ from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.no
 from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTQuantizerTest
 import tensorflow as tf
 from tensorflow.keras.layers import ReLU, PReLU, ELU
+
+from tests.keras_tests.feature_networks_tests.feature_networks.symmetric_threshold_selection_activation_test import \
+    SymmetricThresholdSelectionActivationTest
+from tests.keras_tests.feature_networks_tests.feature_networks.uniform_range_selection_activation_test import \
+    UniformRangeSelectionActivationTest
 
 layers = tf.keras.layers
 
@@ -334,6 +341,20 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_split_conv_bug(self):
         SplitConvBugTest(self).run_test()
+
+    def test_symmetric_threshold_selection_activation(self):
+        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
+        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.MSE).run_test()
+        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.MAE).run_test()
+        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.LP).run_test()
+        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.KL).run_test()
+
+    def test_uniform_range_selection_activation(self):
+        UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
+        UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.MSE).run_test()
+        UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.MAE).run_test()
+        UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.LP).run_test()
+        UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.KL).run_test()
 
 
 if __name__ == '__main__':
