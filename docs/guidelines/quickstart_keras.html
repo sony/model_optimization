@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>MCT Quickstart Guideline &#8212; MCT Documentation: ver 1.1.1</title>
+    <title>MCT Quickstart Guideline for Keras models &#8212; MCT Documentation: ver 1.2.0</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
@@ -19,7 +19,7 @@
     <script src="../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="API Docs" href="../api/api_docs/index.html" />
+    <link rel="next" title="MCT Quickstart Guideline for Pytorch models" href="quickstart_pytorch.html" />
     <link rel="prev" title="Visualization within TensorBoard" href="visualization.html" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <!--[if lt IE 9]>
@@ -33,13 +33,13 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../api/api_docs/index.html" title="API Docs"
+          <a href="quickstart_pytorch.html" title="MCT Quickstart Guideline for Pytorch models"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="visualization.html" title="Visualization within TensorBoard"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.1.1</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">MCT Quickstart Guideline</a></li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">MCT Quickstart Guideline for Keras models</a></li> 
       </ul>
     </div>  
 
@@ -48,8 +48,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="mct-quickstart-guideline">
-<span id="ug-quickstart-keras"></span><h1>MCT Quickstart Guideline<a class="headerlink" href="#mct-quickstart-guideline" title="Permalink to this headline">¶</a></h1>
+  <section id="mct-quickstart-guideline-for-keras-models">
+<span id="ug-quickstart-keras"></span><h1>MCT Quickstart Guideline for Keras models<a class="headerlink" href="#mct-quickstart-guideline-for-keras-models" title="Permalink to this headline">¶</a></h1>
 <p>Here is an example of a code that shows how to use MCT with Keras models.</p>
 <p>Import MCT and MobileNetV1 from Keras applications:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
@@ -102,27 +102,27 @@
                                           <span class="n">preprocessing</span><span class="o">=</span><span class="p">[</span><span class="n">resize</span><span class="p">,</span> <span class="n">normalization</span><span class="p">],</span>
                                           <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
 
+
     <span class="c1"># Create a Callable representative dataset for calibration purposes.</span>
     <span class="c1"># The function should be called without any arguments, and should return a list numpy arrays (array for each</span>
     <span class="c1"># model&#39;s input).</span>
-    <span class="c1"># For example: if the model has two input tensors - one with input shape of 32X32X3 and the second with input</span>
-    <span class="c1"># shape of 224X224X3, and we calibrate the model using batches of 20 images,</span>
-    <span class="c1"># calling representative_data_gen() should return a list</span>
-    <span class="c1"># of two numpy.ndarray objects where the arrays&#39; shapes are [(20, 32, 32, 3), (20, 224, 224, 3)].</span>
+    <span class="c1"># For example: A model has two input tensors - one with input shape of [32 X 32 X 3] and the second with</span>
+    <span class="c1"># an input shape of [224 X 224 X 3]. We calibrate the model using batches of 20 images.</span>
+    <span class="c1"># Calling representative_data_gen() should return a list</span>
+    <span class="c1"># of two numpy.ndarray objects where the arrays&#39; shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].</span>
     <span class="k">def</span> <span class="nf">representative_data_gen</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">image_data_loader</span><span class="o">.</span><span class="n">sample</span><span class="p">()]</span>
 </pre></div>
 </div>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
 <p>Run Post Training Quantization:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+    <span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
     <span class="c1"># Set the number of calibration iterations to 10.</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">MobileNet</span><span class="p">()</span>
     <span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">keras_post_training_quantization</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
                                                                               <span class="n">representative_data_gen</span><span class="p">,</span>
-                                                                              <span class="n">n_iter</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -134,12 +134,16 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="visualization.html"
-                        title="previous chapter">Visualization within TensorBoard</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="../api/api_docs/index.html"
-                        title="next chapter">API Docs</a></p>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="visualization.html"
+                          title="previous chapter">Visualization within TensorBoard</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="quickstart_pytorch.html"
+                          title="next chapter">MCT Quickstart Guideline for Pytorch models</a></p>
+  </div>
 <div id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
@@ -161,18 +165,18 @@
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../api/api_docs/index.html" title="API Docs"
+          <a href="quickstart_pytorch.html" title="MCT Quickstart Guideline for Pytorch models"
              >next</a> |</li>
         <li class="right" >
           <a href="visualization.html" title="Visualization within TensorBoard"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.1.1</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">MCT Quickstart Guideline</a></li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">MCT Quickstart Guideline for Keras models</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>

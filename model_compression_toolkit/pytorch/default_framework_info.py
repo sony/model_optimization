@@ -95,8 +95,8 @@ LAYER2MINMAX = {Softmax: (0, 1),
                 hardsigmoid: (0, 1),
                 ReLU: (0, None),
                 relu: (0, None),
-                ReLU6: (0, 6),
-                relu6: (0, 6)}
+                ReLU6: (0, None),
+                relu6: (0, None)}
 
 """
 Mapping from a QuantizationMethod to an activation quantizer function.

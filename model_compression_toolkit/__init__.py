@@ -33,4 +33,4 @@ from model_compression_toolkit.keras.quantization_facade import keras_post_train
 from model_compression_toolkit.keras.quantization_facade import get_keras_gptq_config
 from model_compression_toolkit.pytorch.quantization_facade import pytorch_post_training_quantization
 
-__version__ = "1.1.1"
+__version__ = "1.2.0"
