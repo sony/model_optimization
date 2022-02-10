@@ -41,7 +41,8 @@ from model_compression_toolkit.common.quantization.quantize_graph_weights import
 from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import compute_bias_correction_of_graph
 
 from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
-from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG, ThresholdSelectionMethod
+from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG, QuantizationErrorMethod, \
+    QuantizationMethod
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
@@ -443,10 +444,12 @@ def _prepare_model_for_quantization(in_model: Any,
     ######################################
     # Shift Negative Activations
     ######################################
-    if quant_config.shift_negative_activation_correction:
+    if quant_config.shift_negative_activation_correction and \
+            quant_config.enable_activation_quantization and \
+            quant_config.activation_quantization_method is not QuantizationMethod.UNIFORM:
         transformed_graph = fw_impl.shift_negative_correction(transformed_graph,
-                                                                    quant_config,
-                                                                    fw_info)
+                                                              quant_config,
+                                                              fw_info)
         if tb_w is not None:
             tb_w.add_graph(transformed_graph, 'after_shift_negative_correction')
             tb_w.add_all_statistics(transformed_graph, 'after_shift_negative_correction')

@@ -53,8 +53,8 @@ class ShiftNegaviteActivationNetTest(BasePytorchTest):
 
     def get_quantization_configs(self):
         return {
-            'all_8bit': mct.QuantizationConfig(mct.ThresholdSelectionMethod.NOCLIPPING,
-                                               mct.ThresholdSelectionMethod.NOCLIPPING,
+            'all_8bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
+                                               mct.QuantizationErrorMethod.NOCLIPPING,
                                                mct.QuantizationMethod.POWER_OF_TWO,
                                                mct.QuantizationMethod.POWER_OF_TWO,
                                                8, 8,

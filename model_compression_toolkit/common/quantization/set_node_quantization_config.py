@@ -102,7 +102,7 @@ def create_node_activation_qc(qc: QuantizationConfig,
         Logger.critical('Unknown quantization method for activations')
 
     activation_quantization_params_fn = get_activation_quantization_params_fn(qc.activation_quantization_method,
-                                                                              qc.activation_threshold_method)
+                                                                              qc.activation_error_method)
 
     return NodeActivationQuantizationConfig(qc,
                                             activation_quantization_fn,
@@ -131,7 +131,7 @@ def create_node_weights_qc(qc: QuantizationConfig,
         Logger.critical('Unknown quantization method for weights')
 
     weights_quantization_params_fn = get_weights_quantization_params_fn(qc.weights_quantization_method,
-                                                                        qc.weights_threshold_method)
+                                                                        qc.weights_error_method)
 
     return NodeWeightsQuantizationConfig(qc,
                                          weights_quantization_fn,

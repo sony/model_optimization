@@ -74,7 +74,7 @@ class LUTQuantizerTest(BasePytorchTest):
         self.kernel = 3
 
     def get_quantization_configs(self):
-        return {'lut_quantizer_test': mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
+        return {'lut_quantizer_test': mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
                                       mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 8,
                                       self.weights_n_bits)}
 
