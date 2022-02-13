@@ -15,6 +15,7 @@
 
 
 import tensorflow as tf
+
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
         MaxPooling2D, Activation, ReLU, GlobalAveragePooling2D, Add, Multiply, AveragePooling2D, UpSampling2D, InputLayer, \
@@ -30,10 +31,11 @@ from model_compression_toolkit.common.framework_info import FrameworkInfo, Chann
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationMethod
 from model_compression_toolkit.common.quantization.quantizers.kmeans_quantizer import kmeans_quantizer
 from model_compression_toolkit.common.quantization.quantizers.lut_kmeans_quantizer import lut_kmeans_quantizer
-from model_compression_toolkit.common.quantization.quantizers.power_of_two_quantizer import power_of_two_quantizer
+from model_compression_toolkit.common.quantization.quantizers.uniform_quantizers import power_of_two_quantizer, \
+    symmetric_quantizer, uniform_quantizer
 from model_compression_toolkit.keras.constants import SOFTMAX, LINEAR, RELU, SWISH, SIGMOID, IDENTITY, TANH, SELU, \
     KERNEL, DEPTHWISE_KERNEL
-from model_compression_toolkit.keras.quantizer.fake_quant_builder import constraint_quantization
+from model_compression_toolkit.keras.quantizer.fake_quant_builder import power_of_two_quantization, symmetric_quantization, uniform_quantization
 
 """
 Division of Keras layers by how they should be quantized.
@@ -155,12 +157,16 @@ LAYER2MINMAX = {Softmax: (0, 1),
 """
 Mapping from a QuantizationMethod to an activation quantizer function.
 """
-ACTIVATION_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: constraint_quantization}
+ACTIVATION_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quantization,
+                                QuantizationMethod.SYMMETRIC: symmetric_quantization,
+                                QuantizationMethod.UNIFORM: uniform_quantization}
 
 """
 Mapping from a QuantizationMethod to an weights quantizer function.
 """
 WEIGHTS_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quantizer,
+                             QuantizationMethod.SYMMETRIC: symmetric_quantizer,
+                             QuantizationMethod.UNIFORM: uniform_quantizer,
                              QuantizationMethod.KMEANS: kmeans_quantizer,
                              QuantizationMethod.LUT_QUANTIZER: lut_kmeans_quantizer}
 

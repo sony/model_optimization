@@ -51,6 +51,11 @@ For using with Tensorflow please install the packages:
 
 For using with Pytorch (experimental) please install the packages: 
 [torch](https://pytorch.org/)
+
+MCT is tested with:
+* Tensorflow version 2.7 
+* Pytorch version 1.10.0 
+
 ### Usage Example 
 For an example of how to use the post training quantization, using Keras,
 please use this [link](tutorials/example_keras_mobilenet.py).
@@ -74,7 +79,6 @@ Tensorboard Visualization (Experimental):
     * CS Analyizer: compare a model compressed with the orignal model to analyze large accuracy drops.
     * Activation statisicis and errors
 
-MCT is tested with Tensorflow Version 2.7. 
 
 ## Results
 ### Keras
@@ -95,6 +99,7 @@ In the following table we present the ImageNet validation results for these mode
 
 | Network Name              | Float Accuracy  | 8Bit Accuracy   | 
 | --------------------------| ---------------:| ---------------:| 
+| MobileNet V2 [3]          | 71.886          | 71.444           |                                      
 | ResNet-18 [3]             | 69.86           | 69.63           |                                      
 | SqueezeNet 1.1 [3]        | 58.128          | 57.678          |                                      
 

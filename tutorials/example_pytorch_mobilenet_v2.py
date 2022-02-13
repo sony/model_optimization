@@ -63,8 +63,13 @@ if __name__ == '__main__':
         return [image_data_loader.sample()]
 
     # Create a model and quantize it using the representative_data_gen as the calibration images.
-    # Set the number of calibration iterations to 10.
+    # Set the number of calibration iterations to 20.
     model = mobilenet_v2(pretrained=True)
+    # set quantization configuration
+    quantization_config = mct.DEFAULTCONFIG
+    # Configure z threshold algorithm for outlier removal. Set z threshold to 16.
+    quantization_config.z_threshold = 16
+    # run post training quantization on the model to get the quantized model output
     quantized_model, quantization_info = mct.pytorch_post_training_quantization(model,
-                                                                              representative_data_gen,
-                                                                              n_iter=10)
+                                                                                representative_data_gen,
+                                                                                n_iter=20)

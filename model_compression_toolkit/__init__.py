@@ -18,7 +18,7 @@ from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
 from model_compression_toolkit.common.quantization import quantization_config
 from model_compression_toolkit.common.mixed_precision import mixed_precision_quantization_config
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig, \
-    ThresholdSelectionMethod, QuantizationMethod, DEFAULTCONFIG
+    QuantizationErrorMethod, QuantizationMethod, DEFAULTCONFIG
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.logger import set_log_folder
@@ -34,4 +34,4 @@ from model_compression_toolkit.keras.quantization_facade import get_keras_gptq_c
 from model_compression_toolkit.pytorch.quantization_facade import pytorch_post_training_quantization, \
     pytorch_post_training_quantization_mixed_precision
 
-__version__ = "1.1.1"
+__version__ = "1.2.0"

@@ -15,6 +15,7 @@
 import numpy as np
 from typing import Tuple, Dict
 
+from model_compression_toolkit import QuantizationMethod
 from model_compression_toolkit.common import BaseNode, Graph
 from model_compression_toolkit.common.constants import SIGNED
 from model_compression_toolkit.common.quantization import quantization_params_generation
@@ -51,7 +52,15 @@ def get_activations_qparams(n: BaseNode,
         signed = np.any(bins_values < 0)
 
     if n.prior_info.is_output_bounded():
-        n.activation_quantization_cfg.activation_quantization_params_fn = quantization_params_generation.no_clipping_selection_min_max
+        if n.activation_quantization_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
+            n.activation_quantization_cfg.activation_quantization_params_fn = \
+                quantization_params_generation.no_clipping_selection_min_max
+        elif n.activation_quantization_cfg.activation_quantization_method == QuantizationMethod.SYMMETRIC:
+            n.activation_quantization_cfg.activation_quantization_params_fn = \
+                quantization_params_generation.symmetric_no_clipping_selection_min_max
+        elif n.activation_quantization_cfg.activation_quantization_method == QuantizationMethod.UNIFORM:
+            n.activation_quantization_cfg.activation_quantization_params_fn = \
+                quantization_params_generation.uniform_no_clipping_selection_min_max
 
     activation_params = n.activation_quantization_cfg.activation_quantization_params_fn(bins_values,
                                                                                         bins_counts,
@@ -59,7 +68,8 @@ def get_activations_qparams(n: BaseNode,
                                                                                         n.activation_quantization_cfg.activation_n_bits,
                                                                                         min_value,
                                                                                         max_value,
-                                                                                        min_threshold=n.activation_quantization_cfg.min_threshold)
+                                                                                        min_threshold=n.activation_quantization_cfg.min_threshold,
+                                                                                        quant_error_method=n.activation_quantization_cfg.activation_error_method)
     activation_params.update({SIGNED: signed})
 
     return activation_params

@@ -30,9 +30,11 @@ from model_compression_toolkit.common.framework_info import FrameworkInfo, Chann
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationMethod
 from model_compression_toolkit.common.quantization.quantizers.kmeans_quantizer import kmeans_quantizer
 from model_compression_toolkit.common.quantization.quantizers.lut_kmeans_quantizer import lut_kmeans_quantizer
-from model_compression_toolkit.common.quantization.quantizers.power_of_two_quantizer import power_of_two_quantizer
+from model_compression_toolkit.common.quantization.quantizers.uniform_quantizers import power_of_two_quantizer, \
+    symmetric_quantizer, uniform_quantizer
 from model_compression_toolkit.pytorch.constants import KERNEL
-from model_compression_toolkit.pytorch.quantizer.fake_quant_builder import power_of_two_quantization
+from model_compression_toolkit.pytorch.quantizer.fake_quant_builder import power_of_two_quantization, \
+    symmetric_quantization, uniform_quantization
 from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder
 
 """
@@ -93,18 +95,22 @@ LAYER2MINMAX = {Softmax: (0, 1),
                 hardsigmoid: (0, 1),
                 ReLU: (0, None),
                 relu: (0, None),
-                ReLU6: (0, 6),
-                relu6: (0, 6)}
+                ReLU6: (0, None),
+                relu6: (0, None)}
 
 """
 Mapping from a QuantizationMethod to an activation quantizer function.
 """
-ACTIVATION_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quantization}
+ACTIVATION_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quantization,
+                                QuantizationMethod.SYMMETRIC: symmetric_quantization,
+                                QuantizationMethod.UNIFORM: uniform_quantization}
 
 """
 Mapping from a QuantizationMethod to an weights quantizer function.
 """
 WEIGHTS_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quantizer,
+                             QuantizationMethod.SYMMETRIC: symmetric_quantizer,
+                             QuantizationMethod.UNIFORM: uniform_quantizer,
                              QuantizationMethod.KMEANS: kmeans_quantizer,
                              QuantizationMethod.LUT_QUANTIZER: lut_kmeans_quantizer}
 

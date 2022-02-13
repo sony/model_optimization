@@ -35,9 +35,9 @@ class NestedModelMultipleOutputsTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, val_batch_size=10)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE, mct.ThresholdSelectionMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16, True, True, True)
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+                                      True, True, True)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 236, 236, 3]]
