@@ -142,13 +142,10 @@ class PytorchModelBuilder(torch.nn.Module):
         if mode == ModelBuilderMode.MIXEDPRECISION:
             for n in self.node_sort:
                 if not isinstance(n, FunctionalNode):
-                    if n.type is DummyPlaceHolder:
-                        # DummyPlaceHolder node always exists, and we just need to initiate it
-                        # but it's not relevant for MP
-                        self.add_module(n.name, node_builder(n))
-                    else:
+                    if n.is_weights_quantization_enabled():
                         self.add_module(n.name, PytorchMixedPrecisionWrapper(n, fw_info))
-                        # TODO: need to call set_model here as well? (called inside for the actual layer model)
+                    else:
+                        self.add_module(n.name, node_builder(n))
         else:
             for n in self.node_sort:
                 if not isinstance(n, FunctionalNode):

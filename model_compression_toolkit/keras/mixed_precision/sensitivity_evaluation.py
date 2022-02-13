@@ -90,7 +90,7 @@ def get_sensitivity_evaluation(graph: Graph,
             The sensitivity metric of the MP model for a given configuration.
         """
 
-        # Configure MP model with the given configuration.  # TODO (OFIR): all it does is to set the index of the relevent bitwidth inside the layer's config wrapper
+        # Configure MP model with the given configuration.
         _configure_bitwidths_keras_model(model_mp,
                                          sorted_configurable_nodes_names,
                                          mp_model_configuration,
@@ -121,9 +121,6 @@ def get_sensitivity_evaluation(graph: Graph,
 
             # when using model.predict(), it does not uses the QuantizeWrapper functionality
             mp_tensors = _tensors_as_list(model_mp(inference_batch_input))
-            # TODO (OFIR): what the call to model on inference_batch does?
-            #  How does the bitwidth index that we set before manifested in this call?
-            #  Where does the actual quantization happens? is it TF quantization or uses our weights quantization?
 
             # Build distance matrix: similarity between the baseline model to the float model
             # in every interest point for every image in the batch.

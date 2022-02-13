@@ -134,6 +134,11 @@ def get_sensitivity_evaluation(graph: Graph,
             # when using model.predict(), it does not uses the QuantizeWrapper functionality
             mp_tensors = _tensors_as_list(model_mp(inference_batch_input))
 
+            # TODO: this calls are also framework-specific
+            # in case the tensors are on GPU, need to move then to CPU in order to convert to numpy arrays
+            mp_tensors = list(map(lambda t: t.detach().cpu(), mp_tensors))
+            baseline_tensors = list(map(lambda t: t.detach().cpu(), baseline_tensors))
+
             # Build distance matrix: similarity between the baseline model to the float model
             # in every interest point for every image in the batch.
             distance_matrices.append(_build_distance_matrix(baseline_tensors,

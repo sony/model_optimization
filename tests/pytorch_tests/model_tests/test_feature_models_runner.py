@@ -19,7 +19,7 @@ from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSame
 from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest
 from tests.pytorch_tests.model_tests.feature_models.layer_name_test import ReuseNameNetTest
 from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTQuantizerTest
-from tests.pytorch_tests.model_tests.feature_models.mixed_precision_test import MixedPercisionSearchBasic
+from tests.pytorch_tests.model_tests.feature_models.mixed_precision_test import MixedPercisionSearch8Bit, MixedPercisionSearch2Bit
 from tests.pytorch_tests.model_tests.feature_models.multiple_output_nodes_multiple_tensors_test import \
     MultipleOutputsMultipleTensorsNetTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_outputs_node_test import MultipleOutputsNetTest
@@ -113,11 +113,17 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         SplitConcatNetTest(self).run_test()
 
-    def test_mixed_precision(self):
+    def test_mixed_precision_8bit(self):
         """
         This test checks the Mixed Precision search.
         """
-        MixedPercisionSearchBasic(self).run_test()
+        MixedPercisionSearch8Bit(self).run_test()
+
+    def test_mixed_precision_2bit(self):
+        """
+        This test checks the Mixed Precision search.
+        """
+        MixedPercisionSearch2Bit(self).run_test()
 
 
 if __name__ == '__main__':

@@ -47,9 +47,14 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
         self.layer.load_state_dict({k: torch.Tensor(v) for k, v in n.weights.items()}, strict=False)
         set_model(self.layer)
 
-        self.node_weights_q_cfg = n.candidates_weights_quantization_cfg
+        self.weight_attrs = fw_info.get_kernel_op_attributes(n.type)
+        # float_weights is a list of weights for each attribute that we want to quantize.
         self.float_weights = [n.get_weights_by_keys(attr) for attr in
-                              fw_info.get_kernel_op_attributes(n.type)]
+                              self.weight_attrs]
+
+        assert len(self.weight_attrs) == len(self.float_weights)
+
+        self.node_weights_q_cfg = n.candidates_weights_quantization_cfg
 
         self.quantizer_fn = self.node_weights_q_cfg[0].weights_quantization_fn
         for qc in self.node_weights_q_cfg:
@@ -71,19 +76,40 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
     def _get_quantized_weights(self):
         quantized_weights = []
         for qc in self.node_weights_q_cfg:
-            quantized_weights.append(self.quantizer_fn(tensor_data=self.float_weights,
-                                                       n_bits=qc.weights_n_bits,
-                                                       signed=True,
-                                                       quantization_params=qc.weights_quantization_params,
-                                                       per_channel=qc.weights_per_channel_threshold,
-                                                       output_channels_axis=qc.weights_channels_axis))
+            # for each quantization configuration in mixed precision
+            # get quantized weights for each attribute and for each filter
+            quantized_per_attr = []
+            for float_weight in self.float_weights:
+                # for each attribute
+                quantized_per_attr.append(self.quantizer_fn(tensor_data=float_weight,
+                                                            n_bits=qc.weights_n_bits,
+                                                            signed=True,
+                                                            quantization_params=qc.weights_quantization_params,
+                                                            per_channel=qc.weights_per_channel_threshold,
+                                                            output_channels_axis=qc.weights_channels_axis))
+            quantized_weights.append(quantized_per_attr)
 
         return quantized_weights
 
-    def set_active_weights(self, bitwidth_idx):
+    def set_active_weights(self,
+                           bitwidth_idx: int,
+                           attr: str = None):
+        if attr is None:  # set bit width to all weights of the layer
+            attr_idxs = [attr_idx for attr_idx in range(len(self.quantized_weights[bitwidth_idx]))]
+            self._set_bit_width_index(bitwidth_idx, attr_idxs)
+        else:  # set bit width to a specific attribute
+            attr_idx = self.weight_attrs.index(attr)
+            self._set_bit_width_index(bitwidth_idx, [attr_idx])
+
+    def _set_bit_width_index(self, bitwidth_idx, attr_idxs):
         assert bitwidth_idx < len(self.quantized_weights), \
             f"Index {bitwidth_idx} does not exist in current quantization candidates list"
+
+        loaded_weights = {k: torch.as_tensor(v) for k, v in self.layer.state_dict().items()}
         with torch.no_grad():
-            # TODO: risky, need to verify that bitwidth_idx exist
-            weights_tensor = self.quantized_weights[bitwidth_idx]
-            self.layer.weight = torch.nn.Parameter(torch.from_numpy(weights_tensor).float())
+            for attr_idx in attr_idxs:
+                weights_tensor = self.quantized_weights[bitwidth_idx][attr_idx]
+                weights_device = loaded_weights[self.weight_attrs[attr_idx]].device
+                active_weights = torch.nn.Parameter(torch.from_numpy(weights_tensor).to(weights_device))
+                loaded_weights[self.weight_attrs[attr_idx]] = active_weights
+            self.layer.load_state_dict(loaded_weights, strict=True)

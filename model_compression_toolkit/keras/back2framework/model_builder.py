@@ -268,12 +268,11 @@ def model_builder(graph: common.Graph,
                 node = nodes[0]
                 # Wrap only if its weights should be quantized
                 if node.is_weights_quantization_enabled():
-                    # TODO (OFIR): if layer's weights need to be quantized then prepare
                     return QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node, fw_info))
                 return layer
 
             elif is_layer_fake_quant(layer):
-                return layer  # TODO (OFIR): if layer is activation than do nothing
+                return layer
             else:
                 raise Exception(
                     f'Mismatch between keras model and graph cant find node named: {get_node_name_from_layer(layer)}')

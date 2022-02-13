@@ -21,6 +21,7 @@ from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.framework_info import FrameworkInfo
+from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder
 
 
 class MixedPrecisionSearchManager(object):
@@ -123,9 +124,13 @@ class MixedPrecisionSearchManager(object):
                 node_num_params = 0
 
                 # Consider only the weights that should be quantized.
-                for attr in self.fw_info.get_kernel_op_attributes(n.type):
-                    if attr is not None:
-                        node_num_params += n.get_weights_by_keys(attr).flatten().shape[0]
+                if n.is_weights_quantization_enabled():
+                    # relevant case for pytorch framework implementation -
+                    # need to consider only nodes that are need to be quantized.
+                    # shouldn't affect tensorflow implementation.
+                    for attr in self.fw_info.get_kernel_op_attributes(n.type):
+                        if attr is not None:
+                            node_num_params += n.get_weights_by_keys(attr).flatten().shape[0]
 
                 node_memory_in_bytes = node_num_params * node_nbits / 8.0
                 weights_memory += node_memory_in_bytes
