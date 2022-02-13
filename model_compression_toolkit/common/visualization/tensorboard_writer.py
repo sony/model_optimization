@@ -31,6 +31,7 @@ from tensorboard.compat.proto.tensor_shape_pb2 import TensorShapeProto
 from tensorboard.summary.writer.event_file_writer import EventFileWriter
 from typing import List, Any, Dict
 
+from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 
@@ -176,13 +177,16 @@ class TensorboardWriter(object):
 
     def add_graph(self,
                   graph: Graph,
-                  main_tag_name: str):
+                  main_tag_name: str,
+                  fw_info:FrameworkInfo):
         """
         Add a graph to display on Tensorboard. The graph is tagged with the name main_tag_name.
 
         Args:
             graph: Graph to display on Tensorboard.
             main_tag_name: Tag to attach to the graph.
+            fw_info: Framework information. Needed to know attributes to quantize in different nodes
+            (for the memory required by each node's coefficients).
 
         """
 
@@ -240,7 +244,7 @@ class TensorboardWriter(object):
                 dims = [(-1,) + output_shape[1:] if output_shape[0] is None else output_shape]
             return dims
 
-        def __create_node_stats(n: BaseNode):
+        def __create_node_stats(n: BaseNode, fw_info:FrameworkInfo):
             """
             Create a NodeExecStats for a node in the graph. A NodeExecStats contains the
             memory and compute time a node requires.
@@ -271,7 +275,7 @@ class TensorboardWriter(object):
                 i_tensor = f'{e.source_node.name}:{e.source_index}'
                 node_def.input.append(i_tensor)
             graph_def.node.extend([node_def])  # Add the node to the graph
-            node_stats.append(__create_node_stats(n))
+            node_stats.append(__create_node_stats(n, fw_info))
 
         er = self.__get_event_writer_by_tag_name(main_tag_name)
         event = Event(graph_def=graph_def.SerializeToString())

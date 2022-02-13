@@ -405,7 +405,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             output_edges.sort(key=lambda e: getattr(e, sort_by_attr))
         return output_edges
 
-    def get_memory(self) -> float:
+    def get_memory(self, fw_info) -> float:
         """
 
         Returns: Total memory consumption of the graph in bytes.
@@ -413,7 +413,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         memory = 0
         for n in self.nodes:
-            memory += n.get_memory_bytes()
+            memory += n.get_memory_bytes(fw_info)
         return memory
 
     def get_configurable_sorted_nodes_names(self,

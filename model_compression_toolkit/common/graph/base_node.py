@@ -138,33 +138,49 @@ class BaseNode:
         """
         return [self.weights[k] for k in self.weights.keys() if self.weights[k] is not None]
 
-    def get_num_parameters(self) -> int:
+    def get_num_parameters(self, fw_info) -> Tuple[int,int]:
         """
+        Compute the number of parameters the node holds.
+        It returns a tuple: Number of quantized parameters, number of float parameters.
 
-        Returns: Number of parameters the node holds.
+        Args:
+            fw_info: Framework info to decide which attributes should be quantized.
+
+        Returns:
+            A tuple of (Number of quantized parameters, number of float parameters).
 
         """
-        node_num_params = np.sum([v.flatten().shape[0] for v in self.weights.values() if v is not None])
-        assert int(node_num_params) == node_num_params
-        return int(node_num_params)
+        total_node_params = np.sum([w.flatten().shape[0] for w in self.weights.values() if w is not None])
 
-    def get_memory_bytes(self, by_candidate_idx: int = None) -> float:
+        q_node_num_params = 0
+
+        for attr in fw_info.get_kernel_op_attributes(self.type):
+            if attr is not None:
+                w = self.get_weights_by_keys(attr)
+                if w is not None:
+                    q_node_num_params += w.flatten().shape[0]
+
+        f_node_num_params = total_node_params - q_node_num_params
+
+        assert int(q_node_num_params) == q_node_num_params
+        assert int(f_node_num_params) == f_node_num_params
+        return int(q_node_num_params), int(f_node_num_params)
+
+    def get_memory_bytes(self, fw_info) -> float:
         """
+        Compute the number of bytes the node's memory requires.
+
+        Args:
+            fw_info: Framework info to decide which attributes should be quantized.
 
         Returns: Number of bytes the node's memory requires.
 
         """
-        params = self.get_num_parameters()
-        if by_candidate_idx is not None:
-            assert type(by_candidate_idx)==int
-            assert by_candidate_idx < len(self.candidates_weights_quantization_cfg)
-            memory = params * self.candidates_weights_quantization_cfg[by_candidate_idx].weights_n_bits / 8 # in bytes
-
-        elif self.final_weights_quantization_cfg is None:  # float coefficients
-            memory = params * 4
-
+        q_params, f_params = self.get_num_parameters(fw_info)
+        if self.final_weights_quantization_cfg is None:  # float coefficients
+            memory = (f_params+q_params) * 4
         else:
-            memory = params * self.final_weights_quantization_cfg.weights_n_bits / 8  # in bytes
+            memory = (f_params*4)+ (q_params * self.final_weights_quantization_cfg.weights_n_bits / 8)  # in bytes
 
         return memory
 
