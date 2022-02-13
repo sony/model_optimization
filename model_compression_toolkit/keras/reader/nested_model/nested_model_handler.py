@@ -57,7 +57,8 @@ def merge_graphs(inner_model_node: BaseNode,
                                outer_graph,
                                inner_graph)
 
-    return Graph(nodes,
+    return Graph(outer_graph.name,
+                 nodes,
                  inputs,
                  outputs,
                  edges)
