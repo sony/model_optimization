@@ -74,6 +74,23 @@ def get_sensitivity_evaluation(graph: Graph,
     baseline_model = _build_baseline_model(graph,
                                            interest_points)
 
+    # First, select images to use for all measurements.
+    samples_count = 0  # Number of images we used so far to compute the distance matrix.
+    images_batches = []
+    while samples_count < quant_config.num_of_images:
+        # Get a batch of images to infer in both models.
+        inference_batch_input = representative_data_gen()
+        batch_size = inference_batch_input[0].shape[0]
+
+        # If we sampled more images than we should use in the distance matrix,
+        # we take only a subset of these images and use only them for computing the distance matrix.
+        if batch_size > quant_config.num_of_images - samples_count:
+            inference_batch_input = [x[:quant_config.num_of_images - samples_count] for x in inference_batch_input]
+            assert quant_config.num_of_images - samples_count == inference_batch_input[0].shape[0]
+            batch_size = quant_config.num_of_images - samples_count
+
+        images_batches.append(inference_batch_input)
+        samples_count += batch_size
 
     def _compute_metric(mp_model_configuration: List[int],
                         node_idx: List[int] = None) -> float:
@@ -96,31 +113,17 @@ def get_sensitivity_evaluation(graph: Graph,
                                          mp_model_configuration,
                                          node_idx)
 
-        samples_count = 0  # Numer of images we used so far to compute the distance matrix.
-
         # List of distance matrices. We create a distance matrix for each sample from the representative_data_gen
         # and merge all of them eventually.
         distance_matrices = []
 
         # Compute the distance matrix for num_of_images images.
-        while samples_count < quant_config.num_of_images:
-            # Get a batch of images to infer in both models.
-            inference_batch_input = representative_data_gen()
-            batch_size = inference_batch_input[0].shape[0]
-
-            # If we sampled more images than we should use in the distance matrix,
-            # we take only a subset of these images and use only them for computing the distance matrix.
-            if batch_size > quant_config.num_of_images-samples_count:
-                inference_batch_input = [x[:quant_config.num_of_images-samples_count] for x in inference_batch_input]
-                assert quant_config.num_of_images-samples_count == inference_batch_input[0].shape[0]
-                batch_size = quant_config.num_of_images-samples_count
-
-            samples_count += batch_size
+        for images in images_batches:
             # If the model contains only one output we save it a list. If it's a list already, we keep it as a list.
-            baseline_tensors = _tensors_as_list(baseline_model(inference_batch_input))
+            baseline_tensors = _tensors_as_list(baseline_model(images))
 
             # when using model.predict(), it does not uses the QuantizeWrapper functionality
-            mp_tensors = _tensors_as_list(model_mp(inference_batch_input))
+            mp_tensors = _tensors_as_list(model_mp(images))
 
             # Build distance matrix: similarity between the baseline model to the float model
             # in every interest point for every image in the batch.
