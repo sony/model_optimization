@@ -14,8 +14,11 @@
 # ==============================================================================
 
 from typing import Callable, Any
+from model_compression_toolkit.common.defaultdict import DefaultDict
 
-MAX_LSBS_CHANGE_MAP = {8: 4, 4: 2, 2: 1}
+MAX_LSBS_CHANGE_MAP = {8: 4,
+                       4: 2,
+                       2: 1}
 
 
 class GradientPTQConfig:
@@ -29,7 +32,7 @@ class GradientPTQConfig:
                  loss: Callable = None,
                  log_function: Callable = None,
                  train_bias: bool = True,
-                 lsb_change_per_bit_width=MAX_LSBS_CHANGE_MAP):
+                 lsb_change_per_bit_width: dict = DefaultDict(MAX_LSBS_CHANGE_MAP, lambda: 1)):
         """
         Initialize a GradientPTQConfig.
 

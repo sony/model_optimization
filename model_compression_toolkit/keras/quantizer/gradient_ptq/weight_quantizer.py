@@ -23,11 +23,20 @@ from model_compression_toolkit.keras.quantizer.base_quantizer import BaseTrainab
 from model_compression_toolkit.keras.quantizer.gradient_ptq.utils import symmetric_constrained_quantizer
 from model_compression_toolkit.common.constants import THRESHOLD
 from model_compression_toolkit.common.defaultdict import DefaultDict
+from model_compression_toolkit.keras.constants import KERNEL
 
 
-def get_kernel(weights_list):
+def get_kernel(weights_list: list) -> str:
+    """
+    This function a list of weights and return the kernel
+    Args:
+        weights_list:  A list of Tensors
+
+    Returns: The kernel tensor.
+
+    """
     for w in weights_list:
-        if "kernel" in w.name:
+        if KERNEL in w.name:
             return w
     raise Exception("Can't find kernel variable")
 

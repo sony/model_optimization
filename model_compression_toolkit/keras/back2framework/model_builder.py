@@ -181,7 +181,7 @@ def model_builder(graph: common.Graph,
         fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
         This is needed when using MIXEDPRECISION or GPTQ mode for passing the kernel attributes to
         the QuanteWrapper we use in both of these cases.
-        gptq_config: GPRQ Configuration class.
+        gptq_config: GPTQ Configuration class..
 
     Returns:
         A tuple of the model, and an UserInformation object.
