@@ -92,6 +92,10 @@ def get_sensitivity_evaluation(graph: Graph,
         images_batches.append(inference_batch_input)
         samples_count += batch_size
 
+    # Infer all images with baseline model, and save them as a list.
+    # If the model contains only one output we save it a list. If it's a list already, we keep it as a list.
+    baseline_tensors_list = [_tensors_as_list(baseline_model(images)) for images in images_batches]
+
     def _compute_metric(mp_model_configuration: List[int],
                         node_idx: List[int] = None) -> float:
         """
@@ -118,10 +122,7 @@ def get_sensitivity_evaluation(graph: Graph,
         distance_matrices = []
 
         # Compute the distance matrix for num_of_images images.
-        for images in images_batches:
-            # If the model contains only one output we save it a list. If it's a list already, we keep it as a list.
-            baseline_tensors = _tensors_as_list(baseline_model(images))
-
+        for images, baseline_tensors in zip(images_batches, baseline_tensors_list):
             # when using model.predict(), it does not uses the QuantizeWrapper functionality
             mp_tensors = _tensors_as_list(model_mp(images))
 
