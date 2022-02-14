@@ -71,6 +71,17 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         self.user_info = UserInformation()
         self.fw_info = fw_info
 
+    def set_fw_info(self,
+                   fw_info: FrameworkInfo):
+        """
+        Set the graph's framework info.
+        Args:
+            fw_info: FrameworkInfo object.
+        """
+
+        self.fw_info = fw_info
+
+
     def get_topo_sorted_nodes(self):
         """
         Returns: a list of toposorted nodes.
