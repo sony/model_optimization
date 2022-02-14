@@ -43,9 +43,6 @@ class MixedPercisionBaseTest(BasePytorchTest):
 
         return {"mixed_precision_model": MixedPrecisionQuantizationConfig(qc, weights_n_bits=[2, 8, 4], num_of_images=1)}
 
-    # def get_input_shapes(self):
-    #     return [[self.val_batch_size, 224, 244, 3]]
-
     def create_feature_network(self, input_shape):
         return MixedPrecisionNet(input_shape)
 

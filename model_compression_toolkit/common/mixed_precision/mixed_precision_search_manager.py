@@ -21,7 +21,6 @@ from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.framework_info import FrameworkInfo
-from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder
 
 
 class MixedPrecisionSearchManager(object):
@@ -67,7 +66,6 @@ class MixedPrecisionSearchManager(object):
             # (which is a list from 0 to the length of the candidates qc list of the node).
             indices_mapping[idx] = list(range(len(n.candidates_weights_quantization_cfg)))  # all search_methods space
         return indices_mapping
-
 
     def get_sensitivity_metric(self) -> Callable:
         """

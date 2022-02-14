@@ -104,7 +104,7 @@ if importlib.util.find_spec("torch") is not None:
                                                            analyze_similarity: bool = False,
                                                            target_kpi: KPI = None):
         """
-         Quantize a trained Keras model using post-training quantization. The model is quantized using a
+         Quantize a trained Pytorch model using post-training quantization. The model is quantized using a
          symmetric constraint quantization thresholds (power of two).
          The model is first optimized using several transformations (e.g. BatchNormalization folding to
          preceding layers). Then, using a given dataset, statistics (e.g. min/max, histogram, etc.) are
@@ -120,11 +120,11 @@ if importlib.util.find_spec("torch") is not None:
          **For now, mixed precision is supported for weights only.**
 
          Args:
-             in_model (Model): Keras model to quantize.
+             in_model (Model): Pytorch model to quantize.
              representative_data_gen (Callable): Dataset used for calibration.
              n_iter (int): Number of calibration iterations to run.
              quant_config (MixedPrecisionQuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized.
-             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/keras/default_framework_info.py#L100>`_
+             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pytorch/default_framework_info.py#L100>`_
              network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
              gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
              analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
@@ -138,10 +138,10 @@ if importlib.util.find_spec("torch") is not None:
 
              >>> import model_compression_toolkit as mct
 
-             Import a Keras model:
+             Import a Pytorch model:
 
-             >>> from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
-             >>> model = MobileNetV2()
+             >>> import torchvision.models.mobilenet_v2 as models
+             >>> module = models.mobilenet_v2()
 
              Create a random dataset generator:
 
@@ -155,11 +155,11 @@ if importlib.util.find_spec("torch") is not None:
 
              Create a KPI object to limit our returned model's size. Note that this value affects only coefficients that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value, while the bias will not):
 
-             >>> kpi = mct.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
+             >>> kpi = mct.KPI(sum(p.numel() for p in module.parameters()) * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
 
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a quantized model:
 
-             >>> quantized_model, quantization_info = mct.keras_post_training_quantization_mixed_precision(model, repr_datagen, n_iter=10, quant_config=config, target_kpi=kpi)
+             >>> quantized_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(module, repr_datagen, n_iter=10, quant_config=config, target_kpi=kpi)
 
              For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 
@@ -202,5 +202,5 @@ else:
 
     def pytorch_post_training_quantization_mixed_precision(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
-                        'when using keras_post_training_quantization_mixed_precision. '
+                        'when using pytorch_post_training_quantization_mixed_precision. '
                         'Could not find Tensorflow package.')
