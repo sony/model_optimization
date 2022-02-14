@@ -30,7 +30,6 @@ from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHo
 from model_compression_toolkit.pytorch.mixed_precision.mixed_precision_wrapper import PytorchMixedPrecisionWrapper
 
 
-
 def build_input_tensors_list(node: BaseNode,
                              graph: Graph,
                              inputs: Tuple[Any],
@@ -131,6 +130,7 @@ class PytorchModelBuilder(torch.nn.Module):
             graph: Graph to build its corresponding Pytorch model.
             mode: Building mode. Read ModelBuilderMode description for more info.
             append2output: List of nodes or OutTensor objects.
+            fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
         """
         super(PytorchModelBuilder, self).__init__()
         self.graph = graph

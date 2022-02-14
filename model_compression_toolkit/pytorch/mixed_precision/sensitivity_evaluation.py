@@ -13,15 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-# from tensorflow.python.layers.base import Layer
-# from tensorflow import Tensor
-# from tensorflow.keras.models import Model
-# from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
-
-# from model_compression_toolkit.keras.back2framework.model_builder import model_builder
-# from model_compression_toolkit.keras.quantizer.mixed_precision.selective_weights_quantize_config import \
-#     SelectiveWeightsQuantizeConfig
-
 from torch import Tensor
 from torch.nn import Module
 
@@ -38,6 +29,7 @@ import numpy as np
 
 from model_compression_toolkit.pytorch.back2framework.model_builder import model_builder
 from model_compression_toolkit.pytorch.mixed_precision.mixed_precision_wrapper import PytorchMixedPrecisionWrapper
+from model_compression_toolkit.pytorch.utils import to_torch_tensor
 
 
 def get_sensitivity_evaluation(graph: Graph,
@@ -49,8 +41,8 @@ def get_sensitivity_evaluation(graph: Graph,
     Create a function to compute the sensitivity metric of an MP model (the sensitivity
     is computed based on the similarity of the interest points' outputs between the MP model
     and the float model).
-    First, we build a MP model (a model where layers that can be configured in different bitwidths use
-    a SelectiveWeightsQuantizeConfig) and a baseline model (a float model).
+    First, we build an MP model (a model where layers that can be configured in different bitwidths use
+    a PytorchMixedPrecisionWrapper) and a baseline model (a float model).
     Then, and based on the outputs of these two models (for some batches from the representative_data_gen),
     we build a function to measure the sensitivity of a change in a bitwidth of a model's layer.
 
@@ -92,7 +84,7 @@ def get_sensitivity_evaluation(graph: Graph,
 
         Args:
             mp_model_configuration: Bitwidth configuration to use to configure the MP model.
-            node_idx: A list of nodes' indices to configure (instead of using the entire mp_mp_model_configuration).
+            node_idx: A list of nodes' indices to configure (instead of using the entire mp_model_configuration).
 
         Returns:
             The sensitivity metric of the MP model for a given configuration.
@@ -104,10 +96,8 @@ def get_sensitivity_evaluation(graph: Graph,
                                            mp_model_configuration,
                                            node_idx)
 
-        # TODO: from here until the end of the while loop the implementation is framework agnostic
-        #  Actually, the entire method is framework agnostic, except the calls to _configure_bitwidth
-        #  (and model_builder in the outer scope).
-        #  many of the helper methods below are also common.
+        # TODO: Consider moving to common all parts that are framework agnostic.
+        #  In this method and some helper methods below.
         samples_count = 0  # Numer of images we used so far to compute the distance matrix.
 
         # List of distance matrices. We create a distance matrix for each sample from the representative_data_gen
@@ -129,13 +119,14 @@ def get_sensitivity_evaluation(graph: Graph,
 
             samples_count += batch_size
             # If the model contains only one output we save it a list. If it's a list already, we keep it as a list.
+            inference_batch_input = list(map(lambda in_arr: to_torch_tensor(in_arr), inference_batch_input))
+
             baseline_tensors = _tensors_as_list(baseline_model(inference_batch_input))
 
             # when using model.predict(), it does not uses the QuantizeWrapper functionality
             mp_tensors = _tensors_as_list(model_mp(inference_batch_input))
 
-            # TODO: this calls are also framework-specific
-            # in case the tensors are on GPU, need to move then to CPU in order to convert to numpy arrays
+            # in case the tensors are on GPU, need to move them to CPU in order to convert to numpy arrays
             mp_tensors = list(map(lambda t: t.detach().cpu(), mp_tensors))
             baseline_tensors = list(map(lambda t: t.detach().cpu(), baseline_tensors))
 
@@ -153,7 +144,6 @@ def get_sensitivity_evaluation(graph: Graph,
 
         # Configure MP model back to the same configuration as the baseline model
         baseline_mp_configuration = [0] * len(mp_model_configuration)
-        # TODO: from here - continues to be framework specific
 
         _configure_bitwidths_pytorch_model(model_mp,
                                            sorted_configurable_nodes_names,
@@ -174,18 +164,19 @@ def _configure_bitwidths_pytorch_model(model_mp: Module,
                                        mp_model_configuration: List[int],
                                        node_idx: List[int]):
     """
-    Configure a dynamic Keras model (namely, model with layers that their weights
-    bitwidth can be configured using SelectiveWeightsQuantizeConfig) using a MP
+    Configure a dynamic Pytorch model (namely, model with layers that their weights
+    bitwidth can be configured using PytorchMixedPrecisionWrapper) using an MP
     model configuration mp_model_configuration.
 
     Args:
-        model_mp: Dynamic Keras model to configure.
+        model_mp: Dynamic Pytorch model to configure. Note: model_mp is a PytorchModelBuilder object which composed of
+        PytorchMixedPrecisionWrapper modules for each layer in the original module that can be configured
+        for different bitwidths.
         sorted_configurable_nodes_names: List of configurable nodes names sorted topology.
         mp_model_configuration: Configuration of bitwidth indices to set to the model.
         node_idx: List of nodes' indices to configure (the rest layers are configured as the baseline model).
 
     """
-    # TODO: note that the mp_model is a PytorchModelBuilder which composed of MPWrappers layers! (add in description)
     # Configure model
     if node_idx is not None:  # configure specific layers in the mp model
         for node_idx_to_configure in node_idx:
@@ -227,15 +218,15 @@ def _build_distance_matrix(baseline_tensors: List[Tensor],
 def _build_baseline_model(graph: Graph,
                           interest_points: List[BaseNode]) -> Module:
     """
-    Build a Keras baseline model to compare inferences of the MP model to.
+    Build a Pytorch baseline model to compare inferences of the MP model to.
     The baseline model is the float model we build from the graph.
 
     Args:
-        graph: Graph to build its baseline Keras model.
+        graph: Graph to build its baseline Pytorch model.
         interest_points: List of nodes to get their outputs.
 
     Returns:
-        A baseline Keras model.
+        A baseline Pytorch model.
     """
 
     baseline_model, _ = model_builder(graph,
@@ -264,9 +255,9 @@ def _tensors_as_list(tensors: Any) -> List[Any]:
 def _set_layer_to_bitwidth(wrapped_layer: Module,
                            bitwidth_idx: int):
     """
-    Configure a layer (which is wrapped in a QuantizeWrapper and holds a
-    SelectiveWeightsQuantizeConfig in its quantize_config) to work with a different bitwidth.
-    The bitwidth_idx is the index of the quantized-weights the quantizer in the SelectiveWeightsQuantizeConfig holds.
+    Configure a layer (which is wrapped in a PytorchMixedPrecisionWrapper and holds a model's layer (nn.Module))
+    to work with a different bitwidth.
+    The bitwidth_idx is the index of the quantized-weights the quantizer in the PytorchMixedPrecisionWrapper holds.
 
     Args:
         wrapped_layer: Layer to change its bitwidth.

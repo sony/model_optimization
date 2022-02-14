@@ -22,7 +22,7 @@ from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
 
 """
-This test checks the BatchNorm folding feature, plus adding a residual connection.
+This test checks the Mixed Precision feature.
 """
 
 
@@ -31,8 +31,8 @@ class MixedPercisionBaseTest(BasePytorchTest):
         super().__init__(unit_test)
 
     def get_quantization_configs(self):
-        qc = mct.QuantizationConfig(mct.ThresholdSelectionMethod.MSE,
-                                    mct.ThresholdSelectionMethod.MSE,
+        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                    mct.QuantizationErrorMethod.MSE,
                                     mct.QuantizationMethod.POWER_OF_TWO,
                                     mct.QuantizationMethod.POWER_OF_TWO,
                                     weights_bias_correction=True,
@@ -60,8 +60,8 @@ class MixedPercisionBaseTest(BasePytorchTest):
                                    [expected_bitwidth_idx, expected_bitwidth_idx]).all())
         # verify that quantization occurred
         quantized_model = quantized_models['mixed_precision_model']
-        conv_layers = list(filter(lambda _layer: type(_layer) == Conv2d, list(quantized_model.modules())))
-        float_conv_layers = list(filter(lambda _layer: type(_layer) == Conv2d, list(float_model.modules())))
+        conv_layers = list(filter(lambda _layer: type(_layer) == Conv2d, list(quantized_model.children())))
+        float_conv_layers = list(filter(lambda _layer: type(_layer) == Conv2d, list(float_model.children())))
         for idx, layer in enumerate(conv_layers):  # quantized per channel
             q_weights = layer.weight.detach().cpu().numpy()
             float_weights = float_conv_layers[idx].weight.detach().cpu().numpy()
