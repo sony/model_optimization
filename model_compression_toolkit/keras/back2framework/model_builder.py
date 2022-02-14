@@ -32,8 +32,9 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapp
 from typing import Tuple, Any, Dict, List
 from tensorflow.python.util.object_identity import Reference as TFReference
 from model_compression_toolkit.common.graph.functional_node import FunctionalNode
-
+from model_compression_toolkit.common.logger import Logger
 from model_compression_toolkit import common
+from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.quantizer.mixed_precision.quantization_config_factory import \
@@ -164,7 +165,8 @@ def run_operation(n: BaseNode,
 def model_builder(graph: common.Graph,
                   mode: ModelBuilderMode = ModelBuilderMode.QUANTIZED,
                   append2output=None,
-                  fw_info: FrameworkInfo = DEFAULT_KERAS_INFO) -> Tuple[tf.keras.models.Model, Any]:
+                  fw_info: FrameworkInfo = DEFAULT_KERAS_INFO, gptq_config: GradientPTQConfig = None) -> Tuple[
+    tf.keras.models.Model, Any]:
     """
     Build a Keras model from a graph representing the model.
     The model is built by converting the graph nodes to Keras layers and applying them sequentially to get the model
@@ -179,10 +181,13 @@ def model_builder(graph: common.Graph,
         fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
         This is needed when using MIXEDPRECISION or GPTQ mode for passing the kernel attributes to
         the QuanteWrapper we use in both of these cases.
+        gptq_config: GPRQ Configuration class.
 
     Returns:
         A tuple of the model, and an UserInformation object.
     """
+    if gptq_config is None and mode == ModelBuilderMode.GPTQ:
+        Logger.exception("Building a model in GPTQ require GPTQ configuration as input")
     node_to_output_tensors_dict = dict()
     model_output_tensors = []
 
@@ -248,7 +253,7 @@ def model_builder(graph: common.Graph,
             nodes = graph.find_node_by_name(get_node_name_from_layer(layer))
             if len(nodes) == 1:
                 node = nodes[0]
-                return QuantizeWrapper(layer, quantization_config_builder_gptq(node, fw_info))
+                return QuantizeWrapper(layer, quantization_config_builder_gptq(node, fw_info, gptq_config))
             elif is_layer_fake_quant(layer):
                 return layer
             else:

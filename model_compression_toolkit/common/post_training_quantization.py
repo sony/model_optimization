@@ -21,6 +21,7 @@ from typing import Callable, List, Tuple, Any
 from tqdm import tqdm
 
 from model_compression_toolkit import common
+from model_compression_toolkit.common import Logger
 from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
@@ -97,8 +98,6 @@ def post_training_quantization(in_model: Any,
         A quantized model and information the user may need to handle the quantized model.
 
     """
-    if quant_config.weights_bias_correction and gptq_config is not None:
-        common.Logger.error('weights_bias_correction should be disabled in GPTQ mode')
 
     tb_w = _init_tensorboard_writer()
 
@@ -117,13 +116,19 @@ def post_training_quantization(in_model: Any,
     ######################################
     if target_kpi is not None:
         assert isinstance(quant_config, MixedPrecisionQuantizationConfig)
-        bit_widths_config = search_bit_width(tg,
-                                             quant_config,
-                                             fw_info,
-                                             target_kpi,
-                                             partial(fw_impl.get_sensitivity_evaluation_fn,
-                                                     representative_data_gen=representative_data_gen,
-                                                     fw_info=fw_info))
+        if quant_config.configuration_overwrite is None:
+            bit_widths_config = search_bit_width(tg,
+                                                 quant_config,
+                                                 fw_info,
+                                                 target_kpi,
+                                                 partial(fw_impl.get_sensitivity_evaluation_fn,
+                                                         representative_data_gen=representative_data_gen,
+                                                         fw_info=fw_info))
+        else:
+            Logger.warning(
+                f'Mixed Precision has overwrite bitwidth configuration{quant_config.configuration_overwrite}')
+            bit_widths_config = quant_config.configuration_overwrite
+
     else:
         bit_widths_config = None
 
@@ -182,20 +187,13 @@ def _quantize_model(fw_info: FrameworkInfo,
                                           fw_impl=fw_impl)
     if tb_w is not None:
         tb_w.add_graph(quantized_tg, 'after_quantization')
-
-    quantized_graph_with_bias_correction = apply_bias_correction_to_graph(quantized_tg,
-                                                                          fw_info=fw_info,
-                                                                          fw_impl=fw_impl)
-    if tb_w is not None:
-        tb_w.add_graph(quantized_graph_with_bias_correction, 'after_bias_correction')
-
     ######################################
     # Back2Framework
     ######################################
     # Before building a quantized model, first apply some substitutions.
-    quantized_graph_with_bias_correction = substitute(quantized_graph_with_bias_correction,
+    quantized_tg = substitute(quantized_tg,
                                                       fw_impl.get_substitutions_pre_build())
-    quantized_model, user_info = fw_impl.model_builder(quantized_graph_with_bias_correction,
+    quantized_model, user_info = fw_impl.model_builder(quantized_tg,
                                                        mode=ModelBuilderMode.QUANTIZED,
                                                        fw_info=fw_info)
     return quantized_model, user_info
@@ -229,6 +227,7 @@ def _apply_gptq(gptq_config: GradientPTQConfig,
                 representative_data_gen: Callable,
                 tb_w: TensorboardWriter,
                 tg: Graph,
+                tg_bias: Graph,
                 fw_info: FrameworkInfo,
                 fw_impl: FrameworkImplementation) -> Graph:
     """
@@ -241,7 +240,8 @@ def _apply_gptq(gptq_config: GradientPTQConfig,
         gptq_config: Configuration for using GPTQ (e.g. optimizer).
         representative_data_gen: Dataset used for calibration.
         tb_w: TensorBoardWriter object to log events.
-        tg: Graph of quantized model.
+        tg: Float Reference Graph.
+        tg_bias: Graph of quantized model.
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).
 
     Returns:
@@ -252,6 +252,7 @@ def _apply_gptq(gptq_config: GradientPTQConfig,
                            "please file a bug. To disable it, do not pass a gptq configuration.")
 
         tg = fw_impl.gptq_training(tg,
+                                   tg_bias,
                                    representative_data_gen,
                                    gptq_config,
                                    fw_info)
@@ -285,30 +286,37 @@ def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
         A tuple of the quantized model and an object of UserInformation.
 
     """
-
-
+    #############################################
+    # Apply Bias Correction
+    #############################################
+    tg_bias = apply_bias_correction_to_graph(tg,
+                                             fw_info=fw_info,
+                                             fw_impl=fw_impl)
+    if tb_w is not None:
+        tb_w.add_graph(tg_bias, 'after_bias_correction')
     #############################################
     # Gradient Based Post Training Quantization
     #############################################
-    tg = _apply_gptq(gptq_config,
+    tg_bias = _apply_gptq(gptq_config,
                      representative_data_gen,
                      tb_w,
                      tg,
+                     tg_bias,
                      fw_info,
                      fw_impl)
 
     tg_float = copy.deepcopy(tg)  # Copy graph before quantization (for similarity analyzer)
     ######################################
-    # Model Quantization
+    # Final Model Quantization
     ######################################
     quantized_model, user_info = _quantize_model(fw_info,
                                                  tb_w,
-                                                 tg,
+                                                 tg_bias,
                                                  fw_impl)
     if analyze_similarity:
         _analyze_similarity(representative_data_gen,
                             tb_w,
-                            tg,
+                            tg_bias,
                             tg_float)
 
     return quantized_model, user_info

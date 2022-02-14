@@ -15,6 +15,8 @@
 
 from typing import Callable, Any
 
+MAX_LSBS_CHANGE_MAP = {8: 4, 4: 2, 2: 1}
+
 
 class GradientPTQConfig:
     """
@@ -26,7 +28,8 @@ class GradientPTQConfig:
                  optimizer: Any,
                  loss: Callable = None,
                  log_function: Callable = None,
-                 train_bias: bool = True):
+                 train_bias: bool = True,
+                 lsb_change_per_bit_width=MAX_LSBS_CHANGE_MAP):
         """
         Initialize a GradientPTQConfig.
 
@@ -36,7 +39,7 @@ class GradientPTQConfig:
             loss (Callable): the loss to use. should accept 2 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors.
             log_function (Callable): Function to log information about the GPTQ process.
             train_bias (bool): Whether to update the bias during the training or not.
-
+            lsb_change_per_bit_width (dict): Whether to update the bias during the training or not.
 
         """
         self.n_iter = n_iter
@@ -44,3 +47,4 @@ class GradientPTQConfig:
         self.loss = loss
         self.log_function = log_function
         self.train_bias = train_bias
+        self.lsb_change_per_bit_width = lsb_change_per_bit_width
