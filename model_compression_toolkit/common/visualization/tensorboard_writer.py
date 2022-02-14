@@ -83,18 +83,20 @@ class TensorboardWriter(object):
     Class to log events to display using Tensorboard such as graphs, histograms, images, etc.
     """
 
-    def __init__(self, dir_path: str):
+    def __init__(self, dir_path: str, fw_info: FrameworkInfo):
         """
         Initialize a TensorboardWriter object.
         
         Args:
             dir_path: Path to save all events to display on Tensorboard.
+            fw_info: FrameworkInfo object (needed for computing nodes' weights memory).
 
         """
         self.dir_path = dir_path
         # we hold EventWriter per tag name, so events can be gathered by tags (like phases during the quantization
         # process).
         self.tag_name_to_event_writer = {}
+        self.fw_info = fw_info
 
     def close(self):
         """
@@ -177,16 +179,13 @@ class TensorboardWriter(object):
 
     def add_graph(self,
                   graph: Graph,
-                  main_tag_name: str,
-                  fw_info:FrameworkInfo):
+                  main_tag_name: str):
         """
         Add a graph to display on Tensorboard. The graph is tagged with the name main_tag_name.
 
         Args:
             graph: Graph to display on Tensorboard.
             main_tag_name: Tag to attach to the graph.
-            fw_info: Framework information. Needed to know attributes to quantize in different nodes
-            (for the memory required by each node's coefficients).
 
         """
 
@@ -244,7 +243,7 @@ class TensorboardWriter(object):
                 dims = [(-1,) + output_shape[1:] if output_shape[0] is None else output_shape]
             return dims
 
-        def __create_node_stats(n: BaseNode, fw_info:FrameworkInfo):
+        def __create_node_stats(n: BaseNode):
             """
             Create a NodeExecStats for a node in the graph. A NodeExecStats contains the
             memory and compute time a node requires.
@@ -259,7 +258,7 @@ class TensorboardWriter(object):
 
             return NodeExecStats(node_name=n.name,
                                  memory=[AllocatorMemoryUsed(
-                                     total_bytes=int(n.get_memory_bytes(fw_info))
+                                     total_bytes=int(n.get_memory_bytes(self.fw_info))
                                  )])
 
         graph_def = GraphDef()  # GraphDef to add to Tensorboard
@@ -275,7 +274,7 @@ class TensorboardWriter(object):
                 i_tensor = f'{e.source_node.name}:{e.source_index}'
                 node_def.input.append(i_tensor)
             graph_def.node.extend([node_def])  # Add the node to the graph
-            node_stats.append(__create_node_stats(n, fw_info))
+            node_stats.append(__create_node_stats(n))
 
         er = self.__get_event_writer_by_tag_name(main_tag_name)
         event = Event(graph_def=graph_def.SerializeToString())

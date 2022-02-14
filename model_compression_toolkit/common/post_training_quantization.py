@@ -100,7 +100,7 @@ def post_training_quantization(in_model: Any,
     if quant_config.weights_bias_correction and gptq_config is not None:
         common.Logger.error('weights_bias_correction should be disabled in GPTQ mode')
 
-    tb_w = _init_tensorboard_writer()
+    tb_w = _init_tensorboard_writer(fw_info)
 
     tg = _prepare_model_for_quantization(in_model,
                                          representative_data_gen,
@@ -132,7 +132,7 @@ def post_training_quantization(in_model: Any,
                         fw_info,
                         bit_widths_config)
 
-    common.Logger.info(f'Expected model size (in bytes): {tg.get_memory(fw_info)}')
+    common.Logger.info(f'Approximated model size (in bytes): {tg.get_memory()}')
 
     quantized_model, user_info = _quantize_fixed_bit_widths_graph(analyze_similarity,
                                                                   fw_info,
@@ -149,17 +149,22 @@ def post_training_quantization(in_model: Any,
 
 
 
-def _init_tensorboard_writer() -> TensorboardWriter:
+def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
     """
+    Create a TensorBoardWriter object initialized with the logger dir path if it was set,
+    or None otherwise.
 
-    Returns: A TensorBoardWriter object initialized with the logger dir path if it was set, or None otherwise.
+    Args:
+        fw_info: FrameworkInfo object.
 
+    Returns:
+        A TensorBoardWriter object.
     """
     tb_w = None
     if common.Logger.LOG_PATH is not None:
         tb_log_dir = os.path.join(os.getcwd(), common.Logger.LOG_PATH, 'tensorboard_logs')
         common.Logger.info(f'To use Tensorboard, please run: tensorboard --logdir {tb_log_dir}')
-        tb_w = TensorboardWriter(tb_log_dir)
+        tb_w = TensorboardWriter(tb_log_dir, fw_info)
     return tb_w
 
 
@@ -357,7 +362,7 @@ def _prepare_model_for_quantization(in_model: Any,
     graph = fw_impl.model_reader(in_model, representative_data_gen)  # model reading
 
     if tb_w is not None:
-        tb_w.add_graph(graph, 'initial_graph', fw_info)
+        tb_w.add_graph(graph, 'initial_graph')
 
     ######################################
     # Graph substitution (pre statistics collection)
@@ -365,7 +370,7 @@ def _prepare_model_for_quantization(in_model: Any,
     transformed_graph = substitute(graph, fw_impl.get_substitutions_pre_statistics_collection())
 
     if tb_w is not None:
-        tb_w.add_graph(transformed_graph, 'pre_statistics_collection_substitutions', fw_info)
+        tb_w.add_graph(transformed_graph, 'pre_statistics_collection_substitutions')
 
     #########################################
     # Set prior info to nodes
@@ -388,7 +393,7 @@ def _prepare_model_for_quantization(in_model: Any,
     transformed_graph = substitute(transformed_graph, fw_impl.get_substitutions_marking())
 
     if tb_w is not None:
-        tb_w.add_graph(transformed_graph, 'after_graph_marking', fw_info)
+        tb_w.add_graph(transformed_graph, 'after_graph_marking')
 
     ######################################
     # Graph analyzing (attaching statistics collectors)
@@ -399,7 +404,7 @@ def _prepare_model_for_quantization(in_model: Any,
                    quant_config)  # Mark points for statistics collection
 
     if tb_w is not None:
-        tb_w.add_graph(transformed_graph, 'after_analyzer_graph', fw_info)
+        tb_w.add_graph(transformed_graph, 'after_analyzer_graph')
 
 
     ######################################
@@ -426,7 +431,7 @@ def _prepare_model_for_quantization(in_model: Any,
                                   fw_impl=fw_impl)
 
     if tb_w is not None:
-        tb_w.add_graph(transformed_graph, 'thresholds_selection', fw_info)
+        tb_w.add_graph(transformed_graph, 'thresholds_selection')
         tb_w.add_all_statistics(transformed_graph, 'thresholds_selection')
 
     ######################################
@@ -453,11 +458,11 @@ def _prepare_model_for_quantization(in_model: Any,
                                                               quant_config,
                                                               fw_info)
         if tb_w is not None:
-            tb_w.add_graph(transformed_graph, 'after_shift_negative_correction', fw_info)
+            tb_w.add_graph(transformed_graph, 'after_shift_negative_correction')
             tb_w.add_all_statistics(transformed_graph, 'after_shift_negative_correction')
 
     if tb_w is not None:
-        tb_w.add_graph(transformed_graph, 'post_statistics_collection_substitutions', fw_info)
+        tb_w.add_graph(transformed_graph, 'post_statistics_collection_substitutions')
         tb_w.add_all_statistics(transformed_graph, 'post_statistics_collection_substitutions')
 
     ########################################################
@@ -468,7 +473,7 @@ def _prepare_model_for_quantization(in_model: Any,
                                                     fw_impl)
 
     if tb_w is not None:
-        tb_w.add_graph(tg_with_bias, 'bias_correction_computation', fw_info)
+        tb_w.add_graph(tg_with_bias, 'bias_correction_computation')
 
     for n in tg_with_bias.nodes:
         assert n.final_weights_quantization_cfg is None
