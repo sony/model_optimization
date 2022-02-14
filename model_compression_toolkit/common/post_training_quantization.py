@@ -188,13 +188,13 @@ def _quantize_model(fw_info: FrameworkInfo,
                                           fw_info=fw_info,
                                           fw_impl=fw_impl)
     if tb_w is not None:
-        tb_w.add_graph(quantized_tg, 'after_quantization', fw_info)
+        tb_w.add_graph(quantized_tg, 'after_quantization')
 
     quantized_graph_with_bias_correction = apply_bias_correction_to_graph(quantized_tg,
                                                                           fw_info=fw_info,
                                                                           fw_impl=fw_impl)
     if tb_w is not None:
-        tb_w.add_graph(quantized_graph_with_bias_correction, 'after_bias_correction', fw_info)
+        tb_w.add_graph(quantized_graph_with_bias_correction, 'after_bias_correction')
 
     ######################################
     # Back2Framework
@@ -264,7 +264,7 @@ def _apply_gptq(gptq_config: GradientPTQConfig,
                                    fw_info)
 
         if tb_w is not None:
-            tb_w.add_graph(tg, 'after_gptq', fw_info)
+            tb_w.add_graph(tg, 'after_gptq')
     return tg
 
 
