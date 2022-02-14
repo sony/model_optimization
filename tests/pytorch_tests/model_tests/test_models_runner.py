@@ -33,35 +33,35 @@ class ModelTest(unittest.TestCase):
     def test_resnet18(self):
         BaseModelTest(self, resnet18, float_reconstruction_error=1e-4).run_test()
 
-    def test_mnasnet1_0(self):
-        BaseModelTest(self, mnasnet1_0, float_reconstruction_error=1e-4).run_test()
-
-    def test_alexnet(self):
-        BaseModelTest(self, alexnet, float_reconstruction_error=1e-4).run_test()
-
-    def test_densenet121(self):
-        BaseModelTest(self, densenet121, float_reconstruction_error=1e-4).run_test()
-
-    def test_googlenet(self):
-        BaseModelTest(self, googlenet, float_reconstruction_error=1e-4).run_test()
-
-    def test_inception_v3(self):
-        BaseModelTest(self, inception_v3, float_reconstruction_error=1e-4).run_test()
-
-    def test_regnet_x_1_6gf(self):
-        BaseModelTest(self, regnet_x_1_6gf, float_reconstruction_error=1e-4).run_test()
-
-    def test_resnext50_32x4d(self):
-        BaseModelTest(self, resnext50_32x4d, float_reconstruction_error=1e-4).run_test()
-
-    def test_squeezenet1_0(self):
-        BaseModelTest(self, squeezenet1_0, float_reconstruction_error=1e-4).run_test()
-
-    def test_vgg16(self):
-        BaseModelTest(self, vgg16, float_reconstruction_error=1e-4).run_test()
-
-    def test_wide_resnet50_2(self):
-        BaseModelTest(self, wide_resnet50_2, float_reconstruction_error=1e-4).run_test()
+    # def test_mnasnet1_0(self):
+    #     BaseModelTest(self, mnasnet1_0, float_reconstruction_error=1e-4).run_test()
+    #
+    # def test_alexnet(self):
+    #     BaseModelTest(self, alexnet, float_reconstruction_error=1e-4).run_test()
+    #
+    # def test_densenet121(self):
+    #     BaseModelTest(self, densenet121, float_reconstruction_error=1e-4).run_test()
+    #
+    # def test_googlenet(self):
+    #     BaseModelTest(self, googlenet, float_reconstruction_error=1e-4).run_test()
+    #
+    # def test_inception_v3(self):
+    #     BaseModelTest(self, inception_v3, float_reconstruction_error=1e-4).run_test()
+    #
+    # def test_regnet_x_1_6gf(self):
+    #     BaseModelTest(self, regnet_x_1_6gf, float_reconstruction_error=1e-4).run_test()
+    #
+    # def test_resnext50_32x4d(self):
+    #     BaseModelTest(self, resnext50_32x4d, float_reconstruction_error=1e-4).run_test()
+    #
+    # def test_squeezenet1_0(self):
+    #     BaseModelTest(self, squeezenet1_0, float_reconstruction_error=1e-4).run_test()
+    #
+    # def test_vgg16(self):
+    #     BaseModelTest(self, vgg16, float_reconstruction_error=1e-4).run_test()
+    #
+    # def test_wide_resnet50_2(self):
+    #     BaseModelTest(self, wide_resnet50_2, float_reconstruction_error=1e-4).run_test()
 
 
 if __name__ == '__main__':
