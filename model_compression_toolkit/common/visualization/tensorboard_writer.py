@@ -259,7 +259,7 @@ class TensorboardWriter(object):
 
             return NodeExecStats(node_name=n.name,
                                  memory=[AllocatorMemoryUsed(
-                                     total_bytes=int(n.get_memory_bytes())
+                                     total_bytes=int(n.get_memory_bytes(fw_info))
                                  )])
 
         graph_def = GraphDef()  # GraphDef to add to Tensorboard
