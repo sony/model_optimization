@@ -67,6 +67,7 @@ class MixedPrecisionSearchManager(object):
             indices_mapping[idx] = list(range(len(n.candidates_weights_quantization_cfg)))  # all search_methods space
         return indices_mapping
 
+
     def get_sensitivity_metric(self) -> Callable:
         """
 
@@ -122,13 +123,9 @@ class MixedPrecisionSearchManager(object):
                 node_num_params = 0
 
                 # Consider only the weights that should be quantized.
-                if n.is_weights_quantization_enabled():
-                    # relevant case for pytorch framework implementation -
-                    # need to consider only nodes that are need to be quantized.
-                    # shouldn't affect tensorflow implementation.
-                    for attr in self.fw_info.get_kernel_op_attributes(n.type):
-                        if attr is not None:
-                            node_num_params += n.get_weights_by_keys(attr).flatten().shape[0]
+                for attr in self.fw_info.get_kernel_op_attributes(n.type):
+                    if attr is not None:
+                        node_num_params += n.get_weights_by_keys(attr).flatten().shape[0]
 
                 node_memory_in_bytes = node_num_params * node_nbits / 8.0
                 weights_memory += node_memory_in_bytes
