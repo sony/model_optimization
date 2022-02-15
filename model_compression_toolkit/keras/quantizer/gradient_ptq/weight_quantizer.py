@@ -75,7 +75,7 @@ class TrainableWeightQuantizer(BaseTrainableQuantizer):
             threshold_values)
         self.quantization_axis = quantization_axis
         self.power_of_two = power_of_two
-        self.max_lsbs_change = max_lsbs_change_map[num_bits]
+        self.max_lsbs_change = max_lsbs_change_map.get(num_bits)
         self.quantizer_parameters = {}
 
     def build(self,
