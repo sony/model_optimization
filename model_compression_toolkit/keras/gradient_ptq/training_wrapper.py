@@ -31,6 +31,7 @@ import numpy as np
 
 
 def gptq_training_wrapper(tg: Graph,
+                          graph_bias: Graph,
                           representative_data_gen: Callable,
                           gptq_config: GradientPTQConfig,
                           fw_info: FrameworkInfo) -> Graph:
@@ -42,7 +43,8 @@ def gptq_training_wrapper(tg: Graph,
     All parameters (such as number of iterations, optimizer, etc.) are in the passed GradientPTQConfig.
 
     Args:
-        tg: Graph to build networks from.
+        tg: Graph to build a float networks from.
+        graph_bias: Graph to build a quantized networks from (includes bias correction).
         representative_data_gen: Dataset generator to get images.
         gptq_config: GradientPTQConfig with parameters about the tuning process.
         fw_info: Framework information needed for keras kernel ops list.
@@ -56,15 +58,16 @@ def gptq_training_wrapper(tg: Graph,
     # Build two models and compare points
     #########################################
     compare_points, _ = get_compare_points(tg)  # get compare points
-    n = len(compare_points)
+
     float_model, float_user_info = model_builder(tg,
                                                  mode=ModelBuilderMode.FLOAT,
                                                  append2output=compare_points,
                                                  fw_info=fw_info)
-    fxp_model, gptq_user_info = model_builder(tg,
+    fxp_model, gptq_user_info = model_builder(graph_bias,
                                               mode=ModelBuilderMode.GPTQ,
                                               append2output=compare_points,
-                                              fw_info=fw_info)
+                                              fw_info=fw_info,
+                                              gptq_config=gptq_config)
 
     trainable_weights = get_trainable_parameters(fxp_model,
                                                  fw_info,
@@ -116,7 +119,7 @@ def gptq_training_wrapper(tg: Graph,
     # Update Graph after GPTQ
     #########################################
     tg_gptq = update_graph_after_gptq(fxp_model,
-                                      tg,
+                                      graph_bias,
                                       add_bias=gptq_config.train_bias)
 
     tg_gptq.user_info.gptq_info_dict['loss'] = loss_list

@@ -30,6 +30,7 @@ from model_compression_toolkit.keras.quantizer.gradient_ptq.weight_quantizer imp
 from model_compression_toolkit.keras.quantizer.gradient_ptq.activation_quantizer import TrainableQuantizer
 from model_compression_toolkit.keras.quantizer.gradient_ptq.base_quantizer_gptq_config import BaseQuantizeConfig
 from model_compression_toolkit.keras.constants import KERNEL
+from model_compression_toolkit.common.defaultdict import DefaultDict
 import numpy as np
 
 
@@ -45,7 +46,7 @@ class ActivationAndWeightQuantizeConfig(BaseQuantizeConfig):
                  weight_num_bits: int,
                  activation_quantization_params: dict,
                  activation_num_bits: int = 8,
-                 max_lsbs_change: int = 8):
+                 max_lsbs_change_map: dict = DefaultDict({}, lambda: 1)):
         """
         Initialize a TrainableQuantizer and set as the weights and activation quantizers.
         Args:
@@ -55,6 +56,7 @@ class ActivationAndWeightQuantizeConfig(BaseQuantizeConfig):
             weight_num_bits: Number of bits to use for weight quantization.
             activation_quantization_params: Parameters to use for the activation quantization.
             activation_num_bits: Number of bits to use for quantization of the activation.
+            max_lsbs_change_map: a mapping between number of bits to max lsb change.
 
         """
 
@@ -73,7 +75,7 @@ class ActivationAndWeightQuantizeConfig(BaseQuantizeConfig):
                                                          threshold_values=threshold_values,
                                                          signed=True,
                                                          quantization_axis=weight_channel_axis,
-                                                         max_lsbs_change=max_lsbs_change)
+                                                         max_lsbs_change_map=max_lsbs_change_map)
 
     def get_weights_and_quantizers(self, layer: Layer) -> List[Tuple[Tensor, Quantizer]]:
         """

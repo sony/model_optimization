@@ -238,7 +238,8 @@ class KerasImplementation(FrameworkImplementation):
         return [RemoveReLUUpperBound()]
 
     def gptq_training(self,
-                      graph: Graph,
+                      graph_float: Graph,
+                      graph_quant: Graph,
                       representative_data_gen: Callable,
                       gptq_config: GradientPTQConfig,
                       fw_info: FrameworkInfo) -> Graph:
@@ -247,7 +248,8 @@ class KerasImplementation(FrameworkImplementation):
         and the quantized model's outputs.
 
         Args:
-            graph: Graph to fine-tune.
+            graph_float: Graph for reference.
+            graph_quant: Graph to fine-tune.
             representative_data_gen: Dataset to use for inputs of the models.
             gptq_config: GradientPTQConfig with configuration for the fine-tuning process.
             fw_info: FrameworkInfo object with information about the specific framework's model.
@@ -256,7 +258,8 @@ class KerasImplementation(FrameworkImplementation):
             Updated graph after GPTQ.
         """
 
-        return gptq_training_wrapper(graph,
+        return gptq_training_wrapper(graph_float,
+                                     graph_quant,
                                      representative_data_gen,
                                      gptq_config,
                                      fw_info)
