@@ -21,6 +21,8 @@ import networkx as nx
 import numpy as np
 
 from networkx.algorithms.dag import topological_sort
+
+from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.edge import EDGE_SINK_INDEX, EDGE_SOURCE_INDEX
 from model_compression_toolkit.common.graph.edge import Edge, convert_to_edge
 from model_compression_toolkit.common.graph.graph_searches import GraphSearches
@@ -33,6 +35,7 @@ from model_compression_toolkit.common.logger import Logger
 OutTensor = namedtuple('OutTensor', 'node node_out_index')
 
 
+
 class Graph(nx.MultiDiGraph, GraphSearches):
     """
     Base graph representing a model to be optimized.
@@ -43,6 +46,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                  input_nodes: List[BaseNode],
                  output_nodes: List[OutTensor],
                  edge_list: List[Edge],
+                 fw_info: FrameworkInfo = None,
                  **attr):
         """
         Args:
@@ -50,6 +54,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             input_nodes: List of input nodes the model
             output_nodes: List of output nodes of the model to a list of their output indices.
             edge_list: List of edges the graph has between nodes.
+            fw_info: FrameworkInfo object (needed for computing the graph's weights memory).
             **attr: Attributes to add to graph as key=value pairs.
         """
 
@@ -64,6 +69,18 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                           e.sink_node,
                           **e.get_attributes())
         self.user_info = UserInformation()
+        self.fw_info = fw_info
+
+    def set_fw_info(self,
+                   fw_info: FrameworkInfo):
+        """
+        Set the graph's framework info.
+        Args:
+            fw_info: FrameworkInfo object.
+        """
+
+        self.fw_info = fw_info
+
 
     def get_topo_sorted_nodes(self):
         """
@@ -413,7 +430,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         memory = 0
         for n in self.nodes:
-            memory += n.get_memory_bytes()
+            memory += n.get_memory_bytes(self.fw_info)
         return memory
 
     def get_configurable_sorted_nodes_names(self,

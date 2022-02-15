@@ -31,6 +31,7 @@ from tensorboard.compat.proto.tensor_shape_pb2 import TensorShapeProto
 from tensorboard.summary.writer.event_file_writer import EventFileWriter
 from typing import List, Any, Dict
 
+from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 
@@ -82,18 +83,20 @@ class TensorboardWriter(object):
     Class to log events to display using Tensorboard such as graphs, histograms, images, etc.
     """
 
-    def __init__(self, dir_path: str):
+    def __init__(self, dir_path: str, fw_info: FrameworkInfo):
         """
         Initialize a TensorboardWriter object.
         
         Args:
             dir_path: Path to save all events to display on Tensorboard.
+            fw_info: FrameworkInfo object (needed for computing nodes' weights memory).
 
         """
         self.dir_path = dir_path
         # we hold EventWriter per tag name, so events can be gathered by tags (like phases during the quantization
         # process).
         self.tag_name_to_event_writer = {}
+        self.fw_info = fw_info
 
     def close(self):
         """
@@ -255,7 +258,7 @@ class TensorboardWriter(object):
 
             return NodeExecStats(node_name=n.name,
                                  memory=[AllocatorMemoryUsed(
-                                     total_bytes=int(n.get_memory_bytes())
+                                     total_bytes=int(n.get_memory_bytes(self.fw_info))
                                  )])
 
         graph_def = GraphDef()  # GraphDef to add to Tensorboard

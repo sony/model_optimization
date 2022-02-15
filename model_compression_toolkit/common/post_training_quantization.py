@@ -100,7 +100,7 @@ def post_training_quantization(in_model: Any,
     if quant_config.weights_bias_correction and gptq_config is not None:
         common.Logger.error('weights_bias_correction should be disabled in GPTQ mode')
 
-    tb_w = _init_tensorboard_writer()
+    tb_w = _init_tensorboard_writer(fw_info)
 
     tg = _prepare_model_for_quantization(in_model,
                                          representative_data_gen,
@@ -132,6 +132,8 @@ def post_training_quantization(in_model: Any,
                         fw_info,
                         bit_widths_config)
 
+    common.Logger.info(f'Approximated model size (in bytes): {tg.get_memory()}')
+
     quantized_model, user_info = _quantize_fixed_bit_widths_graph(analyze_similarity,
                                                                   fw_info,
                                                                   gptq_config,
@@ -147,17 +149,22 @@ def post_training_quantization(in_model: Any,
 
 
 
-def _init_tensorboard_writer() -> TensorboardWriter:
+def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
     """
+    Create a TensorBoardWriter object initialized with the logger dir path if it was set,
+    or None otherwise.
 
-    Returns: A TensorBoardWriter object initialized with the logger dir path if it was set, or None otherwise.
+    Args:
+        fw_info: FrameworkInfo object.
 
+    Returns:
+        A TensorBoardWriter object.
     """
     tb_w = None
     if common.Logger.LOG_PATH is not None:
         tb_log_dir = os.path.join(os.getcwd(), common.Logger.LOG_PATH, 'tensorboard_logs')
         common.Logger.info(f'To use Tensorboard, please run: tensorboard --logdir {tb_log_dir}')
-        tb_w = TensorboardWriter(tb_log_dir)
+        tb_w = TensorboardWriter(tb_log_dir, fw_info)
     return tb_w
 
 
@@ -352,7 +359,10 @@ def _prepare_model_for_quantization(in_model: Any,
     ######################################
     # Represent model in a graph
     ######################################
-    graph = fw_impl.model_reader(in_model, representative_data_gen)  # model reading
+    graph = fw_impl.model_reader(in_model,
+                                 representative_data_gen)  # model reading
+    graph.set_fw_info(fw_info)
+
 
     if tb_w is not None:
         tb_w.add_graph(graph, 'initial_graph')

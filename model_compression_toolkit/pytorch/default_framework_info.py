@@ -65,7 +65,8 @@ If a layer that is not listed here is queried, [None] is returned.
 """
 KERNEL_ATTRIBUTES = DefaultDict({Conv2d: [KERNEL],
                                  ConvTranspose2d: [KERNEL],
-                                 Linear: [KERNEL]})
+                                 Linear: [KERNEL]},
+                                lambda: [None])
 
 """
 Map a layer to its kernel's output and input channels indices.
