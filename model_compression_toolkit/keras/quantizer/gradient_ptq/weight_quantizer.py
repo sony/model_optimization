@@ -22,6 +22,23 @@ from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.keras.quantizer.base_quantizer import BaseTrainableQuantizer
 from model_compression_toolkit.keras.quantizer.gradient_ptq.utils import symmetric_constrained_quantizer
 from model_compression_toolkit.common.constants import THRESHOLD
+from model_compression_toolkit.common.defaultdict import DefaultDict
+from model_compression_toolkit.keras.constants import KERNEL
+
+
+def get_kernel(weights_list: list) -> str:
+    """
+    This function a list of weights and return the kernel
+    Args:
+        weights_list:  A list of Tensors
+
+    Returns: The kernel tensor.
+
+    """
+    for w in weights_list:
+        if KERNEL in w.name:
+            return w
+    raise Exception("Can't find kernel variable")
 
 
 class TrainableWeightQuantizer(BaseTrainableQuantizer):
@@ -36,9 +53,7 @@ class TrainableWeightQuantizer(BaseTrainableQuantizer):
                  threshold_values: np.ndarray,
                  quantization_axis: int = -1,
                  power_of_two: bool = True,
-                 constrained: bool = True,
-                 max_lsbs_change: int = 2,
-                 ar_config=None):
+                 max_lsbs_change_map: dict = DefaultDict({}, lambda: 1)):
         """
         Initialize a TrainableWeightQuantizer object with parameters to use
         for the quantization.
@@ -50,8 +65,7 @@ class TrainableWeightQuantizer(BaseTrainableQuantizer):
             threshold_values: Threshold to use for the quantization.
             quantization_axis: Axis of tensor to use for the quantization.
             power_of_two: Whether the threshold should be constrained or not.
-            max_lsbs_change: max lsbs the variable is allowed to change
-            gptq_config: gptq config. used to pass parameters to the quantizer functions
+            max_lsbs_change_map: a mapping between number of bits to max lsb change.
         """
         self.num_bits = num_bits
         self.per_axis = per_axis
@@ -61,10 +75,8 @@ class TrainableWeightQuantizer(BaseTrainableQuantizer):
             threshold_values)
         self.quantization_axis = quantization_axis
         self.power_of_two = power_of_two
-        self.constrained = constrained
-        self.max_lsbs_change = max_lsbs_change
+        self.max_lsbs_change = max_lsbs_change_map.get(num_bits)
         self.quantizer_parameters = {}
-        self.ar_config = ar_config
 
     def build(self,
               tensor_shape: TensorShape,
@@ -81,6 +93,7 @@ class TrainableWeightQuantizer(BaseTrainableQuantizer):
         Returns:
             Dictionary of new variables.
         """
+        w_shape = get_kernel(layer.weights).shape
         ar_iter = layer.add_weight(
             name + '_gptq_iter',
             shape=(),
@@ -96,7 +109,7 @@ class TrainableWeightQuantizer(BaseTrainableQuantizer):
 
         auxvar_tensor = layer.add_weight(
             name + '_auxvar',
-            shape=layer.weights[0].shape,
+            shape=w_shape,
             initializer=tf.keras.initializers.Constant(0.0),
             trainable=True)
 

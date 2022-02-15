@@ -1,5 +1,5 @@
 # Model Compression Toolkit (MCT)
-![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_tf27.yml/badge.svg)
+![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks.yml/badge.svg)
 
 
 Model Compression Toolkit (MCT) is an open source project for neural network model optimization under efficient, constrained hardware. <br />

@@ -7,3 +7,12 @@ common:
 
 keras:
 - model_compression_toolkit/keras/*
+
+pytorch:
+- model_compression_toolkit/pytorch/*
+
+docs:
+- docs/*
+
+docsrc:
+- docsrc/*
