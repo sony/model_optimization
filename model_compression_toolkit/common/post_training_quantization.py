@@ -258,15 +258,15 @@ def _apply_gptq(gptq_config: GradientPTQConfig,
         common.Logger.info("Using experimental Gradient Based PTQ: If you encounter an issue "
                            "please file a bug. To disable it, do not pass a gptq configuration.")
 
-        tg = fw_impl.gptq_training(tg,
-                                   tg_bias,
-                                   representative_data_gen,
-                                   gptq_config,
-                                   fw_info)
+        tg_bias = fw_impl.gptq_training(tg,
+                                        tg_bias,
+                                        representative_data_gen,
+                                        gptq_config,
+                                        fw_info)
 
         if tb_w is not None:
-            tb_w.add_graph(tg, 'after_gptq')
-    return tg
+            tb_w.add_graph(tg_bias, 'after_gptq')
+    return tg_bias
 
 
 def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
