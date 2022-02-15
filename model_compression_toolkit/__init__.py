@@ -31,6 +31,7 @@ from model_compression_toolkit.common import network_editors as network_editor
 from model_compression_toolkit.keras.quantization_facade import keras_post_training_quantization, \
     keras_post_training_quantization_mixed_precision
 from model_compression_toolkit.keras.quantization_facade import get_keras_gptq_config
-from model_compression_toolkit.pytorch.quantization_facade import pytorch_post_training_quantization
+from model_compression_toolkit.pytorch.quantization_facade import pytorch_post_training_quantization, \
+    pytorch_post_training_quantization_mixed_precision
 
 __version__ = "1.2.0"

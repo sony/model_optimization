@@ -33,6 +33,7 @@ from model_compression_toolkit.pytorch.graph_substitutions.substitutions.batchno
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.mark_activation import MarkActivation
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
     pytorch_apply_shift_negative_correction
+from model_compression_toolkit.pytorch.mixed_precision.sensitivity_evaluation import get_sensitivity_evaluation
 from model_compression_toolkit.pytorch.pytorch_node_prior_info import create_node_prior_info
 from model_compression_toolkit.pytorch.reader.reader import model_reader
 import model_compression_toolkit.pytorch.constants as pytorch_constants
@@ -50,9 +51,7 @@ class PytorchImplementation(FrameworkImplementation):
     @property
     def constants(self):
         """
-
         Returns: Module of Pytorch constants.
-
         """
         return pytorch_constants
 
@@ -62,7 +61,6 @@ class PytorchImplementation(FrameworkImplementation):
         Convert a Pytorch tensor to a Numpy array.
         Args:
             tensor: Pytorch tensor.
-
         Returns:
             Numpy array converted from the input tensor.
         """
@@ -73,7 +71,6 @@ class PytorchImplementation(FrameworkImplementation):
         Convert a Numpy array to a framework's tensor.
         Args:
             tensor: Numpy array.
-
         Returns:
             Framework's tensor converted from the input Numpy array.
         """
@@ -87,7 +84,6 @@ class PytorchImplementation(FrameworkImplementation):
         Args:
             module: Framework's module.
             representative_data_gen (Callable): Dataset used for calibration.
-
         Returns:
             Graph representing the input module.
         """
@@ -102,13 +98,11 @@ class PytorchImplementation(FrameworkImplementation):
         Build a Pytorch module from a graph.
         The mode determines how the module should be build. append2output is a list of Nodes
         to set as the module outputs.
-
         Args:
             graph: Graph to build the module from it.
             mode: Mode for how to build the module.
             append2output: List of Nodes to set as the module's outputs.
             fw_info: FrameworkInfo object with information about the specific framework's module
-
         Returns:
             A tuple of the Pytorch module that was built and an UserInformation object.
         """
@@ -122,11 +116,9 @@ class PytorchImplementation(FrameworkImplementation):
                             input_list: List[Any]) -> Tuple[Any]:
         """
         Run the model logic on the given the inputs.
-
         Args:
             model: Pytorch model.
             input_list: List of inputs for the model.
-
         Returns:
             The Pytorch model's output in numpy format.
         """
@@ -138,12 +130,10 @@ class PytorchImplementation(FrameworkImplementation):
                                   fw_info: FrameworkInfo) -> Graph:
         """
         Apply shift negative correction (SNC) on a graph.
-
         Args:
             graph: Graph to apply SNC on.
             qc: Quantization configuration.
             fw_info: FrameworkInfo object with information about the specific framework's module.
-
         Returns:
             Graph after SNC.
         """
@@ -157,11 +147,9 @@ class PytorchImplementation(FrameworkImplementation):
         """
         Return a statistics collector that should be attached to a node's output
         during statistics collection.
-
         Args:
             node: Node to return its collector.
             output_channel_index: Index of output channels of layers in the model's framework.
-
         Returns:
             Statistics collector for the node.
         """
@@ -170,18 +158,14 @@ class PytorchImplementation(FrameworkImplementation):
 
     def get_substitutions_marking(self) -> List[common.BaseSubstitution]:
         """
-
         Returns: A list of the framework substitutions used for marking
         points we fuse.
-
         """
         return [MarkActivation()]
 
     def get_substitutions_pre_statistics_collection(self) -> List[common.BaseSubstitution]:
         """
-
         Returns: A list of the framework substitutions used before we build a quantized module.
-
         """
         return [pytorch_batchnorm_folding()]
 
@@ -189,10 +173,8 @@ class PytorchImplementation(FrameworkImplementation):
                                                      quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
         """
         Return a list of the framework substitutions used after we collect statistics.
-
         Args:
             quant_config: QuantizationConfig to determine which substitutions to return.
-
         Returns:
             A list of the framework substitutions used after we collect statistics.
         """
@@ -209,11 +191,9 @@ class PytorchImplementation(FrameworkImplementation):
                                                fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
         """
         Return a list of the framework substitutions used for channel equalization.
-
         Args:
             quant_config: QuantizationConfig to determine which substitutions to return.
             fw_info: FrameworkInfo object with information about the specific framework's module.
-
         Returns:
             A list of the framework substitutions used after we collect statistics.
         """
@@ -224,9 +204,7 @@ class PytorchImplementation(FrameworkImplementation):
 
     def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:
         """
-
         Returns: A list of the framework substitutions used before we build a quantized module.
-
         """
         return []
 
@@ -238,13 +216,11 @@ class PytorchImplementation(FrameworkImplementation):
         """
         Update a graph using GPTQ after minimizing the loss between the float module's output
         and the quantized module's outputs.
-
         Args:
             graph: Graph to fine-tune.
             representative_data_gen: Dataset to use for inputs of the models.
             gptq_config: GradientPTQConfig with configuration for the fine-tuning process.
             fw_info: FrameworkInfo object with information about the specific framework's module.
-
         Returns:
             Updated graph after GPTQ.
         """
@@ -259,29 +235,29 @@ class PytorchImplementation(FrameworkImplementation):
         """
         Create and return a function to compute a sensitivity metric for a mixed-precision
         configuration (comparing to the float Pytorch module).
-
         Args:
             graph: Graph to build it's float and mixed-precision Pytorch models.
             quant_config: QuantizationConfig of how the module should be quantized.
             metrics_weights: Array of weights to weight the sensitivity among different layers.
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's module.
-
         Returns:
             A function that computes the metric.
         """
-        raise Exception('This feature is currently not yet available for Pytorch models. Work in progress.')
+        return get_sensitivity_evaluation(graph,
+                                          quant_config,
+                                          metrics_weights,
+                                          representative_data_gen,
+                                          fw_info)
 
     def get_node_prior_info(self,
                             node: BaseNode,
                             fw_info: FrameworkInfo) -> NodePriorInfo:
         """
         Get a NodePriorInfo object for a node that represents a Pytorch layer.
-
         Args:
             node: Node to get its prior info.
             fw_info: Framework specific information needed to create the prior info of the node.
-
         Returns:
             NodePriorInfo with information about the node.
         """
