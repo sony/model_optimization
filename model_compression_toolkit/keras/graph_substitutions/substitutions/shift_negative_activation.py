@@ -136,8 +136,7 @@ def create_add_node(add_value: float,
             NODE_OP: NODE_ADD_OPERATOR,
             NODE_INPUT: [prev_node_name, add_node_name + INPUT_VARIABLE_SUFFIX],
         },
-        CONSTANTS: {1: np.array([[[[add_value]]]],
-                                dtype=np.float32)}}
+        CONSTANTS: {1: np.array(add_value, dtype=np.float32).reshape([1]*len(input_shape))}}
 
     add_node = common.graph.BaseNode(add_node_name,
                                      fw_attr,
