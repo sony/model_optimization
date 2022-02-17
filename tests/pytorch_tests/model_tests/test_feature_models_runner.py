@@ -25,9 +25,11 @@ from tests.pytorch_tests.model_tests.feature_models.multiple_output_nodes_multip
     MultipleOutputsMultipleTensorsNetTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_outputs_node_test import MultipleOutputsNetTest
 from tests.pytorch_tests.model_tests.feature_models.output_in_the_middle_test import OutputInTheMiddleNetTest
+from tests.pytorch_tests.model_tests.feature_models.parameter_net_test import ParameterNetTest
 from tests.pytorch_tests.model_tests.feature_models.reuse_layer_net_test import ReuseLayerNetTest
 from tests.pytorch_tests.model_tests.feature_models.shift_negative_activation_test import ShiftNegaviteActivationNetTest
 from tests.pytorch_tests.model_tests.feature_models.split_concat_net_test import SplitConcatNetTest
+from tests.pytorch_tests.model_tests.feature_models.torch_tensor_attr_net_test import TorchTensorAttrNetTest
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
@@ -93,6 +95,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         OutputInTheMiddleNetTest(self).run_test()
 
+    def test_parameter_net(self):
+        """
+        This tests check a model with a parameter which is a constant at inference time.
+        In addition, the model has an addition layer regular constant tensor
+        """
+        ParameterNetTest(self).run_test()
+
     def test_reuse_layer_net(self):
         """
         This test checks:
@@ -113,6 +122,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
         2. Nodes with multiple outputs and multiple inputs
         """
         SplitConcatNetTest(self).run_test()
+
+    def test_torch_tensor_attr_net(self):
+        """
+        This tests checks a model that has calls to torch.Tensor functions,
+        such as torch.Tensor.size and torch.Tensor.view.
+        """
+        TorchTensorAttrNetTest(self).run_test()
 
     def test_mixed_precision_8bit(self):
         """
