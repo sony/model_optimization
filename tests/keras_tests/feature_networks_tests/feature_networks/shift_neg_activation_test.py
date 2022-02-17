@@ -26,19 +26,18 @@ layers = keras.layers
 
 
 class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
-    def __init__(self, unit_test, linear_op_to_test, activation_op_to_test, use_pad_layer=False):
+    def __init__(self, unit_test, linear_op_to_test, activation_op_to_test, use_pad_layer=False, input_shape=(8, 8, 3)):
         assert type(linear_op_to_test) in [layers.Conv2D, layers.Dense, layers.DepthwiseConv2D]
         self.linear_op_to_test = linear_op_to_test
         self.activation_op_to_test = activation_op_to_test
         self.use_pad_layer = use_pad_layer
-        super().__init__(unit_test)
+        super().__init__(unit_test, input_shape=input_shape)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
                                       mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
                                       False, False, True, shift_negative_activation_correction=True,
                                       shift_negative_ratio=np.inf)
-
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -49,6 +48,8 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        self.unit_test.assertTrue(float_model.output.shape.as_list() == quantized_model.output.shape.as_list(),
+                                  msg=f'Outputs shape mismatch: {float_model.output.shape} != {quantized_model.output.shape}')
         if isinstance(self.activation_op_to_test, tf.keras.layers.PReLU):
             _, w, b = float_model.get_weights()
         else:
