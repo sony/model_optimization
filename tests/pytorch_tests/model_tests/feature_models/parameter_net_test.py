@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 import torch
+
+from model_compression_toolkit.pytorch.utils import to_torch_tensor
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
@@ -27,7 +29,7 @@ class ParameterNet(torch.nn.Module):
 
     def forward(self, x):
         x = self.conv1(x)
-        x = x + torch.ones(1).to('cuda')
+        x = x + to_torch_tensor(torch.ones(1))
         return x * self.p
 
 
