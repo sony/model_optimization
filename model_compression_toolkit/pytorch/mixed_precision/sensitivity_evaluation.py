@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from tensorflow.python.layers.base import Layer
-from tensorflow.keras.models import Model
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
+from torch.nn import Module
 from typing import Callable, List
 
 from model_compression_toolkit.common.framework_info import FrameworkInfo
@@ -24,9 +22,9 @@ from model_compression_toolkit.common.mixed_precision.mixed_precision_quantizati
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.mixed_precision.sensitivity_evaluation_manager import \
     SensitivityEvaluationManager, compute_mp_distance_measure
-from model_compression_toolkit.keras.back2framework.model_builder import model_builder
-from model_compression_toolkit.keras.quantizer.mixed_precision.selective_weights_quantize_config import \
-    SelectiveWeightsQuantizeConfig
+from model_compression_toolkit.pytorch.back2framework.model_builder import model_builder
+from model_compression_toolkit.pytorch.mixed_precision.mixed_precision_wrapper import PytorchMixedPrecisionWrapper
+from model_compression_toolkit.pytorch.utils import to_torch_tensor
 
 
 def get_sensitivity_evaluation(graph: Graph,
@@ -39,7 +37,7 @@ def get_sensitivity_evaluation(graph: Graph,
     is computed based on the similarity of the interest points' outputs between the MP model
     and the float model).
     First, we build an MP model (a model where layers that can be configured in different bitwidths use
-    a SelectiveWeightsQuantizeConfig) and a baseline model (a float model).
+    a PytorchMixedPrecisionWrapper) and a baseline model (a float model).
     Then, and based on the outputs of these two models (for some batches from the representative_data_gen),
     we build a function to measure the sensitivity of a change in a bitwidth of a model's layer.
     Args:
@@ -56,8 +54,12 @@ def get_sensitivity_evaluation(graph: Graph,
     # comparison in the distance computation.
     # It generates and stores a set of image batches for evaluation.
     # It also runs and stores the baseline model's inference on the generated batches.
-    # the model_builder method passed to the manager is the Keras model builder.
-    sem = SensitivityEvaluationManager(graph, fw_info, quant_config, representative_data_gen, model_builder)
+    # the model_builder method passed to the manager is the Pytorch model builder.
+    sem = SensitivityEvaluationManager(graph, fw_info, quant_config, representative_data_gen, model_builder,
+                                       move_tensors_func=lambda l: list(map(lambda t: t.detach().cpu(), l)))
+
+    # Casting images tensors to torch.Tensor and putting them on same model as device
+    sem.images_batches = list(map(lambda in_arr: to_torch_tensor(in_arr), sem.images_batches))
 
     # Initiating baseline_tensors_list since it is not initiated in SensitivityEvaluationManager init.
     sem.init_baseline_tensors_list()
@@ -76,36 +78,38 @@ def get_sensitivity_evaluation(graph: Graph,
         """
 
         # Configure MP model with the given configuration.
-        _configure_bitwidths_keras_model(sem.model_mp,
-                                         sem.sorted_configurable_nodes_names,
-                                         mp_model_configuration,
-                                         node_idx)
+        _configure_bitwidths_pytorch_model(sem.model_mp,
+                                           sem.sorted_configurable_nodes_names,
+                                           mp_model_configuration,
+                                           node_idx)
 
         # Compute the distance matrix
         distance_matrix = sem.build_distance_metrix()
 
         # Configure MP model back to the same configuration as the baseline model
         baseline_mp_configuration = [0] * len(mp_model_configuration)
-        _configure_bitwidths_keras_model(sem.model_mp,
-                                         sem.sorted_configurable_nodes_names,
-                                         baseline_mp_configuration,
-                                         node_idx)
+        _configure_bitwidths_pytorch_model(sem.model_mp,
+                                           sem.sorted_configurable_nodes_names,
+                                           baseline_mp_configuration,
+                                           node_idx)
 
         return compute_mp_distance_measure(distance_matrix, metrics_weights_fn)
 
     return _compute_metric
 
 
-def _configure_bitwidths_keras_model(model_mp: Model,
-                                     sorted_configurable_nodes_names: List[str],
-                                     mp_model_configuration: List[int],
-                                     node_idx: List[int]):
+def _configure_bitwidths_pytorch_model(model_mp: Module,
+                                       sorted_configurable_nodes_names: List[str],
+                                       mp_model_configuration: List[int],
+                                       node_idx: List[int]):
     """
-    Configure a dynamic Keras model (namely, model with layers that their weights
-    bitwidth can be configured using SelectiveWeightsQuantizeConfig) using a MP
+    Configure a dynamic Pytorch model (namely, model with layers that their weights
+    bitwidth can be configured using PytorchMixedPrecisionWrapper) using an MP
     model configuration mp_model_configuration.
     Args:
-        model_mp: Dynamic Keras model to configure.
+        model_mp: Dynamic Pytorch model to configure. Note: model_mp is a PytorchModelBuilder object which composed of
+        PytorchMixedPrecisionWrapper modules for each layer in the original module that can be configured
+        for different bitwidths.
         sorted_configurable_nodes_names: List of configurable nodes names sorted topology.
         mp_model_configuration: Configuration of bitwidth indices to set to the model.
         node_idx: List of nodes' indices to configure (the rest layers are configured as the baseline model).
@@ -113,29 +117,26 @@ def _configure_bitwidths_keras_model(model_mp: Model,
     # Configure model
     if node_idx is not None:  # configure specific layers in the mp model
         for node_idx_to_configure in node_idx:
-            current_layer = model_mp.get_layer(
-                name=f'quant_{sorted_configurable_nodes_names[node_idx_to_configure]}')
+            current_layer = model_mp.get_submodule(target=f'{sorted_configurable_nodes_names[node_idx_to_configure]}')
             _set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
 
     else:  # use the entire mp_model_configuration to configure the model
         for node_idx_to_configure, bitwidth_idx in enumerate(mp_model_configuration):
-            current_layer = model_mp.get_layer(
-                name=f'quant_{sorted_configurable_nodes_names[node_idx_to_configure]}')
+            current_layer = model_mp.get_submodule(target=f'{sorted_configurable_nodes_names[node_idx_to_configure]}')
             _set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
 
 
-def _set_layer_to_bitwidth(wrapped_layer: Layer,
+def _set_layer_to_bitwidth(wrapped_layer: Module,
                            bitwidth_idx: int):
     """
-    Configure a layer (which is wrapped in a QuantizeWrapper and holds a
-    SelectiveWeightsQuantizeConfig in its quantize_config) to work with a different bitwidth.
-    The bitwidth_idx is the index of the quantized-weights the quantizer in the SelectiveWeightsQuantizeConfig holds.
+    Configure a layer (which is wrapped in a PytorchMixedPrecisionWrapper and holds a model's layer (nn.Module))
+    to work with a different bitwidth.
+    The bitwidth_idx is the index of the quantized-weights the quantizer in the PytorchMixedPrecisionWrapper holds.
     Args:
         wrapped_layer: Layer to change its bitwidth.
         bitwidth_idx: Index of the bitwidth the layer should work with.
     """
-    assert isinstance(wrapped_layer, QuantizeWrapper) and isinstance(wrapped_layer.quantize_config,
-                                                                     SelectiveWeightsQuantizeConfig)
+    assert isinstance(wrapped_layer, PytorchMixedPrecisionWrapper) and isinstance(wrapped_layer.layer, Module)
     # Configure the quantize_config to use a different bitwidth
     # (in practice, to use a different already quantized kernel).
-    wrapped_layer.quantize_config.set_bit_width_index(bitwidth_idx)
+    wrapped_layer.set_active_weights(bitwidth_idx)

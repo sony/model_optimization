@@ -15,6 +15,8 @@
 import random
 import unittest
 from torch.fx import symbolic_trace
+
+from model_compression_toolkit import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.utils import get_working_device, set_model, to_torch_tensor, \
     torch_tensor_to_numpy
@@ -109,11 +111,22 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         ptq_models = {}
         model_float = self.create_feature_network(input_shapes)
         for model_name, quant_config in self.get_quantization_configs().items():
-            ptq_model, quantization_info = mct.pytorch_post_training_quantization(model_float,
-                                                                                  representative_data_gen,
-                                                                                  n_iter=1,
-                                                                                  quant_config=quant_config,
-                                                                                  fw_info=DEFAULT_PYTORCH_INFO,
-                                                                                  network_editor=self.get_network_editor())
-            ptq_models.update({model_name: ptq_model})
+            if isinstance(quant_config, MixedPrecisionQuantizationConfig):
+                ptq_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(model_float,
+                                                                                                      representative_data_gen,
+                                                                                                      n_iter=self.num_calibration_iter,
+                                                                                                      quant_config=quant_config,
+                                                                                                      fw_info=DEFAULT_PYTORCH_INFO,
+                                                                                                      network_editor=self.get_network_editor(),
+                                                                                                      gptq_config=self.get_gptq_config(),
+                                                                                                      target_kpi=self.get_kpi())
+                ptq_models.update({model_name: ptq_model})
+            else:
+                ptq_model, quantization_info = mct.pytorch_post_training_quantization(model_float,
+                                                                                      representative_data_gen,
+                                                                                      n_iter=1,
+                                                                                      quant_config=quant_config,
+                                                                                      fw_info=DEFAULT_PYTORCH_INFO,
+                                                                                      network_editor=self.get_network_editor())
+                ptq_models.update({model_name: ptq_model})
         self.compare(ptq_models, model_float, input_x=x, quantization_info=quantization_info)
