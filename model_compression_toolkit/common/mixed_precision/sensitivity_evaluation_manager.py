@@ -50,9 +50,8 @@ class SensitivityEvaluationManager:
         self.move_tensors_func = move_tensors_func
 
         # Get interest points for distance measurement and a list of sorted configurable nodes names
-        self.sorted_configurable_nodes = get_sorted_configurable_nodes_names(graph)
-        self.sorted_configurable_nodes_names = [_n.name for _n in self.sorted_configurable_nodes]
-        self.interest_points = [node for node in self.sorted_configurable_nodes]
+        self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names()
+        self.interest_points = graph.get_configurable_sorted_nodes()
 
         # Build a mixed-precision model which can be configured to use different bitwidth in different layers.
         # And a baseline model.
@@ -135,23 +134,6 @@ class SensitivityEvaluationManager:
         # Assert we used a correct number of images for computing the distance matrix
         assert distance_matrix.shape[1] == self.quant_config.num_of_images
         return distance_matrix
-
-
-def get_sorted_configurable_nodes_names(graph: Graph) -> List[BaseNode]:
-    """
-    Extracts and sorts all configurable nodes in the given graph.
-    Configurable nodes are nodes that represent a model layer that can be configured
-        with different bitwidth for quantization.
-    Args:
-        graph: Graph to search for its MP configuration.
-    Returns: A sorted list of nodes.
-    """
-    sorted_nodes = graph.get_configurable_sorted_nodes()
-    sorted_configurable_nodes = []
-    for n in sorted_nodes:
-        sorted_configurable_nodes.append(n)
-
-    return sorted_configurable_nodes
 
 
 def build_models(graph: Graph, fw_info: FrameworkInfo, interest_points: List[BaseNode], model_builder: Callable) -> Any:

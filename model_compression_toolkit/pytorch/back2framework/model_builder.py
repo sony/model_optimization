@@ -133,9 +133,10 @@ class PytorchModelBuilder(torch.nn.Module):
         self.append2output = append2output
 
         if mode == ModelBuilderMode.MIXEDPRECISION:
+            configurable_nodes = self.graph.get_configurable_sorted_nodes()
             for n in self.node_sort:
                 if not isinstance(n, FunctionalNode):
-                    if n.is_weights_quantization_enabled():
+                    if n in configurable_nodes:
                         self.add_module(n.name, PytorchMixedPrecisionWrapper(n, fw_info))
                     else:
                         self.add_module(n.name, node_builder(n))
