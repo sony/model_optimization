@@ -38,8 +38,5 @@ class AddSameNetTest(BasePytorchTest):
     def __init__(self, unit_test, float_reconstruction_error):
         super().__init__(unit_test, float_reconstruction_error)
 
-    def create_inputs_shape(self):
-        return [[self.val_batch_size, 3, 32, 32]]
-
     def create_feature_network(self, input_shape):
         return AddSameNet()

@@ -94,6 +94,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                 #########################################
                 if convert_fx:
                     # check export to fx
+                    # cannot convert to fx when the model has torch.Tensor operations (i.e. tensor.size())
                     fx_model = symbolic_trace(quantized_model)
                 # check export to torchscript
                 torch_traced = torch.jit.trace(quantized_model, input_x)
