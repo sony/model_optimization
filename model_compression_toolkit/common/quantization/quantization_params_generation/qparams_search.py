@@ -170,7 +170,8 @@ def qparams_tensor_minimization(x, x0, error_function, quant_function, bounds=No
         """
     return optimize.minimize(fun=lambda qparam: error_function(x, quant_function(qparam), qparam),
                              x0=x0,
-                             bounds=bounds)
+                             bounds=bounds,
+                             method='Nelder-Mead')
 
 
 def qparams_histogram_minimization(x, x0, counts, error_function, quant_function, bounds=None):
@@ -202,7 +203,8 @@ def qparams_histogram_minimization(x, x0, counts, error_function, quant_function
                                                                                counts=counts,
                                                                                min_max_range=qparam),
                              x0=x0,
-                             bounds=bounds)
+                             bounds=bounds,
+                             method='Nelder-Mead')
 
 
 def kl_symmetric_qparams_histogram_minimization(x, x0, counts, n_bits, signed, error_function, bounds):
@@ -236,7 +238,8 @@ def kl_symmetric_qparams_histogram_minimization(x, x0, counts, n_bits, signed, e
                                                                                   counts=counts,
                                                                                   min_max_range=np.array([0, threshold]) if not signed else np.array([-threshold, threshold])),
                              x0=x0,
-                             bounds=bounds)
+                             bounds=bounds,
+                             method='Nelder-Mead')
 
 
 def kl_uniform_qparams_histogram_minimization(x, x0, counts, n_bits, error_function, bounds=None):
@@ -269,7 +272,8 @@ def kl_uniform_qparams_histogram_minimization(x, x0, counts, n_bits, error_funct
                                                                                   counts=counts,
                                                                                   min_max_range=min_max_range),
                              x0=x0,
-                             bounds=bounds)
+                             bounds=bounds,
+                             method='Nelder-Mead')
 
 
 def qparams_selection_histogram_search_error_function(error_function: Callable,

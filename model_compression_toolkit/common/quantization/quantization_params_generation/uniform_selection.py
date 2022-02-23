@@ -89,7 +89,8 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
                                                                                  range_max=min_max_range[1],
                                                                                  n_bits=n_bits),
                                     x0=x0,
-                                    bounds=get_range_bounds(tensor_min, tensor_max))
+                                    bounds=get_range_bounds(tensor_min, tensor_max),
+                                    method='Nelder-Mead')
             # returned 'x' here is an array with min and max range values
             res = res.x[0], res.x[1]
     else:

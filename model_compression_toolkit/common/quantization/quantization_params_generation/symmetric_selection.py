@@ -92,7 +92,8 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
                                                                              range_max=threshold,
                                                                              n_bits=n_bits),
                                     x0=init_threshold,
-                                    bounds=get_threshold_bounds(min_threshold, init_threshold))
+                                    bounds=get_threshold_bounds(min_threshold, init_threshold),
+                                    method='Nelder-Mead')
             # returned 'x' here is the optimized threshold value
             res = res.x
     else:
