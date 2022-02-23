@@ -24,7 +24,6 @@ if tf.__version__ < "2.6":
 else:
     from keras.engine.base_layer import Layer
 
-
 from tensorflow.python.training.tracking.data_structures import ListWrapper
 from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
 

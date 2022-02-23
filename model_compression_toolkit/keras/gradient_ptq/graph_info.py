@@ -22,7 +22,7 @@ from typing import Tuple, List
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.keras.constants import USE_BIAS
-from model_compression_toolkit.keras.quantizer.gradient_ptq import ActivationQuantizeConfig, WeightQuantizeConfig, ActivationAndWeightQuantizeConfig
+from model_compression_toolkit.keras.quantizer.gradient_ptq import WeightQuantizeConfig
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from tensorflow.keras.models import Model
 
@@ -64,8 +64,7 @@ def get_trainable_parameters(fxp_model: Model,
     trainable_weights = []
     for layer in fxp_model.layers:
         if isinstance(layer, QuantizeWrapper) and isinstance(
-                layer.quantize_config, (ActivationQuantizeConfig, ActivationAndWeightQuantizeConfig,
-                                        WeightQuantizeConfig)):
+                layer.quantize_config, WeightQuantizeConfig):
             trainable_weights.extend(layer.quantize_config.get_trainable_quantizer_parameters())
             if add_bias:
                 use_bias = isinstance(layer.layer, tuple(fw_info.kernel_ops)) and layer.layer.get_config().get(USE_BIAS)
