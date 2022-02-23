@@ -62,9 +62,8 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
     Returns:
         Optimal quantization range to quantize the tensor uniformly.
     """
-    unsigned_tensor_data = np.abs(tensor_data)
-    tensor_max = get_tensor_max(unsigned_tensor_data, per_channel, channel_axis)
-    tensor_min = -tensor_max  # using minus tensor max for reducing clipping noise in the initial range
+    tensor_min = get_tensor_min(tensor_data, per_channel, channel_axis)
+    tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis)
 
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         res = tensor_min, tensor_max
