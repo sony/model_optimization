@@ -378,7 +378,7 @@ class FeatureNetworkTest(unittest.TestCase):
                                    separate_key_value=separate_key_value, output_dim=14).run_test()
             MultiHeadAttentionTest(self, input_shapes,
                                    num_heads, qk_proj_dim, v_proj_dim, attention_axes,
-                                   separate_key_value=separate_key_value, output_dim=14).run_test()
+                                   separate_key_value=separate_key_value, output_dim=None).run_test()
             MultiHeadAttentionTest(self, input_shapes,
                                    num_heads, qk_proj_dim, v_proj_dim, None,
                                    separate_key_value=separate_key_value, output_dim=14).run_test()
