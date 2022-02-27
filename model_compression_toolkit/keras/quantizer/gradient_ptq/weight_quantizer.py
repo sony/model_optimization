@@ -26,7 +26,7 @@ from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.keras.constants import KERNEL
 
 
-def get_kernel(weights_list: list) -> str:
+def get_kernel(weights_list: list) -> tf.Tensor:
     """
     This function a list of weights and return the kernel
     Args:

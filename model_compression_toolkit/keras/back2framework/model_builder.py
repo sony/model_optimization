@@ -131,35 +131,42 @@ def run_operation(n: BaseNode,
     """
 
     if len(input_tensors) == 0:  # Placeholder handling
-        out_tensors_of_n = input_nodes_to_input_tensors[n]
+        out_tensors_of_n_float = input_nodes_to_input_tensors[n]
+        out_tensors_of_n = out_tensors_of_n_float
         if n.is_activation_quantization_enabled():
             if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ, ModelBuilderMode.MIXEDPRECISION]:
                 # Adding a fake quant node to Input when in GPTQ mode because quantize_model doesn't quantize the
                 # input layer
-                out_tensors_of_n = n.activation_quantization_cfg.quantize_node_output(out_tensors_of_n)
+                out_tensors_of_n = n.activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
 
     else:
         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
         # Build a functional node using its args
         if isinstance(n, FunctionalNode):
             if n.inputs_as_list:  # If the first argument should be a list of tensors:
-                out_tensors_of_n = op_func(input_tensors, *n.op_call_args, **n.op_call_kwargs)
+                out_tensors_of_n_float = op_func(input_tensors, *n.op_call_args, **n.op_call_kwargs)
             else:  # If the input tensors should not be a list but iterated:
-                out_tensors_of_n = op_func(*input_tensors, *n.op_call_args, **n.op_call_kwargs)
+                out_tensors_of_n_float = op_func(*input_tensors, *n.op_call_args, **n.op_call_kwargs)
         else:
             # If operator expects a single input tensor, it cannot be a list as it should
             # have a dtype field.
             if len(input_tensors) == 1:
                 input_tensors = input_tensors[0]
-            out_tensors_of_n = op_func(input_tensors)
+            out_tensors_of_n_float = op_func(input_tensors)
+        out_tensors_of_n = out_tensors_of_n_float
 
         # Add a fake quant node if the node has an activation threshold.
         if n.is_activation_quantization_enabled():
-            if mode in [ModelBuilderMode.QUANTIZED,
-                        ModelBuilderMode.MIXEDPRECISION]:
-                out_tensors_of_n = n.activation_quantization_cfg.quantize_node_output(out_tensors_of_n)
+            if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.MIXEDPRECISION, ModelBuilderMode.GPTQ]:
+                out_tensors_of_n = n.activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
+    return out_tensors_of_n, out_tensors_of_n_float
 
-    return out_tensors_of_n
+
+def convert_node2name(in_node_to_output_tensors_dict):
+    node_name_to_outtensors = dict()
+    for node, tensors in in_node_to_output_tensors_dict.items():
+        node_name_to_outtensors[node.name] = tensors
+    return node_name_to_outtensors
 
 
 def model_builder(graph: common.Graph,
@@ -189,6 +196,7 @@ def model_builder(graph: common.Graph,
     if gptq_config is None and mode == ModelBuilderMode.GPTQ:
         Logger.exception("Building a model in GPTQ require GPTQ configuration as input")
     node_to_output_tensors_dict = dict()
+    node_to_output_tensors_dict_float = dict()
     model_output_tensors = []
 
     # Build an OperationHandler to handle conversions from graph nodes to Keras operators.
@@ -220,28 +228,36 @@ def model_builder(graph: common.Graph,
         input_tensors = build_input_tensors_list(n,
                                                  graph,
                                                  node_to_output_tensors_dict)  # Fetch Node inputs
-        out_tensors_of_n = run_operation(n,  # Run node operation and fetch outputs
-                                         input_tensors,
-                                         op_func,
-                                         input_nodes_to_input_tensors,
-                                         mode)
+        out_tensors_of_n, out_tensors_of_n_float = run_operation(n,  # Run node operation and fetch outputs
+                                                                 input_tensors,
+                                                                 op_func,
+                                                                 input_nodes_to_input_tensors,
+                                                                 mode)
 
         if isinstance(out_tensors_of_n, list):
             node_to_output_tensors_dict.update({n: out_tensors_of_n})
+            node_to_output_tensors_dict_float.update({n: out_tensors_of_n_float})
         else:
             node_to_output_tensors_dict.update({n: [out_tensors_of_n]})
+            node_to_output_tensors_dict_float.update({n: [out_tensors_of_n_float]})
 
     # convert node_to_output_tensors_dict keys to nodes' names since oh.node_sort contains different objects than
     # original graph nodes.
-    node_name_to_outtensors = dict()
-    for node, tensors in node_to_output_tensors_dict.items():
-        node_name_to_outtensors[node.name] = tensors
+    node_name_to_outtensors = convert_node2name(node_to_output_tensors_dict)
+    node_name_to_outtensors_float = convert_node2name(node_to_output_tensors_dict_float)
 
     for ot in output_list:
         if len(node_name_to_outtensors[ot.node.name]) == 1 or append2output is None:
-            model_output_tensors.append(node_name_to_outtensors[ot.node.name][ot.node_out_index])
+            if mode == ModelBuilderMode.GPTQ:
+                model_output_tensors.append(node_name_to_outtensors_float[ot.node.name][ot.node_out_index])
+            else:
+                model_output_tensors.append(node_name_to_outtensors[ot.node.name][ot.node_out_index])
         else:  # When building float model - we collect all outputs from all nodes regardless the actual model's outputs
-            model_output_tensors.append(node_name_to_outtensors[ot.node.name])
+            if mode == ModelBuilderMode.GPTQ:
+                # In case of GPTQ output the float data for the loss and not quantized.
+                model_output_tensors.append(node_name_to_outtensors_float[ot.node.name])
+            else:
+                model_output_tensors.append(node_name_to_outtensors[ot.node.name])
 
     # Build the model.
     model = tf.keras.Model(inputs=inputs_list, outputs=model_output_tensors)

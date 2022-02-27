@@ -13,6 +13,4 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.keras.quantizer.gradient_ptq.activation_quantizer_gptq_config import ActivationQuantizeConfig
 from model_compression_toolkit.keras.quantizer.gradient_ptq.weight_quantizer_gptq_config import WeightQuantizeConfig
-from model_compression_toolkit.keras.quantizer.gradient_ptq.activation_weight_quantizer_gptq_config import ActivationAndWeightQuantizeConfig

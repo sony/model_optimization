@@ -14,7 +14,6 @@
 # ==============================================================================
 
 
-from tensorflow.keras.layers import DepthwiseConv2D
 from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.default_8bit_quantize_configs import \
     NoOpQuantizeConfig
 from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.default_8bit_quantize_registry import \
@@ -45,19 +44,15 @@ def quantization_config_builder_gptq(n: common.BaseNode,
     """
 
     if n.is_weights_quantization_enabled() and n.is_activation_quantization_enabled():
-        qc = keras.quantizer.gradient_ptq.ActivationAndWeightQuantizeConfig(fw_info.get_kernel_op_attributes(n.type),
-                                                                            n.final_weights_quantization_cfg.weights_quantization_params.get(
-                                                                                THRESHOLD),
-                                                                            n.final_weights_quantization_cfg.weights_channels_axis,
-                                                                            n.final_weights_quantization_cfg.weights_n_bits,
-                                                                            n.activation_quantization_cfg.activation_quantization_params,
-                                                                            activation_num_bits=n.activation_quantization_cfg.activation_n_bits,
-                                                                            max_lsbs_change_map=gptq_config.lsb_change_per_bit_width)
+        qc = keras.quantizer.gradient_ptq.WeightQuantizeConfig(fw_info.get_kernel_op_attributes(n.type),
+                                                               n.final_weights_quantization_cfg.weights_quantization_params.get(
+                                                                   THRESHOLD),
+                                                               n.final_weights_quantization_cfg.weights_channels_axis,
+                                                               n.final_weights_quantization_cfg.weights_n_bits,
+                                                               max_lsbs_change_map=gptq_config.lsb_change_per_bit_width)
+        # Quantization is Preformed using fake quantization node
     elif n.is_activation_quantization_enabled() and not n.is_weights_quantization_enabled():
-        qc = keras.quantizer.gradient_ptq.ActivationQuantizeConfig(
-            n.activation_quantization_cfg.activation_quantization_params,
-            num_bits=n.activation_quantization_cfg.activation_n_bits)
-
+        qc = NoOpQuantizeConfig()  # Quantization is Preformed using fake quantization node
     elif n.is_weights_quantization_enabled() and not n.is_activation_quantization_enabled():
         qc = keras.quantizer.gradient_ptq.WeightQuantizeConfig(fw_info.get_kernel_op_attributes(n.type),
                                                                n.final_weights_quantization_cfg.weights_quantization_params.get(
