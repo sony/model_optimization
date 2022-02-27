@@ -58,9 +58,6 @@ from model_compression_toolkit.common.visualization.tensorboard_writer import Te
 from model_compression_toolkit.common.bias_correction.apply_bias_correction_to_graph import apply_bias_correction_to_graph
 
 
-
-
-
 def post_training_quantization(in_model: Any,
                                representative_data_gen: Callable,
                                n_iter: int,
@@ -199,7 +196,7 @@ def _quantize_model(fw_info: FrameworkInfo,
     ######################################
     # Before building a quantized model, first apply some substitutions.
     quantized_tg = substitute(quantized_tg,
-                                                      fw_impl.get_substitutions_pre_build())
+                              fw_impl.get_substitutions_pre_build())
     quantized_model, user_info = fw_impl.model_builder(quantized_tg,
                                                        mode=ModelBuilderMode.QUANTIZED,
                                                        fw_info=fw_info)
@@ -305,12 +302,12 @@ def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
     # Gradient Based Post Training Quantization
     #############################################
     tg_bias = _apply_gptq(gptq_config,
-                     representative_data_gen,
-                     tb_w,
-                     tg,
-                     tg_bias,
-                     fw_info,
-                     fw_impl)
+                          representative_data_gen,
+                          tb_w,
+                          tg,
+                          tg_bias,
+                          fw_info,
+                          fw_impl)
 
     tg_float = copy.deepcopy(tg)  # Copy graph before quantization (for similarity analyzer)
     ######################################

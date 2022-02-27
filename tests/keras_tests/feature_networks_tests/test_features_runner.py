@@ -228,7 +228,8 @@ class FeatureNetworkTest(unittest.TestCase):
         ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(3),
                                activation_op_to_test=tf.nn.leaky_relu, input_shape=(8, 3)).run_test()
         ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(4),
-                               activation_op_to_test=layers.ReLU(negative_slope=0.1)).run_test()
+                               activation_op_to_test=layers.ReLU(negative_slope=0.99),
+                               bypass_op_list=[layers.GlobalAveragePooling2D()]).run_test()
 
     def test_shift_neg_activation_pad_dense(self):
         ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(3),
