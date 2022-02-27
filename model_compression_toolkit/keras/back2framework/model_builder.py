@@ -162,7 +162,7 @@ def run_operation(n: BaseNode,
     return out_tensors_of_n, out_tensors_of_n_float
 
 
-def conver_node2name(in_node_to_output_tensors_dict):
+def convert_node2name(in_node_to_output_tensors_dict):
     node_name_to_outtensors = dict()
     for node, tensors in in_node_to_output_tensors_dict.items():
         node_name_to_outtensors[node.name] = tensors
@@ -243,8 +243,8 @@ def model_builder(graph: common.Graph,
 
     # convert node_to_output_tensors_dict keys to nodes' names since oh.node_sort contains different objects than
     # original graph nodes.
-    node_name_to_outtensors = conver_node2name(node_to_output_tensors_dict)
-    node_name_to_outtensors_float = conver_node2name(node_to_output_tensors_dict_float)
+    node_name_to_outtensors = convert_node2name(node_to_output_tensors_dict)
+    node_name_to_outtensors_float = convert_node2name(node_to_output_tensors_dict_float)
 
     for ot in output_list:
         if len(node_name_to_outtensors[ot.node.name]) == 1 or append2output is None:
