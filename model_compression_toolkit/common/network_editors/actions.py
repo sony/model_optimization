@@ -42,6 +42,11 @@ class EditRule(_EditRule):
 
     """
 
+    def __repr__(self):
+        _str = f'filter={type(self.filter).__name__}{self.filter.__dict__}'
+        _str = f'{_str} ; action={type(self.action).__name__}{self.action.kwargs}'
+        return _str
+
     pass
 
 
@@ -117,6 +122,12 @@ class ChangeFinalWeightsQuantConfigAttr(BaseAction):
         if node.final_weights_quantization_cfg is not None:
             for attr_name, attr_value in self.kwargs.items():
                 node.final_weights_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
+        elif len(node.candidates_weights_quantization_cfg) > 0:
+            for candidate_config in node.candidates_weights_quantization_cfg:
+                for attr_name, attr_value in self.kwargs.items():
+                    candidate_config.set_quant_config_attr(attr_name, attr_value)
+
+
 
 
 

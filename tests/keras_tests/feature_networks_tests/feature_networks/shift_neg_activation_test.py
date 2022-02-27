@@ -17,6 +17,10 @@
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+if tf.__version__ < "2.6":
+    from tensorflow.python.keras.layers.core import TFOpLambda
+else:
+    from keras.layers.core import TFOpLambda
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
@@ -26,12 +30,14 @@ layers = keras.layers
 
 
 class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
-    def __init__(self, unit_test, linear_op_to_test, activation_op_to_test, use_pad_layer=False, input_shape=(8, 8, 3)):
+    def __init__(self, unit_test, linear_op_to_test, activation_op_to_test, use_pad_layer=False, input_shape=(8, 8, 3),
+                 bypass_op_list=None):
         assert type(linear_op_to_test) in [layers.Conv2D, layers.Dense, layers.DepthwiseConv2D]
         self.linear_op_to_test = linear_op_to_test
         self.activation_op_to_test = activation_op_to_test
         self.use_pad_layer = use_pad_layer
-        super().__init__(unit_test, input_shape=input_shape)
+        self.bypass_op_list = bypass_op_list
+        super().__init__(unit_test, input_shape=input_shape, num_calibration_iter=100)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
@@ -42,6 +48,9 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = self.activation_op_to_test(inputs)
+        if self.bypass_op_list:
+            for bypass_op in self.bypass_op_list:
+                x = bypass_op(x)
         if self.use_pad_layer:
             x = layers.ZeroPadding2D(((3, 4), (5, 6)))(x)
         outputs = self.linear_op_to_test(x)
@@ -55,6 +64,17 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
         else:
             w, b = float_model.get_weights()
         linear_op_index = 3 + (4 if self.use_pad_layer else 3)
+        if self.bypass_op_list:
+            for bypass_op in self.bypass_op_list:
+                # add bypass nodes
+                linear_op_index = linear_op_index + 1
+                if isinstance(bypass_op, layers.GlobalAveragePooling2D):
+                    fq_layer = quantized_model.layers[linear_op_index]
+                    self.unit_test.assertTrue(isinstance(fq_layer, TFOpLambda) and
+                                              fq_layer.function is tf.quantization.fake_quant_with_min_max_vars)
+                    self.unit_test.assertTrue(fq_layer.inbound_nodes[0].call_kwargs['min'] == 0)
+                    linear_op_index = linear_op_index + 1
+
         linear_op_index = linear_op_index + int(self.linear_op_to_test.get_config().get('padding') == 'same')
         q_w, q_b = quantized_model.layers[linear_op_index].weights[0].numpy(), \
                    quantized_model.layers[linear_op_index].weights[1].numpy()
@@ -66,7 +86,6 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
         elif isinstance(self.linear_op_to_test, layers.Conv2D):
             self.unit_test.assertTrue(np.allclose(b - q_b, shift_nl_out * np.sum(w, axis=(0, 1, 2))))
         elif isinstance(self.linear_op_to_test, layers.Dense):
-            self.unit_test.assertTrue(np.allclose(b - q_b, shift_nl_out * np.sum(w, axis=(0))))
+            self.unit_test.assertTrue(np.allclose(b - q_b, shift_nl_out * np.sum(w, axis=0)))
         else:
             raise NotImplementedError
-

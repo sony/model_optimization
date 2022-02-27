@@ -14,7 +14,7 @@
 # ==============================================================================
 import copy
 import numpy as np
-from typing import Tuple, Any, Callable
+from typing import List, Tuple, Any, Callable
 
 from model_compression_toolkit.common import FrameworkInfo, Graph, BaseNode
 from model_compression_toolkit.common.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
@@ -186,6 +186,7 @@ def shift_negative_function(graph: Graph,
                             bias_str: str,
                             bias_flag_str: str,
                             zero_padding_node: BaseNode = None,
+                            bypass_nodes: List = None,
                             ) -> Graph:
     """
     Shift the output of a non-linear activation by its minimal output value (quantized) such
@@ -268,9 +269,6 @@ def shift_negative_function(graph: Graph,
     # Use non linear statistics to create statistics for the Add node according to the shifting
     nl_stats_collector = graph.get_out_stats_collector(non_linear_node)
 
-    # The non-linear node's output should be float, so we approximate it by using 16bits quantization.
-    non_linear_node.activation_quantization_cfg.activation_n_bits = SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
-
     add_node_stats_collector = copy.copy(nl_stats_collector)
     graph.set_out_stats_collector_to_node(add_node, add_node_stats_collector)
     graph.shift_stats_collector(add_node, np.array(shift_value))
@@ -304,8 +302,17 @@ def shift_negative_function(graph: Graph,
     set_quantization_configs_to_node(fw_info=fw_info,
                                      node=add_node,
                                      quant_config=qc)
+    add_node.activation_quantization_cfg.activation_n_bits = \
+        non_linear_node.activation_quantization_cfg.activation_n_bits
+    # The non-linear node's output should be float, so we approximate it by using 16bits quantization.
+    non_linear_node.activation_quantization_cfg.activation_n_bits = SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 
-    add_node.activation_quantization_cfg.enable_activation_quantization = False
+    # A bypass node that has its own activation (e.g. GlobalAvgPool2D) can set it to unsigned
+    if bypass_nodes:
+        for bypass_node in bypass_nodes:
+            if bypass_node.activation_quantization_cfg:
+                bypass_node.activation_quantization_cfg.activation_quantization_params['is_signed'] = False
+                graph.shift_stats_collector(bypass_node, np.array(shift_value))
 
     for weight_qc in add_node.candidates_weights_quantization_cfg:
         weight_qc.enable_weights_quantization = False
@@ -330,7 +337,8 @@ def get_next_nodes_to_correct(n: BaseNode,
                               bypass_node_types: NodeOperationMatcher,
                               pad_node_types: NodeOperationMatcher,
                               is_padding_node_and_node_has_padding: Callable,
-                              pad_node_to_consider: BaseNode = None) -> Tuple[Any, Any]:
+                              pad_node_to_consider: BaseNode = None,
+                              bypass_nodes: List = None) -> Tuple[Any, Any, Any]:
     """
     Search for the next linear node of a given node. Go over
     the next nodes of the node and recursively search for a linear node.
@@ -345,33 +353,40 @@ def get_next_nodes_to_correct(n: BaseNode,
          the next node is a linear node with padding.
         pad_node_to_consider: Pad node between the non-linear and linear nodes to consider when
         correcting the expected shift.
+        bypass_nodes: a list of bypass nodes found while running this function
 
     Returns:
-        The linear node (if found) and a padding node (if found), or Nones if it were not found or there are
-        multiple outgoing edges to one of nodes during the search (which means, the substitution can not be applied).
+        The linear node (if found), a padding node (if found) and a list of bypass nodes (if any), or Nones if it
+        were not found or there are multiple outgoing edges to one of nodes during the search (which means, the
+        substitution can not be applied).
     """
 
     next_nodes = graph.get_next_nodes(n)
 
     if len(next_nodes) != 1:
-        return None, None
+        return None, None, None
 
     next_node = next_nodes[0]
 
     if linear_node_types.apply(next_node):
         # Correction is not supported when there are both padding node and a linear node with padding.
         if is_padding_node_and_node_has_padding(pad_node_to_consider, next_node):
-            return None, None
-        return next_node, pad_node_to_consider
+            return None, None, None
+        return next_node, pad_node_to_consider, bypass_nodes
 
     if bypass_node_types.apply(next_node):
+        if bypass_nodes:
+            bypass_nodes.append(next_node)
+        else:
+            bypass_nodes = [next_node]
         return get_next_nodes_to_correct(next_node,
                                          graph,
                                          linear_node_types,
                                          bypass_node_types,
                                          pad_node_types,
                                          is_padding_node_and_node_has_padding,
-                                         pad_node_to_consider)
+                                         pad_node_to_consider,
+                                         bypass_nodes=bypass_nodes)
 
     if pad_node_types.apply(next_node):
         # Correction is not supported when there are more than one padding node between the non-linear node and the
@@ -383,9 +398,10 @@ def get_next_nodes_to_correct(n: BaseNode,
                                              bypass_node_types,
                                              pad_node_types,
                                              is_padding_node_and_node_has_padding,
-                                             next_node)
+                                             next_node,
+                                             bypass_nodes=bypass_nodes)
 
-    return None, None  # If none of the above were found, it means the correction can not be applied
+    return None, None, None  # If none of the above were found, it means the correction can not be applied
 
 
 def apply_shift_negative_correction(graph: Graph,
@@ -429,13 +445,13 @@ def apply_shift_negative_correction(graph: Graph,
     nodes = list(graph.nodes())
     for n in nodes:
         if snc_node_types.apply(n):
-            linear_node, pad_node = get_next_nodes_to_correct(n,
-                                                              graph,
-                                                              linear_node_types,
-                                                              bypass_node_types,
-                                                              pad_node_types,
-                                                              is_padding_node_and_node_has_padding
-                                                              )
+            linear_node, pad_node, bypass_nodes = get_next_nodes_to_correct(n,
+                                                                            graph,
+                                                                            linear_node_types,
+                                                                            bypass_node_types,
+                                                                            pad_node_types,
+                                                                            is_padding_node_and_node_has_padding
+                                                                            )
             if linear_node is not None:
                 graph = shift_negative_function(graph,
                                                 quant_config,
@@ -448,5 +464,6 @@ def apply_shift_negative_correction(graph: Graph,
                                                 padding_str,
                                                 bias_str,
                                                 bias_flag_str,
-                                                zero_padding_node=pad_node)
+                                                zero_padding_node=pad_node,
+                                                bypass_nodes=bypass_nodes)
     return graph
