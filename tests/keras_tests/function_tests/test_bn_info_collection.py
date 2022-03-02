@@ -251,17 +251,17 @@ class TestBNInfoCollection(unittest.TestCase):
         self.assertTrue(not (bn_std is None))
         self.assertTrue(not (bn_mean is None))
 
-        bn2_layer = in_model.get_layer("bn2")
-        mm = bn2_layer.moving_mean
-        mv = bn2_layer.moving_variance
-        m_std = np.sqrt(mv)
-        self.assertTrue((m_std == conv_std).all())
-        self.assertTrue((mm == conv_mean).numpy().all())
+        bn_layer = in_model.get_layer("bn1")
+        gamma = bn_layer.gamma
+        beta = bn_layer.beta
+        self.assertTrue((gamma == conv_std).numpy().all())
+        self.assertTrue((beta == conv_mean).numpy().all())
 
-        gamma = bn2_layer.gamma
-        beta = bn2_layer.beta
-        self.assertTrue((gamma == bn_std).numpy().all())
-        self.assertTrue((beta == bn_mean).numpy().all())
+        bn2_layer = in_model.get_layer("bn2")
+        gamma2 = bn2_layer.gamma
+        beta2 = bn2_layer.beta
+        self.assertTrue((gamma2 == bn_std).numpy().all())
+        self.assertTrue((beta2 == bn_mean).numpy().all())
 
     def test_bn_chain_info_collection(self):
         input_shape = (8, 8, 3)
@@ -302,17 +302,16 @@ class TestBNInfoCollection(unittest.TestCase):
         self.assertTrue((m_std == input_std).all())
         self.assertTrue((mm == input_mean).numpy().all())
 
-        bn2_layer = in_model.get_layer("bn2")
-        mm2 = bn2_layer.moving_mean
-        mv2 = bn2_layer.moving_variance
-        m_std2 = np.sqrt(mv2)
-        self.assertTrue((m_std2 == bn_std).all())
-        self.assertTrue((mm2 == bn_mean).numpy().all())
+        gamma = bn_layer.gamma
+        beta = bn_layer.beta
+        self.assertTrue((gamma == bn_std).numpy().all())
+        self.assertTrue((beta == bn_mean).numpy().all())
 
-        gamma = bn2_layer.gamma
-        beta = bn2_layer.beta
-        self.assertTrue((gamma == bn2_std).numpy().all())
-        self.assertTrue((beta == bn2_mean).numpy().all())
+        bn2_layer = in_model.get_layer("bn2")
+        gamma2 = bn2_layer.gamma
+        beta2 = bn2_layer.beta
+        self.assertTrue((gamma2 == bn2_std).numpy().all())
+        self.assertTrue((beta2 == bn2_mean).numpy().all())
 
     def test_layers_bn_info_collection(self):
         input_shape = (8, 8, 3)

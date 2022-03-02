@@ -301,13 +301,13 @@ class Conv2DBNChainInfoCollectionTest(BasePytorchTest):
         bn2_std = bn2_node.prior_info.std_output
         bn2_mean = bn2_node.prior_info.mean_output
 
-        bn2_layer = model_float.bn2
-        mm2 = bn2_layer.running_mean
-        mv2 = bn2_layer.running_var
-        m_std2 = np.sqrt(mv2.data.numpy())
-        self.unit_test.assertTrue((mm2.data.numpy() == prior_mean).all())
-        self.unit_test.assertTrue((m_std2 == prior_std).all())
+        bn_layer = model_float.bn
+        gamma = bn_layer.weight
+        beta = bn_layer.bias
+        self.unit_test.assertTrue((beta.data.numpy() == prior_mean).all())
+        self.unit_test.assertTrue((gamma.data.numpy() == prior_std).all())
 
+        bn2_layer = model_float.bn2
         gamma2 = bn2_layer.weight
         beta2 = bn2_layer.bias
         self.unit_test.assertTrue((beta2.data.numpy() == bn2_mean).all())
@@ -374,13 +374,13 @@ class BNChainInfoCollectionTest(BasePytorchTest):
         self.unit_test.assertTrue((mm.data.numpy() == prior_mean).all())
         self.unit_test.assertTrue((m_std == prior_std).all())
 
-        bn2_layer = model_float.bn2
-        mm2 = bn2_layer.running_mean
-        mv2 = bn2_layer.running_var
-        m_std2 = np.sqrt(mv2.data.numpy())
-        self.unit_test.assertTrue((mm2.data.numpy() == bn_mean).all())
-        self.unit_test.assertTrue((m_std2 == bn_std).all())
 
+        gamma = bn_layer.weight
+        beta = bn_layer.bias
+        self.unit_test.assertTrue((beta.data.numpy() == bn_mean).all())
+        self.unit_test.assertTrue((gamma.data.numpy() == bn_std).all())
+
+        bn2_layer = model_float.bn2
         gamma2 = bn2_layer.weight
         beta2 = bn2_layer.bias
         self.unit_test.assertTrue((beta2.data.numpy() == bn2_mean).all())
