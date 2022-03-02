@@ -16,7 +16,7 @@
 
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig,\
-    ThresholdSelectionMethod
+    QuantizationErrorMethod
 import model_compression_toolkit as mct
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.common.user_info import UserInformation
@@ -46,8 +46,8 @@ class MultiHeadAttentionTest(BaseKerasFeatureNetworkTest):
         self.output_dim = output_dim
 
     def get_quantization_config(self):
-        return QuantizationConfig(activation_threshold_method=ThresholdSelectionMethod.NOCLIPPING,
-                                  weights_threshold_method=ThresholdSelectionMethod.NOCLIPPING,
+        return QuantizationConfig(activation_error_method=QuantizationErrorMethod.NOCLIPPING,
+                                  weights_error_method=QuantizationErrorMethod.NOCLIPPING,
                                   activation_n_bits=16, weights_n_bits=16,
                                   )
 
