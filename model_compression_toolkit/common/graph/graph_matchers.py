@@ -16,7 +16,6 @@
 
 from typing import Any, List
 
-
 from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.common.matchers import node_matcher, walk_matcher, edge_matcher
 

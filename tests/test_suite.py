@@ -39,6 +39,7 @@ if found_tf:
     from tests.keras_tests.function_tests.test_lut_quanitzer_params import TestLUTQuantizerParams
     from tests.keras_tests.function_tests.test_lp_search_bitwidth import TestLpSearchBitwidth, \
         TestSearchBitwidthConfiguration
+    from tests.keras_tests.function_tests.test_bn_info_collection import TestBNInfoCollection
     from tests.keras_tests.graph_tests.test_graph_reading import TestGraphReading
     from tests.keras_tests.graph_tests.test_graph_quantization_and_export import TestTFLiteExport
     from tests.keras_tests.layer_tests.test_layers_runner import LayerTest as TFLayerTest
@@ -51,6 +52,7 @@ if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
     from tests.pytorch_tests.model_tests.test_feature_models_runner import FeatureModelsTestRunner
     from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
+    from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
 
 
 if __name__ == '__main__':
@@ -68,6 +70,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLogger))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLpSearchBitwidth))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSearchBitwidthConfiguration))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestBNInfoCollection))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLUTQuantizerParams))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphReading))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestTFLiteExport))
@@ -81,6 +84,7 @@ if __name__ == '__main__':
     if found_pytorch:
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TorchLayerTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureModelsTestRunner))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FunctionTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ModelTest))
 
     # ----------------   Join them together ane run them

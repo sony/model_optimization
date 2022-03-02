@@ -100,7 +100,7 @@ class TestUniformRangeSelectionWeights(unittest.TestCase):
                                                         fw_info=fw_info)
         for node in graph.nodes:
             node.prior_info = keras_impl.get_node_prior_info(node=node,
-                                                             fw_info=fw_info)
+                                                             fw_info=fw_info, graph=graph)
         analyzer_graph(keras_impl.attach_sc_to_node,
                        graph,
                        fw_info)

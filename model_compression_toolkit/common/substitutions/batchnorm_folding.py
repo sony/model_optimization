@@ -141,6 +141,8 @@ class BatchNormalizationFolding(common.BaseSubstitution):
 
         graph.replace_output_node(current_node=bn_node, new_node=conv_bn)
 
+        conv_bn.prior_info = bn_node.prior_info
+
         graph.remove_edge(conv_node, bn_node)
         graph.remove_node(bn_node)
         graph.remove_node(conv_node)
