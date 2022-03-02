@@ -95,7 +95,7 @@ class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
 
     def get_gptq_config(self):
         return model_compression_toolkit.common.gptq.gptq_config.GradientPTQConfig(50,
-                                                                                   optimizer=tf.keras.optimizers.SGD(learning_rate=50.0),
+                                                                                   optimizer=tf.keras.optimizers.SGD(learning_rate=0.5),
                                                                                    loss=multiple_tensors_mse_loss)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
@@ -103,9 +103,9 @@ class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
                                   msg='float model number of weights different from quantized model: ' +
                                       f'{len(quantized_gptq_model.weights)} != {len(quantized_model.weights)}')
         # check all weights were updated
-        weights_mean_diff = [np.mean(w_q.numpy() != w_f.numpy()) > 0.3 for w_q, w_f in zip(quantized_model.weights,
-                                                                                           quantized_gptq_model.weights)]
-        self.unit_test.assertTrue(all(weights_mean_diff), msg="Some weights weren't updated")
+        weights_diff = [np.any(w_q.numpy() != w_f.numpy()) for w_q, w_f in zip(quantized_model.weights,
+                                                                               quantized_gptq_model.weights)]
+        self.unit_test.assertTrue(all(weights_diff), msg="Some weights weren't updated")
 
 
 class GradientPTQLearnRateZeroTest(GradientPTQBaseTest):
