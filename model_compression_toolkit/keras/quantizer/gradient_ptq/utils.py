@@ -139,7 +139,8 @@ def symmetric_constrained_quantizer(input_tensor: tf.Tensor,
     if power_of_two:
         max_tensor = power_of_two_max(max_tensor)
     delta = calculate_delta(max_tensor, num_bits, signed)
-    tensor_q = ste_round(tf.stop_gradient(tf.round(input_tensor / delta)) + ste_clip(auxvar_tensor, max_val=max_lsbs_change))
+    input_tensor_int = tf.stop_gradient(tf.round(input_tensor / delta))
+    tensor_q = ste_round(input_tensor_int + ste_clip(auxvar_tensor, max_val=max_lsbs_change*delta)/delta)
     min_int = -int(signed) * (2 ** (num_bits - int(signed)))
     max_int = (2 ** (num_bits - int(signed))) - 1
     return delta * ste_clip(tensor_q, max_val=max_int, min_val=min_int)
