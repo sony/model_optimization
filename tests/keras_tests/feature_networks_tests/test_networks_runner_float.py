@@ -51,6 +51,7 @@ class NetworkTest(object):
 
     def run_network(self, inputs_list):
         fw_impl = KerasImplementation()
+        fw_info = DEFAULT_KERAS_INFO
         graph = model_reader(self.model_float)  # model reading
 
         graph = set_quantization_configuration_to_graph(graph,
@@ -60,6 +61,11 @@ class NetworkTest(object):
                                      mode=ModelBuilderMode.FLOAT)
         self.compare(inputs_list, ptq_model)
 
+        graph = substitute(graph, fw_impl.get_substitutions_prepare_graph())
+        for node in graph.nodes:
+            node.prior_info = fw_impl.get_node_prior_info(node=node,
+                                                          fw_info=fw_info,
+                                                          graph=graph)
         graph = substitute(graph,
                            fw_impl.get_substitutions_pre_statistics_collection())
         graph = set_quantization_configuration_to_graph(graph,

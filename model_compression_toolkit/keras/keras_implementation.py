@@ -177,18 +177,25 @@ class KerasImplementation(FrameworkImplementation):
         """
         return [MarkActivation()]
 
-    def get_substitutions_pre_statistics_collection(self) -> List[common.BaseSubstitution]:
+    def get_substitutions_prepare_graph(self) -> List[common.BaseSubstitution]:
         """
 
         Returns: A list of the framework substitutions used before we build a quantized model.
 
         """
         return [SeparableConvDecomposition(),
-                ActivationDecomposition(),
-                keras_batchnorm_folding()]
+                ActivationDecomposition()]
 
-    def get_substitutions_post_statistics_collection(self, quant_config: QuantizationConfig) -> List[
-        common.BaseSubstitution]:
+    def get_substitutions_pre_statistics_collection(self) -> List[common.BaseSubstitution]:
+        """
+
+        Returns: A list of the framework substitutions used before we build a quantized model.
+
+        """
+        return [keras_batchnorm_folding()]
+
+    def get_substitutions_post_statistics_collection(self, quant_config: QuantizationConfig) \
+            -> List[common.BaseSubstitution]:
         """
         Return a list of the framework substitutions used after we collect statistics.
 
@@ -293,17 +300,19 @@ class KerasImplementation(FrameworkImplementation):
 
     def get_node_prior_info(self,
                             node: BaseNode,
-                            fw_info: FrameworkInfo) -> NodePriorInfo:
+                            fw_info: FrameworkInfo,
+                            graph: Graph) -> NodePriorInfo:
         """
         Get a NodePriorInfo object for a node that represents a Keras layer.
 
         Args:
             node: Node to get its prior info.
             fw_info: Framework specific information needed to create the prior info of the node.
+            graph: Graph to check the next node type.
 
         Returns:
             NodePriorInfo with information about the node.
         """
 
         return create_node_prior_info(node=node,
-                                      fw_info=fw_info)
+                                      fw_info=fw_info, graph=graph)

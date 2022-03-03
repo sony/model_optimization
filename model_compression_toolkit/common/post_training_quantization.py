@@ -39,7 +39,8 @@ from model_compression_toolkit.common.mixed_precision.mixed_precision_quantizati
 from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn
 from model_compression_toolkit.common.quantization.quantize_graph_weights import quantize_graph_weights
-from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import compute_bias_correction_of_graph
+from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import \
+    compute_bias_correction_of_graph
 
 from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG, QuantizationErrorMethod, \
@@ -48,14 +49,16 @@ from model_compression_toolkit.common.quantization.quantization_config import Qu
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
 
-from model_compression_toolkit.common.quantization.set_node_quantization_config import set_quantization_configuration_to_graph
+from model_compression_toolkit.common.quantization.set_node_quantization_config import \
+    set_quantization_configuration_to_graph
 
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.common.user_info import UserInformation
 from model_compression_toolkit.common.model_collector import ModelCollector
 
 from model_compression_toolkit.common.visualization.tensorboard_writer import TensorboardWriter
-from model_compression_toolkit.common.bias_correction.apply_bias_correction_to_graph import apply_bias_correction_to_graph
+from model_compression_toolkit.common.bias_correction.apply_bias_correction_to_graph import \
+    apply_bias_correction_to_graph
 
 
 def post_training_quantization(in_model: Any,
@@ -107,7 +110,6 @@ def post_training_quantization(in_model: Any,
                                          tb_w,
                                          fw_impl)
 
-
     ######################################
     # Finalize bit widths
     ######################################
@@ -146,9 +148,6 @@ def post_training_quantization(in_model: Any,
     user_info.mixed_precision_cfg = bit_widths_config
 
     return quantized_model, user_info
-
-
-
 
 
 def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
@@ -326,7 +325,6 @@ def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
     return quantized_model, user_info
 
 
-
 def _prepare_model_for_quantization(in_model: Any,
                                     representative_data_gen: Callable,
                                     network_editor: List[EditRule] = [],
@@ -368,10 +366,22 @@ def _prepare_model_for_quantization(in_model: Any,
                                  representative_data_gen)  # model reading
     graph.set_fw_info(fw_info)
 
-
     if tb_w is not None:
         tb_w.add_graph(graph, 'initial_graph')
 
+    ######################################
+    # Graph substitution (prepare graph)
+    ######################################
+    graph = substitute(graph, fw_impl.get_substitutions_prepare_graph())
+
+    if tb_w is not None:
+        tb_w.add_graph(graph, 'after_graph_preparation')
+    #########################################
+    # Set prior info to nodes
+    ##########################################
+    for node in graph.nodes:
+        node.prior_info = fw_impl.get_node_prior_info(node=node,
+                                                      fw_info=fw_info, graph=graph)
     ######################################
     # Graph substitution (pre statistics collection)
     ######################################
@@ -379,14 +389,6 @@ def _prepare_model_for_quantization(in_model: Any,
 
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'pre_statistics_collection_substitutions')
-
-    #########################################
-    # Set prior info to nodes
-    ##########################################
-    for node in transformed_graph.nodes:
-        node.prior_info = fw_impl.get_node_prior_info(node=node,
-                                                      fw_info=fw_info)
-
 
     ######################################
     # Add quantization configurations
@@ -414,7 +416,6 @@ def _prepare_model_for_quantization(in_model: Any,
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'after_analyzer_graph')
 
-
     ######################################
     # Statistic collection
     ######################################
@@ -424,7 +425,6 @@ def _prepare_model_for_quantization(in_model: Any,
 
     for _ in tqdm(range(n_iter)):
         mi.infer(representative_data_gen())
-
 
     ######################################
     # Edit network according to user specific settings
@@ -448,12 +448,11 @@ def _prepare_model_for_quantization(in_model: Any,
     transformed_graph = substitute(transformed_graph,
                                    fw_impl.get_substitutions_post_statistics_collection(quant_config))
 
-
     ######################################
     # Channel equalization
     ######################################
     transformed_graph = substitute(transformed_graph,
-                               fw_impl.get_substitutions_channel_equalization(quant_config,
+                                   fw_impl.get_substitutions_channel_equalization(quant_config,
                                                                                   fw_info))
 
     ######################################
@@ -487,4 +486,3 @@ def _prepare_model_for_quantization(in_model: Any,
         assert n.final_weights_quantization_cfg is None
 
     return tg_with_bias
-
