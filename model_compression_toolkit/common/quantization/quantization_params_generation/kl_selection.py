@@ -190,8 +190,7 @@ def _kl_error_function(x: np.ndarray,
     q_bins = uniform_quantize_tensor(bv,
                                      range_min,
                                      range_max,
-                                     n_bits,
-                                     (bv < 0).any())
+                                     n_bits)
 
     # Sum all quantized values to a single bin of that value. Other bins of the same value
     # are zero.
