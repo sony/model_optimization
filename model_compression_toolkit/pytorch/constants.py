@@ -17,10 +17,12 @@
 # # Layer type constants:
 PLACEHOLDER = 'placeholder'
 OUTPUT = 'output'
+CONSTANT = 'constant'
 
 # # Module operation type
 CALL_FUNCTION = 'call_function'
 CALL_METHOD = 'call_method'
+GET_ATTR = 'get_attr'
 
 # # Layers attributes constants:
 LAYER_NAME = 'name'

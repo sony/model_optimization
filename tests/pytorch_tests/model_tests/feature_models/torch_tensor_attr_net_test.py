@@ -16,29 +16,30 @@ import torch
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
-This test checks:
-That we support taking outputs from the middle of the model.
+This tests checks a model that has calls to torch.Tensor functions,
+such as torch.Tensor.size and torch.Tensor.view.
 """
-class OutputInTheMiddleNet(torch.nn.Module):
+class TorchTensorAttrNet(torch.nn.Module):
     def __init__(self):
-        super(OutputInTheMiddleNet, self).__init__()
-        self.conv1 = torch.nn.Conv2d(3, 3, kernel_size=1, stride=1)
-        self.conv2 = torch.nn.Conv2d(3, 3, kernel_size=1, stride=1)
+        super(TorchTensorAttrNet, self).__init__()
+        self.conv1 = torch.nn.Conv2d(3, 4, kernel_size=1, stride=1)
 
     def forward(self, x):
-        x1 = self.conv1(x)
-        x2 = self.conv2(x1)
-        x3 = torch.relu(x2)
-        return x, x1, x2, x3
+        x = self.conv1(x)
+        x = x * x.size(1)
+        return x.view(1, -1)
 
 
-class OutputInTheMiddleNetTest(BasePytorchTest):
+class TorchTensorAttrNetTest(BasePytorchTest):
     """
-    This test checks:
-    That we support taking outputs from the middle of the model.
+    This tests checks a model that has calls to torch.Tensor functions,
+    such as torch.Tensor.size and torch.Tensor.view.
     """
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
     def create_feature_network(self, input_shape):
-        return OutputInTheMiddleNet()
+        return TorchTensorAttrNet()
+
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None, convert_fx=False):
+        super(TorchTensorAttrNetTest, self).compare(quantized_models, float_model, input_x=input_x, quantization_info=quantization_info, convert_fx=False)

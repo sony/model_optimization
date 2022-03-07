@@ -17,12 +17,13 @@ from typing import Dict, List, Tuple, Callable
 import torch
 from torch.fx import GraphModule
 
+from model_compression_toolkit import common
 from model_compression_toolkit.common import BaseNode
 from model_compression_toolkit.common.graph.base_graph import OutTensor
 from model_compression_toolkit.common.graph.edge import Edge
 from model_compression_toolkit.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.pytorch.constants import OUTPUT, PLACEHOLDER, TENSOR_META, CALL_FUNCTION, TYPE, \
-    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST
+    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, GET_ATTR, CONSTANT
 
 
 class DummyPlaceHolder(torch.nn.Module):
@@ -34,6 +35,21 @@ class DummyPlaceHolder(torch.nn.Module):
 
     def forward(self, x):
         return x
+
+
+class ConstantHolder(torch.nn.Module):
+    """
+    Class for saving constant values or parameters in graph inference.
+    """
+    def __init__(self, const_size):
+        super(ConstantHolder, self).__init__()
+        setattr(self, CONSTANT, torch.nn.Parameter(torch.empty(const_size)))
+
+    def __name__(self):
+        return CONSTANT
+
+    def forward(self):
+        return getattr(self, CONSTANT)
 
 
 def nodes_builder(model: GraphModule,
@@ -75,7 +91,17 @@ def nodes_builder(model: GraphModule,
             output_nodes += node.all_input_nodes
             continue
         elif node.op == CALL_METHOD:
-            node_type = getattr(torch, node.target)
+            if hasattr(torch, node.target):
+                node_type = getattr(torch, node.target)
+            elif hasattr(torch.Tensor, node.target):
+                node_type = getattr(torch.Tensor, node.target)
+            else:
+                raise Exception(f'Call method of type \'{node.target}\' is currently not supported.')
+        elif node.op == GET_ATTR:
+            node_type = ConstantHolder
+            common.Logger.warning(
+                'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
+                'converting the model.')
         else:
             raise Exception(f'Unknown node type: {node.name}')
 
@@ -88,6 +114,19 @@ def nodes_builder(model: GraphModule,
                                     module_dict[node.target].named_buffers() if len(parameter.shape) > 0}
             weights.update(named_parameters_weights)
             weights.update(named_buffer_weights)
+
+        if node.op == GET_ATTR:
+            named_parameters_weights = {CONSTANT: to_numpy(parameter) for name, parameter in
+                                        model.named_parameters() if node.target == name}
+            named_buffer_weights = {CONSTANT: to_numpy(parameter) for name, parameter in
+                                    model.named_buffers() if node.target == name}
+            if len(named_parameters_weights) + len(named_buffer_weights) > 1:
+                raise Exception(
+                    f'Constant parameter can only have one tensor. Here we have {len(named_parameters_weights) + len(named_buffer_weights)}')
+
+            weights.update(named_parameters_weights)
+            weights.update(named_buffer_weights)
+            framework_attr.update(const_size=weights.get(CONSTANT).shape)
 
         # extract input shapes
         input_shape = []
