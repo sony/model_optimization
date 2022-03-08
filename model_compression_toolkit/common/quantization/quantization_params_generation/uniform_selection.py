@@ -73,8 +73,7 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
                                                      tensor_max,
                                                      n_bits,
                                                      per_channel,
-                                                     channel_axis,
-                                                     n_iter)
+                                                     channel_axis)
     return {RANGE_MIN: mm[0],
             RANGE_MAX: mm[1]}
 
@@ -121,8 +120,7 @@ def uniform_selection_histogram(bins: np.ndarray,
                                                         tensor_min_max,
                                                         bins,
                                                         counts,
-                                                        n_bits,
-                                                        n_iter)
+                                                        n_bits)
 
     return {RANGE_MIN: mm[0],
             RANGE_MAX: mm[1]}
@@ -168,6 +166,7 @@ def get_range_selection_tensor_error_function(quant_error_method: qc.Quantizatio
         quant_error_method: the requested error function type.
         p: p-norm to use for the Lp-norm distance.
         norm: whether to normalize the error function result.
+        n_bits: Number of bits to quantize the tensor.
 
 
     Returns: a Callable method that calculates the error between a tensor and a quantized tensor.

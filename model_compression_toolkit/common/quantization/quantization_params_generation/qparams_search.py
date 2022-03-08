@@ -16,7 +16,6 @@ import itertools
 from collections import Callable
 from operator import itemgetter
 from typing import Any, Tuple
-from scipy import optimize, stats
 
 import numpy as np
 
@@ -153,6 +152,32 @@ def qparams_symmetric_iterative_minimization(x0: np.ndarray, x: np.ndarray, loss
                                              n_iter: int = 10, alpha: float = 0.7, beta: float = 1.2,
                                              dec_factor: Tuple = (1.02, 0.98), dec_freq: int = 3,
                                              tolerance: float = 1e-11):
+    """
+    Search for an optimal threshold to for symmetric tensor quantization.
+    The search starts with the no-clipping threshold the tensor has, and continues with
+    n_iter of iterative search. In each iteration, a set of n_intervals threshold is created by evenly-spacing the
+    range constructed from the previous obtained threshold multiplied by the alph and beta factors (for lower and upper
+    limits, respectively).
+    In addition, each dec_freq iterations, the factors are multiplied by dec_factor in order to make the search range
+    narrower.
+
+        Args:
+        x0: Initial threshold.
+        x: Numpy array with tensor's content.
+        loss_fn: Function to compute the error between the original and quantized tensors.
+        n_intervals: Number of locations to examine each iteration from the given range.
+        n_iter: Number of searching iterations.
+        alpha: Factor for creating the lower limit of the search range.
+        beta: Factor for creating the upper limit of the search range.
+        dec_factor: Factor for decreasing the multiplication factors, to get narrower search range.
+        dec_freq: Frequency for decreasing the multiplication factors.
+        tolerance: If the improvement between iterations is smaller than tolerance, then early stop.
+
+    Returns:
+        Dictionary with optimized threshold for symmetric tensor quantization (best obtained during the search),
+        and its matching loss value.
+
+    """
     range_scale = np.array([alpha, beta])
     curr_param = x0
     best = {"param": x0, "loss": loss_fn(x0, x)}
@@ -181,6 +206,25 @@ def qparams_symmetric_iterative_minimization(x0: np.ndarray, x: np.ndarray, loss
 
 def iterative_uniform_dynamic_range_search(x0: np.ndarray, x: np.ndarray, scalers: np.ndarray,
                                            loss_fn: Callable, n_iter: int = 10, tolerance: float = 1e-11):
+    """
+    Search for an optimal quantization range for uniform tensor quantization.
+    The search starts with the no-clipping range the tensor has, and continues with
+    n_iter of iterative search. In each iteration, a set of range candidates is created by multiplying each
+    scaler (from the scalers set) with the current base range (the last obtained range).
+
+        Args:
+        x0: Initial base range.
+        x: Numpy array with tensor's content.
+        loss_fn: Function to compute the error between the original and quantized tensors.
+        scalers: A set of multiplication factors, to create a set of quantization range candidates at each iteration.
+        n_iter: Number of searching iterations.
+        tolerance: If the improvement between iterations is smaller than tolerance, then early stop.
+
+    Returns:
+        Dictionary with optimized quantization range for uniform tensor quantization (best obtained during the search),
+        and its matching loss value.
+
+    """
     curr_range_bounds = x0
     best = {"param": x0, "loss": loss_fn(x0, x)}
 
@@ -204,6 +248,18 @@ def iterative_uniform_dynamic_range_search(x0: np.ndarray, x: np.ndarray, scaler
 
 
 def search_fixed_range_intervals(range_bounds: np.ndarray, x: np.ndarray, loss_fn: Callable, n_intervals: int = 100):
+    """
+    Searches in a set of n_intervals thresholds, taken from evenly-space intervales from the constructed range.
+
+    Args:
+        range_bounds: A range for creating a set of evenly-spaced threshold candidates.
+        x: Numpy array with tensor's content.
+        loss_fn: Function to compute the error between the original and quantized tensors.
+        n_intervals: Number of locations to examine each iteration from the given range.
+
+    Returns: Dictionary with best obtained threshold and the threshold's matching loss.
+
+    """
     intervals = np.linspace(start=range_bounds[0], stop=range_bounds[1], num=n_intervals, dtype=float)
     vec_loss = np.vectorize(lambda t: loss_fn(t, x))
     losses = vec_loss(intervals)
@@ -211,8 +267,21 @@ def search_fixed_range_intervals(range_bounds: np.ndarray, x: np.ndarray, loss_f
 
 
 def search_dynamic_range(base_range: np.ndarray, x: np.ndarray, scalers: np.ndarray, loss_fn: Callable):
+    """
+    Searches in a set of constructed quantization ranges.
+
+    Args:
+        base_range: Base quantization range for constructing ranges candidates.
+        x: Numpy array with tensor's content.
+        scalers: A set of scale factor for constructing ranges candidates.
+        loss_fn: Function to compute the error between the original and quantized tensors.
+
+    Returns: Dictionary with best obtained quantization range and the threshold's matching loss.
+
+    """
     ranges = base_range * scalers
-    losses = list(map(lambda r: loss_fn(r, x), ranges))
+    vec_loss = np.vectorize(lambda r: loss_fn(r, x), signature='(n)->()')
+    losses = vec_loss(ranges)
     return {"param": ranges[np.argmin(losses)], "loss": np.min(losses)}
 
 
@@ -225,15 +294,13 @@ def qparams_symmetric_selection_tensor_search(error_function: Callable,
                                               n_iter: int = 10,
                                               min_threshold=MIN_THRESHOLD) -> Any:
     """
-    Search for an optimal threshold to quantize a tensor.
-    The search_methods starts with the constrained no-clipping threshold the tensor has, and continues with
-    n_iter another smaller constrained thresholds. For each candidate threshold, an error is computed
-    based on the passed error function, and the threshold which yields the minimal error is selected
-    and returned.
+    Search for optimal threshold (per-channel or per-tensor) for symmetric quantization of a tensor,
+    using the iterative optimizer method.
 
     Args:
         error_function: Function to compute the error between the original and quantized tensors.
         tensor_data: Numpy array with tensor's content.
+        tensor_max: The max value of the tensor.
         n_bits: Number of bits to quantize the tensor.
         per_channel: Whether the tensor should be quantized per-channel or per-tensor.
         channel_axis: Index of output channels dimension.
@@ -241,7 +308,7 @@ def qparams_symmetric_selection_tensor_search(error_function: Callable,
         min_threshold: Threshold to return if the computed threshold is smaller that min_threshold.
 
     Returns:
-        Optimal constrained threshold to quantize the tensor.
+        Ndarray with an optimized threshold (or set of thresholds shaped according to the channels_axis if per-channel).
 
     """
 
@@ -263,7 +330,7 @@ def qparams_symmetric_selection_tensor_search(error_function: Callable,
                                                                                   quantize_tensor(float_tensor, t,
                                                                                                   n_bits=n_bits,
                                                                                                   signed=signed), t),
-                                                                   n_intervals=20,
+                                                                   n_intervals=30,
                                                                    n_iter=15,
                                                                    dec_freq=3)
 
@@ -277,8 +344,8 @@ def qparams_symmetric_selection_tensor_search(error_function: Callable,
                                                                                                       quantize_tensor(tensor_data, t, n_bits, signed),
                                                                                                       t),
                                                        n_intervals=30,
-                                                       n_iter=20,
-                                                       dec_freq=4)
+                                                       n_iter=40,
+                                                       dec_freq=8)
         return max(min_threshold, res['param'])
 
 
@@ -291,30 +358,29 @@ def qparams_uniform_selection_tensor_search(error_function: Callable,
                                             channel_axis: int = 1,
                                             n_iter: int = 20) -> Any:
     """
-    Search for an optimal threshold to quantize a tensor.
-    The search_methods starts with the constrained no-clipping threshold the tensor has, and continues with
-    n_iter another smaller constrained thresholds. For each candidate threshold, an error is computed
-    based on the passed error function, and the threshold which yields the minimal error is selected
-    and returned.
+    Search for optimal quantization range (per-channel or per-tensor) for uniform quantization of a tensor,
+    using the iterative optimizer method and built-in scale factors
+    for constructing ranges candidates during the search.
 
     Args:
         error_function: Function to compute the error between the original and quantized tensors.
         tensor_data: Numpy array with tensor's content.
+        tensor_min: The min value of the tensor.
+        tensor_max: The max value of the tensor.
         n_bits: Number of bits to quantize the tensor.
         per_channel: Whether the tensor should be quantized per-channel or per-tensor.
         channel_axis: Index of output channels dimension.
         n_iter: Number of searching iterations.
-        min_threshold: Threshold to return if the computed threshold is smaller that min_threshold.
 
     Returns:
-        Optimal constrained threshold to quantize the tensor.
+        Ndarray with an optimized range (or set of thresholds shaped according to the channels_axis if per-channel).
 
     """
 
     output_shape = get_output_shape(tensor_data.shape, channel_axis)
 
-    alpha = np.linspace(0.7, 1.2, 10)
-    beta = np.linspace(0.7, 1.2, 10)
+    alpha = np.linspace(0.7, 1.2, 8)
+    beta = np.linspace(0.7, 1.2, 8)
     scalers = np.asarray(list(itertools.product(alpha, beta)))
 
     # If the threshold is computed per-channel, we rearrange the tensor such that each sub-tensor
@@ -338,7 +404,7 @@ def qparams_uniform_selection_tensor_search(error_function: Callable,
                                                                                                         mm[0], mm[1],
                                                                                                         n_bits=n_bits),
                                                                                 mm),
-                                                                 n_iter=15)
+                                                                 n_iter=10)
 
             # search_function(channel_data, channel_threshold, bounds)
             res_min.append(channel_res['param'][0])
@@ -355,7 +421,7 @@ def qparams_uniform_selection_tensor_search(error_function: Callable,
                                                      error_function(float_tensor,
                                                                     uniform_quantize_tensor(float_tensor, mm[0], mm[1], n_bits=n_bits),
                                                                     mm),
-                                                     n_iter=20)
+                                                     n_iter=30)
         return res['param']
 
 
@@ -367,23 +433,20 @@ def qparams_symmetric_selection_histogram_search(error_function: Callable,
                                                  n_iter: int = 20,
                                                  min_threshold: float = MIN_THRESHOLD):
     """
-    Search for an optimal threshold to quantize a histogram of collected float values.
-    The search_methods starts with the constrained no-clipping threshold by the bins' maximal value, and continues with
-    n_iter another smaller constrained thresholds. For each candidate threshold, an error is computed
-    based on the passed error function, and the threshold which yields the minimal error is selected
-    and returned.
+    search for optimal threshold (per-channel or per-tensor) for symmetric quantization of a histogram,
+    using the iterative optimizer method.
 
     Args:
         error_function: Function to compute the error between the original and quantized histograms.
+        tensor_max: The max value of the tensor.
         bins: Bins of the histogram to search_methods for an optimal threshold.
         counts: Number of elements in the bins to search_methods for a threshold.
         n_bits: Number of bits to quantize the tensor.
-        constrained: Whether the threshold should be constrained or not.
         n_iter: Number of searching iterations.
         min_threshold: Threshold to return if the computed threshold is smaller that min_threshold.
 
     Returns:
-        Optimal constrained threshold to quantize the tensor.
+        Optimized threshold for quantifying the histogram.
 
     """
 
@@ -409,23 +472,22 @@ def kl_qparams_symmetric_selection_histogram_search(error_function: Callable,
                                                     n_iter: int = 10,
                                                     min_threshold: float = MIN_THRESHOLD):
     """
-    Search for an optimal threshold to quantize a histogram of collected float values.
-    The search_methods starts with the constrained no-clipping threshold by the bins' maximal value, and continues with
-    n_iter another smaller constrained thresholds. For each candidate threshold, an error is computed
-    based on the passed error function, and the threshold which yields the minimal error is selected
-    and returned.
+    Search for optimal threshold (per-channel or per-tensor) for symmetric quantization of a histogram,
+    with KL-Divergence loss function (needs a separate search function
+    since the error function needs additional arguments that are constructed from the input)
+    Using the iterative optimizer method for the search.
 
     Args:
         error_function: Function to compute the error between the original and quantized histograms.
+        tensor_max: The max value of the tensor.
         bins: Bins of the histogram to search_methods for an optimal threshold.
         counts: Number of elements in the bins to search_methods for a threshold.
         n_bits: Number of bits to quantize the tensor.
-        constrained: Whether the threshold should be constrained or not.
         n_iter: Number of searching iterations.
         min_threshold: Threshold to return if the computed threshold is smaller that min_threshold.
 
     Returns:
-        Optimal constrained threshold to quantize the tensor.
+        Optimized threshold for quantifying the histogram.
 
     """
 
@@ -450,27 +512,24 @@ def qparams_uniform_selection_histogram_search(error_function: Callable,
                                                n_bits: int,
                                                n_iter: int = 20):
     """
-    Search for an optimal threshold to quantize a histogram of collected float values.
-    The search_methods starts with the constrained no-clipping threshold by the bins' maximal value, and continues with
-    n_iter another smaller constrained thresholds. For each candidate threshold, an error is computed
-    based on the passed error function, and the threshold which yields the minimal error is selected
-    and returned.
+    Search for optimal quantization range (per-channel or per-tensor) for uniform quantization of a histogram,
+    using the iterative optimizer method and built-in scale factors
+    for constructing ranges candidates during the search.
 
     Args:
         error_function: Function to compute the error between the original and quantized histograms.
+        tensor_min_max: Numpy array with tensor's min and max values.
         bins: Bins of the histogram to search_methods for an optimal threshold.
         counts: Number of elements in the bins to search_methods for a threshold.
         n_bits: Number of bits to quantize the tensor.
-        constrained: Whether the threshold should be constrained or not.
         n_iter: Number of searching iterations.
-        min_threshold: Threshold to return if the computed threshold is smaller that min_threshold.
 
     Returns:
-        Optimal constrained threshold to quantize the tensor.
+        Optimized range for quantifying the histogram.
 
     """
-    alpha = np.linspace(0.7, 1.2, 10)
-    beta = np.linspace(0.7, 1.2, 10)
+    alpha = np.linspace(0.7, 1.2, 12)
+    beta = np.linspace(0.7, 1.2, 12)
     scalers = np.asarray(list(itertools.product(alpha, beta)))
     res = iterative_uniform_dynamic_range_search(x0=tensor_min_max, x=bins,
                                                  scalers=scalers,

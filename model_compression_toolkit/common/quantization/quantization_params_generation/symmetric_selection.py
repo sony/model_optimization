@@ -74,8 +74,7 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
                                                               n_bits,
                                                               per_channel,
                                                               channel_axis,
-                                                              n_iter,
-                                                              min_threshold)
+                                                              min_threshold=min_threshold)
     return {THRESHOLD: threshold}
 
 
@@ -118,8 +117,7 @@ def symmetric_selection_histogram(bins: np.ndarray,
                                                                     bins,
                                                                     counts,
                                                                     n_bits,
-                                                                    n_iter,
-                                                                    min_threshold)
+                                                                    min_threshold=min_threshold)
     else:
         error_function = get_threshold_selection_histogram_error_function(quant_error_method, p)
         threshold = qparams_symmetric_selection_histogram_search(error_function,
@@ -127,8 +125,7 @@ def symmetric_selection_histogram(bins: np.ndarray,
                                                                  bins,
                                                                  counts,
                                                                  n_bits,
-                                                                 n_iter,
-                                                                 min_threshold)
+                                                                 min_threshold=min_threshold)
     return {THRESHOLD: threshold}
 
 
@@ -173,6 +170,7 @@ def get_threshold_selection_tensor_error_function(quant_error_method: qc.Quantiz
         quant_error_method: the requested error function type.
         p: p-norm to use for the Lp-norm distance.
         norm: whether to normalize the error function result.
+        n_bits: Number of bits to quantize the tensor.
 
     Returns: a Callable method that calculates the error between a tensor and a quantized tensor.
     """
