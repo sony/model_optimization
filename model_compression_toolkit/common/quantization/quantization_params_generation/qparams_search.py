@@ -19,7 +19,12 @@ from typing import Any, Tuple
 
 import numpy as np
 
-from model_compression_toolkit.common.constants import MIN_THRESHOLD, THRESHOLD
+from model_compression_toolkit.common.constants import MIN_THRESHOLD, THRESHOLD, DEFAULT_TOL, DEFAULT_DEC_FACTOR, \
+    SYMMETRIC_TENSOR_PER_CHANNEL_N_INTERVALS, SYMMETRIC_TENSOR_PER_CHANNEL_N_ITER, SYMMETRIC_TENSOR_DEC_FREQ, \
+    SYMMETRIC_TENSOR_PER_CHANNEL_DEC_FREQ, SYMMETRIC_TENSOR_N_INTERVALS, SYMMETRIC_TENSOR_N_ITER, \
+    UNIFORM_TENSOR_PER_CHANNEL_N_ITER, UNIFORM_TENSOR_N_ITER, SYMMETRIC_HISTOGRAM_DEC_FREQ, SYMMETRIC_HISTOGRAM_N_ITER, \
+    SYMMETRIC_HISTOGRAM_N_INTERVALS, UNIFORM_HISTOGRAM_N_ITER, BOTTOM_FACTOR, UPPER_FACTOR, UNIFORM_TENSOR_N_SAMPLES, \
+    UNIFORM_HISTOGRAM_N_SAMPLES
 from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import quantize_tensor, \
     reshape_tensor_for_per_channel_search, uniform_quantize_tensor, get_output_shape
 from model_compression_toolkit.common.quantization.quantization_params_generation.no_clipping import \
@@ -148,10 +153,14 @@ def qparams_selection_histogram_search(error_function: Callable,
     return np.maximum(threshold_list[np.argmin(error_list)], min_threshold)
 
 
-def qparams_symmetric_iterative_minimization(x0: np.ndarray, x: np.ndarray, loss_fn: Callable, n_intervals: int = 20,
-                                             n_iter: int = 10, alpha: float = 0.7, beta: float = 1.2,
-                                             dec_factor: Tuple = (1.02, 0.98), dec_freq: int = 3,
-                                             tolerance: float = 1e-11):
+def qparams_symmetric_iterative_minimization(x0: np.ndarray, x: np.ndarray, loss_fn: Callable,
+                                             n_intervals: int = SYMMETRIC_TENSOR_N_INTERVALS,
+                                             n_iter: int = SYMMETRIC_TENSOR_N_ITER,
+                                             alpha: float = BOTTOM_FACTOR,
+                                             beta: float = UPPER_FACTOR,
+                                             dec_factor: Tuple = DEFAULT_DEC_FACTOR,
+                                             dec_freq: int = SYMMETRIC_TENSOR_DEC_FREQ,
+                                             tolerance: float = DEFAULT_TOL):
     """
     Search for an optimal threshold to for symmetric tensor quantization.
     The search starts with the no-clipping threshold the tensor has, and continues with
@@ -204,8 +213,12 @@ def qparams_symmetric_iterative_minimization(x0: np.ndarray, x: np.ndarray, loss
     return best
 
 
-def iterative_uniform_dynamic_range_search(x0: np.ndarray, x: np.ndarray, scalers: np.ndarray,
-                                           loss_fn: Callable, n_iter: int = 10, tolerance: float = 1e-11):
+def iterative_uniform_dynamic_range_search(x0: np.ndarray,
+                                           x: np.ndarray,
+                                           scalers: np.ndarray,
+                                           loss_fn: Callable,
+                                           n_iter: int = UNIFORM_TENSOR_N_ITER,
+                                           tolerance: float = DEFAULT_TOL):
     """
     Search for an optimal quantization range for uniform tensor quantization.
     The search starts with the no-clipping range the tensor has, and continues with
@@ -228,15 +241,10 @@ def iterative_uniform_dynamic_range_search(x0: np.ndarray, x: np.ndarray, scaler
     curr_range_bounds = x0
     best = {"param": x0, "loss": loss_fn(x0, x)}
 
-    # for drawing
-    all_loss_res = []
-
     for n in range(n_iter):
         prev_best_loss = best['loss']
         curr_res = search_dynamic_range(base_range=curr_range_bounds, scalers=scalers, x=x, loss_fn=loss_fn)
         curr_range_bounds = curr_res['param']
-        # curr_range_bounds = fix_range_to_include_zero(curr_range_bounds[0], curr_range_bounds[1], 8, False, 0)
-        all_loss_res.append(curr_res['loss'])
         best = min(best, curr_res, key=itemgetter('loss'))
 
         iters_loss_diff = prev_best_loss - curr_res['loss']
@@ -291,7 +299,7 @@ def qparams_symmetric_selection_tensor_search(error_function: Callable,
                                               n_bits: int,
                                               per_channel: bool = False,
                                               channel_axis: int = 1,
-                                              n_iter: int = 10,
+                                              n_iter: int = SYMMETRIC_TENSOR_PER_CHANNEL_N_ITER,
                                               min_threshold=MIN_THRESHOLD) -> Any:
     """
     Search for optimal threshold (per-channel or per-tensor) for symmetric quantization of a tensor,
@@ -330,9 +338,9 @@ def qparams_symmetric_selection_tensor_search(error_function: Callable,
                                                                                   quantize_tensor(float_tensor, t,
                                                                                                   n_bits=n_bits,
                                                                                                   signed=signed), t),
-                                                                   n_intervals=30,
-                                                                   n_iter=15,
-                                                                   dec_freq=3)
+                                                                   n_intervals=SYMMETRIC_TENSOR_PER_CHANNEL_N_INTERVALS,
+                                                                   n_iter=SYMMETRIC_TENSOR_PER_CHANNEL_N_ITER,
+                                                                   dec_freq=SYMMETRIC_TENSOR_PER_CHANNEL_DEC_FREQ)
 
             # search_function(channel_data, channel_threshold, bounds)
             res.append(max(min_threshold, channel_res['param']))
@@ -343,9 +351,9 @@ def qparams_symmetric_selection_tensor_search(error_function: Callable,
                                                        loss_fn=lambda t, float_tensor: error_function(float_tensor,
                                                                                                       quantize_tensor(tensor_data, t, n_bits, signed),
                                                                                                       t),
-                                                       n_intervals=30,
-                                                       n_iter=40,
-                                                       dec_freq=8)
+                                                       n_intervals=SYMMETRIC_TENSOR_N_INTERVALS,
+                                                       n_iter=SYMMETRIC_TENSOR_N_ITER,
+                                                       dec_freq=SYMMETRIC_TENSOR_DEC_FREQ)
         return max(min_threshold, res['param'])
 
 
@@ -356,7 +364,7 @@ def qparams_uniform_selection_tensor_search(error_function: Callable,
                                             n_bits: int,
                                             per_channel: bool = False,
                                             channel_axis: int = 1,
-                                            n_iter: int = 20) -> Any:
+                                            n_iter: int = UNIFORM_TENSOR_PER_CHANNEL_N_ITER) -> Any:
     """
     Search for optimal quantization range (per-channel or per-tensor) for uniform quantization of a tensor,
     using the iterative optimizer method and built-in scale factors
@@ -379,8 +387,8 @@ def qparams_uniform_selection_tensor_search(error_function: Callable,
 
     output_shape = get_output_shape(tensor_data.shape, channel_axis)
 
-    alpha = np.linspace(0.7, 1.2, 8)
-    beta = np.linspace(0.7, 1.2, 8)
+    alpha = np.linspace(BOTTOM_FACTOR, UPPER_FACTOR, UNIFORM_TENSOR_N_SAMPLES)
+    beta = np.linspace(BOTTOM_FACTOR, UPPER_FACTOR, UNIFORM_TENSOR_N_SAMPLES)
     scalers = np.asarray(list(itertools.product(alpha, beta)))
 
     # If the threshold is computed per-channel, we rearrange the tensor such that each sub-tensor
@@ -404,7 +412,7 @@ def qparams_uniform_selection_tensor_search(error_function: Callable,
                                                                                                         mm[0], mm[1],
                                                                                                         n_bits=n_bits),
                                                                                 mm),
-                                                                 n_iter=10)
+                                                                 n_iter=UNIFORM_TENSOR_PER_CHANNEL_N_ITER)
 
             # search_function(channel_data, channel_threshold, bounds)
             res_min.append(channel_res['param'][0])
@@ -421,7 +429,7 @@ def qparams_uniform_selection_tensor_search(error_function: Callable,
                                                      error_function(float_tensor,
                                                                     uniform_quantize_tensor(float_tensor, mm[0], mm[1], n_bits=n_bits),
                                                                     mm),
-                                                     n_iter=30)
+                                                     n_iter=UNIFORM_TENSOR_N_ITER)
         return res['param']
 
 
@@ -430,7 +438,7 @@ def qparams_symmetric_selection_histogram_search(error_function: Callable,
                                                  bins: np.ndarray,
                                                  counts: np.ndarray,
                                                  n_bits: int,
-                                                 n_iter: int = 20,
+                                                 n_iter: int = SYMMETRIC_HISTOGRAM_N_ITER,
                                                  min_threshold: float = MIN_THRESHOLD):
     """
     search for optimal threshold (per-channel or per-tensor) for symmetric quantization of a histogram,
@@ -458,9 +466,9 @@ def qparams_symmetric_selection_histogram_search(error_function: Callable,
                                                                                                      bins,
                                                                                                      quantize_tensor(bins, t, n_bits, signed),
                                                                                                      counts),
-                                                   n_intervals=30,
-                                                   n_iter=20,
-                                                   dec_freq=4)
+                                                   n_intervals=SYMMETRIC_HISTOGRAM_N_INTERVALS,
+                                                   n_iter=SYMMETRIC_HISTOGRAM_N_ITER,
+                                                   dec_freq=SYMMETRIC_HISTOGRAM_DEC_FREQ)
     return max(min_threshold, res['param'])
 
 
@@ -469,7 +477,7 @@ def kl_qparams_symmetric_selection_histogram_search(error_function: Callable,
                                                     bins: np.ndarray,
                                                     counts: np.ndarray,
                                                     n_bits: int,
-                                                    n_iter: int = 10,
+                                                    n_iter: int = SYMMETRIC_HISTOGRAM_N_ITER,
                                                     min_threshold: float = MIN_THRESHOLD):
     """
     Search for optimal threshold (per-channel or per-tensor) for symmetric quantization of a histogram,
@@ -499,9 +507,9 @@ def kl_qparams_symmetric_selection_histogram_search(error_function: Callable,
                                                                                                         quantize_tensor(bins, t, n_bits, signed),
                                                                                                         counts,
                                                                                                         min_max_range=np.array([0, t]) if not signed else np.array([-t, t])),
-                                                   n_intervals=30,
-                                                   n_iter=20,
-                                                   dec_freq=4)
+                                                   n_intervals=SYMMETRIC_HISTOGRAM_N_INTERVALS,
+                                                   n_iter=SYMMETRIC_HISTOGRAM_N_ITER,
+                                                   dec_freq=SYMMETRIC_HISTOGRAM_DEC_FREQ)
     return max(min_threshold, res['param'])
 
 
@@ -510,7 +518,7 @@ def qparams_uniform_selection_histogram_search(error_function: Callable,
                                                bins: np.ndarray,
                                                counts: np.ndarray,
                                                n_bits: int,
-                                               n_iter: int = 20):
+                                               n_iter: int = UNIFORM_HISTOGRAM_N_ITER):
     """
     Search for optimal quantization range (per-channel or per-tensor) for uniform quantization of a histogram,
     using the iterative optimizer method and built-in scale factors
@@ -528,8 +536,8 @@ def qparams_uniform_selection_histogram_search(error_function: Callable,
         Optimized range for quantifying the histogram.
 
     """
-    alpha = np.linspace(0.7, 1.2, 12)
-    beta = np.linspace(0.7, 1.2, 12)
+    alpha = np.linspace(BOTTOM_FACTOR, UPPER_FACTOR, UNIFORM_HISTOGRAM_N_SAMPLES)
+    beta = np.linspace(BOTTOM_FACTOR, UPPER_FACTOR, UNIFORM_HISTOGRAM_N_SAMPLES)
     scalers = np.asarray(list(itertools.product(alpha, beta)))
     res = iterative_uniform_dynamic_range_search(x0=tensor_min_max, x=bins,
                                                  scalers=scalers,
@@ -539,7 +547,7 @@ def qparams_uniform_selection_histogram_search(error_function: Callable,
                                                                                                    uniform_quantize_tensor(bins, mm[0], mm[1], n_bits),
                                                                                                    counts,
                                                                                                    min_max_range=mm),
-                                                 n_iter=30)
+                                                 n_iter=UNIFORM_HISTOGRAM_N_ITER)
     return res['param']
 
 
