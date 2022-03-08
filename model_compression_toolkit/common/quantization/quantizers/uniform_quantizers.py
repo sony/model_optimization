@@ -58,9 +58,7 @@ def power_of_two_quantizer(tensor_data: np.ndarray,
     return quantize_tensor(tensor_data,
                            threshold,
                            n_bits,
-                           signed,
-                           per_channel,
-                           output_channels_axis)
+                           signed)
 
 
 def symmetric_quantizer(tensor_data: np.ndarray,
@@ -91,9 +89,7 @@ def symmetric_quantizer(tensor_data: np.ndarray,
     return quantize_tensor(tensor_data,
                            threshold,
                            n_bits,
-                           signed,
-                           per_channel,
-                           output_channels_axis)
+                           signed)
 
 
 def uniform_quantizer(tensor_data: np.ndarray,
@@ -121,4 +117,4 @@ def uniform_quantizer(tensor_data: np.ndarray,
     if range_min is None or range_max is None:
         raise Exception("'quantization range' parameters must be defined in 'quantization_params'")
 
-    return uniform_quantize_tensor(tensor_data, range_min, range_max, n_bits, per_channel, output_channels_axis)
+    return uniform_quantize_tensor(tensor_data, range_min, range_max, n_bits)

@@ -60,8 +60,7 @@ class TestFixRangeToZero(unittest.TestCase):
                                            num=tensor_data.shape[channel_axis]), get_output_shape(shape, channel_axis))
         max_range = np.reshape(np.linspace(start=max_range_bounds[0], stop=max_range_bounds[1],
                                            num=tensor_data.shape[channel_axis]), get_output_shape(shape, channel_axis))
-        q = uniform_quantize_tensor(tensor_data, range_min=min_range, range_max=max_range, n_bits=n_bits,
-                                    per_channel=True, channel_axis=channel_axis)
+        q = uniform_quantize_tensor(tensor_data, range_min=min_range, range_max=max_range, n_bits=n_bits)
         self.assertTrue((q == 0).any())
 
 

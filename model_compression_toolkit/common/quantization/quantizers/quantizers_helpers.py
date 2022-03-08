@@ -89,9 +89,7 @@ def calculate_min_max_values(threshold: np.ndarray,
 def quantize_tensor(tensor_data: np.ndarray,
                     threshold: np.ndarray,
                     n_bits: int,
-                    signed: bool,
-                    per_channel: bool = False,
-                    channel_axis: int = 1) -> np.ndarray:
+                    signed: bool) -> np.ndarray:
     """
     Quantize a tensor according to given: threshold, number of bits, and whether
     quantization range is sign or unsigned.
@@ -101,8 +99,6 @@ def quantize_tensor(tensor_data: np.ndarray,
         threshold: Threshold for quantization ranges.
         n_bits: Number of bits to quantize the tensor.
         signed: Whether the tensor contains negative values or not.
-        per_channel: Whether the quantization should be per-channel or not.
-        channel_axis: Output channel index.
 
     Returns:
         Quantized data.
@@ -120,17 +116,13 @@ def quantize_tensor(tensor_data: np.ndarray,
     return uniform_quantize_tensor(tensor_data,
                                    range_min=range_min,
                                    range_max=range_max,
-                                   n_bits=n_bits,
-                                   per_channel=per_channel,
-                                   channel_axis=channel_axis)
+                                   n_bits=n_bits)
 
 
 def uniform_quantize_tensor(tensor_data: np.ndarray,
                             range_min: np.ndarray,
                             range_max: np.ndarray,
-                            n_bits: int,
-                            per_channel: bool = False,
-                            channel_axis: int = 1) -> np.ndarray:
+                            n_bits: int) -> np.ndarray:
     """
     Quantize a tensor according to given range (min, max) and number of bits.
 
@@ -139,15 +131,13 @@ def uniform_quantize_tensor(tensor_data: np.ndarray,
         range_min: minimum bound of the range for quantization (or array of min values per channel).
         range_max: maximum bound of the range for quantization (or array of max values per channel).
         n_bits: Number of bits to quantize the tensor.
-        per_channel: Whether the quantization should be per-channel or not.
-        channel_axis: Output channel index.
 
     Returns:
         Quantized data.
     """
 
     # adjusts the quantization rage so the quantization grid include zero.
-    a, b = fix_range_to_include_zero(range_min, range_max, n_bits, per_channel, channel_axis)
+    a, b = fix_range_to_include_zero(range_min, range_max, n_bits)
 
     # Compute the step size of quantized values.
     delta = (b - a) / (2 ** n_bits - 1)
@@ -280,9 +270,7 @@ def reshape_tensor_for_per_channel_search(tensor_data: np.ndarray, channel_axis:
 
 def fix_range_to_include_zero(range_min: np.ndarray,
                               range_max: np.ndarray,
-                              n_bits: int,
-                              per_channel: bool,
-                              channel_axis: int) -> Tuple[np.ndarray, np.ndarray]:
+                              n_bits: int) -> Tuple[np.ndarray, np.ndarray]:
     """
     Adjusting the quantization range to include representation of 0.0 in the quantization grid.
     If quantization per-channel, then range_min and range_max should be tensors in the specific shape that allows
@@ -292,50 +280,21 @@ def fix_range_to_include_zero(range_min: np.ndarray,
         range_min: min bound of the quantization range (before adjustment).
         range_max: max bound of the quantization range (before adjustment).
         n_bits: Number of bits to quantize the tensor.
-        per_channel: Whether the quantization should be per-channel or not.
-        channel_axis: Output channel index.
 
     Returns: adjusted quantization range
     """
-    if per_channel:
-        output_shape = get_output_shape(range_min.shape, channel_axis)
-        min_max_pairs_per_channel = np.column_stack((range_min.flatten(), range_max.flatten()))
-        # signature='(n)->(),()' makes the vectorized operation to except an array (instead of a scalar)
-        # and return a tuple of scalars.
-        # in this case it operates on pairs of values and the outcome when applying on min_max_pairs_per_channel
-        # is a tuple of two arrays (min_ranges and max_ranges).
-        v_adjust = np.vectorize(lambda min_max_range: adjust_range(min_max_range, n_bits=n_bits),
-                                signature='(n)->(),()')
+    min_positive = range_min > 0
+    max_negative = range_max < 0
 
-        res_min_max_pairs = v_adjust(min_max_pairs_per_channel)
+    scale = (range_max - range_min) / (2 ** n_bits - 1)
 
-        res_min = np.reshape(res_min_max_pairs[0], output_shape)
-        res_max = np.reshape(res_min_max_pairs[1], output_shape)
-        return res_min, res_max
-    else:
-        return adjust_range([range_min, range_max], n_bits)
+    min_range_adj = scale * np.round(range_min / scale)
+    max_range_adj = range_max - range_min + min_range_adj
 
-
-def adjust_range(min_max_range: List[np.ndarray], n_bits: int) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Adjusting a specific quantization range to representation of 0.0 in the quantization grid.
-    Args:
-        min_max_range: quantization range (before adjustment)
-        n_bits: Number of bits to quantize the tensor.
-
-    Returns: adjusted quantization min bound and max bound
-
-    """
-    a, b = min_max_range
-    if a > 0:
-        return min_max_range[0] - a, min_max_range[1]
-    elif b < 0:
-        return min_max_range[0], min_max_range[1] - b
-    else:
-        scale = (b - a) / (2 ** n_bits - 1)
-        min_max_range = scale * np.round(a / scale), b
-        min_max_range = min_max_range[0], b + min_max_range[0] - a
-    return min_max_range
+    mid_range = np.logical_and(np.logical_not(min_positive), np.logical_not(max_negative))
+    min_range_adj = min_range_adj * mid_range + max_negative * range_min
+    max_range_adj = max_range_adj * mid_range + min_positive * range_max
+    return min_range_adj, max_range_adj
 
 
 def get_output_shape(tensor_shape, channel_axis):
