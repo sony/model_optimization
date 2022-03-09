@@ -25,9 +25,10 @@ from model_compression_toolkit import common
 from model_compression_toolkit.common.graph.base_graph import Graph, BaseNode, OutTensor
 from model_compression_toolkit.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher
+from model_compression_toolkit.common.constants import REUSE, REUSE_GROUP
 from model_compression_toolkit.keras.constants import KERNEL, BIAS, USE_BIAS, NUM_HEADS, KEY_DIM, VALUE_DIM, \
     QUERY_SHAPE, KEY_SHAPE, VALUE_SHAPE, OUTPUT_SHAPE, ATTENTION_AXES, ACTIVATION, LINEAR, UNITS, AXES, \
-    FUNCTION, DIMS, F_RESHAPE
+    FUNCTION, DIMS, F_RESHAPE, Q_KERNEL, Q_BIAS, K_KERNEL, K_BIAS, V_KERNEL, V_BIAS, OUTPUT_KERNEL, OUTPUT_BIAS
 
 
 class MHAParams:
@@ -71,7 +72,7 @@ class MHAParams:
         self.key_proj_shape = self.k_reshape_shape[:-1] + (self.query_key_dim,)
         self.value_proj_shape = self.v_reshape_shape[:-1] + (self.value_dim,)
         self.att_matrix_shape = (self.key_shape[0],) + (self.q_att_axes_prod, kv_att_axes_prod)
-        self.reuse_params = {'reuse': mha_node.reuse, 'reuse_group': mha_node.reuse_group}
+        self.reuse_params = {REUSE: mha_node.reuse, REUSE_GROUP: mha_node.reuse_group}
         self.concat_shape = (self.key_shape[0],) + (self.q_att_axes_prod, self.value_dim*self.num_heads)
         self.output_shape = self.concat_shape[:-1] + (self.d_model,)
 
@@ -157,30 +158,24 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
         """
         # add norm factor to query kernel and bias
         factor = (params.query_key_dim ** -0.5)
-        qk = mha_node.weights[self._get_weight_by_name(mha_node, '/query/kernel')][:, head_index, :].copy() * factor
-        kk = mha_node.weights[self._get_weight_by_name(mha_node, '/key/kernel')][:, head_index, :].copy()
-        vk = mha_node.weights[self._get_weight_by_name(mha_node, '/value/kernel')][:, head_index, :].copy()
-        qb = mha_node.weights[self._get_weight_by_name(mha_node, '/query/bias')][head_index, :].copy() * factor
-        kb = mha_node.weights[self._get_weight_by_name(mha_node, '/key/bias')][head_index, :].copy()
-        vb = mha_node.weights[self._get_weight_by_name(mha_node, '/value/bias')][head_index, :].copy()
+        qk = mha_node.weights[self._get_weight_by_name(mha_node, Q_KERNEL)][:, head_index, :].copy() * factor
+        kk = mha_node.weights[self._get_weight_by_name(mha_node, K_KERNEL)][:, head_index, :].copy()
+        vk = mha_node.weights[self._get_weight_by_name(mha_node, V_KERNEL)][:, head_index, :].copy()
+        qb = mha_node.weights[self._get_weight_by_name(mha_node, Q_BIAS)][head_index, :].copy() * factor
+        kb = mha_node.weights[self._get_weight_by_name(mha_node, K_BIAS)][head_index, :].copy()
+        vb = mha_node.weights[self._get_weight_by_name(mha_node, V_BIAS)][head_index, :].copy()
 
         # create new nodes:
         # project query, key & value inputs to query_key_dim, query_key_dim & value_dim respectively
         q_node = BaseNode(f'{mha_node.name}_query_{head_index}', {UNITS: params.query_key_dim, USE_BIAS: params.use_bias,
                                                                   ACTIVATION: LINEAR},
                           params.q_reshape_shape, params.query_proj_shape, {KERNEL: qk, BIAS: qb}, Dense, **params.reuse_params)
-        # query_nodes.append(q_node)
-        # graph.add_node(q_node)
         graph.add_node_with_in_edges(q_node, [q_reshape_node])
         k_node = BaseNode(f'{mha_node.name}_key_{head_index}', {UNITS: params.query_key_dim, USE_BIAS: params.use_bias, ACTIVATION: LINEAR},
                           params.k_reshape_shape, params.key_proj_shape, {KERNEL: kk, BIAS: kb}, Dense, **params.reuse_params)
-        # key_nodes.append(k_node)
-        # graph.add_node(k_node)
         graph.add_node_with_in_edges(k_node, [k_reshape_node])
         v_node = BaseNode(f'{mha_node.name}_value_{head_index}', {UNITS: params.value_dim, USE_BIAS: params.use_bias, ACTIVATION: LINEAR},
                           params.v_reshape_shape, params.value_proj_shape, {KERNEL: vk, BIAS: vb}, Dense, **params.reuse_params)
-        # value_nodes.append(v_node)
-        # graph.add_node(v_node)
         graph.add_node_with_in_edges(v_node, [v_reshape_node])
 
         # calculate attention matrix:
@@ -204,6 +199,40 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
         return dotv_node
 
     @staticmethod
+    def _concat_heads(graph, name, input_nodes, params):
+        """
+        concatenate attention heads
+
+        :param graph: input graph
+        :param name: MHA node name
+        :param input_nodes: all the outputs of the attention heads
+        :param params: MHA params object
+        :return: concat node
+        """
+        concat_node = BaseNode(f'{name}_concat', {},
+                               (params.value_proj_shape,)*params.num_heads, params.concat_shape, {}, Concatenate,
+                               **params.reuse_params)
+        graph.add_node_with_in_edges(concat_node, input_nodes)
+        return concat_node
+
+    def _project_output(self, graph, mha_node, input_node, params):
+        """
+        project all attention outputs (after concatenation
+
+        :param graph: input graph
+        :param mha_node: MHA node
+        :param input_node: concat node
+        :param params: MHA params object
+        :return: output node of the MHA node
+        """
+        w_out = mha_node.weights[self._get_weight_by_name(mha_node, OUTPUT_KERNEL)].copy().reshape((-1, params.d_model))
+        b_out = mha_node.weights[self._get_weight_by_name(mha_node, OUTPUT_BIAS)].copy()
+        output_dense = BaseNode(f'{mha_node.name}_output_dense', {UNITS: params.d_model, USE_BIAS: params.use_bias, ACTIVATION: LINEAR},
+                                params.concat_shape, params.output_shape, {KERNEL: w_out, BIAS: b_out}, Dense, **params.reuse_params)
+        graph.add_node_with_in_edges(output_dense, [input_node])
+        return output_dense
+
+    @staticmethod
     def _destandarize_output_shapes(graph, name, output_node, params):
         """
         return output to original MHA output shape
@@ -224,6 +253,35 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
         graph.add_node_with_in_edges(output_permute_node, [output_reshape_node])
 
         return output_permute_node
+
+    @staticmethod
+    def _connect_to_graph(graph, mha_node, q_permute_node, k_permute_node, v_permute_node, output_permute_node):
+        """
+        connect subgraph to input graph
+
+        :param graph: input graph
+        :param mha_node: MHA node to substitute inputs and outputs with
+        :param q_permute_node: 1st input to MHA node
+        :param k_permute_node: 2nd input to MHA node
+        :param v_permute_node: 3rd input to MHA node
+        :param output_permute_node: output node of MHA node
+        """
+        if len(graph.in_edges(mha_node)) == 3:
+            # MHA node is called with 3 inputs: Query, Value & Key
+            query_in_edge, value_in_edge, key_in_edge = graph.in_edges(mha_node)
+        else:
+            # MHA node is called with 2 inputs: Query & Value. Key=Value
+            query_in_edge, value_in_edge = graph.in_edges(mha_node)
+            key_in_edge = value_in_edge
+        graph.add_edge(query_in_edge[0], q_permute_node, **graph.get_edge_data(*query_in_edge, 0))
+        if key_in_edge is not value_in_edge:
+            graph.add_edge(key_in_edge[0], k_permute_node, **graph.get_edge_data(*key_in_edge, 0))
+        graph.add_edge(value_in_edge[0], v_permute_node, **graph.get_edge_data(*value_in_edge, 0))
+        graph.remove_edge(query_in_edge[0], mha_node)
+        graph.remove_edge(key_in_edge[0], mha_node)
+        if key_in_edge is not value_in_edge:
+            graph.remove_edge(value_in_edge[0], mha_node)
+        graph.reconnect_out_edges(current_node=mha_node, new_node=output_permute_node)
 
     def substitute(self,
                    graph: Graph,
@@ -260,38 +318,16 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
             att_head_output_nodes.append(dotv_node)
 
         # concatenate all attention heads
-        concat_node = BaseNode(f'{mha_node.name}_concat', {},
-                               (params.value_proj_shape,)*params.num_heads, params.concat_shape, {}, Concatenate,
-                               **params.reuse_params)
-        graph.add_node_with_in_edges(concat_node, att_head_output_nodes)
+        concat_node = self._concat_heads(graph, mha_node.name, att_head_output_nodes, params)
 
         # project output
-        w_out = mha_node.weights[self._get_weight_by_name(mha_node, '/attention_output/kernel')].copy().reshape((-1, params.d_model))
-        b_out = mha_node.weights[self._get_weight_by_name(mha_node, '/attention_output/bias')].copy()
-        output_dense = BaseNode(f'{mha_node.name}_output_dense', {UNITS: params.d_model, USE_BIAS: params.use_bias, ACTIVATION: LINEAR},
-                                params.concat_shape, params.output_shape, {KERNEL: w_out, BIAS: b_out}, Dense, **params.reuse_params)
-        graph.add_node_with_in_edges(output_dense, [concat_node])
+        output_dense = self._project_output(graph, mha_node, concat_node, params)
 
         # re-order output to match MHA node output (reshape+permute)
         output_permute_node = self._destandarize_output_shapes(graph, mha_node.name, output_dense, params)
 
         # connect edges to new nodes
-        if len(mha_in_edges) == 3:
-            # MHA node is called with 3 inputs: Query, Value & Key
-            query_in_edge, value_in_edge, key_in_edge = graph.in_edges(mha_node)
-        else:
-            # MHA node is called with 2 inputs: Query & Value. Key=Value
-            query_in_edge, value_in_edge = graph.in_edges(mha_node)
-            key_in_edge = value_in_edge
-        graph.add_edge(query_in_edge[0], q_permute_node, **graph.get_edge_data(*query_in_edge, 0))
-        if key_in_edge is not value_in_edge:
-            graph.add_edge(key_in_edge[0], k_permute_node, **graph.get_edge_data(*key_in_edge, 0))
-        graph.add_edge(value_in_edge[0], v_permute_node, **graph.get_edge_data(*value_in_edge, 0))
-        graph.remove_edge(query_in_edge[0], mha_node)
-        graph.remove_edge(key_in_edge[0], mha_node)
-        if key_in_edge is not value_in_edge:
-            graph.remove_edge(value_in_edge[0], mha_node)
-        graph.reconnect_out_edges(current_node=mha_node, new_node=output_permute_node)
+        self._connect_to_graph(graph, mha_node, q_permute_node, k_permute_node, v_permute_node, output_permute_node)
 
         # Finally, remove the MHA node
         graph.remove_node(mha_node, new_graph_outputs=[OutTensor(output_permute_node, 0)])
