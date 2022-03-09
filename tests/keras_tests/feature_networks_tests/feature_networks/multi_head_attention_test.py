@@ -84,4 +84,4 @@ class MultiHeadAttentionTest(BaseKerasFeatureNetworkTest):
         out_float = float_model(input_x).numpy()
         self.unit_test.assertTrue(out_quantized.shape == out_float.shape)
         nmse = np.mean(np.abs((out_quantized - out_float)) ** 2) / np.mean(np.abs(out_float) ** 2)
-        self.unit_test.assertTrue(np.isclose(nmse, 0))
+        self.unit_test.assertTrue(np.isclose(nmse, 0, atol=1e-7))

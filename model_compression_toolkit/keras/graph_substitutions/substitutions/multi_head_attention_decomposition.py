@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,55 @@ from model_compression_toolkit import common
 from model_compression_toolkit.common.graph.base_graph import Graph, BaseNode, OutTensor
 from model_compression_toolkit.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher
-from model_compression_toolkit.keras.constants import KERNEL, BIAS
+from model_compression_toolkit.keras.constants import KERNEL, BIAS, USE_BIAS, NUM_HEADS, KEY_DIM, VALUE_DIM, \
+    QUERY_SHAPE, KEY_SHAPE, VALUE_SHAPE, OUTPUT_SHAPE, ATTENTION_AXES, ACTIVATION, LINEAR, UNITS, AXES, \
+    FUNCTION, DIMS, F_RESHAPE
+
+
+class MHAParams:
+    """
+    A data class to hold all relevant parameters from the MHA node framework attributes
+    """
+    def __init__(self, mha_node):
+        """
+        Extract MHA params from layer attributes
+        :param mha_node: MHA node
+        """
+        self.num_heads = mha_node.framework_attr[NUM_HEADS]
+        self.use_bias = mha_node.framework_attr[USE_BIAS]
+        self.query_key_dim = mha_node.framework_attr[KEY_DIM]
+        self.value_dim = mha_node.framework_attr[VALUE_DIM]
+        self.query_shape = tuple(mha_node.framework_attr[QUERY_SHAPE])
+        self.key_shape = tuple(mha_node.framework_attr[KEY_SHAPE])
+        self.value_shape = tuple(mha_node.framework_attr[VALUE_SHAPE])
+        output_dim = mha_node.framework_attr[OUTPUT_SHAPE]
+        self.d_model = self.query_shape[-1] if output_dim is None else output_dim
+        self.attention_axes = tuple(mha_node.framework_attr[ATTENTION_AXES])
+
+        # compute the parameters for folding the iteration and attention axes
+        iter_axes, iter_axes_prod, self.q_att_axes_prod, kv_att_axes_prod = [], 1, 1, 1
+        for i, (aq, ak) in enumerate(zip(self.query_shape[1:-1], self.key_shape[1:-1])):
+            if i+1 in self.attention_axes:
+                self.q_att_axes_prod = self.q_att_axes_prod * aq
+                kv_att_axes_prod = kv_att_axes_prod * ak
+            else:
+                iter_axes.append(i+1)
+                iter_axes_prod = iter_axes_prod * aq
+        self.perm_dims = [0] + iter_axes + list(self.attention_axes) + [len(self.query_shape)-1]
+        self.output_perm_dims = [self.perm_dims.index(i) for i in range(len(self.perm_dims))]  # dims to revert perm_dims
+        self.q_perm_shape = tuple([self.query_shape[i] for i in self.perm_dims])
+        self.k_perm_shape = tuple([self.key_shape[i] for i in self.perm_dims])
+        self.v_perm_shape = tuple([self.value_shape[i] for i in self.perm_dims])
+        self.q_reshape_shape = tuple([self.query_shape[0], self.q_att_axes_prod, self.query_shape[-1]])
+        self.k_reshape_shape = tuple([self.key_shape[0], kv_att_axes_prod, self.key_shape[-1]])
+        self.v_reshape_shape = tuple([self.value_shape[0], kv_att_axes_prod, self.value_shape[-1]])
+        self.query_proj_shape = self.q_reshape_shape[:-1] + (self.query_key_dim,)
+        self.key_proj_shape = self.k_reshape_shape[:-1] + (self.query_key_dim,)
+        self.value_proj_shape = self.v_reshape_shape[:-1] + (self.value_dim,)
+        self.att_matrix_shape = (self.key_shape[0],) + (self.q_att_axes_prod, kv_att_axes_prod)
+        self.reuse_params = {'reuse': mha_node.reuse, 'reuse_group': mha_node.reuse_group}
+        self.concat_shape = (self.key_shape[0],) + (self.q_att_axes_prod, self.value_dim*self.num_heads)
+        self.output_shape = self.concat_shape[:-1] + (self.d_model,)
 
 
 class MultiHeadAttentionDecomposition(common.BaseSubstitution):
@@ -41,12 +89,151 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
         """
         super().__init__(matcher_instance=NodeOperationMatcher(MultiHeadAttention))
 
+    @staticmethod
+    def _get_weight_by_name(mha_node, w_str):
+        return [k for k in mha_node.weights.keys() if w_str in k][0]
+
+    @staticmethod
+    def _standarize_input_shapes(graph, name, num_input_edges, params):
+        """
+        Add Permute and tf.reshape nodes to stadarize the inputs. output shape will be [B, Sequence, Channels],
+        where the batch axis contains the iteration axes, if any
+
+        :param graph: input graph
+        :param name: MHA node name
+        :param num_input_edges: number of input to MHA node. Must be either 2 or 3
+        :param params: MHA params object
+        :return: Query, Key & Value nodes to use as inputs to subgraph,
+                 Standarized Query, Key & Value nodes to connect to the rest of the subgraph
+        """
+        assert num_input_edges in [2, 3]
+        q_permute_node = BaseNode(f'{name}_query_input_permute', {DIMS: params.perm_dims[1:]},
+                                  params.query_shape, params.q_perm_shape, {}, Permute, **params.reuse_params)
+        graph.add_node(q_permute_node)
+        v_permute_node = BaseNode(f'{name}_value_input_permute', {DIMS: params.perm_dims[1:]},
+                                  params.value_shape, params.v_perm_shape, {}, Permute, **params.reuse_params)
+        graph.add_node(v_permute_node)
+
+        q_reshape_node = FunctionalNode(f'{name}_query_input_reshape', {FUNCTION: F_RESHAPE},
+                                        params.q_perm_shape, params.q_reshape_shape, {}, TFOpLambda,
+                                        op_call_args=[(-1,) + params.q_reshape_shape[1:]], op_call_kwargs={},
+                                        functional_op=tf.reshape, **params.reuse_params)
+        graph.add_node_with_in_edges(q_reshape_node, [q_permute_node])
+        v_reshape_node = FunctionalNode(f'{name}_value_input_reshape', {FUNCTION: F_RESHAPE},
+                                        params.v_perm_shape, params.v_reshape_shape, {}, TFOpLambda,
+                                        op_call_args=[(-1,) + params.v_reshape_shape[1:]], op_call_kwargs={},
+                                        functional_op=tf.reshape, **params.reuse_params)
+        graph.add_node_with_in_edges(v_reshape_node, [v_permute_node])
+        if num_input_edges == 3:
+            # MHA node is called with 3 inputs: Query, Value & Key
+            k_permute_node = BaseNode(f'{name}_key_input_permute', {DIMS: params.perm_dims[1:]},
+                                      params.key_shape, params.k_perm_shape, {}, Permute, **params.reuse_params)
+            graph.add_node(k_permute_node)
+            k_reshape_node = FunctionalNode(f'{name}_key_input_reshape', {FUNCTION: F_RESHAPE},
+                                            params.k_perm_shape, params.k_reshape_shape, {}, TFOpLambda,
+                                            op_call_args=[(-1,) + params.k_reshape_shape[1:]], op_call_kwargs={},
+                                            functional_op=tf.reshape, **params.reuse_params)
+            graph.add_node_with_in_edges(k_reshape_node, [k_permute_node])
+        else:
+            # MHA node is called with 2 inputs: Query & Value. Key=Value
+            k_permute_node = v_permute_node
+            k_reshape_node = v_reshape_node
+
+        return (q_permute_node, k_permute_node, v_permute_node,
+                q_reshape_node, k_reshape_node, v_reshape_node)
+
+    def _calc_attention_head(self, graph, q_reshape_node, k_reshape_node, v_reshape_node, mha_node,
+                             head_index, params):
+        """
+        Generate the attention head subgraph: Dot(softmax(Dot(proj(Q), proj(K))), proj(V))
+        :param graph: input graph
+        :param q_reshape_node:
+        :param k_reshape_node:
+        :param v_reshape_node:
+        :param mha_node: MHA node
+        :param head_index: head index being generated. used to set correct node names
+        :param params: MHA params object
+        :return: output of attention head
+        """
+        # add norm factor to query kernel and bias
+        factor = (params.query_key_dim ** -0.5)
+        qk = mha_node.weights[self._get_weight_by_name(mha_node, '/query/kernel')][:, head_index, :].copy() * factor
+        kk = mha_node.weights[self._get_weight_by_name(mha_node, '/key/kernel')][:, head_index, :].copy()
+        vk = mha_node.weights[self._get_weight_by_name(mha_node, '/value/kernel')][:, head_index, :].copy()
+        qb = mha_node.weights[self._get_weight_by_name(mha_node, '/query/bias')][head_index, :].copy() * factor
+        kb = mha_node.weights[self._get_weight_by_name(mha_node, '/key/bias')][head_index, :].copy()
+        vb = mha_node.weights[self._get_weight_by_name(mha_node, '/value/bias')][head_index, :].copy()
+
+        # create new nodes:
+        # project query, key & value inputs to query_key_dim, query_key_dim & value_dim respectively
+        q_node = BaseNode(f'{mha_node.name}_query_{head_index}', {UNITS: params.query_key_dim, USE_BIAS: params.use_bias,
+                                                                  ACTIVATION: LINEAR},
+                          params.q_reshape_shape, params.query_proj_shape, {KERNEL: qk, BIAS: qb}, Dense, **params.reuse_params)
+        # query_nodes.append(q_node)
+        # graph.add_node(q_node)
+        graph.add_node_with_in_edges(q_node, [q_reshape_node])
+        k_node = BaseNode(f'{mha_node.name}_key_{head_index}', {UNITS: params.query_key_dim, USE_BIAS: params.use_bias, ACTIVATION: LINEAR},
+                          params.k_reshape_shape, params.key_proj_shape, {KERNEL: kk, BIAS: kb}, Dense, **params.reuse_params)
+        # key_nodes.append(k_node)
+        # graph.add_node(k_node)
+        graph.add_node_with_in_edges(k_node, [k_reshape_node])
+        v_node = BaseNode(f'{mha_node.name}_value_{head_index}', {UNITS: params.value_dim, USE_BIAS: params.use_bias, ACTIVATION: LINEAR},
+                          params.v_reshape_shape, params.value_proj_shape, {KERNEL: vk, BIAS: vb}, Dense, **params.reuse_params)
+        # value_nodes.append(v_node)
+        # graph.add_node(v_node)
+        graph.add_node_with_in_edges(v_node, [v_reshape_node])
+
+        # calculate attention matrix:
+        # apply tf.matmul(q, tf.transpose(k, perm=[0, 2, 1]) as layers.Dot(axes=2)([q, k])
+        dot_node = BaseNode(f'{mha_node.name}_dot_{head_index}', {AXES: 2},
+                            (params.query_proj_shape, params.key_proj_shape), params.att_matrix_shape, {}, Dot,
+                            **params.reuse_params)
+        graph.add_node_with_in_edges(dot_node, [q_node, k_node])
+
+        # apply softmax on attention matrix
+        softmax_node = BaseNode(f'{mha_node.name}_softmax_{head_index}', {},
+                                params.att_matrix_shape, params.att_matrix_shape,
+                                {}, Softmax, **params.reuse_params)
+        graph.add_node_with_in_edges(softmax_node, [dot_node])
+
+        dotv_node = BaseNode(f'{mha_node.name}_dotv_{head_index}', {AXES: (2, 1)},
+                             (params.att_matrix_shape, params.value_proj_shape), params.value_proj_shape,
+                             {}, Dot, **params.reuse_params)
+        graph.add_node_with_in_edges(dotv_node, [softmax_node, v_node])
+
+        return dotv_node
+
+    @staticmethod
+    def _destandarize_output_shapes(graph, name, output_node, params):
+        """
+        return output to original MHA output shape
+        :param graph: input graph
+        :param name: MHA node name
+        :param output_node: output node of output projection
+        :param params: MHA params object
+        :return: Destandarized output node, which matches in shape the output of the MHA node
+        """
+        output_reshape_node = FunctionalNode(f'{name}_output_reshape', {FUNCTION: F_RESHAPE},
+                                             params.output_shape, params.q_perm_shape[:-1] + (params.d_model,), {}, TFOpLambda,
+                                             op_call_args=[(-1,) + params.q_perm_shape[1:-1] + (params.d_model,)], op_call_kwargs={},
+                                             functional_op=tf.reshape, **params.reuse_params)
+        graph.add_node_with_in_edges(output_reshape_node, [output_node])
+        output_permute_node = BaseNode(f'{name}_output_permute', {DIMS: params.output_perm_dims[1:]},
+                                       params.q_perm_shape[:-1] + (params.d_model,), params.query_shape[:-1] + (params.d_model,),
+                                       {}, Permute, **params.reuse_params)
+        graph.add_node_with_in_edges(output_permute_node, [output_reshape_node])
+
+        return output_permute_node
+
     def substitute(self,
                    graph: Graph,
                    mha_node: BaseNode) -> Graph:
         """
         Removes a MultiHeadAttention node from the graph, and replaces it with
-         a compatible graph that consists of Dense, Dot, Softmax and Concatenate layers
+         a compatible graph that consists of Dense, Dot, Softmax and Concatenate layers.
+        Additional reshape and permute nodes are used to shape the inputs to the standard
+        of [B, Sequence, C]. All attention axes are folded on the Sequence axis. Iteration
+        axes are folded on the Bacth axis
 
         Args:
             graph: Graph we apply the substitution on.
@@ -56,181 +243,37 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
             Graph after applying the substitution.
         """
 
-        query_nodes, key_nodes, value_nodes, att_head_output_nodes = [], [], [], []
+        params = MHAParams(mha_node)
 
-        # MHA params:
-        num_heads = mha_node.framework_attr['num_heads']
-        use_bias = mha_node.framework_attr['use_bias']
-        query_key_dim = mha_node.framework_attr['key_dim']
-        value_dim = mha_node.framework_attr['value_dim']
-        query_shape = tuple(mha_node.framework_attr['query_shape'])
-        key_shape = tuple(mha_node.framework_attr['key_shape'])
-        value_shape = tuple(mha_node.framework_attr['value_shape'])
-        output_dim = mha_node.framework_attr['output_shape']
-        d_model = query_shape[-1] if output_dim is None else output_dim
-        attention_axes = tuple(mha_node.framework_attr['attention_axes'])
-
-        iter_axes, iter_axes_prod, q_att_axes_prod, kv_att_axes_prod = [], 1, 1, 1
-        for i, (aq, ak) in enumerate(zip(query_shape[1:-1], key_shape[1:-1])):
-            if i+1 in attention_axes:
-                q_att_axes_prod = q_att_axes_prod * aq
-                kv_att_axes_prod = kv_att_axes_prod * ak
-            else:
-                iter_axes.append(i+1)
-                iter_axes_prod = iter_axes_prod * aq
-        perm_dims = [0] + iter_axes + list(attention_axes) + [len(query_shape)-1]
-        output_perm_dims = [perm_dims.index(i) for i in range(len(perm_dims))]  # dims to revert perm_dims
-        q_perm_shape = tuple([query_shape[i] for i in perm_dims])
-        k_perm_shape = tuple([key_shape[i] for i in perm_dims])
-        v_perm_shape = tuple([value_shape[i] for i in perm_dims])
-        q_reshape_shape = tuple([query_shape[0], q_att_axes_prod, query_shape[-1]])
-        k_reshape_shape = tuple([key_shape[0], kv_att_axes_prod, key_shape[-1]])
-        v_reshape_shape = tuple([value_shape[0], kv_att_axes_prod, value_shape[-1]])
-        query_proj_shape = q_reshape_shape[:-1] + (query_key_dim,)
-        key_proj_shape = k_reshape_shape[:-1] + (query_key_dim,)
-        value_proj_shape = v_reshape_shape[:-1] + (value_dim,)
-        att_matrix_shape = (key_shape[0],) + (q_att_axes_prod, kv_att_axes_prod)
-
-        get_weight_name = lambda w_str: [k for k in mha_node.weights.keys() if w_str in k][0]
+        mha_in_edges = graph.in_edges(mha_node)
 
         # input permutation and reshape to standard shape: (batch, sequence, channels)
-        mha_in_edges = graph.in_edges(mha_node)
-        if len(mha_in_edges) == 3:
-            # MHA node is called with 3 inputs: Query, Value & Key
-            q_permute_node = BaseNode(f'{mha_node.name}_query_input_permute', {'dims': perm_dims[1:]},
-                                      query_shape, q_perm_shape, {}, Permute,
-                                      reuse=mha_node.reuse, reuse_group=mha_node.reuse_group)
-            graph.add_node(q_permute_node)
-            k_permute_node = BaseNode(f'{mha_node.name}_key_input_permute', {'dims': perm_dims[1:]},
-                                      key_shape, k_perm_shape, {}, Permute,
-                                      reuse=mha_node.reuse, reuse_group=mha_node.reuse_group)
-            graph.add_node(k_permute_node)
-            v_permute_node = BaseNode(f'{mha_node.name}_value_input_permute', {'dims': perm_dims[1:]},
-                                      value_shape, v_perm_shape, {}, Permute,
-                                      reuse=mha_node.reuse, reuse_group=mha_node.reuse_group)
-            graph.add_node(v_permute_node)
-
-            q_reshape_node = FunctionalNode(f'{mha_node.name}_query_input_reshape', {'function': 'reshape'},
-                                            q_perm_shape, q_reshape_shape, {}, TFOpLambda,
-                                            op_call_args=[(-1,) + q_reshape_shape[1:]], op_call_kwargs={},
-                                            reuse=mha_node.reuse, reuse_group=mha_node.reuse_group,
-                                            functional_op=tf.reshape)
-            graph.add_node_with_in_edges(q_reshape_node, [q_permute_node])
-            k_reshape_node = FunctionalNode(f'{mha_node.name}_key_input_reshape', {'function': 'reshape'},
-                                            k_perm_shape, k_reshape_shape, {}, TFOpLambda,
-                                            op_call_args=[(-1,) + k_reshape_shape[1:]], op_call_kwargs={},
-                                            reuse=mha_node.reuse, reuse_group=mha_node.reuse_group,
-                                            functional_op=tf.reshape)
-            graph.add_node_with_in_edges(k_reshape_node, [k_permute_node])
-            v_reshape_node = FunctionalNode(f'{mha_node.name}_value_input_reshape', {'function': 'reshape'},
-                                            v_perm_shape, v_reshape_shape, {}, TFOpLambda,
-                                            op_call_args=[(-1,) + v_reshape_shape[1:]], op_call_kwargs={},
-                                            reuse=mha_node.reuse, reuse_group=mha_node.reuse_group,
-                                            functional_op=tf.reshape)
-            graph.add_node_with_in_edges(v_reshape_node, [v_permute_node])
-
-        else:
-            # MHA node is called with 2 inputs: Query & Value. Key=Value
-            q_permute_node = BaseNode(f'{mha_node.name}_query_input_permute', {'dims': perm_dims[1:]},
-                                      query_shape, q_perm_shape, {}, Permute,
-                                      reuse=mha_node.reuse, reuse_group=mha_node.reuse_group)
-            graph.add_node(q_permute_node)
-            v_permute_node = BaseNode(f'{mha_node.name}_value_input_permute', {'dims': perm_dims[1:]},
-                                      value_shape, v_perm_shape, {}, Permute,
-                                      reuse=mha_node.reuse, reuse_group=mha_node.reuse_group)
-            graph.add_node(v_permute_node)
-            q_reshape_node = FunctionalNode(f'{mha_node.name}_query_input_reshape', {'function': 'reshape'},
-                                            q_perm_shape, q_reshape_shape, {}, TFOpLambda,
-                                            op_call_args=[(-1,) + q_reshape_shape[1:]], op_call_kwargs={},
-                                            reuse=mha_node.reuse, reuse_group=mha_node.reuse_group,
-                                            functional_op=tf.reshape)
-            graph.add_node_with_in_edges(q_reshape_node, [q_permute_node])
-            v_reshape_node = FunctionalNode(f'{mha_node.name}_value_input_reshape', {'function': 'reshape'},
-                                            v_perm_shape, v_reshape_shape, {}, TFOpLambda,
-                                            op_call_args=[(-1,) + v_reshape_shape[1:]], op_call_kwargs={},
-                                            reuse=mha_node.reuse, reuse_group=mha_node.reuse_group,
-                                            functional_op=tf.reshape)
-            graph.add_node_with_in_edges(v_reshape_node, [v_permute_node])
-            k_permute_node = v_permute_node
-            k_reshape_node = v_reshape_node
-            k_reshape_shape = v_reshape_shape
+        q_permute_node, k_permute_node, v_permute_node, \
+        q_reshape_node, k_reshape_node, v_reshape_node = \
+            self._standarize_input_shapes(graph, mha_node.name, len(mha_in_edges), params)
 
         # Generate nodes for attention heads:
-        for h in range(num_heads):
-            # add norm factor to query kernel and bias
-            qk = mha_node.weights[get_weight_name('/query/kernel')][:, h, :].copy() * (query_key_dim ** -0.5)
-            kk = mha_node.weights[get_weight_name('/key/kernel')][:, h, :].copy()
-            vk = mha_node.weights[get_weight_name('/value/kernel')][:, h, :].copy()
-            qb = mha_node.weights[get_weight_name('/query/bias')][h, :].copy() * (query_key_dim ** -0.5)
-            kb = mha_node.weights[get_weight_name('/key/bias')][h, :].copy()
-            vb = mha_node.weights[get_weight_name('/value/bias')][h, :].copy()
-
-            # create new nodes:
-            # project query, key & value inputs to query_key_dim, query_key_dim & value_dim respectively
-            q_node = BaseNode(f'{mha_node.name}_query_{h}', {'units': query_key_dim, 'use_bias': use_bias, 'activation': 'linear'},
-                              q_reshape_shape, query_proj_shape, {KERNEL: qk, BIAS: qb}, Dense,
-                              reuse=mha_node.reuse, reuse_group=mha_node.reuse_group)
-            # query_nodes.append(q_node)
-            # graph.add_node(q_node)
-            graph.add_node_with_in_edges(q_node, [q_reshape_node])
-            k_node = BaseNode(f'{mha_node.name}_key_{h}', {'units': query_key_dim, 'use_bias': use_bias, 'activation': 'linear'},
-                              k_reshape_shape, key_proj_shape, {KERNEL: kk, BIAS: kb}, Dense,
-                              reuse=mha_node.reuse, reuse_group=mha_node.reuse_group)
-            # key_nodes.append(k_node)
-            # graph.add_node(k_node)
-            graph.add_node_with_in_edges(k_node, [k_reshape_node])
-            v_node = BaseNode(f'{mha_node.name}_value_{h}', {'units': value_dim, 'use_bias': use_bias, 'activation': 'linear'},
-                              v_reshape_shape, value_proj_shape, {KERNEL: vk, BIAS: vb}, Dense,
-                              reuse=mha_node.reuse, reuse_group=mha_node.reuse_group)
-            # value_nodes.append(v_node)
-            # graph.add_node(v_node)
-            graph.add_node_with_in_edges(v_node, [v_reshape_node])
-
-            # calculate attention matrix:
-            # apply tf.matmul(q, tf.transpose(k, perm=[0, 2, 1]) as layers.Dot(axes=2)([q, k])
-            dot_node = BaseNode(f'{mha_node.name}_dot_{h}', {'axes': 2},
-                                (query_proj_shape, key_proj_shape), att_matrix_shape, {}, Dot,
-                                reuse=mha_node.reuse, reuse_group=mha_node.reuse_group)
-            graph.add_node_with_in_edges(dot_node, [q_node, k_node])
-
-            # apply softmax on attention matrix
-            softmax_node = BaseNode(f'{mha_node.name}_softmax_{h}', {},
-                                    att_matrix_shape, att_matrix_shape,
-                                    {}, Softmax, reuse=mha_node.reuse, reuse_group=mha_node.reuse_group)
-            graph.add_node_with_in_edges(softmax_node, [dot_node])
-
-            dotv_node = BaseNode(f'{mha_node.name}_dotv_{h}', {'axes': (2, 1)},
-                                 (att_matrix_shape, value_proj_shape), value_proj_shape,
-                                 {}, Dot, reuse=mha_node.reuse, reuse_group=mha_node.reuse_group)
-            graph.add_node_with_in_edges(dotv_node, [softmax_node, v_node])
+        att_head_output_nodes = []
+        for head_index in range(params.num_heads):
+            dotv_node = self._calc_attention_head(graph, q_reshape_node, k_reshape_node, v_reshape_node,
+                                                  mha_node, head_index, params)
             att_head_output_nodes.append(dotv_node)
 
         # concatenate all attention heads
-        concat_shape = (key_shape[0],) + (q_att_axes_prod, value_dim*num_heads)
-        output_shape = concat_shape[:-1] + (d_model,)
         concat_node = BaseNode(f'{mha_node.name}_concat', {},
-                               (value_proj_shape,)*num_heads, concat_shape, {}, Concatenate,
-                               reuse=mha_node.reuse, reuse_group=mha_node.reuse_group)
+                               (params.value_proj_shape,)*params.num_heads, params.concat_shape, {}, Concatenate,
+                               **params.reuse_params)
         graph.add_node_with_in_edges(concat_node, att_head_output_nodes)
 
-        w_out = mha_node.weights[get_weight_name('/attention_output/kernel')].copy().reshape((-1, d_model))
-        b_out = mha_node.weights[get_weight_name('/attention_output/bias')].copy()
-        output_dense = BaseNode(f'{mha_node.name}_output_dense', {'units': d_model, 'use_bias': use_bias, 'activation': 'linear'},
-                                concat_shape, output_shape, {KERNEL: w_out, BIAS: b_out}, Dense,
-                                reuse=mha_node.reuse, reuse_group=mha_node.reuse_group)
+        # project output
+        w_out = mha_node.weights[self._get_weight_by_name(mha_node, '/attention_output/kernel')].copy().reshape((-1, params.d_model))
+        b_out = mha_node.weights[self._get_weight_by_name(mha_node, '/attention_output/bias')].copy()
+        output_dense = BaseNode(f'{mha_node.name}_output_dense', {UNITS: params.d_model, USE_BIAS: params.use_bias, ACTIVATION: LINEAR},
+                                params.concat_shape, params.output_shape, {KERNEL: w_out, BIAS: b_out}, Dense, **params.reuse_params)
         graph.add_node_with_in_edges(output_dense, [concat_node])
 
         # re-order output to match MHA node output (reshape+permute)
-        output_reshape_node = FunctionalNode(f'{mha_node.name}_output_reshape', {'function': 'reshape'},
-                                             output_shape, q_perm_shape[:-1] + (d_model,), {}, TFOpLambda,
-                                             op_call_args=[(-1,) + q_perm_shape[1:-1] + (d_model,)], op_call_kwargs={},
-                                             reuse=mha_node.reuse, reuse_group=mha_node.reuse_group,
-                                             functional_op=tf.reshape)
-        graph.add_node_with_in_edges(output_reshape_node, [output_dense])
-        output_permute_node = BaseNode(f'{mha_node.name}_output_permute', {'dims': output_perm_dims[1:]},
-                                       q_perm_shape[:-1] + (d_model,), query_shape[:-1] + (d_model,), {}, Permute,
-                                       reuse=mha_node.reuse, reuse_group=mha_node.reuse_group)
-        graph.add_node_with_in_edges(output_permute_node, [output_reshape_node])
+        output_permute_node = self._destandarize_output_shapes(graph, mha_node.name, output_dense, params)
 
         # connect edges to new nodes
         if len(mha_in_edges) == 3:
@@ -250,6 +293,7 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
             graph.remove_edge(value_in_edge[0], mha_node)
         graph.reconnect_out_edges(current_node=mha_node, new_node=output_permute_node)
 
+        # Finally, remove the MHA node
         graph.remove_node(mha_node, new_graph_outputs=[OutTensor(output_permute_node, 0)])
 
         return graph
