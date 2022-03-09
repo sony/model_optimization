@@ -28,6 +28,9 @@ SCALE_PER_CHANNEL = 'scale_per_channel'
 RANGE_MIN = 'range_min'
 RANGE_MAX = 'range_max'
 
+# BaseNode attributes
+REUSE = 'reuse'
+REUSE_GROUP = 'reuse_group'
 
 # Data types:
 DATA_TYPE = 'dtype'

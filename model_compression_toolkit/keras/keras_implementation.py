@@ -26,6 +26,8 @@ from model_compression_toolkit.keras.graph_substitutions.substitutions.relu_boun
     ReLUBoundCorrection
 from model_compression_toolkit.keras.graph_substitutions.substitutions.remove_relu_upper_bound import \
     RemoveReLUUpperBound
+from model_compression_toolkit.keras.graph_substitutions.substitutions.multi_head_attention_decomposition import \
+    MultiHeadAttentionDecomposition
 from model_compression_toolkit.keras.graph_substitutions.substitutions.scale_equalization import \
     ScaleEqualization, ScaleEqualizationWithPad, ScaleEqualizationMidActivation, ScaleEqualizationMidActivationWithPad
 from model_compression_toolkit.keras.graph_substitutions.substitutions.separableconv_decomposition import \
@@ -184,6 +186,7 @@ class KerasImplementation(FrameworkImplementation):
 
         """
         return [SeparableConvDecomposition(),
+                MultiHeadAttentionDecomposition(),
                 ActivationDecomposition()]
 
     def get_substitutions_pre_statistics_collection(self) -> List[common.BaseSubstitution]:

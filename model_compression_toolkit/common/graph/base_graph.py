@@ -319,6 +319,31 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             self.add_edge(ie.source_node, new_node, **ie.get_attributes())
             self.remove_edge(ie.source_node, current_node)
 
+    def add_node_with_in_edges(self, new_node: BaseNode, input_nodes: List[BaseNode],
+                               input_nodes_output_index: List[int] = []):
+        """
+        Add node to graph and connect it to its input nodes
+        (useful when adding a node during substitutions).
+
+        Args:
+            new_node: Node to add.
+            input_nodes: A list of new_node input nodes. The order is the sink_index of the edge
+             between the input node and new_node
+            input_nodes_output_index: A list output indices from input nodes. The order is the
+             source_index of the edge. Deafult is an empty list which means all output indices
+             are zero
+        """
+
+        if len(input_nodes_output_index) == 0:
+            input_nodes_output_index = [0] * len(input_nodes)
+
+        if len(input_nodes_output_index) != len(input_nodes):
+            raise Exception('Graph.add_node_with_in_edges: input_nodes & input_nodes_output_index must be the same length')
+
+        self.add_node(new_node)
+        for sink_index, (in_node, source_index) in enumerate(zip(input_nodes, input_nodes_output_index)):
+            self.add_edge(in_node, new_node, source_index=source_index, sink_index=sink_index)
+
     def replace_output_node(self,
                             current_node: BaseNode,
                             new_node: BaseNode):

@@ -19,12 +19,11 @@ import tensorflow as tf
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
         MaxPooling2D, Activation, ReLU, GlobalAveragePooling2D, Add, Multiply, AveragePooling2D, UpSampling2D, InputLayer, \
-        Concatenate, Softmax, PReLU, Flatten, Cropping2D, ELU, Dot, LeakyReLU
+        Concatenate, Softmax, PReLU, Flatten, Cropping2D, ELU, Dot, LeakyReLU, Permute
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
     Dropout, MaxPooling2D, Activation, ReLU, GlobalAveragePooling2D, Add, Multiply, AveragePooling2D, UpSampling2D, \
-    InputLayer, Concatenate, Softmax, PReLU, Flatten, Cropping2D, Dot, ELU, LeakyReLU
-
+    InputLayer, Concatenate, Softmax, PReLU, Flatten, Cropping2D, Dot, ELU, LeakyReLU, Permute
 
 from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.common.framework_info import FrameworkInfo, ChannelAxis
@@ -52,10 +51,12 @@ KERNEL_OPS = [Conv2D,
 NO_QUANTIZATION = [Reshape,
                    tf.reshape,
                    Flatten,
+                   Permute,
                    Cropping2D,
                    ZeroPadding2D,
                    Dropout,
                    MaxPooling2D,
+                   tf.reshape,
                    tf.split,
                    tf.quantization.fake_quant_with_min_max_vars]  # TODO:  replace with marking
 
@@ -88,6 +89,7 @@ ACTIVATION = [Activation,
               tf.nn.selu,
               tf.nn.softplus,
               tf.nn.softmax,
+              Dot,
               tf.add,
               tf.multiply,
               tf.reduce_mean,
