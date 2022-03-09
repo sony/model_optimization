@@ -81,11 +81,10 @@ def qparams_selection_tensor_search(error_function: Callable,
     # eventually used to select the threshold with the minimal error.
     for i in range(n_iter):
         if per_channel:
-            per_channel_error = []
-            for j in range(tensor_data_r.shape[0]):  # iterate all channels of the tensor.
-                qt = quantize_tensor(tensor_data_r[j, :], threshold.flatten()[j] / (2 ** i), n_bits, signed)
-                error = error_function(qt, tensor_data_r[j, :], threshold=threshold.flatten()[j] / (2 ** i))
-                per_channel_error.append(error)
+            threshold_hat = (threshold / (2 ** i)).reshape([-1, 1])
+            qt = quantize_tensor(tensor_data_r, threshold_hat, n_bits, signed)
+            per_channel_error = _error_function_wrapper(error_function, tensor_data_r, qt, threshold_hat)
+
             error_list.append(np.asarray(per_channel_error))
         else:  # quantize per-tensor
             qt = quantize_tensor(tensor_data, threshold / (2 ** i), n_bits, signed)
@@ -622,3 +621,19 @@ def get_init_threshold(min_threshold: float, tensor_max: np.ndarray, per_channel
         init_t[tensor_max < min_threshold] = min_threshold
         return init_t
     return max(min_threshold, tensor_max)
+
+
+def _error_function_wrapper(error_function, float_tensor, q_tensor, in_threshold):
+    """
+    Wrapper method for using the error methods in a vectorized per-channel parameters' search.
+    Args:
+        error_function: error_function: Function to compute the error between the original and quantized tensors.
+        float_tensor: Numpy array with float tensor's content.
+        q_tensor: Numpy array with quantized tensor's content.
+        in_threshold: Threshold the tensor is quantized by (used in specific error functions only).
+    Returns: A list of error values per-channel for the quantized tensor, according to the error function.
+    """
+    _error_per_list = []
+    for j in range(float_tensor.shape[0]):  # iterate all channels of the tensor.
+        _error_per_list.append(error_function(float_tensor[j, :], q_tensor[j, :], threshold=in_threshold[j]))
+    return _error_per_list
