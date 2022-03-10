@@ -44,8 +44,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
         quantization_error_methods = [mct.QuantizationErrorMethod.MSE,
                                       mct.QuantizationErrorMethod.NOCLIPPING,
                                       mct.QuantizationErrorMethod.MAE,
-                                      mct.QuantizationErrorMethod.LP,
-                                      mct.QuantizationErrorMethod.KL]
+                                      mct.QuantizationErrorMethod.LP]
         bias_correction = [True, False]
         relu_unbound_correction = [True, False]
         input_scaling = [True, False]
@@ -62,9 +61,6 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         for quantize_method, error_method, bias_correction, per_channel, input_scaling in weights_test_combinations:
-            if per_channel and error_method == mct.QuantizationErrorMethod.KL:
-                # we omit tests for per-channel with KL error method since it takes very long runtime
-                continue
             qc = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
                                         weights_error_method=error_method,
                                         activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
