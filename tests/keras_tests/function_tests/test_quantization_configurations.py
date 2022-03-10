@@ -22,6 +22,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 import itertools
 
+
 def model_gen():
     inputs = layers.Input(shape=[16, 16, 3])
     x = layers.Conv2D(2, 3, padding='same')(inputs)
@@ -41,10 +42,10 @@ class TestQuantizationConfigurations(unittest.TestCase):
                              mct.QuantizationMethod.SYMMETRIC,
                              mct.QuantizationMethod.UNIFORM]
         quantization_error_methods = [mct.QuantizationErrorMethod.MSE,
-                                    mct.QuantizationErrorMethod.NOCLIPPING,
-                                    mct.QuantizationErrorMethod.MAE,
-                                    mct.QuantizationErrorMethod.LP,
-                                    mct.QuantizationErrorMethod.KL]
+                                      mct.QuantizationErrorMethod.NOCLIPPING,
+                                      mct.QuantizationErrorMethod.MAE,
+                                      mct.QuantizationErrorMethod.LP,
+                                      mct.QuantizationErrorMethod.KL]
         bias_correction = [True, False]
         relu_unbound_correction = [True, False]
         input_scaling = [True, False]
@@ -61,12 +62,15 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         for quantize_method, error_method, bias_correction, per_channel, input_scaling in weights_test_combinations:
+            if per_channel and error_method == mct.QuantizationErrorMethod.KL:
+                # we omit tests for per-channel with KL error method since it takes very long runtime
+                continue
             qc = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
                                         weights_error_method=error_method,
                                         activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                                         weights_quantization_method=quantize_method,
-                                        activation_n_bits=8,
-                                        weights_n_bits=16,
+                                        activation_n_bits=16,
+                                        weights_n_bits=8,
                                         relu_unbound_correction=False,
                                         weights_bias_correction=bias_correction,
                                         weights_per_channel_threshold=per_channel,
