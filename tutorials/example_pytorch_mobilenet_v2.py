@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from torchvision.models import mobilenet_v2
 from PIL import Image
 from torchvision import transforms
+from torchvision.models import mobilenet_v2
+
 import model_compression_toolkit as mct
 
 """
@@ -38,19 +39,18 @@ if __name__ == '__main__':
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
-    from model_compression_toolkit import FolderImageLoader
+    image_data_loader = mct.FolderImageLoader(folder,
+                                              preprocessing=[np_to_pil,
+                                                             transforms.Compose([
+                                                                 transforms.Resize(256),
+                                                                 transforms.CenterCrop(224),
+                                                                 transforms.ToTensor(),
+                                                                 transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                                                                      std=[0.229, 0.224, 0.225]),
+                                                             ])
+                                                             ],
+                                              batch_size=batch_size)
 
-    image_data_loader = FolderImageLoader(folder,
-                                          preprocessing=[np_to_pil,
-                                                         transforms.Compose([
-                                                             transforms.Resize(256),
-                                                             transforms.CenterCrop(224),
-                                                             transforms.ToTensor(),
-                                                             transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                                                                  std=[0.229, 0.224, 0.225]),
-                                                         ])
-                                                         ],
-                                          batch_size=batch_size)
 
     # Create a Callable representative dataset for calibration purposes.
     # The function should be called without any arguments, and should return a list numpy arrays (array for each
@@ -65,11 +65,20 @@ if __name__ == '__main__':
     # Create a model and quantize it using the representative_data_gen as the calibration images.
     # Set the number of calibration iterations to 20.
     model = mobilenet_v2(pretrained=True)
-    # set quantization configuration
+
+    # Set quantization configuration
     quantization_config = mct.DEFAULTCONFIG
-    # Configure z threshold algorithm for outlier removal. Set z threshold to 16.
+
+    # Configure z threshold algorithm for outlier removal. Set z threshold to 16:
     quantization_config.z_threshold = 16
+
+    # Configure hardware settings to quantize the model. For example, to use power-of-2 quantizers
+    # for both weights and activations (more quantization methods are available in QuantizationMethod API):
+    hw_model = mct.HardwareModel(activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                                 weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO)
+
     # run post training quantization on the model to get the quantized model output
     quantized_model, quantization_info = mct.pytorch_post_training_quantization(model,
                                                                                 representative_data_gen,
+                                                                                hw_model,
                                                                                 n_iter=20)

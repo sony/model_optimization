@@ -15,6 +15,7 @@
 import torch
 import numpy as np
 import model_compression_toolkit as mct
+import model_compression_toolkit.common.hardware_model
 from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.common.network_editors.actions import EditRule, \
     ChangeCandidtaesWeightsQuantizationMethod
@@ -74,14 +75,15 @@ class LUTQuantizerTest(BasePytorchTest):
         self.kernel = 3
 
     def get_quantization_configs(self):
-        return {'lut_quantizer_test': mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 8,
-                                      self.weights_n_bits)}
+        return {'lut_quantizer_test': mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                                             mct.QuantizationErrorMethod.MSE,
+                                                             8,
+                                                             self.weights_n_bits)}
 
     def get_network_editor(self):
         return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
                          action=ChangeCandidtaesWeightsQuantizationMethod(
-                             weights_quantization_method=mct.QuantizationMethod.LUT_QUANTIZER))]
+                             weights_quantization_method=model_compression_toolkit.common.hardware_model.QuantizationMethod.LUT_QUANTIZER))]
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 16, 16], [self.val_batch_size, 3, 16, 16]]

@@ -20,6 +20,9 @@ from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 import model_compression_toolkit as mct
 import tensorflow as tf
 
+from model_compression_toolkit import HardwareModel, QuantizationMethod
+from tests.common_tests.helpers.hardware_models import POWER_OF_2_HW_MODEL
+
 
 class TestTFLiteExport(unittest.TestCase):
 
@@ -29,7 +32,10 @@ class TestTFLiteExport(unittest.TestCase):
         def rep_data():
             return [np.random.randn(1, 224, 224, 3)]
 
-        quantized_model, _ = mct.keras_post_training_quantization(model, rep_data, n_iter=1)
+        quantized_model, _ = mct.keras_post_training_quantization(model,
+                                                                  rep_data,
+                                                                  POWER_OF_2_HW_MODEL,
+                                                                  n_iter=1)
 
         converter = tf.lite.TFLiteConverter.from_keras_model(quantized_model)
         quantized_tflite_model = converter.convert()

@@ -25,7 +25,6 @@ from tests.common_tests.function_tests.test_collectors_manipulation import TestC
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 
-
 found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
     "tensorflow_model_optimization") is not None
 found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util.find_spec(
@@ -47,6 +46,7 @@ if found_tf:
         TestSymmetricThresholdSelectionWeights
     from tests.keras_tests.function_tests.test_uniform_quantize_tensor import TestUniformQuantizeTensor
     from tests.keras_tests.function_tests.test_uniform_range_selection_weights import TestUniformRangeSelectionWeights
+    from tests.keras_tests.function_tests.test_get_gptq_config import TestGetGPTQConfig
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -77,6 +77,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSymmetricThresholdSelectionWeights))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformQuantizeTensor))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformRangeSelectionWeights))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGetGPTQConfig))
         # Keras test layers are supported in TF2.6 or higher versions
         if tf.__version__ >= "2.6":
             suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLayerTest))

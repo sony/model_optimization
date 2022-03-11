@@ -19,6 +19,9 @@ from tensorflow.keras.applications.mobilenet import MobileNet
 from model_compression_toolkit import get_keras_gptq_config, keras_post_training_quantization, DEFAULTCONFIG
 import tensorflow as tf
 
+from tests.common_tests.helpers.hardware_models import POWER_OF_2_HW_MODEL
+
+
 def random_datagen():
     return [np.random.random((1, 224, 224, 3))]
 
@@ -36,6 +39,7 @@ class TestGetGPTQConfig(unittest.TestCase):
         for gptq_config in gptq_configurations:
             keras_post_training_quantization(in_model=MobileNet(),
                                              representative_data_gen=random_datagen,
+                                             hw_model=POWER_OF_2_HW_MODEL,
                                              n_iter=1,
                                              quant_config=qc,
                                              gptq_config=gptq_config)

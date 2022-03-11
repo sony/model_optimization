@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import model_compression_toolkit.common.gptq.gptq_config
+import model_compression_toolkit.common.hardware_model
 from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
@@ -33,8 +34,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                          input_shape=(1,16,16,3))
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,16, 16,
                                       True, False, True)
 
 
@@ -67,13 +67,17 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         model_float = self.create_networks()
 
         qc = self.get_quantization_config()
-        ptq_model, quantization_info = mct.keras_post_training_quantization(model_float, representative_data_gen,
+        ptq_model, quantization_info = mct.keras_post_training_quantization(model_float,
+                                                                            representative_data_gen,
+                                                                            self.get_hw_model(),
                                                                             n_iter=self.num_calibration_iter,
                                                                             quant_config=qc,
                                                                             fw_info=DEFAULT_KERAS_INFO,
                                                                             network_editor=self.get_network_editor())
+
         ptq_gptq_model, quantization_info = mct.keras_post_training_quantization(model_float, representative_data_gen,
                                                                                  n_iter=self.num_calibration_iter,
+                                                                                 hw_model=self.get_hw_model(),
                                                                                  quant_config=qc,
                                                                                  fw_info=DEFAULT_KERAS_INFO,
                                                                                  network_editor=self.get_network_editor(),

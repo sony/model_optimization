@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
+import model_compression_toolkit.common.hardware_model
 from model_compression_toolkit.common.matchers.node_matcher import NodeAndMatcher
 from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
     get_weights_quantization_params_fn
@@ -54,8 +53,7 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,16, 16,
                                       False, False, True)
 
     def get_network_editor(self):
@@ -126,8 +124,7 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,16, 16,
                                       False, False, True)
 
     def get_network_editor(self):
@@ -182,12 +179,13 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def params_fn(self):
-        return get_weights_quantization_params_fn(mct.QuantizationMethod.POWER_OF_TWO,
-                                                  mct.QuantizationErrorMethod.NOCLIPPING)
+        return get_weights_quantization_params_fn(
+            model_compression_toolkit.common.hardware_model.QuantizationMethod.POWER_OF_TWO,
+            mct.QuantizationErrorMethod.NOCLIPPING)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+                                      16, 16,
                                       False, False, False)
 
     def get_network_editor(self):
@@ -248,12 +246,13 @@ class FilterLogicTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def params_fn(self):
-        return get_weights_quantization_params_fn(cmo.QuantizationMethod.POWER_OF_TWO,
-                                                  cmo.QuantizationErrorMethod.NOCLIPPING)
+        return get_weights_quantization_params_fn(
+            model_compression_toolkit.common.hardware_model.QuantizationMethod.POWER_OF_TWO,
+            cmo.QuantizationErrorMethod.NOCLIPPING)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+                                      model_compression_toolkit.common.hardware_model.QuantizationMethod.POWER_OF_TWO, model_compression_toolkit.common.hardware_model.QuantizationMethod.POWER_OF_TWO, 16, 16,
                                       False, False, False)
 
     def get_network_editor(self):

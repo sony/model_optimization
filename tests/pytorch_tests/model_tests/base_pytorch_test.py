@@ -16,6 +16,7 @@ import random
 import unittest
 from torch.fx import symbolic_trace
 
+import model_compression_toolkit.common.hardware_model
 from model_compression_toolkit import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.utils import get_working_device, set_model, to_torch_tensor, \
@@ -37,22 +38,18 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         return {
             'no_quantization': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
                                                       mct.QuantizationErrorMethod.NOCLIPPING,
-                                                      mct.QuantizationMethod.POWER_OF_TWO,
-                                                      mct.QuantizationMethod.POWER_OF_TWO,
                                                       32, 32, False, True, True,
                                                       enable_weights_quantization=False,
                                                       enable_activation_quantization=False),
+
             'all_32bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
                                                 mct.QuantizationErrorMethod.NOCLIPPING,
-                                                mct.QuantizationMethod.POWER_OF_TWO,
-                                                mct.QuantizationMethod.POWER_OF_TWO,
                                                 32, 32, False, True, True,
                                                 enable_weights_quantization=True,
                                                 enable_activation_quantization=True),
+
             'all_4bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
                                                mct.QuantizationErrorMethod.NOCLIPPING,
-                                               mct.QuantizationMethod.POWER_OF_TWO,
-                                               mct.QuantizationMethod.POWER_OF_TWO,
                                                4, 4, False, False, True,
                                                enable_weights_quantization=True,
                                                enable_activation_quantization=True),
@@ -116,6 +113,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
             if isinstance(quant_config, MixedPrecisionQuantizationConfig):
                 ptq_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(model_float,
                                                                                                       representative_data_gen,
+                                                                                                      self.get_hw_model(),
                                                                                                       n_iter=self.num_calibration_iter,
                                                                                                       quant_config=quant_config,
                                                                                                       fw_info=DEFAULT_PYTORCH_INFO,
@@ -126,9 +124,14 @@ class BasePytorchTest(BaseFeatureNetworkTest):
             else:
                 ptq_model, quantization_info = mct.pytorch_post_training_quantization(model_float,
                                                                                       representative_data_gen,
+                                                                                      self.get_hw_model(),
                                                                                       n_iter=1,
                                                                                       quant_config=quant_config,
                                                                                       fw_info=DEFAULT_PYTORCH_INFO,
                                                                                       network_editor=self.get_network_editor())
                 ptq_models.update({model_name: ptq_model})
-        self.compare(ptq_models, model_float, input_x=x, quantization_info=quantization_info)
+
+        self.compare(ptq_models,
+                     model_float,
+                     input_x=x,
+                     quantization_info=quantization_info)

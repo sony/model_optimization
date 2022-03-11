@@ -15,11 +15,12 @@
 
 import unittest
 
+import model_compression_toolkit.common.hardware_model
 from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.common.network_editors.actions import EditRule, \
     ChangeCandidtaesWeightsQuantizationMethod
 
-import model_compression_toolkit as cmo
+import model_compression_toolkit as mct
 import tensorflow as tf
 import numpy as np
 
@@ -49,15 +50,24 @@ class LUTQuantizerTest(BaseKerasFeatureNetworkTest):
         self.conv_w = get_uniform_weights(self.kernel, self.num_conv_channels, self.num_conv_channels)
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
+    def get_hw_model(self):
+        return mct.HardwareModel(activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                                 weights_quantization_method=mct.QuantizationMethod.LUT_QUANTIZER)
+
     def get_quantization_config(self):
-        return cmo.QuantizationConfig(cmo.QuantizationErrorMethod.MSE, cmo.QuantizationErrorMethod.MSE,
-                                      cmo.QuantizationMethod.POWER_OF_TWO, cmo.QuantizationMethod.LUT_QUANTIZER, 4, 2,
-                                      False, False, True)
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationErrorMethod.MSE,
+                                      4,
+                                      2,
+                                      False,
+                                      False,
+                                      True)
 
     def get_network_editor(self):
         return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
                          action=ChangeCandidtaesWeightsQuantizationMethod(
-                             weights_quantization_method=cmo.QuantizationMethod.POWER_OF_TWO))]
+                             weights_quantization_method=model_compression_toolkit.common.hardware_model
+                                 .QuantizationMethod.POWER_OF_TWO))]
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, self.num_conv_channels]]

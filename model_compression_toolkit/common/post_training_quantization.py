@@ -20,10 +20,11 @@ from functools import partial
 from typing import Callable, List, Tuple, Any
 from tqdm import tqdm
 
-from model_compression_toolkit import common
+from model_compression_toolkit import common, QuantizationMethod
 from model_compression_toolkit.common import Logger
 from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.common.hardware_model import HardwareModel
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common import FrameworkInfo
 from model_compression_toolkit.common.constants import NUM_SAMPLES_CS_TENSORBOARD
@@ -43,8 +44,7 @@ from model_compression_toolkit.common.bias_correction.compute_bias_correction_of
     compute_bias_correction_of_graph
 
 from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
-from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG, QuantizationErrorMethod, \
-    QuantizationMethod
+from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG, QuantizationErrorMethod
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
@@ -63,6 +63,7 @@ from model_compression_toolkit.common.bias_correction.apply_bias_correction_to_g
 
 def post_training_quantization(in_model: Any,
                                representative_data_gen: Callable,
+                               hw_model: HardwareModel,
                                n_iter: int,
                                quant_config: QuantizationConfig,
                                fw_info: FrameworkInfo,
@@ -85,6 +86,7 @@ def post_training_quantization(in_model: Any,
     Args:
         in_model: Model to quantize.
         representative_data_gen: Dataset used for calibration.
+        hw_model: HardwareModel configuration for hardware settings (such as quantizers types).
         n_iter: Number of calibration iterations to run.
         quant_config: QuantizationConfig containing parameters of how the model should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/common/quantization/quantization_config.py#L163>`_
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/keras/default_framework_info.py#L114>`_
@@ -103,6 +105,7 @@ def post_training_quantization(in_model: Any,
 
     tg = _prepare_model_for_quantization(in_model,
                                          representative_data_gen,
+                                         hw_model,
                                          network_editor,
                                          n_iter,
                                          quant_config,
@@ -327,6 +330,7 @@ def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
 
 def _prepare_model_for_quantization(in_model: Any,
                                     representative_data_gen: Callable,
+                                    hw_model: HardwareModel,
                                     network_editor: List[EditRule] = [],
                                     n_iter: int = 500,
                                     quant_config: QuantizationConfig = DEFAULTCONFIG,
@@ -345,6 +349,7 @@ def _prepare_model_for_quantization(in_model: Any,
     Args:
         in_model (Model): Keras model to optimize and prepare for quantization.
         representative_data_gen (Callable): Dataset used for calibration.
+        hw_model: HardwareModel configuration for hardware settings (such as quantizers types).
         network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to
         change quantization settings of the filtered nodes.
         n_iter (int): Number of calibration iterations to run.
@@ -395,7 +400,8 @@ def _prepare_model_for_quantization(in_model: Any,
     ######################################
     transformed_graph = set_quantization_configuration_to_graph(graph=transformed_graph,
                                                                 quant_config=quant_config,
-                                                                fw_info=fw_info)
+                                                                fw_info=fw_info,
+                                                                hw_model=hw_model)
 
     ######################################
     # Graph marking points
@@ -460,10 +466,11 @@ def _prepare_model_for_quantization(in_model: Any,
     ######################################
     if quant_config.shift_negative_activation_correction and \
             quant_config.enable_activation_quantization and \
-            quant_config.activation_quantization_method is not QuantizationMethod.UNIFORM:
+            hw_model.activation_quantization_method is not QuantizationMethod.UNIFORM:
         transformed_graph = fw_impl.shift_negative_correction(transformed_graph,
                                                               quant_config,
-                                                              fw_info)
+                                                              fw_info,
+                                                              hw_model)
         if tb_w is not None:
             tb_w.add_graph(transformed_graph, 'after_shift_negative_correction')
             tb_w.add_all_statistics(transformed_graph, 'after_shift_negative_correction')

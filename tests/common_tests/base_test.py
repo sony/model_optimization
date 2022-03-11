@@ -3,11 +3,13 @@ from typing import Any, List
 
 from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.common.hardware_model import HardwareModel, QuantizationMethod
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
 import numpy as np
 
 from model_compression_toolkit.common.user_info import UserInformation
+from tests.common_tests.helpers.hardware_models import POWER_OF_2_HW_MODEL
 
 
 class BaseTest:
@@ -26,6 +28,9 @@ class BaseTest:
 
     def generate_inputs(self):
         return [np.random.randn(*in_shape) for in_shape in self.get_input_shapes()]
+
+    def get_hw_model(self):
+        return POWER_OF_2_HW_MODEL
 
     def representative_data_gen(self):
         return self.generate_inputs()

@@ -18,6 +18,7 @@ from typing import Callable, Any
 
 import numpy as np
 
+from model_compression_toolkit.common.hardware_model import HardwareModel
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 
 
@@ -61,6 +62,7 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
     """
     def __init__(self,
                  qc: QuantizationConfig,
+                 hw_model: HardwareModel,
                  activation_quantization_fn: Callable,
                  activation_quantization_params_fn: Callable
                  ):
@@ -68,6 +70,7 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
 
         Args:
             qc: QuantizationConfig to create the node's config from.
+            hw_model: HardwareModel configuration for hardware settings (such as quantizers types).
             activation_quantization_fn: Function to use when quantizing the node's activations.
             activation_quantization_params_fn: Function to use when computing the threshold for quantizing a node's activations.
         """
@@ -76,7 +79,6 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.activation_quantization_params_fn = activation_quantization_params_fn
         self.activation_quantization_params = {}
         self.activation_error_method = qc.activation_error_method
-        self.activation_quantization_method = qc.activation_quantization_method
         self.activation_n_bits = qc.activation_n_bits
         self.relu_unbound_correction = qc.relu_unbound_correction
         self.enable_activation_quantization = qc.enable_activation_quantization
@@ -88,6 +90,8 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.z_threshold = qc.z_threshold
         self.shift_negative_ratio = qc.shift_negative_ratio
         self.shift_negative_threshold_recalculation = qc.shift_negative_threshold_recalculation
+        self.activation_quantization_method = hw_model.activation_quantization_method
+
 
     def quantize_node_output(self,
                              tensors: Any) -> Any:
@@ -161,6 +165,7 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
     """
     def __init__(self,
                  qc: QuantizationConfig,
+                 hw_model: HardwareModel,
                  weights_quantization_fn: Callable,
                  weights_quantization_params_fn: Callable,
                  weights_channels_axis: int):
@@ -168,6 +173,7 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
 
         Args:
             qc: QuantizationConfig to create the node's config from.
+            hw_model: HardwareModel configuration for hardware settings (such as quantizers types).
             weights_quantization_fn: Function to use when quantizing the node's weights.
             weights_quantization_params_fn:  Function to use when computing the threshold for quantizing a node's weights.
             weights_channels_axis: Axis to quantize a node's kernel when quantizing per-channel.
@@ -178,13 +184,13 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.weights_channels_axis = weights_channels_axis
         self.weights_quantization_params = {}
         self.weights_error_method = qc.weights_error_method
-        self.weights_quantization_method = qc.weights_quantization_method
         self.weights_n_bits = qc.weights_n_bits
         self.weights_bias_correction = qc.weights_bias_correction
         self.weights_per_channel_threshold = qc.weights_per_channel_threshold
         self.enable_weights_quantization = qc.enable_weights_quantization
         self.min_threshold = qc.min_threshold
         self.l_p_value = qc.l_p_value
+        self.weights_quantization_method = hw_model.weights_quantization_method
 
     def set_weights_quantization_fn(self, weights_quantization_fn: Callable):
         """

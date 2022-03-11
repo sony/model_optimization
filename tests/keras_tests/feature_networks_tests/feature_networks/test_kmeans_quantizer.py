@@ -15,6 +15,7 @@
 
 import unittest
 
+import model_compression_toolkit.common.hardware_model
 from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.common.network_editors.actions import EditRule, ChangeCandidatesWeightsQuantConfigAttr, \
     ChangeActivationQuantConfigAttr, \
@@ -45,8 +46,11 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
     - Check that different quantization methods on the same weights give different results
     '''
 
-    def __init__(self, unit_test, quantization_method: cmo.QuantizationMethod.KMEANS, weight_fn=get_uniform_weights,
+    def __init__(self, unit_test,
+                 quantization_method: model_compression_toolkit.common.hardware_model.QuantizationMethod.KMEANS,
+                 weight_fn=get_uniform_weights,
                  weights_n_bits: int = 3):
+
         self.quantization_method = quantization_method
         self.weights_n_bits = weights_n_bits
         self.node_to_change_name = 'change'
@@ -55,10 +59,18 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
         self.conv_w = weight_fn(self.kernel, self.num_conv_channels, self.num_conv_channels)
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
+    def get_hw_model(self):
+        return cmo.HardwareModel(activation_quantization_method=cmo.QuantizationMethod.POWER_OF_TWO,
+                                 weights_quantization_method=self.quantization_method)
+
     def get_quantization_config(self):
-        return cmo.QuantizationConfig(cmo.QuantizationErrorMethod.MSE, cmo.QuantizationErrorMethod.MSE,
-                                      cmo.QuantizationMethod.POWER_OF_TWO, self.quantization_method, 4,
-                                      self.weights_n_bits, False, False, True)
+        return cmo.QuantizationConfig(cmo.QuantizationErrorMethod.MSE,
+                                      cmo.QuantizationErrorMethod.MSE,
+                                      4,
+                                      self.weights_n_bits,
+                                      False,
+                                      False,
+                                      True)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, self.num_conv_channels]]
@@ -78,7 +90,7 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
     def get_network_editor(self):
         return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
                          action=ChangeCandidatesWeightsQuantConfigAttr(
-                             weights_quantization_method=cmo.QuantizationMethod.POWER_OF_TWO))]
+                             weights_quantization_method=model_compression_toolkit.common.hardware_model.QuantizationMethod.POWER_OF_TWO))]
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv's weights have different values since they where quantized
@@ -92,7 +104,7 @@ class KmeansQuantizerTest(KmeansQuantizerTestBase):
     This test checks the chosen quantization method is different that symmetric uniform
     '''
 
-    def __init__(self, unit_test, quantization_method: cmo.QuantizationMethod.KMEANS, weights_n_bits: int = 3):
+    def __init__(self, unit_test, quantization_method: model_compression_toolkit.common.hardware_model.QuantizationMethod.KMEANS, weights_n_bits: int = 3):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -107,8 +119,15 @@ class KmeansQuantizerTestManyClasses(KmeansQuantizerTestBase):
     This test checks the chosen quantization method is different that symmetric uniform
     '''
 
-    def __init__(self, unit_test, quantization_method: cmo.QuantizationMethod.KMEANS, weights_n_bits: int = 8):
-        super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
+    def __init__(self,
+                 unit_test,
+                 quantization_method: model_compression_toolkit.common.hardware_model.QuantizationMethod.KMEANS,
+                 weights_n_bits: int = 8):
+
+        super().__init__(unit_test,
+                         quantization_method,
+                         get_uniform_weights,
+                         weights_n_bits)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv's weights have different values since they where quantized
@@ -122,7 +141,7 @@ class KmeansQuantizerTestZeroWeights(KmeansQuantizerTestBase):
     This test checks the case where all the weight values are zero
     '''
 
-    def __init__(self, unit_test, quantization_method: cmo.QuantizationMethod.KMEANS, weights_n_bits: int = 3):
+    def __init__(self, unit_test, quantization_method: model_compression_toolkit.common.hardware_model.QuantizationMethod.KMEANS, weights_n_bits: int = 3):
         super().__init__(unit_test, quantization_method, get_zero_as_weights, weights_n_bits)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -136,37 +155,37 @@ class KmeansQuantizerTestZeroWeights(KmeansQuantizerTestBase):
 # This test checks that the Kmeans quantization has a different result than symmetric uniform quantization
 class RunKmeansTest(unittest.TestCase):
     def test_kmeans_quantizer(self):
-        KmeansQuantizerTest(self, cmo.QuantizationMethod.KMEANS).run_test()
+        KmeansQuantizerTest(self, model_compression_toolkit.common.hardware_model.QuantizationMethod.KMEANS).run_test()
 
 
 # This test checks that the LUT- Kmeans quantization has a different result than symmetric uniform quantization
 class RunLutKmeansTest(unittest.TestCase):
     def test_kmeans_quantizer(self):
-        KmeansQuantizerTest(self, cmo.QuantizationMethod.LUT_QUANTIZER).run_test()
+        KmeansQuantizerTest(self, model_compression_toolkit.common.hardware_model.QuantizationMethod.LUT_QUANTIZER).run_test()
 
 
 # In this test we have weights with less unique values than the number of clusters
 class RunKmeansTestManyClasses(unittest.TestCase):
     def test_kmeans_quantizer(self):
-        KmeansQuantizerTestManyClasses(self, cmo.QuantizationMethod.KMEANS, weights_n_bits=8).run_test()
+        KmeansQuantizerTestManyClasses(self, model_compression_toolkit.common.hardware_model.QuantizationMethod.KMEANS, weights_n_bits=8).run_test()
 
 
 # In this test we have weights with less unique values than the number of clusters
 class RunLutKmeansTestManyClasses(unittest.TestCase):
     def test_kmeans_quantizer(self):
-        KmeansQuantizerTestManyClasses(self, cmo.QuantizationMethod.LUT_QUANTIZER, weights_n_bits=8).run_test()
+        KmeansQuantizerTestManyClasses(self, model_compression_toolkit.common.hardware_model.QuantizationMethod.LUT_QUANTIZER, weights_n_bits=8).run_test()
 
 
 # This test checks the case where all the weight values are zero
 class RunKmeansTestZeroWeights(unittest.TestCase):
     def test_kmeans_quantizer_zero_weights(self):
-        KmeansQuantizerTest(self, cmo.QuantizationMethod.KMEANS).run_test()
+        KmeansQuantizerTest(self, model_compression_toolkit.common.hardware_model.QuantizationMethod.KMEANS).run_test()
 
 
 # This test checks the case where all the weight values are zero
 class RunLutKmeansTestZeroWeights(unittest.TestCase):
     def test_kmeans_quantizer_zero_weights(self):
-        KmeansQuantizerTest(self, cmo.QuantizationMethod.LUT_QUANTIZER).run_test()
+        KmeansQuantizerTest(self, model_compression_toolkit.common.hardware_model.QuantizationMethod.LUT_QUANTIZER).run_test()
 
 
 if __name__ == '__main__':

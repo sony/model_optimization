@@ -17,6 +17,7 @@ import unittest
 from functools import partial
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
+from model_compression_toolkit import HardwareModel, QuantizationMethod
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
@@ -32,6 +33,9 @@ from model_compression_toolkit.common.quantization.set_node_quantization_config 
 from model_compression_toolkit.common.model_collector import ModelCollector
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
+import copy
+
+from tests.common_tests.helpers.hardware_models import POWER_OF_2_HW_MODEL
 
 
 class TestLpSearchBitwidth(unittest.TestCase):
@@ -69,8 +73,6 @@ class TestLpSearchBitwidth(unittest.TestCase):
 class TestSearchBitwidthConfiguration(unittest.TestCase):
 
     def test_search_engine(self):
-        # qc = DEFAULT_MIXEDPRECISION_CONFIG
-        import copy
         qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
         qc.num_of_images=1
         qc.weights_n_bits = [8]
@@ -84,7 +86,8 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         graph = keras_impl.model_reader(in_model, dummy_representative_dataset)  # model reading
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=qc,
-                                                        fw_info=fw_info)
+                                                        fw_info=fw_info,
+                                                        hw_model=POWER_OF_2_HW_MODEL)
         for node in graph.nodes:
             node.prior_info = keras_impl.get_node_prior_info(node=node,
                                                              fw_info=fw_info, graph=graph)
@@ -92,13 +95,17 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                        graph,
                        fw_info)
 
-        mi = ModelCollector(graph, fw_info=DEFAULT_KERAS_INFO, fw_impl=keras_impl)
+        mi = ModelCollector(graph,
+                            fw_info=DEFAULT_KERAS_INFO,
+                            fw_impl=keras_impl)
+
         for i in range(10):
             mi.infer([np.random.randn(1, 224, 224, 3)])
 
         calculate_quantization_params(graph,
                                       fw_info,
                                       fw_impl=keras_impl)
+
         keras_sens_eval = partial(keras_impl.get_sensitivity_evaluation_fn,
                                   representative_data_gen=lambda: [np.random.random((1, 224, 224, 3))],
                                   fw_info=fw_info)

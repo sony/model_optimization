@@ -16,6 +16,8 @@
 
 import numpy as np
 import tensorflow as tf
+
+import model_compression_toolkit.common.hardware_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import model_compression_toolkit as mct
@@ -36,8 +38,7 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
                          input_shape=(16,16,3))
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,16, 16,
                                       relu_unbound_correction=False, weights_bias_correction=False,
                                       weights_per_channel_threshold=True, activation_channel_equalization=True)
 

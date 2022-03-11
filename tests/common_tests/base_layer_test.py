@@ -68,12 +68,14 @@ class BaseLayerTest(BaseTest):
                 if isinstance(qc, MixedPrecisionQuantizationConfig):
                     ptq_model, quantization_info = self.get_mixed_precision_ptq_facade()(model_float,
                                                                                          self.representative_data_gen,
+                                                                                         hw_model=self.get_hw_model(),
                                                                                          n_iter=self.num_calibration_iter,
                                                                                          quant_config=qc,
                                                                                          fw_info=self.get_fw_info())
                 else:
                     ptq_model, quantization_info = self.get_ptq_facade()(model_float,
                                                                          self.representative_data_gen,
+                                                                         hw_model=self.get_hw_model(),
                                                                          n_iter=self.num_calibration_iter,
                                                                          quant_config=qc,
                                                                          fw_info=self.get_fw_info())

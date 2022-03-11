@@ -5,7 +5,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Model
 
 from model_compression_toolkit import QuantizationConfig, FrameworkInfo, common, GradientPTQConfig, \
-    MixedPrecisionQuantizationConfig
+    MixedPrecisionQuantizationConfig, HardwareModel
 from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
@@ -137,7 +137,8 @@ class KerasImplementation(FrameworkImplementation):
     def shift_negative_correction(self,
                                   graph: Graph,
                                   qc: QuantizationConfig,
-                                  fw_info: FrameworkInfo) -> Graph:
+                                  fw_info: FrameworkInfo,
+                                  hw_model: HardwareModel) -> Graph:
         """
         Apply shift negative correction (SNC) on a graph.
 
@@ -145,13 +146,15 @@ class KerasImplementation(FrameworkImplementation):
             graph: Graph to apply SNC on.
             qc: Quantization configuration.
             fw_info: FrameworkInfo object with information about the specific framework's model.
+            hw_model: HardwareModel configuration for hardware settings (such as quantizers types).
 
         Returns:
             Graph after SNC.
         """
         return keras_apply_shift_negative_correction(graph,
                                                      qc,
-                                                     fw_info)
+                                                     fw_info,
+                                                     hw_model)
 
     def attach_sc_to_node(self,
                           node: BaseNode,

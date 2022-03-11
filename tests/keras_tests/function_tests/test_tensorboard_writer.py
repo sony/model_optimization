@@ -24,6 +24,9 @@ import os
 import glob
 from tensorboard.backend.event_processing import event_file_loader
 
+from model_compression_toolkit import HardwareModel, QuantizationMethod
+from tests.common_tests.helpers.hardware_models import POWER_OF_2_HW_MODEL
+
 
 def random_datagen():
     return [np.random.random((1, 224, 224, 3))]
@@ -35,7 +38,10 @@ class TestLogger(unittest.TestCase):
     def setUpClass(cls):
         mct.common.Logger.set_log_file('/tmp/')
         model = MobileNet()
-        mct.keras_post_training_quantization(model, random_datagen, n_iter=1)
+        mct.keras_post_training_quantization(model,
+                                             random_datagen,
+                                             POWER_OF_2_HW_MODEL,
+                                             n_iter=1)
 
     def test_tensorboard_log_dir(self):
         self.assertTrue(os.path.exists(os.path.join(mct.common.Logger.LOG_PATH, 'tensorboard_logs')))

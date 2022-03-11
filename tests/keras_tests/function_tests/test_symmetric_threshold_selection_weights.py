@@ -18,7 +18,7 @@ import unittest
 from keras import Input, Model
 from keras.layers import Conv2D, Conv2DTranspose
 
-from model_compression_toolkit import QuantizationConfig, QuantizationMethod, QuantizationErrorMethod
+from model_compression_toolkit import QuantizationConfig, QuantizationMethod, QuantizationErrorMethod, HardwareModel
 from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import \
     compute_bias_correction_of_graph
 from model_compression_toolkit.common.constants import THRESHOLD
@@ -89,8 +89,11 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
 
     def run_test_for_threshold_method(self, threshold_method, per_channel=True):
         qc = QuantizationConfig(weights_error_method=threshold_method,
-                                weights_quantization_method=QuantizationMethod.SYMMETRIC, weights_n_bits=8,
+                                weights_n_bits=8,
                                 weights_per_channel_threshold=per_channel)
+
+        sym_weights_hw_model = HardwareModel(weights_quantization_method=QuantizationMethod.SYMMETRIC,
+                                             activation_quantization_method=QuantizationMethod.POWER_OF_TWO)
 
         fw_info = DEFAULT_KERAS_INFO
         in_model = create_network()
@@ -98,15 +101,21 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
         graph = keras_impl.model_reader(in_model, None)  # model reading
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=qc,
-                                                        fw_info=fw_info)
+                                                        fw_info=fw_info,
+                                                        hw_model=sym_weights_hw_model)
         for node in graph.nodes:
             node.prior_info = keras_impl.get_node_prior_info(node=node,
-                                                             fw_info=fw_info, graph=graph)
+                                                             fw_info=fw_info,
+                                                             graph=graph)
+
         analyzer_graph(keras_impl.attach_sc_to_node,
                        graph,
                        fw_info)
 
-        mi = ModelCollector(graph, fw_info=DEFAULT_KERAS_INFO, fw_impl=keras_impl)
+        mi = ModelCollector(graph,
+                            fw_info=DEFAULT_KERAS_INFO,
+                            fw_impl=keras_impl)
+
         for i in range(10):
             mi.infer([np.random.randn(1, 16, 16, 4)])
 

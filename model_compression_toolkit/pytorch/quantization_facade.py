@@ -14,7 +14,7 @@
 # ==============================================================================
 from typing import Callable, List
 
-from model_compression_toolkit import common
+from model_compression_toolkit import common, HardwareModel
 from model_compression_toolkit.common import Logger
 from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
@@ -36,6 +36,7 @@ if importlib.util.find_spec("torch") is not None:
 
     def pytorch_post_training_quantization(in_module: Module,
                                            representative_data_gen: Callable,
+                                           hw_model: HardwareModel,
                                            n_iter: int = 500,
                                            quant_config: QuantizationConfig = DEFAULTCONFIG,
                                            fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
@@ -77,6 +78,7 @@ if importlib.util.find_spec("torch") is not None:
 
         return post_training_quantization(in_module,
                                           representative_data_gen,
+                                          hw_model,
                                           n_iter,
                                           quant_config,
                                           fw_info,
@@ -87,6 +89,7 @@ if importlib.util.find_spec("torch") is not None:
 
     def pytorch_post_training_quantization_mixed_precision(in_model: Module,
                                                            representative_data_gen: Callable,
+                                                           hw_model: HardwareModel,
                                                            n_iter: int = 500,
                                                            quant_config: MixedPrecisionQuantizationConfig = DEFAULT_MIXEDPRECISION_CONFIG,
                                                            fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
@@ -146,6 +149,7 @@ if importlib.util.find_spec("torch") is not None:
             quant_config.weights_n_bits = [max(quant_config.weights_n_bits)]
             return pytorch_post_training_quantization(in_model,
                                                       representative_data_gen,
+                                                      hw_model,
                                                       n_iter,
                                                       quant_config,
                                                       fw_info,
@@ -158,6 +162,7 @@ if importlib.util.find_spec("torch") is not None:
 
         return post_training_quantization(in_model,
                                           representative_data_gen,
+                                          hw_model,
                                           n_iter,
                                           quant_config,
                                           fw_info,

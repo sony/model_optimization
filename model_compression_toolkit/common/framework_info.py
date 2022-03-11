@@ -18,7 +18,7 @@ from collections import Callable
 from enum import Enum
 from typing import Dict, Any, List
 
-from model_compression_toolkit.common.quantization.quantization_config import QuantizationMethod
+from model_compression_toolkit.common.hardware_model import QuantizationMethod
 from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.common.graph.base_node import BaseNode
 

@@ -16,6 +16,7 @@ import torch
 import numpy as np
 from torch.nn import Conv2d
 
+import model_compression_toolkit.common.hardware_model
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, KPI
 from model_compression_toolkit.common.user_info import UserInformation
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -33,8 +34,6 @@ class MixedPercisionBaseTest(BasePytorchTest):
     def get_quantization_configs(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
                                     mct.QuantizationErrorMethod.MSE,
-                                    mct.QuantizationMethod.POWER_OF_TWO,
-                                    mct.QuantizationMethod.POWER_OF_TWO,
                                     weights_bias_correction=True,
                                     weights_per_channel_threshold=True,
                                     activation_channel_equalization=False,

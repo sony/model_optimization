@@ -21,7 +21,7 @@ from torch import reshape
 from torch.nn.functional import hardswish, silu, prelu, elu
 from torch.nn.functional import avg_pool2d
 
-from model_compression_toolkit import common, QuantizationConfig, FrameworkInfo
+from model_compression_toolkit import common, QuantizationConfig, FrameworkInfo, HardwareModel
 from model_compression_toolkit.common import BaseNode, Graph
 from model_compression_toolkit.common.graph.graph_matchers import EdgeMatcher
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher
@@ -192,7 +192,8 @@ def is_padding_node_and_node_has_padding(pad_node_to_consider: BaseNode,
 
 def pytorch_apply_shift_negative_correction(graph: Graph,
                                             quant_config: QuantizationConfig,
-                                            fw_info: FrameworkInfo) -> Graph:
+                                            fw_info: FrameworkInfo,
+                                            hw_model: HardwareModel) -> Graph:
     """
     Apply shift negative correction (SNC) on a graph built from a Pytorch model.
 
@@ -208,6 +209,7 @@ def pytorch_apply_shift_negative_correction(graph: Graph,
     return apply_shift_negative_correction(graph,
                                            quant_config,
                                            fw_info,
+                                           hw_model,
                                            snc_node,
                                            linear_node,
                                            bypass_node,

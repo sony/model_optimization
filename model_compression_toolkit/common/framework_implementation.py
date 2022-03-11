@@ -17,7 +17,7 @@ from typing import Callable, Any, List, Tuple
 
 import numpy as np
 
-from model_compression_toolkit import common, GradientPTQConfig, MixedPrecisionQuantizationConfig
+from model_compression_toolkit import common, GradientPTQConfig, MixedPrecisionQuantizationConfig, HardwareModel
 from model_compression_toolkit.common import BaseNode
 from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.common.framework_info import FrameworkInfo
@@ -129,7 +129,8 @@ class FrameworkImplementation(ABC):
     def shift_negative_correction(self,
                                   graph: Graph,
                                   qc: QuantizationConfig,
-                                  fw_info: FrameworkInfo) -> Graph:
+                                  fw_info: FrameworkInfo,
+                                  hw_model: HardwareModel) -> Graph:
         """
         Apply shift negative correction (SNC) on a graph.
 
@@ -137,6 +138,7 @@ class FrameworkImplementation(ABC):
             graph: Graph to apply SNC on.
             qc: Quantization configuration.
             fw_info: FrameworkInfo object with information about the specific framework's model.
+            hw_model: HardwareModel configuration for hardware settings (such as quantizers types).
 
         Returns:
             Graph after SNC.

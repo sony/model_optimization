@@ -16,8 +16,10 @@
 
 import tensorflow as tf
 import numpy as np
+
+import model_compression_toolkit.common.hardware_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-import model_compression_toolkit as cmo
+import model_compression_toolkit as mct
 
 keras = tf.keras
 layers = keras.layers
@@ -31,9 +33,12 @@ class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
     def generate_inputs(self):
         return [np.random.uniform(low=-7, high=7, size=in_shape) for in_shape in self.get_input_shapes()]
 
+    def get_hw_model(self):
+        return mct.HardwareModel(activation_quantization_method=mct.QuantizationMethod.UNIFORM,
+                                 weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO)
+
     def get_quantization_config(self):
-        return cmo.QuantizationConfig(activation_error_method=self.activation_threshold_method,
-                                      activation_quantization_method=cmo.QuantizationMethod.UNIFORM,
+        return mct.QuantizationConfig(activation_error_method=self.activation_threshold_method,
                                       activation_n_bits=8)
 
     def create_networks(self):

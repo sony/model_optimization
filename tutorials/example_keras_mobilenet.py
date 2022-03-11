@@ -13,8 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 
-import model_compression_toolkit as mct
 from tensorflow.keras.applications.mobilenet import MobileNet
+
+import model_compression_toolkit as mct
 
 """
 This tutorial demonstrates how a model (more specifically, MobileNetV1) can be
@@ -59,11 +60,9 @@ if __name__ == '__main__':
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
-    from model_compression_toolkit import FolderImageLoader
-    image_data_loader = FolderImageLoader(folder,
-                                          preprocessing=[resize, normalization],
-                                          batch_size=batch_size)
-
+    image_data_loader = mct.FolderImageLoader(folder,
+                                              preprocessing=[resize, normalization],
+                                              batch_size=batch_size)
 
     # Create a Callable representative dataset for calibration purposes.
     # The function should be called without any arguments, and should return a list numpy arrays (array for each
@@ -75,9 +74,16 @@ if __name__ == '__main__':
     def representative_data_gen() -> list:
         return [image_data_loader.sample()]
 
+    # Configure hardware settings to quantize the model. For example, to use a symmetric quantizer
+    # to quantize the weights and a power-of-2 quantizer for the activations (more quantization methods
+    # are available in QuantizationMethod API):
+    hw_model = mct.HardwareModel(activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                                 weights_quantization_method=mct.QuantizationMethod.SYMMETRIC)
+
     # Create a model and quantize it using the representative_data_gen as the calibration images.
     # Set the number of calibration iterations to 10.
     model = MobileNet()
     quantized_model, quantization_info = mct.keras_post_training_quantization(model,
                                                                               representative_data_gen,
+                                                                              hw_model,
                                                                               n_iter=10)
