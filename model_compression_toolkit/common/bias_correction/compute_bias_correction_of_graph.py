@@ -70,16 +70,16 @@ def _compute_bias_correction_per_candidate_qc(node: BaseNode,
     """
 
     if node.is_weights_quantization_enabled():
-        for weights_qc in node.candidates_weights_quantization_cfg:
+        for weights_qc in node.candidates_quantization_cfg:
             if fw_info.in_kernel_ops(node):
                 quantized_kernel, io_channels_axes = get_quantized_kernel_by_weights_qc(fw_info,
                                                                                         node,
-                                                                                        weights_qc,
+                                                                                        weights_qc.weights_quantization_cfg,
                                                                                         fw_impl=fw_impl)
 
                 # If a kernel was quantized and weights bias correction is enabled in n.quantization_cfg,
                 # a bias correction term is being calculated and used in the node's bias term.
-                if weights_qc.weights_bias_correction:
+                if weights_qc.weights_quantization_cfg.weights_bias_correction:
                     bias_correction_term = _get_bias_correction_term_of_node(io_channels_axes[0],
                                                                              node,
                                                                              node_in_stats_collector,
@@ -88,7 +88,7 @@ def _compute_bias_correction_per_candidate_qc(node: BaseNode,
                                                                              fw_impl=fw_impl)
 
                     # Store the correction term to use it later,
-                    weights_qc.bias_corrected = bias_correction_term
+                    weights_qc.weights_quantization_cfg.bias_corrected = bias_correction_term
 
 
 def _compute_bias_correction(kernel: np.ndarray,

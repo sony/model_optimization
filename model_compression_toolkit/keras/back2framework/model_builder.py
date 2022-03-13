@@ -135,9 +135,10 @@ def run_operation(n: BaseNode,
         out_tensors_of_n = out_tensors_of_n_float
         if n.is_activation_quantization_enabled():
             if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ, ModelBuilderMode.MIXEDPRECISION]:
-                # Adding a fake quant node to Input when in GPTQ mode because quantize_model doesn't quantize the
-                # input layer
-                out_tensors_of_n = n.activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
+                for candidate_qc in n.candidates_quantization_cfg:
+                    # Adding a fake quant node to Input when in GPTQ mode because quantize_model doesn't quantize the
+                    # input layer
+                    out_tensors_of_n = candidate_qc.activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
 
     else:
         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
@@ -158,7 +159,8 @@ def run_operation(n: BaseNode,
         # Add a fake quant node if the node has an activation threshold.
         if n.is_activation_quantization_enabled():
             if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.MIXEDPRECISION, ModelBuilderMode.GPTQ]:
-                out_tensors_of_n = n.activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
+                for candidate_qc in n.candidates_quantization_cfg:
+                    out_tensors_of_n = candidate_qc.activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
     return out_tensors_of_n, out_tensors_of_n_float
 
 

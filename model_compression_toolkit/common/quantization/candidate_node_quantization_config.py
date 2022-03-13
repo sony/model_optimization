@@ -1,0 +1,50 @@
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+
+from typing import Callable, Any
+
+import numpy as np
+
+from model_compression_toolkit.common.quantization.node_quantization_config import BaseNodeNodeQuantizationConfig, \
+    NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
+from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
+
+
+##########################################
+# Every node holds a quantization configuration
+# for its weights quantization, and a different quantization
+# configuration for its activation quantization configuration.
+##########################################
+
+class CandidateNodeQuantizationConfig(BaseNodeNodeQuantizationConfig):
+
+    def __init__(self,
+                 qc: QuantizationConfig,
+                 activation_quantization_fn: Callable,
+                 activation_quantization_params_fn: Callable,
+                 weights_quantization_fn: Callable,
+                 weights_quantization_params_fn: Callable,
+                 weights_channels_axis: int
+                 ):
+
+        self.activation_quantization_cfg = NodeActivationQuantizationConfig(qc,
+                                                                            activation_quantization_fn,
+                                                                            activation_quantization_params_fn)
+
+        self.weights_quantization_cfg = NodeWeightsQuantizationConfig(qc,
+                                                                      weights_quantization_fn,
+                                                                      weights_quantization_params_fn,
+                                                                      weights_channels_axis)

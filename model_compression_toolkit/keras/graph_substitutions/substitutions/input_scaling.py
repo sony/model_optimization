@@ -79,26 +79,26 @@ class BaseInputScaling(common.BaseSubstitution):
         input_layer = nodes_list[0]
         linear_layer = nodes_list[-1]
 
-        threshold = input_layer.activation_quantization_cfg.activation_quantization_params.get(THRESHOLD)
+        for input_candidate_qc in input_layer.candidates_quantization_cfg:
+            threshold = input_candidate_qc.activation_quantization_cfg.activation_quantization_params.get(THRESHOLD)
 
-        if threshold is None:
-            return graph
+            if threshold is None:
+                return graph
 
-        min_value, max_value = graph.get_out_stats_collector(input_layer).get_min_max_values()
-        threshold_float = max(abs(min_value), max_value)
+            min_value, max_value = graph.get_out_stats_collector(input_layer).get_min_max_values()
+            threshold_float = max(abs(min_value), max_value)
 
-        if threshold > threshold_float:
-            scale_factor = threshold_float / threshold
-            graph.user_info.set_input_scale(1 / scale_factor)
+            if threshold > threshold_float:
+                scale_factor = threshold_float / threshold
+                graph.user_info.set_input_scale(1 / scale_factor)
 
-            w1_fixed = linear_layer.get_weights_by_keys(KERNEL) * scale_factor
-            linear_layer.set_weights_by_keys(KERNEL, w1_fixed)
+                w1_fixed = linear_layer.get_weights_by_keys(KERNEL) * scale_factor
+                linear_layer.set_weights_by_keys(KERNEL, w1_fixed)
 
-            graph.scale_stats_collector(input_layer, 1 / scale_factor)
+                graph.scale_stats_collector(input_layer, 1 / scale_factor)
 
-            # After scaling weights may have different thresholds so it needs to be recalculated
-            for nqc in linear_layer.candidates_weights_quantization_cfg:
-                nqc.calculate_and_set_weights_params(w1_fixed)
+                # After scaling weights may have different thresholds so it needs to be recalculated
+                input_candidate_qc.weights_quantization_cfg.calculate_and_set_weights_params(w1_fixed)
 
         return graph
 

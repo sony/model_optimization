@@ -15,15 +15,16 @@
 
 
 import copy
-from typing import List
+from typing import List, Dict
 
 from model_compression_toolkit.common import Logger, BaseNode
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
-from model_compression_toolkit.common.quantization.node_quantization_config import NodeActivationQuantizationConfig, \
-    NodeWeightsQuantizationConfig
+from model_compression_toolkit.common.quantization.candidate_node_quantization_config import \
+    CandidateNodeQuantizationConfig
+from model_compression_toolkit.common.quantization.node_quantization_config import NodeActivationQuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
@@ -65,24 +66,20 @@ def set_quantization_configs_to_node(node: BaseNode,
         fw_info: Information needed for quantization about the specific framework.
 
     """
-    # Create activation QC for this node
-    node.activation_quantization_cfg = create_node_activation_qc(quant_config,
-                                                                 fw_info)
+    # Create QC candidates for weights and activation combined
+    weight_channel_axis = fw_info.kernel_channels_mapping.get(node.type)[0]
+    node.candidates_quantization_cfg = _create_node_candidates_qc(quant_config,
+                                                                  fw_info,
+                                                                  weight_channel_axis)
 
     enable_activation_quantization = quant_config.enable_activation_quantization and (fw_info.in_activation_ops(node) or fw_info.in_kernel_ops(node))
-    node.activation_quantization_cfg.enable_activation_quantization = enable_activation_quantization
-
-    # Create weights QC for this node
-    weight_channel_axis = fw_info.kernel_channels_mapping.get(node.type)[0]
-    node.candidates_weights_quantization_cfg = _create_node_candidates_weights_qc(quant_config,
-                                                                                  fw_info,
-                                                                                  weight_channel_axis)
-
     enable_weights_quantization = quant_config.enable_weights_quantization and fw_info.in_kernel_ops(node)
-    for qc in node.candidates_weights_quantization_cfg:
-        qc.enable_weights_quantization = enable_weights_quantization
+    for candidate_qc in node.candidates_quantization_cfg:
+        candidate_qc.weights_quantization_cfg.enable_weights_quantization = enable_weights_quantization
+        candidate_qc.activation_quantization_cfg.enable_activation_quantization = enable_activation_quantization
 
 
+# TODO: remove method after fixing shift negative (uses it there)
 def create_node_activation_qc(qc: QuantizationConfig,
                               fw_info: FrameworkInfo) -> NodeActivationQuantizationConfig:
     """
@@ -109,22 +106,11 @@ def create_node_activation_qc(qc: QuantizationConfig,
                                             activation_quantization_params_fn)
 
 
-def create_node_weights_qc(qc: QuantizationConfig,
-                           fw_info: FrameworkInfo,
-                           weight_channel_axis: int) -> NodeWeightsQuantizationConfig:
-    """
-    Create a weights quantization configuration from a QuantizationConfig object.
+def create_node_qc_candidate(qc: QuantizationConfig,
+                             fw_info: FrameworkInfo,
+                             weight_channel_axis: int) -> CandidateNodeQuantizationConfig:
 
-    Args:
-        qc: QuantizationConfig to create the node's config from.
-        fw_info: Information about the specific framework the node was created from (e.g., whether or not its
-        weights/activations should be quantized)
-        weight_channel_axis: Axis to quantize a node's kernel when quantizing per-channel.
-
-    Returns:
-        Weights quantization configuration of a node.
-    """
-
+    # get attributes for weights quantization
     weights_quantization_fn = fw_info.weights_quantizer_mapping.get(qc.weights_quantization_method)
 
     if weights_quantization_fn is None:
@@ -133,17 +119,27 @@ def create_node_weights_qc(qc: QuantizationConfig,
     weights_quantization_params_fn = get_weights_quantization_params_fn(qc.weights_quantization_method,
                                                                         qc.weights_error_method)
 
-    return NodeWeightsQuantizationConfig(qc,
-                                         weights_quantization_fn,
-                                         weights_quantization_params_fn,
-                                         weight_channel_axis)
+    # get attributes for activation quantization
+    activation_quantization_fn = fw_info.activation_quantizer_mapping.get(qc.activation_quantization_method)
+    if activation_quantization_fn is None:
+        Logger.critical('Unknown quantization method for activations')
+
+    activation_quantization_params_fn = get_activation_quantization_params_fn(qc.activation_quantization_method,
+                                                                              qc.activation_error_method)
+
+    return CandidateNodeQuantizationConfig(qc,
+                                           activation_quantization_fn,
+                                           activation_quantization_params_fn,
+                                           weights_quantization_fn,
+                                           weights_quantization_params_fn,
+                                           weight_channel_axis)
 
 
-def _create_node_candidates_weights_qc(qc: QuantizationConfig,
-                                       fw_info: FrameworkInfo,
-                                       weight_channel_axis: int) -> List[NodeWeightsQuantizationConfig]:
+def _create_node_candidates_qc(qc: QuantizationConfig,
+                               fw_info: FrameworkInfo,
+                               weight_channel_axis: int) -> List[CandidateNodeQuantizationConfig]:
     """
-    Create a list of candidates of weights quantization configurations for a node.
+    Create a list of candidates of weights and activation quantization configurations for a node.
 
     Args:
         qc: Quantization configuration the quantization process should follow.
@@ -154,14 +150,19 @@ def _create_node_candidates_weights_qc(qc: QuantizationConfig,
         List of candidates of weights quantization configurations to set for a node.
     """
 
-    candidats = []
+    candidates = []
     if isinstance(qc, MixedPrecisionQuantizationConfig):
-        qc.weights_n_bits.sort(reverse=True)
-        for nbits in qc.weights_n_bits:
-            single_nbits_qc = copy.deepcopy(qc)
-            single_nbits_qc.weights_n_bits = nbits
-            candidats.append(create_node_weights_qc(single_nbits_qc, fw_info, weight_channel_axis))
+        qc.n_bits_candidates.sort(reverse=True)  # TODO: will sort tuples by first element (weights), is that what we want?
+        for weights_n_bits, activation_n_bits in qc.n_bits_candidates:
+            candidate_nbits_qc = copy.deepcopy(qc)
+            candidate_nbits_qc.weights_n_bits = weights_n_bits
+            candidate_nbits_qc.activation_n_bits = activation_n_bits
+            candidates.append(create_node_qc_candidate(candidate_nbits_qc,
+                                                       fw_info,
+                                                       weight_channel_axis))
     else:
-        candidats.append(create_node_weights_qc(qc, fw_info, weight_channel_axis))
+        candidates.append(create_node_qc_candidate(qc,
+                                                   fw_info,
+                                                   weight_channel_axis))
 
-    return candidats
+    return candidates

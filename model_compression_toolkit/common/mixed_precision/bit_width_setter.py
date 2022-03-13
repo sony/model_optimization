@@ -45,18 +45,19 @@ def set_bit_widths(quant_config: QuantizationConfig,
     graph = copy.deepcopy(graph_to_set_bit_widths)
 
     if isinstance(quant_config, MixedPrecisionQuantizationConfig):
-        if len(quant_config.weights_n_bits) == 0:
+        if len(quant_config.n_bits_candidates) == 0:
             Logger.critical(
-                f'Quantization configuration nbits has to contain at least one bit width. Length is: '
-                f'{len(quant_config.weights_n_bits)}')
+                f'Quantization configuration nbits candidates list has to contain at least one bit width candidate. '
+                f'Length is: '
+                f'{len(quant_config.n_bits_candidates)}')
 
         # When working in mixed-precision mode, and there's only one bitwidth, we simply set the
         # only candidate of the node as its final weight quantization configuration.
-        if len(quant_config.weights_n_bits) == 1:
+        if len(quant_config.n_bits_candidates) == 1:
             for n in graph.nodes:
                 if n.name in graph.get_configurable_sorted_nodes_names():
-                    assert len(n.candidates_weights_quantization_cfg) == 1
-                    n.final_weights_quantization_cfg = n.candidates_weights_quantization_cfg[0]
+                    assert len(n.candidates_quantization_cfg) == 1
+                    n.final_weights_quantization_cfg = n.candidates_quantization_cfg[0].weights_quantization_cfg
 
         else:
             Logger.info(f'Set bit widths from configuration: {bit_widths_config}')
@@ -67,25 +68,25 @@ def set_bit_widths(quant_config: QuantizationConfig,
                 node_name = node.name if not node.reuse else '_'.join(node.name.split('_')[:-2])
                 if node_name in sorted_nodes_names:  # only configurable nodes are in this list
                     node_index_in_graph = sorted_nodes_names.index(node_name)
-                    _set_node_qc(bit_widths_config,
-                                 fw_info,
-                                 node,
-                                 node_index_in_graph)
+                    _set_node_weights_qc(bit_widths_config,
+                                         fw_info,
+                                         node,
+                                         node_index_in_graph)
 
     # When working in non-mixed-precision mode, there's only one bitwidth, and we simply set the
     # only candidate of the node as its final weight quantization configuration.
     else:
         for n in graph.nodes:
             if fw_info.in_kernel_ops(n):
-                assert len(n.candidates_weights_quantization_cfg) == 1
-                n.final_weights_quantization_cfg = n.candidates_weights_quantization_cfg[0]
+                assert len(n.candidates_quantization_cfg) == 1
+                n.final_weights_quantization_cfg = n.candidates_quantization_cfg[0].weights_quantization_cfg
 
     return graph
 
 
-def _get_node_qc_by_bit_widths(node: BaseNode,
-                               bit_width_cfg: List[int],
-                               node_index_in_graph: int) -> Any:
+def _get_node_weights_qc_by_bit_widths(node: BaseNode,
+                                       bit_width_cfg: List[int],
+                                       node_index_in_graph: int) -> Any:
     """
     Get the node's quantization configuration that
     matches to the bit width index as in the MP configuration bit_width_cfg.
@@ -102,15 +103,15 @@ def _get_node_qc_by_bit_widths(node: BaseNode,
 
     if node.is_weights_quantization_enabled():
         bit_index_in_cfg = bit_width_cfg[node_index_in_graph]
-        qc = node.candidates_weights_quantization_cfg[bit_index_in_cfg]
-        return qc
+        weights_qc = node.candidates_quantization_cfg[bit_index_in_cfg].weights_quantization_cfg
+        return weights_qc
     return None
 
 
-def _set_node_qc(bit_width_cfg: List[int],
-                 fw_info: FrameworkInfo,
-                 node: BaseNode,
-                 node_index_in_graph: int):
+def _set_node_weights_qc(bit_width_cfg: List[int],
+                         fw_info: FrameworkInfo,
+                         node: BaseNode,
+                         node_index_in_graph: int):
     """
     Get the node's quantization configuration that
     matches to the bit width index as in the MP configuration bit_width_cfg, and use it to finalize the node's
@@ -126,7 +127,7 @@ def _set_node_qc(bit_width_cfg: List[int],
 
     """
     if fw_info.in_kernel_ops(node):
-        node_qc = _get_node_qc_by_bit_widths(node, bit_width_cfg, node_index_in_graph)
+        node_qc = _get_node_weights_qc_by_bit_widths(node, bit_width_cfg, node_index_in_graph)
         if node_qc is None:
             Logger.critical(f'Node {node.name} quantization configuration from configuration file'
                             f' was not found in candidates configurations.')

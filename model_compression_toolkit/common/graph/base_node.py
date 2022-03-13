@@ -59,9 +59,10 @@ class BaseNode:
         self.layer_class = layer_class
         self.reuse = reuse
         self.reuse_group = reuse_group
-        self.activation_quantization_cfg = None
+        # self.activation_quantization_cfg = None  # TODO: refactor everywhere in code
         self.final_weights_quantization_cfg = None
-        self.candidates_weights_quantization_cfg = None
+        # self.candidates_weights_quantization_cfg = None  # TODO: refactor everywhere in code
+        self.candidates_quantization_cfg = None
         self.prior_info = None
 
     @property
@@ -78,7 +79,10 @@ class BaseNode:
         Returns: Whether node activation quantization is enabled or not.
 
         """
-        return self.activation_quantization_cfg.enable_activation_quantization
+        for qc in self.candidates_quantization_cfg:
+            assert self.candidates_quantization_cfg[0].activation_quantization_cfg.enable_activation_quantization == \
+                   qc.activation_quantization_cfg.enable_activation_quantization
+        return self.candidates_quantization_cfg[0].activation_quantization_cfg.enable_activation_quantization
 
     def is_weights_quantization_enabled(self) -> bool:
         """
@@ -86,9 +90,10 @@ class BaseNode:
         Returns: Whether node weights quantization is enabled or not.
 
         """
-        for qc in self.candidates_weights_quantization_cfg:
-            assert self.candidates_weights_quantization_cfg[0].enable_weights_quantization == qc.enable_weights_quantization
-        return self.candidates_weights_quantization_cfg[0].enable_weights_quantization
+        for qc in self.candidates_quantization_cfg:
+            assert self.candidates_quantization_cfg[0].weights_quantization_cfg.enable_weights_quantization == \
+                   qc.weights_quantization_cfg.enable_weights_quantization
+        return self.candidates_quantization_cfg[0].weights_quantization_cfg.enable_weights_quantization
 
     def __repr__(self):
         """
@@ -194,6 +199,7 @@ class BaseNode:
         Returns: A dictionary containing information from node's weight quantization configuration candidates.
 
         """
+        # TODO: need refactor, also for activations nbits and with correct candidates variable
         shared_attributes = [CORRECTED_BIAS_ATTRIBUTE, WEIGHTS_NBITS_ATTRIBUTE]
         attr = dict()
         if self.is_weights_quantization_enabled():

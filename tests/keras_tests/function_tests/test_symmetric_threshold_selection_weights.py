@@ -131,8 +131,8 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
                                                                       keras_impl)
 
         nodes_list = list(graph.nodes)
-        conv1_threshold = nodes_list[0].candidates_weights_quantization_cfg[0].weights_quantization_params[THRESHOLD]
-        conv2_threshold = nodes_list[1].candidates_weights_quantization_cfg[0].weights_quantization_params[THRESHOLD]
+        conv1_threshold = nodes_list[0].candidates_quantization_cfg[0].weights_quantization_cfg.weights_quantization_params[THRESHOLD]
+        conv2_threshold = nodes_list[1].candidates_quantization_cfg[0].weights_quantization_cfg.weights_quantization_params[THRESHOLD]
         conv1_threshold_log = np.log2(conv1_threshold)
         conv2_threshold_log = np.log2(conv2_threshold)
         self.assertFalse(np.array_equal(conv1_threshold_log, conv1_threshold_log.astype(int)),

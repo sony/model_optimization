@@ -99,9 +99,9 @@ class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
         Returns:
             The node after its quant_config has been modified.
         """
-        for nqc in node.candidates_weights_quantization_cfg:
+        for nqc in node.candidates_quantization_cfg:
             for attr_name, attr_value in self.kwargs.items():
-                nqc.set_quant_config_attr(attr_name, attr_value)
+                nqc.weights_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
 
 
 class ChangeFinalWeightsQuantConfigAttr(BaseAction):
@@ -122,15 +122,15 @@ class ChangeFinalWeightsQuantConfigAttr(BaseAction):
         if node.final_weights_quantization_cfg is not None:
             for attr_name, attr_value in self.kwargs.items():
                 node.final_weights_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
-        elif len(node.candidates_weights_quantization_cfg) > 0:
-            for candidate_config in node.candidates_weights_quantization_cfg:
+        elif len(node.candidates_quantization_cfg) > 0:
+            for candidate_config in node.candidates_quantization_cfg:
                 for attr_name, attr_value in self.kwargs.items():
-                    candidate_config.set_quant_config_attr(attr_name, attr_value)
+                    candidate_config.weights_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
 
 
 
 
-
+# TODO: change name to Candidate-... (and refactor everywhere)
 class ChangeActivationQuantConfigAttr(BaseAction):
     """
     Class ChangeActivationQuantConfigAttr to change attributes in a node's activation quantization configuration.
@@ -157,8 +157,9 @@ class ChangeActivationQuantConfigAttr(BaseAction):
         Returns:q
             The node after its quant_config has been modified.
         """
-        for attr_name, attr_value in self.kwargs.items():
-            node.activation_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
+        for nqc in node.candidates_quantization_cfg:
+            for attr_name, attr_value in self.kwargs.items():
+                nqc.activation_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
 
 
 class ChangeQuantizationParamFunction(BaseAction):
@@ -190,14 +191,15 @@ class ChangeQuantizationParamFunction(BaseAction):
         Returns:
             The node after its quantization params function has been modified.
         """
-        if self.activation_quantization_params_fn is not None:
-            node.activation_quantization_cfg.set_activation_quantization_params_fn(
-                self.activation_quantization_params_fn)
-        if self.weights_quantization_params_fn is not None:
-            for qc in node.candidates_weights_quantization_cfg:
-                qc.set_weights_quantization_params_fn(self.weights_quantization_params_fn)
+        for nqc in node.candidates_quantization_cfg:
+            if self.activation_quantization_params_fn is not None:
+                nqc.activation_quantization_cfg.set_activation_quantization_params_fn(
+                    self.activation_quantization_params_fn)
+            if self.weights_quantization_params_fn is not None:
+                nqc.weights_quantization_cfg.set_weights_quantization_params_fn(self.weights_quantization_params_fn)
 
 
+# TODO: change name to Candidates-... (and refactor everywhere)
 class ChangeActivationQuantizationMethod(BaseAction):
     """
     Class ChangeQuantizationMethod to change a node's activations quantizer function.
@@ -226,20 +228,20 @@ class ChangeActivationQuantizationMethod(BaseAction):
             The node after its quantization function has been modified.
         """
         if self.activation_quantization_method is not None:
+            for qc in node.candidates_quantization_cfg:
+                activation_quantization_params_fn = get_activation_quantization_params_fn(
+                    self.activation_quantization_method, qc.activation_quantization_cfg.activation_error_method)
 
-            activation_quantization_params_fn = get_activation_quantization_params_fn(
-                self.activation_quantization_method, node.activation_quantization_cfg.activation_error_method)
+                if node.prior_info.is_output_bounded():
+                    activation_quantization_params_fn = quantization_params_generation.no_clipping_selection_min_max
 
-            if node.prior_info.is_output_bounded():
-                activation_quantization_params_fn = quantization_params_generation.no_clipping_selection_min_max
+                qc.activation_quantization_cfg.set_activation_quantization_params_fn(activation_quantization_params_fn)
+                activation_quantization_fn = fw_info.activation_quantizer_mapping.get(self.activation_quantization_method)
 
-            node.activation_quantization_cfg.set_activation_quantization_params_fn(activation_quantization_params_fn)
-            activation_quantization_fn = fw_info.activation_quantizer_mapping.get(self.activation_quantization_method)
+                if activation_quantization_fn is None:
+                    raise Exception('Unknown quantization method for activations')
 
-            if activation_quantization_fn is None:
-                raise Exception('Unknown quantization method for activations')
-
-            node.activation_quantization_cfg.set_activation_quantization_fn(activation_quantization_fn)
+                qc.activation_quantization_cfg.set_activation_quantization_fn(activation_quantization_fn)
 
 
 
@@ -317,16 +319,16 @@ class ChangeCandidtaesWeightsQuantizationMethod(BaseAction):
         """
 
         if self.weights_quantization_method is not None:
-            for qc in node.candidates_weights_quantization_cfg:
+            for qc in node.candidates_quantization_cfg:
 
                 weights_quantization_params_fn = get_weights_quantization_params_fn(self.weights_quantization_method,
-                                                                                    qc.weights_error_method)
+                                                                                    qc.weights_quantization_cfg.weights_error_method)
 
-                qc.set_weights_quantization_params_fn(weights_quantization_params_fn)
+                qc.weights_quantization_cfg.set_weights_quantization_params_fn(weights_quantization_params_fn)
 
                 weights_quantization_fn = fw_info.weights_quantizer_mapping.get(self.weights_quantization_method)
 
                 if weights_quantization_fn is None:
                     raise Exception('Unknown quantization method for weights')
 
-                qc.set_weights_quantization_fn(weights_quantization_fn)
+                qc.weights_quantization_cfg.set_weights_quantization_fn(weights_quantization_fn)
