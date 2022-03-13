@@ -119,7 +119,9 @@ class GradientPTQLearnRateZeroTest(GradientPTQBaseTest):
         self.unit_test.assertTrue(len(quantized_model.weights) == len(quantized_gptq_model.weights),
                                   msg='float model number of weights different from quantized model: ' +
                                       f'{len(quantized_gptq_model.weights)} != {len(quantized_model.weights)}')
-        # check all weights didn't change
-        weights_diff = [np.all(w_q.numpy() == w_f.numpy()) for w_q, w_f in
+        # check all weights didn't change (small noise is possible due to quantization with numpy
+        # vs quantization with tf)
+        weights_diff = [np.isclose(np.max(np.abs(w_q - w_f)), 0, atol=1e-5) for w_q, w_f in
                         zip(quantized_model.weights, quantized_gptq_model.weights)]
-        self.unit_test.assertTrue(all(weights_diff), msg="Some weights were updated")
+        for weights_close in weights_diff:
+            self.unit_test.assertTrue(np.all(weights_close))

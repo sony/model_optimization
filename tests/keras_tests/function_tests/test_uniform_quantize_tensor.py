@@ -60,8 +60,7 @@ class TestUniformQuantizeTensor(unittest.TestCase):
         gt_quantized_tensor = \
             ground_truth_quantize_tensor(tensor_data, threshold=threshold, n_bits=n_bits, signed=signed)
         quantized_tensor = \
-            quantize_tensor(tensor_data, threshold=threshold, n_bits=n_bits, signed=signed,
-                            per_channel=per_channel, channel_axis=channel_axis)
+            quantize_tensor(tensor_data, threshold=threshold, n_bits=n_bits, signed=signed)
         self.assertTrue(gt_quantized_tensor.shape == quantized_tensor.shape)
         self.assertTrue((gt_quantized_tensor == quantized_tensor).all())
 
