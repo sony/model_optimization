@@ -15,8 +15,7 @@
 
 
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig,\
-    QuantizationErrorMethod
+from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 import model_compression_toolkit as mct
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.common.user_info import UserInformation
@@ -46,10 +45,8 @@ class MultiHeadAttentionTest(BaseKerasFeatureNetworkTest):
         self.output_dim = output_dim
 
     def get_quantization_config(self):
-        return QuantizationConfig(activation_error_method=QuantizationErrorMethod.NOCLIPPING,
-                                  weights_error_method=QuantizationErrorMethod.NOCLIPPING,
-                                  activation_n_bits=16, weights_n_bits=16,
-                                  )
+        return QuantizationConfig(enable_weights_quantization=False,
+                                  enable_activation_quantization=False)
 
     def get_input_shapes(self):
         if self.separate_key_value:
@@ -84,4 +81,4 @@ class MultiHeadAttentionTest(BaseKerasFeatureNetworkTest):
         out_float = float_model(input_x).numpy()
         self.unit_test.assertTrue(out_quantized.shape == out_float.shape)
         nmse = np.mean(np.abs((out_quantized - out_float)) ** 2) / np.mean(np.abs(out_float) ** 2)
-        self.unit_test.assertTrue(np.isclose(nmse, 0, atol=1e-7))
+        self.unit_test.assertTrue(np.isclose(nmse, 0))
