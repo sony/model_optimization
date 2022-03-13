@@ -14,7 +14,6 @@
 # ==============================================================================
 import itertools
 from collections import Callable
-from operator import itemgetter
 from typing import Any, Tuple, Dict
 
 import numpy as np
@@ -128,12 +127,12 @@ def qparams_selection_histogram_search(error_function: Callable,
     signed = np.any(bins < 0)  # Whether histogram contains negative values or not.
     threshold = (1 + int(constrained)) * no_clipping_selection_histogram(bins,
                                                                          counts,
-                                                                         p=0,  # dummy
-                                                                         n_bits=n_bits,  # dummy
-                                                                         min_value=0,  # dummy
-                                                                         max_value=0,  # dummy
+                                                                         p=0,#dummy
+                                                                         n_bits=n_bits,#dummy
+                                                                         min_value=0,#dummy
+                                                                         max_value=0,#dummy
                                                                          constrained=constrained,
-                                                                         n_iter=n_iter,  # dummy
+                                                                         n_iter=n_iter, #dummy
                                                                          min_threshold=min_threshold)
     # Init a list of thresholds.
     error_list = []

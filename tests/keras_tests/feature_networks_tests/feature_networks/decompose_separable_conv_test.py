@@ -33,9 +33,6 @@ class DecomposeSeparableConvTest(BaseKerasFeatureNetworkTest):
     def get_quantization_config(self):
         return mct.QuantizationConfig(weights_bias_correction=False)
 
-    # def create_inputs_shape(self):
-    #     return [[self.val_batch_size, 3, 4, 5]]
-
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         outputs = layers.SeparableConv2D(1, 2, depth_multiplier=self.depth_multiplier)(inputs)

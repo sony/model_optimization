@@ -68,7 +68,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
     def create_feature_network(self, input_shape):
         pass
 
-    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None, convert_fx=True):
         set_model(float_model)
         float_result = float_model(*input_x)
         for model_name, quantized_model in quantized_models.items():
@@ -92,8 +92,10 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                 #########################################
                 # check model export
                 #########################################
-                # check export to fx
-                fx_model = symbolic_trace(quantized_model)
+                if convert_fx:
+                    # check export to fx
+                    # cannot convert to fx when the model has torch.Tensor operations (i.e. tensor.size())
+                    fx_model = symbolic_trace(quantized_model)
                 # check export to torchscript
                 torch_traced = torch.jit.trace(quantized_model, input_x)
                 torch_script_model = torch.jit.script(torch_traced)

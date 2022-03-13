@@ -36,6 +36,8 @@ from model_compression_toolkit.pytorch.constants import KERNEL
 from model_compression_toolkit.pytorch.quantizer.fake_quant_builder import power_of_two_quantization, \
     symmetric_quantization, uniform_quantization
 from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder
+from model_compression_toolkit.pytorch.quantizer.fake_quant_builder import power_of_two_quantization
+from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder, ConstantHolder
 
 """
 Division of Pytorch modules by how they should be quantized.
@@ -46,7 +48,7 @@ NO_QUANTIZATION: Layers that should not be quantized.
 
 KERNEL_OPS = [Conv2d, Linear, ConvTranspose2d]
 
-NO_QUANTIZATION = [Dropout, Flatten] + \
+NO_QUANTIZATION = [Dropout, Flatten, ConstantHolder] + \
                   [dropout, flatten, split, operator.getitem, reshape, unsqueeze]
 
 ACTIVATION = [DummyPlaceHolder] + \
