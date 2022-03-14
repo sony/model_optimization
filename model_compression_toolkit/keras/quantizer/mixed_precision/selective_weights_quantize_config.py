@@ -19,6 +19,9 @@ import numpy as np
 from tensorflow import Tensor
 import tensorflow as tf
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+from model_compression_toolkit.common.quantization.candidate_node_quantization_config import \
+    CandidateNodeQuantizationConfig
+
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers import Layer
 else:
@@ -26,7 +29,6 @@ else:
 from tensorflow.python.training.tracking.data_structures import ListWrapper
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_config import QuantizeConfig
 
-from model_compression_toolkit.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
 from model_compression_toolkit.keras.quantizer.mixed_precision.selective_quantizer import SelectiveQuantizer
 
 
@@ -46,7 +48,7 @@ class SelectiveWeightsQuantizeConfig(QuantizeConfig):
     def __init__(self,
                  weight_attrs: List[str],
                  float_weights: List[np.ndarray],
-                 node_weights_q_cfg: List[NodeWeightsQuantizationConfig]):
+                 node_q_cfg: List[CandidateNodeQuantizationConfig]):
         """
         Init a SelectiveWeightsQuantizeConfig instance.
 
@@ -59,19 +61,19 @@ class SelectiveWeightsQuantizeConfig(QuantizeConfig):
         """
         # Make sure the candidates configurations arrived in a descending order.
         curmax = np.inf
-        for n in node_weights_q_cfg:
-            assert n.weights_n_bits < curmax
-            curmax = n.weights_n_bits
+        for n_candidate in node_q_cfg:
+            assert n_candidate.weights_quantization_cfg.weights_n_bits < curmax
+            curmax = n_candidate.weights_quantization_cfg.weights_n_bits
 
         self.weight_attrs = weight_attrs
-        assert len(node_weights_q_cfg) > 0, 'SelectiveWeightsQuantizeConfig has to receive' \
+        assert len(node_q_cfg) > 0, 'SelectiveWeightsQuantizeConfig has to receive' \
                                             'at least one weight quantization configuration'
         assert len(weight_attrs) == len(float_weights)
 
-        self.node_weights_q_cfg = node_weights_q_cfg
+        self.node_q_cfg = node_q_cfg
 
         # Initialize a SelectiveQuantizer for each weight that should be quantized.
-        self.weight_quantizers = [SelectiveQuantizer(node_weights_q_cfg,
+        self.weight_quantizers = [SelectiveQuantizer(node_q_cfg,
                                                      float_weight=float_weight) for float_weight in float_weights]
 
     def get_candidate_nbits(self) -> List[int]:
@@ -80,7 +82,7 @@ class SelectiveWeightsQuantizeConfig(QuantizeConfig):
         Returns: All possible number of bits the SelectiveWeightsQuantizeConfig holds.
 
         """
-        return [x.weights_n_bits for x in self.node_weights_q_cfg]
+        return [x.weights_quantization_cfg.weights_n_bits for x in self.node_q_cfg]
 
     def set_bit_width_index(self,
                             index: int,

@@ -154,7 +154,7 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
         """
         return (not self.has_activation_quantization_params())
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, NodeActivationQuantizationConfig):
             return False
 
@@ -268,7 +268,7 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
         """
         return len(self.weights_quantization_params) > 0
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, NodeWeightsQuantizationConfig):
             return False
 

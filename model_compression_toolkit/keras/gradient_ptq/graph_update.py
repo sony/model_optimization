@@ -59,14 +59,14 @@ def update_graph_after_gptq(fxp_model: Model,
             if len(node) != 1:
                 common.Logger.error(f"Can't update GPTQ graph due to missing layer named: {layer.layer.name}")
             node = node[0]
-            weights, weight_quant_config, activation_quant_config = layer.quantize_config.update_layer_quantization_params(
-                layer)
+            weights, weight_quant_config, activation_quant_config = \
+                layer.quantize_config.update_layer_quantization_params(layer)
             for weight_attr, weight in weights.items():
                 node.set_weights_by_keys(weight_attr, weight.numpy())
             for config_attr, config_value in weight_quant_config.items():
                 node.final_weights_quantization_cfg.set_quant_config_attr(config_attr, config_value)
             for config_attr, config_value in activation_quant_config.items():
-                node.activation_quantization_cfg.set_quant_config_attr(config_attr, config_value)
+                node.final_activation_quantization_cfg.set_quant_config_attr(config_attr, config_value)
             if add_bias:
                 use_bias = layer.layer.get_config().get(USE_BIAS)
                 if use_bias is not None and use_bias:

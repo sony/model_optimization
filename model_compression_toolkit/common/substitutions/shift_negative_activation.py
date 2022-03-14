@@ -293,7 +293,7 @@ def shift_negative_function(graph: Graph,
                                          quant_config=qc)
 
         for candidate_qc in pad_node.candidates_quantization_cfg:
-            candidate_qc.weights_quntization_cfg.enable_weights_quantization = False
+            candidate_qc.weights_quantization_cfg.enable_weights_quantization = False
             candidate_qc.activation_quantization_cfg.enable_activation_quantization = False
 
         # Insert a pad node between the add node to the op2d, and create statistics for the pad node

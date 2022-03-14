@@ -134,11 +134,17 @@ def run_operation(n: BaseNode,
         out_tensors_of_n_float = input_nodes_to_input_tensors[n]
         out_tensors_of_n = out_tensors_of_n_float
         if n.is_activation_quantization_enabled():
-            if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ, ModelBuilderMode.MIXEDPRECISION]:
-                for candidate_qc in n.candidates_quantization_cfg:
-                    # Adding a fake quant node to Input when in GPTQ mode because quantize_model doesn't quantize the
-                    # input layer
-                    out_tensors_of_n = candidate_qc.activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
+            if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ]:
+                assert n.final_activation_quantization_cfg is not None, \
+                    "Node's final_activation_quantization_cfg is None"
+                # Adding a fake quant node to Input when in GPTQ mode because quantize_model doesn't quantize the
+                # input layer
+                out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
+            elif mode in [ModelBuilderMode.MIXEDPRECISION]:
+                # TODO: refactor after implementing activations mixed precision
+                assert n.is_all_activation_candidates_equal()
+                out_tensors_of_n = n.candidates_quantization_cfg.activation_quantization_cfg.quantize_node_output(
+                    out_tensors_of_n_float)
 
     else:
         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
@@ -158,9 +164,16 @@ def run_operation(n: BaseNode,
 
         # Add a fake quant node if the node has an activation threshold.
         if n.is_activation_quantization_enabled():
-            if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.MIXEDPRECISION, ModelBuilderMode.GPTQ]:
-                for candidate_qc in n.candidates_quantization_cfg:
-                    out_tensors_of_n = candidate_qc.activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
+            if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ]:
+                assert n.final_activation_quantization_cfg is not None, \
+                    "Node's final_activation_quantization_cfg is None"
+                out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
+            elif mode in [ModelBuilderMode.MIXEDPRECISION]:
+                # TODO: refactor after implementing activations mixed precision
+                assert n.is_all_activation_candidates_equal()
+                out_tensors_of_n = n.candidates_quantization_cfg.activation_quantization_cfg.quantize_node_output(
+                    out_tensors_of_n_float)
+
     return out_tensors_of_n, out_tensors_of_n_float
 
 

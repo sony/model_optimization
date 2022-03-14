@@ -62,6 +62,7 @@ class BaseNode:
         self.reuse_group = reuse_group
         # self.activation_quantization_cfg = None  # TODO: refactor everywhere in code
         self.final_weights_quantization_cfg = None
+        self.final_activation_quantization_cfg = None
         # self.candidates_weights_quantization_cfg = None  # TODO: refactor everywhere in code
         self.candidates_quantization_cfg = None
         self.prior_info = None
@@ -203,7 +204,7 @@ class BaseNode:
         shared_attributes = [CORRECTED_BIAS_ATTRIBUTE, WEIGHTS_NBITS_ATTRIBUTE]
         attr = dict()
         if self.is_weights_quantization_enabled():
-            attr = copy.deepcopy(self.candidates_quantization_cfg.weights_quantization_cfg[0].__dict__)
+            attr = copy.deepcopy(self.candidates_quantization_cfg[0].weights_quantization_cfg.__dict__)
             for shared_attr in shared_attributes:
                 if shared_attr in attr:
                     unified_attr = []
@@ -225,7 +226,7 @@ class BaseNode:
         shared_attributes = [ACTIVATION_NBITS_ATTRIBUTE]
         attr = dict()
         if self.is_weights_quantization_enabled():
-            attr = copy.deepcopy(self.candidates_quantization_cfg.activation_quantization_cfg[0].__dict__)
+            attr = copy.deepcopy(self.candidates_quantization_cfg[0].activation_quantization_cfg.__dict__)
             for shared_attr in shared_attributes:
                 if shared_attr in attr:
                     unified_attr = []

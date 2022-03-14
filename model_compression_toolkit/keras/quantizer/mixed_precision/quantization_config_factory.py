@@ -39,10 +39,11 @@ def quantization_config_builder_mixed_precision(n: common.BaseNode,
         QuantizeConfig to wrap the layer so it can work in MP Keras models.
     """
 
-    assert n.candidates_weights_quantization_cfg is not None
-    node_weights_q_cfg = n.candidates_weights_quantization_cfg
+    assert n.candidates_quantization_cfg is not None
+    node_q_cfg_candidates = n.candidates_quantization_cfg
     # sort by decending bit width so using indices would be easier
-    node_weights_q_cfg.sort(key=lambda x: x.weights_n_bits, reverse=True)
+    node_q_cfg_candidates.sort(key=lambda x: (x.weights_quantization_cfg.weights_n_bits,
+                                              x.activation_quantization_cfg.activation_n_bits), reverse=True)
 
     float_weights = [n.get_weights_by_keys(attr) for attr in fw_info.get_kernel_op_attributes(n.type)]
 
@@ -50,4 +51,4 @@ def quantization_config_builder_mixed_precision(n: common.BaseNode,
     # quantized using all possible bitwidhts in the node's candidates weights quantization configurations).
     return SelectiveWeightsQuantizeConfig(fw_info.get_kernel_op_attributes(n.type),
                                           float_weights=float_weights,
-                                          node_weights_q_cfg=node_weights_q_cfg)
+                                          node_weights_q_cfg=node_q_cfg_candidates)
