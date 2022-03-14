@@ -83,34 +83,35 @@ class ReLUBoundCorrection(common.BaseSubstitution):
         if max_value is None:
             return graph
 
-        for nqc in non_linear_node.candidates_quantization_cfg:
-            threshold = nqc.activation_quantization_cfg.activation_quantization_params.get(THRESHOLD)
-            threshold_float = max_value
+        threshold = non_linear_node.activation_quantization_cfg.activation_quantization_params.get(THRESHOLD)
+        threshold_float = max_value
 
-            if threshold > threshold_float:
-                scale_factor = threshold_float / threshold
+        if threshold > threshold_float:
+            scale_factor = threshold_float / threshold
 
-                # Scale activation bound only if it is already bounded and has 'max_value' attribute.
-                if RELU_MAX_VALUE in non_linear_node.framework_attr and \
-                        is_number(non_linear_node.framework_attr[RELU_MAX_VALUE]):
-                    non_linear_node.framework_attr[RELU_MAX_VALUE] = np.float32(threshold)
-                    common.Logger.debug(
-                        f"Node named:{non_linear_node.name} max value change "
-                        f"to:{non_linear_node.framework_attr[RELU_MAX_VALUE]}")
+            # Scale activation bound only if it is already bounded and has 'max_value' attribute.
+            if RELU_MAX_VALUE in non_linear_node.framework_attr and \
+                    is_number(non_linear_node.framework_attr[RELU_MAX_VALUE]):
+                non_linear_node.framework_attr[RELU_MAX_VALUE] = np.float32(threshold)
+                common.Logger.debug(
+                    f"Node named:{non_linear_node.name} max value change "
+                    f"to:{non_linear_node.framework_attr[RELU_MAX_VALUE]}")
 
-                w2_fixed = scale_factor * second_op2d_node.get_weights_by_keys(KERNEL)
-                w1_fixed = first_op2d_node.get_weights_by_keys(KERNEL) / scale_factor
-                b1_fixed = first_op2d_node.get_weights_by_keys(BIAS) / scale_factor
+            w2_fixed = scale_factor * second_op2d_node.get_weights_by_keys(KERNEL)
+            w1_fixed = first_op2d_node.get_weights_by_keys(KERNEL) / scale_factor
+            b1_fixed = first_op2d_node.get_weights_by_keys(BIAS) / scale_factor
 
-                first_op2d_node.set_weights_by_keys(KERNEL, w1_fixed)
-                first_op2d_node.set_weights_by_keys(BIAS, b1_fixed)
-                second_op2d_node.set_weights_by_keys(KERNEL, w2_fixed)
+            first_op2d_node.set_weights_by_keys(KERNEL, w1_fixed)
+            first_op2d_node.set_weights_by_keys(BIAS, b1_fixed)
+            second_op2d_node.set_weights_by_keys(KERNEL, w2_fixed)
 
-                graph.scale_stats_collector(non_linear_node, 1 / scale_factor)
-                graph.scale_stats_collector(first_op2d_node, 1 / scale_factor)
+            graph.scale_stats_collector(non_linear_node, 1 / scale_factor)
+            graph.scale_stats_collector(first_op2d_node, 1 / scale_factor)
 
-                # After scaling weights may have different thresholds so it needs to be recalculated
-                nqc.weights_quantization_cfg.calculate_and_set_weights_params(w1_fixed)
-                nqc.weights_quantization_cfg.calculate_and_set_weights_params(w2_fixed)
+            # After scaling weights may have different thresholds so it needs to be recalculated
+            for nqc in first_op2d_node.candidates_weights_quantization_cfg:
+                nqc.calculate_and_set_weights_params(w1_fixed)
+            for nqc in second_op2d_node.candidates_weights_quantization_cfg:
+                nqc.calculate_and_set_weights_params(w2_fixed)
 
         return graph

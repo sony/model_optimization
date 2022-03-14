@@ -154,6 +154,27 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
         """
         return (not self.has_activation_quantization_params())
 
+    def __eq__(self, other):
+        if not isinstance(other, NodeActivationQuantizationConfig):
+            return False
+
+        return self.activation_quantization_fn == other.activation_quantization_fn and \
+               self.activation_quantization_params_fn == other.activation_quantization_params_fn and \
+               self.activation_quantization_params == other.activation_quantization_params and \
+               self.activation_error_method == other.activation_error_method and \
+               self.activation_quantization_method == other.activation_quantization_method and \
+               self.activation_n_bits == other.activation_n_bits and \
+               self.relu_unbound_correction == other.relu_unbound_correction and \
+               self.enable_activation_quantization == other.enable_activation_quantization and \
+               self.activation_channel_equalization == other.activation_channel_equalization and \
+               self.input_scaling == other.input_scaling and \
+               self.min_threshold == other.min_threshold and \
+               self.l_p_value == other.l_p_value and \
+               self.shift_negative_activation_correction == other.shift_negative_activation_correction and \
+               self.z_threshold == other.z_threshold and \
+               self.shift_negative_ratio == other.shift_negative_ratio and \
+               self.shift_negative_threshold_recalculation == other.shift_negative_threshold_recalculation
+
 
 class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
     """
@@ -247,4 +268,19 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
         """
         return len(self.weights_quantization_params) > 0
 
+    def __eq__(self, other):
+        if not isinstance(other, NodeWeightsQuantizationConfig):
+            return False
 
+        return self.weights_quantization_fn == other.weights_quantization_fn and \
+               self.weights_quantization_params_fn == other.weights_quantization_params_fn and \
+               self.weights_channels_axis == other.weights_channels_axis and \
+               self.weights_quantization_params == other.weights_quantization_params and \
+               self.weights_error_method == other.weights_error_method and \
+               self.weights_quantization_method == other.weights_quantization_method and \
+               self.weights_n_bits == other.weights_n_bits and \
+               self.weights_bias_correction == other.weights_bias_correction and \
+               self.weights_per_channel_threshold == other.weights_per_channel_threshold and \
+               self.enable_weights_quantization == other.enable_weights_quantization and \
+               self.min_threshold == other.min_threshold and \
+               self.l_p_value == other.l_p_value

@@ -18,7 +18,8 @@ from typing import Dict, Any, Tuple
 
 import numpy as np
 
-from model_compression_toolkit.common.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE
+from model_compression_toolkit.common.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
+    ACTIVATION_NBITS_ATTRIBUTE
 
 
 class BaseNode:
@@ -189,7 +190,7 @@ class BaseNode:
 
         return memory
 
-    def get_unified_candidates_dict(self):
+    def get_unified_weights_candidates_dict(self):
         """
         In Mixed-Precision, a node can have multiple candidates for weights quantization configuration.
         In order to display a single view of a node (for example, for logging in TensorBoard) we need a way
@@ -199,16 +200,47 @@ class BaseNode:
         Returns: A dictionary containing information from node's weight quantization configuration candidates.
 
         """
-        # TODO: need refactor, also for activations nbits and with correct candidates variable
         shared_attributes = [CORRECTED_BIAS_ATTRIBUTE, WEIGHTS_NBITS_ATTRIBUTE]
         attr = dict()
         if self.is_weights_quantization_enabled():
-            attr = copy.deepcopy(self.candidates_weights_quantization_cfg[0].__dict__)
+            attr = copy.deepcopy(self.candidates_quantization_cfg.weights_quantization_cfg[0].__dict__)
             for shared_attr in shared_attributes:
                 if shared_attr in attr:
                     unified_attr = []
-                    for candidate in self.candidates_weights_quantization_cfg:
-                        unified_attr.append(getattr(candidate, shared_attr))
+                    for candidate in self.candidates_quantization_cfg:
+                        unified_attr.append(getattr(candidate.weights_quantization_cfg, shared_attr))
                     attr[shared_attr] = unified_attr
         return attr
+
+    def get_unified_activation_candidates_dict(self):
+        """
+        In Mixed-Precision, a node can have multiple candidates for activation quantization configuration.
+        In order to display a single view of a node (for example, for logging in TensorBoard) we need a way
+        to create a single dictionary from all candidates.
+        This method is aimed to build such an unified dictionary for a node.
+
+        Returns: A dictionary containing information from node's activation quantization configuration candidates.
+
+        """
+        shared_attributes = [ACTIVATION_NBITS_ATTRIBUTE]
+        attr = dict()
+        if self.is_weights_quantization_enabled():
+            attr = copy.deepcopy(self.candidates_quantization_cfg.activation_quantization_cfg[0].__dict__)
+            for shared_attr in shared_attributes:
+                if shared_attr in attr:
+                    unified_attr = []
+                    for candidate in self.candidates_quantization_cfg:
+                        unified_attr.append(getattr(candidate.activation_quantization_cfg, shared_attr))
+                    attr[shared_attr] = unified_attr
+        return attr
+
+    def is_all_activation_candidates_equal(self):
+        return all(candidate.activation_quantization_cfg ==
+                   self.candidates_quantization_cfg[0].activation_quantization_cfg
+                   for candidate in self.candidates_quantization_cfg)
+
+    def is_all_weights_candidates_equal(self):
+        return all(candidate.weights_quantization_cfg ==
+                   self.candidates_quantization_cfg[0].weights_quantization_cfg
+                   for candidate in self.candidates_quantization_cfg)
 

@@ -219,20 +219,27 @@ def shift_negative_function(graph: Graph,
 
     min_to_correct, max_value2compare = graph.get_out_stats_collector(non_linear_node).get_min_max_values()
 
+    if not non_linear_node.is_all_activation_candidates_equal():
+        raise Exception("Shift negative correction is not supported for more than one activation quantization "
+                        "configuration candidate")
+
+    # all candidates have same activation config, so taking the first candidate for calculations
+    non_linear_node_cfg_candidate = non_linear_node.candidates_quantization_cfg[0].activation_quantization_cfg
+
     # get the non-linear activation threshold
-    activation_threshold = non_linear_node.activation_quantization_cfg.activation_quantization_params.get(THRESHOLD)
+    activation_threshold = non_linear_node_cfg_candidate.activation_quantization_params.get(THRESHOLD)
 
     negative_rate = np.abs(min_to_correct) / activation_threshold
 
-    enable_sub = negative_rate <= non_linear_node.activation_quantization_cfg.shift_negative_ratio
+    enable_sub = negative_rate <= non_linear_node_cfg_candidate.shift_negative_ratio
     if min_to_correct >= 0 or not enable_sub:
         return graph
 
     # Calculate the shifting value by checking the quantized points of the shifted activation and
     # taking the minimal quantized point that is still positive.
     q_points = np.linspace(0, activation_threshold - activation_threshold / (
-            2 ** non_linear_node.activation_quantization_cfg.activation_n_bits),
-                           2 ** non_linear_node.activation_quantization_cfg.activation_n_bits).astype(
+            2 ** non_linear_node_cfg_candidate.activation_n_bits),
+                           2 ** non_linear_node_cfg_candidate.activation_n_bits).astype(
         'float32')  # Change to type float32 to support tensorflow dtypes
 
     delta = q_points + min_to_correct
@@ -285,9 +292,9 @@ def shift_negative_function(graph: Graph,
                                          node=pad_node,
                                          quant_config=qc)
 
-        pad_node.activation_quantization_cfg.enable_activation_quantization = False
-        for weight_qc in pad_node.candidates_weights_quantization_cfg:
-            weight_qc.enable_weights_quantization = False
+        for candidate_qc in pad_node.candidates_quantization_cfg:
+            candidate_qc.weights_quntization_cfg.enable_weights_quantization = False
+            candidate_qc.activation_quantization_cfg.enable_activation_quantization = False
 
         # Insert a pad node between the add node to the op2d, and create statistics for the pad node
         insert_node_before_node(graph,
@@ -302,31 +309,41 @@ def shift_negative_function(graph: Graph,
     set_quantization_configs_to_node(fw_info=fw_info,
                                      node=add_node,
                                      quant_config=qc)
-    add_node.activation_quantization_cfg.activation_n_bits = \
-        non_linear_node.activation_quantization_cfg.activation_n_bits
+
+    for candidate_qc in add_node.candidates_quantization_cfg:
+        candidate_qc.activation_quantization_cfg.activation_n_bits = \
+            non_linear_node_cfg_candidate.activation_n_bits
+
     # The non-linear node's output should be float, so we approximate it by using 16bits quantization.
-    non_linear_node.activation_quantization_cfg.activation_n_bits = SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
+    for candidate_qc in non_linear_node.candidates_quantization_cfg:
+        candidate_qc.activation_quantization_cfg.activation_n_bits = SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 
     # A bypass node that has its own activation (e.g. GlobalAvgPool2D) can set it to unsigned
     if bypass_nodes:
         for bypass_node in bypass_nodes:
-            if bypass_node.activation_quantization_cfg:
-                bypass_node.activation_quantization_cfg.activation_quantization_params['is_signed'] = False
-                graph.shift_stats_collector(bypass_node, np.array(shift_value))
+            for bypass_candidate_qc in bypass_node.candidates_quantization_cfg:
+                if bypass_candidate_qc.activation_quantization_cfg:
+                    bypass_candidate_qc.activation_quantization_cfg.activation_quantization_params['is_signed'] = False
+                    graph.shift_stats_collector(bypass_node, np.array(shift_value))
 
-    for weight_qc in add_node.candidates_weights_quantization_cfg:
-        weight_qc.enable_weights_quantization = False
+    for candidate_qc in add_node.candidates_quantization_cfg:
+        candidate_qc.weights_quantization_cfg.enable_weights_quantization = False
 
-    add_node.activation_quantization_cfg = create_node_activation_qc(qc,
-                                                                     fw_info)
+        candidate_qc.activation_quantization_cfg = create_node_activation_qc(qc,
+                                                                             fw_info)
 
-    add_node.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
-                                                                            SIGNED: False})
+        candidate_qc.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
+                                                                                    SIGNED: False})
 
-    if non_linear_node.activation_quantization_cfg.shift_negative_threshold_recalculation:
-        activation_param = get_activations_qparams(add_node, graph)
+    if non_linear_node_cfg_candidate.shift_negative_threshold_recalculation:
+        activation_param = get_activations_qparams(activation_quant_cfg=non_linear_node_cfg_candidate,
+                                                   nodes_prior_info=non_linear_node.prior_info,
+                                                   out_stats_container=graph.get_out_stats_collector(non_linear_node),
+                                                   graph=graph)
+
         assert activation_param.get(SIGNED) == False
-        add_node.activation_quantization_cfg.set_activation_quantization_param(activation_param)
+        for candidate_qc in non_linear_node.candidates_quantization_cfg:
+            candidate_qc.activation_quantization_cfg.set_activation_quantization_param(activation_param)
 
     return graph
 

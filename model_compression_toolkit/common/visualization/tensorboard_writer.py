@@ -213,10 +213,10 @@ class TensorboardWriter(object):
             if n.final_weights_quantization_cfg is not None:
                 attr.update(n.final_weights_quantization_cfg.__dict__)
             elif n.candidates_quantization_cfg is not None:
-                attr.update(n.get_unified_candidates_dict())
-            # TODO: maybe need to split to unified weights and unified activations
-            # if n.activation_quantization_cfg is not None:
-            #     attr.update(n.activation_quantization_cfg.__dict__)
+                attr.update(n.get_unified_weights_candidates_dict())
+
+            if n.candidates_quantization_cfg is not None:
+                attr.update(n.get_unified_activation_candidates_dict())
             return attr
 
         def __get_node_output_dims(n: BaseNode) -> List[tuple]:
