@@ -539,7 +539,7 @@ def qparams_symmetric_selection_histogram_search(error_function: Callable,
         Optimized threshold for quantifying the histogram.
 
     """
-    signed = np.any(bins < 0)  # Whether histogram contains negative values or not.
+    signed = np.any(bins[:-1][counts != 0] < 0)  # Whether histogram contains negative values or not.
 
     res = qparams_symmetric_iterative_minimization(x0=get_init_threshold(min_threshold, tensor_max),
                                                    x=bins,
@@ -583,7 +583,7 @@ def kl_qparams_symmetric_selection_histogram_search(error_function: Callable,
         Optimized threshold for quantifying the histogram.
 
     """
-    signed = np.any(bins < 0)  # Whether histogram contains negative values or not.
+    signed = np.any(bins[:-1][counts != 0] < 0)  # Whether histogram contains negative values or not.
     res = qparams_symmetric_iterative_minimization(x0=get_init_threshold(min_threshold, tensor_max),
                                                    x=bins,
                                                    loss_fn=lambda x, q_x, t:
@@ -718,7 +718,10 @@ def get_init_threshold(min_threshold: float, tensor_max: np.ndarray, per_channel
     return max(min_threshold, tensor_max)
 
 
-def _error_function_wrapper(error_function, float_tensor, q_tensor, in_params):
+def _error_function_wrapper(error_function: Callable,
+                            float_tensor: np.ndarray,
+                            q_tensor: np.ndarray,
+                            in_params: np.ndarray) -> np.ndarray:
     """
     Wrapper method for using the error methods in a vectorized per-channel parameters' search.
 
