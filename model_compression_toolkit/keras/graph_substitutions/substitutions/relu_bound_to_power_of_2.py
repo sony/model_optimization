@@ -74,7 +74,7 @@ class ReLUBoundToPowerOfTwo(common.BaseSubstitution):
 
         max_value = non_linear_node.framework_attr.get(RELU_MAX_VALUE, None)
 
-        # only act on bound relu with not POT max value
+        # only act on bound relu with non POT max value
         if max_value is None or np.log2(max_value).astype(int) - np.log2(max_value) == 0:
             return graph
 

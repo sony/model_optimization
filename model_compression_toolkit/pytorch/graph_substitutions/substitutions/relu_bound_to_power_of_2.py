@@ -14,6 +14,7 @@
 # ==============================================================================
 
 from typing import List
+import numpy as np
 
 from torch.nn import Conv2d, ReLU6, Linear, ConvTranspose2d, Hardtanh
 from torch.nn.functional import relu6, hardtanh
@@ -36,7 +37,9 @@ class ReLUBoundToPowerOfTwo(common.BaseSubstitution):
         Initialize a ReLUBoundToPowerOfTwo object.
         """
         homogeneous_activation_nodes = NodeOperationMatcher(ReLU6) | \
-                                       NodeOperationMatcher(relu6)
+                                       NodeOperationMatcher(relu6) | \
+                                       NodeOperationMatcher(Hardtanh) | \
+                                       NodeOperationMatcher(hardtanh)
 
         op2d_node = NodeOperationMatcher(Conv2d) | \
                     NodeOperationMatcher(Linear) | \
@@ -71,17 +74,27 @@ class ReLUBoundToPowerOfTwo(common.BaseSubstitution):
         non_linear_node = nodes_list[1]
         second_op2d_node = nodes_list[2]
 
-        scale_factor = 6 / self.threshold
+        scale_factor = 6.0 / self.threshold
 
+        # only act on bound relu with not POT max value and 0 min value
         if non_linear_node.type == ReLU6:
             non_linear_node.layer_class = Hardtanh
-            # TODO: needs to be checked
             non_linear_node.framework_attr[INPLACE] = False
             non_linear_node.framework_attr[HARDTANH_MIN_VAL] = 0.0
             non_linear_node.framework_attr[HARDTANH_MAX_VAL] = self.threshold
         elif non_linear_node.type == relu6:
             non_linear_node.functional_op = hardtanh
             non_linear_node.functional_op.__defaults__ = (0.0, self.threshold, False)
+        elif non_linear_node.type == Hardtanh:
+            if (non_linear_node.framework_attr[HARDTANH_MIN_VAL] == 0.0) and not \
+                    (np.log2(non_linear_node.framework_attr[HARDTANH_MAX_VAL]).astype(int) -
+                     np.log2(non_linear_node.framework_attr[HARDTANH_MAX_VAL]) == 0):
+                non_linear_node.framework_attr[HARDTANH_MAX_VAL] = self.threshold
+        elif non_linear_node.type == hardtanh:
+            if (non_linear_node.framework_attr[HARDTANH_MIN_VAL] == 0.0) and not \
+                    (np.log2(non_linear_node.framework_attr[HARDTANH_MAX_VAL]).astype(int) -
+                     np.log2(non_linear_node.framework_attr[HARDTANH_MAX_VAL]) == 0):
+                non_linear_node.functional_op.__defaults__ = (0.0, self.threshold, non_linear_node.framework_attr[INPLACE])
 
         common.Logger.debug(
             f"Node named:{non_linear_node.name} changed "
