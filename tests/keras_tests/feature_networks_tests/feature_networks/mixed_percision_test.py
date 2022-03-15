@@ -37,11 +37,11 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
                                     mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                    relu_unbound_correction=True, weights_bias_correction=True,
+                                    relu_unbound_correction=False, weights_bias_correction=True,
                                     weights_per_channel_threshold=True, input_scaling=True,
                                     activation_channel_equalization=True)
 
-        return MixedPrecisionQuantizationConfig(qc, weights_n_bits=[2, 8, 4], num_of_images=1)
+        return MixedPrecisionQuantizationConfig(qc, n_bits_candidates=[(2, 8), (8, 8), (4, 8)], num_of_images=1)
 
     def get_bit_widths_config(self):
         return None
@@ -175,4 +175,4 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
                                     weights_per_channel_threshold=True, input_scaling=False,
                                     activation_channel_equalization=False)
 
-        return MixedPrecisionQuantizationConfig(qc, weights_n_bits=[2, 8, 4, 16])
+        return MixedPrecisionQuantizationConfig(qc, n_bits_candidates=[(2, 8), (8, 8), (4, 8), (16, 8)])

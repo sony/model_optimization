@@ -25,7 +25,7 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
 
     def __init__(self,
                  qc: QuantizationConfig = DEFAULTCONFIG,
-                 n_bits_candidates: List[Tuple[int, int]] = None,  # TODO: refactor everywhere in code
+                 n_bits_candidates: List[Tuple[int, int]] = None,
                  compute_distance_fn: Callable = compute_mse,
                  distance_weighting_method: Callable = get_average_weights,
                  num_of_images: int = 32,

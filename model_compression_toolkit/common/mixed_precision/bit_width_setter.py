@@ -129,11 +129,12 @@ def _set_node_final_qc(bit_width_cfg: List[int],
         node_index_in_graph: Index of the node in the bit_width_cfg.
 
     """
-    if fw_info.in_kernel_ops(node):
-        node_qc = _get_node_qc_by_bit_widths(node, bit_width_cfg, node_index_in_graph)
-        if node_qc is None:
-            Logger.critical(f'Node {node.name} quantization configuration from configuration file'
-                            f' was not found in candidates configurations.')
-        else:
-            node.final_weights_quantization_cfg = node_qc.weights_quantization_configuration
-            node.final_activation_quantization_cfg = node_qc.activation_quantization_configuration
+    node_qc = _get_node_qc_by_bit_widths(node, bit_width_cfg, node_index_in_graph)
+    if node_qc is None:
+        Logger.critical(f'Node {node.name} quantization configuration from configuration file'
+                        f' was not found in candidates configurations.')
+    else:
+        if fw_info.in_kernel_ops(node):
+            node.final_weights_quantization_cfg = node_qc.weights_quantization_cfg
+        # TODO: do we need to set final config only to specific layer (fake quant?) or is setting to all layers is fine?
+        node.final_activation_quantization_cfg = node_qc.activation_quantization_cfg

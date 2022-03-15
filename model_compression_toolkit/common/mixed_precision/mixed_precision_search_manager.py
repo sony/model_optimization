@@ -52,8 +52,8 @@ class MixedPrecisionSearchManager(object):
 
     def get_search_space(self) -> Dict[int, List[int]]:
         """
-        The search space is a mapping from a node's index to a list of integers (possible bitwidths for
-        the node).
+        The search space is a mapping from a node's index to a list of integers (possible bitwidths candidates indeces
+        for the node).
 
         Returns:
             The entire search space of the graph.
@@ -64,7 +64,7 @@ class MixedPrecisionSearchManager(object):
         for idx, n in enumerate(nodes_to_configure):
             # For each node, get all possible bitwidth indices for it
             # (which is a list from 0 to the length of the candidates qc list of the node).
-            indices_mapping[idx] = list(range(len(n.candidates_weights_quantization_cfg)))  # all search_methods space
+            indices_mapping[idx] = list(range(len(n.candidates_quantization_cfg)))  # all search_methods space
         return indices_mapping
 
 
@@ -110,7 +110,8 @@ class MixedPrecisionSearchManager(object):
             for n in self.graph.nodes:
                 if n.name in mp_nodes:
                     node_idx = mp_nodes.index(n.name)
-                    node_nbits = n.candidates_weights_quantization_cfg[mp_model_config[node_idx]].weights_n_bits
+                    # TODO: modify to account for activations size when implementing activations mixed precision
+                    node_nbits = n.candidates_quantization_cfg[mp_model_config[node_idx]].weights_quantization_cfg.weights_n_bits
                 elif n.is_weights_quantization_enabled():
                     # The only valid way to get here is if the node is reused (which means that we're not looking
                     # for its configuration), and we ignore it when computing the KPI (as the base node will acount
