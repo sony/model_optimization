@@ -209,7 +209,7 @@ class BaseScaleEqualization(common.BaseSubstitution):
     """
     Substitution to scale the weights of two linear nodes in order to use the entire
     constrained range when activations are quantized.
-    Unlike relu_bound_correction, scaling here is per-channel and a non-linear node my or may not
+    Unlike relu_bound_to_power_of_2, scaling here is per-channel and a non-linear node my or may not
     exist between the linear nodes (set nl_index to 0 if it doesn't)
     """
 
