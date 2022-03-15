@@ -60,10 +60,8 @@ class BaseNode:
         self.layer_class = layer_class
         self.reuse = reuse
         self.reuse_group = reuse_group
-        # self.activation_quantization_cfg = None  # TODO: refactor everywhere in code
         self.final_weights_quantization_cfg = None
         self.final_activation_quantization_cfg = None
-        # self.candidates_weights_quantization_cfg = None  # TODO: refactor everywhere in code
         self.candidates_quantization_cfg = None
         self.prior_info = None
 
@@ -236,11 +234,25 @@ class BaseNode:
         return attr
 
     def is_all_activation_candidates_equal(self):
+        """
+        Checks whether all candidates' quantization configuration have the same activation configuration,
+        using the self-implemented __eq__ method of class NodeActivationQuantizationConfig.
+
+        Returns: True if all candidates have same activation configuration, False otherwise.
+
+        """
         return all(candidate.activation_quantization_cfg ==
                    self.candidates_quantization_cfg[0].activation_quantization_cfg
                    for candidate in self.candidates_quantization_cfg)
 
     def is_all_weights_candidates_equal(self):
+        """
+        Checks whether all candidates' quantization configuration have the same weights configuration,
+        using the self-implemented __eq__ method of class NodeWeightsQuantizationConfig.
+
+        Returns: True if all candidates have same weights configuration, False otherwise.
+
+        """
         return all(candidate.weights_quantization_cfg ==
                    self.candidates_quantization_cfg[0].weights_quantization_cfg
                    for candidate in self.candidates_quantization_cfg)

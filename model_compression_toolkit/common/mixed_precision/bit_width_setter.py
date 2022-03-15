@@ -31,7 +31,7 @@ def set_bit_widths(quant_config: QuantizationConfig,
                    bit_widths_config: List[int] = None) -> Graph:
     """
     Set bit widths configuration to nodes in a graph. For each node, use the desired index
-    in bit_widths_config to finalize the node weights quantization configuration.
+    in bit_widths_config to finalize the node weights and activation quantization configuration.
 
     Args:
         quant_config: MixedPrecisionQuantizationConfig the graph was computed according to.
@@ -123,7 +123,7 @@ def _set_node_final_qc(bit_width_cfg: List[int],
     """
     Get the node's quantization configuration that
     matches to the bit width index as in the MP configuration bit_width_cfg, and use it to finalize the node's
-    weights quantization config.
+    weights and activation quantization config.
     If the node quantization config was not found, raise an exception.
 
     Args:

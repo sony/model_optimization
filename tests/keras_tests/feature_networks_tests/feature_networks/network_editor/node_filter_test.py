@@ -24,7 +24,7 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 import numpy as np
 from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, \
     NodeTypeFilter
-from model_compression_toolkit.common.network_editors.actions import ChangeActivationQuantConfigAttr, \
+from model_compression_toolkit.common.network_editors.actions import ChangeCandidatesActivationQuantConfigAttr, \
     ChangeQuantizationParamFunction, EditRule, ChangeCandidatesWeightsQuantConfigAttr
 
 keras = tf.keras
@@ -63,7 +63,7 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         # second and third rule- they both do opperations on the same node.The goels are:
         #   1- to check "or" opperation. 2- to see that the last rule in the list is the last rule applied
         return [EditRule(filter=NodeNameScopeFilter(self.scope),
-                         action=ChangeActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
+                         action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
                 EditRule(filter=NodeNameScopeFilter(self.scope),
                          action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits)),
                 EditRule(filter=NodeNameScopeFilter('2'),
@@ -132,7 +132,7 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
 
     def get_network_editor(self):
         return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
-                         action=ChangeActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
+                         action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
                 EditRule(filter=NodeNameFilter(self.node_to_change_name),
                          action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits))
                 ]
@@ -194,11 +194,11 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         return [EditRule(filter=NodeTypeFilter(self.type_to_change),
                          action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits)),
                 EditRule(filter=NodeTypeFilter(self.type_to_change),
-                         action=ChangeActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
+                         action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
                 EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
                          action=ChangeQuantizationParamFunction(weights_quantization_params_fn=self.params_fn())),
                 EditRule(filter=NodeNameFilter(self.node_to_change_name) and NodeTypeFilter(layers.ReLU),
-                         action=ChangeActivationQuantConfigAttr(activation_n_bits=16))]
+                         action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=16))]
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 224, self.num_conv_channels]]
@@ -262,7 +262,7 @@ class FilterLogicTest(BaseKerasFeatureNetworkTest):
                 (NodeAndMatcher(NodeTypeFilter(self.type_to_change), NodeNameFilter(self.node_to_change_name)),
                  ChangeQuantizationParamFunction(weights_quantization_params_fn=self.params_fn())),
                 (NodeAndMatcher(NodeTypeFilter(layers.ReLU), NodeNameFilter(self.node_to_change_name)),
-                 ChangeActivationQuantConfigAttr(activation_n_bits=16))
+                 ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=16))
                 ]
 
     def get_input_shapes(self):

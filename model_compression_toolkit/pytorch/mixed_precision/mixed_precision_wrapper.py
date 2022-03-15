@@ -42,7 +42,7 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
         """
         super(PytorchMixedPrecisionWrapper, self).__init__()
 
-        assert n.candidates_weights_quantization_cfg is not None
+        assert n.candidates_quantization_cfg is not None
 
         framework_attr = copy.copy(n.framework_attr)
         self.layer = n.type(**framework_attr)
@@ -57,11 +57,11 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
 
         assert len(self.weight_attrs) == len(self.float_weights)
 
-        self.node_weights_q_cfg = n.candidates_weights_quantization_cfg
+        self.node_q_cfg = n.candidates_quantization_cfg
 
-        self.quantizer_fn = self.node_weights_q_cfg[0].weights_quantization_fn
-        for qc in self.node_weights_q_cfg:
-            assert qc.weights_quantization_fn == self.quantizer_fn
+        self.quantizer_fn = self.node_q_cfg[0].weights_quantization_cfg.weights_quantization_fn
+        for qc in self.node_q_cfg:
+            assert qc.weights_quantization_cfg.weights_quantization_fn == self.quantizer_fn
 
         self.quantized_weights = self._get_quantized_weights()
 
@@ -81,18 +81,18 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
         Returns: a list of quantized weights - for each bitwidth and layer's attribute to be quantized.
         """
         quantized_weights = []
-        for qc in self.node_weights_q_cfg:
+        for qc in self.node_q_cfg:
             # for each quantization configuration in mixed precision
             # get quantized weights for each attribute and for each filter
             quantized_per_attr = []
             for float_weight in self.float_weights:
                 # for each attribute
                 quantized_per_attr.append(self.quantizer_fn(tensor_data=float_weight,
-                                                            n_bits=qc.weights_n_bits,
+                                                            n_bits=qc.weights_quantization_cfg.weights_n_bits,
                                                             signed=True,
-                                                            quantization_params=qc.weights_quantization_params,
-                                                            per_channel=qc.weights_per_channel_threshold,
-                                                            output_channels_axis=qc.weights_channels_axis))
+                                                            quantization_params=qc.weights_quantization_cfg.weights_quantization_params,
+                                                            per_channel=qc.weights_quantization_cfg.weights_per_channel_threshold,
+                                                            output_channels_axis=qc.weights_quantization_cfg.weights_channels_axis))
             quantized_weights.append(quantized_per_attr)
 
         return quantized_weights

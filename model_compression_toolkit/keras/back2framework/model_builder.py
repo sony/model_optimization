@@ -122,8 +122,8 @@ def run_operation(n: BaseNode,
         n: The corresponding node of the layer it runs.
         input_tensors: List of references to Keras tensors that are the layer's inputs.
         op_func: Layer to apply to the input tensors.
-        input_nodes_to_input_tensors: A dictionary from an node to its input tensors.
-        mode: model quantiztion mode from ModelBuilderMode
+        input_nodes_to_input_tensors: A dictionary from a node to its input tensors.
+        mode: model quantization mode from ModelBuilderMode
 
     Returns:
         A list of references to Keras tensors. The layer's output tensors after applying the

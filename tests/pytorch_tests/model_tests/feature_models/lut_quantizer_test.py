@@ -17,7 +17,7 @@ import numpy as np
 import model_compression_toolkit as mct
 from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.common.network_editors.actions import EditRule, \
-    ChangeCandidtaesWeightsQuantizationMethod
+    ChangeCandidatesWeightsQuantizationMethod
 from model_compression_toolkit.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
@@ -80,7 +80,7 @@ class LUTQuantizerTest(BasePytorchTest):
 
     def get_network_editor(self):
         return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
-                         action=ChangeCandidtaesWeightsQuantizationMethod(
+                         action=ChangeCandidatesWeightsQuantizationMethod(
                              weights_quantization_method=mct.QuantizationMethod.LUT_QUANTIZER))]
 
     def create_inputs_shape(self):

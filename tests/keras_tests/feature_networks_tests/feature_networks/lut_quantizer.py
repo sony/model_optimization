@@ -17,7 +17,7 @@ import unittest
 
 from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.common.network_editors.actions import EditRule, \
-    ChangeCandidtaesWeightsQuantizationMethod
+    ChangeCandidatesWeightsQuantizationMethod
 
 import model_compression_toolkit as cmo
 import tensorflow as tf
@@ -56,7 +56,7 @@ class LUTQuantizerTest(BaseKerasFeatureNetworkTest):
 
     def get_network_editor(self):
         return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
-                         action=ChangeCandidtaesWeightsQuantizationMethod(
+                         action=ChangeCandidatesWeightsQuantizationMethod(
                              weights_quantization_method=cmo.QuantizationMethod.POWER_OF_TWO))]
 
     def get_input_shapes(self):

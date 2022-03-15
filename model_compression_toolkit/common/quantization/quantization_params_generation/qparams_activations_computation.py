@@ -16,7 +16,6 @@ import numpy as np
 from typing import Tuple, Dict
 
 from model_compression_toolkit import QuantizationMethod
-from model_compression_toolkit.common import Graph
 from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.common.constants import SIGNED
 from model_compression_toolkit.common.node_prior_info import NodePriorInfo
@@ -26,14 +25,14 @@ from model_compression_toolkit.common.quantization.node_quantization_config impo
 
 def get_activations_qparams(activation_quant_cfg: NodeActivationQuantizationConfig,
                             nodes_prior_info: NodePriorInfo,
-                            out_stats_container: BaseStatsCollector,
-                            graph: Graph) -> Dict[str, float]:
+                            out_stats_container: BaseStatsCollector) -> Dict[str, float]:
     """
     Compute the activations params for a given node in a graph according to a params function.
 
     Args:
-        n: Node to compute its' activations threshold.
-        graph: Graph the node is in.
+        activation_quant_cfg: node's activation quantization configuration.
+        nodes_prior_info: Prior info collected for the node that is being quantized.
+        out_stats_container: Tensor containing output statistics of the node.
 
     Returns:
         The computed activation quantization params.

@@ -79,11 +79,10 @@ def set_quantization_configs_to_node(node: BaseNode,
         candidate_qc.activation_quantization_cfg.enable_activation_quantization = enable_activation_quantization
 
 
-# TODO: remove method after fixing shift negative (uses it there)
 def create_node_activation_qc(qc: QuantizationConfig,
                               fw_info: FrameworkInfo) -> NodeActivationQuantizationConfig:
     """
-    Create a activations quantization configuration from a QuantizationConfig object.
+    Create an activation quantization configuration from a QuantizationConfig object.
 
     Args:
         qc: QuantizationConfig to create the node's config from.
@@ -109,6 +108,20 @@ def create_node_activation_qc(qc: QuantizationConfig,
 def create_node_qc_candidate(qc: QuantizationConfig,
                              fw_info: FrameworkInfo,
                              weight_channel_axis: int) -> CandidateNodeQuantizationConfig:
+    """
+    Create quantization configuration candidate from a QuantizationConfig object.
+    Creates both weights and activation quantization configurations
+    and initialize a candidate object that encapsulates both.
+
+    Args:
+        qc: QuantizationConfig to create the node's config from.
+        fw_info: Information about the specific framework the node was created from (e.g., whether its
+            weights/activations should be quantized)
+        weight_channel_axis: Output channel index of the node's kernel.
+
+    Returns: a CandidateNodeQuantizationConfig object with both weights and activation quantization config objects.
+
+    """
 
     # get attributes for weights quantization
     weights_quantization_fn = fw_info.weights_quantizer_mapping.get(qc.weights_quantization_method)

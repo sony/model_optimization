@@ -41,7 +41,9 @@ class MixedPercisionBaseTest(BasePytorchTest):
                                     relu_unbound_correction=False,
                                     input_scaling=False)
 
-        return {"mixed_precision_model": MixedPrecisionQuantizationConfig(qc, weights_n_bits=[2, 8, 4], num_of_images=1)}
+        return {"mixed_precision_model": MixedPrecisionQuantizationConfig(qc,
+                                                                          n_bits_candidates=[(2, 8), (8, 8), (4, 8)],
+                                                                          num_of_images=1)}
 
     def create_feature_network(self, input_shape):
         return MixedPrecisionNet(input_shape)

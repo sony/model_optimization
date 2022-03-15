@@ -23,7 +23,7 @@ from model_compression_toolkit.common.quantization.quantization_config import Qu
 
 ##########################################
 # Every node holds a quantization configuration
-# for its weights quantization, and a different quantization
+# for its weights and activations quantization, and a different quantization
 # configuration for its activation quantization configuration.
 ##########################################
 
@@ -155,6 +155,15 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
         return (not self.has_activation_quantization_params())
 
     def __eq__(self, other: Any) -> bool:
+        """
+        Compares the object to another object to find if they are equal.
+
+        Args:
+            other: An object to compare to.
+
+        Returns: Whether the objects are identical or not.
+
+        """
         if not isinstance(other, NodeActivationQuantizationConfig):
             return False
 
@@ -269,6 +278,15 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
         return len(self.weights_quantization_params) > 0
 
     def __eq__(self, other: Any) -> bool:
+        """
+        Compares the object to another object to find if they are equal.
+
+        Args:
+            other: An object to compare to.
+
+        Returns: Whether the objects are identical or not.
+
+        """
         if not isinstance(other, NodeWeightsQuantizationConfig):
             return False
 

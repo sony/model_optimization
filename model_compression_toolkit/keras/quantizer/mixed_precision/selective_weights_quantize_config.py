@@ -56,7 +56,7 @@ class SelectiveWeightsQuantizeConfig(QuantizeConfig):
             weight_attrs: Attributes of the layer's weights to quantize, the
             SelectiveWeightsQuantizeConfig is attached to.
             float_weights: Float weights of the layer, the SelectiveWeightsQuantizeConfig is attached to.
-            node_weights_q_cfg: Candidates weight quantization config the node has (the node from which
+            node_q_cfg: Candidates quantization config the node has (the node from which
             we built the layer that is attached to SelectiveWeightsQuantizeConfig).
         """
         # Make sure the candidates configurations arrived in a descending order.

@@ -17,7 +17,7 @@ import unittest
 
 from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.common.network_editors.actions import EditRule, ChangeCandidatesWeightsQuantConfigAttr, \
-    ChangeActivationQuantConfigAttr, \
+    ChangeCandidatesActivationQuantConfigAttr, \
     ChangeFinalWeightsQuantConfigAttr
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as cmo

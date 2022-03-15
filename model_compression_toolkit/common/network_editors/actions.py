@@ -128,17 +128,14 @@ class ChangeFinalWeightsQuantConfigAttr(BaseAction):
                     candidate_config.weights_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
 
 
-
-
-# TODO: change name to Candidate-... (and refactor everywhere)
-class ChangeActivationQuantConfigAttr(BaseAction):
+class ChangeCandidatesActivationQuantConfigAttr(BaseAction):
     """
-    Class ChangeActivationQuantConfigAttr to change attributes in a node's activation quantization configuration.
+    Class ChangeCandidatesActivationQuantConfigAttr to change attributes in a node's activation quantization configuration.
     """
 
     def __init__(self, **kwargs):
         """
-        Init a ChangeActivationQuantConfigAttr object.
+        Init a ChangeCandidatesActivationQuantConfigAttr object.
 
         Args:
             kwargs: dict of attr_name and attr_value to change in the node's activation quantization configuration.
@@ -199,15 +196,14 @@ class ChangeQuantizationParamFunction(BaseAction):
                 nqc.weights_quantization_cfg.set_weights_quantization_params_fn(self.weights_quantization_params_fn)
 
 
-# TODO: change name to Candidates-... (and refactor everywhere)
-class ChangeActivationQuantizationMethod(BaseAction):
+class ChangeCandidatesActivationQuantizationMethod(BaseAction):
     """
     Class ChangeQuantizationMethod to change a node's activations quantizer function.
     """
 
     def __init__(self, activation_quantization_method=None):
         """
-        Init a ChangeActivationQuantizationMethod object.
+        Init a ChangeCandidatesActivationQuantizationMethod object.
 
         Args:
             activation_quantization_method: a quantization method for a node's activations.
@@ -242,7 +238,6 @@ class ChangeActivationQuantizationMethod(BaseAction):
                     raise Exception('Unknown quantization method for activations')
 
                 qc.activation_quantization_cfg.set_activation_quantization_fn(activation_quantization_fn)
-
 
 
 class ChangeFinalWeightsQuantizationMethod(BaseAction):
@@ -289,15 +284,14 @@ class ChangeFinalWeightsQuantizationMethod(BaseAction):
             node.final_weights_quantization_cfg.set_weights_quantization_fn(weights_quantization_fn)
 
 
-
-class ChangeCandidtaesWeightsQuantizationMethod(BaseAction):
+class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
     """
-    Class ChangeCandidtaesWeightsQuantizationMethod to change a node's weights quantizer function.
+    Class ChangeCandidatesWeightsQuantizationMethod to change a node's weights quantizer function.
     """
 
     def __init__(self, weights_quantization_method=None):
         """
-        Init a ChangeCandidtaesWeightsQuantizationMethod object.
+        Init a ChangeCandidatesWeightsQuantizationMethod object.
 
         Args:
             weights_quantization_method: a quantization method for a node's weights.

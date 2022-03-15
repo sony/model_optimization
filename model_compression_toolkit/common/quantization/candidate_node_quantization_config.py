@@ -14,9 +14,7 @@
 # ==============================================================================
 
 
-from typing import Callable, Any
-
-import numpy as np
+from typing import Callable
 
 from model_compression_toolkit.common.quantization.node_quantization_config import BaseNodeNodeQuantizationConfig, \
     NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
@@ -30,7 +28,9 @@ from model_compression_toolkit.common.quantization.quantization_config import Qu
 ##########################################
 
 class CandidateNodeQuantizationConfig(BaseNodeNodeQuantizationConfig):
-
+    """
+    Class for representing candidate node configuration, which includes weights and activation configuration combined.
+    """
     def __init__(self,
                  qc: QuantizationConfig,
                  activation_quantization_fn: Callable,
@@ -39,6 +39,16 @@ class CandidateNodeQuantizationConfig(BaseNodeNodeQuantizationConfig):
                  weights_quantization_params_fn: Callable,
                  weights_channels_axis: int
                  ):
+        """
+
+        Args:
+            qc: QuantizationConfig to create the node's config from.
+            activation_quantization_fn: Function to use when quantizing the node's activations.
+            activation_quantization_params_fn: Function to use when computing the threshold for quantizing a node's activations.
+            weights_quantization_fn: Function to use when quantizing the node's weights.
+            weights_quantization_params_fn:  Function to use when computing the threshold for quantizing a node's weights.
+            weights_channels_axis: Axis to quantize a node's kernel when quantizing per-channel.
+        """
 
         self.activation_quantization_cfg = NodeActivationQuantizationConfig(qc,
                                                                             activation_quantization_fn,
