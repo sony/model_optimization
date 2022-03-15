@@ -73,6 +73,11 @@ def set_bit_widths(quant_config: QuantizationConfig,
                                        fw_info,
                                        node,
                                        node_index_in_graph)
+                else:
+                    # TODO: refactor after adding activation mixed precision
+                    if node.is_activation_quantization_enabled():
+                        assert node.is_all_activation_candidates_equal, "Activation Mixed Precision is not supported"
+                        node.final_activation_quantization_cfg = node.candidates_quantization_cfg[0].activation_quantization_cfg
 
     # When working in non-mixed-precision mode, there's only one bitwidth, and we simply set the
     # only candidate of the node as its final weight quantization configuration.
