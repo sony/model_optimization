@@ -42,13 +42,13 @@ class TestQuantizationConfigurations(unittest.TestCase):
                              mct.QuantizationMethod.SYMMETRIC,
                              mct.QuantizationMethod.UNIFORM]
         quantization_error_methods = [mct.QuantizationErrorMethod.KL]
-        relu_unbound_correction = [True, False]
+        relu_bound_to_power_of_2 = [True, False]
         weights_per_channel = [True, False]
 
         weights_config_list = [quantizer_methods, quantization_error_methods, weights_per_channel]
         weights_test_combinations = list(itertools.product(*weights_config_list))
 
-        activation_config_list = [quantizer_methods, quantization_error_methods, relu_unbound_correction]
+        activation_config_list = [quantizer_methods, quantization_error_methods, relu_bound_to_power_of_2]
         activation_test_combinations = list(itertools.product(*activation_config_list))
 
         model = model_gen()
@@ -59,7 +59,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                         weights_quantization_method=quantize_method,
                                         activation_n_bits=16,
                                         weights_n_bits=8,
-                                        relu_unbound_correction=False,
+                                        relu_bound_to_power_of_2=False,
                                         weights_bias_correction=True,
                                         weights_per_channel_threshold=per_channel,
                                         input_scaling=False)
@@ -70,11 +70,11 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                                                               fw_info=DEFAULT_KERAS_INFO)
 
         model = model_gen()
-        for quantize_method, error_method, relu_unbound_correction in activation_test_combinations:
+        for quantize_method, error_method, relu_bound_to_power_of_2 in activation_test_combinations:
             qc = mct.QuantizationConfig(activation_error_method=error_method,
                                         activation_quantization_method=quantize_method,
                                         activation_n_bits=8,
-                                        relu_unbound_correction=relu_unbound_correction,
+                                        relu_bound_to_power_of_2=relu_bound_to_power_of_2,
                                         shift_negative_activation_correction=False,
                                         enable_weights_quantization=False)
             q_model, quantization_info = mct.keras_post_training_quantization(model,

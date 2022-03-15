@@ -17,6 +17,8 @@ import unittest
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSameNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest
+from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
+    HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.layer_name_test import ReuseNameNetTest
 from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTQuantizerTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_test import MixedPercisionSearch8Bit, \
@@ -52,6 +54,18 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the BatchNorm folding feature, plus adding a residual connection.
         """
         BNFoldingNetTest(self).run_test()
+
+    def test_relu_bound_to_power_of_2(self):
+        """
+        This test checks the Relu bound to POT feature.
+        """
+        ReLUBoundToPOTNetTest(self).run_test()
+
+    def test_hardtanh_bound_to_power_of_2(self):
+        """
+        This test checks the Relu bound to POT feature with Hardtanh layer as Relu.
+        """
+        HardtanhBoundToPOTNetTest(self).run_test()
 
     def test_layer_name(self):
         """

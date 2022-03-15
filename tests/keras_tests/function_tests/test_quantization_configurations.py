@@ -46,7 +46,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                       mct.QuantizationErrorMethod.MAE,
                                       mct.QuantizationErrorMethod.LP]
         bias_correction = [True, False]
-        relu_unbound_correction = [True, False]
+        relu_bound_to_power_of_2 = [True, False]
         input_scaling = [True, False]
         weights_per_channel = [True, False]
         shift_negative_correction = [True, False]
@@ -55,7 +55,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                input_scaling]
         weights_test_combinations = list(itertools.product(*weights_config_list))
 
-        activation_config_list = [quantizer_methods, quantization_error_methods, relu_unbound_correction,
+        activation_config_list = [quantizer_methods, quantization_error_methods, relu_bound_to_power_of_2,
                                   shift_negative_correction]
         activation_test_combinations = list(itertools.product(*activation_config_list))
 
@@ -67,7 +67,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                         weights_quantization_method=quantize_method,
                                         activation_n_bits=16,
                                         weights_n_bits=8,
-                                        relu_unbound_correction=False,
+                                        relu_bound_to_power_of_2=False,
                                         weights_bias_correction=bias_correction,
                                         weights_per_channel_threshold=per_channel,
                                         input_scaling=input_scaling)
@@ -78,7 +78,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                                                               fw_info=DEFAULT_KERAS_INFO)
 
         model = model_gen()
-        for quantize_method, error_method, relu_unbound_correction, shift_negative_correction\
+        for quantize_method, error_method, relu_bound_to_power_of_2, shift_negative_correction \
                 in activation_test_combinations:
             qc = mct.QuantizationConfig(activation_error_method=error_method,
                                         weights_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
@@ -86,7 +86,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                         weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                                         activation_n_bits=8,
                                         weights_n_bits=16,
-                                        relu_unbound_correction=relu_unbound_correction,
+                                        relu_bound_to_power_of_2=relu_bound_to_power_of_2,
                                         weights_bias_correction=False,
                                         weights_per_channel_threshold=False,
                                         shift_negative_activation_correction=shift_negative_correction)
