@@ -99,7 +99,7 @@ ACTIVATION = [Activation,
               tf.image.resize,
               tf.image.crop_and_resize,
               tf.concat,
-              Dot]
+              ]
 
 
 
