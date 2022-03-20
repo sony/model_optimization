@@ -42,6 +42,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
     """
 
     def __init__(self,
+                 name: str,
                  nodes: List[BaseNode],
                  input_nodes: List[BaseNode],
                  output_nodes: List[OutTensor],
@@ -59,6 +60,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
 
         super().__init__(**attr)
+        self.name = name
         self.input_nodes = input_nodes
         self.output_nodes = output_nodes
         self.node_to_out_stats_collector = dict()
@@ -80,7 +82,6 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
 
         self.fw_info = fw_info
-
 
     def get_topo_sorted_nodes(self):
         """

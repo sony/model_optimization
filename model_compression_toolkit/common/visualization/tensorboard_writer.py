@@ -30,7 +30,7 @@ from tensorboard.compat.proto.summary_pb2 import Summary
 from tensorboard.compat.proto.tensor_shape_pb2 import TensorShapeProto
 from tensorboard.summary.writer.event_file_writer import EventFileWriter
 from typing import List, Any, Dict
-
+from networkx import topological_sort
 from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
@@ -39,7 +39,7 @@ DEVICE_STEP_STATS = "/device:CPU:0"
 
 
 def get_node_properties(node_dict_to_log: dict,
-                        output_shapes: List[tuple]) -> Dict[str, Any]:
+                        output_shapes: List[tuple] = None) -> Dict[str, Any]:
     """
     Create a dictionary with properties for a node to display.
 
@@ -189,11 +189,10 @@ class TensorboardWriter(object):
 
         """
 
-        def __get_node_attr(n: BaseNode) -> Dict[str, Any]:
+        def __get_node_act_attr(n: BaseNode) -> Dict[str, Any]:
             """
             Create a dictionary to display as the node's attributes.
-            The dictionary contains information from node's framework attributes, quantization attributes
-            and quantization configuration.
+            The dictionary contains information from node's activation attributes.
 
             Args:
                 n: Node to create its attributes.
@@ -201,22 +200,47 @@ class TensorboardWriter(object):
             Returns:
                 Dictionary containing attributes to display.
             """
+            attr = dict()
+            if n.activation_quantization_cfg is not None:
+                attr.update(n.activation_quantization_cfg.__dict__)
+            return attr
 
-            attr = deepcopy(n.framework_attr)
-            if n.quantization_attr is not None:
-                attr.update(n.quantization_attr)
+        def __get_node_weights_attr(n: BaseNode) -> Dict[str, Any]:
+            """
+            Create a dictionary to display as the node's attributes.
+            The dictionary contains information from node's weights attributes.
 
+            Args:
+                n: Node to create its attributes.
+
+            Returns:
+                Dictionary containing attributes to display.
+            """
             # To log quantization configurations we need to check
             # if they exist at all, as we can log the initial graph,
             # which its nodes do not have configurations yet.
             # Log final config or unified candidates, not both
+            attr = dict()
             if n.final_weights_quantization_cfg is not None:
                 attr.update(n.final_weights_quantization_cfg.__dict__)
             elif n.candidates_weights_quantization_cfg is not None:
                 attr.update(n.get_unified_candidates_dict())
+            return attr
 
-            if n.activation_quantization_cfg is not None:
-                attr.update(n.activation_quantization_cfg.__dict__)
+        def __get_node_attr(n: BaseNode) -> Dict[str, Any]:
+            """
+            Create a dictionary to display as the node's attributes.
+            The dictionary contains information from node's framework attributes and quantization attributes
+
+            Args:
+                n: Node to create its attributes.
+
+            Returns:
+                Dictionary containing attributes to display.
+            """
+            attr = deepcopy(n.framework_attr)
+            if n.quantization_attr is not None:
+                attr.update(n.quantization_attr)
             return attr
 
         def __get_node_output_dims(n: BaseNode) -> List[tuple]:
@@ -264,17 +288,49 @@ class TensorboardWriter(object):
         graph_def = GraphDef()  # GraphDef to add to Tensorboard
 
         node_stats = []
-        for n in graph.nodes:  # For each node in the graph, we create a NodeDef and connect it to existing NodeDefs
-            node_properties = get_node_properties(__get_node_attr(n), __get_node_output_dims(n))
-            node_def = NodeDef(attr=node_properties)
-            node_def.name = n.name
-            node_def.device = n.type.__name__  # For coloring different ops differently
-            node_def.op = n.type.__name__
+        types_dict = dict()
+        node_sort = list(topological_sort(graph))
+        for n in node_sort:  # For each node in the graph, we create NodeDefs and connect them to existing NodeDefs
+            # ----------------------------
+            # Main NodeDef: framework attributes
+            # ----------------------------
+            main_node_def = NodeDef(attr=get_node_properties(__get_node_attr(n), __get_node_output_dims(n)))
+            main_node_def.device = n.type.__name__  # For coloring different ops differently
+            main_node_def.op = n.type.__name__
+            op_id = types_dict.get(main_node_def.op, 0)
+            if len(graph.incoming_edges(n)) == 0:  # Input layer
+                n.tb_node_def = 'Input/' + n.name
+            elif len(graph.out_edges(n)) == 0:  # Output layer
+                n.tb_node_def = 'Output/' + n.name
+            else:
+                n.tb_node_def = graph.name + '/' + main_node_def.op + '_' + str(op_id) + '/' + n.name
+            main_node_def.name = n.tb_node_def
             for e in graph.incoming_edges(n):  # Connect node to its incoming nodes
-                i_tensor = f'{e.source_node.name}:{e.source_index}'
-                node_def.input.append(i_tensor)
-            graph_def.node.extend([node_def])  # Add the node to the graph
+                i_tensor = f'{e.source_node.tb_node_def}:{e.source_index}'
+                main_node_def.input.append(i_tensor)
+            # ----------------------------
+            # Weights NodeDef
+            # ----------------------------
+            attr = __get_node_weights_attr(n)
+            if bool(attr):
+                weights_node_def = NodeDef(attr=get_node_properties(attr))
+                weights_node_def.name = main_node_def.name + ".weights"
+                main_node_def.input.append(f'{weights_node_def.name}:{1}')
+                graph_def.node.extend([weights_node_def])  # Add the node to the graph
+            # ----------------------------
+            # Activation NodeDef
+            # ----------------------------
+            attr = __get_node_act_attr(n)
+            if bool(attr):
+                act_node_def = NodeDef(attr=get_node_properties(attr, __get_node_output_dims(n)))
+                n.tb_node_def = main_node_def.name + ".activation"
+                act_node_def.name = n.tb_node_def
+                act_node_def.input.append(f'{main_node_def.name}:{0}')
+                graph_def.node.extend([act_node_def])  # Add the node to the graph
+
+            graph_def.node.extend([main_node_def])  # Add the node to the graph
             node_stats.append(__create_node_stats(n))
+            types_dict.update({main_node_def.op: op_id + 1})
 
         er = self.__get_event_writer_by_tag_name(main_tag_name)
         event = Event(graph_def=graph_def.SerializeToString())
