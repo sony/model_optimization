@@ -53,7 +53,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n_iter</strong> (<em>int</em>) – Number of iterations to train.</p></li>
 <li><p><strong>optimizer</strong> (<em>Any</em>) – Optimizer to use.</p></li>
-<li><p><strong>loss</strong> (<em>Callable</em>) – the loss to use. should accept 2 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors.</p></li>
+<li><p><strong>loss</strong> (<em>Callable</em>) – The loss to use. Should accept 4 lists of tensors. 1st list of quantized tensors, the 2nd list are the float tensors, the 3rd list are the quantized weights and the 4th lsit are the float weights.</p></li>
 <li><p><strong>log_function</strong> (<em>Callable</em>) – Function to log information about the GPTQ process.</p></li>
 <li><p><strong>train_bias</strong> (<em>bool</em>) – Whether to update the bias during the training or not.</p></li>
 </ul>
