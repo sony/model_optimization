@@ -24,7 +24,7 @@ from model_compression_toolkit.common import Graph
 from model_compression_toolkit.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.keras.gradient_ptq.graph_info import get_compare_points, \
-    get_trainable_parameters
+    get_trainable_parameters, get_weights_for_loss
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.keras.gradient_ptq.graph_update import update_graph_after_gptq
 import numpy as np
@@ -69,13 +69,14 @@ def gptq_training_wrapper(tg: Graph,
                                               fw_info=fw_info,
                                               gptq_config=gptq_config)
 
-    trainable_weights, flp_weights_list, fxp_weights_list = \
-        get_trainable_parameters(fxp_model,
-                                 fw_info,
-                                 add_bias=gptq_config.train_bias)
+    trainable_weights = get_trainable_parameters(fxp_model,
+                                                 fw_info,
+                                                 add_bias=gptq_config.train_bias)
+    flp_weights_list, fxp_weights_list = get_weights_for_loss(fxp_model)
 
-    if len(compare_points) != len(trainable_weights):
-        raise Exception("GPTQ: Mismatch between number of compare points and number of layers with trainable weights")
+    if not (len(compare_points) == len(trainable_weights) == len(flp_weights_list) == len(fxp_weights_list)):
+        raise Exception("GPTQ: Mismatch between number of compare points, number of layers with trainable weights " +
+                        "and number of float and quantized weights for loss")
 
     flattened_trainable_weights = [w for layer_weights in trainable_weights for w in layer_weights]
 

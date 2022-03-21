@@ -50,7 +50,8 @@ if importlib.util.find_spec("tensorflow") is not None\
         args:
             n_iter (int): Number of iterations to fine-tune.
             optimizer (OptimizerV2): Keras optimizer to use for fine-tuning.
-            loss (Callable): loss to use during fine-tuning. Should accept 2 lists of Tensorflow tensors. 1st list of quantized tensors, the 2nd list is the float tensors.
+            loss (Callable): loss to use during fine-tuning. should accept 4 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors,
+             the 3rd is a list of quantized weights and the 4th is a list of float weights.
             log_function (Callable): Function to log information about the gptq process.
             train_bias (bool): Whether to update the bias during the the fine-tuning or not.
 
