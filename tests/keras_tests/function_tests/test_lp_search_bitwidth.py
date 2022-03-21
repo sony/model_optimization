@@ -30,6 +30,7 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 from model_compression_toolkit.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.common.model_collector import ModelCollector
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import KERAS_DEFAULT_MODEL
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 
@@ -82,17 +83,24 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
             return None
 
         graph = keras_impl.model_reader(in_model, dummy_representative_dataset)  # model reading
+        graph.set_fw_info(fw_info)
+        graph.set_fw_hw_model(KERAS_DEFAULT_MODEL)
         graph = set_quantization_configuration_to_graph(graph=graph,
-                                                        quant_config=qc,
-                                                        fw_info=fw_info)
+                                                        quant_config=qc)
+
         for node in graph.nodes:
             node.prior_info = keras_impl.get_node_prior_info(node=node,
-                                                             fw_info=fw_info, graph=graph)
+                                                             fw_info=fw_info,
+                                                             graph=graph)
+
         analyzer_graph(keras_impl.attach_sc_to_node,
                        graph,
                        fw_info)
 
-        mi = ModelCollector(graph, fw_info=DEFAULT_KERAS_INFO, fw_impl=keras_impl)
+        mi = ModelCollector(graph,
+                            fw_info=DEFAULT_KERAS_INFO,
+                            fw_impl=keras_impl)
+
         for i in range(10):
             mi.infer([np.random.randn(1, 224, 224, 3)])
 

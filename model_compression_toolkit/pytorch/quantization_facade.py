@@ -17,6 +17,7 @@ from typing import Callable, List
 from model_compression_toolkit import common
 from model_compression_toolkit.common import Logger
 from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
+from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.network_editors.actions import EditRule
@@ -31,8 +32,8 @@ import importlib
 if importlib.util.find_spec("torch") is not None:
     from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
+    from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import PYTORCH_DEFAULT_MODEL
     from torch.nn import Module
-
 
     def pytorch_post_training_quantization(in_module: Module,
                                            representative_data_gen: Callable,
@@ -41,7 +42,8 @@ if importlib.util.find_spec("torch") is not None:
                                            fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                                            network_editor: List[EditRule] = [],
                                            gptq_config: GradientPTQConfig = None,
-                                           analyze_similarity: bool = False):
+                                           analyze_similarity: bool = False,
+                                           fw_hw_model: FrameworkHardwareModel = PYTORCH_DEFAULT_MODEL):
         """
         Quantize a trained Pytorch module using post-training quantization. The module is quantized using a
         symmetric constraint quantization thresholds (power of two).
@@ -52,6 +54,7 @@ if importlib.util.find_spec("torch") is not None:
         (both coefficients and activations by default).
         If a gptq configuration is passed, the quantized weights are optimized using gradient based post
         training quantization by comparing points between the float and quantized modules, and minimizing the observed loss.
+
         Args:
             in_module (Module): Pytorch module to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
@@ -61,18 +64,27 @@ if importlib.util.find_spec("torch") is not None:
             network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
+
         Returns:
             A quantized module and information the user may need to handle the quantized module.
+
         Examples:
+
             Import a Pytorch module:
+
             >>> import torchvision.models.mobilenet_v2 as models
             >>> module = models.mobilenet_v2()
+
             Create a random dataset generator:
+
             >>> import numpy as np
             >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
+
             Import mct and pass the module with the representative dataset generator to get a quantized module:
+
             >>> import model_compression_toolkit as mct
             >>> quantized_module, quantization_info = mct.pytorch_post_training_quantization(module, repr_datagen)
+
         """
 
         return post_training_quantization(in_module,
@@ -81,9 +93,11 @@ if importlib.util.find_spec("torch") is not None:
                                           quant_config,
                                           fw_info,
                                           PytorchImplementation(),
+                                          fw_hw_model,
                                           network_editor,
                                           gptq_config,
                                           analyze_similarity)
+
 
     def pytorch_post_training_quantization_mixed_precision(in_model: Module,
                                                            representative_data_gen: Callable,
@@ -93,7 +107,8 @@ if importlib.util.find_spec("torch") is not None:
                                                            network_editor: List[EditRule] = [],
                                                            gptq_config: GradientPTQConfig = None,
                                                            analyze_similarity: bool = False,
-                                                           target_kpi: KPI = None):
+                                                           target_kpi: KPI = None,
+                                                           fw_hw_model: FrameworkHardwareModel = PYTORCH_DEFAULT_MODEL):
         """
          Quantize a trained Pytorch model using post-training quantization. The model is quantized using a
          symmetric constraint quantization thresholds (power of two).
@@ -109,6 +124,7 @@ if importlib.util.find_spec("torch") is not None:
          training quantization by comparing points between the float and quantized models, and minimizing the observed loss.
          Notice that this feature is experimental.
          **For now, mixed precision is supported for weights only.**
+
          Args:
              in_model (Model): Pytorch model to quantize.
              representative_data_gen (Callable): Dataset used for calibration.
@@ -119,25 +135,41 @@ if importlib.util.find_spec("torch") is not None:
              gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
              analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
+
          Returns:
              A quantized model and information the user may need to handle the quantized model.
+
          Examples:
+
              Import MCT:
+
              >>> import model_compression_toolkit as mct
+
              Import a Pytorch model:
+
              >>> import torchvision.models.mobilenet_v2 as models
              >>> module = models.mobilenet_v2()
+
              Create a random dataset generator:
+
              >>> import numpy as np
              >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
+
              Create a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
              Here, each layer can be quantized by 2, 4 or 8 bits:
+
              >>> config = mct.MixedPrecisionQuantizationConfig(weights_n_bits=[4, 2, 8])
+
              Create a KPI object to limit our returned model's size. Note that this value affects only coefficients that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value, while the bias will not):
+
              >>> kpi = mct.KPI(sum(p.numel() for p in module.parameters()) * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
+
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a quantized model:
+
              >>> quantized_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(module, repr_datagen, n_iter=10, quant_config=config, target_kpi=kpi)
+
              For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
+
          """
         if target_kpi is None:
             common.Logger.warning("No KPI was passed. Using non mixed-precision compression process...")
@@ -151,7 +183,8 @@ if importlib.util.find_spec("torch") is not None:
                                                       fw_info,
                                                       network_editor,
                                                       gptq_config,
-                                                      analyze_similarity)
+                                                      analyze_similarity,
+                                                      fw_hw_model)
 
         common.Logger.info("Using experimental mixed-precision quantization. "
                            "If you encounter an issue please file a bug.")
@@ -162,6 +195,7 @@ if importlib.util.find_spec("torch") is not None:
                                           quant_config,
                                           fw_info,
                                           PytorchImplementation(),
+                                          fw_hw_model,
                                           network_editor,
                                           gptq_config,
                                           analyze_similarity,

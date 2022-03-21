@@ -16,6 +16,7 @@
 import tensorflow as tf
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+from model_compression_toolkit.common.hardware_representation import QuantizationMethod
 from model_compression_toolkit.common.substitutions.shift_negative_activation import apply_shift_negative_correction
 
 if tf.__version__ < "2.6":
@@ -284,6 +285,11 @@ def keras_apply_shift_negative_correction(graph: Graph,
         Graph after SNC.
     """
     snc_node, linear_node, bypass_node, pad_node = shift_negative_activation_node_matchers()
+
+    for op_qc in graph.fw_hw_model.get_default_qc_options().quantization_config_list:
+        if op_qc.activation_quantization_method is QuantizationMethod.UNIFORM:
+            return graph
+
     return apply_shift_negative_correction(graph,
                                            quant_config,
                                            fw_info,

@@ -54,6 +54,9 @@ class BaseTest:
     def create_networks(self):
         raise Exception('create_networks is not implemented')
 
+    def get_fw_hw_model(self):
+        raise Exception('get_fw_hw_model is not implemented')
+
     def compare(self, ptq_model: Any,
                 model_float: Any,
                 input_x: List[np.ndarray],

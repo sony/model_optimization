@@ -13,14 +13,15 @@
 # limitations under the License.
 # ==============================================================================
 
-
-from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
+import itertools
 import unittest
+
 import numpy as np
-import model_compression_toolkit as mct
 import tensorflow as tf
 from tensorflow.keras import layers
-import itertools
+
+import model_compression_toolkit as mct
+from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 
 
 def model_gen():
@@ -38,9 +39,10 @@ class TestQuantizationConfigurations(unittest.TestCase):
         def representative_data_gen():
             return [x]
 
-        quantizer_methods = [mct.QuantizationMethod.POWER_OF_TWO,
-                             mct.QuantizationMethod.SYMMETRIC,
-                             mct.QuantizationMethod.UNIFORM]
+        quantizer_methods = [mct.hardware_representation.QuantizationMethod.POWER_OF_TWO,
+                             mct.hardware_representation.QuantizationMethod.SYMMETRIC,
+                             mct.hardware_representation.QuantizationMethod.UNIFORM]
+
         quantization_error_methods = [mct.QuantizationErrorMethod.MSE,
                                       mct.QuantizationErrorMethod.NOCLIPPING,
                                       mct.QuantizationErrorMethod.MAE,
@@ -61,10 +63,19 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         for quantize_method, error_method, bias_correction, per_channel, input_scaling in weights_test_combinations:
+            qco = mct.hardware_representation.QuantizationConfigOptions(
+                [mct.hardware_representation.OpQuantizationConfig(
+                    activation_quantization_method=mct.hardware_representation.QuantizationMethod.POWER_OF_TWO,
+                    weights_quantization_method=quantize_method,
+                    activation_n_bits=16,
+                    weights_n_bits=8,
+                    weights_per_channel_threshold=per_channel,
+                    enable_weights_quantization=True,
+                    enable_activation_quantization=True)])
+            fw_hw_model = mct.hardware_representation.FrameworkHardwareModel(
+                mct.hardware_representation.HardwareModel(qco))
             qc = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
                                         weights_error_method=error_method,
-                                        activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
-                                        weights_quantization_method=quantize_method,
                                         activation_n_bits=16,
                                         weights_n_bits=8,
                                         relu_bound_to_power_of_2=False,
@@ -75,26 +86,38 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                                                               representative_data_gen,
                                                                               n_iter=1,
                                                                               quant_config=qc,
-                                                                              fw_info=DEFAULT_KERAS_INFO)
+                                                                              fw_info=DEFAULT_KERAS_INFO,
+                                                                              fw_hw_model=fw_hw_model)
 
         model = model_gen()
-        for quantize_method, error_method, relu_bound_to_power_of_2, shift_negative_correction \
-                in activation_test_combinations:
+        for quantize_method, error_method, relu_bound_to_power_of_2, shift_negative_correction in activation_test_combinations:
+            qco = mct.hardware_representation.QuantizationConfigOptions(
+                [mct.hardware_representation.OpQuantizationConfig(
+                    activation_quantization_method=quantize_method,
+                    weights_quantization_method=mct.hardware_representation.QuantizationMethod.POWER_OF_TWO,
+                    activation_n_bits=16,
+                    weights_n_bits=8,
+                    weights_per_channel_threshold=False,
+                    enable_weights_quantization=True,
+                    enable_activation_quantization=True)])
+
+            fw_hw_model = mct.hardware_representation.FrameworkHardwareModel(
+                mct.hardware_representation.HardwareModel(qco))
             qc = mct.QuantizationConfig(activation_error_method=error_method,
                                         weights_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
-                                        activation_quantization_method=quantize_method,
-                                        weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                                         activation_n_bits=8,
                                         weights_n_bits=16,
                                         relu_bound_to_power_of_2=relu_bound_to_power_of_2,
                                         weights_bias_correction=False,
                                         weights_per_channel_threshold=False,
                                         shift_negative_activation_correction=shift_negative_correction)
+
             q_model, quantization_info = mct.keras_post_training_quantization(model,
                                                                               representative_data_gen,
                                                                               n_iter=1,
                                                                               quant_config=qc,
-                                                                              fw_info=DEFAULT_KERAS_INFO)
+                                                                              fw_info=DEFAULT_KERAS_INFO,
+                                                                              fw_hw_model=fw_hw_model)
 
 
 if __name__ == '__main__':

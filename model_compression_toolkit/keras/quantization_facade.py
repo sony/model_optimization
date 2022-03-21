@@ -29,9 +29,12 @@ from model_compression_toolkit.common.quantization.quantization_config import DE
 
 import importlib
 
+from model_compression_toolkit.common.hardware_representation.hardware2framework import FrameworkHardwareModel
+
 if importlib.util.find_spec("tensorflow") is not None\
         and importlib.util.find_spec("tensorflow_model_optimization") is not None:
     import tensorflow as tf
+    from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import KERAS_DEFAULT_MODEL
     from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.keras.keras_model_validation import KerasModelValidation
@@ -88,7 +91,8 @@ if importlib.util.find_spec("tensorflow") is not None\
                                          fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                                          network_editor: List[EditRule] = [],
                                          gptq_config: GradientPTQConfig = None,
-                                         analyze_similarity: bool = False):
+                                         analyze_similarity: bool = False,
+                                         fw_hw_model: FrameworkHardwareModel = KERAS_DEFAULT_MODEL):
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
         symmetric constraint quantization thresholds (power of two).
@@ -138,6 +142,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                           quant_config,
                                           fw_info,
                                           KerasImplementation(),
+                                          fw_hw_model,
                                           network_editor,
                                           gptq_config,
                                           analyze_similarity)
@@ -151,7 +156,8 @@ if importlib.util.find_spec("tensorflow") is not None\
                                                          network_editor: List[EditRule] = [],
                                                          gptq_config: GradientPTQConfig = None,
                                                          analyze_similarity: bool = False,
-                                                         target_kpi: KPI = None):
+                                                         target_kpi: KPI = None,
+                                                         fw_hw_model: FrameworkHardwareModel = KERAS_DEFAULT_MODEL):
         """
          Quantize a trained Keras model using post-training quantization. The model is quantized using a
          symmetric constraint quantization thresholds (power of two).
@@ -228,7 +234,8 @@ if importlib.util.find_spec("tensorflow") is not None\
                                                     fw_info,
                                                     network_editor,
                                                     gptq_config,
-                                                    analyze_similarity)
+                                                    analyze_similarity,
+                                                    fw_hw_model)
 
         common.Logger.info("Using experimental mixed-precision quantization. "
                            "If you encounter an issue please file a bug.")
@@ -239,6 +246,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                           quant_config,
                                           fw_info,
                                           KerasImplementation(),
+                                          fw_hw_model,
                                           network_editor,
                                           gptq_config,
                                           analyze_similarity,

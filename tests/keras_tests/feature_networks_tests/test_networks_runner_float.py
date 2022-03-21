@@ -21,6 +21,7 @@ import unittest
 from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import KERAS_DEFAULT_MODEL
 from model_compression_toolkit.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
@@ -53,10 +54,11 @@ class NetworkTest(object):
         fw_impl = KerasImplementation()
         fw_info = DEFAULT_KERAS_INFO
         graph = model_reader(self.model_float)  # model reading
+        graph.set_fw_info(DEFAULT_KERAS_INFO)
+        graph.set_fw_hw_model(KERAS_DEFAULT_MODEL)
 
         graph = set_quantization_configuration_to_graph(graph,
-                                                        DEFAULTCONFIG,
-                                                        DEFAULT_KERAS_INFO)
+                                                        DEFAULTCONFIG)
         ptq_model, _ = model_builder(graph,
                                      mode=ModelBuilderMode.FLOAT)
         self.compare(inputs_list, ptq_model)
@@ -69,8 +71,7 @@ class NetworkTest(object):
         graph = substitute(graph,
                            fw_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         graph = set_quantization_configuration_to_graph(graph,
-                                                        DEFAULTCONFIG,
-                                                        DEFAULT_KERAS_INFO)
+                                                        DEFAULTCONFIG)
 
         ptq_model, _ = model_builder(graph,
                                      mode=ModelBuilderMode.FLOAT)

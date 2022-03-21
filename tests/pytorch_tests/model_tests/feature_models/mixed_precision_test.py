@@ -33,8 +33,6 @@ class MixedPercisionBaseTest(BasePytorchTest):
     def get_quantization_configs(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
                                     mct.QuantizationErrorMethod.MSE,
-                                    mct.QuantizationMethod.POWER_OF_TWO,
-                                    mct.QuantizationMethod.POWER_OF_TWO,
                                     weights_bias_correction=True,
                                     weights_per_channel_threshold=True,
                                     activation_channel_equalization=False,

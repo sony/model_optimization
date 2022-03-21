@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
-from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
 if tf.__version__ < "2.6":
@@ -40,8 +37,7 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, input_shape=input_shape, num_calibration_iter=100)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,16, 16,
                                       False, False, True, shift_negative_activation_correction=True,
                                       shift_negative_ratio=np.inf)
 

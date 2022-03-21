@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
+import model_compression_toolkit.hardware_representation.op_quantization_config
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 import unittest
 import numpy as np
@@ -38,9 +37,9 @@ class TestQuantizationConfigurations(unittest.TestCase):
         def representative_data_gen():
             return [x]
 
-        quantizer_methods = [mct.QuantizationMethod.POWER_OF_TWO,
-                             mct.QuantizationMethod.SYMMETRIC,
-                             mct.QuantizationMethod.UNIFORM]
+        quantizer_methods = [model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.POWER_OF_TWO,
+                             model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.SYMMETRIC,
+                             model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.UNIFORM]
         quantization_error_methods = [mct.QuantizationErrorMethod.KL]
         relu_bound_to_power_of_2 = [True, False]
         weights_per_channel = [True, False]
@@ -55,7 +54,8 @@ class TestQuantizationConfigurations(unittest.TestCase):
         for quantize_method, error_method, per_channel in weights_test_combinations:
             qc = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
                                         weights_error_method=error_method,
-                                        activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                                        activation_quantization_method=model_compression_toolkit.hardware_model
+                                        .op_quantization_config.QuantizationMethod.POWER_OF_TWO,
                                         weights_quantization_method=quantize_method,
                                         activation_n_bits=16,
                                         weights_n_bits=8,

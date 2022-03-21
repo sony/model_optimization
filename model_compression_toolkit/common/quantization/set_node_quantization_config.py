@@ -27,11 +27,13 @@ from model_compression_toolkit.common.quantization.node_quantization_config impo
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
+from model_compression_toolkit.common.hardware_representation.hardware2framework import FrameworkHardwareModel
+from model_compression_toolkit.common.hardware_representation.op_quantization_config import QuantizationConfigOptions, \
+    OpQuantizationConfig
 
 
 def set_quantization_configuration_to_graph(graph: Graph,
-                                            quant_config: QuantizationConfig,
-                                            fw_info: FrameworkInfo) -> Graph:
+                                            quant_config: QuantizationConfig) -> Graph:
     """
     Add quantization configuration for each graph node.
 
@@ -49,13 +51,15 @@ def set_quantization_configuration_to_graph(graph: Graph,
     for n in graph_with_qcs.nodes:
         set_quantization_configs_to_node(node=n,
                                          quant_config=quant_config,
-                                         fw_info=fw_info)
+                                         fw_info=graph.fw_info,
+                                         fw_hw_model=graph.fw_hw_model)
     return graph_with_qcs
 
 
 def set_quantization_configs_to_node(node: BaseNode,
                                      quant_config: QuantizationConfig,
-                                     fw_info: FrameworkInfo):
+                                     fw_info: FrameworkInfo,
+                                     fw_hw_model: FrameworkHardwareModel):
     """
     Create and set quantization configurations to a node (for both weights and activation).
 
@@ -65,9 +69,12 @@ def set_quantization_configs_to_node(node: BaseNode,
         fw_info: Information needed for quantization about the specific framework.
 
     """
+    op_cfg_options = fw_hw_model.get_default_qc_options()
+
     # Create activation QC for this node
     node.activation_quantization_cfg = create_node_activation_qc(quant_config,
-                                                                 fw_info)
+                                                                 fw_info,
+                                                                 op_cfg_options)
 
     enable_activation_quantization = quant_config.enable_activation_quantization and (fw_info.in_activation_ops(node) or fw_info.in_kernel_ops(node))
     node.activation_quantization_cfg.enable_activation_quantization = enable_activation_quantization
@@ -76,7 +83,8 @@ def set_quantization_configs_to_node(node: BaseNode,
     weight_channel_axis = fw_info.kernel_channels_mapping.get(node.type)[0]
     node.candidates_weights_quantization_cfg = _create_node_candidates_weights_qc(quant_config,
                                                                                   fw_info,
-                                                                                  weight_channel_axis)
+                                                                                  weight_channel_axis,
+                                                                                  op_cfg_options)
 
     enable_weights_quantization = quant_config.enable_weights_quantization and fw_info.in_kernel_ops(node)
     for qc in node.candidates_weights_quantization_cfg:
@@ -84,7 +92,8 @@ def set_quantization_configs_to_node(node: BaseNode,
 
 
 def create_node_activation_qc(qc: QuantizationConfig,
-                              fw_info: FrameworkInfo) -> NodeActivationQuantizationConfig:
+                              fw_info: FrameworkInfo,
+                              op_cfg_options: QuantizationConfigOptions) -> NodeActivationQuantizationConfig:
     """
     Create a activations quantization configuration from a QuantizationConfig object.
 
@@ -97,21 +106,28 @@ def create_node_activation_qc(qc: QuantizationConfig,
         Activation quantization configuration of a node.
     """
 
-    activation_quantization_fn = fw_info.activation_quantizer_mapping.get(qc.activation_quantization_method)
+    # Temporal assertion as this is the only use for hw model right now
+    for cfg in op_cfg_options.quantization_config_list:
+        assert cfg.activation_quantization_method == op_cfg_options.quantization_config_list[0].activation_quantization_method
+    op_cfg = op_cfg_options.quantization_config_list[0]
+
+    activation_quantization_fn = fw_info.activation_quantizer_mapping.get(op_cfg.activation_quantization_method)
     if activation_quantization_fn is None:
         Logger.critical('Unknown quantization method for activations')
 
-    activation_quantization_params_fn = get_activation_quantization_params_fn(qc.activation_quantization_method,
+    activation_quantization_params_fn = get_activation_quantization_params_fn(op_cfg.activation_quantization_method,
                                                                               qc.activation_error_method)
 
     return NodeActivationQuantizationConfig(qc,
+                                            op_cfg,
                                             activation_quantization_fn,
                                             activation_quantization_params_fn)
 
 
 def create_node_weights_qc(qc: QuantizationConfig,
                            fw_info: FrameworkInfo,
-                           weight_channel_axis: int) -> NodeWeightsQuantizationConfig:
+                           weight_channel_axis: int,
+                           op_cfg: OpQuantizationConfig) -> NodeWeightsQuantizationConfig:
     """
     Create a weights quantization configuration from a QuantizationConfig object.
 
@@ -125,15 +141,16 @@ def create_node_weights_qc(qc: QuantizationConfig,
         Weights quantization configuration of a node.
     """
 
-    weights_quantization_fn = fw_info.weights_quantizer_mapping.get(qc.weights_quantization_method)
+    weights_quantization_fn = fw_info.weights_quantizer_mapping.get(op_cfg.weights_quantization_method)
 
     if weights_quantization_fn is None:
         Logger.critical('Unknown quantization method for weights')
 
-    weights_quantization_params_fn = get_weights_quantization_params_fn(qc.weights_quantization_method,
+    weights_quantization_params_fn = get_weights_quantization_params_fn(op_cfg.weights_quantization_method,
                                                                         qc.weights_error_method)
 
     return NodeWeightsQuantizationConfig(qc,
+                                         op_cfg,
                                          weights_quantization_fn,
                                          weights_quantization_params_fn,
                                          weight_channel_axis)
@@ -141,7 +158,8 @@ def create_node_weights_qc(qc: QuantizationConfig,
 
 def _create_node_candidates_weights_qc(qc: QuantizationConfig,
                                        fw_info: FrameworkInfo,
-                                       weight_channel_axis: int) -> List[NodeWeightsQuantizationConfig]:
+                                       weight_channel_axis: int,
+                                       op_cfg_options: QuantizationConfigOptions) -> List[NodeWeightsQuantizationConfig]:
     """
     Create a list of candidates of weights quantization configurations for a node.
 
@@ -153,6 +171,10 @@ def _create_node_candidates_weights_qc(qc: QuantizationConfig,
     Returns:
         List of candidates of weights quantization configurations to set for a node.
     """
+    # Temporal assertion as this is the only use for hw model right now
+    for cfg in op_cfg_options.quantization_config_list:
+        assert cfg.weights_quantization_method == op_cfg_options.quantization_config_list[0].weights_quantization_method
+    op_cfg = op_cfg_options.quantization_config_list[0]
 
     candidats = []
     if isinstance(qc, MixedPrecisionQuantizationConfig):
@@ -160,8 +182,14 @@ def _create_node_candidates_weights_qc(qc: QuantizationConfig,
         for nbits in qc.weights_n_bits:
             single_nbits_qc = copy.deepcopy(qc)
             single_nbits_qc.weights_n_bits = nbits
-            candidats.append(create_node_weights_qc(single_nbits_qc, fw_info, weight_channel_axis))
+            candidats.append(create_node_weights_qc(single_nbits_qc,
+                                                    fw_info,
+                                                    weight_channel_axis,
+                                                    op_cfg))
     else:
-        candidats.append(create_node_weights_qc(qc, fw_info, weight_channel_axis))
+        candidats.append(create_node_weights_qc(qc,
+                                                fw_info,
+                                                weight_channel_axis,
+                                                op_cfg))
 
     return candidats

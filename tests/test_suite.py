@@ -20,10 +20,10 @@ import unittest
 
 #  ----------------  Individual test suites
 from tests.common_tests.function_tests.test_histogram_collector import TestHistogramCollector
-
 from tests.common_tests.function_tests.test_collectors_manipulation import TestCollectorsManipulations
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
+from tests.common_tests.test_hardware_model import HardwareModelingTest, OpsetTest, QCOptionsTest, FusingTest
 
 
 found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
@@ -47,12 +47,15 @@ if found_tf:
         TestSymmetricThresholdSelectionWeights
     from tests.keras_tests.function_tests.test_uniform_quantize_tensor import TestUniformQuantizeTensor
     from tests.keras_tests.function_tests.test_uniform_range_selection_weights import TestUniformRangeSelectionWeights
+    from tests.keras_tests.test_keras_hardware_model import TestKerasHWModel
+
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
     from tests.pytorch_tests.model_tests.test_feature_models_runner import FeatureModelsTestRunner
     from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
+    from tests.pytorch_tests.test_pytorch_hardware_model import TestPytorchHWModel
 
 
 if __name__ == '__main__':
@@ -62,6 +65,10 @@ if __name__ == '__main__':
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCollectorsManipulations))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFolderLoader))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestThresholdSelection))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(HardwareModelingTest))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(OpsetTest))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(QCOptionsTest))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FusingTest))
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
@@ -77,6 +84,8 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSymmetricThresholdSelectionWeights))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformQuantizeTensor))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformRangeSelectionWeights))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasHWModel))
+
         # Keras test layers are supported in TF2.6 or higher versions
         if tf.__version__ >= "2.6":
             suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLayerTest))
@@ -86,6 +95,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureModelsTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FunctionTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ModelTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchHWModel))
 
     # ----------------   Join them together ane run them
     comboSuite = unittest.TestSuite(suiteList)

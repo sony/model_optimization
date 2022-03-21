@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 import random
-import unittest
 from torch.fx import symbolic_trace
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig
@@ -37,22 +36,16 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         return {
             'no_quantization': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
                                                       mct.QuantizationErrorMethod.NOCLIPPING,
-                                                      mct.QuantizationMethod.POWER_OF_TWO,
-                                                      mct.QuantizationMethod.POWER_OF_TWO,
                                                       32, 32, False, True, True,
                                                       enable_weights_quantization=False,
                                                       enable_activation_quantization=False),
             'all_32bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
                                                 mct.QuantizationErrorMethod.NOCLIPPING,
-                                                mct.QuantizationMethod.POWER_OF_TWO,
-                                                mct.QuantizationMethod.POWER_OF_TWO,
                                                 32, 32, False, True, True,
                                                 enable_weights_quantization=True,
                                                 enable_activation_quantization=True),
             'all_4bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
                                                mct.QuantizationErrorMethod.NOCLIPPING,
-                                               mct.QuantizationMethod.POWER_OF_TWO,
-                                               mct.QuantizationMethod.POWER_OF_TWO,
                                                4, 4, False, False, True,
                                                enable_weights_quantization=True,
                                                enable_activation_quantization=True),

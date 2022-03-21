@@ -18,7 +18,8 @@ import unittest
 from keras import Input, Model
 from keras.layers import Conv2D, Conv2DTranspose
 
-from model_compression_toolkit import QuantizationConfig, QuantizationMethod, QuantizationErrorMethod
+import model_compression_toolkit as mct
+from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod
 from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import \
     compute_bias_correction_of_graph
 from model_compression_toolkit.common.constants import RANGE_MIN, RANGE_MAX
@@ -88,24 +89,40 @@ class TestUniformRangeSelectionWeights(unittest.TestCase):
 
     def run_test_for_threshold_method(self, threshold_method, per_channel=True):
         qc = QuantizationConfig(weights_error_method=threshold_method,
-                                weights_quantization_method=QuantizationMethod.UNIFORM, weights_n_bits=8,
+                                weights_n_bits=8,
                                 weights_per_channel_threshold=per_channel)
+
+        qco = mct.hardware_representation.QuantizationConfigOptions(
+            [mct.hardware_representation.OpQuantizationConfig(
+                activation_quantization_method=mct.hardware_representation.QuantizationMethod.POWER_OF_TWO,
+                weights_quantization_method=mct.hardware_representation.QuantizationMethod.UNIFORM,
+                activation_n_bits=8,
+                weights_n_bits=8,
+                weights_per_channel_threshold=True,
+                enable_weights_quantization=True,
+                enable_activation_quantization=True)])
+        hw_model = mct.hardware_representation.FrameworkHardwareModel(mct.hardware_representation.HardwareModel(qco))
 
         fw_info = DEFAULT_KERAS_INFO
         in_model = create_network()
         keras_impl = KerasImplementation()
         graph = keras_impl.model_reader(in_model, None)  # model reading
+        graph.set_fw_hw_model(hw_model)
+        graph.set_fw_info(fw_info)
         graph = set_quantization_configuration_to_graph(graph=graph,
-                                                        quant_config=qc,
-                                                        fw_info=fw_info)
+                                                        quant_config=qc)
         for node in graph.nodes:
             node.prior_info = keras_impl.get_node_prior_info(node=node,
-                                                             fw_info=fw_info, graph=graph)
+                                                             fw_info=fw_info,
+                                                             graph=graph)
         analyzer_graph(keras_impl.attach_sc_to_node,
                        graph,
                        fw_info)
 
-        mi = ModelCollector(graph, fw_info=DEFAULT_KERAS_INFO, fw_impl=keras_impl)
+        mi = ModelCollector(graph,
+                            fw_info=DEFAULT_KERAS_INFO,
+                            fw_impl=keras_impl)
+
         for i in range(10):
             mi.infer([np.random.randn(1, 16, 16, 4)])
 

@@ -18,6 +18,7 @@ from typing import Callable, Any
 
 import numpy as np
 
+from model_compression_toolkit.common.hardware_representation import OpQuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 
 
@@ -26,6 +27,7 @@ from model_compression_toolkit.common.quantization.quantization_config import Qu
 # for its weights quantization, and a different quantization
 # configuration for its activation quantization configuration.
 ##########################################
+
 
 class BaseNodeNodeQuantizationConfig(object):
     """
@@ -61,6 +63,7 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
     """
     def __init__(self,
                  qc: QuantizationConfig,
+                 op_cfg: OpQuantizationConfig,
                  activation_quantization_fn: Callable,
                  activation_quantization_params_fn: Callable
                  ):
@@ -76,7 +79,7 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.activation_quantization_params_fn = activation_quantization_params_fn
         self.activation_quantization_params = {}
         self.activation_error_method = qc.activation_error_method
-        self.activation_quantization_method = qc.activation_quantization_method
+        self.activation_quantization_method = op_cfg.activation_quantization_method
         self.activation_n_bits = qc.activation_n_bits
         self.relu_bound_to_power_of_2 = qc.relu_bound_to_power_of_2
         self.enable_activation_quantization = qc.enable_activation_quantization
@@ -161,6 +164,7 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
     """
     def __init__(self,
                  qc: QuantizationConfig,
+                 op_cfg: OpQuantizationConfig,
                  weights_quantization_fn: Callable,
                  weights_quantization_params_fn: Callable,
                  weights_channels_axis: int):
@@ -178,7 +182,7 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.weights_channels_axis = weights_channels_axis
         self.weights_quantization_params = {}
         self.weights_error_method = qc.weights_error_method
-        self.weights_quantization_method = qc.weights_quantization_method
+        self.weights_quantization_method = op_cfg.weights_quantization_method
         self.weights_n_bits = qc.weights_n_bits
         self.weights_bias_correction = qc.weights_bias_correction
         self.weights_per_channel_threshold = qc.weights_per_channel_threshold
