@@ -38,7 +38,7 @@ class MixedPercisionBaseTest(BasePytorchTest):
                                     weights_bias_correction=True,
                                     weights_per_channel_threshold=True,
                                     activation_channel_equalization=False,
-                                    relu_unbound_correction=False,
+                                    relu_bound_to_power_of_2=False,
                                     input_scaling=False)
 
         return {"mixed_precision_model": MixedPrecisionQuantizationConfig(qc, weights_n_bits=[2, 8, 4], num_of_images=1)}

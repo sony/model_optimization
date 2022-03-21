@@ -67,7 +67,7 @@ class NetworkTest(object):
                                                           fw_info=fw_info,
                                                           graph=graph)
         graph = substitute(graph,
-                           fw_impl.get_substitutions_pre_statistics_collection())
+                           fw_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         graph = set_quantization_configuration_to_graph(graph,
                                                         DEFAULTCONFIG,
                                                         DEFAULT_KERAS_INFO)

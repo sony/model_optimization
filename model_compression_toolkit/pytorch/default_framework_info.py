@@ -13,9 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 import torch
-from torch.nn import Hardswish, Hardsigmoid, ReLU, ReLU6, LeakyReLU, PReLU, SiLU, Softmax, \
+from torch.nn import Hardswish, Hardsigmoid, ReLU, Hardtanh, ReLU6, LeakyReLU, PReLU, SiLU, Softmax, \
     Sigmoid, Softplus, Softsign, Tanh
-from torch.nn.functional import hardswish, hardsigmoid, relu, relu6, leaky_relu, prelu, silu, softmax, \
+from torch.nn.functional import hardswish, hardsigmoid, relu, hardtanh, relu6, leaky_relu, prelu, silu, softmax, \
     softplus, softsign
 from torch.nn import UpsamplingBilinear2d, AdaptiveAvgPool2d, AvgPool2d, MaxPool2d
 from torch.nn.functional import upsample_bilinear, adaptive_avg_pool2d, avg_pool2d, max_pool2d
@@ -35,7 +35,6 @@ from model_compression_toolkit.common.quantization.quantizers.uniform_quantizers
 from model_compression_toolkit.pytorch.constants import KERNEL
 from model_compression_toolkit.pytorch.quantizer.fake_quant_builder import power_of_two_quantization, \
     symmetric_quantization, uniform_quantization
-from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder
 from model_compression_toolkit.pytorch.quantizer.fake_quant_builder import power_of_two_quantization
 from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder, ConstantHolder
 
@@ -52,8 +51,8 @@ NO_QUANTIZATION = [Dropout, Flatten, ConstantHolder] + \
                   [dropout, flatten, split, operator.getitem, reshape, unsqueeze]
 
 ACTIVATION = [DummyPlaceHolder] + \
-    [Hardswish, Hardsigmoid, ReLU, ReLU6, LeakyReLU, PReLU, SiLU, Softmax, Sigmoid, Softplus, Softsign, Tanh] + \
-    [hardswish, hardsigmoid, relu, relu6, leaky_relu, prelu, silu, softmax, sigmoid, softplus, softsign, tanh] + \
+    [Hardswish, Hardsigmoid, ReLU, Hardtanh, ReLU6, LeakyReLU, PReLU, SiLU, Softmax, Sigmoid, Softplus, Softsign, Tanh] + \
+    [hardswish, hardsigmoid, relu, hardtanh, relu6, leaky_relu, prelu, silu, softmax, sigmoid, softplus, softsign, tanh] + \
     [torch.relu] + \
     [UpsamplingBilinear2d, AdaptiveAvgPool2d, AvgPool2d, MaxPool2d] + \
     [upsample_bilinear, adaptive_avg_pool2d, avg_pool2d, max_pool2d] + \
