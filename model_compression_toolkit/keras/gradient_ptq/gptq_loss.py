@@ -34,13 +34,17 @@ def mse_loss(y: tf.Tensor, x: tf.Tensor, normalized: bool = True) -> tf.Tensor:
 
 
 def multiple_tensors_mse_loss(y_list: List[tf.Tensor],
-                              x_list: List[tf.Tensor]) -> tf.Tensor:
+                              x_list: List[tf.Tensor],
+                              fxp_w_list: List[List[tf.Tensor]],
+                              flp_w_list: List[List[tf.Tensor]]) -> tf.Tensor:
     """
     Compute MSE similarity between two lists of tensors
 
     Args:
         y_list: First list of tensors.
         x_list: Second list of tensors.
+        fxp_w_list: list of lists each containing a quantized model layer's trainable weights - quantized
+        flp_w_list: list of lists each containing a float model layer's weights - not quantized
 
     Returns:
         A single loss value which is the average of all MSE loss of all tensor pairs
