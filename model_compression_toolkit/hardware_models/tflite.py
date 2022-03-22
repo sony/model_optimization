@@ -18,9 +18,10 @@ from model_compression_toolkit.common.hardware_representation.op_quantization_co
 
 
 def get_tflite_hw_model():
-    # Create a quantization config.
-    # A quantization configuration defines how an operator
-    # should be quantized on the modeled hardware:
+    # Create a quantization config. A quantization configuration defines how an operator
+    # should be quantized on the modeled hardware. In TFLite
+    # activations quantization is asymmetric, and weights quantization is symmetric:
+    # https://www.tensorflow.org/lite/performance/quantization_spec#symmetric_vs_asymmetric
     eight_bits = hw_model.OpQuantizationConfig(
         activation_quantization_method=QuantizationMethod.UNIFORM,
         weights_quantization_method=QuantizationMethod.SYMMETRIC,
@@ -45,6 +46,9 @@ def get_tflite_hw_model():
     # To start defining the model's components (such as operator sets, and fusing patterns),
     # use 'with' the hardware model instance, and create them as below:
     with tflite_model:
+        # In TFLite, the quantized operator specifications constraint operators quantization
+        # differently. For more details:
+        # https://www.tensorflow.org/lite/performance/quantization_spec#int8_quantized_operator_specifications
         hw_model.OperatorsSet("PreserveQuantizationParams",
                               hw_model.get_default_quantization_config_options().clone_and_edit(
                                   quantization_preserving=True))
@@ -84,6 +88,7 @@ def get_tflite_hw_model():
                                         qc_options=hw_model.get_default_quantization_config_options().clone_and_edit(
                                             quantization_preserving=True))
 
+        # Source: https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/grappler/optimizers/remapper
         hw_model.Fusing([kernel, bias_add])
         hw_model.Fusing([kernel, bias_add, activations_to_fuse])
         hw_model.Fusing([conv2d, batch_norm, activations_to_fuse])
@@ -93,26 +98,3 @@ def get_tflite_hw_model():
 
     return tflite_model
 
-
-if __name__ == '__main__':
-    tflite_hw_model = get_tflite_hw_model()
-    tflite_hw_model.show()
-
-# Per-axis (aka per-channel in Conv ops) or per-tensor weights are represented by
-# int8 two’s complement values in the range [-127, 127] with zero-point equal to 0.
-# Per-tensor activations/inputs are represented by int8 two’s complement values in
-# the range [-128, 127], with a zero-point in range [-128, 127].
-
-# TFLite has per-axis support for a growing number of operations.
-# At the time of this document, support exists for Conv2d and DepthwiseConv2d.
-
-# Activations are asymmetric
-# Weights are symmetric: forced to have zero-point equal to 0.
-
-
-# quantization_preserving
-# qparams restirictions
-# weights grid range
-# activations grid range
-# Fusing patterns: https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/grappler/optimizers/remapper
-# .cc#L43

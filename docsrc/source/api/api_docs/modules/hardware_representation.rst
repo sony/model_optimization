@@ -8,11 +8,15 @@ hardware_representation Module
 =================================
 
 MCT can be configured to quantize and optimize models for different hardware settings.
-For example, when using qnnpack backend for Pytorch model inference, Pytorch quantization configuration
-uses per-tensor weights quantization for Conv2d, while when using tflite modeling, Tensorflow uses
-per-channel weights quantization for Conv2D.
+For example, when using qnnpack backend for Pytorch model inference, Pytorch `quantization
+configuration <https://github.com/pytorch/pytorch/blob/master/torch/ao/quantization/qconfig.py#L199>`_
+uses `per-tensor weights quantization <https://github.com/pytorch/pytorch/blob/master/torch/ao/quantization/observer.py#L1429>`_
+for Conv2d, while when using tflite modeling, Tensorflow uses `per-channel weights quantization for
+Conv2D <https://www.tensorflow.org/lite/performance/quantization_spec#per-axis_vs_per-tensor>`_.
+
 This can be addressed in MCT by using the hardware_representation module, that can configure different
 parameters that are hardware-related, and the optimization process will use this to optimize the model accordingly.
+Models for TFLite and qnnpack can be observed `here <https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/hardware_models>`_, and can be used using :ref:`get_model function<ug-get_model>`.
 
 
 The first part is configuring the quantization method for both wights and activations of an operator.
@@ -28,6 +32,14 @@ Select a method to use during quantization:
 
 |
 
+
+.. note::
+   For now, the **only** information from :class:`~model_compression_toolkit.hardware_representation.HardwareModel`
+   that MCT uses are the values of :class:`~model_compression_toolkit.hardware_representation.QuantizationMethod`
+   (for weights and activations) from the default :class:`~model_compression_toolkit.hardware_representation.QuantizationConfigOptions` that is
+   set to the :class:`~model_compression_toolkit.hardware_representation.HardwareModel`.
+
+   - MCT will use more information from :class:`~model_compression_toolkit.hardware_representation.HardwareModel` gradually, in the future.
 
 Using a quantization method (or methods, if the weights and activations of an operator are quantized differently)
 Quantization configuration of different operators can be created using OpQuantizationConfig:

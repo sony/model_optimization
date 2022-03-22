@@ -12,24 +12,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Any
+
 
 class ImmutableClass(object):
     """
-    Class to make inherits immutable
+    Class to make inherits classes immutable.
     """
-
     _initialized = False
 
     def __init__(self):
         self._initialized = False
 
-    def __setattr__(self, *args, **kwargs):
+    def __setattr__(self,
+                    *args: Any,
+                    **kwargs: Any):
+        """
+        Use this method to enforce immutability when object is finalized.
+
+        Args:
+            *args: Arguments to set to attribute.
+            **kwargs: Keyword-arguments to set to attribute.
+
+        """
         if self._initialized:
-            raise Exception('Immutable Class')
+            raise Exception('Immutable class. Can\'t edit attributes')
         else:
-            object.__setattr__(self, *args, **kwargs)
+            object.__setattr__(self,
+                               *args,
+                               **kwargs)
 
     def initialized_done(self):
+        """
+
+        Method to use when object should be immutable.
+
+        """
         if self._initialized:
-            raise Exception('reinitialized')
-        self._initialized = True
+            raise Exception('reinitialized')  # Can not get finalized again.
+        self._initialized = True  # Finalize object.

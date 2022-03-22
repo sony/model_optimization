@@ -91,4 +91,3 @@ def get_keras_hardware_model_tflite():
     return tflite_keras
 
 
-KERAS_TFLITE_MODEL = get_keras_hardware_model_tflite()

@@ -24,6 +24,11 @@ class OperatorsSetBase(HardwareModelComponent):
     Base class to represent a set of operators.
     """
     def __init__(self, name: str):
+        """
+
+        Args:
+            name: Name of OperatorsSet.
+        """
         super().__init__(name=name)
 
 

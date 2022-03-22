@@ -49,7 +49,7 @@ class HardwareModelingTest(unittest.TestCase):
             with model:
                 hwm.OperatorsSet("opset")
             model.operator_set = []
-        self.assertEqual('Immutable Class', str(e.exception))
+        self.assertEqual('Immutable class. Can\'t edit attributes', str(e.exception))
 
     def test_default_options_more_than_single_qc(self):
         test_qco = hwm.QuantizationConfigOptions([TEST_QC, TEST_QC], base_config=TEST_QC)

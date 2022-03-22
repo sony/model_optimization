@@ -30,10 +30,11 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 from model_compression_toolkit.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.common.model_collector import ModelCollector
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import KERAS_DEFAULT_MODEL
+from model_compression_toolkit import get_model
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 
+KERAS_DEFAULT_MODEL = get_model('tensorflow', 'default')
 
 class TestLpSearchBitwidth(unittest.TestCase):
 

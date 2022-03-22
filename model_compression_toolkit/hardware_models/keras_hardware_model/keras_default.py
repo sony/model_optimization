@@ -70,4 +70,3 @@ def get_default_hwm_keras():
     return default_hwm_keras
 
 
-KERAS_DEFAULT_MODEL = get_default_hwm_keras()

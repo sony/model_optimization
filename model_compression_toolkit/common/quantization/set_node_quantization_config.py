@@ -98,6 +98,7 @@ def create_node_activation_qc(qc: QuantizationConfig,
     Create a activations quantization configuration from a QuantizationConfig object.
 
     Args:
+        op_cfg_options:
         qc: QuantizationConfig to create the node's config from.
         fw_info: Information about the specific framework the node was created from (e.g., whether or not its
         weights/activations should be quantized)
@@ -106,9 +107,9 @@ def create_node_activation_qc(qc: QuantizationConfig,
         Activation quantization configuration of a node.
     """
 
-    # Temporal assertion as this is the only use for hw model right now
-    for cfg in op_cfg_options.quantization_config_list:
-        assert cfg.activation_quantization_method == op_cfg_options.quantization_config_list[0].activation_quantization_method
+    # op_cfg_options is the default qco of hwm (in the future it will be taken per operator/node),
+    # and the default qco is always at length 1. Thus, we take index 0.
+    # In the future, each candidate will be generated from each option.
     op_cfg = op_cfg_options.quantization_config_list[0]
 
     activation_quantization_fn = fw_info.activation_quantizer_mapping.get(op_cfg.activation_quantization_method)
@@ -132,6 +133,7 @@ def create_node_weights_qc(qc: QuantizationConfig,
     Create a weights quantization configuration from a QuantizationConfig object.
 
     Args:
+        op_cfg: OpQuantizationConfig of the node.
         qc: QuantizationConfig to create the node's config from.
         fw_info: Information about the specific framework the node was created from (e.g., whether or not its
         weights/activations should be quantized)
@@ -167,13 +169,15 @@ def _create_node_candidates_weights_qc(qc: QuantizationConfig,
         qc: Quantization configuration the quantization process should follow.
         fw_info: Framework information (e.g., which layers should have their kernels' quantized).
         weight_channel_axis: Output channel index of the node's kernel.
+        op_cfg_options: Options for OpQuantizationConfig for the node.
 
     Returns:
         List of candidates of weights quantization configurations to set for a node.
     """
-    # Temporal assertion as this is the only use for hw model right now
-    for cfg in op_cfg_options.quantization_config_list:
-        assert cfg.weights_quantization_method == op_cfg_options.quantization_config_list[0].weights_quantization_method
+    # op_cfg_options is the default qco of hwm (in the future it will be taken per operator/node),
+    # and the default qco is always at length 1. Thus, we take index 0.
+    # In the future, each candidate will be generated from each option, and not (only) according
+    # to MixedPrecisionQuantizationConfig.
     op_cfg = op_cfg_options.quantization_config_list[0]
 
     candidats = []

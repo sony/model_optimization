@@ -32,8 +32,10 @@ import importlib
 if importlib.util.find_spec("torch") is not None:
     from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
-    from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import PYTORCH_DEFAULT_MODEL
     from torch.nn import Module
+
+    from model_compression_toolkit import get_model
+    PYTORCH_DEFAULT_MODEL = get_model('pytorch', 'default')
 
     def pytorch_post_training_quantization(in_module: Module,
                                            representative_data_gen: Callable,
@@ -64,6 +66,8 @@ if importlib.util.find_spec("torch") is not None:
             network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
+            fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
+
 
         Returns:
             A quantized module and information the user may need to handle the quantized module.
@@ -135,6 +139,7 @@ if importlib.util.find_spec("torch") is not None:
              gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
              analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
+             fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
 
          Returns:
              A quantized model and information the user may need to handle the quantized model.

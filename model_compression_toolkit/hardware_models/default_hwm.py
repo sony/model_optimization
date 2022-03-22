@@ -64,16 +64,9 @@ def get_default_hardware_model():
         # to quantize the operations' activations using LUT.
         four_bits = eight_bits.clone_and_edit(weights_n_bits=4)
         two_bits = eight_bits.clone_and_edit(weights_n_bits=2)
-        four_bits_lut = four_bits.clone_and_edit(
-            weights_quantization_method=hwm.QuantizationMethod.LUT_QUANTIZER)
-        two_bits_lut = two_bits.clone_and_edit(
-            weights_quantization_method=hwm.QuantizationMethod.LUT_QUANTIZER)
-
         mixed_precision_configuration_options = hwm.QuantizationConfigOptions([eight_bits,
                                                                                four_bits,
-                                                                               two_bits,
-                                                                               four_bits_lut,
-                                                                               two_bits_lut],
+                                                                               two_bits],
                                                                               base_config=eight_bits)
 
         # Define operator sets that use mixed_precision_configuration_options:

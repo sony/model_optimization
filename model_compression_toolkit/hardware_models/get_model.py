@@ -14,28 +14,36 @@
 # ==============================================================================
 
 import importlib
-
 from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
 
-found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
-    "tensorflow_model_optimization") is not None
-found_torch = importlib.util.find_spec("torch") is not None
 
+#############################
+# Build Tensorflow models:
+#############################
+found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec("tensorflow_model_optimization") is not None
 tf_models_dict = {}
-torch_models_dict = {}
 
 if found_tf:
-    from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import KERAS_DEFAULT_MODEL
-    from model_compression_toolkit.hardware_models.keras_hardware_model.keras_tflite import KERAS_TFLITE_MODEL
+    from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import get_default_hwm_keras
+    from model_compression_toolkit.hardware_models.keras_hardware_model.keras_tflite import get_keras_hardware_model_tflite
+    # KERAS_DEFAULT_MODEL = get_default_hwm_keras()
+    # KERAS_TFLITE_MODEL = get_keras_hardware_model_tflite()
+    tf_models_dict = {'default': get_default_hwm_keras(),
+                      'tflite': get_keras_hardware_model_tflite()}
 
-    tf_models_dict = {'default': KERAS_DEFAULT_MODEL,
-                      'tflite': KERAS_TFLITE_MODEL}
+
+#############################
+# Build Pytorch models:
+#############################
+found_torch = importlib.util.find_spec("torch") is not None
+torch_models_dict = {}
+
 if found_torch:
-    from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import PYTORCH_DEFAULT_MODEL
-    from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_qnnpack import PYTORCH_QNNPACK_MODEL
+    from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import get_default_hwm_pytorch
+    from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_qnnpack import get_qnnpack_pytorch
+    torch_models_dict = {'default': get_default_hwm_pytorch(),
+                         'qnnpack': get_qnnpack_pytorch()}
 
-    torch_models_dict = {'default': PYTORCH_DEFAULT_MODEL,
-                         'qnnpack': PYTORCH_QNNPACK_MODEL}
 
 fw_hw_models_dict = {'tensorflow': tf_models_dict,
                      'pytorch': torch_models_dict}

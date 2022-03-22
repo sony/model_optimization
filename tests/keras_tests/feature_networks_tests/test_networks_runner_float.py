@@ -21,7 +21,7 @@ import unittest
 from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import KERAS_DEFAULT_MODEL
+from model_compression_toolkit.hardware_models.get_model import KERAS_DEFAULT_MODEL
 from model_compression_toolkit.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute

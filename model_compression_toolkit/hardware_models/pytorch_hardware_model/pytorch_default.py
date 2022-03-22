@@ -77,4 +77,4 @@ def get_default_hwm_pytorch():
     return default_hwm_pytorch
 
 
-PYTORCH_DEFAULT_MODEL = get_default_hwm_pytorch()
+

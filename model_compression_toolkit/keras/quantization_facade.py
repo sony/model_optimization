@@ -34,13 +34,15 @@ from model_compression_toolkit.common.hardware_representation.hardware2framework
 if importlib.util.find_spec("tensorflow") is not None\
         and importlib.util.find_spec("tensorflow_model_optimization") is not None:
     import tensorflow as tf
-    from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import KERAS_DEFAULT_MODEL
     from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
     from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
     from keras.optimizer_v2.optimizer_v2 import OptimizerV2
+
+    from model_compression_toolkit import get_model
+    KERAS_DEFAULT_MODEL = get_model('tensorflow', 'default')
 
     def get_keras_gptq_config(n_iter: int,
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(),
@@ -113,6 +115,7 @@ if importlib.util.find_spec("tensorflow") is not None\
             network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
+            fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
 
         Returns:
             A quantized model and information the user may need to handle the quantized model.
@@ -184,6 +187,8 @@ if importlib.util.find_spec("tensorflow") is not None\
              gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
              analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
+             fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
+
 
          Returns:
              A quantized model and information the user may need to handle the quantized model.
