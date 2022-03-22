@@ -26,10 +26,11 @@ tf_models_dict = {}
 if found_tf:
     from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import get_default_hwm_keras
     from model_compression_toolkit.hardware_models.keras_hardware_model.keras_tflite import get_keras_hardware_model_tflite
-    # KERAS_DEFAULT_MODEL = get_default_hwm_keras()
-    # KERAS_TFLITE_MODEL = get_keras_hardware_model_tflite()
+    from model_compression_toolkit.hardware_models.keras_hardware_model.keras_qnnpack import get_qnnpack_tensorflow
+
     tf_models_dict = {'default': get_default_hwm_keras(),
-                      'tflite': get_keras_hardware_model_tflite()}
+                      'tflite': get_keras_hardware_model_tflite(),
+                      'qnnpack': get_qnnpack_tensorflow()}
 
 
 #############################
@@ -41,7 +42,10 @@ torch_models_dict = {}
 if found_torch:
     from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import get_default_hwm_pytorch
     from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_qnnpack import get_qnnpack_pytorch
+    from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_tflite import get_pytorch_tflite_model
+
     torch_models_dict = {'default': get_default_hwm_pytorch(),
+                         'tflite': get_pytorch_tflite_model(),
                          'qnnpack': get_qnnpack_pytorch()}
 
 
@@ -53,9 +57,8 @@ def get_model(fw_name: str,
               hw_name: str) -> FrameworkHardwareModel:
     """
     Get a FrameworkHardwareModel by the hardware model name and the framework name.
-    For now, it supports the next models:
-    For 'tensorflow' - hw_name can be 'default' or 'tflite'.
-    For 'pytorch' - hw_name can be 'default' or 'qnnpack'.
+    For now, it supports frameworks 'tensorflow' and 'pytorch'. For both of them
+    the hardware model can be 'default','tflite', or 'qnnpack'.
 
     Args:
         fw_name: Framework name of the FrameworkHardwareModel.

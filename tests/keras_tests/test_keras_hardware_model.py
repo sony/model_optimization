@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+import copy
 import unittest
 from functools import partial
 
@@ -26,6 +26,8 @@ from model_compression_toolkit.common.hardware_representation import FrameworkHa
 from model_compression_toolkit.common.hardware_representation.hardware2framework import LayerFilterParams
 from model_compression_toolkit.common.hardware_representation.hardware2framework.attribute_filter import Greater, \
     Smaller, GreaterEq, Eq, SmallerEq
+from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
+    DEFAULT_MIXEDPRECISION_CONFIG
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from tests.common_tests.test_hardware_model import TEST_QCO, TEST_QC
 
@@ -210,7 +212,10 @@ class TestKerasHWModel(unittest.TestCase):
 class TestGetKerasHardwareModelAPI(unittest.TestCase):
 
     def test_get_keras_hw_models(self):
-        keras_hw_models = ['default', 'tflite']
+        keras_hw_models = ['default',
+                           'tflite',
+                           'qnnpack']
+
         for hw_name in keras_hw_models:
             fw_hw_model = mct.get_model('tensorflow', hw_name)
             model = MobileNetV2()
@@ -223,11 +228,14 @@ class TestGetKerasHardwareModelAPI(unittest.TestCase):
                                                                       n_iter=1,
                                                                       fw_hw_model=fw_hw_model)
 
+            mp_qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
+            mp_qc.num_of_images = 1
             quantized_model, _ = mct.keras_post_training_quantization_mixed_precision(model,
                                                                                       rep_data,
                                                                                       n_iter=1,
                                                                                       fw_hw_model=fw_hw_model,
-                                                                                      target_kpi=mct.KPI(np.inf))
+                                                                                      target_kpi=mct.KPI(np.inf),
+                                                                                      quant_config=mp_qc)
 
     def test_get_keras_not_supported_model(self):
         with self.assertRaises(Exception) as e:

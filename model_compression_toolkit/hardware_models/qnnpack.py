@@ -62,7 +62,3 @@ def get_qnnpack_model():
 
     return qnnpack_model
 
-
-if __name__ == '__main__':
-    qnnpack = get_qnnpack_model()
-    qnnpack.show()

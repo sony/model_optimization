@@ -96,5 +96,3 @@ def get_default_hardware_model():
 
     return default_hwm
 
-
-DEFAULT_MCT_HARDWARE_MODEL = get_default_hardware_model()

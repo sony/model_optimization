@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+import copy
 import unittest
 from functools import partial
 
@@ -26,7 +26,9 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
 from model_compression_toolkit.common.hardware_representation.hardware2framework import LayerFilterParams
 from model_compression_toolkit.common.hardware_representation.hardware2framework.attribute_filter import Greater, \
-    Smaller
+    Smaller, Eq
+from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
+    DEFAULT_MIXEDPRECISION_CONFIG
 from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
 from tests.common_tests.test_hardware_model import TEST_QC, TEST_QCO
 from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import LayerTestModel
@@ -60,6 +62,14 @@ class TestPytorchHWModel(unittest.TestCase):
         self.assertFalse(hardtanh_with_params.match(get_node(partial(hardtanh, max_val=2, min_val=0.5))))
         self.assertFalse(hardtanh_with_params.match(get_node(partial(hardtanh, max_val=2))))
         self.assertFalse(hardtanh_with_params.match(get_node(partial(hardtanh, max_val=1, min_val=0.5))))
+
+        l2norm_tflite_opset = LayerFilterParams(torch.nn.functional.normalize, Eq('p',2) | Eq('p',None))
+        self.assertTrue(l2norm_tflite_opset.match(get_node(partial(torch.nn.functional.normalize, p=2))))
+        self.assertTrue(l2norm_tflite_opset.match(get_node(partial(torch.nn.functional.normalize, p=2.0))))
+        self.assertTrue(l2norm_tflite_opset.match(get_node(torch.nn.functional.normalize)))
+        self.assertFalse(l2norm_tflite_opset.match(get_node(partial(torch.nn.functional.normalize, p=3.0))))
+
+
 
     def test_qco_by_pytorch_layer(self):
         default_qco = hwm.QuantizationConfigOptions([TEST_QC])
@@ -205,7 +215,10 @@ class TestPytorchHWModel(unittest.TestCase):
 class TestGetPytorchHardwareModelAPI(unittest.TestCase):
 
     def test_get_pytorch_models(self):
-        pytorch_hw_models = ['default', 'qnnpack']
+        pytorch_hw_models = ['default',
+                             'qnnpack'
+                             'tflite']
+
         for hw_name in pytorch_hw_models:
             fw_hw_model = mct.get_model('pytorch', hw_name)
             model = mobilenet_v2(pretrained=True)
@@ -218,10 +231,13 @@ class TestGetPytorchHardwareModelAPI(unittest.TestCase):
                                                                         n_iter=1,
                                                                         fw_hw_model=fw_hw_model)
 
+            mp_qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
+            mp_qc.num_of_images = 1
             quantized_model, _ = mct.pytorch_post_training_quantization_mixed_precision(model,
                                                                                         rep_data,
                                                                                         n_iter=1,
-                                                                                        fw_hw_model=fw_hw_model)
+                                                                                        fw_hw_model=fw_hw_model,
+                                                                                        quant_config=mp_qc)
 
     def test_get_pytorch_not_supported_model(self):
         with self.assertRaises(Exception) as e:

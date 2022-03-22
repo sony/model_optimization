@@ -18,6 +18,7 @@ from model_compression_toolkit.common.hardware_representation.op_quantization_co
 
 
 def get_tflite_hw_model():
+
     # Create a quantization config. A quantization configuration defines how an operator
     # should be quantized on the modeled hardware. In TFLite
     # activations quantization is asymmetric, and weights quantization is symmetric:

@@ -15,9 +15,7 @@
 
 
 import torch
-from torch.nn import Conv2d, Linear, BatchNorm2d
-from torch.nn import Hardtanh
-from torch.nn import ReLU, ReLU6
+from torch.nn import Conv2d, Linear, BatchNorm2d, ConvTranspose2d, Hardtanh, ReLU, ReLU6
 from torch.nn.functional import relu, relu6, hardtanh
 
 from model_compression_toolkit.common.hardware_representation.hardware2framework import \
@@ -33,7 +31,10 @@ def get_qnnpack_pytorch():
                                              name='qnnpack_pytorch')
 
     with qnnpack_pytorch:
-        OperationsSetToLayers("Conv", [Conv2d])
+        OperationsSetToLayers("Conv", [Conv2d,
+                                       torch.nn.functional.conv2d,
+                                       ConvTranspose2d,
+                                       torch.nn.functional.conv_transpose2d])
 
         OperationsSetToLayers("Linear", [Linear])
 
@@ -48,6 +49,3 @@ def get_qnnpack_pytorch():
                                        LayerFilterParams(hardtanh, min_val=0)])
 
     return qnnpack_pytorch
-
-
-PYTORCH_QNNPACK_MODEL = get_qnnpack_pytorch()

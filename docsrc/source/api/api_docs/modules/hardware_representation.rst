@@ -248,7 +248,7 @@ HardwareModel Code Example
 
 .. literalinclude:: ../../../../../model_compression_toolkit/hardware_models/default_hwm.py
     :language: python
-    :lines: 16-104
+    :lines: 16-98
 
 |
 

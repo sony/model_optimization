@@ -42,11 +42,14 @@ def get_default_hwm_keras():
                                                      BatchNormalization])
 
         hwm.OperationsSetToLayers("Conv", [Conv2D,
-                                           DepthwiseConv2D])
+                                           DepthwiseConv2D,
+                                           tf.nn.conv2d,
+                                           tf.nn.depthwise_conv2d])
 
         hwm.OperationsSetToLayers("FullyConnected", [Dense])
 
-        hwm.OperationsSetToLayers("ConvTranspose", [Conv2DTranspose])
+        hwm.OperationsSetToLayers("ConvTranspose", [Conv2DTranspose,
+                                                    tf.nn.conv2d_transpose])
 
         hwm.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                               tf.nn.relu6,
