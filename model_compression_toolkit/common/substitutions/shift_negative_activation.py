@@ -19,6 +19,7 @@ from typing import List, Tuple, Any, Callable
 from model_compression_toolkit.common import FrameworkInfo, Graph, BaseNode
 from model_compression_toolkit.common.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher
+from model_compression_toolkit.common.hardware_representation import QuantizationMethod
 from model_compression_toolkit.common.quantization.set_node_quantization_config import create_node_activation_qc, \
     set_quantization_configs_to_node
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
@@ -283,7 +284,8 @@ def shift_negative_function(graph: Graph,
         # Set quantization configuration to node, even though we do not quantize it:
         set_quantization_configs_to_node(fw_info=fw_info,
                                          node=pad_node,
-                                         quant_config=qc)
+                                         quant_config=qc,
+                                         fw_hw_model=graph.fw_hw_model)
 
         pad_node.activation_quantization_cfg.enable_activation_quantization = False
         for weight_qc in pad_node.candidates_weights_quantization_cfg:
@@ -301,7 +303,9 @@ def shift_negative_function(graph: Graph,
 
     set_quantization_configs_to_node(fw_info=fw_info,
                                      node=add_node,
-                                     quant_config=qc)
+                                     quant_config=qc,
+                                     fw_hw_model=graph.fw_hw_model)
+
     add_node.activation_quantization_cfg.activation_n_bits = \
         non_linear_node.activation_quantization_cfg.activation_n_bits
     # The non-linear node's output should be float, so we approximate it by using 16bits quantization.
@@ -318,7 +322,8 @@ def shift_negative_function(graph: Graph,
         weight_qc.enable_weights_quantization = False
 
     add_node.activation_quantization_cfg = create_node_activation_qc(qc,
-                                                                     fw_info)
+                                                                     fw_info,
+                                                                     graph.fw_hw_model.get_default_op_qc())
 
     add_node.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
                                                                             SIGNED: False})
@@ -442,6 +447,11 @@ def apply_shift_negative_correction(graph: Graph,
     Returns:
         Graph after applying shift negative on selected activations.
     """
+    # Skip substitution if QuantizationMethod is uniform.
+    op_qc = graph.fw_hw_model.get_default_op_qc()
+    if op_qc.activation_quantization_method is QuantizationMethod.UNIFORM:
+        return graph
+
     nodes = list(graph.nodes())
     for n in nodes:
         if snc_node_types.apply(n):

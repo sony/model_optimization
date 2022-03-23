@@ -12,12 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
 from model_compression_toolkit.common.matchers.node_matcher import NodeAndMatcher
 from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
     get_weights_quantization_params_fn
-from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
+
 import model_compression_toolkit as mct
 import tensorflow as tf
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -29,6 +27,7 @@ from model_compression_toolkit.common.network_editors.actions import ChangeActiv
 
 keras = tf.keras
 layers = keras.layers
+hw_model = mct.hardware_representation
 
 
 def get_uniform_weights(kernel, in_channels, out_channels):
@@ -54,8 +53,7 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,16, 16,
                                       False, False, True)
 
     def get_network_editor(self):
@@ -126,8 +124,7 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,16, 16,
                                       False, False, True)
 
     def get_network_editor(self):
@@ -182,12 +179,12 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def params_fn(self):
-        return get_weights_quantization_params_fn(mct.QuantizationMethod.POWER_OF_TWO,
-                                                  mct.QuantizationErrorMethod.NOCLIPPING)
+        return get_weights_quantization_params_fn(
+            hw_model.QuantizationMethod.POWER_OF_TWO,
+            mct.QuantizationErrorMethod.NOCLIPPING)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,16, 16,
                                       False, False, False)
 
     def get_network_editor(self):
@@ -248,12 +245,14 @@ class FilterLogicTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def params_fn(self):
-        return get_weights_quantization_params_fn(cmo.QuantizationMethod.POWER_OF_TWO,
-                                                  cmo.QuantizationErrorMethod.NOCLIPPING)
+        return get_weights_quantization_params_fn(
+            model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.POWER_OF_TWO,
+            cmo.QuantizationErrorMethod.NOCLIPPING)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+                                      model_compression_toolkit.hardware_model.op_quantization_config
+                                      .QuantizationMethod.POWER_OF_TWO, model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.POWER_OF_TWO, 16, 16,
                                       False, False, False)
 
     def get_network_editor(self):

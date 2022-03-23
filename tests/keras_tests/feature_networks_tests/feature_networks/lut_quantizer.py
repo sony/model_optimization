@@ -27,7 +27,7 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 
 keras = tf.keras
 layers = keras.layers
-
+hw_model = cmo.hardware_representation
 
 def get_uniform_weights(kernel, in_channels, out_channels):
     return np.array([i - np.round((in_channels * kernel * kernel * out_channels) / 2) for i in
@@ -49,15 +49,30 @@ class LUTQuantizerTest(BaseKerasFeatureNetworkTest):
         self.conv_w = get_uniform_weights(self.kernel, self.num_conv_channels, self.num_conv_channels)
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
+
+    def get_fw_hw_model(self):
+        qco = hw_model.QuantizationConfigOptions([hw_model.OpQuantizationConfig(activation_quantization_method=hw_model.QuantizationMethod.POWER_OF_TWO,
+                                                                      weights_quantization_method=hw_model.QuantizationMethod.LUT_QUANTIZER,
+                                                                      activation_n_bits=8,
+                                                                      weights_n_bits=8,
+                                                                      weights_per_channel_threshold=True,
+                                                                      enable_weights_quantization=True,
+                                                                      enable_activation_quantization=True)])
+        return hw_model.FrameworkHardwareModel(hw_model.HardwareModel(qco))
+
     def get_quantization_config(self):
-        return cmo.QuantizationConfig(cmo.QuantizationErrorMethod.MSE, cmo.QuantizationErrorMethod.MSE,
-                                      cmo.QuantizationMethod.POWER_OF_TWO, cmo.QuantizationMethod.LUT_QUANTIZER, 4, 2,
-                                      False, False, True)
+        return cmo.QuantizationConfig(cmo.QuantizationErrorMethod.MSE,
+                                      cmo.QuantizationErrorMethod.MSE,
+                                      4,
+                                      2,
+                                      False,
+                                      False,
+                                      True)
 
     def get_network_editor(self):
         return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
                          action=ChangeCandidtaesWeightsQuantizationMethod(
-                             weights_quantization_method=cmo.QuantizationMethod.POWER_OF_TWO))]
+                             weights_quantization_method=cmo.hardware_representation.QuantizationMethod.POWER_OF_TWO))]
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, self.num_conv_channels]]

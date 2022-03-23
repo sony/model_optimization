@@ -16,8 +16,8 @@
 from collections import Callable
 
 from model_compression_toolkit.common.quantization import quantization_params_generation
-from model_compression_toolkit.common.quantization.quantization_config import QuantizationErrorMethod, \
-    QuantizationMethod
+from model_compression_toolkit.common.quantization.quantization_config import QuantizationErrorMethod
+from model_compression_toolkit.common.hardware_representation import QuantizationMethod
 from model_compression_toolkit.common.quantization.quantization_params_generation.kmeans_params import kmeans_tensor
 from model_compression_toolkit.common.quantization.quantization_params_generation.lut_kmeans_params import lut_kmeans_tensor
 from model_compression_toolkit.common.quantization.quantization_params_generation.symmetric_selection import \

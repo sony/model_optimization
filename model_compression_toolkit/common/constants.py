@@ -13,6 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 
+# Supported frameworks in MCT:
+TENSORFLOW = 'tensorflow'
+PYTORCH = 'pytorch'
 
 # Minimal threshold to use for quantization ranges:
 MIN_THRESHOLD = (2 ** -28)

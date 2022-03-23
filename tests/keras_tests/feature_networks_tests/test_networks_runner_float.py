@@ -19,11 +19,14 @@ import tensorflow as tf
 import unittest
 
 from model_compression_toolkit import DEFAULTCONFIG
+from model_compression_toolkit.common.constants import TENSORFLOW
 from model_compression_toolkit.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
+from model_compression_toolkit import get_model
 from model_compression_toolkit.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
+from model_compression_toolkit.keras.constants import DEFAULT_HWM
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.keras.reader.reader import model_reader
@@ -52,11 +55,14 @@ class NetworkTest(object):
     def run_network(self, inputs_list):
         fw_impl = KerasImplementation()
         fw_info = DEFAULT_KERAS_INFO
-        graph = model_reader(self.model_float)  # model reading
 
+        keras_default_hw_model = get_model(TENSORFLOW, DEFAULT_HWM)
+
+        graph = model_reader(self.model_float)  # model reading
+        graph.set_fw_info(DEFAULT_KERAS_INFO)
+        graph.set_fw_hw_model(keras_default_hw_model)
         graph = set_quantization_configuration_to_graph(graph,
-                                                        DEFAULTCONFIG,
-                                                        DEFAULT_KERAS_INFO)
+                                                        DEFAULTCONFIG)
         ptq_model, _ = model_builder(graph,
                                      mode=ModelBuilderMode.FLOAT)
         self.compare(inputs_list, ptq_model)
@@ -69,8 +75,7 @@ class NetworkTest(object):
         graph = substitute(graph,
                            fw_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         graph = set_quantization_configuration_to_graph(graph,
-                                                        DEFAULTCONFIG,
-                                                        DEFAULT_KERAS_INFO)
+                                                        DEFAULTCONFIG)
 
         ptq_model, _ = model_builder(graph,
                                      mode=ModelBuilderMode.FLOAT)

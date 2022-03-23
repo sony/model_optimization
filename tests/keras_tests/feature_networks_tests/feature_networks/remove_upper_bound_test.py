@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
-from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -31,7 +28,7 @@ class RemoveUpperBoundTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+                                      16, 16,
                                       False, False, False)
 
     def get_input_shapes(self):
