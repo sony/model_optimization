@@ -286,10 +286,6 @@ def keras_apply_shift_negative_correction(graph: Graph,
     """
     snc_node, linear_node, bypass_node, pad_node = shift_negative_activation_node_matchers()
 
-    for op_qc in graph.fw_hw_model.get_default_qc_options().quantization_config_list:
-        if op_qc.activation_quantization_method is QuantizationMethod.UNIFORM:
-            return graph
-
     return apply_shift_negative_correction(graph,
                                            quant_config,
                                            fw_info,

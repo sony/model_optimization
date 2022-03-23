@@ -22,12 +22,14 @@ from keras.applications.mobilenet_v2 import MobileNetV2
 from keras.layers import Conv2D, Conv2DTranspose, ReLU, Activation
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.common.constants import TENSORFLOW
 from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
 from model_compression_toolkit.common.hardware_representation.hardware2framework import LayerFilterParams
 from model_compression_toolkit.common.hardware_representation.hardware2framework.attribute_filter import Greater, \
     Smaller, GreaterEq, Eq, SmallerEq
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
+from model_compression_toolkit.keras.constants import DEFAULT_HWM, QNNPACK_HWM, TFLITE_HWM
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from tests.common_tests.test_hardware_model import TEST_QCO, TEST_QC
 
@@ -212,12 +214,12 @@ class TestKerasHWModel(unittest.TestCase):
 class TestGetKerasHardwareModelAPI(unittest.TestCase):
 
     def test_get_keras_hw_models(self):
-        keras_hw_models = ['default',
-                           'tflite',
-                           'qnnpack']
+        keras_hw_models = [DEFAULT_HWM,
+                           QNNPACK_HWM,
+                           TFLITE_HWM]
 
         for hw_name in keras_hw_models:
-            fw_hw_model = mct.get_model('tensorflow', hw_name)
+            fw_hw_model = mct.get_model(TENSORFLOW, hw_name)
             model = MobileNetV2()
 
             def rep_data():
@@ -239,5 +241,5 @@ class TestGetKerasHardwareModelAPI(unittest.TestCase):
 
     def test_get_keras_not_supported_model(self):
         with self.assertRaises(Exception) as e:
-            mct.get_model('tensorflow', 'should_not_support')
+            mct.get_model(TENSORFLOW, 'should_not_support')
         self.assertEqual('Hardware model named should_not_support is not supported for framework tensorflow', str(e.exception))

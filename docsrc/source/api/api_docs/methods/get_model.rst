@@ -8,3 +8,6 @@ Get Hardware Model
 =======================================
 
 .. autofunction:: model_compression_toolkit.get_model
+
+
+.. include:: ../notes/hwm_note.rst

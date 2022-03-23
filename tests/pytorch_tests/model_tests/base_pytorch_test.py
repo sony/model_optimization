@@ -16,6 +16,8 @@ import random
 from torch.fx import symbolic_trace
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, get_model
+from model_compression_toolkit.common.constants import PYTORCH
+from model_compression_toolkit.pytorch.constants import DEFAULT_HWM
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.utils import get_working_device, set_model, to_torch_tensor, \
     torch_tensor_to_numpy
@@ -115,7 +117,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                                                                                                       network_editor=self.get_network_editor(),
                                                                                                       gptq_config=self.get_gptq_config(),
                                                                                                       target_kpi=self.get_kpi(),
-                                                                                                      fw_hw_model=get_model('pytorch', 'default'))
+                                                                                                      fw_hw_model=get_model(PYTORCH, DEFAULT_HWM))
                 ptq_models.update({model_name: ptq_model})
             else:
                 ptq_model, quantization_info = mct.pytorch_post_training_quantization(model_float,
@@ -124,7 +126,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                                                                                       quant_config=quant_config,
                                                                                       fw_info=DEFAULT_PYTORCH_INFO,
                                                                                       network_editor=self.get_network_editor(),
-                                                                                      fw_hw_model=get_model('pytorch', 'default'))
+                                                                                      fw_hw_model=get_model(PYTORCH, DEFAULT_HWM))
                 ptq_models.update({model_name: ptq_model})
 
         self.compare(ptq_models, model_float, input_x=x, quantization_info=quantization_info)

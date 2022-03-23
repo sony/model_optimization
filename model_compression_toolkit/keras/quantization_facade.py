@@ -17,6 +17,7 @@ from typing import Callable, List
 
 from model_compression_toolkit import common
 from model_compression_toolkit.common import Logger
+from model_compression_toolkit.common.constants import TENSORFLOW
 from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.framework_info import FrameworkInfo
@@ -31,6 +32,7 @@ import importlib
 
 from model_compression_toolkit.common.hardware_representation.hardware2framework import FrameworkHardwareModel
 
+
 if importlib.util.find_spec("tensorflow") is not None\
         and importlib.util.find_spec("tensorflow_model_optimization") is not None:
     import tensorflow as tf
@@ -40,9 +42,10 @@ if importlib.util.find_spec("tensorflow") is not None\
     from tensorflow.keras.models import Model
     from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
     from keras.optimizer_v2.optimizer_v2 import OptimizerV2
+    from model_compression_toolkit.keras.constants import DEFAULT_HWM
 
     from model_compression_toolkit import get_model
-    KERAS_DEFAULT_MODEL = get_model('tensorflow', 'default')
+    KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_HWM)
 
     def get_keras_gptq_config(n_iter: int,
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(),

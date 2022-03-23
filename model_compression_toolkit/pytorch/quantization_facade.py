@@ -16,6 +16,7 @@ from typing import Callable, List
 
 from model_compression_toolkit import common
 from model_compression_toolkit.common import Logger
+from model_compression_toolkit.common.constants import PYTORCH
 from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
 from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
@@ -32,10 +33,11 @@ import importlib
 if importlib.util.find_spec("torch") is not None:
     from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
+    from model_compression_toolkit.pytorch.constants import DEFAULT_HWM
     from torch.nn import Module
 
     from model_compression_toolkit import get_model
-    PYTORCH_DEFAULT_MODEL = get_model('pytorch', 'default')
+    PYTORCH_DEFAULT_MODEL = get_model(PYTORCH, DEFAULT_HWM)
 
     def pytorch_post_training_quantization(in_module: Module,
                                            representative_data_gen: Callable,

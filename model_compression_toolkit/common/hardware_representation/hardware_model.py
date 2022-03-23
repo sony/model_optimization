@@ -47,10 +47,8 @@ def get_default_quantization_config():
     This OpQuantizationConfig is the single option in the default QuantizationConfigOptions.
 
     """
-    assert len(get_current_model().default_qco.quantization_config_list) == 1, \
-        f'Default quantization configuration options must contain only one option,' \
-        f' but found {len(get_current_model().default_qco.quantization_config_list)} configurations.'
-    return get_current_model().default_qco.quantization_config_list[0]
+
+    return get_current_model().get_default_op_quantization_config()
 
 
 class HardwareModel(ImmutableClass):
@@ -95,6 +93,17 @@ class HardwareModel(ImmutableClass):
             if operators_set_name == op_set.name:
                 return op_set.qc_options
         return get_default_quantization_config_options()
+
+    def get_default_op_quantization_config(self) -> OpQuantizationConfig:
+        """
+
+        Returns: The default OpQuantizationConfig of the hardware model.
+
+        """
+        assert len(self.default_qco.quantization_config_list) == 1, \
+            f'Default quantization configuration options must contain only one option,' \
+            f' but found {len(get_current_model().default_qco.quantization_config_list)} configurations.'
+        return self.default_qco.quantization_config_list[0]
 
     def is_opset_in_model(self,
                           opset_name: str) -> bool:

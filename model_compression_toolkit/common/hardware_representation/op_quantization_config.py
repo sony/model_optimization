@@ -197,24 +197,3 @@ class QuantizationConfigOptions(object):
     def get_info(self):
         return {f'option {i}': cfg.get_info() for i, cfg in enumerate(self.quantization_config_list)}
 
-
-class QuantizationMethod(Enum):
-    """
-    Method for quantization function selection:
-
-    POWER_OF_TWO - Symmetric, uniform, threshold is power of two quantization.
-
-    KMEANS - k-means quantization.
-
-    LUT_QUANTIZER - quantization using a look up table.
-
-    SYMMETRIC - Symmetric, uniform, quantization.
-
-    UNIFORM - uniform quantization,
-
-    """
-    POWER_OF_TWO = 0
-    KMEANS = 1
-    LUT_QUANTIZER = 2
-    SYMMETRIC = 3
-    UNIFORM = 4

@@ -23,12 +23,14 @@ from torch.nn.functional import hardtanh
 from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.common.constants import PYTORCH
 from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
 from model_compression_toolkit.common.hardware_representation.hardware2framework import LayerFilterParams
 from model_compression_toolkit.common.hardware_representation.hardware2framework.attribute_filter import Greater, \
     Smaller, Eq
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
+from model_compression_toolkit.pytorch.constants import DEFAULT_HWM, TFLITE_HWM, QNNPACK_HWM
 from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
 from tests.common_tests.test_hardware_model import TEST_QC, TEST_QCO
 from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import LayerTestModel
@@ -215,12 +217,12 @@ class TestPytorchHWModel(unittest.TestCase):
 class TestGetPytorchHardwareModelAPI(unittest.TestCase):
 
     def test_get_pytorch_models(self):
-        pytorch_hw_models = ['default',
-                             'qnnpack'
-                             'tflite']
+        pytorch_hw_models = [DEFAULT_HWM,
+                             QNNPACK_HWM,
+                             TFLITE_HWM]
 
         for hw_name in pytorch_hw_models:
-            fw_hw_model = mct.get_model('pytorch', hw_name)
+            fw_hw_model = mct.get_model(PYTORCH, hw_name)
             model = mobilenet_v2(pretrained=True)
 
             def rep_data():
@@ -241,7 +243,7 @@ class TestGetPytorchHardwareModelAPI(unittest.TestCase):
 
     def test_get_pytorch_not_supported_model(self):
         with self.assertRaises(Exception) as e:
-            mct.get_model('pytorch', 'should_not_support')
+            mct.get_model(PYTORCH, 'should_not_support')
         self.assertEqual('Hardware model named should_not_support is not supported for framework pytorch',
                          str(e.exception))
 

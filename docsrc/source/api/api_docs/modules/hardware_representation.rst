@@ -18,6 +18,11 @@ This can be addressed in MCT by using the hardware_representation module, that c
 parameters that are hardware-related, and the optimization process will use this to optimize the model accordingly.
 Models for TFLite and qnnpack can be observed `here <https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/hardware_models>`_, and can be used using :ref:`get_model function<ug-get_model>`.
 
+|
+
+.. include:: ../notes/hwm_note.rst
+
+|
 
 The first part is configuring the quantization method for both wights and activations of an operator.
 Several methods can be used using QuantizationMethod API:
@@ -32,14 +37,6 @@ Select a method to use during quantization:
 
 |
 
-
-.. note::
-   For now, the **only** information from :class:`~model_compression_toolkit.hardware_representation.HardwareModel`
-   that MCT uses are the values of :class:`~model_compression_toolkit.hardware_representation.QuantizationMethod`
-   (for weights and activations) from the default :class:`~model_compression_toolkit.hardware_representation.QuantizationConfigOptions` that is
-   set to the :class:`~model_compression_toolkit.hardware_representation.HardwareModel`.
-
-   - MCT will use more information from :class:`~model_compression_toolkit.hardware_representation.HardwareModel` gradually, in the future.
 
 Using a quantization method (or methods, if the weights and activations of an operator are quantized differently)
 Quantization configuration of different operators can be created using OpQuantizationConfig:

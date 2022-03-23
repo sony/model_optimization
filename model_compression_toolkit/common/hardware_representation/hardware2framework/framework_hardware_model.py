@@ -25,7 +25,8 @@ from model_compression_toolkit.common.hardware_representation.hardware2framework
 from model_compression_toolkit.common.hardware_representation.hardware2framework.layer_filter_params import LayerFilterParams
 from model_compression_toolkit.common.immutable import ImmutableClass
 from model_compression_toolkit.common.graph.base_node import BaseNode
-from model_compression_toolkit.common.hardware_representation.op_quantization_config import QuantizationConfigOptions
+from model_compression_toolkit.common.hardware_representation.op_quantization_config import QuantizationConfigOptions, \
+    OpQuantizationConfig
 from model_compression_toolkit.common.hardware_representation.operators import OperatorsSet, OperatorsSetBase
 from model_compression_toolkit.common.hardware_representation.hardware_model import HardwareModel
 from model_compression_toolkit.common.hardware_representation.hardware2framework.current_framework_hardware_model import _current_framework_hardware_model
@@ -148,14 +149,14 @@ class FrameworkHardwareModel(ImmutableClass):
         self.initialized_done()
         return self
 
-    def get_default_qc_options(self) -> QuantizationConfigOptions:
+    def get_default_op_qc(self) -> OpQuantizationConfig:
         """
 
-        Returns: The default QCOptions of the HardwareModel that is attached
-        to the FrameworkHardwareModel
+        Returns: The default OpQuantizationConfig of the HardwareModel that is attached
+        to the FrameworkHardwareModel.
 
         """
-        return self.hw_model.default_qco
+        return self.hw_model.get_default_op_quantization_config()
 
     def get_qco_by_node(self,
                         node: BaseNode) -> QuantizationConfigOptions:

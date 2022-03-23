@@ -12,11 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
+
 import numpy as np
 import unittest
 from functools import partial
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
+from model_compression_toolkit.common.constants import TENSORFLOW
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
@@ -31,10 +34,10 @@ from model_compression_toolkit.common.quantization.set_node_quantization_config 
     set_quantization_configuration_to_graph
 from model_compression_toolkit.common.model_collector import ModelCollector
 from model_compression_toolkit import get_model
+from model_compression_toolkit.keras.constants import DEFAULT_HWM
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 
-KERAS_DEFAULT_MODEL = get_model('tensorflow', 'default')
 
 class TestLpSearchBitwidth(unittest.TestCase):
 
@@ -71,9 +74,8 @@ class TestLpSearchBitwidth(unittest.TestCase):
 class TestSearchBitwidthConfiguration(unittest.TestCase):
 
     def test_search_engine(self):
-        # qc = DEFAULT_MIXEDPRECISION_CONFIG
-        import copy
         qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
+        KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_HWM)
         qc.num_of_images=1
         qc.weights_n_bits = [8]
         fw_info = DEFAULT_KERAS_INFO

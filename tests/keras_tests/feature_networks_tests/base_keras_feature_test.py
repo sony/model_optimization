@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
+from model_compression_toolkit.common.constants import TENSORFLOW
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.keras.constants import DEFAULT_HWM
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit import keras_post_training_quantization, \
     keras_post_training_quantization_mixed_precision, FrameworkInfo
@@ -38,7 +38,7 @@ class BaseKerasFeatureNetworkTest(BaseFeatureNetworkTest):
                          input_shape=input_shape)
 
     def get_fw_hw_model(self):
-        return get_model('tensorflow', 'default')
+        return get_model(TENSORFLOW, DEFAULT_HWM)
 
     def get_ptq_facade(self):
         return keras_post_training_quantization
