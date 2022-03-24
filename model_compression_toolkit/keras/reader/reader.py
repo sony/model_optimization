@@ -114,7 +114,7 @@ def build_graph(model: Model,
     outputs = connectivity_handler.build_outputs_list([t.ref() for t in model.outputs])
     edges = get_edges(connectivity_handler)
     nodes = connectivity_handler.get_nodes()
-    return Graph(nodes, inputs, outputs, edges)
+    return Graph(model.name, nodes, inputs, outputs, edges)
 
 
 def parse_model(model: Model) -> Graph:

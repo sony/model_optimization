@@ -66,7 +66,7 @@ def build_graph(model: torch.fx.GraphModule,
     # build graph edges
     edges = edges_builder(model, fx_node_2_graph_node)
 
-    return Graph(nodes, inputs, outputs, edges)
+    return Graph(model._get_name(), nodes, inputs, outputs, edges)
 
 
 def fx_graph_module_generation(pytorch_model: torch.nn.Module,

@@ -29,6 +29,15 @@ The graphs representing the model can be seen under the Graphs tab:
 
 |
 
+Clicking on the Main Graph blocks will open a deeper view of the graph:
+
+.. image:: ../../images/tbwriter/tbwriter_graphs2.png
+  :scale: 40%
+
+.. image:: ../../images/tbwriter/tbwriter_graphs3.png
+  :scale: 40%
+
+|
 
 To observe the model at different stages of the quantization process, change the 'Run':
 
