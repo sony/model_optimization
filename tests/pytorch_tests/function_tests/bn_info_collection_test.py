@@ -179,7 +179,7 @@ class BNInfoCollectionTest(BasePytorchTest):
         gamma = bn_layer.weight
         beta = bn_layer.bias
 
-        self.unit_test.assertTrue((gamma.cpu().data.numpy() == prior_std).all())
+        self.unit_test.assertTrue((abs(gamma.cpu().data.numpy()) == prior_std).all())
         self.unit_test.assertTrue((beta.cpu().data.numpy() == prior_mean).all())
 
 
@@ -246,13 +246,13 @@ class Conv2D2BNInfoCollectionTest(BasePytorchTest):
         gamma = bn_layer.weight
         beta = bn_layer.bias
         self.unit_test.assertTrue((beta.cpu().data.numpy() == bn_mean).all())
-        self.unit_test.assertTrue((gamma.cpu().data.numpy() == bn_std).all())
+        self.unit_test.assertTrue((abs(gamma.cpu().data.numpy()) == bn_std).all())
 
         bn2_layer = model_float.bn2
         gamma2 = bn2_layer.weight
         beta2 = bn2_layer.bias
         self.unit_test.assertTrue((beta2.cpu().data.numpy() == bn2_mean).all())
-        self.unit_test.assertTrue((gamma2.cpu().data.numpy() == bn2_std).all())
+        self.unit_test.assertTrue((abs(gamma2.cpu().data.numpy()) == bn2_std).all())
 
 
 class Conv2DBNChainInfoCollectionTest(BasePytorchTest):
@@ -306,13 +306,13 @@ class Conv2DBNChainInfoCollectionTest(BasePytorchTest):
         gamma = bn_layer.weight
         beta = bn_layer.bias
         self.unit_test.assertTrue((beta.cpu().data.numpy() == prior_mean).all())
-        self.unit_test.assertTrue((gamma.cpu().data.numpy() == prior_std).all())
+        self.unit_test.assertTrue((abs(gamma.cpu().data.numpy()) == prior_std).all())
 
         bn2_layer = model_float.bn2
         gamma2 = bn2_layer.weight
         beta2 = bn2_layer.bias
         self.unit_test.assertTrue((beta2.cpu().data.numpy() == bn2_mean).all())
-        self.unit_test.assertTrue((gamma2.cpu().data.numpy() == bn2_std).all())
+        self.unit_test.assertTrue((abs(gamma2.cpu().data.numpy()) == bn2_std).all())
 
 
 class BNChainInfoCollectionTest(BasePytorchTest):
@@ -375,17 +375,16 @@ class BNChainInfoCollectionTest(BasePytorchTest):
         self.unit_test.assertTrue((mm.cpu().data.numpy() == prior_mean).all())
         self.unit_test.assertTrue((m_std == prior_std).all())
 
-
         gamma = bn_layer.weight
         beta = bn_layer.bias
         self.unit_test.assertTrue((beta.cpu().data.numpy() == bn_mean).all())
-        self.unit_test.assertTrue((gamma.cpu().data.numpy() == bn_std).all())
+        self.unit_test.assertTrue((abs(gamma.cpu().data.numpy()) == bn_std).all())
 
         bn2_layer = model_float.bn2
         gamma2 = bn2_layer.weight
         beta2 = bn2_layer.bias
         self.unit_test.assertTrue((beta2.cpu().data.numpy() == bn2_mean).all())
-        self.unit_test.assertTrue((gamma2.cpu().data.numpy() == bn2_std).all())
+        self.unit_test.assertTrue((abs(gamma2.cpu().data.numpy()) == bn2_std).all())
 
 
 class BNLayerInfoCollectionTest(BasePytorchTest):
@@ -469,7 +468,7 @@ class BNLayerInfoCollectionTest(BasePytorchTest):
         gamma = bn_layer.weight
         beta = bn_layer.bias
         self.unit_test.assertTrue((beta.cpu().data.numpy() == bn_mean).all())
-        self.unit_test.assertTrue((gamma.cpu().data.numpy() == bn_std).all())
+        self.unit_test.assertTrue((abs(gamma.cpu().data.numpy()) == bn_std).all())
 
         bn2_layer = model_float.bn2
         mm2 = bn2_layer.running_mean
@@ -481,7 +480,7 @@ class BNLayerInfoCollectionTest(BasePytorchTest):
         gamma2 = bn2_layer.weight
         beta2 = bn2_layer.bias
         self.unit_test.assertTrue((beta2.cpu().data.numpy() == bn2_mean).all())
-        self.unit_test.assertTrue((gamma2.cpu().data.numpy() == bn2_std).all())
+        self.unit_test.assertTrue((abs(gamma2.cpu().data.numpy()) == bn2_std).all())
 
         bn3_layer = model_float.bn3
         mm3 = bn3_layer.running_mean
@@ -493,7 +492,7 @@ class BNLayerInfoCollectionTest(BasePytorchTest):
         gamma3 = bn3_layer.weight
         beta3 = bn3_layer.bias
         self.unit_test.assertTrue((beta3.cpu().data.numpy() == bn3_mean).all())
-        self.unit_test.assertTrue((gamma3.cpu().data.numpy() == bn3_std).all())
+        self.unit_test.assertTrue((abs(gamma3.cpu().data.numpy()) == bn3_std).all())
 
 
 class INP2BNInfoCollectionTest(BasePytorchTest):
@@ -559,10 +558,10 @@ class INP2BNInfoCollectionTest(BasePytorchTest):
         gamma = bn_layer.weight
         beta = bn_layer.bias
         self.unit_test.assertTrue((beta.cpu().data.numpy() == bn_mean).all())
-        self.unit_test.assertTrue((gamma.cpu().data.numpy() == bn_std).all())
+        self.unit_test.assertTrue((abs(gamma.cpu().data.numpy()) == bn_std).all())
 
         bn2_layer = model_float.bn2
         gamma2 = bn2_layer.weight
         beta2 = bn2_layer.bias
         self.unit_test.assertTrue((beta2.cpu().data.numpy() == bn2_mean).all())
-        self.unit_test.assertTrue((gamma2.cpu().data.numpy() == bn2_std).all())
+        self.unit_test.assertTrue((abs(gamma2.cpu().data.numpy()) == bn2_std).all())

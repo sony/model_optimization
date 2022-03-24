@@ -83,10 +83,11 @@ def _get_mean_std_outputs(node: BaseNode,
     mean_output, std_output = None, None
 
     if node.type == BatchNormalization:
-        std_output = node.get_weights_by_keys(GAMMA)
         mean_output = node.get_weights_by_keys(BETA)
-        if std_output is None:
+        if node.get_weights_by_keys(GAMMA) is None:
             std_output = 1.0
+        else:
+            std_output = np.abs(node.get_weights_by_keys(GAMMA))
         if mean_output is None:
             mean_output = 0.0
     else:
