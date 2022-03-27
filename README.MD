@@ -72,7 +72,7 @@ Quantization:
 	* Post Training Quantization for Keras models.
 	* Post Training Quantization for Pytorch models (experimental).
     * Gradient based post training (Experimental, Keras only).
-    * Mixed-precision post training quantization (Experimental, Keras only).
+    * Mixed-precision post training quantization (Experimental).
     
 Tensorboard Visualization (Experimental):
 
