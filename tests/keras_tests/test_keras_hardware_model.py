@@ -18,8 +18,13 @@ from functools import partial
 
 import numpy as np
 import tensorflow as tf
-from keras.applications.mobilenet_v2 import MobileNetV2
-from keras.layers import Conv2D, Conv2DTranspose, ReLU, Activation
+
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+if tf.__version__ < "2.6":
+    from tensorflow.keras.layers import Conv2D, Conv2DTranspose, ReLU, Activation, Input
+else:
+    from keras.layers import Conv2D, Conv2DTranspose, ReLU, Activation
+    from keras import Input
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.common.constants import TENSORFLOW
@@ -34,14 +39,11 @@ from model_compression_toolkit.keras.keras_implementation import KerasImplementa
 from tests.common_tests.test_hardware_model import TEST_QCO, TEST_QC
 
 hwm = mct.hardware_representation
-keras = tf.keras
-layers = keras.layers
-
 
 def get_node(layer):
-    i = layers.Input(shape=(3, 16, 16))
+    i = Input(shape=(3, 16, 16))
     x = layer(i)
-    model = keras.Model(i, x)
+    model = tf.keras.Model(i, x)
     graph = KerasImplementation().model_reader(model, None)
     return graph.get_topo_sorted_nodes()[1]
 
