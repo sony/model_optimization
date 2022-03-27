@@ -16,6 +16,7 @@
 
 from typing import Callable
 
+from model_compression_toolkit.common.hardware_representation import OpQuantizationConfig
 from model_compression_toolkit.common.quantization.node_quantization_config import BaseNodeNodeQuantizationConfig, \
     NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
@@ -33,6 +34,7 @@ class CandidateNodeQuantizationConfig(BaseNodeNodeQuantizationConfig):
     """
     def __init__(self,
                  qc: QuantizationConfig,
+                 op_cfg: OpQuantizationConfig,
                  activation_quantization_fn: Callable,
                  activation_quantization_params_fn: Callable,
                  weights_quantization_fn: Callable,
@@ -43,6 +45,7 @@ class CandidateNodeQuantizationConfig(BaseNodeNodeQuantizationConfig):
 
         Args:
             qc: QuantizationConfig to create the node's config from.
+            op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
             activation_quantization_fn: Function to use when quantizing the node's activations.
             activation_quantization_params_fn: Function to use when computing the threshold for quantizing a node's activations.
             weights_quantization_fn: Function to use when quantizing the node's weights.
@@ -51,10 +54,12 @@ class CandidateNodeQuantizationConfig(BaseNodeNodeQuantizationConfig):
         """
 
         self.activation_quantization_cfg = NodeActivationQuantizationConfig(qc,
+                                                                            op_cfg,
                                                                             activation_quantization_fn,
                                                                             activation_quantization_params_fn)
 
         self.weights_quantization_cfg = NodeWeightsQuantizationConfig(qc,
+                                                                      op_cfg,
                                                                       weights_quantization_fn,
                                                                       weights_quantization_params_fn,
                                                                       weights_channels_axis)

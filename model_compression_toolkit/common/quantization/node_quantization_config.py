@@ -71,6 +71,7 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
 
         Args:
             qc: QuantizationConfig to create the node's config from.
+            op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
             activation_quantization_fn: Function to use when quantizing the node's activations.
             activation_quantization_params_fn: Function to use when computing the threshold for quantizing a node's activations.
         """
@@ -176,7 +177,6 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
                self.activation_error_method == other.activation_error_method and \
                self.activation_quantization_method == other.activation_quantization_method and \
                self.activation_n_bits == other.activation_n_bits and \
-               self.relu_unbound_correction == other.relu_unbound_correction and \
                self.enable_activation_quantization == other.enable_activation_quantization and \
                self.activation_channel_equalization == other.activation_channel_equalization and \
                self.input_scaling == other.input_scaling and \
@@ -202,6 +202,7 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
 
         Args:
             qc: QuantizationConfig to create the node's config from.
+            op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
             weights_quantization_fn: Function to use when quantizing the node's weights.
             weights_quantization_params_fn:  Function to use when computing the threshold for quantizing a node's weights.
             weights_channels_axis: Axis to quantize a node's kernel when quantizing per-channel.

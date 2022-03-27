@@ -29,8 +29,7 @@ from model_compression_toolkit.common.quantization.quantization_config import Qu
 from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
 from model_compression_toolkit.common.hardware_representation.hardware2framework import FrameworkHardwareModel
-from model_compression_toolkit.common.hardware_representation.op_quantization_config import QuantizationConfigOptions, \
-    OpQuantizationConfig
+from model_compression_toolkit.common.hardware_representation.op_quantization_config import OpQuantizationConfig
 
 
 def set_quantization_configuration_to_graph(graph: Graph,
@@ -144,11 +143,11 @@ def create_node_qc_candidate(qc: QuantizationConfig,
                                                                         qc.weights_error_method)
 
     # get attributes for activation quantization
-    activation_quantization_fn = fw_info.activation_quantizer_mapping.get(qc.activation_quantization_method)
+    activation_quantization_fn = fw_info.activation_quantizer_mapping.get(op_cfg.activation_quantization_method)
     if activation_quantization_fn is None:
         Logger.critical('Unknown quantization method for activations')
 
-    activation_quantization_params_fn = get_activation_quantization_params_fn(qc.activation_quantization_method,
+    activation_quantization_params_fn = get_activation_quantization_params_fn(op_cfg.activation_quantization_method,
                                                                               qc.activation_error_method)
 
     return CandidateNodeQuantizationConfig(qc,
