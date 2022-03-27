@@ -84,7 +84,10 @@ if __name__ == '__main__':
     # layers representation.
     hardware_model = mct.get_model('tensorflow', 'default')
 
+
     quantized_model, quantization_info = mct.keras_post_training_quantization(model,
                                                                               representative_data_gen,
                                                                               fw_hw_model=hardware_model,
                                                                               n_iter=10)
+
+
