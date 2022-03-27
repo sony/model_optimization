@@ -14,9 +14,13 @@
 # ==============================================================================
 
 import tensorflow as tf
-from keras.layers import Conv2D, Dense, Reshape, Flatten, Cropping2D, ZeroPadding2D, \
-    Dropout, MaxPooling2D, ReLU, Activation, Add, PReLU, BatchNormalization, Conv2DTranspose, DepthwiseConv2D
 
+if tf.__version__ < "2.6":
+    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
+        MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, BatchNormalization
+else:
+    from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
+    Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, BatchNormalization
 
 from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
 
