@@ -33,9 +33,17 @@ Initialize data loader:
 
 |
 
+Get a FrameworkHardwareModel:
+
+.. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
+    :language: python
+    :lines: 80-86
+
+|
+
 Run Post Training Quantization:
 
 .. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
-    :lines: 77-82
+    :lines: 87-92
 

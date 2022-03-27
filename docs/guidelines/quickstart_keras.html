@@ -116,13 +116,26 @@
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<p>Run Post Training Quantization:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
-    <span class="c1"># Set the number of calibration iterations to 10.</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="n">MobileNet</span><span class="p">()</span>
-
+<p>Get a FrameworkHardwareModel:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
     <span class="c1"># Get a HardwareModel object that models the hardware for the quantized model inference.</span>
     <span class="c1"># The model determines the quantization methods to use during the MCT optimization process.</span>
+    <span class="c1"># Here, for example, we use the default model that is attached to a Tensorflow</span>
+    <span class="c1"># layers representation.</span>
+    <span class="n">hardware_model</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s1">&#39;tensorflow&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">)</span>
+
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Run Post Training Quantization:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+    <span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">keras_post_training_quantization</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
+                                                                              <span class="n">representative_data_gen</span><span class="p">,</span>
+                                                                              <span class="n">fw_hw_model</span><span class="o">=</span><span class="n">hardware_model</span><span class="p">,</span>
+                                                                              <span class="n">n_iter</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
 </pre></div>
 </div>
 </section>
