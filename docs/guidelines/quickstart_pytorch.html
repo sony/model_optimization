@@ -115,17 +115,17 @@
 <div class="line"><br /></div>
 </div>
 <p>Run Post Training Quantization:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Get a HardwareModel object that models the hardware for the quantized model inference.</span>
+    <span class="c1"># The model determines the quantization methods to use during the MCT optimization process.</span>
+    <span class="c1"># Here, for example, we use the default model that is attached to a Pytorch</span>
+    <span class="c1"># layers representation.</span>
+    <span class="n">hardware_model</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s1">&#39;pytorch&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
     <span class="c1"># Set the number of calibration iterations to 20.</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">mobilenet_v2</span><span class="p">(</span><span class="n">pretrained</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># set quantization configuration</span>
     <span class="n">quantization_config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">DEFAULTCONFIG</span>
-    <span class="c1"># Configure z threshold algorithm for outlier removal. Set z threshold to 16.</span>
-    <span class="n">quantization_config</span><span class="o">.</span><span class="n">z_threshold</span> <span class="o">=</span> <span class="mi">16</span>
-    <span class="c1"># run post training quantization on the model to get the quantized model output</span>
-    <span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">pytorch_post_training_quantization</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
-                                                                                <span class="n">representative_data_gen</span><span class="p">,</span>
-                                                                                <span class="n">n_iter</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>

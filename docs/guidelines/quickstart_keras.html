@@ -102,7 +102,6 @@
                                           <span class="n">preprocessing</span><span class="o">=</span><span class="p">[</span><span class="n">resize</span><span class="p">,</span> <span class="n">normalization</span><span class="p">],</span>
                                           <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
 
-
     <span class="c1"># Create a Callable representative dataset for calibration purposes.</span>
     <span class="c1"># The function should be called without any arguments, and should return a list numpy arrays (array for each</span>
     <span class="c1"># model&#39;s input).</span>
@@ -111,18 +110,19 @@
     <span class="c1"># Calling representative_data_gen() should return a list</span>
     <span class="c1"># of two numpy.ndarray objects where the arrays&#39; shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].</span>
     <span class="k">def</span> <span class="nf">representative_data_gen</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">image_data_loader</span><span class="o">.</span><span class="n">sample</span><span class="p">()]</span>
 </pre></div>
 </div>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
 <p>Run Post Training Quantization:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-    <span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
     <span class="c1"># Set the number of calibration iterations to 10.</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">MobileNet</span><span class="p">()</span>
-    <span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">keras_post_training_quantization</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
-                                                                              <span class="n">representative_data_gen</span><span class="p">,</span>
+
+    <span class="c1"># Get a HardwareModel object that models the hardware for the quantized model inference.</span>
+    <span class="c1"># The model determines the quantization methods to use during the MCT optimization process.</span>
 </pre></div>
 </div>
 </section>

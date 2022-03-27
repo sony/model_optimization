@@ -1,0 +1,670 @@
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>hardware_representation Module &#8212; MCT Documentation: ver 1.2.0</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">hardware_representation Module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="hardware-representation-module">
+<span id="ug-hardware-representation"></span><h1>hardware_representation Module<a class="headerlink" href="#hardware-representation-module" title="Permalink to this headline">¶</a></h1>
+<p>MCT can be configured to quantize and optimize models for different hardware settings.
+For example, when using qnnpack backend for Pytorch model inference, Pytorch <a class="reference external" href="https://github.com/pytorch/pytorch/blob/master/torch/ao/quantization/qconfig.py#L199">quantization
+configuration</a>
+uses <a class="reference external" href="https://github.com/pytorch/pytorch/blob/master/torch/ao/quantization/observer.py#L1429">per-tensor weights quantization</a>
+for Conv2d, while when using tflite modeling, Tensorflow uses <a class="reference external" href="https://www.tensorflow.org/lite/performance/quantization_spec#per-axis_vs_per-tensor">per-channel weights quantization for
+Conv2D</a>.</p>
+<p>This can be addressed in MCT by using the hardware_representation module, that can configure different
+parameters that are hardware-related, and the optimization process will use this to optimize the model accordingly.
+Models for TFLite and qnnpack can be observed <a class="reference external" href="https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/hardware_models">here</a>, and can be used using <a class="reference internal" href="../methods/get_model.html#ug-get-model"><span class="std std-ref">get_model function</span></a>.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For now, the <strong>only</strong> information from <a class="reference internal" href="#model_compression_toolkit.hardware_representation.HardwareModel" title="model_compression_toolkit.hardware_representation.HardwareModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">HardwareModel</span></code></a>
+that MCT uses are the values of <a class="reference internal" href="#model_compression_toolkit.hardware_representation.QuantizationMethod" title="model_compression_toolkit.hardware_representation.QuantizationMethod"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuantizationMethod</span></code></a>
+(for weights and activations) from the default <a class="reference internal" href="#model_compression_toolkit.hardware_representation.QuantizationConfigOptions" title="model_compression_toolkit.hardware_representation.QuantizationConfigOptions"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuantizationConfigOptions</span></code></a> that is
+set to the <a class="reference internal" href="#model_compression_toolkit.hardware_representation.HardwareModel" title="model_compression_toolkit.hardware_representation.HardwareModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">HardwareModel</span></code></a>.</p>
+<ul class="simple">
+<li><p>MCT will use more information from <a class="reference internal" href="#model_compression_toolkit.hardware_representation.HardwareModel" title="model_compression_toolkit.hardware_representation.HardwareModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">HardwareModel</span></code></a> gradually, in the future.</p></li>
+</ul>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The first part is configuring the quantization method for both wights and activations of an operator.
+Several methods can be used using QuantizationMethod API:</p>
+<section id="quantizationmethod">
+<h2>QuantizationMethod<a class="headerlink" href="#quantizationmethod" title="Permalink to this headline">¶</a></h2>
+<p>Select a method to use during quantization:</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.hardware_representation.QuantizationMethod">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.hardware_representation.</span></span><span class="sig-name descname"><span class="pre">QuantizationMethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.hardware_representation.QuantizationMethod" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method for quantization function selection:</p>
+<p>POWER_OF_TWO - Symmetric, uniform, threshold is power of two quantization.</p>
+<p>KMEANS - k-means quantization.</p>
+<p>LUT_QUANTIZER - quantization using a look up table.</p>
+<p>SYMMETRIC - Symmetric, uniform, quantization.</p>
+<p>UNIFORM - uniform quantization,</p>
+</dd></dl>
+
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Using a quantization method (or methods, if the weights and activations of an operator are quantized differently)
+Quantization configuration of different operators can be created using OpQuantizationConfig:</p>
+</section>
+<section id="opquantizationconfig">
+<h2>OpQuantizationConfig<a class="headerlink" href="#opquantizationconfig" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.hardware_representation.OpQuantizationConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.hardware_representation.</span></span><span class="sig-name descname"><span class="pre">OpQuantizationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">activation_quantization_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_quantization_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_per_channel_threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_weights_quantization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_activation_quantization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantization_preserving</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_zero_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_multiplier_nbits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.hardware_representation.OpQuantizationConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>OpQuantizationConfig is a class to configure the quantization parameters of an operator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>activation_quantization_method</strong> (<a class="reference internal" href="#model_compression_toolkit.hardware_representation.QuantizationMethod" title="model_compression_toolkit.hardware_representation.QuantizationMethod"><em>QuantizationMethod</em></a>) – Which method to use from QuantizationMethod for activation quantization.</p></li>
+<li><p><strong>weights_quantization_method</strong> (<a class="reference internal" href="#model_compression_toolkit.hardware_representation.QuantizationMethod" title="model_compression_toolkit.hardware_representation.QuantizationMethod"><em>QuantizationMethod</em></a>) – Which method to use from QuantizationMethod for weights quantization.</p></li>
+<li><p><strong>activation_n_bits</strong> (<em>int</em>) – Number of bits to quantize the activations.</p></li>
+<li><p><strong>weights_n_bits</strong> (<em>int</em>) – Number of bits to quantize the coefficients.</p></li>
+<li><p><strong>weights_per_channel_threshold</strong> (<em>bool</em>) – Whether to quantize the weights per-channel or not (per-tensor).</p></li>
+<li><p><strong>enable_weights_quantization</strong> (<em>bool</em>) – Whether to quantize the model weights or not.</p></li>
+<li><p><strong>enable_activation_quantization</strong> (<em>bool</em>) – Whether to quantize the model activations or not.</p></li>
+<li><p><strong>quantization_preserving</strong> (<em>bool</em>) – Whether quantization parameters should be the same for an operator’s input and output.</p></li>
+<li><p><strong>fixed_scale</strong> (<em>float</em>) – Scale to use for an operator quantization parameters.</p></li>
+<li><p><strong>fixed_zero_point</strong> (<em>int</em>) – Zero-point to use for an operator quantization parameters.</p></li>
+<li><p><strong>weights_multiplier_nbits</strong> (<em>int</em>) – Number of bits to use when quantizing in look-up-table.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>If, for example, we would like to quantize an operator’s weights with 8 bits (and per-channel), its activations
+with 8 bits, and the quantization thresholds (for both weights and activations) must be power-of-two,
+we can create the OpQuantizationConfig:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">op_qc_8bit</span> <span class="o">=</span> <span class="n">OpQuantizationConfig</span><span class="p">(</span>
+    <span class="n">activation_quantization_method</span><span class="o">=</span><span class="n">QuantizationMethod</span><span class="o">.</span><span class="n">POWER_OF_TWO</span><span class="p">,</span>
+     <span class="n">weights_quantization_method</span><span class="o">=</span><span class="n">QuantizationMethod</span><span class="o">.</span><span class="n">POWER_OF_TWO</span><span class="p">,</span>
+     <span class="n">activation_n_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+     <span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+     <span class="n">weights_per_channel_threshold</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+     <span class="n">enable_weights_quantization</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+     <span class="n">enable_activation_quantization</span><span class="o">=</span><span class="kc">True</span>
+ <span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>We will demonstrate later how to attach this OpQuantizationConfig to a specific operator.</p>
+<p>If an operator can be quantized in different ways (the simplest example is mixed-precision quantization),
+one can create a QuantizationConfigOptions instance to represent a set of possible quantization
+configuration options for an operator:</p>
+</section>
+<section id="quantizationconfigoptions">
+<h2>QuantizationConfigOptions<a class="headerlink" href="#quantizationconfigoptions" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.hardware_representation.QuantizationConfigOptions">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.hardware_representation.</span></span><span class="sig-name descname"><span class="pre">QuantizationConfigOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantization_config_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.hardware_representation.QuantizationConfigOptions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrap a set of quantization configurations to consider during the quantization
+of an operator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>quantization_config_list</strong> (<em>List</em><em>[</em><a class="reference internal" href="#model_compression_toolkit.hardware_representation.OpQuantizationConfig" title="model_compression_toolkit.hardware_representation.OpQuantizationConfig"><em>OpQuantizationConfig</em></a><em>]</em>) – List of possible OpQuantizationConfig to gather.</p></li>
+<li><p><strong>base_config</strong> (<a class="reference internal" href="#model_compression_toolkit.hardware_representation.OpQuantizationConfig" title="model_compression_toolkit.hardware_representation.OpQuantizationConfig"><em>OpQuantizationConfig</em></a>) – Fallback OpQuantizationConfig to use when optimizing the model in a non mixed-precision manner.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p>If a QuantizationConfigOptions is created with more than
+one OpQuantizationConfig option, a base_config must be passed to the QuantizationConfigOptions
+in order to support the model when MCT optimizes the model in no mixed-precision manner.</p>
+<p>For example, we would like to quantize an operator’s weights with either 2, 4 or 8 bits (and in
+case we would like to use MCT non mixed-precision functions, we would like to quantize the operator
+using 8 bits). For this we can create new OpQuantizationConfigs based on previously created
+OpQuantizationConfigs, and gather them under a single QuantizationConfigOptions instance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># To quantize a model using mixed-precision, create a QuantizationConfigOptions with more</span>
+<span class="c1"># than one QuantizationConfig.</span>
+<span class="c1"># In this example, we aim to quantize some operations&#39; weights using 2, 4 or 8 bits.</span>
+<span class="n">op_qc_4bit</span> <span class="o">=</span> <span class="n">op_qc_8bit</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">op_qc_2bit</span> <span class="o">=</span> <span class="n">op_qc_8bit</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">mixed_precision_configuration_options</span> <span class="o">=</span> <span class="n">QuantizationConfigOptions</span><span class="p">([</span><span class="n">op_qc_8bit</span><span class="p">,</span>
+                                                                   <span class="n">op_qc_4bit</span><span class="p">,</span>
+                                                                   <span class="n">op_qc_2bit</span><span class="p">],</span>
+                                                                   <span class="n">base_config</span><span class="o">=</span><span class="n">op_qc_8bit</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The main class to define the hardware-related properties, is called HardwareModel. Using a HardwareModel
+object we can create operator sets, configure how these operators sets will be quantized,
+group operators by common properties and configure patterns of operators to fuse:</p>
+</section>
+<section id="hardwaremodel">
+<h2>HardwareModel<a class="headerlink" href="#hardwaremodel" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.hardware_representation.HardwareModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.hardware_representation.</span></span><span class="sig-name descname"><span class="pre">HardwareModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">default_qco</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default_hm'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.hardware_representation.HardwareModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modeling of the hardware the quantized model will use during inference.
+The model contains definition of operators, quantization configurations of them, and
+fusing patterns so that multiple operators will be combined into a single operator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>default_qco</strong> (<a class="reference internal" href="#model_compression_toolkit.hardware_representation.QuantizationConfigOptions" title="model_compression_toolkit.hardware_representation.QuantizationConfigOptions"><em>QuantizationConfigOptions</em></a>) – Default QuantizationConfigOptions to use for operators that their QuantizationConfigOptions are not defined in the model.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Name of the model.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p>A default QuantizationConfigOptions (containing a single OpQuantizationConfig) must be passed
+when instancing a HardwareModel object. It comes to use when MCT needs to optimize
+an operator that is not defined explicitly in the HardwareModel. In this case, the OpQuantizationConfig
+in the default QuantizationConfigOptions will guide MCT how this operator should be optimized. For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a QuantizationConfigOptions with a single OpQuantizationConfig to use as</span>
+<span class="c1"># a default configuration options.</span>
+<span class="n">default_configuration_options</span> <span class="o">=</span> <span class="n">QuantizationConfigOptions</span><span class="p">([</span><span class="n">op_qc_8bit</span><span class="p">])</span>
+
+<span class="c1"># Create a HardwareModel and set its default quantization config.</span>
+<span class="c1"># This default configuration will be used for all operations</span>
+<span class="c1"># unless specified otherwise:</span>
+<span class="n">my_model</span> <span class="o">=</span> <span class="n">HardwareModel</span><span class="p">(</span><span class="n">default_configuration_options</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;my_model&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Then, we can start defining the model by creating OperatorsSets:</p>
+</section>
+<section id="operatorsset">
+<h2>OperatorsSet<a class="headerlink" href="#operatorsset" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.hardware_representation.OperatorsSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.hardware_representation.</span></span><span class="sig-name descname"><span class="pre">OperatorsSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qc_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.hardware_representation.OperatorsSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set of operators that are represented by a unique label.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Set’s label (must be unique in a HardwareModel).</p></li>
+<li><p><strong>qc_options</strong> (<a class="reference internal" href="#model_compression_toolkit.hardware_representation.QuantizationConfigOptions" title="model_compression_toolkit.hardware_representation.QuantizationConfigOptions"><em>QuantizationConfigOptions</em></a>) – Configuration options to use for this set of operations.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p>An OperatorsSet gathers group of operators that are labeled by a unique name and can be attached to a
+QuantizationConfigOptions (so MCT will use these options to optimize operators from this set).
+For example, if FullyConnected can be quantized using 2, 4, or 8 bits, we can create the next
+OperatorsSet using the previously created mixed_precision_configuration_options:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define operators set named &quot;FullyConnected&quot; and attach</span>
+<span class="c1"># mixed_precision_configuration_options as its QuantizationConfigOptions:</span>
+<span class="n">fc_opset</span> <span class="o">=</span> <span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;FullyConnected&quot;</span><span class="p">,</span> <span class="n">mixed_precision_configuration_options</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The QuantizationConfigOptions is optional. An OperatorsSet can be also created
+without any attached QuantizationConfigOptions. Operators in this kind of OperatorsSets
+are attached implicitly to the default QuantizationConfigOptions of the HardwareModel
+they are part of:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define operators set named &quot;Relu&quot; and do not attach</span>
+<span class="c1"># it any QuantizationConfigOptions:</span>
+<span class="n">relu_opset</span> <span class="o">=</span> <span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;Relu&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Another component of a HardwareModel is Fusing. Fusing defines a list
+of operators that should be combined and treated as a single operator, hence no
+quantization is applied between them when they appear in a model:</p>
+</section>
+<section id="fusing">
+<h2>Fusing<a class="headerlink" href="#fusing" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.hardware_representation.Fusing">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.hardware_representation.</span></span><span class="sig-name descname"><span class="pre">Fusing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator_groups_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.hardware_representation.Fusing" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> – Name of component.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>For example, to fuse the previously created two OperatorsSets fc_opset and
+relu_opset we can create the next Fusing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Combine multiple operators into a single operator to avoid quantization between</span>
+<span class="c1"># them. To do this we define fusing patterns using the OperatorsSets that were created.</span>
+<span class="n">Fusing</span><span class="p">([</span><span class="n">fc_opset</span><span class="p">,</span> <span class="n">relu_opset</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Notice that the list of opsets must contain at least two OperatorSets.
+Also notice that sublist of the OperatorsSet list that is passed to the Fusing,
+will not be fused, unless another Fusing is created for that. For example,
+if a model is defined to fuse three sequenced operators [FullyConnected, Relu, Add]:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># In addition to the OperatorsSets we created, create new OperatorsSets for &quot;add&quot; ops:</span>
+<span class="n">add_opset</span> <span class="o">=</span> <span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;Add&quot;</span><span class="p">)</span>
+
+<span class="c1"># Fuse sequences of operators:</span>
+<span class="n">Fusing</span><span class="p">([</span><span class="n">fc_opset</span><span class="p">,</span> <span class="n">relu_opset</span><span class="p">,</span> <span class="n">add_opset</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>and the pre-trained model that MCT optimizes has a sequence of [fc_opset, relu_opset]
+where the next operator is not an add_opset, the two operators [fc_opset, relu_opset]
+will not be fused as the only defined fusing pattern is of the three OperatorsSets
+[fc_opset, relu_opset, add_opset]. In order to fuse sequences of [fc_opset, relu_opset]
+as well, a new Fusing should be defined:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fuse sequences of the three listed operators:</span>
+<span class="n">Fusing</span><span class="p">([</span><span class="n">fc_opset</span><span class="p">,</span> <span class="n">relu_opset</span><span class="p">,</span> <span class="n">add_opset</span><span class="p">])</span>
+
+<span class="c1"># In addition, fuse sequences of the two listed operators:</span>
+<span class="n">Fusing</span><span class="p">([</span><span class="n">fc_opset</span><span class="p">,</span> <span class="n">relu_opset</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Now, if MCT encounters a sequence of [fc_opset, relu_opset] they will be fused regardless the following operator.
+Sequences of [fc_opset, relu_opset, add_opset] will be fused as well, and
+the new Fusing of [fc_opset, relu_opset] will not affect them (but will affect patterns
+of [fc_opset, relu_opset], of course).</p>
+<p>When multiple operators should be fused in a similar way, an OperatorSetConcat can be used:</p>
+</section>
+<section id="operatorsetconcat">
+<h2>OperatorSetConcat<a class="headerlink" href="#operatorsetconcat" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.hardware_representation.OperatorSetConcat">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.hardware_representation.</span></span><span class="sig-name descname"><span class="pre">OperatorSetConcat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">opsets</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.hardware_representation.OperatorSetConcat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenate a list of operator sets to treat them similarly in different places (like fusing).</p>
+<p>Group a list of operation sets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*opsets</strong> (<a class="reference internal" href="#model_compression_toolkit.hardware_representation.OperatorsSet" title="model_compression_toolkit.hardware_representation.OperatorsSet"><em>OperatorsSet</em></a>) – List of operator sets to group.</p></li>
+<li><p><strong>opsets</strong> (<a class="reference internal" href="#model_compression_toolkit.hardware_representation.OperatorsSet" title="model_compression_toolkit.common.hardware_representation.operators.OperatorsSet"><em>model_compression_toolkit.common.hardware_representation.operators.OperatorsSet</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p>OperatorSetConcat gathers multiple OperatorsSet and can be specified in a fusing operators list.
+If, for example, we want to fuse the patterns [fc_opset, add_opset] and [fc_opset, relu_opset],
+we can either create two separate Fusing objects as was demonstrated above, or an OperatorSetConcat
+can be used as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Concatenate two OpseratorsSet objects to be treated similarly when fused:</span>
+<span class="n">activations_after_fc_to_fuse</span> <span class="o">=</span> <span class="n">OperatorSetConcat</span><span class="p">(</span><span class="n">relu_opset</span><span class="p">,</span> <span class="n">add_opset</span><span class="p">)</span>
+
+<span class="c1"># Create a fusing pattern using OperatorSetConcat. This is equivalent to define two</span>
+<span class="c1"># separate fusing patterns of: [fc_opset, relu_opset], [fc_opset, add_opset]</span>
+<span class="n">Fusing</span><span class="p">([</span><span class="n">fc_opset</span><span class="p">,</span> <span class="n">activations_after_fc_to_fuse</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="hardwaremodel-code-example">
+<h2>HardwareModel Code Example<a class="headerlink" href="#hardwaremodel-code-example" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
+<span class="n">hwm</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">hardware_representation</span>
+
+
+<span class="k">def</span> <span class="nf">get_default_hardware_model</span><span class="p">():</span>
+    <span class="c1"># Create a quantization config.</span>
+    <span class="c1"># A quantization configuration defines how an operator</span>
+    <span class="c1"># should be quantized on the modeled hardware:</span>
+    <span class="n">eight_bits</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">OpQuantizationConfig</span><span class="p">(</span>
+        <span class="n">activation_quantization_method</span><span class="o">=</span><span class="n">hwm</span><span class="o">.</span><span class="n">QuantizationMethod</span><span class="o">.</span><span class="n">POWER_OF_TWO</span><span class="p">,</span>
+        <span class="n">weights_quantization_method</span><span class="o">=</span><span class="n">hwm</span><span class="o">.</span><span class="n">QuantizationMethod</span><span class="o">.</span><span class="n">POWER_OF_TWO</span><span class="p">,</span>
+        <span class="n">activation_n_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">weights_per_channel_threshold</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">enable_weights_quantization</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">enable_activation_quantization</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create a QuantizationConfigOptions, which defines a set</span>
+    <span class="c1"># of possible configurations to consider when quantizing a set of operations (in mixed-precision, for example).</span>
+    <span class="c1"># If the QuantizationConfigOptions contains only one configuration,</span>
+    <span class="c1"># this configuration will be used for the operation quantization:</span>
+    <span class="n">default_configuration_options</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">QuantizationConfigOptions</span><span class="p">([</span><span class="n">eight_bits</span><span class="p">])</span>
+
+    <span class="c1"># Create a HardwareModel and set its default quantization config.</span>
+    <span class="c1"># This default configuration will be used for all operations</span>
+    <span class="c1"># unless specified otherwise (see OperatorsSet, for example):</span>
+    <span class="n">default_hwm</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">HardwareModel</span><span class="p">(</span><span class="n">default_configuration_options</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;default_hwm&#39;</span><span class="p">)</span>
+
+    <span class="c1"># To start defining the model&#39;s components (such as operator sets, and fusing patterns),</span>
+    <span class="c1"># use &#39;with&#39; the hardware model instance, and create them as below:</span>
+    <span class="k">with</span> <span class="n">default_hwm</span><span class="p">:</span>
+        <span class="c1"># Create an OperatorsSet to represent a set of operations.</span>
+        <span class="c1"># Each OperatorsSet has a unique label.</span>
+        <span class="c1"># If a quantization configuration options is passed, these options will</span>
+        <span class="c1"># be used for operations that will be attached to this set&#39;s label.</span>
+        <span class="c1"># Otherwise, it will be a configure-less set (used in fusing):</span>
+
+        <span class="c1"># May suit for operations like: Dropout, Reshape, etc.</span>
+        <span class="n">hwm</span><span class="o">.</span><span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;NoQuantization&quot;</span><span class="p">,</span>
+                         <span class="n">hwm</span><span class="o">.</span><span class="n">get_default_quantization_config_options</span><span class="p">()</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span>
+                             <span class="n">enable_weights_quantization</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                             <span class="n">enable_activation_quantization</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+        <span class="c1"># To quantize a model using mixed-precision, create</span>
+        <span class="c1"># a QuantizationConfigOptions with more than one QuantizationConfig.</span>
+        <span class="c1"># In this example, we quantize some operations&#39; weights</span>
+        <span class="c1"># using 2, 4 or 8 bits, and when using 2 or 4 bits, it&#39;s possible</span>
+        <span class="c1"># to quantize the operations&#39; activations using LUT.</span>
+        <span class="n">four_bits</span> <span class="o">=</span> <span class="n">eight_bits</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">two_bits</span> <span class="o">=</span> <span class="n">eight_bits</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">mixed_precision_configuration_options</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">QuantizationConfigOptions</span><span class="p">([</span><span class="n">eight_bits</span><span class="p">,</span>
+                                                                               <span class="n">four_bits</span><span class="p">,</span>
+                                                                               <span class="n">two_bits</span><span class="p">],</span>
+                                                                              <span class="n">base_config</span><span class="o">=</span><span class="n">eight_bits</span><span class="p">)</span>
+
+        <span class="c1"># Define operator sets that use mixed_precision_configuration_options:</span>
+        <span class="n">hwm</span><span class="o">.</span><span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;ConvTranspose&quot;</span><span class="p">,</span> <span class="n">mixed_precision_configuration_options</span><span class="p">)</span>
+        <span class="n">conv</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;Conv&quot;</span><span class="p">,</span> <span class="n">mixed_precision_configuration_options</span><span class="p">)</span>
+        <span class="n">fc</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;FullyConnected&quot;</span><span class="p">,</span> <span class="n">mixed_precision_configuration_options</span><span class="p">)</span>
+
+        <span class="c1"># Define operations sets without quantization configuration</span>
+        <span class="c1"># options (useful for creating fusing patterns, for example):</span>
+        <span class="n">any_relu</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;AnyReLU&quot;</span><span class="p">)</span>
+        <span class="n">add</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;Add&quot;</span><span class="p">)</span>
+        <span class="n">prelu</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;PReLU&quot;</span><span class="p">)</span>
+        <span class="n">swish</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;Swish&quot;</span><span class="p">)</span>
+        <span class="n">sigmoid</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;Sigmoid&quot;</span><span class="p">)</span>
+        <span class="n">tanh</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;Tanh&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Combine multiple operators into a single operator to avoid quantization between</span>
+        <span class="c1"># them. To do this we define fusing patterns using the OperatorsSets that were created.</span>
+        <span class="c1"># To group multiple sets with regard to fusing, an OperatorSetConcat can be created</span>
+        <span class="n">activations_after_conv_to_fuse</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">OperatorSetConcat</span><span class="p">(</span><span class="n">any_relu</span><span class="p">,</span> <span class="n">swish</span><span class="p">,</span> <span class="n">prelu</span><span class="p">,</span> <span class="n">sigmoid</span><span class="p">,</span> <span class="n">tanh</span><span class="p">)</span>
+        <span class="n">activations_after_fc_to_fuse</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">OperatorSetConcat</span><span class="p">(</span><span class="n">any_relu</span><span class="p">,</span> <span class="n">swish</span><span class="p">,</span> <span class="n">sigmoid</span><span class="p">)</span>
+
+        <span class="n">hwm</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">conv</span><span class="p">,</span> <span class="n">activations_after_conv_to_fuse</span><span class="p">])</span>
+        <span class="n">hwm</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">fc</span><span class="p">,</span> <span class="n">activations_after_fc_to_fuse</span><span class="p">])</span>
+        <span class="n">hwm</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">conv</span><span class="p">,</span> <span class="n">add</span><span class="p">,</span> <span class="n">any_relu</span><span class="p">])</span>
+        <span class="n">hwm</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">conv</span><span class="p">,</span> <span class="n">any_relu</span><span class="p">,</span> <span class="n">add</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">default_hwm</span>
+
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>After modeling the hardware MCT should optimize according to, this hardware model needs to be
+attached to a specific framework information in order to associate the operators that are defined in
+hardware model to layers in different representations of a framework.
+For example, if we created an OperatorsSet for “Add” operator, in Tensorflow this operator
+can be used by two different layers: keras.layers.Add, tf.add.
+To attach a list of framework’s layers to an OperatorsSet that is defined in the HardwareModel,
+an OperationsSetToLayers can be used:</p>
+</section>
+<section id="operationssettolayers">
+<h2>OperationsSetToLayers<a class="headerlink" href="#operationssettolayers" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.hardware_representation.OperationsSetToLayers">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.hardware_representation.</span></span><span class="sig-name descname"><span class="pre">OperationsSetToLayers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_set_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.hardware_representation.OperationsSetToLayers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Associate an OperatorsSet to a list of framework’s layers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>op_set_name</strong> (<em>str</em>) – Name of OperatorsSet to associate with layers.</p></li>
+<li><p><strong>layers</strong> (<em>List</em><em>[</em><em>Any</em><em>]</em>) – List of layers/FilterLayerParams to associate with OperatorsSet.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Using OperationsSetToLayers we can associate an OperatorsSet label to a list of framework’s layers:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">Add</span>
+<span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Add&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">Add</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>This way, when MCT quantizes one of the layers tf.add or keras.layers.Add, it uses the QuantizationConfigOptions
+that is associated with the OperatorsSet that was labeled “Add” to optimize the layer.</p>
+<p>There are cases where an operator can be represented using a layer but it must have a specific configuration.</p>
+<p>For example, in case the optimization should be different for bounded ReLU and unbounded ReLU, two OperatorSets
+can be created, and the layers that will be attached to each OperatorSet will have to be filtered.
+For that, LayerFilterParams can be used:</p>
+</section>
+<section id="layerfilterparams">
+<h2>LayerFilterParams<a class="headerlink" href="#layerfilterparams" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.hardware_representation.LayerFilterParams">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.hardware_representation.</span></span><span class="sig-name descname"><span class="pre">LayerFilterParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">conditions</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.hardware_representation.LayerFilterParams" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrap a layer with filters to filter framework’s layers by their attributes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> – Layer to match when filtering.</p></li>
+<li><p><strong>*conditions</strong> (<em>AttributeFilter</em>) – List of conditions to satisfy.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments to filter layers according to.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p>LayerFilterParams wraps a layer with several conditions and key-value pairs
+and can check whether a layer matches the layer, conditions and key-value pairs.
+If for example a distinguish need to be made between bounded-ReLU and unbounded-ReLU in Tensorflow
+the next LayerFilterParams can be created:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">ReLU</span>
+
+<span class="c1"># Create a LayerFilterParams that matches ReLU layers that have an attribute &#39;max_value&#39;</span>
+<span class="c1"># and it is None</span>
+<span class="n">unbounded_relu_filter</span> <span class="o">=</span> <span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">ReLU</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+<span class="c1"># Create a LayerFilterParams that matches ReLU layers that have an attribute &#39;max_value&#39;</span>
+<span class="c1"># and it is not None</span>
+<span class="n">unbounded_relu_filter</span> <span class="o">=</span> <span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">ReLU</span><span class="p">,</span> <span class="n">NotEq</span><span class="p">(</span><span class="s1">&#39;max_value&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>In this example, we used NotEq which is a way to filter layers with attributes that has
+a value different than the value that was passed (in this case - None). More filters can be created
+and passed to the LayerFilterParams in order to create more detailed filter.
+More filters and usage examples are detailed <a class="reference internal" href="layer_filters.html#ug-layer-filters"><span class="std std-ref">here</span></a>.</p>
+<p>These LayerFilterParams instances can now be attached to OperatorsSets in the HardwareModel
+using OperationsSetToLayers just like any other layers:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">ReLU</span><span class="p">,</span> <span class="n">Activation</span>
+
+<span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;ReLU&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span>
+                               <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu6</span><span class="p">,</span>
+                               <span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">ReLU</span><span class="p">,</span> <span class="n">negative_slope</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+                               <span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">)])</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The mapping from OperatorsSets to layers’ lists are part of a class called FrameworkHardwareModel
+which attaches the layers representations to OperatorsSets in a HardwareModel instance:</p>
+</section>
+<section id="frameworkhardwaremodel">
+<h2>FrameworkHardwareModel<a class="headerlink" href="#frameworkhardwaremodel" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.hardware_representation.FrameworkHardwareModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.hardware_representation.</span></span><span class="sig-name descname"><span class="pre">FrameworkHardwareModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hw_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'base'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.hardware_representation.FrameworkHardwareModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attach framework information to a modeled hardware.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hw_model</strong> (<a class="reference internal" href="#model_compression_toolkit.hardware_representation.HardwareModel" title="model_compression_toolkit.hardware_representation.HardwareModel"><em>HardwareModel</em></a>) – Modeled hardware to attach framework information to.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Name of the FrameworkHardwareModel.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p>To create a FrameworkHardwareModel, a HardwareModel instance should be passed upon the
+FrameworkHardwareModel initialization. Then, OperationsSetToLayers can be created and attached
+to the FrameworkHardwareModel like in the following example:</p>
+</section>
+<section id="frameworkhardwaremodel-code-example">
+<h2>FrameworkHardwareModel Code Example<a class="headerlink" href="#frameworkhardwaremodel-code-example" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="n">Dropout</span><span class="p">,</span> <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">Activation</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">PReLU</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Cropping2D</span><span class="p">,</span> <span class="n">BatchNormalization</span>
+
+<span class="kn">from</span> <span class="nn">model_compression_toolkit.hardware_models.default_hwm</span> <span class="kn">import</span> <span class="n">get_default_hardware_model</span>
+
+<span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
+<span class="n">hwm</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">hardware_representation</span>
+
+
+<span class="k">def</span> <span class="nf">get_default_hwm_keras</span><span class="p">():</span>
+    <span class="n">default_hwm</span> <span class="o">=</span> <span class="n">get_default_hardware_model</span><span class="p">()</span>
+    <span class="n">default_hwm_keras</span> <span class="o">=</span> <span class="n">hwm</span><span class="o">.</span><span class="n">FrameworkHardwareModel</span><span class="p">(</span><span class="n">default_hwm</span><span class="p">,</span>
+                                                   <span class="n">name</span><span class="o">=</span><span class="s1">&#39;default_hwm_keras&#39;</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">default_hwm_keras</span><span class="p">:</span>
+        <span class="n">hwm</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;NoQuantization&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">Reshape</span><span class="p">,</span>
+                                                     <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">,</span>
+                                                     <span class="n">Flatten</span><span class="p">,</span>
+                                                     <span class="n">Cropping2D</span><span class="p">,</span>
+                                                     <span class="n">ZeroPadding2D</span><span class="p">,</span>
+                                                     <span class="n">Dropout</span><span class="p">,</span>
+                                                     <span class="n">MaxPooling2D</span><span class="p">,</span>
+                                                     <span class="n">tf</span><span class="o">.</span><span class="n">split</span><span class="p">,</span>
+                                                     <span class="n">tf</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">fake_quant_with_min_max_vars</span><span class="p">,</span>
+                                                     <span class="n">BatchNormalization</span><span class="p">])</span>
+
+        <span class="n">hwm</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Conv&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">Conv2D</span><span class="p">,</span>
+                                           <span class="n">DepthwiseConv2D</span><span class="p">,</span>
+                                           <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">conv2d</span><span class="p">,</span>
+                                           <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">depthwise_conv2d</span><span class="p">])</span>
+
+        <span class="n">hwm</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;FullyConnected&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">Dense</span><span class="p">])</span>
+
+        <span class="n">hwm</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;ConvTranspose&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">Conv2DTranspose</span><span class="p">,</span>
+                                                    <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">conv2d_transpose</span><span class="p">])</span>
+
+        <span class="n">hwm</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;AnyReLU&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span>
+                                              <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu6</span><span class="p">,</span>
+                                              <span class="n">hwm</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">ReLU</span><span class="p">,</span> <span class="n">negative_slope</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+                                              <span class="n">hwm</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">)])</span>
+
+        <span class="n">hwm</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Add&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">add</span><span class="p">,</span>
+                                          <span class="n">Add</span><span class="p">])</span>
+
+        <span class="n">hwm</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;PReLU&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">PReLU</span><span class="p">])</span>
+
+        <span class="n">hwm</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Swish&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">swish</span><span class="p">,</span>
+                                            <span class="n">hwm</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;swish&quot;</span><span class="p">)])</span>
+
+</pre></div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">hardware_representation Module</a><ul>
+<li><a class="reference internal" href="#quantizationmethod">QuantizationMethod</a></li>
+<li><a class="reference internal" href="#opquantizationconfig">OpQuantizationConfig</a></li>
+<li><a class="reference internal" href="#quantizationconfigoptions">QuantizationConfigOptions</a></li>
+<li><a class="reference internal" href="#hardwaremodel">HardwareModel</a></li>
+<li><a class="reference internal" href="#operatorsset">OperatorsSet</a></li>
+<li><a class="reference internal" href="#fusing">Fusing</a></li>
+<li><a class="reference internal" href="#operatorsetconcat">OperatorSetConcat</a></li>
+<li><a class="reference internal" href="#hardwaremodel-code-example">HardwareModel Code Example</a></li>
+<li><a class="reference internal" href="#operationssettolayers">OperationsSetToLayers</a></li>
+<li><a class="reference internal" href="#layerfilterparams">LayerFilterParams</a></li>
+<li><a class="reference internal" href="#frameworkhardwaremodel">FrameworkHardwareModel</a></li>
+<li><a class="reference internal" href="#frameworkhardwaremodel-code-example">FrameworkHardwareModel Code Example</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">hardware_representation Module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Sony Semiconductors Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

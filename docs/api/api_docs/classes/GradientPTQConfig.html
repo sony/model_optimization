@@ -45,7 +45,7 @@
 <p><strong>The following API can be used to create a GradientPTQConfig instance which can be used for post training quantization using knowledge distillation from a teacher (float Keras model) to a student (the quantized Keras model)</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.GradientPTQConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">GradientPTQConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.GradientPTQConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">GradientPTQConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lsb_change_per_bit_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DefaultDict(MAX_LSBS_CHANGE_MAP,</span> <span class="pre">lambda</span> <span class="pre">:</span> <span class="pre">...)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.GradientPTQConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configuration to use for quantization with GradientPTQ (experimental).</p>
 <p>Initialize a GradientPTQConfig.</p>
 <dl class="field-list simple">
@@ -53,9 +53,11 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n_iter</strong> (<em>int</em>) – Number of iterations to train.</p></li>
 <li><p><strong>optimizer</strong> (<em>Any</em>) – Optimizer to use.</p></li>
-<li><p><strong>loss</strong> (<em>Callable</em>) – the loss to use. should accept 2 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors.</p></li>
+<li><p><strong>loss</strong> (<em>Callable</em>) – The loss to use. should accept 4 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors,
+the 3rd is a list of quantized weights and the 4th is a list of float weights.</p></li>
 <li><p><strong>log_function</strong> (<em>Callable</em>) – Function to log information about the GPTQ process.</p></li>
 <li><p><strong>train_bias</strong> (<em>bool</em>) – Whether to update the bias during the training or not.</p></li>
+<li><p><strong>lsb_change_per_bit_width</strong> (<em>dict</em>) – Whether to update the bias during the training or not.</p></li>
 </ul>
 </dd>
 </dl>
