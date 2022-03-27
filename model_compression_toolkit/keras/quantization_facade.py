@@ -234,7 +234,9 @@ if importlib.util.find_spec("tensorflow") is not None\
             common.Logger.warning("No KPI was passed. Using non mixed-precision compression process...")
             # Before starting non-mixed-precision process, we need to set only single bit width, so we take the best
             # option which is the maximal number of bits.
-            quant_config.weights_n_bits = [max(quant_config.weights_n_bits)]
+            single_bitwidth_candidate = max(quant_config.n_bits_candidates, key=lambda candidate: candidate[0])
+            quant_config.weights_n_bits = [single_bitwidth_candidate[0]]
+            quant_config.n_bits_candidates = [single_bitwidth_candidate]
             return keras_post_training_quantization(in_model,
                                                     representative_data_gen,
                                                     n_iter,
