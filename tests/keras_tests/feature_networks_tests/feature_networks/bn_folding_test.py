@@ -15,6 +15,7 @@
 
 
 from abc import ABC
+
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
@@ -34,8 +35,7 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
         super(BaseBatchNormalizationFolding, self).__init__(unit_test=unit_test)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,16, 16,
                                       False, False, True, enable_weights_quantization=False,
                                       enable_activation_quantization=False)
 

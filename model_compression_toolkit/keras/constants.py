@@ -77,3 +77,11 @@ K_BIAS = '/key/bias'
 V_BIAS = '/value/bias'
 OUTPUT_KERNEL = '/attention_output/kernel'
 OUTPUT_BIAS = '/attention_output/bias'
+
+# ReLU bound constants
+RELU_POT_BOUND = 8.0
+
+# Supported HW models names for Tensorflow:
+DEFAULT_HWM = 'default'
+TFLITE_HWM = 'tflite'
+QNNPACK_HWM = 'qnnpack'

@@ -16,6 +16,7 @@
 
 import numpy as np
 import tensorflow as tf
+
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import model_compression_toolkit as mct
@@ -35,10 +36,12 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                    mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                    relu_unbound_correction=True, weights_bias_correction=True,
-                                    weights_per_channel_threshold=True, input_scaling=True,
+        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                    mct.QuantizationErrorMethod.MSE,
+                                    relu_bound_to_power_of_2=True,
+                                    weights_bias_correction=True,
+                                    weights_per_channel_threshold=True,
+                                    input_scaling=True,
                                     activation_channel_equalization=True)
 
         return MixedPrecisionQuantizationConfig(qc, n_bits_candidates=[(2, 8), (8, 8), (4, 8)], num_of_images=1)
@@ -68,8 +71,7 @@ class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
 
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                    mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                    relu_unbound_correction=True, weights_bias_correction=True,
+                                    relu_bound_to_power_of_2=True, weights_bias_correction=True,
                                     weights_per_channel_threshold=False, input_scaling=True,
                                     activation_channel_equalization=True)
 
@@ -169,10 +171,13 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
 
     def get_quantization_config(self):
-        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                    mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                    activation_n_bits=16, relu_unbound_correction=False, weights_bias_correction=False,
-                                    weights_per_channel_threshold=True, input_scaling=False,
+        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                    mct.QuantizationErrorMethod.MSE,
+                                    activation_n_bits=16,
+                                    relu_bound_to_power_of_2=False,
+                                    weights_bias_correction=False,
+                                    weights_per_channel_threshold=True,
+                                    input_scaling=False,
                                     activation_channel_equalization=False)
 
         return MixedPrecisionQuantizationConfig(qc, n_bits_candidates=[(2, 16), (8, 16), (4, 16), (16, 16)])

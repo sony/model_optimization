@@ -17,6 +17,7 @@ from typing import Callable, List
 
 from model_compression_toolkit import common
 from model_compression_toolkit.common import Logger
+from model_compression_toolkit.common.constants import TENSORFLOW
 from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.framework_info import FrameworkInfo
@@ -29,6 +30,9 @@ from model_compression_toolkit.common.quantization.quantization_config import DE
 
 import importlib
 
+from model_compression_toolkit.common.hardware_representation.hardware2framework import FrameworkHardwareModel
+
+
 if importlib.util.find_spec("tensorflow") is not None\
         and importlib.util.find_spec("tensorflow_model_optimization") is not None:
     import tensorflow as tf
@@ -38,6 +42,10 @@ if importlib.util.find_spec("tensorflow") is not None\
     from tensorflow.keras.models import Model
     from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
     from keras.optimizer_v2.optimizer_v2 import OptimizerV2
+    from model_compression_toolkit.keras.constants import DEFAULT_HWM
+
+    from model_compression_toolkit import get_model
+    KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_HWM)
 
     def get_keras_gptq_config(n_iter: int,
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(),
@@ -50,7 +58,8 @@ if importlib.util.find_spec("tensorflow") is not None\
         args:
             n_iter (int): Number of iterations to fine-tune.
             optimizer (OptimizerV2): Keras optimizer to use for fine-tuning.
-            loss (Callable): loss to use during fine-tuning. Should accept 2 lists of Tensorflow tensors. 1st list of quantized tensors, the 2nd list is the float tensors.
+            loss (Callable): loss to use during fine-tuning. should accept 4 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors,
+             the 3rd is a list of quantized weights and the 4th is a list of float weights.
             log_function (Callable): Function to log information about the gptq process.
             train_bias (bool): Whether to update the bias during the the fine-tuning or not.
 
@@ -87,7 +96,8 @@ if importlib.util.find_spec("tensorflow") is not None\
                                          fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                                          network_editor: List[EditRule] = [],
                                          gptq_config: GradientPTQConfig = None,
-                                         analyze_similarity: bool = False):
+                                         analyze_similarity: bool = False,
+                                         fw_hw_model: FrameworkHardwareModel = KERAS_DEFAULT_MODEL):
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
         symmetric constraint quantization thresholds (power of two).
@@ -108,6 +118,7 @@ if importlib.util.find_spec("tensorflow") is not None\
             network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
+            fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
 
         Returns:
             A quantized model and information the user may need to handle the quantized model.
@@ -137,6 +148,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                           quant_config,
                                           fw_info,
                                           KerasImplementation(),
+                                          fw_hw_model,
                                           network_editor,
                                           gptq_config,
                                           analyze_similarity)
@@ -150,7 +162,8 @@ if importlib.util.find_spec("tensorflow") is not None\
                                                          network_editor: List[EditRule] = [],
                                                          gptq_config: GradientPTQConfig = None,
                                                          analyze_similarity: bool = False,
-                                                         target_kpi: KPI = None):
+                                                         target_kpi: KPI = None,
+                                                         fw_hw_model: FrameworkHardwareModel = KERAS_DEFAULT_MODEL):
         """
          Quantize a trained Keras model using post-training quantization. The model is quantized using a
          symmetric constraint quantization thresholds (power of two).
@@ -177,6 +190,8 @@ if importlib.util.find_spec("tensorflow") is not None\
              gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
              analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
+             fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
+
 
          Returns:
              A quantized model and information the user may need to handle the quantized model.
@@ -227,7 +242,8 @@ if importlib.util.find_spec("tensorflow") is not None\
                                                     fw_info,
                                                     network_editor,
                                                     gptq_config,
-                                                    analyze_similarity)
+                                                    analyze_similarity,
+                                                    fw_hw_model)
 
         common.Logger.info("Using experimental mixed-precision quantization. "
                            "If you encounter an issue please file a bug.")
@@ -238,6 +254,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                           quant_config,
                                           fw_info,
                                           KerasImplementation(),
+                                          fw_hw_model,
                                           network_editor,
                                           gptq_config,
                                           analyze_similarity,

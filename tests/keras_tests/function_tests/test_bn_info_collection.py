@@ -18,6 +18,7 @@ from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, Sep
 from tensorflow import initializers
 import numpy as np
 
+from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
@@ -134,7 +135,7 @@ def prepare_graph(in_model):
     for node in graph.nodes:
         node.prior_info = keras_impl.get_node_prior_info(node=node,
                                                          fw_info=fw_info, graph=graph)
-    transformed_graph = substitute(graph, keras_impl.get_substitutions_pre_statistics_collection())
+    transformed_graph = substitute(graph, keras_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
     return transformed_graph
 
 
@@ -156,7 +157,7 @@ class TestBNInfoCollection(unittest.TestCase):
         bn_layer = in_model.get_layer("bn1")
         gamma = bn_layer.gamma
         beta = bn_layer.beta
-        self.assertTrue((gamma == prior_std).numpy().all())
+        self.assertTrue((abs(gamma) == prior_std).numpy().all())
         self.assertTrue((beta == prior_mean).numpy().all())
 
     def test_seperableconv2d_bn_info_collection(self):
@@ -175,7 +176,7 @@ class TestBNInfoCollection(unittest.TestCase):
         bn_layer = in_model.get_layer("bn1")
         gamma = bn_layer.gamma
         beta = bn_layer.beta
-        self.assertTrue((gamma == prior_std).numpy().all())
+        self.assertTrue((abs(gamma) == prior_std).numpy().all())
         self.assertTrue((beta == prior_mean).numpy().all())
 
     def test_conv2d_2bn_info_collection(self):
@@ -219,13 +220,13 @@ class TestBNInfoCollection(unittest.TestCase):
 
         gamma = bn_layer.gamma
         beta = bn_layer.beta
-        self.assertTrue((gamma == bn_std).numpy().all())
+        self.assertTrue((abs(gamma) == bn_std).numpy().all())
         self.assertTrue((beta == bn_mean).numpy().all())
 
         bn2_layer = in_model.get_layer("bn2")
         gamma2 = bn2_layer.gamma
         beta2 = bn2_layer.beta
-        self.assertTrue((gamma2 == bn2_std).numpy().all())
+        self.assertTrue((abs(gamma2) == bn2_std).numpy().all())
         self.assertTrue((beta2 == bn2_mean).numpy().all())
 
     def test_conv2d_bn_chain_info_collection(self):
@@ -254,13 +255,13 @@ class TestBNInfoCollection(unittest.TestCase):
         bn_layer = in_model.get_layer("bn1")
         gamma = bn_layer.gamma
         beta = bn_layer.beta
-        self.assertTrue((gamma == conv_std).numpy().all())
+        self.assertTrue((abs(gamma) == conv_std).numpy().all())
         self.assertTrue((beta == conv_mean).numpy().all())
 
         bn2_layer = in_model.get_layer("bn2")
         gamma2 = bn2_layer.gamma
         beta2 = bn2_layer.beta
-        self.assertTrue((gamma2 == bn_std).numpy().all())
+        self.assertTrue((abs(gamma2) == bn_std).numpy().all())
         self.assertTrue((beta2 == bn_mean).numpy().all())
 
     def test_bn_chain_info_collection(self):
@@ -304,13 +305,13 @@ class TestBNInfoCollection(unittest.TestCase):
 
         gamma = bn_layer.gamma
         beta = bn_layer.beta
-        self.assertTrue((gamma == bn_std).numpy().all())
+        self.assertTrue((abs(gamma) == bn_std).numpy().all())
         self.assertTrue((beta == bn_mean).numpy().all())
 
         bn2_layer = in_model.get_layer("bn2")
         gamma2 = bn2_layer.gamma
         beta2 = bn2_layer.beta
-        self.assertTrue((gamma2 == bn2_std).numpy().all())
+        self.assertTrue((abs(gamma2) == bn2_std).numpy().all())
         self.assertTrue((beta2 == bn2_mean).numpy().all())
 
     def test_layers_bn_info_collection(self):
@@ -381,7 +382,7 @@ class TestBNInfoCollection(unittest.TestCase):
 
         gamma = bn_layer.gamma
         beta = bn_layer.beta
-        self.assertTrue((gamma == bn_std).numpy().all())
+        self.assertTrue((abs(gamma) == bn_std).numpy().all())
         self.assertTrue((beta == bn_mean).numpy().all())
 
         bn2_layer = in_model.get_layer("bn2")
@@ -393,7 +394,7 @@ class TestBNInfoCollection(unittest.TestCase):
 
         gamma2 = bn2_layer.gamma
         beta2 = bn2_layer.beta
-        self.assertTrue((gamma2 == bn2_std).numpy().all())
+        self.assertTrue((abs(gamma2) == bn2_std).numpy().all())
         self.assertTrue((beta2 == bn2_mean).numpy().all())
 
         bn3_layer = in_model.get_layer("bn3")
@@ -405,7 +406,7 @@ class TestBNInfoCollection(unittest.TestCase):
 
         gamma3 = bn3_layer.gamma
         beta3 = bn3_layer.beta
-        self.assertTrue((gamma3 == bn3_std).numpy().all())
+        self.assertTrue((abs(gamma3) == bn3_std).numpy().all())
         self.assertTrue((beta3 == bn3_mean).numpy().all())
 
     def test_inp_2bn_info_collection(self):
@@ -449,13 +450,13 @@ class TestBNInfoCollection(unittest.TestCase):
 
         gamma = bn_layer.gamma
         beta = bn_layer.beta
-        self.assertTrue((gamma == bn_std).numpy().all())
+        self.assertTrue((abs(gamma) == bn_std).numpy().all())
         self.assertTrue((beta == bn_mean).numpy().all())
 
         bn2_layer = in_model.get_layer("bn2")
         gamma2 = bn2_layer.gamma
         beta2 = bn2_layer.beta
-        self.assertTrue((gamma2 == bn2_std).numpy().all())
+        self.assertTrue((abs(gamma2) == bn2_std).numpy().all())
         self.assertTrue((beta2 == bn2_mean).numpy().all())
 
     def test_no_scale_center_bn_info_collection(self):
@@ -494,7 +495,7 @@ class TestBNInfoCollection(unittest.TestCase):
             gamma = 1.0
         if beta is None:
             beta = 0.0
-        self.assertTrue((gamma == bn_std))
+        self.assertTrue((abs(gamma) == bn_std))
         self.assertTrue((beta == bn_mean))
 
 

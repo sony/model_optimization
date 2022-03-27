@@ -24,7 +24,7 @@ from model_compression_toolkit.common import Graph
 from model_compression_toolkit.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.keras.gradient_ptq.graph_info import get_compare_points, \
-    get_trainable_parameters
+    get_trainable_parameters, get_weights_for_loss
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.keras.gradient_ptq.graph_update import update_graph_after_gptq
 import numpy as np
@@ -72,6 +72,13 @@ def gptq_training_wrapper(tg: Graph,
     trainable_weights = get_trainable_parameters(fxp_model,
                                                  fw_info,
                                                  add_bias=gptq_config.train_bias)
+    flp_weights_list, fxp_weights_list = get_weights_for_loss(fxp_model)
+
+    if not (len(compare_points) == len(trainable_weights) == len(flp_weights_list) == len(fxp_weights_list)):
+        raise Exception("GPTQ: Mismatch between number of compare points, number of layers with trainable weights " +
+                        "and number of float and quantized weights for loss")
+
+    flattened_trainable_weights = [w for layer_weights in trainable_weights for w in layer_weights]
 
     if float_user_info.input_scale != gptq_user_info.input_scale:
         common.Logger.error("Input scale mismatch between float and GPTQ networks")  # pragma: no cover
@@ -94,15 +101,15 @@ def gptq_training_wrapper(tg: Graph,
         y_float = float_model(input_data)  # running float model
         with tf.GradientTape(persistent=True) as tape:
             y_fxp = fxp_model(input_data)  # running fxp model
-            loss_value = gptq_config.loss(y_fxp, y_float)  # calculate cs loss
+            loss_value = gptq_config.loss(y_fxp, y_float, fxp_weights_list, flp_weights_list)
 
         # Use the gradient tape to automatically retrieve
         # the gradients of the trainable variables with respect to the loss.
-        grads = tape.gradient(loss_value, trainable_weights)
+        grads = tape.gradient(loss_value, flattened_trainable_weights)
 
         # Run one step of gradient descent by updating
         # the value of the variables to minimize the loss.
-        gptq_config.optimizer.apply_gradients(zip(grads, trainable_weights))
+        gptq_config.optimizer.apply_gradients(zip(grads, flattened_trainable_weights))
 
         return loss_value, grads
 
@@ -111,7 +118,7 @@ def gptq_training_wrapper(tg: Graph,
         data = representative_data_gen()
         loss_value_step, grads = update_step([d * input_scale for d in data])
         if gptq_config.log_function is not None:
-            gptq_config.log_function(loss_value_step, grads, trainable_weights, compare_points)
+            gptq_config.log_function(loss_value_step, grads, flattened_trainable_weights, compare_points)
         loss_list.append(loss_value_step.numpy())
         common.Logger.debug(f'last loss value: {loss_list[-1]}')
 

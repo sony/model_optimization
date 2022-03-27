@@ -16,11 +16,10 @@
 
 import numpy as np
 import tensorflow as tf
+
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import model_compression_toolkit as mct
-from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
-from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers
@@ -37,8 +36,8 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
-                                      relu_unbound_correction=False, weights_bias_correction=False,
+                                      16, 16,
+                                      relu_bound_to_power_of_2=False, weights_bias_correction=False,
                                       weights_per_channel_threshold=True, activation_channel_equalization=True)
 
     def create_networks(self):

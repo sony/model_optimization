@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
@@ -34,8 +32,7 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                    mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO,
-                                    activation_n_bits=16, relu_unbound_correction=True, weights_bias_correction=True,
+                                    activation_n_bits=16, relu_bound_to_power_of_2=True, weights_bias_correction=True,
                                     weights_per_channel_threshold=True, input_scaling=True,
                                     activation_channel_equalization=True)
 

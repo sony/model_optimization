@@ -31,6 +31,7 @@ from model_compression_toolkit.common.collectors.statistics_collector import Bas
 from model_compression_toolkit.common.collectors.statistics_collector import scale_statistics, shift_statistics
 from model_compression_toolkit.common.user_info import UserInformation
 from model_compression_toolkit.common.logger import Logger
+from model_compression_toolkit.common.hardware_representation.hardware2framework import FrameworkHardwareModel
 
 OutTensor = namedtuple('OutTensor', 'node node_out_index')
 
@@ -42,6 +43,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
     """
 
     def __init__(self,
+                 name: str,
                  nodes: List[BaseNode],
                  input_nodes: List[BaseNode],
                  output_nodes: List[OutTensor],
@@ -59,6 +61,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
 
         super().__init__(**attr)
+        self.name = name
         self.input_nodes = input_nodes
         self.output_nodes = output_nodes
         self.node_to_out_stats_collector = dict()
@@ -80,6 +83,15 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
 
         self.fw_info = fw_info
+
+    def set_fw_hw_model(self,
+                        fw_hw_model: FrameworkHardwareModel):
+        """
+        Set the graph's framework hardware model.
+        Args:
+            fw_hw_model: FrameworkHardwareModel object.
+        """
+        self.fw_hw_model = fw_hw_model
 
 
     def get_topo_sorted_nodes(self):

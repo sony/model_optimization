@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import model_compression_toolkit.common.gptq.gptq_config
-from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
-from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
-import model_compression_toolkit as mct
-from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.common.user_info import UserInformation
-import tensorflow as tf
-from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
+import tensorflow as tf
+
+import model_compression_toolkit as mct
+import model_compression_toolkit.common.gptq.gptq_config
+from model_compression_toolkit.common.user_info import UserInformation
+from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
 layers = keras.layers
@@ -33,8 +33,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                          input_shape=(1,16,16,3))
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.QuantizationMethod.POWER_OF_TWO, mct.QuantizationMethod.POWER_OF_TWO, 16, 16,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,16, 16,
                                       True, False, True)
 
 
