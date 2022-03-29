@@ -52,7 +52,7 @@ def get_activations_qparams(activation_quant_cfg: NodeActivationQuantizationConf
     if nodes_prior_info.is_output_bounded():
         signed = min_value < 0
     else:
-        signed = np.any(bins_values < 0)
+        signed = np.any(bins_values[:-1][bins_counts > 0] < 0)
 
     if nodes_prior_info.is_output_bounded():
         if activation_quant_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO:

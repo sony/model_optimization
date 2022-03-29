@@ -55,14 +55,7 @@ class SelectiveQuantizer(Quantizer):
             curmax = n_candidate.weights_quantization_cfg.weights_n_bits
 
         self.node_q_cfg = node_q_cfg
-
-        # Use the node's quantizer. The SelectiveQuantizer is supported only if
-        # all node's qc candidates use the same quantizer.
-        quantizer_fn = self.node_q_cfg[0].weights_quantization_cfg.weights_quantization_fn
-        for qc in self.node_q_cfg:
-            assert qc.weights_quantization_cfg.weights_quantization_fn == quantizer_fn
-
-        self.quantizer_fn = quantizer_fn
+        self.quantizer_fn_list = [qc.weights_quantization_cfg.weights_quantization_fn for qc in self.node_q_cfg]
         self.float_weight = float_weight
         self.quantized_weights = []
         self.active_quantization_config_index = 0  # initialize with first (maximal number of bits)
@@ -79,12 +72,12 @@ class SelectiveQuantizer(Quantizer):
             Quantized weight.
         """
         qc = self.node_q_cfg[index].weights_quantization_cfg
-        return self.quantizer_fn(self.float_weight,
-                                 qc.weights_n_bits,
-                                 True,
-                                 qc.weights_quantization_params,
-                                 qc.weights_per_channel_threshold,
-                                 qc.weights_channels_axis)
+        return self.quantizer_fn_list[index](self.float_weight,
+                                             qc.weights_n_bits,
+                                             True,
+                                             qc.weights_quantization_params,
+                                             qc.weights_per_channel_threshold,
+                                             qc.weights_channels_axis)
 
     def _store_quantized_weights(self):
         """
@@ -172,7 +165,7 @@ class SelectiveQuantizer(Quantizer):
         return {
             'node_q_cfg': self.node_q_cfg,
             'float_weight': self.float_weight,
-            'quantizer_fn': self.quantizer_fn
+            'quantizer_fn_list': self.quantizer_fn_list
         }
 
     def __eq__(self, other: Any) -> bool:
@@ -189,7 +182,7 @@ class SelectiveQuantizer(Quantizer):
 
         return (self.node_q_cfg == other.node_q_cfg and
                 self.float_weight == other.float_weight and
-                self.quantizer_fn == other.quantizer_fn)
+                self.quantizer_fn_list == other.quantizer_fn_list)
 
     def __ne__(self, other: Any) -> bool:
         """

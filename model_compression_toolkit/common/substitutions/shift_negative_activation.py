@@ -325,7 +325,7 @@ def shift_negative_function(graph: Graph,
         for bypass_node in bypass_nodes:
             for bypass_candidate_qc in bypass_node.candidates_quantization_cfg:
                 if bypass_candidate_qc.activation_quantization_cfg:
-                    bypass_candidate_qc.activation_quantization_cfg.activation_quantization_params['is_signed'] = False
+                    bypass_candidate_qc.activation_quantization_cfg.activation_quantization_params[SIGNED] = False
                     graph.shift_stats_collector(bypass_node, np.array(shift_value))
 
     for candidate_qc in add_node.candidates_quantization_cfg:

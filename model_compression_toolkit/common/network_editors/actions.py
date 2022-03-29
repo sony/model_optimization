@@ -122,10 +122,6 @@ class ChangeFinalWeightsQuantConfigAttr(BaseAction):
         if node.final_weights_quantization_cfg is not None:
             for attr_name, attr_value in self.kwargs.items():
                 node.final_weights_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
-        elif len(node.candidates_quantization_cfg) > 0:
-            for candidate_config in node.candidates_quantization_cfg:
-                for attr_name, attr_value in self.kwargs.items():
-                    candidate_config.weights_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
 
 
 class ChangeCandidatesActivationQuantConfigAttr(BaseAction):
@@ -157,6 +153,26 @@ class ChangeCandidatesActivationQuantConfigAttr(BaseAction):
         for nqc in node.candidates_quantization_cfg:
             for attr_name, attr_value in self.kwargs.items():
                 nqc.activation_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
+
+
+class ChangeFinalActivationQuantConfigAttr(BaseAction):
+    """
+    Class ChangeFinalActivationQuantConfigAttr to change attributes in a node's quant_config.
+    """
+
+    def __init__(self, **kwargs):
+        """
+        Init a ChangeFinalActivationQuantConfigAttr object.
+
+        Args:
+            kwargs: dict of attr_name and attr_value to change in the node's quant_config.
+        """
+        self.kwargs = kwargs
+
+    def apply(self, node: BaseNode, graph, fw_info):
+        if node.final_activation_quantization_cfg is not None:
+            for attr_name, attr_value in self.kwargs.items():
+                node.final_activation_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
 
 
 class ChangeQuantizationParamFunction(BaseAction):

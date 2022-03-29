@@ -178,7 +178,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
 
     candidates = []
     if isinstance(qc, MixedPrecisionQuantizationConfig):
-        qc.n_bits_candidates.sort(reverse=True)  # TODO: will sort tuples by first element (weights), is that what we want?
+        qc.n_bits_candidates.sort(reverse=True)
         for weights_n_bits, activation_n_bits in qc.n_bits_candidates:
             candidate_nbits_qc = copy.deepcopy(qc)
             candidate_nbits_qc.weights_n_bits = weights_n_bits

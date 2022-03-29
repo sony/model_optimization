@@ -76,14 +76,6 @@ class SelectiveWeightsQuantizeConfig(QuantizeConfig):
         self.weight_quantizers = [SelectiveQuantizer(node_q_cfg,
                                                      float_weight=float_weight) for float_weight in float_weights]
 
-    def get_candidate_nbits(self) -> List[int]:
-        """
-
-        Returns: All possible number of bits the SelectiveWeightsQuantizeConfig holds.
-
-        """
-        return [x.weights_quantization_cfg.weights_n_bits for x in self.node_q_cfg]
-
     def set_bit_width_index(self,
                             index: int,
                             attr: str=None):
