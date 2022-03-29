@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from keras.layers import Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense, BatchNormalization, ReLU, Activation
 
 from model_compression_toolkit.common.hardware_representation.hardware2framework import \
     FrameworkHardwareModel, LayerFilterParams
@@ -21,6 +20,10 @@ from model_compression_toolkit.common.hardware_representation.hardware2framework
 from model_compression_toolkit.hardware_models.qnnpack import get_qnnpack_model
 
 import tensorflow as tf
+if tf.__version__ < "2.6":
+    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense, BatchNormalization, ReLU, Activation
+else:
+    from keras.layers import Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense, BatchNormalization, ReLU, Activation
 
 
 def get_qnnpack_tensorflow():

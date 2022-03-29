@@ -68,6 +68,7 @@ if __name__ == '__main__':
     # layers representation.
     hardware_model = mct.get_model('pytorch', 'default')
 
+
     # Create a model and quantize it using the representative_data_gen as the calibration images.
     # Set the number of calibration iterations to 20.
     model = mobilenet_v2(pretrained=True)
@@ -80,3 +81,5 @@ if __name__ == '__main__':
                                                                                 representative_data_gen,
                                                                                 fw_hw_model=hardware_model,
                                                                                 n_iter=20)
+
+

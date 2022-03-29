@@ -14,9 +14,13 @@
 # ==============================================================================
 
 import tensorflow as tf
-from keras import layers
-from keras.layers import Conv2D, Dense, Reshape, ZeroPadding2D, \
-    MaxPooling2D, ReLU, AveragePooling2D, Activation, DepthwiseConv2D
+if tf.__version__ < "2.6":
+    from tensorflow.keras.layers import Conv2D, Dense, Reshape, ZeroPadding2D, AveragePooling2D, Activation, DepthwiseConv2D, MaxPooling2D, ReLU, Add, Softmax, Concatenate, Multiply, Maximum, Minimum, BatchNormalization
+else:
+    from keras.layers import Conv2D, Dense, Reshape, ZeroPadding2D, AveragePooling2D, Activation, DepthwiseConv2D, MaxPooling2D, ReLU, Add, Softmax, Concatenate, Multiply, Maximum, Minimum, BatchNormalization
+
+
+from tensorflow.python.keras.layers.core import SlicingOpLambda
 from tensorflow.python.ops.image_ops_impl import ResizeMethod
 
 from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
@@ -33,10 +37,10 @@ def get_keras_hardware_model_tflite():
     with tflite_keras:
         OperationsSetToLayers("PreserveQuantizationParams", [AveragePooling2D,
                                                              tf.nn.avg_pool2d,
-                                                             layers.Concatenate,
+                                                             Concatenate,
                                                              tf.concat,
                                                              MaxPooling2D,
-                                                             layers.Multiply,
+                                                             Multiply,
                                                              tf.multiply,
                                                              Reshape,
                                                              tf.reshape,
@@ -49,12 +53,12 @@ def get_keras_hardware_model_tflite():
                                                              tf.space_to_batch_nd,
                                                              tf.transpose,
                                                              tf.maximum,
-                                                             layers.Maximum,
+                                                             Maximum,
                                                              tf.minimum,
-                                                             layers.Minimum,
+                                                             Minimum,
                                                              tf.pad,
                                                              tf.slice,
-                                                             layers.SlicingOpLambda])
+                                                             SlicingOpLambda])
 
         OperationsSetToLayers("FullyConnected", [Dense])
         OperationsSetToLayers("L2Normalization", [tf.math.l2_normalize])
@@ -63,7 +67,7 @@ def get_keras_hardware_model_tflite():
                                        LayerFilterParams(Activation, activation="tanh")])
 
         OperationsSetToLayers("Softmax", [tf.nn.softmax,
-                                          layers.Softmax,
+                                          Softmax,
                                           LayerFilterParams(Activation, activation="softmax")])
 
         OperationsSetToLayers("Logistic", [tf.sigmoid,
@@ -80,14 +84,13 @@ def get_keras_hardware_model_tflite():
         OperationsSetToLayers("Elu", [tf.nn.elu,
                                       LayerFilterParams(Activation, activation="elu")])
 
-        OperationsSetToLayers("BatchNorm", [layers.BatchNormalization,
+        OperationsSetToLayers("BatchNorm", [BatchNormalization,
                                             tf.nn.batch_normalization])
 
         OperationsSetToLayers("Squeeze", [tf.squeeze])
         OperationsSetToLayers("BiasAdd", [tf.nn.bias_add])
         OperationsSetToLayers("Add", [tf.add,
-                                      layers.Add])
+                                      Add])
 
     return tflite_keras
-
 

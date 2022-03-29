@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>MCT Quickstart Guideline for Pytorch models &#8212; MCT Documentation: ver 1.2.0</title>
+    <title>MCT Quickstart Guideline for Pytorch models &#8212; MCT Documentation: ver 1.3.0</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="quickstart_keras.html" title="MCT Quickstart Guideline for Keras models"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.3.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">MCT Quickstart Guideline for Pytorch models</a></li> 
       </ul>
     </div>  
@@ -114,8 +114,22 @@
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
+<p>Get a FrameworkHardwareModel:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+    <span class="c1"># Get a HardwareModel object that models the hardware for the quantized model inference.</span>
+    <span class="c1"># The model determines the quantization methods to use during the MCT optimization process.</span>
+    <span class="c1"># Here, for example, we use the default model that is attached to a Pytorch</span>
+    <span class="c1"># layers representation.</span>
+    <span class="n">hardware_model</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s1">&#39;pytorch&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">)</span>
+
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
 <p>Run Post Training Quantization:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+    <span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
     <span class="c1"># Set the number of calibration iterations to 20.</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">mobilenet_v2</span><span class="p">(</span><span class="n">pretrained</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># set quantization configuration</span>
@@ -125,7 +139,9 @@
     <span class="c1"># run post training quantization on the model to get the quantized model output</span>
     <span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">pytorch_post_training_quantization</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
                                                                                 <span class="n">representative_data_gen</span><span class="p">,</span>
+                                                                                <span class="n">fw_hw_model</span><span class="o">=</span><span class="n">hardware_model</span><span class="p">,</span>
                                                                                 <span class="n">n_iter</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+
 </pre></div>
 </div>
 </section>
@@ -173,7 +189,7 @@
         <li class="right" >
           <a href="quickstart_keras.html" title="MCT Quickstart Guideline for Keras models"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.3.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">MCT Quickstart Guideline for Pytorch models</a></li> 
       </ul>
     </div>

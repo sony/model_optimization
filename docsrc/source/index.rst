@@ -64,6 +64,7 @@ Keras:
 Pytorch (Experimental):
 
 * :ref:`Hardware-friendly Post Training Quantization<ug-pytorch_post_training_quantization>` [1]
+* :ref:`Mixed-precision post training quantization<ug-pytorch_post_training_quantization_mixed_precision>`
 
 Visualization:
 

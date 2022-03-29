@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>FrameworkInfo Class &#8212; MCT Documentation: ver 1.2.0</title>
+    <title>FrameworkInfo Class &#8212; MCT Documentation: ver 1.3.0</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
@@ -30,7 +30,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.3.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">FrameworkInfo Class</a></li> 
       </ul>
     </div>  
@@ -59,8 +59,8 @@ no_quantization_ops:Layers that should not get quantized (e.g., Reshape, Transpo
 <li><p><strong>kernel_ops</strong> (<em>list</em>) – A list of operators that are in the kernel_ops group.</p></li>
 <li><p><strong>activation_ops</strong> (<em>list</em>) – A list of operators that are in the activation_ops group.</p></li>
 <li><p><strong>no_quantization_ops</strong> (<em>list</em>) – A list of operators that are in the no_quantization_ops group.</p></li>
-<li><p><strong>activation_quantizer_mapping</strong> (<em>Dict</em><em>[</em><a class="reference internal" href="../modules/quantization_config.html#model_compression_toolkit.QuantizationMethod" title="model_compression_toolkit.QuantizationMethod"><em>QuantizationMethod</em></a><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
-<li><p><strong>weights_quantizer_mapping</strong> (<em>Dict</em><em>[</em><a class="reference internal" href="../modules/quantization_config.html#model_compression_toolkit.QuantizationMethod" title="model_compression_toolkit.QuantizationMethod"><em>QuantizationMethod</em></a><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
+<li><p><strong>activation_quantizer_mapping</strong> (<em>Dict</em><em>[</em><a class="reference internal" href="../modules/hardware_representation.html#model_compression_toolkit.hardware_representation.QuantizationMethod" title="model_compression_toolkit.hardware_representation.QuantizationMethod"><em>QuantizationMethod</em></a><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
+<li><p><strong>weights_quantizer_mapping</strong> (<em>Dict</em><em>[</em><a class="reference internal" href="../modules/hardware_representation.html#model_compression_toolkit.hardware_representation.QuantizationMethod" title="model_compression_toolkit.hardware_representation.QuantizationMethod"><em>QuantizationMethod</em></a><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
 <li><p><strong>kernel_channels_mapping</strong> (<a class="reference internal" href="DefaultDict.html#model_compression_toolkit.DefaultDict" title="model_compression_toolkit.DefaultDict"><em>DefaultDict</em></a>) – Dictionary from a layer to a tuple of its kernel in/out channels indices.</p></li>
 <li><p><strong>activation_min_max_mapping</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>]</em>) – Dictionary from an activation function to its min/max output values.</p></li>
 <li><p><strong>layer_min_max_mapping</strong> (<em>Dict</em><em>[</em><em>Any</em><em>, </em><em>tuple</em><em>]</em>) – Dictionary from a layer to its min/max output values.</p></li>
@@ -158,7 +158,7 @@ set, and we know it’s kernel out/in channel indices are (3, 2) respectivly:</p
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.3.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">FrameworkInfo Class</a></li> 
       </ul>
     </div>

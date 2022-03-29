@@ -33,9 +33,18 @@ Initialize data loader:
 
 |
 
+Get a FrameworkHardwareModel:
+
+.. literalinclude:: ../../../tutorials/example_pytorch_mobilenet_v2.py
+    :language: python
+    :lines: 64-70
+
+|
+
+
 Run Post Training Quantization:
 
 .. literalinclude:: ../../../tutorials/example_pytorch_mobilenet_v2.py
     :language: python
-    :lines: 65-75
+    :lines: 71-84
 
