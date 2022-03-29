@@ -125,10 +125,10 @@ def update_linear_nodes(graph:Graph,
     first_op2d_node.set_weights_by_keys(KERNEL, w1_fixed)
     second_op2d_node.set_weights_by_keys(KERNEL, w2_fixed)
 
-    for nqc in first_op2d_node.candidates_weights_quantization_cfg:
-        nqc.calculate_and_set_weights_params(w1_fixed)
-    for nqc in second_op2d_node.candidates_weights_quantization_cfg:
-        nqc.calculate_and_set_weights_params(w2_fixed)
+    for nqc in first_op2d_node.candidates_quantization_cfg:
+        nqc.weights_quantization_cfg.calculate_and_set_weights_params(w1_fixed)
+    for nqc in second_op2d_node.candidates_quantization_cfg:
+        nqc.weights_quantization_cfg.calculate_and_set_weights_params(w2_fixed)
 
 
 def calculate_scale_correction(graph: Graph,
@@ -149,7 +149,13 @@ def calculate_scale_correction(graph: Graph,
     """
 
     tensor_stat = graph.get_out_stats_collector(activation_node)
-    threshold = activation_node.activation_quantization_cfg.activation_quantization_params.get(THRESHOLD)
+
+    if not activation_node.is_all_activation_candidates_equal():
+        raise Exception("Scale equalization is not supported for more than one activation quantization configuration "
+                        "candidate")
+
+    # all candidates have same activation config, so taking the first candidate for calculations
+    threshold = activation_node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params.get(THRESHOLD)
 
     max_vector = np.max(np.stack([tensor_stat.mpcc.max_per_channel, np.abs(tensor_stat.mpcc.min_per_channel)], axis=-1),
                         axis=-1)

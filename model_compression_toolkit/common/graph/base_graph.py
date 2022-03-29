@@ -506,6 +506,6 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         for n in sorted_nodes:
             if n.is_weights_quantization_enabled():
                 if not n.reuse or include_reused_nodes:
-                    if len(n.candidates_weights_quantization_cfg) >= 1:
+                    if len(n.candidates_quantization_cfg) >= 1:
                         sorted_configurable_nodes.append(n)
         return sorted_configurable_nodes

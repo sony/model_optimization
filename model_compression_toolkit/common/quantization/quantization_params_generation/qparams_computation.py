@@ -55,32 +55,36 @@ def calculate_quantization_params(graph: Graph,
         weights_params, activation_params, activation_is_signed, output_channels_axis, \
         input_channels_axis, activation_threshold_float = {}, {}, None, None, None, None
 
-        if fw_info.in_kernel_ops(n):  # If the node has a kernel to quantize
-            if n.is_weights_quantization_enabled():
-                for candidtae_qc in n.candidates_weights_quantization_cfg:
-                    output_channels_axis, _ = get_channels_axis(candidtae_qc, fw_info, n.type)
+        for candidate_qc in n.candidates_quantization_cfg:
+            if fw_info.in_kernel_ops(n):  # If the node has a kernel to quantize
+                if n.is_weights_quantization_enabled():
+                    output_channels_axis, _ = get_channels_axis(candidate_qc.weights_quantization_cfg, fw_info, n.type)
                     weights_params = get_weights_qparams(n.get_weights_by_keys(fw_impl.constants.KERNEL),
-                                                         candidtae_qc,
+                                                         candidate_qc.weights_quantization_cfg,
                                                          output_channels_axis)
 
-                    candidtae_qc.set_weights_quantization_param(weights_params)
-                    candidtae_qc.weights_channels_axis = output_channels_axis
+                    candidate_qc.weights_quantization_cfg.set_weights_quantization_param(weights_params)
+                    candidate_qc.weights_quantization_cfg.weights_channels_axis = output_channels_axis
 
-            if n.is_activation_quantization_enabled():  # If node's activations should be quantized as well, we compute its
-                # activation threshold
-                activation_params = get_activations_qparams(n=n, graph=graph)
+                if n.is_activation_quantization_enabled():
+                    # If node's activations should be quantized as well, we compute its activation threshold
+                    activation_params = get_activations_qparams(activation_quant_cfg=candidate_qc.activation_quantization_cfg,
+                                                                nodes_prior_info=n.prior_info,
+                                                                out_stats_container=graph.get_out_stats_collector(n))
 
-        elif fw_info.in_activation_ops(n):  # If node has no kernel, but its activations should be quantized
+            elif fw_info.in_activation_ops(n):  # If node has no kernel, but its activations should be quantized
+                if n.is_activation_quantization_enabled():
+                    activation_params = get_activations_qparams(activation_quant_cfg=candidate_qc.activation_quantization_cfg,
+                                                                nodes_prior_info=n.prior_info,
+                                                                out_stats_container=graph.get_out_stats_collector(n))
+            # If node should not be quantized at all
+            elif fw_info.in_no_quantization_ops(n):
+                pass  # pragma: no cover
+
+            # Create a NodeQuantizationConfig containing all quantization params and attach it to the node
             if n.is_activation_quantization_enabled():
-                activation_params = get_activations_qparams(n=n, graph=graph)
-        # If node should not be quantized at all
-        elif fw_info.in_no_quantization_ops(n):
-            pass  # pragma: no cover
+                candidate_qc.activation_quantization_cfg.set_activation_quantization_param(activation_params)
 
         # If layer type is not in framework info, log a warning.
-        else:
+        if not fw_info.in_no_quantization_ops(n) and not fw_info.in_activation_ops(n) and not fw_info.in_kernel_ops(n):
             Logger.warning(f"Warning: unknown layer: {n.type.__name__}")
-
-        # Create a NodeQuantizationConfig containing all quantization params and attach it to the node
-        if n.is_activation_quantization_enabled():
-            n.activation_quantization_cfg.set_activation_quantization_param(activation_params)

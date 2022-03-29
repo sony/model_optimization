@@ -147,10 +147,10 @@ class TestUniformRangeSelectionWeights(unittest.TestCase):
                                                                       keras_impl)
 
         nodes_list = list(graph.nodes)
-        conv1_min = nodes_list[0].candidates_weights_quantization_cfg[0].weights_quantization_params[RANGE_MIN].flatten()
-        conv2_min = nodes_list[1].candidates_weights_quantization_cfg[0].weights_quantization_params[RANGE_MIN].flatten()
-        conv1_max = nodes_list[0].candidates_weights_quantization_cfg[0].weights_quantization_params[RANGE_MAX].flatten()
-        conv2_max = nodes_list[1].candidates_weights_quantization_cfg[0].weights_quantization_params[RANGE_MAX].flatten()
+        conv1_min = nodes_list[0].candidates_quantization_cfg[0].weights_quantization_cfg.weights_quantization_params[RANGE_MIN].flatten()
+        conv2_min = nodes_list[1].candidates_quantization_cfg[0].weights_quantization_cfg.weights_quantization_params[RANGE_MIN].flatten()
+        conv1_max = nodes_list[0].candidates_quantization_cfg[0].weights_quantization_cfg.weights_quantization_params[RANGE_MAX].flatten()
+        conv2_max = nodes_list[1].candidates_quantization_cfg[0].weights_quantization_cfg.weights_quantization_params[RANGE_MAX].flatten()
 
         for range_min, range_max in list(zip(conv1_min, conv1_max)):
             self.assertTrue(range_min <= 0 <= range_max,

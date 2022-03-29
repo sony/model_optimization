@@ -125,7 +125,8 @@ if importlib.util.find_spec("torch") is not None:
          statistics. Then, using an ILP solver we find a mixed-precision configuration, and set a bit width
          for each layer. The model is then quantized (both coefficients and activations by default).
          In order to limit the maximal model's size, a target KPI can be passed after weights_memory
-         is set (in bytes).
+         is set (in bytes). If a target KPI wasn't passed, then the first number of bits configuration in quant_config
+         will be used for non-mixed-precision quantization.
          If a gptq configuration is passed, the quantized weights are optimized using gradient based post
          training quantization by comparing points between the float and quantized models, and minimizing the observed loss.
          Notice that this feature is experimental.
@@ -179,10 +180,16 @@ if importlib.util.find_spec("torch") is not None:
 
          """
         if target_kpi is None:
-            common.Logger.warning("No KPI was passed. Using non mixed-precision compression process...")
             # Before starting non-mixed-precision process, we need to set only single bit width, so we take the best
             # option which is the maximal number of bits.
-            quant_config.weights_n_bits = [max(quant_config.weights_n_bits)]
+            single_bitwidth_candidate = quant_config.n_bits_candidates[0]
+            quant_config.weights_n_bits = [single_bitwidth_candidate[0]]
+            quant_config.activation_n_bits = [single_bitwidth_candidate[1]]
+            quant_config.n_bits_candidates = [single_bitwidth_candidate]
+            common.Logger.warning(
+                f"No KPI was passed. Using non mixed-precision compression process with "
+                f"weights_n_bits={quant_config.weights_n_bits} "
+                f"and activation_n_bits={quant_config.activation_n_bits}...")
             return pytorch_post_training_quantization(in_model,
                                                       representative_data_gen,
                                                       n_iter,

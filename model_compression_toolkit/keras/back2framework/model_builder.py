@@ -122,8 +122,8 @@ def run_operation(n: BaseNode,
         n: The corresponding node of the layer it runs.
         input_tensors: List of references to Keras tensors that are the layer's inputs.
         op_func: Layer to apply to the input tensors.
-        input_nodes_to_input_tensors: A dictionary from an node to its input tensors.
-        mode: model quantiztion mode from ModelBuilderMode
+        input_nodes_to_input_tensors: A dictionary from a node to its input tensors.
+        mode: model quantization mode from ModelBuilderMode
 
     Returns:
         A list of references to Keras tensors. The layer's output tensors after applying the
@@ -134,10 +134,15 @@ def run_operation(n: BaseNode,
         out_tensors_of_n_float = input_nodes_to_input_tensors[n]
         out_tensors_of_n = out_tensors_of_n_float
         if n.is_activation_quantization_enabled():
-            if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ, ModelBuilderMode.MIXEDPRECISION]:
+            if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ] and n.final_activation_quantization_cfg:
                 # Adding a fake quant node to Input when in GPTQ mode because quantize_model doesn't quantize the
                 # input layer
-                out_tensors_of_n = n.activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
+                out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
+            elif mode in [ModelBuilderMode.MIXEDPRECISION]:
+                # TODO: refactor after implementing activations mixed precision
+                assert n.is_all_activation_candidates_equal()
+                out_tensors_of_n = n.candidates_quantization_cfg[0].activation_quantization_cfg.quantize_node_output(
+                    out_tensors_of_n_float)
 
     else:
         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
@@ -157,8 +162,14 @@ def run_operation(n: BaseNode,
 
         # Add a fake quant node if the node has an activation threshold.
         if n.is_activation_quantization_enabled():
-            if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.MIXEDPRECISION, ModelBuilderMode.GPTQ]:
-                out_tensors_of_n = n.activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
+            if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ] and n.final_activation_quantization_cfg:
+                out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
+            elif mode in [ModelBuilderMode.MIXEDPRECISION]:
+                # TODO: refactor after implementing activations mixed precision
+                assert n.is_all_activation_candidates_equal()
+                out_tensors_of_n = n.candidates_quantization_cfg[0].activation_quantization_cfg.quantize_node_output(
+                    out_tensors_of_n_float)
+
     return out_tensors_of_n, out_tensors_of_n_float
 
 

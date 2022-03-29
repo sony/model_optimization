@@ -201,8 +201,10 @@ class TensorboardWriter(object):
                 Dictionary containing attributes to display.
             """
             attr = dict()
-            if n.activation_quantization_cfg is not None:
-                attr.update(n.activation_quantization_cfg.__dict__)
+            if n.final_activation_quantization_cfg is not None:
+                attr.update(n.final_activation_quantization_cfg.__dict__)
+            elif n.candidates_quantization_cfg is not None:
+                attr.update(n.get_unified_activation_candidates_dict())
             return attr
 
         def __get_node_weights_attr(n: BaseNode) -> Dict[str, Any]:
@@ -223,8 +225,8 @@ class TensorboardWriter(object):
             attr = dict()
             if n.final_weights_quantization_cfg is not None:
                 attr.update(n.final_weights_quantization_cfg.__dict__)
-            elif n.candidates_weights_quantization_cfg is not None:
-                attr.update(n.get_unified_candidates_dict())
+            elif n.candidates_quantization_cfg is not None:
+                attr.update(n.get_unified_weights_candidates_dict())
             return attr
 
         def __get_node_attr(n: BaseNode) -> Dict[str, Any]:

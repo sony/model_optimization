@@ -36,7 +36,7 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
                                     weights_per_channel_threshold=True, input_scaling=True,
                                     activation_channel_equalization=True)
 
-        return MixedPrecisionQuantizationConfig(qc, weights_n_bits=[2, 16, 4])
+        return MixedPrecisionQuantizationConfig(qc, n_bits_candidates=[(2, 16), (16, 16), (4, 16)])
 
     def create_networks(self):
         layer = layers.Conv2D(3, 4)

@@ -46,11 +46,12 @@ NUM_SAMPLES_CS_TENSORBOARD = 20
 # num bits for shift negative non linear node
 SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS = 16
 
-# In Mixed-Precision, a node can have multiple candidates for weights quantization configuration.
+# In Mixed-Precision, a node can have multiple candidates for weights and activations quantization configuration.
 # In order to display a single view of a node (for example, for logging in TensorBoard) we need to track the attributes
 # that are shared among different candidates:
 WEIGHTS_NBITS_ATTRIBUTE = 'weights_n_bits'
 CORRECTED_BIAS_ATTRIBUTE = 'corrected_bias'
+ACTIVATION_NBITS_ATTRIBUTE = 'activation_n_bits'
 
 
 # Quantization Parameters Iterative Search Defaults:

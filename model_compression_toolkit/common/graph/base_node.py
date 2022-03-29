@@ -18,7 +18,8 @@ from typing import Dict, Any, Tuple
 
 import numpy as np
 
-from model_compression_toolkit.common.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE
+from model_compression_toolkit.common.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
+    ACTIVATION_NBITS_ATTRIBUTE
 
 
 class BaseNode:
@@ -59,9 +60,9 @@ class BaseNode:
         self.layer_class = layer_class
         self.reuse = reuse
         self.reuse_group = reuse_group
-        self.activation_quantization_cfg = None
         self.final_weights_quantization_cfg = None
-        self.candidates_weights_quantization_cfg = None
+        self.final_activation_quantization_cfg = None
+        self.candidates_quantization_cfg = None
         self.prior_info = None
 
     @property
@@ -78,7 +79,10 @@ class BaseNode:
         Returns: Whether node activation quantization is enabled or not.
 
         """
-        return self.activation_quantization_cfg.enable_activation_quantization
+        for qc in self.candidates_quantization_cfg:
+            assert self.candidates_quantization_cfg[0].activation_quantization_cfg.enable_activation_quantization == \
+                   qc.activation_quantization_cfg.enable_activation_quantization
+        return self.candidates_quantization_cfg[0].activation_quantization_cfg.enable_activation_quantization
 
     def is_weights_quantization_enabled(self) -> bool:
         """
@@ -86,9 +90,10 @@ class BaseNode:
         Returns: Whether node weights quantization is enabled or not.
 
         """
-        for qc in self.candidates_weights_quantization_cfg:
-            assert self.candidates_weights_quantization_cfg[0].enable_weights_quantization == qc.enable_weights_quantization
-        return self.candidates_weights_quantization_cfg[0].enable_weights_quantization
+        for qc in self.candidates_quantization_cfg:
+            assert self.candidates_quantization_cfg[0].weights_quantization_cfg.enable_weights_quantization == \
+                   qc.weights_quantization_cfg.enable_weights_quantization
+        return self.candidates_quantization_cfg[0].weights_quantization_cfg.enable_weights_quantization
 
     def __repr__(self):
         """
@@ -184,7 +189,7 @@ class BaseNode:
 
         return memory
 
-    def get_unified_candidates_dict(self):
+    def get_unified_weights_candidates_dict(self):
         """
         In Mixed-Precision, a node can have multiple candidates for weights quantization configuration.
         In order to display a single view of a node (for example, for logging in TensorBoard) we need a way
@@ -197,12 +202,58 @@ class BaseNode:
         shared_attributes = [CORRECTED_BIAS_ATTRIBUTE, WEIGHTS_NBITS_ATTRIBUTE]
         attr = dict()
         if self.is_weights_quantization_enabled():
-            attr = copy.deepcopy(self.candidates_weights_quantization_cfg[0].__dict__)
+            attr = copy.deepcopy(self.candidates_quantization_cfg[0].weights_quantization_cfg.__dict__)
             for shared_attr in shared_attributes:
                 if shared_attr in attr:
                     unified_attr = []
-                    for candidate in self.candidates_weights_quantization_cfg:
-                        unified_attr.append(getattr(candidate, shared_attr))
+                    for candidate in self.candidates_quantization_cfg:
+                        unified_attr.append(getattr(candidate.weights_quantization_cfg, shared_attr))
                     attr[shared_attr] = unified_attr
         return attr
+
+    def get_unified_activation_candidates_dict(self):
+        """
+        In Mixed-Precision, a node can have multiple candidates for activation quantization configuration.
+        In order to display a single view of a node (for example, for logging in TensorBoard) we need a way
+        to create a single dictionary from all candidates.
+        This method is aimed to build such an unified dictionary for a node.
+
+        Returns: A dictionary containing information from node's activation quantization configuration candidates.
+
+        """
+        shared_attributes = [ACTIVATION_NBITS_ATTRIBUTE]
+        attr = dict()
+        if self.is_weights_quantization_enabled():
+            attr = copy.deepcopy(self.candidates_quantization_cfg[0].activation_quantization_cfg.__dict__)
+            for shared_attr in shared_attributes:
+                if shared_attr in attr:
+                    unified_attr = []
+                    for candidate in self.candidates_quantization_cfg:
+                        unified_attr.append(getattr(candidate.activation_quantization_cfg, shared_attr))
+                    attr[shared_attr] = unified_attr
+        return attr
+
+    def is_all_activation_candidates_equal(self):
+        """
+        Checks whether all candidates' quantization configuration have the same activation configuration,
+        using the self-implemented __eq__ method of class NodeActivationQuantizationConfig.
+
+        Returns: True if all candidates have same activation configuration, False otherwise.
+
+        """
+        return all(candidate.activation_quantization_cfg ==
+                   self.candidates_quantization_cfg[0].activation_quantization_cfg
+                   for candidate in self.candidates_quantization_cfg)
+
+    def is_all_weights_candidates_equal(self):
+        """
+        Checks whether all candidates' quantization configuration have the same weights configuration,
+        using the self-implemented __eq__ method of class NodeWeightsQuantizationConfig.
+
+        Returns: True if all candidates have same weights configuration, False otherwise.
+
+        """
+        return all(candidate.weights_quantization_cfg ==
+                   self.candidates_quantization_cfg[0].weights_quantization_cfg
+                   for candidate in self.candidates_quantization_cfg)
 

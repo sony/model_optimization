@@ -16,60 +16,63 @@ import numpy as np
 from typing import Tuple, Dict
 
 from model_compression_toolkit.common.hardware_representation import QuantizationMethod
-from model_compression_toolkit.common import BaseNode, Graph
+from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.common.constants import SIGNED
 from model_compression_toolkit.common.quantization import quantization_params_generation
+from model_compression_toolkit.common.node_prior_info import NodePriorInfo
+from model_compression_toolkit.common.quantization.node_quantization_config import NodeActivationQuantizationConfig
 
 
-def get_activations_qparams(n: BaseNode,
-                            graph: Graph) -> Dict[str, float]:
+def get_activations_qparams(activation_quant_cfg: NodeActivationQuantizationConfig,
+                            nodes_prior_info: NodePriorInfo,
+                            out_stats_container: BaseStatsCollector) -> Dict[str, float]:
     """
     Compute the activations params for a given node in a graph according to a params function.
 
     Args:
-        n: Node to compute its' activations threshold.
-        graph: Graph the node is in.
+        activation_quant_cfg: node's activation quantization configuration.
+        nodes_prior_info: Prior info collected for the node that is being quantized.
+        out_stats_container: Tensor containing output statistics of the node.
 
     Returns:
         The computed activation quantization params.
     """
 
-    out_stats_container = graph.get_out_stats_collector(n)
     bins_values, bins_counts = None, None
 
     # If the statistics container collected the histogram, we start by filtering outliers using z threshold
     # filtering, and then computing the threshold based on the filtered histogram.
     if out_stats_container.require_collection():
         bins_values, bins_counts = out_stats_container.hc.get_histogram()
-        bins_counts = quantization_params_generation.z_score_filter(n.activation_quantization_cfg.z_threshold,
+        bins_counts = quantization_params_generation.z_score_filter(activation_quant_cfg.z_threshold,
                                                                     bins_values,
                                                                     bins_counts)
     min_value, max_value = out_stats_container.get_min_max_values()
 
-    if n.prior_info.is_output_bounded():
+    if nodes_prior_info.is_output_bounded():
         signed = min_value < 0
     else:
-        signed = np.any(bins_values < 0)
+        signed = np.any(bins_values[:-1][bins_counts > 0] < 0)
 
-    if n.prior_info.is_output_bounded():
-        if n.activation_quantization_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
-            n.activation_quantization_cfg.activation_quantization_params_fn = \
+    if nodes_prior_info.is_output_bounded():
+        if activation_quant_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
+            activation_quant_cfg.activation_quantization_params_fn = \
                 quantization_params_generation.no_clipping_selection_min_max
-        elif n.activation_quantization_cfg.activation_quantization_method == QuantizationMethod.SYMMETRIC:
-            n.activation_quantization_cfg.activation_quantization_params_fn = \
+        elif activation_quant_cfg.activation_quantization_method == QuantizationMethod.SYMMETRIC:
+            activation_quant_cfg.activation_quantization_params_fn = \
                 quantization_params_generation.symmetric_no_clipping_selection_min_max
-        elif n.activation_quantization_cfg.activation_quantization_method == QuantizationMethod.UNIFORM:
-            n.activation_quantization_cfg.activation_quantization_params_fn = \
+        elif activation_quant_cfg.activation_quantization_method == QuantizationMethod.UNIFORM:
+            activation_quant_cfg.activation_quantization_params_fn = \
                 quantization_params_generation.uniform_no_clipping_selection_min_max
 
-    activation_params = n.activation_quantization_cfg.activation_quantization_params_fn(bins_values,
-                                                                                        bins_counts,
-                                                                                        n.activation_quantization_cfg.l_p_value,
-                                                                                        n.activation_quantization_cfg.activation_n_bits,
-                                                                                        min_value,
-                                                                                        max_value,
-                                                                                        min_threshold=n.activation_quantization_cfg.min_threshold,
-                                                                                        quant_error_method=n.activation_quantization_cfg.activation_error_method)
+    activation_params = activation_quant_cfg.activation_quantization_params_fn(bins_values,
+                                                                               bins_counts,
+                                                                               activation_quant_cfg.l_p_value,
+                                                                               activation_quant_cfg.activation_n_bits,
+                                                                               min_value,
+                                                                               max_value,
+                                                                               min_threshold=activation_quant_cfg.min_threshold,
+                                                                               quant_error_method=activation_quant_cfg.activation_error_method)
     activation_params.update({SIGNED: signed})
 
     return activation_params

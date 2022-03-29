@@ -14,7 +14,7 @@
 # ==============================================================================
 
 from enum import Enum
-from typing import List, Callable
+from typing import List, Callable, Tuple
 
 from model_compression_toolkit.common.mixed_precision.distance_weighting import get_average_weights
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig, DEFAULTCONFIG
@@ -25,7 +25,7 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
 
     def __init__(self,
                  qc: QuantizationConfig = DEFAULTCONFIG,
-                 weights_n_bits: List[int] = None,
+                 n_bits_candidates: List[Tuple[int, int]] = None,
                  compute_distance_fn: Callable = compute_mse,
                  distance_weighting_method: Callable = get_average_weights,
                  num_of_images: int = 32,
@@ -37,7 +37,8 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
 
         Args:
             qc (QuantizationConfig): QuantizationConfig object containing parameters of how the model should be quantized.
-            weights_n_bits (List[int]): List of possible number of bits to quantize the coefficients.
+            n_bits_candidates (List[Tuple[int, int]]): List of possible number of bits to quantize the coefficients and
+                activations (Tuple of (weights n_bits, activations n_bits)).
             compute_distance_fn (Callable): Function to compute a distance between two tensors.
             distance_weighting_method (Callable): Function to use when weighting the distances among different layers when computing the sensitivity metric.
             num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
@@ -46,7 +47,8 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
         """
 
         super().__init__(**qc.__dict__)
-        self.weights_n_bits = weights_n_bits if weights_n_bits is not None else [qc.weights_n_bits]
+        self.n_bits_candidates = n_bits_candidates if n_bits_candidates is not None else [(qc.weights_n_bits,
+                                                                                           qc.activation_n_bits)]
         self.compute_distance_fn = compute_distance_fn
         self.distance_weighting_method = distance_weighting_method
         self.num_of_images = num_of_images
@@ -55,6 +57,6 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
 
 # Default quantization configuration the library use.
 DEFAULT_MIXEDPRECISION_CONFIG = MixedPrecisionQuantizationConfig(DEFAULTCONFIG,
-                                                                 [2, 4, 8],
+                                                                 [(2, 8), (4, 8), (8, 8)],  # mixed precision only for weights
                                                                  compute_mse,
                                                                  get_average_weights)

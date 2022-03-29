@@ -44,7 +44,7 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
                                     input_scaling=True,
                                     activation_channel_equalization=True)
 
-        return MixedPrecisionQuantizationConfig(qc, weights_n_bits=[2, 8, 4], num_of_images=1)
+        return MixedPrecisionQuantizationConfig(qc, n_bits_candidates=[(2, 8), (8, 8), (4, 8)], num_of_images=1)
 
     def get_bit_widths_config(self):
         return None
@@ -180,4 +180,4 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
                                     input_scaling=False,
                                     activation_channel_equalization=False)
 
-        return MixedPrecisionQuantizationConfig(qc, weights_n_bits=[2, 8, 4, 16])
+        return MixedPrecisionQuantizationConfig(qc, n_bits_candidates=[(2, 16), (8, 16), (4, 16), (16, 16)])
