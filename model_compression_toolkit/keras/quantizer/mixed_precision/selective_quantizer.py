@@ -43,7 +43,7 @@ class SelectiveQuantizer(Quantizer):
         Init a selective quantizer.
 
         Args:
-            node_q_cfg: Quantization configuration candidate of the node that generated the layer that will
+            node_q_cfg: Quantization configuration candidates of the node that generated the layer that will
                 use this quantizer.
             float_weight: Float weights of the layer.
         """

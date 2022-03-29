@@ -81,10 +81,10 @@ def calculate_quantization_params(graph: Graph,
             elif fw_info.in_no_quantization_ops(n):
                 pass  # pragma: no cover
 
-            # If layer type is not in framework info, log a warning.
-            else:
-                Logger.warning(f"Warning: unknown layer: {n.type.__name__}")
-
             # Create a NodeQuantizationConfig containing all quantization params and attach it to the node
             if n.is_activation_quantization_enabled():
                 candidate_qc.activation_quantization_cfg.set_activation_quantization_param(activation_params)
+
+        # If layer type is not in framework info, log a warning.
+        if not fw_info.in_no_quantization_ops(n) and not fw_info.in_activation_ops(n) and not fw_info.in_kernel_ops(n):
+            Logger.warning(f"Warning: unknown layer: {n.type.__name__}")
