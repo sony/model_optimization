@@ -75,21 +75,19 @@ class BaseAction(ABC):
 
 class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
     """
-    Class ChangeCandidatesWeightsQuantConfigAttr to change attributes in a node's weights quantization configuration.
+    Change attributes in a layer's weights quantization configuration candidates.
     """
 
     def __init__(self, **kwargs):
         """
-        Init a ChangeCandidatesWeightsQuantConfigAttr object.
-
         Args:
-            kwargs: dict of attr_name and attr_value to change in the node's weights quantization configuration.
+            kwargs: Dictionary of attr_name and attr_value to change layer's weights quantization configuration candidates.
         """
         self.kwargs = kwargs
 
     def apply(self, node: BaseNode, graph, fw_info):
         """
-        Change the attribute 'attr_name' in quant_config with 'attr_value'.
+        Change the attribute 'attr_name' in weights quantization config candidates with 'attr_value'.
 
         Args:
             node: Node object to change its quant_config.
@@ -97,7 +95,7 @@ class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
             fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
                      groups of layers by how they should be quantized, etc.)
         Returns:
-            The node after its quant_config has been modified.
+            The node after its weights' quantization config candidates have been modified.
         """
         for nqc in node.candidates_quantization_cfg:
             for attr_name, attr_value in self.kwargs.items():
@@ -106,15 +104,13 @@ class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
 
 class ChangeFinalWeightsQuantConfigAttr(BaseAction):
     """
-    Class ChangeFinalWeightsQuantConfigAttr to change attributes in a node's quant_config.
+    Change attributes in a layer's final weights quantization config.
     """
 
     def __init__(self, **kwargs):
         """
-        Init a ChangeFinalWeightsQuantConfigAttr object.
-
         Args:
-            kwargs: dict of attr_name and attr_value to change in the node's quant_config.
+            kwargs: Dictionary of attr_name and attr_value to change layer's final weights quantization config.
         """
         self.kwargs = kwargs
 
@@ -126,21 +122,19 @@ class ChangeFinalWeightsQuantConfigAttr(BaseAction):
 
 class ChangeCandidatesActivationQuantConfigAttr(BaseAction):
     """
-    Class ChangeCandidatesActivationQuantConfigAttr to change attributes in a node's activation quantization configuration.
+    Change attributes in a layer's activation quantization configuration candidates.
     """
 
     def __init__(self, **kwargs):
         """
-        Init a ChangeCandidatesActivationQuantConfigAttr object.
-
         Args:
-            kwargs: dict of attr_name and attr_value to change in the node's activation quantization configuration.
+            kwargs: Dictionary of attr_name and attr_value to change in the layer's activation quantization configuration candidates.
         """
         self.kwargs = kwargs
 
     def apply(self, node: BaseNode, graph, fw_info):
         """
-        Change the attribute 'attr_name' in quant_config with 'attr_value'.
+        Change the attribute 'attr_name' in activation quantization configuration candidates with 'attr_value'.
 
         Args:
             node: Node object to change its quant_config.
@@ -148,7 +142,7 @@ class ChangeCandidatesActivationQuantConfigAttr(BaseAction):
             fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
                      groups of layers by how they should be quantized, etc.)
         Returns:q
-            The node after its quant_config has been modified.
+            The node after its activation quantization configuration candidates have been modified.
         """
         for nqc in node.candidates_quantization_cfg:
             for attr_name, attr_value in self.kwargs.items():
@@ -157,15 +151,13 @@ class ChangeCandidatesActivationQuantConfigAttr(BaseAction):
 
 class ChangeFinalActivationQuantConfigAttr(BaseAction):
     """
-    Class ChangeFinalActivationQuantConfigAttr to change attributes in a node's quant_config.
+    Change attributes in a layer's final activation quantization config.
     """
 
     def __init__(self, **kwargs):
         """
-        Init a ChangeFinalActivationQuantConfigAttr object.
-
         Args:
-            kwargs: dict of attr_name and attr_value to change in the node's quant_config.
+            kwargs: Dictionary of attr_name and attr_value to change layer's final activation quantization config.
         """
         self.kwargs = kwargs
 
