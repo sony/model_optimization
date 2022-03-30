@@ -57,7 +57,7 @@ def gptq_training_wrapper(tg: Graph,
     #########################################
     # Build two models and compare points
     #########################################
-    compare_points, _ = get_compare_points(tg)  # get compare points
+    compare_points, _, compare_points_mean, compare_points_std = get_compare_points(tg)  # get compare points
 
     float_model, float_user_info = model_builder(tg,
                                                  mode=ModelBuilderMode.FLOAT,
