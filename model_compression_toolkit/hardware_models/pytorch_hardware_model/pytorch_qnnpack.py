@@ -18,6 +18,7 @@ import torch
 from torch.nn import Conv2d, Linear, BatchNorm2d, ConvTranspose2d, Hardtanh, ReLU, ReLU6
 from torch.nn.functional import relu, relu6, hardtanh
 
+from model_compression_toolkit.common.hardware_representation import HardwareModel
 from model_compression_toolkit.common.hardware_representation.hardware2framework import \
     FrameworkHardwareModel, LayerFilterParams
 from model_compression_toolkit.common.hardware_representation.hardware2framework import \
@@ -27,8 +28,13 @@ from model_compression_toolkit.hardware_models.qnnpack import get_qnnpack_model
 
 def get_qnnpack_pytorch():
     qnnpackhm = get_qnnpack_model()
-    qnnpack_pytorch = FrameworkHardwareModel(qnnpackhm,
-                                             name='qnnpack_pytorch')
+    return generate_fhw_model_qnnpack_pytorch(name='qnnpack_tensorflow',
+                                              qnnpack_hm=qnnpackhm)
+
+
+def generate_fhw_model_qnnpack_pytorch(name: str, qnnpack_hm: HardwareModel):
+    qnnpack_pytorch = FrameworkHardwareModel(qnnpack_hm,
+                                             name=name)
 
     with qnnpack_pytorch:
         OperationsSetToLayers("Conv", [Conv2d,

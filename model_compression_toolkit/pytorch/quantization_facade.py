@@ -180,12 +180,6 @@ if importlib.util.find_spec("torch") is not None:
 
          """
         if target_kpi is None:
-            # Before starting non-mixed-precision process, we need to set only single bit width, so we take the best
-            # option which is the maximal number of bits.
-            single_bitwidth_candidate = quant_config.n_bits_candidates[0]
-            quant_config.weights_n_bits = [single_bitwidth_candidate[0]]
-            quant_config.activation_n_bits = [single_bitwidth_candidate[1]]
-            quant_config.n_bits_candidates = [single_bitwidth_candidate]
             common.Logger.warning(
                 f"No KPI was passed. Using non mixed-precision compression process with "
                 f"base_config defined in the given hardware model...")

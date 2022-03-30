@@ -13,6 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 import torch
+
+from model_compression_toolkit.hardware_models.default_hwm import generate_default_hardware_model
+from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import generate_fhw_model_pytorch
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from torch.nn import Conv2d, ReLU, ReLU6, Hardtanh
 from torch.nn.functional import relu, relu6, hardtanh
@@ -92,6 +95,12 @@ class ReLUBoundToPOTNetTest(BasePytorchTest):
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 32, 32]]
 
+    def get_fw_hw_model(self):
+        return {
+            '8bit_relu_bound': generate_fhw_model_pytorch(name="relu_bound_pytorch_test",
+                                                          hardware_model=generate_default_hardware_model()),
+        }
+
     def get_quantization_configs(self):
         quant_config = mct.DEFAULTCONFIG
         quant_config.relu_bound_to_power_of_2 = True
@@ -127,6 +136,12 @@ class HardtanhBoundToPOTNetTest(BasePytorchTest):
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 32, 32]]
+
+    def get_fw_hw_model(self):
+        return {
+            '8bit_relu_bound': generate_fhw_model_pytorch(name="tanh_pytorch_test",
+                                                          hardware_model=generate_default_hardware_model()),
+        }
 
     def get_quantization_configs(self):
         quant_config = mct.DEFAULTCONFIG

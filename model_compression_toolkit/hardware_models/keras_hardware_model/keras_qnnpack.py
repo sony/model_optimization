@@ -28,11 +28,11 @@ else:
 
 def get_qnnpack_tensorflow():
     qnnpackhm = get_qnnpack_model()
-    return generate_fhw_model_qnnpack(name='qnnpack_tensorflow',
-                                      qnnpack_hm=qnnpackhm)
+    return generate_fhw_model_qnnpack_keras(name='qnnpack_tensorflow',
+                                            qnnpack_hm=qnnpackhm)
 
 
-def generate_fhw_model_qnnpack(name: str, qnnpack_hm: HardwareModel):
+def generate_fhw_model_qnnpack_keras(name: str, qnnpack_hm: HardwareModel):
     qnnpack_tf = FrameworkHardwareModel(qnnpack_hm, name=name)
 
     with qnnpack_tf:

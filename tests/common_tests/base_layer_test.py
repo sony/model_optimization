@@ -54,7 +54,7 @@ class BaseLayerTest(BaseTest):
             # Disable all features that are enabled by default:
             hwm = generate_default_hardware_model(enable_weights_quantization=False,
                                                   enable_activation_quantization=False)
-            return generate_fhw_model_keras(name="bn_folding_test", hardware_model=hwm)
+            return generate_fhw_model_keras(name="base_layer_test", hardware_model=hwm)
         elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
             return get_default_hwm_keras()
         else:

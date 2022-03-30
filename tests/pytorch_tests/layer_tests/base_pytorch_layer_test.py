@@ -145,6 +145,7 @@ class BasePytorchLayerTest(BaseLayerTest):
                 continue
             if hasattr(quantized_model, str(node.target)):
                 if type(op) in fw_info.kernel_ops:
+                # if node.is_weights_quantization_enabled():
                     quantized_weights = get_layer_weights(getattr(quantized_model, node.target))
                     float_weights = get_layer_weights(getattr(float_model, node.target))
                     for k, v in quantized_weights.items():
@@ -158,6 +159,7 @@ class BasePytorchLayerTest(BaseLayerTest):
                     self.unit_test.assertTrue(is_node_fake_quant(node_next))
 
             elif op in fw_info.activation_ops:
+            # elif node.is_activation_quantization_enabled():
                 node_next = node.next
                 while get_node_operation(node_next, quantized_model) == operator.getitem:
                     node_next = node_next.next

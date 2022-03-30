@@ -32,11 +32,11 @@ from model_compression_toolkit.hardware_models.tflite import get_tflite_hw_model
 
 def get_keras_hardware_model_tflite():
     tflite_hm = get_tflite_hw_model()
-    return generate_fhw_model_tflite(name='tflite_keras',
-                                     tflite_hm=tflite_hm)
+    return generate_fhw_model_tflite_keras(name='tflite_keras',
+                                           tflite_hm=tflite_hm)
 
 
-def generate_fhw_model_tflite(name: str, tflite_hm: HardwareModel):
+def generate_fhw_model_tflite_keras(name: str, tflite_hm: HardwareModel):
     tflite_keras = FrameworkHardwareModel(tflite_hm, name=name)
 
     with tflite_keras:

@@ -22,6 +22,7 @@ from torch.nn import Dropout, Flatten, Hardtanh
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh
 
+from model_compression_toolkit.common.hardware_representation import HardwareModel
 from model_compression_toolkit.common.hardware_representation.hardware2framework import \
     FrameworkHardwareModel, LayerFilterParams
 from model_compression_toolkit.common.hardware_representation.hardware2framework import \
@@ -30,11 +31,25 @@ from model_compression_toolkit.hardware_models.default_hwm import get_default_ha
 
 
 def get_default_hwm_pytorch():
-    default_hm = get_default_hardware_model()
-    default_hwm_pytorch = FrameworkHardwareModel(default_hm,
-                                                 name='default_hwm_pytorch')
+    default_hwm = get_default_hardware_model()
+    return generate_fhw_model_pytorch(name='default_hwm_pytorch',
+                                      hardware_model=default_hwm)
 
-    with default_hwm_pytorch:
+
+def generate_fhw_model_pytorch(name: str, hardware_model: HardwareModel):
+    """
+    Generates a FrameworkHardwareModel object with default operation sets to layers mapping.
+    Args:
+        name: Name of the framework hardware model.
+        hardware_model: HardwareModel object.
+
+    Returns: a FrameworkHardwareModel object for the given HardwareModel.
+    """
+
+    fhwm_pytorch = FrameworkHardwareModel(hardware_model,
+                                          name=name)
+
+    with fhwm_pytorch:
         OperationsSetToLayers("NoQuantization", [Dropout,
                                                  Flatten,
                                                  dropout,
@@ -74,7 +89,4 @@ def get_default_hwm_pytorch():
         OperationsSetToLayers("Tanh", [Tanh,
                                        tanh])
 
-    return default_hwm_pytorch
-
-
-
+    return fhwm_pytorch
