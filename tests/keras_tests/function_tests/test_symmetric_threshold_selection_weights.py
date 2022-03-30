@@ -31,6 +31,8 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
     calculate_quantization_params
 from model_compression_toolkit.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
+from model_compression_toolkit.hardware_models.default_hwm import generate_default_hardware_model
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 
@@ -89,27 +91,21 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
         self.run_test_for_threshold_method(QuantizationErrorMethod.KL, per_channel=False)
 
     def run_test_for_threshold_method(self, threshold_method, per_channel=True):
-        qc = QuantizationConfig(weights_error_method=threshold_method,
-                                weights_n_bits=8,
-                                weights_per_channel_threshold=per_channel)
+        qc = QuantizationConfig(weights_error_method=threshold_method, weights_per_channel_threshold=per_channel)
 
-        qco = mct.hardware_representation.QuantizationConfigOptions(
-            [mct.hardware_representation.OpQuantizationConfig(
-                activation_quantization_method=mct.hardware_representation.QuantizationMethod.POWER_OF_TWO,
-                weights_quantization_method=mct.hardware_representation.QuantizationMethod.SYMMETRIC,
-                activation_n_bits=8,
-                weights_n_bits=8,
-                weights_per_channel_threshold=True,
-                enable_weights_quantization=True,
-                enable_activation_quantization=True)])
-        hw_model = mct.hardware_representation.FrameworkHardwareModel(mct.hardware_representation.HardwareModel(qco))
+        hwm = generate_default_hardware_model(
+            weights_quantization_method=mct.hardware_representation.QuantizationMethod.SYMMETRIC,
+            activation_quantization_method=mct.hardware_representation.QuantizationMethod.POWER_OF_TWO,
+            weights_n_bits=8,
+            activation_n_bits=8)
+        fw_hw_model = generate_fhw_model_keras(name="symmetric_threshold_selection_test", hardware_model=hwm)
 
         fw_info = DEFAULT_KERAS_INFO
         in_model = create_network()
         keras_impl = KerasImplementation()
         graph = keras_impl.model_reader(in_model, None)  # model reading
         graph.set_fw_info(fw_info)
-        graph.set_fw_hw_model(hw_model)
+        graph.set_fw_hw_model(fw_hw_model)
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=qc)
         for node in graph.nodes:

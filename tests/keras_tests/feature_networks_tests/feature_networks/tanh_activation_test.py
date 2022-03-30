@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import model_compression_toolkit.hardware_representation.op_quantization_config
+
+from model_compression_toolkit.hardware_models.default_hwm import generate_default_hardware_model
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
@@ -28,12 +30,14 @@ class TanhActivationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      model_compression_toolkit.hardware_model.op_quantization_config
-                                      .QuantizationMethod.POWER_OF_TWO, model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.POWER_OF_TWO, 16, 16,
-                                      True, True, True)
+    def get_fw_hw_model(self):
+        hwm = generate_default_hardware_model(weights_n_bits=16,
+                                              activation_n_bits=16)
+        return generate_fhw_model_keras(name="tanh_activation_test", hardware_model=hwm)
 
+    def get_quantization_config(self):
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE, True,
+                                      True)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

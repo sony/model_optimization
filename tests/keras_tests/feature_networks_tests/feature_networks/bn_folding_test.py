@@ -16,6 +16,8 @@
 
 from abc import ABC
 
+from model_compression_toolkit.hardware_models.default_hwm import generate_default_hardware_model
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
@@ -27,17 +29,23 @@ from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers
-
+hw_model = mct.hardware_representation
 
 class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
 
     def __init__(self, unit_test):
         super(BaseBatchNormalizationFolding, self).__init__(unit_test=unit_test)
 
+    def get_fw_hw_model(self):
+        hwm = generate_default_hardware_model(weights_n_bits=16,
+                                              activation_n_bits=16,
+                                              enable_weights_quantization=False,
+                                              enable_activation_quantization=False)
+        return generate_fhw_model_keras(name="bn_folding_test", hardware_model=hwm)
+
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,16, 16,
-                                      False, False, True, enable_weights_quantization=False,
-                                      enable_activation_quantization=False)
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
+                                      False, False, True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         y = float_model.predict(input_x)

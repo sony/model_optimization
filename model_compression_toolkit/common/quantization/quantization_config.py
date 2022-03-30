@@ -49,14 +49,10 @@ class QuantizationConfig(object):
     def __init__(self,
                  activation_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE,
                  weights_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE,
-                 activation_n_bits: int = 8,
-                 weights_n_bits: int = 8,
                  relu_bound_to_power_of_2: bool = False,
                  weights_bias_correction: bool = True,
                  weights_per_channel_threshold: bool = True,
                  input_scaling: bool = False,
-                 enable_weights_quantization: bool = True,
-                 enable_activation_quantization: bool = True,
                  shift_negative_activation_correction: bool = False,
                  activation_channel_equalization: bool = False,
                  z_threshold: float = math.inf,
@@ -70,14 +66,10 @@ class QuantizationConfig(object):
         Args:
             activation_error_method (QuantizationErrorMethod): Which method to use from QuantizationErrorMethod for activation quantization threshold selection.
             weights_error_method (QuantizationErrorMethod): Which method to use from QuantizationErrorMethod for activation quantization threshold selection.
-            activation_n_bits (int): Number of bits to quantize the activations.
-            weights_n_bits (int): Number of bits to quantize the coefficients.
             relu_bound_to_power_of_2 (bool): Whether to use relu to power of 2 scaling correction or not.
             weights_bias_correction (bool): Whether to use weights bias correction or not.
             weights_per_channel_threshold (bool): Whether to quantize the weights per-channel or not (per-tensor).
             input_scaling (bool): Whether to use input scaling or not.
-            enable_weights_quantization (bool): Whether to quantize the model weights or not.
-            enable_activation_quantization (bool): Whether to quantize the model activations or not.
             shift_negative_activation_correction (bool): Whether to use shifting negative activation correction or not.
             activation_channel_equalization (bool): Whether to use activation channel equalization correction or not.
             z_threshold (float): Value of z score for outliers removal.
@@ -94,7 +86,7 @@ class QuantizationConfig(object):
             enabling relu_bound_to_power_of_2, weights_bias_correction, and quantizing the weights per-channel,
             one can instantiate a quantization configuration:
 
-            >>> qc = QuantizationConfig(activation_error_method=QuantizationErrorMethod.NOCLIPPING,weights_error_method=QuantizationErrorMethod.MSE,activation_quantization_method=QuantizationMethod.POWER_OF_TWO,weights_quantization_method=QuantizationMethod.POWER_OF_TWO,activation_n_bits=6,weights_n_bits=7,relu_bound_to_power_of_2=True,weights_bias_correction=True,weights_per_channel_threshold=True)
+            >>> qc = QuantizationConfig(activation_error_method=QuantizationErrorMethod.NOCLIPPING,weights_error_method=QuantizationErrorMethod.MSE,relu_bound_to_power_of_2=True,weights_bias_correction=True,weights_per_channel_threshold=True)
 
 
             The QuantizationConfig instanse can then be passed to
@@ -103,19 +95,15 @@ class QuantizationConfig(object):
             In order to use a different quantization method (than power-of-two that is used by default),
             one may pass a desired QuantizationMethod when instantiating a QuantizationConfig. For example:
 
-            >>> qc = QuantizationConfig(activation_quantization_method=QuantizationMethod.LUT_QUANTIZER)
+            >>> qc = QuantizationConfig()
 
         """
 
         self.activation_error_method = activation_error_method
         self.weights_error_method = weights_error_method
-        self.activation_n_bits = activation_n_bits
-        self.weights_n_bits = weights_n_bits
         self.relu_bound_to_power_of_2 = relu_bound_to_power_of_2
         self.weights_bias_correction = weights_bias_correction
         self.weights_per_channel_threshold = weights_per_channel_threshold
-        self.enable_weights_quantization = enable_weights_quantization
-        self.enable_activation_quantization = enable_activation_quantization
         self.activation_channel_equalization = activation_channel_equalization
         self.input_scaling = input_scaling
         self.min_threshold = min_threshold
@@ -132,8 +120,6 @@ class QuantizationConfig(object):
 # Default quantization configuration the library use.
 DEFAULTCONFIG = QuantizationConfig(QuantizationErrorMethod.MSE,
                                    QuantizationErrorMethod.MSE,
-                                   activation_n_bits=8,
-                                   weights_n_bits=8,
                                    relu_bound_to_power_of_2=False,
                                    weights_bias_correction=True,
                                    weights_per_channel_threshold=True,

@@ -17,19 +17,37 @@ from model_compression_toolkit import hardware_representation as hw_model
 
 
 def get_qnnpack_model():
+    return generate_qnnpack_hw_model()
+
+
+def generate_qnnpack_hw_model(activation_quantization_method=hw_model.QuantizationMethod.UNIFORM,
+                              weights_quantization_method=hw_model.QuantizationMethod.SYMMETRIC,
+                              activation_n_bits=8,
+                              weights_n_bits=8,
+                              weights_per_channel_threshold=False,
+                              enable_weights_quantization=True,
+                              enable_activation_quantization=True,
+                              quantization_preserving=False,
+                              fixed_scale=None,
+                              fixed_zero_point=None,
+                              weights_multiplier_nbits=None):
     # Create a quantization config. A quantization configuration defines how an operator
     # should be quantized on the modeled hardware.
     # For qnnpack backend, Pytorch uses a QConfig with torch.per_tensor_affine for
     # activations quantization and a torch.per_tensor_symmetric quantization scheme
     # for weights quantization (https://pytorch.org/docs/stable/quantization.html#natively-supported-backends):
     eight_bits = hw_model.OpQuantizationConfig(
-        activation_quantization_method=hw_model.QuantizationMethod.UNIFORM,
-        weights_quantization_method=hw_model.QuantizationMethod.SYMMETRIC,
-        activation_n_bits=8,
-        weights_n_bits=8,
-        weights_per_channel_threshold=False,
-        enable_weights_quantization=True,
-        enable_activation_quantization=True
+        activation_quantization_method=activation_quantization_method,
+        weights_quantization_method=weights_quantization_method,
+        activation_n_bits=activation_n_bits,
+        weights_n_bits=weights_n_bits,
+        weights_per_channel_threshold=weights_per_channel_threshold,
+        enable_weights_quantization=enable_weights_quantization,
+        enable_activation_quantization=enable_activation_quantization,
+        quantization_preserving=quantization_preserving,
+        fixed_scale=fixed_scale,
+        fixed_zero_point=fixed_zero_point,
+        weights_multiplier_nbits=weights_multiplier_nbits
     )
 
     # Create a QuantizationConfigOptions, which defines a set
@@ -61,4 +79,3 @@ def get_qnnpack_model():
         hw_model.Fusing([linear, relu])
 
     return qnnpack_model
-

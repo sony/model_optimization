@@ -299,7 +299,7 @@ def model_builder(graph: common.Graph,
             if len(nodes) == 1:
                 node = nodes[0]
                 # Wrap only if its weights should be quantized
-                if node.is_weights_quantization_enabled():
+                if node.is_weights_quantization_enabled() and node.has_weights_to_quantize(fw_info):
                     return QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node, fw_info))
                 return layer
 

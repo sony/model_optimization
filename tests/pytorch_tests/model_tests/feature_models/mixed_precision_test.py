@@ -31,17 +31,12 @@ class MixedPercisionBaseTest(BasePytorchTest):
         super().__init__(unit_test)
 
     def get_quantization_configs(self):
-        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                    mct.QuantizationErrorMethod.MSE,
-                                    weights_bias_correction=True,
-                                    weights_per_channel_threshold=True,
-                                    activation_channel_equalization=False,
-                                    relu_bound_to_power_of_2=False,
-                                    input_scaling=False)
+        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
+                                    relu_bound_to_power_of_2=False, weights_bias_correction=True,
+                                    weights_per_channel_threshold=True, input_scaling=False,
+                                    activation_channel_equalization=False)
 
-        return {"mixed_precision_model": MixedPrecisionQuantizationConfig(qc,
-                                                                          n_bits_candidates=[(2, 8), (8, 8), (4, 8)],
-                                                                          num_of_images=1)}
+        return {"mixed_precision_model": MixedPrecisionQuantizationConfig(qc, num_of_images=1)}
 
     def create_feature_network(self, input_shape):
         return MixedPrecisionNet(input_shape)

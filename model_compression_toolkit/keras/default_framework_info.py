@@ -42,7 +42,7 @@ KERNEL_OPS: Layers that their coefficients should be quantized.
 ACTIVATION: Layers that their activation should be quantized.
 NO_QUANTIZATION: Layers that should not be quantized.
 """
-
+# TODO: remove these three lists and refactor kernel_ops, activation_ops, no_quantization_ops
 KERNEL_OPS = [Conv2D,
               DepthwiseConv2D,
               Dense,

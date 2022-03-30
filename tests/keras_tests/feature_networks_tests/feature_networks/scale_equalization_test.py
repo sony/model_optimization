@@ -17,6 +17,8 @@
 import numpy as np
 import tensorflow as tf
 
+from model_compression_toolkit.hardware_models.default_hwm import generate_default_hardware_model
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import model_compression_toolkit as mct
@@ -34,9 +36,13 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test,
                          input_shape=(16,16,3))
 
+    def get_fw_hw_model(self):
+        hwm = generate_default_hardware_model(weights_n_bits=16,
+                                              activation_n_bits=16)
+        return generate_fhw_model_keras(name="scale_equalization_test", hardware_model=hwm)
+
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      16, 16,
                                       relu_bound_to_power_of_2=False, weights_bias_correction=False,
                                       weights_per_channel_threshold=True, activation_channel_equalization=True)
 

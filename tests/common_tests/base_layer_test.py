@@ -3,7 +3,12 @@ from enum import Enum
 from typing import List, Any
 import numpy as np
 
-from model_compression_toolkit import MixedPrecisionQuantizationConfig, DEFAULTCONFIG
+from model_compression_toolkit import MixedPrecisionQuantizationConfig, DEFAULTCONFIG, get_model
+from model_compression_toolkit.common.constants import TENSORFLOW
+from model_compression_toolkit.hardware_models.default_hwm import generate_default_hardware_model
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras, \
+    get_default_hwm_keras
+from model_compression_toolkit.keras.constants import DEFAULT_HWM
 from tests.common_tests.base_test import BaseTest
 
 
@@ -44,18 +49,20 @@ class BaseLayerTest(BaseTest):
     def get_layers(self):
         return self.layers
 
+    def get_fw_hw_model(self):
+        if self.current_mode == LayerTestMode.FLOAT:
+            # Disable all features that are enabled by default:
+            hwm = generate_default_hardware_model(enable_weights_quantization=False,
+                                                  enable_activation_quantization=False)
+            return generate_fhw_model_keras(name="bn_folding_test", hardware_model=hwm)
+        elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
+            return get_default_hwm_keras()
+        else:
+            raise NotImplemented
+
     def get_quantization_config(self):
         qc = copy.deepcopy(DEFAULTCONFIG)
         qc.weights_bias_correction = False
-        if self.current_mode == LayerTestMode.FLOAT:
-            # Disable all features that are enabled by default:
-            qc.enable_activation_quantization = False
-            qc.enable_weights_quantization = False
-        elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
-            qc.weights_n_bits = 8
-            qc.activation_n_bits = 8
-        else:
-            raise NotImplemented
         return qc
 
     def run_test(self):
@@ -70,13 +77,15 @@ class BaseLayerTest(BaseTest):
                                                                                          self.representative_data_gen,
                                                                                          n_iter=self.num_calibration_iter,
                                                                                          quant_config=qc,
-                                                                                         fw_info=self.get_fw_info())
+                                                                                         fw_info=self.get_fw_info(),
+                                                                                         fw_hw_model=self.get_fw_hw_model())
                 else:
                     ptq_model, quantization_info = self.get_ptq_facade()(model_float,
                                                                          self.representative_data_gen,
                                                                          n_iter=self.num_calibration_iter,
                                                                          quant_config=qc,
-                                                                         fw_info=self.get_fw_info())
+                                                                         fw_info=self.get_fw_info(),
+                                                                         fw_hw_model=self.get_fw_hw_model())
 
                 self.compare(ptq_model, model_float, input_x=self.representative_data_gen(),
                              quantization_info=quantization_info)

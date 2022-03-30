@@ -15,6 +15,9 @@
 import tensorflow as tf
 
 import model_compression_toolkit.hardware_representation.op_quantization_config
+
+from model_compression_toolkit.hardware_models.default_hwm import generate_default_hardware_model
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 if tf.__version__ < "2.6":
@@ -36,10 +39,14 @@ class SlicingOpLambdaTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, val_batch_size=1)
 
+    def get_fw_hw_model(self):
+        hwm = generate_default_hardware_model(weights_n_bits=16,
+                                              activation_n_bits=16)
+        return generate_fhw_model_keras(name="slicing_op_lambda_test", hardware_model=hwm)
+
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.POWER_OF_TWO, model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.POWER_OF_TWO, 16, 16,
-                                      False, False, True)
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE, False,
+                                      False)
 
 
     def create_networks(self):

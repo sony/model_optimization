@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+from model_compression_toolkit.common.hardware_representation import HardwareModel
 from model_compression_toolkit.common.hardware_representation.hardware2framework import \
     FrameworkHardwareModel, LayerFilterParams
 from model_compression_toolkit.common.hardware_representation.hardware2framework import \
@@ -28,8 +28,12 @@ else:
 
 def get_qnnpack_tensorflow():
     qnnpackhm = get_qnnpack_model()
-    qnnpack_tf = FrameworkHardwareModel(qnnpackhm,
-                                        name='qnnpack_tensorflow')
+    return generate_fhw_model_qnnpack(name='qnnpack_tensorflow',
+                                      qnnpack_hm=qnnpackhm)
+
+
+def generate_fhw_model_qnnpack(name: str, qnnpack_hm: HardwareModel):
+    qnnpack_tf = FrameworkHardwareModel(qnnpack_hm, name=name)
 
     with qnnpack_tf:
         OperationsSetToLayers("Conv", [Conv2D,

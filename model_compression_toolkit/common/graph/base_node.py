@@ -257,3 +257,10 @@ class BaseNode:
                    self.candidates_quantization_cfg[0].weights_quantization_cfg
                    for candidate in self.candidates_quantization_cfg)
 
+    def has_weights_to_quantize(self, fw_info):
+        attrs = fw_info.get_kernel_op_attributes(self.type)
+        for attr in attrs:
+            if attr and self.get_weights_by_keys(attr) is not None:
+                return True
+        return False
+

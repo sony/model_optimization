@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 import model_compression_toolkit.common.gptq.gptq_config
+from model_compression_toolkit.hardware_models.default_hwm import generate_default_hardware_model
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 import tensorflow as tf
 import numpy as np
@@ -25,21 +27,24 @@ import random
 
 keras = tf.keras
 layers = keras.layers
+hw_model = mct.hardware_representation
 
-TWO_BIT_QUANTIZATION = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.MSE,
-                                              weights_error_method=mct.QuantizationErrorMethod.MSE,
-                                              activation_n_bits=2, weights_n_bits=2, relu_bound_to_power_of_2=False,
-                                              weights_bias_correction=False, weights_per_channel_threshold=True)
+QUANTIZATION_CONFIG = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.MSE,
+                                             weights_error_method=mct.QuantizationErrorMethod.MSE,
+                                             relu_bound_to_power_of_2=False, weights_bias_correction=False,
+                                             weights_per_channel_threshold=True)
 
-EIGHT_BIT_QUANTIZATION = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.MSE,
-                                                weights_error_method=mct.QuantizationErrorMethod.MSE,
-                                                activation_n_bits=8, weights_n_bits=8, relu_bound_to_power_of_2=False,
-                                                weights_bias_correction=False, weights_per_channel_threshold=True)
+TWO_BIT_QUANTIZATION = generate_fhw_model_keras(name="two_bit_network_test",
+                                                hardware_model=generate_default_hardware_model(weights_n_bits=2,
+                                                                                               activation_n_bits=2))
 
-FLOAT_QUANTIZATION = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.MSE,
-                                            weights_error_method=mct.QuantizationErrorMethod.MSE,
-                                            activation_n_bits=16, weights_n_bits=16, relu_bound_to_power_of_2=False,
-                                            weights_bias_correction=False, weights_per_channel_threshold=True)
+EIGHT_BIT_QUANTIZATION = generate_fhw_model_keras(name="eight_bit_network_test",
+                                                  hardware_model=generate_default_hardware_model(weights_n_bits=8,
+                                                                                                 activation_n_bits=8))
+
+FLOAT_QUANTIZATION = generate_fhw_model_keras(name="float_network_test",
+                                              hardware_model=generate_default_hardware_model(weights_n_bits=16,
+                                                                                             activation_n_bits=16))
 
 
 class RunMode(Enum):
@@ -48,10 +53,10 @@ class RunMode(Enum):
     FLOAT = 2
 
 
-def run_mode(qc):
-    if qc is FLOAT_QUANTIZATION:
+def run_mode(fwhm):
+    if fwhm is FLOAT_QUANTIZATION:
         return RunMode.FLOAT
-    elif qc is EIGHT_BIT_QUANTIZATION:
+    elif fwhm is EIGHT_BIT_QUANTIZATION:
         return RunMode.EIGHT
     else:
         return RunMode.TWO
@@ -65,21 +70,21 @@ class NetworkTest(object):
         self.num_calibration_iter = num_calibration_iter
         self.gptq = gptq
 
-    def compare(self, inputs_list, quantized_model, qc):
+    def compare(self, inputs_list, quantized_model, qc, fwhm):
         output_q = quantized_model.predict(inputs_list)
         output_f = self.model_float.predict(inputs_list)
         if isinstance(output_f, list):
             cs = np.mean([cosine_similarity(oq, of) for oq, of, in zip(output_q, output_f)])
         else:
             cs = cosine_similarity(output_f, output_q)
-        if run_mode(qc) == RunMode.FLOAT:
+        if run_mode(fwhm) == RunMode.FLOAT:
             self.unit_test.assertTrue(np.isclose(cs, 1, 0.001), msg=f'fail cosine similarity check: {cs}')
-        elif run_mode(qc) == RunMode.EIGHT:
+        elif run_mode(fwhm) == RunMode.EIGHT:
             pass  # remove the cs check for 8 bit quantizaiton at this stage
             # self.unit_test.assertTrue(np.isclose(cs, 1, atol=0.6), msg=f'fail cosine similarity check:{cs}')
-        elif run_mode(qc) == RunMode.TWO:
+        elif run_mode(fwhm) == RunMode.TWO:
             self.unit_test.assertTrue(np.isclose(cs, 0, atol=0.5), msg=f'fail cosine similarity check:{cs}')
-        if run_mode(qc) == RunMode.EIGHT:
+        if run_mode(fwhm) == RunMode.EIGHT:
             # TFLite Converter only support eight bit quantization
             try:
                 converter = tf.lite.TFLiteConverter.from_keras_model(quantized_model)
@@ -88,7 +93,7 @@ class NetworkTest(object):
                 error_msg = e.message if hasattr(e, 'message') else str(e)
                 self.unit_test.assertTrue(False, f'fail TFLite convertion with the following error: {error_msg}')
 
-    def run_network(self, inputs_list, qc):
+    def run_network(self, inputs_list, qc, fwhm):
         def representative_data_gen():
             return inputs_list
 
@@ -102,14 +107,16 @@ class NetworkTest(object):
                                                                                 quant_config=qc,
                                                                                 fw_info=DEFAULT_KERAS_INFO,
                                                                                 n_iter=self.num_calibration_iter,
-                                                                                gptq_config=arc)
+                                                                                gptq_config=arc,
+                                                                                fw_hw_model=fwhm)
         else:
             ptq_model, quantization_info = mct.keras_post_training_quantization(self.model_float,
                                                                                 representative_data_gen,
                                                                                 quant_config=qc,
                                                                                 fw_info=DEFAULT_KERAS_INFO,
-                                                                                n_iter=self.num_calibration_iter)
-        self.compare(inputs_list, ptq_model, qc)
+                                                                                n_iter=self.num_calibration_iter,
+                                                                                fw_hw_model=fwhm)
+        self.compare(inputs_list, ptq_model, qc, fwhm)
 
 
 def set_seed():
@@ -133,11 +140,15 @@ class FeatureNetworkTest(unittest.TestCase):
         inputs_list = FeatureNetworkTest.create_inputs(input_shapes)
 
         NetworkTest(self, model_float, input_shapes, num_calibration_iter, gptq=gptq).run_network(inputs_list,
+                                                                                                  QUANTIZATION_CONFIG,
                                                                                                   EIGHT_BIT_QUANTIZATION)
         if not gptq:
             NetworkTest(self, model_float, input_shapes, num_calibration_iter, gptq=gptq).run_network(inputs_list,
+                                                                                                      QUANTIZATION_CONFIG,
                                                                                                       TWO_BIT_QUANTIZATION)
+
             NetworkTest(self, model_float, input_shapes, num_calibration_iter, gptq=gptq).run_network(inputs_list,
+                                                                                                      QUANTIZATION_CONFIG,
                                                                                                       FLOAT_QUANTIZATION)
 
     def test_mobilenet_v1(self):

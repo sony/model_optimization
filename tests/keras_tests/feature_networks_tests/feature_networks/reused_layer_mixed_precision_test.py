@@ -32,11 +32,11 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                    activation_n_bits=16, relu_bound_to_power_of_2=True, weights_bias_correction=True,
+                                    relu_bound_to_power_of_2=True, weights_bias_correction=True,
                                     weights_per_channel_threshold=True, input_scaling=True,
                                     activation_channel_equalization=True)
 
-        return MixedPrecisionQuantizationConfig(qc, n_bits_candidates=[(2, 16), (16, 16), (4, 16)])
+        return MixedPrecisionQuantizationConfig(qc)
 
     def create_networks(self):
         layer = layers.Conv2D(3, 4)

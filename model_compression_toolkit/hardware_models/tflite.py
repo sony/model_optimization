@@ -14,23 +14,39 @@
 # ==============================================================================
 
 from model_compression_toolkit import hardware_representation as hw_model
-from model_compression_toolkit.common.hardware_representation.op_quantization_config import QuantizationMethod
 
 
 def get_tflite_hw_model():
+    return generate_tflite_hw_model()
 
+
+def generate_tflite_hw_model(activation_quantization_method=hw_model.QuantizationMethod.UNIFORM,
+                             weights_quantization_method=hw_model.QuantizationMethod.SYMMETRIC,
+                             activation_n_bits=8,
+                             weights_n_bits=8,
+                             weights_per_channel_threshold=True,
+                             enable_weights_quantization=True,
+                             enable_activation_quantization=True,
+                             quantization_preserving=False,
+                             fixed_scale=None,
+                             fixed_zero_point=None,
+                             weights_multiplier_nbits=None):
     # Create a quantization config. A quantization configuration defines how an operator
     # should be quantized on the modeled hardware. In TFLite
     # activations quantization is asymmetric, and weights quantization is symmetric:
     # https://www.tensorflow.org/lite/performance/quantization_spec#symmetric_vs_asymmetric
     eight_bits = hw_model.OpQuantizationConfig(
-        activation_quantization_method=QuantizationMethod.UNIFORM,
-        weights_quantization_method=QuantizationMethod.SYMMETRIC,
-        activation_n_bits=8,
-        weights_n_bits=8,
-        weights_per_channel_threshold=True,
-        enable_weights_quantization=True,
-        enable_activation_quantization=True
+        activation_quantization_method=activation_quantization_method,
+        weights_quantization_method=weights_quantization_method,
+        activation_n_bits=activation_n_bits,
+        weights_n_bits=weights_n_bits,
+        weights_per_channel_threshold=weights_per_channel_threshold,
+        enable_weights_quantization=enable_weights_quantization,
+        enable_activation_quantization=enable_activation_quantization,
+        quantization_preserving=quantization_preserving,
+        fixed_scale=fixed_scale,
+        fixed_zero_point=fixed_zero_point,
+        weights_multiplier_nbits=weights_multiplier_nbits
     )
 
     # Create a QuantizationConfigOptions, which defines a set
@@ -98,4 +114,3 @@ def get_tflite_hw_model():
         hw_model.Fusing([batch_norm, add, activations_to_fuse])
 
     return tflite_model
-

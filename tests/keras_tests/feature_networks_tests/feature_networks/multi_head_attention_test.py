@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
+from model_compression_toolkit.hardware_models.default_hwm import generate_default_hardware_model
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 import model_compression_toolkit as mct
@@ -44,9 +44,13 @@ class MultiHeadAttentionTest(BaseKerasFeatureNetworkTest):
         self.separate_key_value = separate_key_value
         self.output_dim = output_dim
 
+    def get_fw_hw_model(self):
+        hwm = generate_default_hardware_model(enable_weights_quantization=False,
+                                              enable_activation_quantization=False)
+        return generate_fhw_model_keras(name="mha_test", hardware_model=hwm)
+
     def get_quantization_config(self):
-        return QuantizationConfig(enable_weights_quantization=False,
-                                  enable_activation_quantization=False)
+        return QuantizationConfig()
 
     def get_input_shapes(self):
         if self.separate_key_value:

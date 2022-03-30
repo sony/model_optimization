@@ -17,7 +17,8 @@
 import tensorflow as tf
 import numpy as np
 
-
+from model_compression_toolkit.hardware_models.default_hwm import generate_default_hardware_model
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as cmo
 
@@ -33,19 +34,13 @@ class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
     def generate_inputs(self):
         return [np.random.uniform(low=-7, high=7, size=in_shape) for in_shape in self.get_input_shapes()]
 
-    def get_quantization_config(self):
-        return cmo.QuantizationConfig(activation_error_method=self.activation_threshold_method,
-                                      activation_n_bits=8)
-
     def get_fw_hw_model(self):
-        qco = hw_model.QuantizationConfigOptions([hw_model.OpQuantizationConfig(activation_quantization_method=hw_model.QuantizationMethod.UNIFORM,
-                                                                      weights_quantization_method=hw_model.QuantizationMethod.POWER_OF_TWO,
-                                                                      activation_n_bits=8,
-                                                                      weights_n_bits=8,
-                                                                      weights_per_channel_threshold=True,
-                                                                      enable_weights_quantization=True,
-                                                                      enable_activation_quantization=True)])
-        return hw_model.FrameworkHardwareModel(hw_model.HardwareModel(qco))
+        hwm = generate_default_hardware_model(activation_quantization_method=hw_model.QuantizationMethod.UNIFORM,
+                                              activation_n_bits=8)
+        return generate_fhw_model_keras(name="uniform_range_test", hardware_model=hwm)
+
+    def get_quantization_config(self):
+        return cmo.QuantizationConfig(activation_error_method=self.activation_threshold_method)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

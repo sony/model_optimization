@@ -37,20 +37,11 @@ class BasePytorchTest(BaseFeatureNetworkTest):
     def get_quantization_configs(self):
         return {
             'no_quantization': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
-                                                      mct.QuantizationErrorMethod.NOCLIPPING,
-                                                      32, 32, False, True, True,
-                                                      enable_weights_quantization=False,
-                                                      enable_activation_quantization=False),
+                                                      mct.QuantizationErrorMethod.NOCLIPPING, False, True, True),
             'all_32bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
-                                                mct.QuantizationErrorMethod.NOCLIPPING,
-                                                32, 32, False, True, True,
-                                                enable_weights_quantization=True,
-                                                enable_activation_quantization=True),
+                                                mct.QuantizationErrorMethod.NOCLIPPING, False, True, True),
             'all_4bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
-                                               mct.QuantizationErrorMethod.NOCLIPPING,
-                                               4, 4, False, False, True,
-                                               enable_weights_quantization=True,
-                                               enable_activation_quantization=True),
+                                               mct.QuantizationErrorMethod.NOCLIPPING, False, False, True),
         }
 
     def create_inputs_shape(self):

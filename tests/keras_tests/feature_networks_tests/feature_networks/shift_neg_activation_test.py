@@ -14,6 +14,10 @@
 # ==============================================================================
 import model_compression_toolkit as mct
 import tensorflow as tf
+
+from model_compression_toolkit.hardware_models.default_hwm import generate_default_hardware_model
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers.core import TFOpLambda
 else:
@@ -36,10 +40,14 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
         self.bypass_op_list = bypass_op_list
         super().__init__(unit_test, input_shape=input_shape, num_calibration_iter=100)
 
+    def get_fw_hw_model(self):
+        hwm = generate_default_hardware_model(weights_n_bits=16,
+                                              activation_n_bits=16)
+        return generate_fhw_model_keras(name="shift_neg_test", hardware_model=hwm)
+
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,16, 16,
-                                      False, False, True, shift_negative_activation_correction=True,
-                                      shift_negative_ratio=np.inf)
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE, False, False,
+                                      True, shift_negative_activation_correction=True, shift_negative_ratio=np.inf)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

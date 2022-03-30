@@ -77,9 +77,7 @@ class LUTQuantizerTest(BasePytorchTest):
 
     def get_quantization_configs(self):
         return {'lut_quantizer_test': mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                                             mct.QuantizationErrorMethod.MSE,
-                                                             8,
-                                                             self.weights_n_bits)}
+                                                             mct.QuantizationErrorMethod.MSE)}
 
     def get_network_editor(self):
         return [EditRule(filter=NodeNameFilter(self.node_to_change_name),

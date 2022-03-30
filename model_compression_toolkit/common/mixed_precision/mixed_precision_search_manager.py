@@ -112,7 +112,7 @@ class MixedPrecisionSearchManager(object):
                     node_idx = mp_nodes.index(n.name)
                     # TODO: modify to account for activations size when implementing activations mixed precision
                     node_nbits = n.candidates_quantization_cfg[mp_model_config[node_idx]].weights_quantization_cfg.weights_n_bits
-                elif n.is_weights_quantization_enabled():
+                elif n.is_weights_quantization_enabled() and n.has_weights_to_quantize(self.fw_info):
                     # The only valid way to get here is if the node is reused (which means that we're not looking
                     # for its configuration), and we ignore it when computing the KPI (as the base node will acount
                     # for it).
