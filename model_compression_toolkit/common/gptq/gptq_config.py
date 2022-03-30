@@ -39,8 +39,9 @@ class GradientPTQConfig:
         Args:
             n_iter (int): Number of iterations to train.
             optimizer (Any): Optimizer to use.
-            loss (Callable): The loss to use. should accept 4 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors,
-             the 3rd is a list of quantized weights and the 4th is a list of float weights.
+            loss (Callable): The loss to use. should accept 6 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors,
+             the 3rd is a list of quantized weights, the 4th is a list of float weights, the 5th and 6th lists are the mean and std of the tensors
+             accordingly. see example in multiple_tensors_mse_loss
             log_function (Callable): Function to log information about the GPTQ process.
             train_bias (bool): Whether to update the bias during the training or not.
             lsb_change_per_bit_width (dict): Whether to update the bias during the training or not.
