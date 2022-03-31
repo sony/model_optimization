@@ -36,7 +36,8 @@ class BaseNode:
                  layer_class: type,
                  reuse: bool = False,
                  reuse_group: str = None,
-                 quantization_attr: Dict[str, Any] = None):
+                 quantization_attr: Dict[str, Any] = None,
+                 has_activation: bool = True):
         """
         Init a Node object.
 
@@ -64,6 +65,7 @@ class BaseNode:
         self.final_activation_quantization_cfg = None
         self.candidates_quantization_cfg = None
         self.prior_info = None
+        self.has_activation = has_activation
 
     @property
     def type(self):

@@ -93,7 +93,8 @@ def _get_node_qc_by_bit_widths(node: BaseNode,
     Returns:
         Node quantization configuration if it was found, or None otherwise.
     """
-
+    # if (node.is_weights_quantization_enabled() and node.has_weights_to_quantize(fw_info)) or \
+    #         (node.is_activation_quantization_enabled() and node.has_activation):
     if node.is_weights_quantization_enabled() or node.is_activation_quantization_enabled():
         bit_index_in_cfg = bit_width_cfg[node_index_in_graph]
         qc = node.candidates_quantization_cfg[bit_index_in_cfg]

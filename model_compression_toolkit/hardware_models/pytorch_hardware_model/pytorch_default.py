@@ -28,6 +28,7 @@ from model_compression_toolkit.common.hardware_representation.hardware2framework
 from model_compression_toolkit.common.hardware_representation.hardware2framework import \
     OperationsSetToLayers
 from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
+from model_compression_toolkit.pytorch.reader.graph_builders import ConstantHolder, DummyPlaceHolder
 
 
 def get_default_hwm_pytorch():
@@ -58,7 +59,8 @@ def generate_fhw_model_pytorch(name: str, hardware_model: HardwareModel):
                                                  operator.getitem,
                                                  reshape,
                                                  unsqueeze,
-                                                 BatchNorm2d])
+                                                 BatchNorm2d,
+                                                 torch.Tensor.size])
 
         OperationsSetToLayers("Conv", [Conv2d])
 

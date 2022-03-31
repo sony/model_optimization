@@ -180,6 +180,8 @@ if importlib.util.find_spec("torch") is not None:
 
          """
         if target_kpi is None:
+            # TODO: throw exception or fix such that the actual config would be base_config (requires fix
+            #   in set_node_quantization_config and in bit_width_setter)
             common.Logger.warning(
                 f"No KPI was passed. Using non mixed-precision compression process with "
                 f"base_config defined in the given hardware model...")

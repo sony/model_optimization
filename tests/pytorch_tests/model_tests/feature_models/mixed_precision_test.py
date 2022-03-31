@@ -18,6 +18,8 @@ from torch.nn import Conv2d
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, KPI
 from model_compression_toolkit.common.user_info import UserInformation
+from model_compression_toolkit.hardware_models.default_hwm import generate_default_hardware_model
+from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import generate_fhw_model_pytorch
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
 
@@ -29,6 +31,12 @@ This test checks the Mixed Precision feature.
 class MixedPercisionBaseTest(BasePytorchTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
+
+    def get_fw_hw_model(self):
+        return {
+            'mixed_precision_model': generate_fhw_model_pytorch(name="mixed_precision_pytorch_test",
+                                                                hardware_model=generate_default_hardware_model()),
+        }
 
     def get_quantization_configs(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,

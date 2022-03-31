@@ -18,6 +18,8 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod
+from model_compression_toolkit.hardware_models.default_hwm import generate_default_hardware_model
+from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import generate_fhw_model_pytorch
 from model_compression_toolkit.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
@@ -74,6 +76,14 @@ class LUTQuantizerTest(BasePytorchTest):
         self.node_to_change_name = 'conv1'
         self.num_conv_channels = 3
         self.kernel = 3
+
+    def get_fw_hw_model(self):
+        return {
+            'lut_quantizer_test': generate_fhw_model_pytorch(name="lut_quantizer_pytorch_test",
+                                                             hardware_model=generate_default_hardware_model(
+                                                                 activation_n_bits=8,
+                                                                 weights_n_bits=self.weights_n_bits)),
+        }
 
     def get_quantization_configs(self):
         return {'lut_quantizer_test': mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,

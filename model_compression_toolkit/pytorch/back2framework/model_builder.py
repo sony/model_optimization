@@ -84,7 +84,7 @@ def run_operation(n: BaseNode,
         out_tensors_of_n = op_func(*input_tensors + op_call_args, **functional_kwargs)
 
     # Add a fake quant node if the node has an activation threshold.
-    if mode == ModelBuilderMode.QUANTIZED and n.is_activation_quantization_enabled() \
+    if mode == ModelBuilderMode.QUANTIZED and n.is_activation_quantization_enabled() and n.has_activation \
             and n.final_activation_quantization_cfg:
         out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n)
 

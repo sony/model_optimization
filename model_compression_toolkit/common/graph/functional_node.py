@@ -22,7 +22,8 @@ class FunctionalNode(BaseNode):
                  reuse_group: str = None,
                  quantization_attr: Dict[str, Any] = None,
                  functional_op: Any = None,
-                 inputs_as_list: bool = False):
+                 inputs_as_list: bool = False,
+                 has_activation: bool = True):
         """
         Init a FunctionalNode object.
 
@@ -51,7 +52,8 @@ class FunctionalNode(BaseNode):
                          layer_class,
                          reuse,
                          reuse_group,
-                         quantization_attr)
+                         quantization_attr,
+                         has_activation=has_activation)
 
         self.op_call_kwargs = op_call_kwargs
         self.op_call_args = op_call_args

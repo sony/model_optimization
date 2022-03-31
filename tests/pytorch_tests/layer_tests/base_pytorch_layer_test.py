@@ -16,17 +16,49 @@ import operator
 from typing import List, Any, Tuple
 import numpy as np
 import torch
+from torch.nn import Hardswish, Hardsigmoid, ReLU, Hardtanh, ReLU6, LeakyReLU, PReLU, SiLU, Softmax, \
+    Sigmoid, Softplus, Softsign, Tanh
+from torch.nn.functional import hardswish, hardsigmoid, relu, hardtanh, relu6, leaky_relu, prelu, silu, softmax, \
+    softplus, softsign
+from torch.nn import UpsamplingBilinear2d, AdaptiveAvgPool2d, AvgPool2d, MaxPool2d
+from torch.nn.functional import upsample_bilinear, adaptive_avg_pool2d, avg_pool2d, max_pool2d
+from torch.nn import Conv2d, ConvTranspose2d, Linear, BatchNorm2d
+from torch.nn import Dropout, Flatten
+from torch import add, multiply, mul, sub, flatten, reshape, split, unsqueeze, concat, cat,\
+    mean, dropout, sigmoid, tanh
 from torch.fx import symbolic_trace
 from torch.nn import Module
 
 from model_compression_toolkit import FrameworkInfo, pytorch_post_training_quantization
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.hardware_models.default_hwm import generate_default_hardware_model
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import get_default_hwm_pytorch
 from model_compression_toolkit.pytorch.constants import CALL_FUNCTION, OUTPUT, CALL_METHOD, PLACEHOLDER
-from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder
 from model_compression_toolkit.pytorch.utils import torch_tensor_to_numpy, to_torch_tensor
 from tests.common_tests.base_layer_test import BaseLayerTest, LayerTestMode
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
+from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder, ConstantHolder
+
+PYTORCH_LAYER_TEST_OPS = {
+    "kernel_ops": [Conv2d, Linear, ConvTranspose2d],
+
+    "no_quantization": [Dropout, Flatten, ConstantHolder, dropout, flatten, split, operator.getitem, reshape,
+                        unsqueeze],
+
+    "activation": [DummyPlaceHolder,
+                   Hardswish, Hardsigmoid, ReLU, Hardtanh, ReLU6, LeakyReLU, PReLU, SiLU, Softmax,
+                   Sigmoid, Softplus, Softsign, Tanh, hardswish, hardsigmoid, relu, hardtanh,
+                   relu6, leaky_relu, prelu,
+                   silu, softmax, sigmoid, softplus, softsign, tanh, torch.relu,
+                   UpsamplingBilinear2d, AdaptiveAvgPool2d, AvgPool2d, MaxPool2d,
+                   upsample_bilinear, adaptive_avg_pool2d, avg_pool2d, max_pool2d,
+                   add, sub, mul, multiply,
+                   operator.add, operator.sub, operator.mul,
+                   BatchNorm2d, concat, cat, mean]
+}
+
 
 class LayerTestModel(torch.nn.Module):
     def __init__(self, layer):
@@ -100,6 +132,17 @@ class BasePytorchLayerTest(BaseLayerTest):
                          is_inputs_a_list=is_inputs_a_list,
                          use_cpu=use_cpu)
 
+    def get_fw_hw_model(self):
+        if self.current_mode == LayerTestMode.FLOAT:
+            # Disable all features that are enabled by default:
+            hwm = generate_default_hardware_model(enable_weights_quantization=False,
+                                                  enable_activation_quantization=False)
+            return generate_fhw_model_keras(name="base_torch_layer_test", hardware_model=hwm)
+        elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
+            return get_default_hwm_pytorch()
+        else:
+            raise NotImplemented
+
     def get_fw_info(self) -> FrameworkInfo:
         return DEFAULT_PYTORCH_INFO
 
@@ -144,8 +187,7 @@ class BasePytorchLayerTest(BaseLayerTest):
             if op == OUTPUT or op == operator.getitem or is_node_fake_quant(node):
                 continue
             if hasattr(quantized_model, str(node.target)):
-                if type(op) in fw_info.kernel_ops:
-                # if node.is_weights_quantization_enabled():
+                if type(op) in PYTORCH_LAYER_TEST_OPS['kernel_ops']:
                     quantized_weights = get_layer_weights(getattr(quantized_model, node.target))
                     float_weights = get_layer_weights(getattr(float_model, node.target))
                     for k, v in quantized_weights.items():
@@ -158,14 +200,13 @@ class BasePytorchLayerTest(BaseLayerTest):
                         node_next = node_next.next
                     self.unit_test.assertTrue(is_node_fake_quant(node_next))
 
-            elif op in fw_info.activation_ops:
-            # elif node.is_activation_quantization_enabled():
+            elif op in PYTORCH_LAYER_TEST_OPS['activation']:
                 node_next = node.next
                 while get_node_operation(node_next, quantized_model) == operator.getitem:
                     node_next = node_next.next
                 self.unit_test.assertTrue(is_node_fake_quant(node_next))
 
-            elif op in fw_info.no_quantization_ops:
+            elif op in PYTORCH_LAYER_TEST_OPS['no_quantization']:
                 node_next = node.next
                 while get_node_operation(node_next, quantized_model) == operator.getitem:
                     node_next = node_next.next

@@ -62,7 +62,7 @@ def calculate_quantization_params(graph: Graph,
                 candidate_qc.weights_quantization_cfg.set_weights_quantization_param(weights_params)
                 candidate_qc.weights_quantization_cfg.weights_channels_axis = output_channels_axis
 
-            if n.is_activation_quantization_enabled():
+            if n.has_activation and n.is_activation_quantization_enabled():
                 # If node's activations should be quantized as well, we compute its activation quantization parameters
                 activation_params = get_activations_qparams(activation_quant_cfg=candidate_qc.activation_quantization_cfg,
                                                             nodes_prior_info=n.prior_info,

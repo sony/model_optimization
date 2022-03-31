@@ -239,7 +239,8 @@ class TestGetPytorchHardwareModelAPI(unittest.TestCase):
                                                                                         rep_data,
                                                                                         n_iter=1,
                                                                                         fw_hw_model=fw_hw_model,
-                                                                                        quant_config=mp_qc)
+                                                                                        quant_config=mp_qc,
+                                                                                        target_kpi=mct.KPI(np.inf))
 
     def test_get_pytorch_not_supported_model(self):
         with self.assertRaises(Exception) as e:
