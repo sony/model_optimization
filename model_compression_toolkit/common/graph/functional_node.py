@@ -41,6 +41,7 @@ class FunctionalNode(BaseNode):
             quantization_attr: Attributes the node holds regarding how it should be quantized.
             functional_op: The op the node implements.
             inputs_as_list: Whether to pass the node its input tensors as a list or not when calling the layer.
+            has_activation: Whether the node has activations that we might want to quantize.
 
         """
 
