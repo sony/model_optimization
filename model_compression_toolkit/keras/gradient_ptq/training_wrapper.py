@@ -57,7 +57,7 @@ def gptq_training_wrapper(tg: Graph,
     #########################################
     # Build two models and compare points
     #########################################
-    compare_points, _ = get_compare_points(tg)  # get compare points
+    compare_points, _, compare_points_mean, compare_points_std = get_compare_points(tg)  # get compare points
 
     float_model, float_user_info = model_builder(tg,
                                                  mode=ModelBuilderMode.FLOAT,
@@ -101,7 +101,8 @@ def gptq_training_wrapper(tg: Graph,
         y_float = float_model(input_data)  # running float model
         with tf.GradientTape(persistent=True) as tape:
             y_fxp = fxp_model(input_data)  # running fxp model
-            loss_value = gptq_config.loss(y_fxp, y_float, fxp_weights_list, flp_weights_list)
+            loss_value = gptq_config.loss(y_fxp, y_float, fxp_weights_list, flp_weights_list,
+                                          compare_points_mean, compare_points_std)
 
         # Use the gradient tape to automatically retrieve
         # the gradients of the trainable variables with respect to the loss.
