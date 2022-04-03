@@ -71,7 +71,7 @@ def generate_fhw_model_keras(name: str, hardware_model: HardwareModel):
 
         hwm.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                               tf.nn.relu6,
-                                              ReLU,
+                                              hwm.LayerFilterParams(ReLU, negative_slope=0.0),
                                               hwm.LayerFilterParams(Activation, activation="relu")])
 
         hwm.OperationsSetToLayers("Add", [tf.add,
