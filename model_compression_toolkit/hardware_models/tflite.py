@@ -30,7 +30,11 @@ def get_tflite_hw_model():
         weights_n_bits=8,
         weights_per_channel_threshold=True,
         enable_weights_quantization=True,
-        enable_activation_quantization=True
+        enable_activation_quantization=True,
+        quantization_preserving=False,
+        fixed_scale=None,
+        fixed_zero_point=None,
+        weights_multiplier_nbits=None
     )
 
     # Create a QuantizationConfigOptions, which defines a set

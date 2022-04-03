@@ -101,7 +101,12 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
                 weights_n_bits=8,
                 weights_per_channel_threshold=True,
                 enable_weights_quantization=True,
-                enable_activation_quantization=True)])
+                enable_activation_quantization=True,
+                quantization_preserving=False,
+                fixed_scale=None,
+                fixed_zero_point=None,
+                weights_multiplier_nbits=None
+            )])
         hw_model = mct.hardware_representation.FrameworkHardwareModel(mct.hardware_representation.HardwareModel(qco))
 
         fw_info = DEFAULT_KERAS_INFO

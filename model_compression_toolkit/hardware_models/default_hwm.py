@@ -18,17 +18,38 @@ hwm = mct.hardware_representation
 
 
 def get_default_hardware_model():
+    return generate_default_hardware_model()
+
+
+def generate_default_hardware_model(activation_quantization_method=hwm.QuantizationMethod.POWER_OF_TWO,
+                                    weights_quantization_method=hwm.QuantizationMethod.POWER_OF_TWO,
+                                    activation_n_bits=8,
+                                    weights_n_bits=8,
+                                    weights_per_channel_threshold=True,
+                                    enable_weights_quantization=True,
+                                    enable_activation_quantization=True,
+                                    quantization_preserving=False,
+                                    fixed_scale=None,
+                                    fixed_zero_point=None,
+                                    weights_multiplier_nbits=None,
+                                    mixed_precision_cfg=None
+                                    ):
+
     # Create a quantization config.
     # A quantization configuration defines how an operator
     # should be quantized on the modeled hardware:
     eight_bits = hwm.OpQuantizationConfig(
-        activation_quantization_method=hwm.QuantizationMethod.POWER_OF_TWO,
-        weights_quantization_method=hwm.QuantizationMethod.POWER_OF_TWO,
-        activation_n_bits=8,
-        weights_n_bits=8,
-        weights_per_channel_threshold=True,
-        enable_weights_quantization=True,
-        enable_activation_quantization=True
+        activation_quantization_method=activation_quantization_method,
+        weights_quantization_method=weights_quantization_method,
+        activation_n_bits=activation_n_bits,
+        weights_n_bits=weights_n_bits,
+        weights_per_channel_threshold=weights_per_channel_threshold,
+        enable_weights_quantization=enable_weights_quantization,
+        enable_activation_quantization=enable_activation_quantization,
+        quantization_preserving=quantization_preserving,
+        fixed_scale=fixed_scale,
+        fixed_zero_point=fixed_zero_point,
+        weights_multiplier_nbits=weights_multiplier_nbits
     )
 
     # Create a QuantizationConfigOptions, which defines a set
@@ -64,9 +85,9 @@ def get_default_hardware_model():
         # to quantize the operations' activations using LUT.
         four_bits = eight_bits.clone_and_edit(weights_n_bits=4)
         two_bits = eight_bits.clone_and_edit(weights_n_bits=2)
-        mixed_precision_configuration_options = hwm.QuantizationConfigOptions([eight_bits,
-                                                                               four_bits,
-                                                                               two_bits],
+        mixed_precision_cfg_list = [eight_bits, four_bits, two_bits] \
+            if mixed_precision_cfg is None else mixed_precision_cfg  # allowing to use mp config from input
+        mixed_precision_configuration_options = hwm.QuantizationConfigOptions(mixed_precision_cfg_list,
                                                                               base_config=eight_bits)
 
         # Define operator sets that use mixed_precision_configuration_options:
@@ -95,4 +116,3 @@ def get_default_hardware_model():
         hwm.Fusing([conv, any_relu, add])
 
     return default_hwm
-

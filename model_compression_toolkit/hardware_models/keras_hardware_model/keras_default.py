@@ -15,6 +15,8 @@
 
 import tensorflow as tf
 
+from model_compression_toolkit.common.hardware_representation import HardwareModel
+
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
         MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, BatchNormalization
@@ -30,10 +32,22 @@ hwm = mct.hardware_representation
 
 def get_default_hwm_keras():
     default_hwm = get_default_hardware_model()
-    default_hwm_keras = hwm.FrameworkHardwareModel(default_hwm,
-                                                   name='default_hwm_keras')
+    return generate_fhw_model_keras(name='default_hwm_keras',
+                                    hardware_model=default_hwm)
 
-    with default_hwm_keras:
+
+def generate_fhw_model_keras(name: str, hardware_model: HardwareModel):
+    """
+    Generates a FrameworkHardwareModel object with default operation sets to layers mapping.
+    Args:
+        name: Name of the framework hardware model.
+        hardware_model: HardwareModel object.
+    Returns: a FrameworkHardwareModel object for the given HardwareModel.
+    """
+
+    fhwm_keras = hwm.FrameworkHardwareModel(hardware_model,
+                                            name=name)
+    with fhwm_keras:
         hwm.OperationsSetToLayers("NoQuantization", [Reshape,
                                                      tf.reshape,
                                                      Flatten,
@@ -57,7 +71,7 @@ def get_default_hwm_keras():
 
         hwm.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                               tf.nn.relu6,
-                                              hwm.LayerFilterParams(ReLU, negative_slope=0.0),
+                                              ReLU,
                                               hwm.LayerFilterParams(Activation, activation="relu")])
 
         hwm.OperationsSetToLayers("Add", [tf.add,
@@ -73,7 +87,4 @@ def get_default_hwm_keras():
 
         hwm.OperationsSetToLayers("Tanh", [tf.nn.tanh,
                                            hwm.LayerFilterParams(Activation, activation="tanh")])
-
-    return default_hwm_keras
-
-
+    return fhwm_keras

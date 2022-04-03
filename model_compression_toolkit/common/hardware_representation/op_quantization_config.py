@@ -54,10 +54,10 @@ class OpQuantizationConfig:
                  weights_per_channel_threshold: bool,
                  enable_weights_quantization: bool,
                  enable_activation_quantization: bool,
-                 quantization_preserving: bool = False,
-                 fixed_scale: float = None,
-                 fixed_zero_point: int = None,
-                 weights_multiplier_nbits: int = None  # If None - set 8 in hptq, o.w use it
+                 quantization_preserving: bool,
+                 fixed_scale: float,
+                 fixed_zero_point: int,
+                 weights_multiplier_nbits: int  # If None - set 8 in hptq, o.w use it
                  ):
         """
 
