@@ -125,7 +125,7 @@ if importlib.util.find_spec("torch") is not None:
          For each possible bit width (per layer) a threshold is then being calculated using the collected
          statistics. Then, using an ILP solver we find a mixed-precision configuration, and set a bit width
          for each layer. The model is then quantized (both coefficients and activations by default).
-         In order to limit the maximal model's size, a target KPI can be passed after weights_memory
+         In order to limit the maximal model's size, a target KPI need to be passed after weights_memory
          is set (in bytes).
          If a gptq configuration is passed, the quantized weights are optimized using gradient based post
          training quantization by comparing points between the float and quantized models, and minimizing the observed loss.
@@ -180,19 +180,9 @@ if importlib.util.find_spec("torch") is not None:
 
          """
         if not isinstance(quant_config, MixedPrecisionQuantizationConfig):
-            common.Logger.info("Given quantization config is not of MixedPrecisionQuantizationConfig type,"
-                               "executing a non mixed-precision compression process with base_config defined in the "
-                               "given hardware model...")
-
-            return pytorch_post_training_quantization(in_model,
-                                                      representative_data_gen,
-                                                      n_iter,
-                                                      quant_config,
-                                                      fw_info,
-                                                      network_editor,
-                                                      gptq_config,
-                                                      analyze_similarity,
-                                                      fw_hw_model)
+            common.Logger.error("Given quantization config to mixed-precision facade is not of type "
+                                "MixedPrecisionQuantizationConfig. Please use pytorch_post_training_quantization API, "
+                                "or pass a valid mixed precision configuration.")
 
         common.Logger.info("Using experimental mixed-precision quantization. "
                            "If you encounter an issue please file a bug.")
