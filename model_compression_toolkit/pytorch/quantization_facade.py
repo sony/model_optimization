@@ -107,13 +107,14 @@ if importlib.util.find_spec("torch") is not None:
 
     def pytorch_post_training_quantization_mixed_precision(in_model: Module,
                                                            representative_data_gen: Callable,
+                                                           target_kpi: KPI,
                                                            n_iter: int = 500,
                                                            quant_config: MixedPrecisionQuantizationConfig = DEFAULT_MIXEDPRECISION_CONFIG,
                                                            fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                                                            network_editor: List[EditRule] = [],
                                                            gptq_config: GradientPTQConfig = None,
                                                            analyze_similarity: bool = False,
-                                                           target_kpi: KPI = None,
+
                                                            fw_hw_model: FrameworkHardwareModel = PYTORCH_DEFAULT_MODEL):
         """
          Quantize a trained Pytorch model using post-training quantization. The model is quantized using a
@@ -124,9 +125,8 @@ if importlib.util.find_spec("torch") is not None:
          For each possible bit width (per layer) a threshold is then being calculated using the collected
          statistics. Then, using an ILP solver we find a mixed-precision configuration, and set a bit width
          for each layer. The model is then quantized (both coefficients and activations by default).
-         In order to limit the maximal model's size, a target KPI can be passed after weights_memory
-         is set (in bytes). If a target KPI wasn't passed, then the first number of bits configuration in quant_config
-         will be used for non-mixed-precision quantization.
+         In order to limit the maximal model's size, a target KPI need to be passed after weights_memory
+         is set (in bytes).
          If a gptq configuration is passed, the quantized weights are optimized using gradient based post
          training quantization by comparing points between the float and quantized models, and minimizing the observed loss.
          Notice that this feature is experimental.
@@ -135,13 +135,13 @@ if importlib.util.find_spec("torch") is not None:
          Args:
              in_model (Model): Pytorch model to quantize.
              representative_data_gen (Callable): Dataset used for calibration.
+             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              n_iter (int): Number of calibration iterations to run.
              quant_config (MixedPrecisionQuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized.
              fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pytorch/default_framework_info.py#L100>`_
              network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
              gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
              analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
-             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
 
          Returns:
@@ -179,19 +179,10 @@ if importlib.util.find_spec("torch") is not None:
              For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 
          """
-        if target_kpi is None:
-            common.Logger.warning(
-                f"No KPI was passed. Using non mixed-precision compression process with "
-                f"base_config defined in the given hardware model...")
-            return pytorch_post_training_quantization(in_model,
-                                                      representative_data_gen,
-                                                      n_iter,
-                                                      quant_config,
-                                                      fw_info,
-                                                      network_editor,
-                                                      gptq_config,
-                                                      analyze_similarity,
-                                                      fw_hw_model)
+        if not isinstance(quant_config, MixedPrecisionQuantizationConfig):
+            common.Logger.error("Given quantization config to mixed-precision facade is not of type "
+                                "MixedPrecisionQuantizationConfig. Please use pytorch_post_training_quantization API, "
+                                "or pass a valid mixed precision configuration.")
 
         common.Logger.info("Using experimental mixed-precision quantization. "
                            "If you encounter an issue please file a bug.")
