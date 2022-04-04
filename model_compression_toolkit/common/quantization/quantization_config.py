@@ -53,6 +53,7 @@ class QuantizationConfig(object):
                  weights_bias_correction: bool = True,
                  weights_per_channel_threshold: bool = True,
                  input_scaling: bool = False,
+                 softmax_shift: bool = False,
                  enable_weights_quantization: bool = True,
                  enable_activation_quantization: bool = True,
                  shift_negative_activation_correction: bool = False,
@@ -72,6 +73,7 @@ class QuantizationConfig(object):
             weights_bias_correction (bool): Whether to use weights bias correction or not.
             weights_per_channel_threshold (bool): Whether to quantize the weights per-channel or not (per-tensor).
             input_scaling (bool): Whether to use input scaling or not.
+            softmax_shift (bool): Whether to use softmax shift or not.
             enable_weights_quantization (bool): Whether to quantize the model weights or not.
             enable_activation_quantization (bool): Whether to quantize the model activations or not.
             shift_negative_activation_correction (bool): Whether to use shifting negative activation correction or not.
@@ -106,6 +108,7 @@ class QuantizationConfig(object):
         self.enable_activation_quantization = enable_activation_quantization
         self.activation_channel_equalization = activation_channel_equalization
         self.input_scaling = input_scaling
+        self.softmax_shift = softmax_shift
         self.min_threshold = min_threshold
         self.shift_negative_activation_correction = shift_negative_activation_correction
         self.z_threshold = z_threshold
@@ -123,5 +126,6 @@ DEFAULTCONFIG = QuantizationConfig(QuantizationErrorMethod.MSE,
                                    relu_bound_to_power_of_2=False,
                                    weights_bias_correction=True,
                                    weights_per_channel_threshold=True,
-                                   input_scaling=False)
+                                   input_scaling=False,
+                                   softmax_shift=False)
 

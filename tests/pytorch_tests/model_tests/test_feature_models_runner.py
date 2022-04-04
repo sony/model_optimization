@@ -19,6 +19,8 @@ from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSame
 from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
+from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
+    SoftmaxFunctionNetTest
 from tests.pytorch_tests.model_tests.feature_models.layer_name_test import ReuseNameNetTest
 from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTQuantizerTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_test import MixedPercisionSearch8Bit, \
@@ -66,6 +68,18 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the Relu bound to POT feature with Hardtanh layer as Relu.
         """
         HardtanhBoundToPOTNetTest(self).run_test()
+
+    def test_softmax_layer_shift(self):
+        """
+        This test checks the Softmax shift feature with Softmax as layer.
+        """
+        SoftmaxLayerNetTest(self).run_test()
+
+    def test_softmax_function_shift(self):
+        """
+        This test checks the Softmax shift feature with Softmax as function.
+        """
+        SoftmaxFunctionNetTest(self).run_test()
 
     def test_layer_name(self):
         """
