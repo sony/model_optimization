@@ -22,7 +22,8 @@ class FunctionalNode(BaseNode):
                  reuse_group: str = None,
                  quantization_attr: Dict[str, Any] = None,
                  functional_op: Any = None,
-                 inputs_as_list: bool = False):
+                 inputs_as_list: bool = False,
+                 has_activation: bool = True):
         """
         Init a FunctionalNode object.
 
@@ -40,6 +41,7 @@ class FunctionalNode(BaseNode):
             quantization_attr: Attributes the node holds regarding how it should be quantized.
             functional_op: The op the node implements.
             inputs_as_list: Whether to pass the node its input tensors as a list or not when calling the layer.
+            has_activation: Whether the node has activations that we might want to quantize.
 
         """
 
@@ -51,7 +53,8 @@ class FunctionalNode(BaseNode):
                          layer_class,
                          reuse,
                          reuse_group,
-                         quantization_attr)
+                         quantization_attr,
+                         has_activation=has_activation)
 
         self.op_call_kwargs = op_call_kwargs
         self.op_call_args = op_call_args

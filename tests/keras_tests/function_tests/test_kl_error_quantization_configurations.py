@@ -52,13 +52,19 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         for quantize_method, error_method, per_channel in weights_test_combinations:
-            default_op_cfg = hwm.OpQuantizationConfig(activation_quantization_method=hwm.QuantizationMethod.POWER_OF_TWO,
-                                                    weights_quantization_method=quantize_method,
-                                                    activation_n_bits=16,
-                                                    weights_n_bits=8,
-                                                    enable_weights_quantization=True,
-                                                    enable_activation_quantization=True,
-                                                    weights_per_channel_threshold=per_channel)
+            default_op_cfg = hwm.OpQuantizationConfig(
+                activation_quantization_method=hwm.QuantizationMethod.POWER_OF_TWO,
+                weights_quantization_method=quantize_method,
+                activation_n_bits=16,
+                weights_n_bits=8,
+                enable_weights_quantization=True,
+                enable_activation_quantization=True,
+                weights_per_channel_threshold=per_channel,
+                quantization_preserving=False,
+                fixed_scale=None,
+                fixed_zero_point=None,
+                weights_multiplier_nbits=None
+                )
 
             hw_model = hwm.FrameworkHardwareModel(hwm.HardwareModel(hwm.QuantizationConfigOptions([default_op_cfg])))
 
@@ -81,12 +87,17 @@ class TestQuantizationConfigurations(unittest.TestCase):
         model = model_gen()
         for quantize_method, error_method, relu_bound_to_power_of_2 in activation_test_combinations:
             default_op_cfg = hwm.OpQuantizationConfig(activation_quantization_method=quantize_method,
-                                                weights_quantization_method=hwm.QuantizationMethod.POWER_OF_TWO,
-                                                activation_n_bits=8,
-                                                weights_n_bits=8,
-                                                enable_weights_quantization=False,
-                                                enable_activation_quantization=True,
-                                                weights_per_channel_threshold=True)
+                                                      weights_quantization_method=hwm.QuantizationMethod.POWER_OF_TWO,
+                                                      activation_n_bits=8,
+                                                      weights_n_bits=8,
+                                                      enable_weights_quantization=False,
+                                                      enable_activation_quantization=True,
+                                                      weights_per_channel_threshold=True,
+                                                      quantization_preserving=False,
+                                                      fixed_scale=None,
+                                                      fixed_zero_point=None,
+                                                      weights_multiplier_nbits=None
+                                                      )
 
             hw_model = hwm.FrameworkHardwareModel(hwm.HardwareModel(hwm.QuantizationConfigOptions([default_op_cfg])))
 

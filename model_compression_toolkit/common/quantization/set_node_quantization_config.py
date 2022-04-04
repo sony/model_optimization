@@ -78,8 +78,12 @@ def set_quantization_configs_to_node(node: BaseNode,
                                                                   weight_channel_axis,
                                                                   node_qc_options)
 
-    enable_activation_quantization = quant_config.enable_activation_quantization and (fw_info.in_activation_ops(node) or fw_info.in_kernel_ops(node))
-    enable_weights_quantization = quant_config.enable_weights_quantization and fw_info.in_kernel_ops(node)
+    enable_activation_quantization = quant_config.enable_activation_quantization \
+                                     and (fw_info.in_activation_ops(node) or fw_info.in_kernel_ops(node)) \
+                                     and node.get_has_activation()
+    enable_weights_quantization = quant_config.enable_weights_quantization \
+                                  and fw_info.in_kernel_ops(node) \
+                                  and node.has_weights_to_quantize(fw_info)
     for candidate_qc in node.candidates_quantization_cfg:
         candidate_qc.weights_quantization_cfg.enable_weights_quantization = enable_weights_quantization
         candidate_qc.activation_quantization_cfg.enable_activation_quantization = enable_activation_quantization

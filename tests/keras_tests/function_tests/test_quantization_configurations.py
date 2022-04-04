@@ -71,7 +71,12 @@ class TestQuantizationConfigurations(unittest.TestCase):
                     weights_n_bits=8,
                     weights_per_channel_threshold=per_channel,
                     enable_weights_quantization=True,
-                    enable_activation_quantization=True)])
+                    enable_activation_quantization=True,
+                    quantization_preserving=False,
+                    fixed_scale=None,
+                    fixed_zero_point=None,
+                    weights_multiplier_nbits=None
+                )])
             fw_hw_model = mct.hardware_representation.FrameworkHardwareModel(
                 mct.hardware_representation.HardwareModel(qco))
             qc = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
@@ -99,7 +104,12 @@ class TestQuantizationConfigurations(unittest.TestCase):
                     weights_n_bits=8,
                     weights_per_channel_threshold=False,
                     enable_weights_quantization=True,
-                    enable_activation_quantization=True)])
+                    enable_activation_quantization=True,
+                    quantization_preserving=False,
+                    fixed_scale=None,
+                    fixed_zero_point=None,
+                    weights_multiplier_nbits=None
+                )])
 
             fw_hw_model = mct.hardware_representation.FrameworkHardwareModel(
                 mct.hardware_representation.HardwareModel(qco))
