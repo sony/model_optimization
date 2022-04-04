@@ -75,6 +75,7 @@ def nodes_builder(model: GraphModule,
     for node in model.graph.nodes:
         # extract node type and framework attributes
         framework_attr = dict(node.kwargs)
+        node_has_activation = True
         if node.target in module_dict.keys():
             node_module = module_dict[node.target]
             node_type = type(node_module)
@@ -99,6 +100,7 @@ def nodes_builder(model: GraphModule,
                 raise Exception(f'Call method of type \'{node.target}\' is currently not supported.')
         elif node.op == GET_ATTR:
             node_type = ConstantHolder
+            node_has_activation = False
             common.Logger.warning(
                 'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
                 'converting the model.')
@@ -176,6 +178,7 @@ def nodes_builder(model: GraphModule,
                                      output_shape=output_shape,
                                      weights=weights,
                                      layer_class=node_type,
+                                     has_activation=node_has_activation,
                                      **kwargs)
 
         # generate graph inputs list
