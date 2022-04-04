@@ -19,10 +19,10 @@ from model_compression_toolkit.common.hardware_representation import HardwareMod
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
-        MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, BatchNormalization
+        MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
-    Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, BatchNormalization
+    Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D
 
 from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
 
@@ -56,8 +56,7 @@ def generate_fhw_model_keras(name: str, hardware_model: HardwareModel):
                                                      Dropout,
                                                      MaxPooling2D,
                                                      tf.split,
-                                                     tf.quantization.fake_quant_with_min_max_vars,
-                                                     BatchNormalization])
+                                                     tf.quantization.fake_quant_with_min_max_vars])
 
         hwm.OperationsSetToLayers("Conv", [Conv2D,
                                            DepthwiseConv2D,
