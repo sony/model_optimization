@@ -58,13 +58,19 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
     def get_fw_hw_model(self):
-        qco = hardware_representation.QuantizationConfigOptions([hardware_representation.OpQuantizationConfig(activation_quantization_method=hardware_representation.QuantizationMethod.POWER_OF_TWO,
-                                                                      weights_quantization_method=self.quantization_method,
-                                                                      activation_n_bits=8,
-                                                                      weights_n_bits=8,
-                                                                      weights_per_channel_threshold=True,
-                                                                      enable_weights_quantization=True,
-                                                                      enable_activation_quantization=True)])
+        qco = hardware_representation.QuantizationConfigOptions([hardware_representation.OpQuantizationConfig(
+            activation_quantization_method=hardware_representation.QuantizationMethod.POWER_OF_TWO,
+            weights_quantization_method=self.quantization_method,
+            activation_n_bits=8,
+            weights_n_bits=8,
+            weights_per_channel_threshold=True,
+            enable_weights_quantization=True,
+            enable_activation_quantization=True,
+            quantization_preserving=False,
+            fixed_scale=None,
+            fixed_zero_point=None,
+            weights_multiplier_nbits=None
+            )])
         return hardware_representation.FrameworkHardwareModel(hardware_representation.HardwareModel(qco))
 
     def get_quantization_config(self):

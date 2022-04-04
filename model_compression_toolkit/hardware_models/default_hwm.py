@@ -12,12 +12,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import List, Tuple
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.common.hardware_representation import OpQuantizationConfig, HardwareModel
+
 hwm = mct.hardware_representation
 
 
-def get_default_hardware_model():
+def get_default_hardware_model() -> HardwareModel:
+    """
+    A method that generates a default hardware model, with base 8-bit quantization configuration and 8, 4, 2
+    bits configuration list for mixed-precision quantization.
+    NOTE: in order to generate a hardware model with different configurations but with the same Operators Sets
+    (for tests, experiments, etc.), use this method implementation as a test-case, i.e., override the
+    'get_op_quantization_configs' method and use its output to call 'generate_hardware_model' with your configurations.
+
+    Returns: A HardwareModel object.
+
+    """
+    base_config, mixed_precision_cfg_list = get_op_quantization_configs()
+    return generate_hardware_model(base_config, mixed_precision_cfg_list, name='default_hwm')
+
+
+def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig]]:
+    """
+    Creates a default configuration object for 8-bit quantization, to be used to set a default hardware model.
+    In addition, creates a default configuration objects list (with 8, 4 and 2 bit quantization) to be used as
+    default configuration for mixed-precision quantization.
+
+    Returns: An OpQuantizationConfig config object and a list of OpQuantizationConfig objects.
+
+    """
     # Create a quantization config.
     # A quantization configuration defines how an operator
     # should be quantized on the modeled hardware:
@@ -28,23 +54,54 @@ def get_default_hardware_model():
         weights_n_bits=8,
         weights_per_channel_threshold=True,
         enable_weights_quantization=True,
-        enable_activation_quantization=True
-    )
+        enable_activation_quantization=True,
+        quantization_preserving=False,
+        fixed_scale=None,
+        fixed_zero_point=None,
+        weights_multiplier_nbits=None)
 
+    # To quantize a model using mixed-precision, create
+    # a list with more than one OpQuantizationConfig.
+    # In this example, we quantize some operations' weights
+    # using 2, 4 or 8 bits, and when using 2 or 4 bits, it's possible
+    # to quantize the operations' activations using LUT.
+    four_bits = eight_bits.clone_and_edit(weights_n_bits=4)
+    two_bits = eight_bits.clone_and_edit(weights_n_bits=2)
+    mixed_precision_cfg_list = [eight_bits, four_bits, two_bits]
+
+    return eight_bits, mixed_precision_cfg_list
+
+
+def generate_hardware_model(base_config: OpQuantizationConfig,
+                            mixed_precision_cfg_list: List[OpQuantizationConfig],
+                            name: str) -> HardwareModel:
+    """
+    Generates HardwareModel with default defined Operators Sets, based on the given base configuration and
+    mixed-precision configurations options list.
+
+    Args:
+        base_config: An OpQuantizationConfig to set as the hardware model base configuration.
+        mixed_precision_cfg_list: A list of OpQuantizationConfig to be used as the hardware model mixed-precision
+            quantization configuration options.
+        name: The name of the Hardware model.
+
+    Returns: A HardwareModel object.
+
+    """
     # Create a QuantizationConfigOptions, which defines a set
     # of possible configurations to consider when quantizing a set of operations (in mixed-precision, for example).
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
-    default_configuration_options = hwm.QuantizationConfigOptions([eight_bits])
+    default_configuration_options = hwm.QuantizationConfigOptions([base_config])
 
     # Create a HardwareModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
-    default_hwm = hwm.HardwareModel(default_configuration_options, name='default_hwm')
+    generated_hwm = hwm.HardwareModel(default_configuration_options, name=name)
 
     # To start defining the model's components (such as operator sets, and fusing patterns),
     # use 'with' the hardware model instance, and create them as below:
-    with default_hwm:
+    with generated_hwm:
         # Create an OperatorsSet to represent a set of operations.
         # Each OperatorsSet has a unique label.
         # If a quantization configuration options is passed, these options will
@@ -57,17 +114,9 @@ def get_default_hardware_model():
                              enable_weights_quantization=False,
                              enable_activation_quantization=False))
 
-        # To quantize a model using mixed-precision, create
-        # a QuantizationConfigOptions with more than one QuantizationConfig.
-        # In this example, we quantize some operations' weights
-        # using 2, 4 or 8 bits, and when using 2 or 4 bits, it's possible
-        # to quantize the operations' activations using LUT.
-        four_bits = eight_bits.clone_and_edit(weights_n_bits=4)
-        two_bits = eight_bits.clone_and_edit(weights_n_bits=2)
-        mixed_precision_configuration_options = hwm.QuantizationConfigOptions([eight_bits,
-                                                                               four_bits,
-                                                                               two_bits],
-                                                                              base_config=eight_bits)
+        # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects
+        mixed_precision_configuration_options = hwm.QuantizationConfigOptions(mixed_precision_cfg_list,
+                                                                              base_config=base_config)
 
         # Define operator sets that use mixed_precision_configuration_options:
         hwm.OperatorsSet("ConvTranspose", mixed_precision_configuration_options)
@@ -94,5 +143,4 @@ def get_default_hardware_model():
         hwm.Fusing([conv, add, any_relu])
         hwm.Fusing([conv, any_relu, add])
 
-    return default_hwm
-
+    return generated_hwm

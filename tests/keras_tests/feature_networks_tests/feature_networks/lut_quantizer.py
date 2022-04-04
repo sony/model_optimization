@@ -51,13 +51,19 @@ class LUTQuantizerTest(BaseKerasFeatureNetworkTest):
 
 
     def get_fw_hw_model(self):
-        qco = hw_model.QuantizationConfigOptions([hw_model.OpQuantizationConfig(activation_quantization_method=hw_model.QuantizationMethod.POWER_OF_TWO,
-                                                                      weights_quantization_method=hw_model.QuantizationMethod.LUT_QUANTIZER,
-                                                                      activation_n_bits=8,
-                                                                      weights_n_bits=8,
-                                                                      weights_per_channel_threshold=True,
-                                                                      enable_weights_quantization=True,
-                                                                      enable_activation_quantization=True)])
+        qco = hw_model.QuantizationConfigOptions(
+            [hw_model.OpQuantizationConfig(activation_quantization_method=hw_model.QuantizationMethod.POWER_OF_TWO,
+                                           weights_quantization_method=hw_model.QuantizationMethod.LUT_QUANTIZER,
+                                           activation_n_bits=8,
+                                           weights_n_bits=8,
+                                           weights_per_channel_threshold=True,
+                                           enable_weights_quantization=True,
+                                           enable_activation_quantization=True,
+                                           quantization_preserving=False,
+                                           fixed_scale=None,
+                                           fixed_zero_point=None,
+                                           weights_multiplier_nbits=None
+                                           )])
         return hw_model.FrameworkHardwareModel(hw_model.HardwareModel(qco))
 
     def get_quantization_config(self):
