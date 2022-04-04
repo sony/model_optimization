@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import List, Tuple
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.common.hardware_representation import OpQuantizationConfig, HardwareModel
+
 hwm = mct.hardware_representation
 
 
-def get_default_hardware_model():
+def get_default_hardware_model() -> HardwareModel:
     """
     A method that generates a default hardware model, with base 8-bit quantization configuration and 8, 4, 2
     bits configuration list for mixed-precision quantization.
@@ -32,7 +35,7 @@ def get_default_hardware_model():
     return generate_hardware_model(base_config, mixed_precision_cfg_list, name='default_hwm')
 
 
-def get_op_quantization_configs():
+def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig]]:
     """
     Creates a default configuration object for 8-bit quantization, to be used to set a default hardware model.
     In addition, creates a default configuration objects list (with 8, 4 and 2 bit quantization) to be used as
@@ -69,7 +72,9 @@ def get_op_quantization_configs():
     return eight_bits, mixed_precision_cfg_list
 
 
-def generate_hardware_model(base_config, mixed_precision_cfg_list, name):
+def generate_hardware_model(base_config: OpQuantizationConfig,
+                            mixed_precision_cfg_list: List[OpQuantizationConfig],
+                            name: str) -> HardwareModel:
     """
     Generates HardwareModel with default defined Operators Sets, based on the given base configuration and
     mixed-precision configurations options list.
