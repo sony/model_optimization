@@ -29,7 +29,8 @@ from model_compression_toolkit.common.quantization.quantization_config import Qu
 from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
 from model_compression_toolkit.common.hardware_representation.hardware2framework import FrameworkHardwareModel
-from model_compression_toolkit.common.hardware_representation.op_quantization_config import OpQuantizationConfig
+from model_compression_toolkit.common.hardware_representation.op_quantization_config import OpQuantizationConfig, \
+    QuantizationConfigOptions
 
 
 def set_quantization_configuration_to_graph(graph: Graph,
@@ -68,14 +69,14 @@ def set_quantization_configs_to_node(node: BaseNode,
         fw_hw_model: FrameworkHardwareModel to get default OpQuantizationConfig.
 
     """
-    op_cfg = fw_hw_model.get_default_op_qc()
+    node_qc_options = fw_hw_model.get_qco_by_node(node)
 
     # Create QC candidates for weights and activation combined
     weight_channel_axis = fw_info.kernel_channels_mapping.get(node.type)[0]
     node.candidates_quantization_cfg = _create_node_candidates_qc(quant_config,
                                                                   fw_info,
                                                                   weight_channel_axis,
-                                                                  op_cfg)
+                                                                  node_qc_options)
 
     enable_activation_quantization = quant_config.enable_activation_quantization and (fw_info.in_activation_ops(node) or fw_info.in_kernel_ops(node))
     enable_weights_quantization = quant_config.enable_weights_quantization and fw_info.in_kernel_ops(node)
@@ -162,7 +163,7 @@ def create_node_qc_candidate(qc: QuantizationConfig,
 def _create_node_candidates_qc(qc: QuantizationConfig,
                                fw_info: FrameworkInfo,
                                weight_channel_axis: int,
-                               op_cfg: OpQuantizationConfig) -> List[CandidateNodeQuantizationConfig]:
+                               node_qc_options: QuantizationConfigOptions) -> List[CandidateNodeQuantizationConfig]:
     """
     Create a list of candidates of weights and activation quantization configurations for a node.
 
@@ -170,7 +171,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
         qc: Quantization configuration the quantization process should follow.
         fw_info: Framework information (e.g., which layers should have their kernels' quantized).
         weight_channel_axis: Output channel index of the node's kernel.
-        op_cfg: OpQuantizationConfig for the node with quantizers types.
+        node_qc_options: QuantizationConfigOptions for the node with quantization candidates information.
 
     Returns:
         List of candidates of weights quantization configurations to set for a node.
@@ -178,16 +179,22 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
 
     candidates = []
     if isinstance(qc, MixedPrecisionQuantizationConfig):
-        qc.n_bits_candidates.sort(reverse=True)
-        for weights_n_bits, activation_n_bits in qc.n_bits_candidates:
+        for op_cfg in node_qc_options.quantization_config_list:
             candidate_nbits_qc = copy.deepcopy(qc)
-            candidate_nbits_qc.weights_n_bits = weights_n_bits
-            candidate_nbits_qc.activation_n_bits = activation_n_bits
             candidates.append(create_node_qc_candidate(candidate_nbits_qc,
                                                        fw_info,
                                                        weight_channel_axis,
                                                        op_cfg))
+        # sorting the candidates by weights number of bits first and then by activation number of bits
+        # (in reversed order)
+        candidates.sort(key=lambda c: (c.weights_quantization_cfg.weights_n_bits,
+                                       c.activation_quantization_cfg.activation_n_bits), reverse=True)
     else:
+        op_cfg = node_qc_options.quantization_config_list[0]
+        if len(node_qc_options.quantization_config_list) > 1:
+            op_cfg = node_qc_options.base_config
+            Logger.warning(f"Given multiple candidates configurations for non mixed-precision quantization,"
+                           f"using base_config as the node's configuration")
         candidates.append(create_node_qc_candidate(qc,
                                                    fw_info,
                                                    weight_channel_axis,

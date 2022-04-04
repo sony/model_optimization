@@ -215,7 +215,7 @@ if importlib.util.find_spec("tensorflow") is not None\
              Create a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
              Here, each layer can be quantized by 2, 4 or 8 bits:
 
-             >>> config = mct.MixedPrecisionQuantizationConfig(weights_n_bits=[4, 2, 8])
+             >>> config = mct.MixedPrecisionQuantizationConfig()
 
              Create a KPI object to limit our returned model's size. Note that this value affects only coefficients that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value, while the bias will not):
 
@@ -232,16 +232,9 @@ if importlib.util.find_spec("tensorflow") is not None\
                              fw_info=fw_info).validate()
 
         if target_kpi is None:
-            # Before starting non-mixed-precision process, we need to set only single bit width, so we take the best
-            # option which is the maximal number of bits.
-            single_bitwidth_candidate = quant_config.n_bits_candidates[0]
-            quant_config.weights_n_bits = [single_bitwidth_candidate[0]]
-            quant_config.activation_n_bits = [single_bitwidth_candidate[1]]
-            quant_config.n_bits_candidates = [single_bitwidth_candidate]
             common.Logger.warning(
                 f"No KPI was passed. Using non mixed-precision compression process with "
-                f"weights_n_bits={quant_config.weights_n_bits} "
-                f"and activation_n_bits={quant_config.activation_n_bits}...")
+                f"base_config defined in the given hardware model...")
             return keras_post_training_quantization(in_model,
                                                     representative_data_gen,
                                                     n_iter,

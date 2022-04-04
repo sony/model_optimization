@@ -49,8 +49,6 @@ class QuantizationConfig(object):
     def __init__(self,
                  activation_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE,
                  weights_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE,
-                 activation_n_bits: int = 8,
-                 weights_n_bits: int = 8,
                  relu_bound_to_power_of_2: bool = False,
                  weights_bias_correction: bool = True,
                  weights_per_channel_threshold: bool = True,
@@ -70,8 +68,6 @@ class QuantizationConfig(object):
         Args:
             activation_error_method (QuantizationErrorMethod): Which method to use from QuantizationErrorMethod for activation quantization threshold selection.
             weights_error_method (QuantizationErrorMethod): Which method to use from QuantizationErrorMethod for activation quantization threshold selection.
-            activation_n_bits (int): Number of bits to quantize the activations.
-            weights_n_bits (int): Number of bits to quantize the coefficients.
             relu_bound_to_power_of_2 (bool): Whether to use relu to power of 2 scaling correction or not.
             weights_bias_correction (bool): Whether to use weights bias correction or not.
             weights_per_channel_threshold (bool): Whether to quantize the weights per-channel or not (per-tensor).
@@ -94,23 +90,16 @@ class QuantizationConfig(object):
             enabling relu_bound_to_power_of_2, weights_bias_correction, and quantizing the weights per-channel,
             one can instantiate a quantization configuration:
 
-            >>> qc = QuantizationConfig(activation_error_method=QuantizationErrorMethod.NOCLIPPING,weights_error_method=QuantizationErrorMethod.MSE,activation_quantization_method=QuantizationMethod.POWER_OF_TWO,weights_quantization_method=QuantizationMethod.POWER_OF_TWO,activation_n_bits=6,weights_n_bits=7,relu_bound_to_power_of_2=True,weights_bias_correction=True,weights_per_channel_threshold=True)
+            >>> qc = QuantizationConfig(activation_error_method=QuantizationErrorMethod.NOCLIPPING,weights_error_method=QuantizationErrorMethod.MSE,activation_quantization_method=QuantizationMethod.POWER_OF_TWO,weights_quantization_method=QuantizationMethod.POWER_OF_TWO,relu_bound_to_power_of_2=True,weights_bias_correction=True,weights_per_channel_threshold=True)
 
 
             The QuantizationConfig instanse can then be passed to
             :func:`~model_compression_toolkit.keras_post_training_quantization`
 
-            In order to use a different quantization method (than power-of-two that is used by default),
-            one may pass a desired QuantizationMethod when instantiating a QuantizationConfig. For example:
-
-            >>> qc = QuantizationConfig(activation_quantization_method=QuantizationMethod.LUT_QUANTIZER)
-
         """
 
         self.activation_error_method = activation_error_method
         self.weights_error_method = weights_error_method
-        self.activation_n_bits = activation_n_bits
-        self.weights_n_bits = weights_n_bits
         self.relu_bound_to_power_of_2 = relu_bound_to_power_of_2
         self.weights_bias_correction = weights_bias_correction
         self.weights_per_channel_threshold = weights_per_channel_threshold
@@ -132,8 +121,6 @@ class QuantizationConfig(object):
 # Default quantization configuration the library use.
 DEFAULTCONFIG = QuantizationConfig(QuantizationErrorMethod.MSE,
                                    QuantizationErrorMethod.MSE,
-                                   activation_n_bits=8,
-                                   weights_n_bits=8,
                                    relu_bound_to_power_of_2=False,
                                    weights_bias_correction=True,
                                    weights_per_channel_threshold=True,

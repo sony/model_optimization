@@ -81,7 +81,7 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.activation_quantization_params = {}
         self.activation_error_method = qc.activation_error_method
         self.activation_quantization_method = op_cfg.activation_quantization_method
-        self.activation_n_bits = qc.activation_n_bits
+        self.activation_n_bits = op_cfg.activation_n_bits
         self.relu_bound_to_power_of_2 = qc.relu_bound_to_power_of_2
         self.enable_activation_quantization = qc.enable_activation_quantization
         self.activation_channel_equalization = qc.activation_channel_equalization
@@ -214,7 +214,7 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.weights_quantization_params = {}
         self.weights_error_method = qc.weights_error_method
         self.weights_quantization_method = op_cfg.weights_quantization_method
-        self.weights_n_bits = qc.weights_n_bits
+        self.weights_n_bits = op_cfg.weights_n_bits
         self.weights_bias_correction = qc.weights_bias_correction
         self.weights_per_channel_threshold = qc.weights_per_channel_threshold
         self.enable_weights_quantization = qc.enable_weights_quantization
