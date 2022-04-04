@@ -15,9 +15,13 @@
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
+from model_compression_toolkit.hardware_models.default_hwm import get_op_quantization_configs
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+
+from tests.common_tests.helpers.generate_test_hw_model import generate_mixed_precision_test_hw_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
@@ -30,13 +34,21 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
+    def get_fw_hw_model(self):
+        base_config, _ = get_op_quantization_configs()
+        base_config = base_config.clone_and_edit(weights_n_bits=16,
+                                                 activation_n_bits=16)
+        mp_hw_model = generate_mixed_precision_test_hw_model(base_cfg=base_config,
+                                                             mp_bitwidth_candidates_list=[(2, 16), (4, 16), (16, 16)])
+        return generate_fhw_model_keras(name="reused_layer_mp_test", hardware_model=mp_hw_model)
+
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                    activation_n_bits=16, relu_bound_to_power_of_2=True, weights_bias_correction=True,
+                                    relu_bound_to_power_of_2=True, weights_bias_correction=True,
                                     weights_per_channel_threshold=True, input_scaling=True,
                                     activation_channel_equalization=True)
 
-        return MixedPrecisionQuantizationConfig(qc, n_bits_candidates=[(2, 16), (16, 16), (4, 16)])
+        return MixedPrecisionQuantizationConfig(qc)
 
     def create_networks(self):
         layer = layers.Conv2D(3, 4)

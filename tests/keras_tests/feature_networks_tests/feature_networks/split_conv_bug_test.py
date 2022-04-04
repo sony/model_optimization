@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+
+from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
@@ -27,10 +30,14 @@ class SplitConvBugTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
+    def get_fw_hw_model(self):
+        hwm = generate_test_hw_model({'weights_n_bits': 16,
+                                      'activation_n_bits': 16})
+        return generate_fhw_model_keras(name="split_conv_bug_test", hardware_model=hwm)
+
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
                                       mct.QuantizationErrorMethod.MSE,
-                                      16, 16,
                                       True, True, True, input_scaling=True)
 
     def get_input_shapes(self):

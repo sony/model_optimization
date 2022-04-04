@@ -21,6 +21,7 @@ from torch.nn import Module
 
 from model_compression_toolkit import FrameworkInfo, pytorch_post_training_quantization
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import generate_fhw_model_pytorch
 from model_compression_toolkit.pytorch.constants import CALL_FUNCTION, OUTPUT, CALL_METHOD, PLACEHOLDER
 from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder
 from model_compression_toolkit.pytorch.utils import torch_tensor_to_numpy, to_torch_tensor
@@ -76,6 +77,13 @@ def get_layer_weights(layer):
     weights.update(named_parameters_weights)
     weights.update(named_buffer_weights)
     return weights
+
+
+def get_layer_test_fw_hw_model_dict(hardware_model, test_name, fhwm_name):
+    return {
+        test_name: generate_fhw_model_pytorch(name=fhwm_name,
+                                              hardware_model=hardware_model),
+    }
 
 
 class BasePytorchLayerTest(BaseLayerTest):

@@ -2,6 +2,10 @@ from typing import List, Any, Tuple
 
 import tensorflow as tf
 
+from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
+
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers.core import TFOpLambda
     from tensorflow.keras.models import Model
@@ -41,6 +45,17 @@ class BaseKerasLayerTest(BaseLayerTest):
                          quantization_modes=quantization_modes,
                          is_inputs_a_list=is_inputs_a_list,
                          use_cpu=use_cpu)
+
+    def get_fw_hw_model(self):
+        if self.current_mode == LayerTestMode.FLOAT:
+            # Disable all features that are enabled by default:
+            return generate_fhw_model_keras(name="float_layer_test", hardware_model=get_default_hardware_model())
+        elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
+            hwm = generate_test_hw_model({'weights_n_bits': 8,
+                                          'activation_n_bits': 8})
+            return generate_fhw_model_keras(name="8bit_layer_test", hardware_model=hwm)
+        else:
+            raise NotImplemented
 
     def get_fw_info(self) -> FrameworkInfo:
         return DEFAULT_KERAS_INFO

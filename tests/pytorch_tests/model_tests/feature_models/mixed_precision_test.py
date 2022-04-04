@@ -18,6 +18,8 @@ from torch.nn import Conv2d
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, KPI
 from model_compression_toolkit.common.user_info import UserInformation
+from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
+from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import get_layer_test_fw_hw_model_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
 
@@ -30,6 +32,11 @@ class MixedPercisionBaseTest(BasePytorchTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
+    def get_fw_hw_model(self):
+        return get_layer_test_fw_hw_model_dict(hardware_model=get_default_hardware_model(),
+                                               test_name='mixed_precision_model',
+                                               fhwm_name='mixed_precision_pytorch_test')
+
     def get_quantization_configs(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
                                     mct.QuantizationErrorMethod.MSE,
@@ -40,7 +47,6 @@ class MixedPercisionBaseTest(BasePytorchTest):
                                     input_scaling=False)
 
         return {"mixed_precision_model": MixedPrecisionQuantizationConfig(qc,
-                                                                          n_bits_candidates=[(2, 8), (8, 8), (4, 8)],
                                                                           num_of_images=1)}
 
     def create_feature_network(self, input_shape):

@@ -44,6 +44,9 @@ class BaseLayerTest(BaseTest):
     def get_layers(self):
         return self.layers
 
+    def get_fw_hw_model(self):
+        raise NotImplemented
+
     def get_quantization_config(self):
         qc = copy.deepcopy(DEFAULTCONFIG)
         qc.weights_bias_correction = False
@@ -51,11 +54,6 @@ class BaseLayerTest(BaseTest):
             # Disable all features that are enabled by default:
             qc.enable_activation_quantization = False
             qc.enable_weights_quantization = False
-        elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
-            qc.weights_n_bits = 8
-            qc.activation_n_bits = 8
-        else:
-            raise NotImplemented
         return qc
 
     def run_test(self):
@@ -70,13 +68,15 @@ class BaseLayerTest(BaseTest):
                                                                                          self.representative_data_gen,
                                                                                          n_iter=self.num_calibration_iter,
                                                                                          quant_config=qc,
-                                                                                         fw_info=self.get_fw_info())
+                                                                                         fw_info=self.get_fw_info(),
+                                                                                         fw_hw_model=self.get_fw_hw_model())
                 else:
                     ptq_model, quantization_info = self.get_ptq_facade()(model_float,
                                                                          self.representative_data_gen,
                                                                          n_iter=self.num_calibration_iter,
                                                                          quant_config=qc,
-                                                                         fw_info=self.get_fw_info())
+                                                                         fw_info=self.get_fw_info(),
+                                                                         fw_hw_model=self.get_fw_hw_model())
 
                 self.compare(ptq_model, model_float, input_x=self.representative_data_gen(),
                              quantization_info=quantization_info)
