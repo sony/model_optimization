@@ -237,6 +237,7 @@ class TestGetPytorchHardwareModelAPI(unittest.TestCase):
             mp_qc.num_of_images = 1
             quantized_model, _ = mct.pytorch_post_training_quantization_mixed_precision(model,
                                                                                         rep_data,
+                                                                                        target_kpi=mct.KPI(np.inf),
                                                                                         n_iter=1,
                                                                                         fw_hw_model=fw_hw_model,
                                                                                         quant_config=mp_qc)

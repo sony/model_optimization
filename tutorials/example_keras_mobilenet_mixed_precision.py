@@ -103,7 +103,7 @@ if __name__ == '__main__':
 
     quantized_model, quantization_info = mct.keras_post_training_quantization_mixed_precision(model,
                                                                                               representative_data_gen,
+                                                                                              target_kpi=kpi,
                                                                                               n_iter=num_iter,
                                                                                               quant_config=configuration,
-                                                                                              fw_hw_model=hardware_model,
-                                                                                              target_kpi=kpi)
+                                                                                              fw_hw_model=hardware_model)
