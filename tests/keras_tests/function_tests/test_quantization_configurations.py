@@ -21,7 +21,9 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
+from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
 
 
 def model_gen():
@@ -63,26 +65,14 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         for quantize_method, error_method, bias_correction, per_channel, input_scaling in weights_test_combinations:
-            qco = mct.hardware_representation.QuantizationConfigOptions(
-                [mct.hardware_representation.OpQuantizationConfig(
-                    activation_quantization_method=mct.hardware_representation.QuantizationMethod.POWER_OF_TWO,
-                    weights_quantization_method=quantize_method,
-                    activation_n_bits=16,
-                    weights_n_bits=8,
-                    weights_per_channel_threshold=per_channel,
-                    enable_weights_quantization=True,
-                    enable_activation_quantization=True,
-                    quantization_preserving=False,
-                    fixed_scale=None,
-                    fixed_zero_point=None,
-                    weights_multiplier_nbits=None
-                )])
-            fw_hw_model = mct.hardware_representation.FrameworkHardwareModel(
-                mct.hardware_representation.HardwareModel(qco))
+            hwm = generate_test_hw_model({
+                'weights_quantization_method': quantize_method,
+                'weights_n_bits': 8,
+                'activation_n_bits': 16})
+            fw_hw_model = generate_fhw_model_keras(name="quant_config_weights_test", hardware_model=hwm)
+
             qc = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
                                         weights_error_method=error_method,
-                                        activation_n_bits=16,
-                                        weights_n_bits=8,
                                         relu_bound_to_power_of_2=False,
                                         weights_bias_correction=bias_correction,
                                         weights_per_channel_threshold=per_channel,
@@ -96,27 +86,14 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         for quantize_method, error_method, relu_bound_to_power_of_2, shift_negative_correction in activation_test_combinations:
-            qco = mct.hardware_representation.QuantizationConfigOptions(
-                [mct.hardware_representation.OpQuantizationConfig(
-                    activation_quantization_method=quantize_method,
-                    weights_quantization_method=mct.hardware_representation.QuantizationMethod.POWER_OF_TWO,
-                    activation_n_bits=16,
-                    weights_n_bits=8,
-                    weights_per_channel_threshold=False,
-                    enable_weights_quantization=True,
-                    enable_activation_quantization=True,
-                    quantization_preserving=False,
-                    fixed_scale=None,
-                    fixed_zero_point=None,
-                    weights_multiplier_nbits=None
-                )])
+            hwm = generate_test_hw_model({
+                'activation_quantization_method': quantize_method,
+                'weights_n_bits': 16,
+                'activation_n_bits': 8})
+            fw_hw_model = generate_fhw_model_keras(name="quant_config_activation_test", hardware_model=hwm)
 
-            fw_hw_model = mct.hardware_representation.FrameworkHardwareModel(
-                mct.hardware_representation.HardwareModel(qco))
             qc = mct.QuantizationConfig(activation_error_method=error_method,
                                         weights_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
-                                        activation_n_bits=8,
-                                        weights_n_bits=16,
                                         relu_bound_to_power_of_2=relu_bound_to_power_of_2,
                                         weights_bias_correction=False,
                                         weights_per_channel_threshold=False,

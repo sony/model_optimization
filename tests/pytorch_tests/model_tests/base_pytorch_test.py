@@ -17,6 +17,7 @@ from torch.fx import symbolic_trace
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, get_model
 from model_compression_toolkit.common.constants import PYTORCH
+from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import generate_fhw_model_pytorch
 from model_compression_toolkit.pytorch.constants import DEFAULT_HWM
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.utils import get_working_device, set_model, to_torch_tensor, \
@@ -25,6 +26,7 @@ import model_compression_toolkit as mct
 import torch
 import numpy as np
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
 
 """
 The base test class for the feature networks
@@ -34,21 +36,36 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         super().__init__(unit_test)
         self.float_reconstruction_error = float_reconstruction_error
 
+    def get_fw_hw_model(self):
+        return {
+            'no_quantization': generate_fhw_model_pytorch(name="no_quant_pytorch_test",
+                                                          hardware_model=generate_test_hw_model({'weights_n_bits': 32,
+                                                                                                 'activation_n_bits': 32})),
+            'all_32bit': generate_fhw_model_pytorch(name="32_quant_pytorch_test",
+                                                    hardware_model=generate_test_hw_model({'weights_n_bits': 32,
+                                                                                           'activation_n_bits': 32})),
+            'all_4bit': generate_fhw_model_pytorch(name="4_quant_pytorch_test",
+                                                   hardware_model=generate_test_hw_model({'weights_n_bits': 4,
+                                                                                          'activation_n_bits': 4})),
+        }
+
+    # TODO: We can remove this method and refactor Pytorch tests to run only over
+    #  different hw models (as all configs here are identical)
     def get_quantization_configs(self):
         return {
             'no_quantization': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
                                                       mct.QuantizationErrorMethod.NOCLIPPING,
-                                                      32, 32, False, True, True,
+                                                      False, True, True,
                                                       enable_weights_quantization=False,
                                                       enable_activation_quantization=False),
             'all_32bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
                                                 mct.QuantizationErrorMethod.NOCLIPPING,
-                                                32, 32, False, True, True,
+                                                False, True, True,
                                                 enable_weights_quantization=True,
                                                 enable_activation_quantization=True),
             'all_4bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
                                                mct.QuantizationErrorMethod.NOCLIPPING,
-                                               4, 4, False, False, True,
+                                               False, False, True,
                                                enable_weights_quantization=True,
                                                enable_activation_quantization=True),
         }
@@ -107,7 +124,10 @@ class BasePytorchTest(BaseFeatureNetworkTest):
 
         ptq_models = {}
         model_float = self.create_feature_network(input_shapes)
-        for model_name, quant_config in self.get_quantization_configs().items():
+        quant_config_dict = self.get_quantization_configs()
+        for model_name in quant_config_dict.keys():
+            quant_config = quant_config_dict[model_name]
+            fw_hw_model = self.get_fw_hw_model()[model_name]
             if isinstance(quant_config, MixedPrecisionQuantizationConfig):
                 ptq_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(model_float,
                                                                                                       representative_data_gen,
@@ -117,7 +137,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                                                                                                       network_editor=self.get_network_editor(),
                                                                                                       gptq_config=self.get_gptq_config(),
                                                                                                       target_kpi=self.get_kpi(),
-                                                                                                      fw_hw_model=get_model(PYTORCH, DEFAULT_HWM))
+                                                                                                      fw_hw_model=fw_hw_model)
                 ptq_models.update({model_name: ptq_model})
             else:
                 ptq_model, quantization_info = mct.pytorch_post_training_quantization(model_float,
@@ -126,7 +146,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                                                                                       quant_config=quant_config,
                                                                                       fw_info=DEFAULT_PYTORCH_INFO,
                                                                                       network_editor=self.get_network_editor(),
-                                                                                      fw_hw_model=get_model(PYTORCH, DEFAULT_HWM))
+                                                                                      fw_hw_model=fw_hw_model)
                 ptq_models.update({model_name: ptq_model})
 
         self.compare(ptq_models, model_float, input_x=x, quantization_info=quantization_info)

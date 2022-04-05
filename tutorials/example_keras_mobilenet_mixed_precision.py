@@ -87,8 +87,8 @@ if __name__ == '__main__':
     # Create a mixed-precision configuration with possible bit widths. MCT
     # will search a mixed-precision configuration (namely, bit width for each layer)
     # and quantize the model according to this configuration.
-    # Here, each layer can be quantized by 2, 4 or 8 bits.
-    configuration = MixedPrecisionQuantizationConfig(weights_n_bits=[2, 8, 4])
+    # The candidates bitwidth for quantization should be defined in the hardware model:
+    configuration = MixedPrecisionQuantizationConfig()
 
     # Create a KPI object to limit our returned model's size. Note that this value affects only coefficients that
     # should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value, while the bias
