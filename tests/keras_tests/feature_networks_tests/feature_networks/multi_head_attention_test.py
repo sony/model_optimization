@@ -46,9 +46,6 @@ class MultiHeadAttentionTest(BaseKerasFeatureNetworkTest):
     def get_fw_hw_model(self):
         return get_quantization_disabled_keras_hw_model("multi_head_attention_test")
 
-    def get_quantization_config(self):
-        return QuantizationConfig()
-
     def get_input_shapes(self):
         if self.separate_key_value:
             return [[self.val_batch_size] + list(self.query_input_shape),

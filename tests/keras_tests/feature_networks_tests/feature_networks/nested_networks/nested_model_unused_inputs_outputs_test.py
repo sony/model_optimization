@@ -42,9 +42,6 @@ class NestedModelUnusedInputsOutputsTest(BaseKerasFeatureNetworkTest):
     def get_fw_hw_model(self):
         return get_quantization_disabled_keras_hw_model("nested_model_unused_inputs_test")
 
-    def get_quantization_config(self):
-        return mct.QuantizationConfig()
-
     def inner_functional_model(self, input_shape):
         inputs = layers.Input(shape=input_shape[1:])
         x = layers.Conv2D(3, 4)(inputs)
