@@ -74,7 +74,7 @@ class BaseKerasLayerTest(BaseLayerTest):
     def get_fw_hw_model(self):
         if self.current_mode == LayerTestMode.FLOAT:
             # Disable all features that are enabled by default:
-            get_quantization_disabled_keras_hw_model("float_layer_test")
+            return get_quantization_disabled_keras_hw_model("float_layer_test")
         elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
             hwm = generate_test_hw_model({'weights_n_bits': 8,
                                           'activation_n_bits': 8})
