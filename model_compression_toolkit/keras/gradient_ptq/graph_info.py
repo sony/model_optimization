@@ -75,7 +75,9 @@ def get_trainable_parameters(fxp_model: Model,
             # collect trainable weights per layer
             layer_trainable_weights = layer.quantize_config.get_trainable_quantizer_parameters()
             if add_bias:
-                use_bias = isinstance(layer.layer, tuple(fw_info.kernel_ops)) and layer.layer.get_config().get(USE_BIAS)
+                kernel_ops_attrs = fw_info.kernel_ops_attributes_mapping.get(type(layer.layer))
+                use_bias = kernel_ops_attrs is not None and kernel_ops_attrs[0] is not None \
+                           and layer.layer.get_config().get(USE_BIAS)
                 if use_bias is not None and use_bias:
                     layer_trainable_weights.append(layer.layer.bias)
             trainable_weights.append(layer_trainable_weights)

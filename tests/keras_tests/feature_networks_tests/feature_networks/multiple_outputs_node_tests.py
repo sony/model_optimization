@@ -17,6 +17,8 @@
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
+
+from tests.common_tests.helpers.generate_test_hw_model import get_quantization_disabled_keras_hw_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
@@ -29,9 +31,11 @@ class MultipleOutputsNodeTests(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
+    def get_fw_hw_model(self):
+        return get_quantization_disabled_keras_hw_model("multiple_outputs_test")
+
     def get_quantization_config(self):
-        return mct.QuantizationConfig(enable_activation_quantization=False,
-                                      enable_weights_quantization=False)
+        return mct.QuantizationConfig()
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
