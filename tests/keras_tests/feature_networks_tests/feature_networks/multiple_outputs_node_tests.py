@@ -34,6 +34,9 @@ class MultipleOutputsNodeTests(BaseKerasFeatureNetworkTest):
     def get_fw_hw_model(self):
         return get_quantization_disabled_keras_hw_model("multiple_outputs_test")
 
+    def get_quantization_config(self):
+        return mct.QuantizationConfig()
+
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Dense(20)(inputs)
