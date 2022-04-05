@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 # ==============================================================================
 from model_compression_toolkit.hardware_models.default_hwm import get_op_quantization_configs, generate_hardware_model
 import model_compression_toolkit as mct
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 
 hwm = mct.hardware_representation
 
@@ -33,3 +34,9 @@ def generate_mixed_precision_test_hw_model(base_cfg, mp_bitwidth_candidates_list
         mp_op_cfg_list.append(candidate_cfg)
 
     return generate_hardware_model(base_cfg, mp_op_cfg_list, name=name)
+
+
+def get_16bit_fw_hw_model(name):
+    hw_model = generate_test_hw_model({'weights_n_bits': 16,
+                                       'activation_n_bits': 16})
+    return generate_fhw_model_keras(name=name, hardware_model=hw_model)

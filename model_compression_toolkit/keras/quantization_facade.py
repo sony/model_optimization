@@ -212,7 +212,7 @@ if importlib.util.find_spec("tensorflow") is not None\
              >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
 
              Create a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
-             Here, each layer can be quantized by 2, 4 or 8 bits:
+             The candidates bitwidth for quantization should be defined in the hardware model:
 
              >>> config = mct.MixedPrecisionQuantizationConfig()
 

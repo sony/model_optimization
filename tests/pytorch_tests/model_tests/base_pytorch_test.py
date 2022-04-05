@@ -49,6 +49,8 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                                                                                           'activation_n_bits': 4})),
         }
 
+    # TODO: We can remove this method and refactor Pytorch tests to run only over
+    #  different hw models (as all configs here are identical)
     def get_quantization_configs(self):
         return {
             'no_quantization': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,

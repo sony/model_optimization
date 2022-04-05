@@ -84,8 +84,7 @@ class QuantizationConfig(object):
 
         Examples:
             One may create a quantization configuration to quantize a model according to.
-            For example, to quantize a model using 6 bits for activation, 7 bits for weights,
-            weights and activation quantization method is symetric uniform,
+            For example, to quantize a model's weights and activation using symetric uniform quantization method,
             weights threshold selection using MSE, activation threshold selection using NOCLIPPING,
             enabling relu_bound_to_power_of_2, weights_bias_correction, and quantizing the weights per-channel,
             one can instantiate a quantization configuration:

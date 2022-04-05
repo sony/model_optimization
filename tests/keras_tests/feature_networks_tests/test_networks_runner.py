@@ -20,7 +20,7 @@ import numpy as np
 import unittest
 import model_compression_toolkit as mct
 from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
+from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model, get_16bit_fw_hw_model
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from enum import Enum
 import random
@@ -42,9 +42,7 @@ EIGHT_BIT_QUANTIZATION = generate_fhw_model_keras(name="eight_bit_network_test",
                                                   hardware_model=generate_test_hw_model({'weights_n_bits': 8,
                                                                                          'activation_n_bits': 8}))
 
-FLOAT_QUANTIZATION = generate_fhw_model_keras(name="float_network_test",
-                                              hardware_model=generate_test_hw_model({'weights_n_bits': 16,
-                                                                                     'activation_n_bits': 16}))
+FLOAT_QUANTIZATION = get_16bit_fw_hw_model("float_network_test")
 
 
 
