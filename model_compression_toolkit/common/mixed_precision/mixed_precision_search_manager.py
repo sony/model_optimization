@@ -104,33 +104,47 @@ class MixedPrecisionSearchManager(object):
 
             """
             weights_memory = 0
+            activations_memory = 0
 
-            # Go over all nodes that shold be taken into consideration when computing the KPI.
+            # Go over all nodes that should be taken into consideration when computing the KPI.
             mp_nodes = self.graph.get_configurable_sorted_nodes_names()
             for n in self.graph.nodes:
                 if n.name in mp_nodes:
                     node_idx = mp_nodes.index(n.name)
-                    # TODO: modify to account for activations size when implementing activations mixed precision
-                    node_nbits = n.candidates_quantization_cfg[mp_model_config[node_idx]].weights_quantization_cfg.weights_n_bits
-                elif n.is_weights_quantization_enabled():
+                    node_qc = n.candidates_quantization_cfg[mp_model_config[node_idx]]
+                    node_nbits = (node_qc.weights_quantization_cfg.weights_n_bits,
+                                  node_qc.activation_quantization_cfg.activation_n_bits)
+                elif n.is_weights_quantization_enabled() and n.has_weights_to_quantize(self.fw_info):
                     # The only valid way to get here is if the node is reused (which means that we're not looking
                     # for its configuration), and we ignore it when computing the KPI (as the base node will acount
                     # for it).
+                    # In activations - if we sum all inputs as a metric then we don't want to skip reused nodes.
                     assert n.reuse, "If node has candidates it should be part of the configurable nodes," \
                                     " unless it's a reused node"
-                    node_nbits = 0  # Ignore reused nodes is the KPI computation.
-                else:  # No weights quantization
-                    node_nbits = 0
-                node_num_params = 0
+                    node_nbits = (0, 0)  # Ignore reused nodes is the KPI computation.
+                else:  # No quantization
+                    node_nbits = (0, 0)
 
+                # Weights memory size computation
                 # Consider only the weights that should be quantized.
-                for attr in self.fw_info.get_kernel_op_attributes(n.type):
-                    if attr is not None:
-                        node_num_params += n.get_weights_by_keys(attr).flatten().shape[0]
+                if n.is_weights_quantization_enabled and not n.is_all_weights_candidates_equal():
+                    node_num_weights_params = 0
+                    for attr in self.fw_info.get_kernel_op_attributes(n.type):
+                        if attr is not None:
+                            node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
 
-                node_memory_in_bytes = node_num_params * node_nbits / 8.0
-                weights_memory += node_memory_in_bytes
+                    node_weights_memory_in_bytes = node_num_weights_params * node_nbits[0] / 8.0
+                    weights_memory += node_weights_memory_in_bytes
 
-            return KPI(weights_memory=weights_memory)
+                    # Activation memory size computation
+                    # Currently, consider layer's activation size as size of layer's output,
+                    # and total model activations' size as sum of layers' output.
+                if n.is_activation_quantization_enabled and not n.is_all_activation_candidates_equal():
+                    node_output_size = n.get_total_output_params()
+                    node_activation_memory_in_bytes = node_output_size * node_nbits[1] / 8.0
+                    activations_memory += node_activation_memory_in_bytes
+
+            return KPI(weights_memory=weights_memory,
+                       activation_memory=activations_memory)
 
         return _compute_kpi

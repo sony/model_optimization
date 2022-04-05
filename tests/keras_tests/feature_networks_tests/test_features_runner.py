@@ -18,9 +18,13 @@ import unittest
 from model_compression_toolkit import QuantizationErrorMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_bound_to_power_of_2_test import \
     ReLUBoundToPOTNetTest
-from tests.keras_tests.feature_networks_tests.feature_networks.mixed_percision_test import MixedPercisionBaseTest, \
-    MixedPercisionSearchTest, MixedPercisionManuallyConfiguredTest, MixedPercisionDepthwiseTest, \
+from tests.keras_tests.feature_networks_tests.feature_networks.mixed_percision_test import MixedPercisionSearchTest, \
+    MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest
+from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_activation_test import \
+    MixedPrecisionActivationSearchTest, MixedPrecisionActivationSearchKPI4BitsAvgTest, \
+    MixedPrecisionActivationSearchKPI2BitsAvgTest, MixedPrecisionActivationDepthwiseTest, \
+    MixedPrecisionActivationSplitLayerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multiple_inputs_node_tests import MultipleInputsNodeTests
 from tests.keras_tests.feature_networks_tests.feature_networks.multiple_outputs_node_tests import \
     MultipleOutputsNodeTests
@@ -65,7 +69,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.no
 from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTQuantizerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multi_head_attention_test import MultiHeadAttentionTest
 import tensorflow as tf
-from tensorflow.keras.layers import ReLU, PReLU, ELU
+from tensorflow.keras.layers import PReLU, ELU
 
 from tests.keras_tests.feature_networks_tests.feature_networks.symmetric_threshold_selection_activation_test import \
     SymmetricThresholdSelectionActivationTest
@@ -103,6 +107,21 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_mixed_precision_dw(self):
         MixedPercisionDepthwiseTest(self).run_test()
+
+    def test_mixed_precision_activation_search(self):
+        MixedPrecisionActivationSearchTest(self).run_test()
+
+    def test_mixed_precision_activation_search_kpi_4bits_avg(self):
+        MixedPrecisionActivationSearchKPI4BitsAvgTest(self).run_test()
+
+    def test_mixed_precision_activation_search_kpi_2bits_avg(self):
+        MixedPrecisionActivationSearchKPI2BitsAvgTest(self).run_test()
+
+    def test_mixed_precision_activation_dw(self):
+        MixedPrecisionActivationDepthwiseTest(self).run_test()
+
+    def test_mixed_precision_activation_split(self):
+        MixedPrecisionActivationSplitLayerTest(self).run_test()
 
     def test_name_filter(self):
         NameFilterTest(self).run_test()

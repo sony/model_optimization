@@ -63,7 +63,16 @@ def mp_integer_programming_search(layer_to_bitwidth_mapping: Dict[int, List[int]
     layer_to_kpi_mapping, minimal_kpi = _compute_kpis(layer_to_bitwidth_mapping,
                                                       compute_kpi_fn)
 
-    assert minimal_kpi.weights_memory <= target_kpi.weights_memory, f'Minimal KPI cannot be greater than target KPI. Minimal KPI:{minimal_kpi}, Target KPI:{target_kpi}'
+    assert minimal_kpi.weights_memory <= target_kpi.weights_memory, \
+        f'Weights memory in minimal KPI cannot be greater than weights memory in target KPI. ' \
+        f'Weights memory in minimal KPI:{minimal_kpi.weights_memory}, ' \
+        f'weights memory in target KPI:{target_kpi.weights_memory}'
+
+    assert minimal_kpi.activation_memory <= target_kpi.activation_memory, \
+        f'Activation memory in minimal KPI cannot be greater than activation memory in target KPI. ' \
+        f'Activation memory in minimal KPI:{minimal_kpi.activation_memory}, ' \
+        f'activation memory in target KPI:{target_kpi.activation_memory}'
+
     # Add all equations and inequalities that define the problem.
     lp_problem = _formalize_problem(layer_to_indicator_vars_mapping,
                                     layer_to_metrics_mapping,
@@ -159,17 +168,29 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
             [v for v in layer_to_indicator_vars_mapping[layer].values()]) == 1
 
     # Bound the feasible solution space with the desired KPI.
-    if target_kpi is not None and not np.isinf(target_kpi.weights_memory):
+    # Creates separate constraints for weights KPI and activation KPI.
+    if target_kpi is not None:
         total_weights_consumption = []
+        total_activation_consumption = []
         for layer in layer_to_metrics_mapping.keys():
-            weights_by_indicators = [indicator * layer_to_kpi_mapping[layer][nbits].weights_memory for nbits, indicator
-                                     in layer_to_indicator_vars_mapping[layer].items()]
-            total_weights_consumption.extend(weights_by_indicators)
+            if not np.isinf(target_kpi.weights_memory):
+                weights_by_indicators = [indicator * layer_to_kpi_mapping[layer][nbits].weights_memory
+                                         for nbits, indicator in layer_to_indicator_vars_mapping[layer].items()]
+                total_weights_consumption.extend(weights_by_indicators)
+            if not np.isinf(target_kpi.activation_memory):
+                activation_by_indicators = [indicator * layer_to_kpi_mapping[layer][nbits].activation_memory
+                                            for nbits, indicator in layer_to_indicator_vars_mapping[layer].items()]
+                total_activation_consumption.extend(activation_by_indicators)
 
         # Total model memory size is bounded to the given KPI.
-        # Since total_weights_consumption is the contribution to the minimal possible KPI,
+        # Since total_weights_consumption and total_activation_consumption is the contribution
+        # to the minimal possible KPI (for weights and activation respectively),
         # we bound the problem by the difference of the target KPI to the minimal KPI.
-        lp_problem += lpSum(total_weights_consumption) <= target_kpi.weights_memory - minimal_kpi.weights_memory
+        if not np.isinf(target_kpi.weights_memory):
+            lp_problem += lpSum(total_weights_consumption) <= target_kpi.weights_memory - minimal_kpi.weights_memory
+        if not np.isinf(target_kpi.activation_memory):
+            lp_problem += lpSum(
+                total_activation_consumption) <= target_kpi.activation_memory - minimal_kpi.activation_memory
 
     return lp_problem
 
@@ -253,8 +274,12 @@ def _compute_kpis(node_to_bitwidth_indices: Dict[int, List[int]],
             mp_model_configuration[node_idx] = bitwidth_idx
 
             mp_model_kpi = compute_kpi_fn(mp_model_configuration)
-            contribution_to_minimal_model = mp_model_kpi.weights_memory - minimal_kpi.weights_memory
+            contribution_to_minimal_model_weights = mp_model_kpi.weights_memory - minimal_kpi.weights_memory
+            contribution_to_minimal_model_activation = mp_model_kpi.activation_memory - minimal_kpi.activation_memory
 
-            layer_to_kpi_mapping[node_idx][bitwidth_idx] = KPI(contribution_to_minimal_model)
+            layer_to_kpi_mapping[node_idx][bitwidth_idx] = KPI(
+                weights_memory=contribution_to_minimal_model_weights,
+                activation_memory=contribution_to_minimal_model_activation
+            )
 
     return layer_to_kpi_mapping, minimal_kpi
