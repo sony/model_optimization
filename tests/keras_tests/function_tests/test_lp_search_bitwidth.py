@@ -34,9 +34,11 @@ from model_compression_toolkit.common.quantization.set_node_quantization_config 
     set_quantization_configuration_to_graph
 from model_compression_toolkit.common.model_collector import ModelCollector
 from model_compression_toolkit import get_model
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from model_compression_toolkit.keras.constants import DEFAULT_HWM
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
+from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
 
 
 class TestLpSearchBitwidth(unittest.TestCase):
@@ -75,7 +77,8 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
     def test_search_engine(self):
         qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
-        KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_HWM)
+        hw_model = generate_test_hw_model({'enable_activation_quantization': False})
+        fw_hw_model = generate_fhw_model_keras(name="bitwidth_cfg_test", hardware_model=hw_model)
         qc.num_of_images=1
         qc.weights_n_bits = [8]
         fw_info = DEFAULT_KERAS_INFO
@@ -87,7 +90,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         graph = keras_impl.model_reader(in_model, dummy_representative_dataset)  # model reading
         graph.set_fw_info(fw_info)
-        graph.set_fw_hw_model(KERAS_DEFAULT_MODEL)
+        graph.set_fw_hw_model(fw_hw_model)
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=qc)
 
