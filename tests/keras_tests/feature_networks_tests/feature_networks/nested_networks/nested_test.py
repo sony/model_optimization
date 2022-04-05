@@ -14,6 +14,10 @@
 # ==============================================================================
 
 import tensorflow as tf
+
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
+
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.engine.functional import Functional
     from tensorflow.python.keras.engine.sequential import Sequential
@@ -37,8 +41,13 @@ class NestedTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test,
                          input_shape=(16,16,3))
 
+    def get_fw_hw_model(self):
+        hwm = generate_test_hw_model({'enable_weights_quantization': False,
+                                      'enable_activation_quantization': False})
+        return generate_fhw_model_keras(name="nested_test", hardware_model=hwm)
+
     def get_quantization_config(self):
-        return mct.QuantizationConfig(enable_weights_quantization=False, enable_activation_quantization=False)
+        return mct.QuantizationConfig()
 
     # Dummy model to test reader's recursively model parsing
     def dummy_model(self, input_shape):

@@ -125,7 +125,5 @@ def _set_node_final_qc(bit_width_cfg: List[int],
         Logger.critical(f'Node {node.name} quantization configuration from configuration file'
                         f' was not found in candidates configurations.')
     else:
-        if fw_info.in_kernel_ops(node):
-            node.final_weights_quantization_cfg = node_qc.weights_quantization_cfg
         node.final_weights_quantization_cfg = node_qc.weights_quantization_cfg
         node.final_activation_quantization_cfg = node_qc.activation_quantization_cfg

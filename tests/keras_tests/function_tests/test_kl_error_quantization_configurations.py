@@ -80,13 +80,13 @@ class TestQuantizationConfigurations(unittest.TestCase):
             hwm = generate_test_hw_model({
                 'activation_quantization_method': quantize_method,
                 'weights_n_bits': 8,
-                'activation_n_bits': 8})
+                'activation_n_bits': 8,
+                'enable_weights_quantization': False})
             fw_hw_model = generate_fhw_model_keras(name="kl_quant_config_activation_test", hardware_model=hwm)
 
             qc = mct.QuantizationConfig(activation_error_method=error_method,
                                         relu_bound_to_power_of_2=relu_bound_to_power_of_2,
-                                        shift_negative_activation_correction=False,
-                                        enable_weights_quantization=False)
+                                        shift_negative_activation_correction=False)
 
             q_model, quantization_info = mct.keras_post_training_quantization(model,
                                                                               representative_data_gen,
