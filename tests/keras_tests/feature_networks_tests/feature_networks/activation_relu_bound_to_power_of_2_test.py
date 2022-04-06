@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 
 import tensorflow as tf
@@ -30,8 +31,9 @@ class ReLUBoundToPOTNetTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        qc = super(ReLUBoundToPOTNetTest, self).get_quantization_config()
-        qc.relu_bound_to_power_of_2 = True
+        qc = QuantizationConfig(QuantizationErrorMethod.MSE,
+                                QuantizationErrorMethod.MSE,
+                                relu_bound_to_power_of_2=True)
         return qc
 
     def create_networks(self):

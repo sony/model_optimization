@@ -17,10 +17,10 @@ from torch.nn import Conv2d, BatchNorm2d, ReLU
 from model_compression_toolkit.pytorch.utils import to_torch_tensor
 import numpy as np
 
+from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
-from tests.common_tests.helpers.get_default_quant_config import get_default_quantization_config_copy
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
@@ -162,8 +162,7 @@ class BNInfoCollectionTest(BasePytorchTest):
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
                                                                fw_info=fw_info,
                                                                graph=graph)
-        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(
-            get_default_quantization_config_copy()))
+        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
 
     def run_test(self):
@@ -212,8 +211,7 @@ class Conv2D2BNInfoCollectionTest(BasePytorchTest):
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
                                                                fw_info=fw_info,
                                                                graph=graph)
-        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(
-            get_default_quantization_config_copy()))
+        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
 
     def run_test(self):
@@ -285,8 +283,7 @@ class Conv2DBNChainInfoCollectionTest(BasePytorchTest):
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
                                                                fw_info=fw_info,
                                                                graph=graph)
-        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(
-            get_default_quantization_config_copy()))
+        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
 
     def run_test(self):
@@ -346,8 +343,7 @@ class BNChainInfoCollectionTest(BasePytorchTest):
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
                                                                fw_info=fw_info,
                                                                graph=graph)
-        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(
-            get_default_quantization_config_copy()))
+        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
 
     def run_test(self):
@@ -419,8 +415,7 @@ class BNLayerInfoCollectionTest(BasePytorchTest):
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
                                                                fw_info=fw_info,
                                                                graph=graph)
-        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(
-            get_default_quantization_config_copy()))
+        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
 
     def run_test(self):
@@ -528,8 +523,7 @@ class INP2BNInfoCollectionTest(BasePytorchTest):
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
                                                                fw_info=fw_info,
                                                                graph=graph)
-        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(
-            get_default_quantization_config_copy()))
+        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
 
     def run_test(self):

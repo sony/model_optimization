@@ -16,11 +16,9 @@ import copy
 import unittest
 import numpy as np
 from tensorflow.keras.applications.mobilenet import MobileNet
-from model_compression_toolkit import get_keras_gptq_config, keras_post_training_quantization
+from model_compression_toolkit import get_keras_gptq_config, keras_post_training_quantization, DEFAULTCONFIG, \
+    QuantizationConfig, QuantizationErrorMethod
 import tensorflow as tf
-
-from tests.common_tests.helpers.get_default_quant_config import get_default_quantization_config_copy
-
 
 def random_datagen():
     return [np.random.random((1, 224, 224, 3))]
@@ -29,8 +27,9 @@ def random_datagen():
 class TestGetGPTQConfig(unittest.TestCase):
 
     def test_get_keras_gptq_config(self):
-        qc = get_default_quantization_config_copy()
-        qc.weights_bias_correction = False # disable bias correction when working with GPTQ
+        qc = QuantizationConfig(QuantizationErrorMethod.MSE,
+                                QuantizationErrorMethod.MSE,
+                                weights_bias_correction=False) # disable bias correction when working with GPTQ
 
         gptq_configurations = [get_keras_gptq_config(n_iter=1),
                                get_keras_gptq_config(n_iter=1, train_bias=False),

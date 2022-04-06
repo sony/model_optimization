@@ -3,9 +3,9 @@ from enum import Enum
 from typing import List, Any
 import numpy as np
 
-from model_compression_toolkit import MixedPrecisionQuantizationConfig
+from model_compression_toolkit import MixedPrecisionQuantizationConfig, DEFAULTCONFIG, QuantizationConfig, \
+    QuantizationErrorMethod
 from tests.common_tests.base_test import BaseTest
-from tests.common_tests.helpers.get_default_quant_config import get_default_quantization_config_copy
 
 
 class LayerTestMode(Enum):
@@ -49,12 +49,17 @@ class BaseLayerTest(BaseTest):
         raise NotImplemented
 
     def get_quantization_config(self):
-        qc = get_default_quantization_config_copy()
-        qc.weights_bias_correction = False
+        qc = QuantizationConfig(QuantizationErrorMethod.MSE,
+                                QuantizationErrorMethod.MSE,
+                                weights_bias_correction=False)
         if self.current_mode == LayerTestMode.FLOAT:
             # Disable all features that are enabled by default:
-            qc.enable_activation_quantization = False
-            qc.enable_weights_quantization = False
+            qc = QuantizationConfig(QuantizationErrorMethod.MSE,
+                                    QuantizationErrorMethod.MSE,
+                                    weights_bias_correction=False,
+                                    enable_activation_quantization=False,
+                                    enable_weights_quantization=False
+                                    )
         return qc
 
     def run_test(self):
