@@ -42,7 +42,7 @@ def quantize_graph_weights(graph_to_quantize: Graph,
     # (according to operators groups in framework info).
     for n in graph.nodes():
 
-        if fw_info.in_kernel_ops(n) and n.final_weights_quantization_cfg.enable_weights_quantization:
+        if n.is_weights_quantization_enabled():
             quantized_kernel, io_channels_axes = get_quantized_kernel_by_weights_qc(fw_info,
                                                                                     n,
                                                                                     n.final_weights_quantization_cfg,

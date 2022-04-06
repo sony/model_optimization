@@ -38,12 +38,15 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
         super(BaseBatchNormalizationFolding, self).__init__(unit_test=unit_test)
 
     def get_fw_hw_model(self):
-        return get_16bit_fw_hw_model("kmean_quantizer_test")
+        hwm = generate_test_hw_model({'weights_n_bits': 16,
+                                      'activation_n_bits': 16,
+                                      'enable_weights_quantization': False,
+                                      'enable_activation_quantization': False})
+        return generate_fhw_model_keras(name="bn_folding_test", hardware_model=hwm)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
-                                      False, False, True, enable_weights_quantization=False,
-                                      enable_activation_quantization=False)
+                                      False, False, True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         y = float_model.predict(input_x)

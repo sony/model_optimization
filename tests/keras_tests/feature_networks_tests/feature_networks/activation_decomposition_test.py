@@ -18,6 +18,7 @@ import tensorflow as tf
 import numpy as np
 
 from model_compression_toolkit.keras.constants import ACTIVATION, LINEAR
+from tests.common_tests.helpers.generate_test_hw_model import get_quantization_disabled_keras_hw_model
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as mct
@@ -31,8 +32,8 @@ class ActivationDecompositionTest(BaseKerasFeatureNetworkTest):
         self.activation_function = activation_function
         super().__init__(unit_test)
 
-    def get_quantization_config(self):
-        return mct.QuantizationConfig(enable_weights_quantization=False, enable_activation_quantization=False)
+    def get_fw_hw_model(self):
+        return get_quantization_disabled_keras_hw_model("activation_decomp_test")
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

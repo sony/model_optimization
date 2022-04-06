@@ -44,3 +44,9 @@ def get_16bit_fw_hw_model(name):
     hw_model = generate_test_hw_model({'weights_n_bits': 16,
                                        'activation_n_bits': 16})
     return generate_fhw_model_keras(name=name, hardware_model=hw_model)
+
+
+def get_quantization_disabled_keras_hw_model(name):
+    hwm = generate_test_hw_model({'enable_weights_quantization': False,
+                                  'enable_activation_quantization': False})
+    return generate_fhw_model_keras(name=name, hardware_model=hwm)

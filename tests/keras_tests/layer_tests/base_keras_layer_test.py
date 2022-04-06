@@ -4,15 +4,24 @@ import tensorflow as tf
 
 from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
 from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
+from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model, \
+    get_quantization_disabled_keras_hw_model
 
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers.core import TFOpLambda
     from tensorflow.keras.models import Model
     from tensorflow.keras.layers import Input
+    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
+        Dropout, MaxPooling2D, Activation, ReLU, GlobalAveragePooling2D, Add, Multiply, AveragePooling2D, \
+        UpSampling2D, InputLayer, Concatenate, Softmax, PReLU, Flatten, Cropping2D, ELU, Dot, LeakyReLU, Permute, \
+        LayerNormalization
 else:
     from keras.layers.core import TFOpLambda
     from keras import Input, Model
+    from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
+        Dropout, MaxPooling2D, Activation, ReLU, GlobalAveragePooling2D, Add, Multiply, AveragePooling2D, \
+        UpSampling2D, InputLayer, Concatenate, Softmax, PReLU, Flatten, Cropping2D, Dot, ELU, LeakyReLU, Permute, \
+        LayerNormalization
 
 from model_compression_toolkit import FrameworkInfo, keras_post_training_quantization, \
     keras_post_training_quantization_mixed_precision
@@ -22,6 +31,22 @@ from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from tests.common_tests.base_layer_test import BaseLayerTest, LayerTestMode
 import numpy as np
+
+
+KERAS_LAYER_TEST_OPS = {
+    "kernel_ops": [Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose],
+
+    "no_quantization": [Reshape, tf.reshape, Flatten, Permute, Cropping2D, ZeroPadding2D, Dropout, MaxPooling2D,
+                        tf.reshape, tf.split, tf.quantization.fake_quant_with_min_max_vars],
+
+    "activation": [Activation, ReLU, tf.nn.relu, tf.nn.relu6, tf.nn.leaky_relu, Softmax, GlobalAveragePooling2D, Add,
+                   Multiply, AveragePooling2D, UpSampling2D, InputLayer, Concatenate, PReLU, ELU, tf.nn.silu,
+                   tf.nn.swish, tf.nn.sigmoid, tf.nn.tanh, tf.nn.relu, tf.nn.relu6, tf.nn.leaky_relu, LeakyReLU,
+                   tf.nn.softsign, tf.nn.gelu, tf.nn.elu, tf.nn.selu, tf.nn.softplus, tf.nn.softmax, Dot,
+                   LayerNormalization, tf.add, tf.multiply, tf.reduce_mean, tf.reduce_min, tf.reduce_sum, tf.reduce_max,
+                   tf.image.resize, tf.image.crop_and_resize, tf.concat,
+                   ]
+}
 
 
 class BaseKerasLayerTest(BaseLayerTest):
@@ -49,7 +74,7 @@ class BaseKerasLayerTest(BaseLayerTest):
     def get_fw_hw_model(self):
         if self.current_mode == LayerTestMode.FLOAT:
             # Disable all features that are enabled by default:
-            return generate_fhw_model_keras(name="float_layer_test", hardware_model=get_default_hardware_model())
+            return get_quantization_disabled_keras_hw_model("float_layer_test")
         elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
             hwm = generate_test_hw_model({'weights_n_bits': 8,
                                           'activation_n_bits': 8})
@@ -115,18 +140,18 @@ class BaseKerasLayerTest(BaseLayerTest):
         fw_info = self.get_fw_info()
         for layer in quantized_model.layers:
             op = layer.function if isinstance(layer, TFOpLambda) else type(layer)
-            if op in fw_info.kernel_ops:
+            if op in KERAS_LAYER_TEST_OPS['kernel_ops']:
                 for attr in fw_info.get_kernel_op_attributes(type(layer)):
                     self.unit_test.assertTrue(np.sum(np.abs(
                         getattr(layer, attr) - getattr(float_model.get_layer(layer.name), attr))) > 0.0)
                 for next_layer in [node.layer for node in layer.outbound_nodes]:
                     self.unit_test.assertTrue(is_layer_fake_quant(next_layer))
 
-            elif op in fw_info.activation_ops:
+            elif op in KERAS_LAYER_TEST_OPS['activation']:
                 for next_layer in [node.layer for node in layer.outbound_nodes]:
                     self.unit_test.assertTrue(is_layer_fake_quant(next_layer))
 
-            elif op in fw_info.no_quantization_ops:
+            elif op in KERAS_LAYER_TEST_OPS['no_quantization']:
                 for next_layer in [node.layer for node in layer.outbound_nodes]:
                     self.unit_test.assertFalse(is_layer_fake_quant(next_layer))
 
