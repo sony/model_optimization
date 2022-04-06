@@ -158,9 +158,17 @@ class QuantizationConfigOptions(object):
             assert isinstance(cfg, OpQuantizationConfig), f'Options should be a list of QuantizationConfig objects, ' \
                                                         f'but found an object type: {type(cfg)}'
         self.quantization_config_list = quantization_config_list
-        if len(quantization_config_list)>1:
-            assert base_config is not None, f'When quantization config options contains more than one configuration, a base_config must be passed for non-mixed-precision optimization process'
-        self.base_config = base_config
+        if len(quantization_config_list) > 1:
+            assert base_config is not None, f'When quantization config options contains more than one configuration, ' \
+                                            f'a base_config must be passed for non-mixed-precision optimization process'
+            assert base_config in quantization_config_list, f"base_config must be in the given quantization config " \
+                                                            f"list of options"
+            self.base_config = base_config
+        elif len(quantization_config_list) == 1:
+            self.base_config = quantization_config_list[0]
+        else:
+            raise Exception("QuantizationConfigOptions must have at least one OpQuantizationConfig "
+                            "defined in its options list, but list is empty")
 
     def __eq__(self, other):
         """
