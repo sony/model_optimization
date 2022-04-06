@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import copy
-
 import torch
 from torch.nn import Conv2d, BatchNorm2d, ReLU
 from model_compression_toolkit.pytorch.utils import to_torch_tensor
@@ -164,7 +162,7 @@ class BNInfoCollectionTest(BasePytorchTest):
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
                                                                fw_info=fw_info,
                                                                graph=graph)
-        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(copy.deepcopy(DEFAULTCONFIG)))
+        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
 
     def run_test(self):
@@ -213,7 +211,7 @@ class Conv2D2BNInfoCollectionTest(BasePytorchTest):
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
                                                                fw_info=fw_info,
                                                                graph=graph)
-        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(copy.deepcopy(DEFAULTCONFIG)))
+        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
 
     def run_test(self):
@@ -285,7 +283,7 @@ class Conv2DBNChainInfoCollectionTest(BasePytorchTest):
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
                                                                fw_info=fw_info,
                                                                graph=graph)
-        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(copy.deepcopy(DEFAULTCONFIG)))
+        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
 
     def run_test(self):
@@ -345,7 +343,7 @@ class BNChainInfoCollectionTest(BasePytorchTest):
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
                                                                fw_info=fw_info,
                                                                graph=graph)
-        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(copy.deepcopy(DEFAULTCONFIG)))
+        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
 
     def run_test(self):
@@ -417,7 +415,7 @@ class BNLayerInfoCollectionTest(BasePytorchTest):
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
                                                                fw_info=fw_info,
                                                                graph=graph)
-        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(copy.deepcopy(DEFAULTCONFIG)))
+        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
 
     def run_test(self):
@@ -525,7 +523,7 @@ class INP2BNInfoCollectionTest(BasePytorchTest):
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
                                                                fw_info=fw_info,
                                                                graph=graph)
-        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(copy.deepcopy(DEFAULTCONFIG)))
+        transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
 
     def run_test(self):
