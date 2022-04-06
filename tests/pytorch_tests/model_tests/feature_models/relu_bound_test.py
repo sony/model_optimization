@@ -145,7 +145,7 @@ class HardtanhBoundToPOTNetTest(BasePytorchTest):
                                                fhwm_name='relu_bound_pytorch_test')
 
     def get_quantization_configs(self):
-        quant_config = mct.DEFAULTCONFIG
+        quant_config = copy.deepcopy(mct.DEFAULTCONFIG)
         quant_config.relu_bound_to_power_of_2 = True
         return {"8bit_relu_bound": quant_config}
 

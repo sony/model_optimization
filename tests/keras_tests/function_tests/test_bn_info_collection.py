@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
+
 import keras
 import unittest
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, SeparableConv2D, Reshape
@@ -135,7 +137,7 @@ def prepare_graph(in_model):
     for node in graph.nodes:
         node.prior_info = keras_impl.get_node_prior_info(node=node,
                                                          fw_info=fw_info, graph=graph)
-    transformed_graph = substitute(graph, keras_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
+    transformed_graph = substitute(graph, keras_impl.get_substitutions_pre_statistics_collection(copy.deepcopy(DEFAULTCONFIG)))
     return transformed_graph
 
 
