@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
+
 import torch
 
+from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
 from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import get_layer_test_fw_hw_model_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -101,7 +104,7 @@ class ReLUBoundToPOTNetTest(BasePytorchTest):
                                                fhwm_name='relu_bound_pytorch_test')
 
     def get_quantization_configs(self):
-        quant_config = super(ReLUBoundToPOTNetTest).get_quantization_config()
+        quant_config = copy.deepcopy(DEFAULTCONFIG)
         quant_config.relu_bound_to_power_of_2 = True
         return {"8bit_relu_bound": quant_config}
 
