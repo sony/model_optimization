@@ -18,10 +18,10 @@ from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, Sep
 from tensorflow import initializers
 import numpy as np
 
-from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
+from tests.common_tests.helpers.get_default_quant_config import get_default_quantization_config_copy
 
 
 def create_model_1(input_shape):
@@ -135,7 +135,8 @@ def prepare_graph(in_model):
     for node in graph.nodes:
         node.prior_info = keras_impl.get_node_prior_info(node=node,
                                                          fw_info=fw_info, graph=graph)
-    transformed_graph = substitute(graph, keras_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
+    transformed_graph = substitute(graph, keras_impl.get_substitutions_pre_statistics_collection(
+        get_default_quantization_config_copy()))
     return transformed_graph
 
 

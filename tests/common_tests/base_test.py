@@ -1,13 +1,13 @@
 import copy
 from typing import Any, List
 
-from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
 import numpy as np
 
 from model_compression_toolkit.common.user_info import UserInformation
+from tests.common_tests.helpers.get_default_quant_config import get_default_quantization_config_copy
 
 
 class BaseTest:
@@ -34,7 +34,7 @@ class BaseTest:
         return [self.input_shape for _ in range(self.num_of_inputs)]
 
     def get_quantization_config(self):
-        return copy.deepcopy(DEFAULTCONFIG)
+        return get_default_quantization_config_copy()
 
     def get_mixed_precision_quantization_config(self):
         return copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)

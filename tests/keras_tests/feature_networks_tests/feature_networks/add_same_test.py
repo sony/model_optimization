@@ -20,7 +20,6 @@ import tensorflow as tf
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
-from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG
 
 keras = tf.keras
 layers = keras.layers
