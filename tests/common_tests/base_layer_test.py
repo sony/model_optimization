@@ -57,8 +57,6 @@ class BaseLayerTest(BaseTest):
             qc = QuantizationConfig(QuantizationErrorMethod.MSE,
                                     QuantizationErrorMethod.MSE,
                                     weights_bias_correction=False,
-                                    enable_activation_quantization=False,
-                                    enable_weights_quantization=False
                                     )
         return qc
 
