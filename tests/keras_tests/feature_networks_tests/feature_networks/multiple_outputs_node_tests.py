@@ -47,5 +47,8 @@ class MultipleOutputsNodeTests(BaseKerasFeatureNetworkTest):
         inputs = self.generate_inputs()
         output_q = quantized_model.predict(inputs)
         output_f = float_model.predict(inputs)
+        print(quantized_model.summary())
+        print('*'*50)
+        print(float_model.summary())
         for o_q, o_f in zip(output_q, output_f):
             self.unit_test.assertTrue(np.sum(np.abs(o_q-o_f))==0)

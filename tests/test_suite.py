@@ -32,70 +32,70 @@ found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util
     "torchvision") is not None
 
 if found_tf:
-    import tensorflow as tf
+    # import tensorflow as tf
     from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
-    from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
-    from tests.keras_tests.function_tests.test_tensorboard_writer import TestLogger
-    from tests.keras_tests.function_tests.test_lut_quanitzer_params import TestLUTQuantizerParams
-    from tests.keras_tests.function_tests.test_lp_search_bitwidth import TestLpSearchBitwidth, \
-        TestSearchBitwidthConfiguration
-    from tests.keras_tests.function_tests.test_bn_info_collection import TestBNInfoCollection
-    from tests.keras_tests.graph_tests.test_graph_reading import TestGraphReading
-    from tests.keras_tests.graph_tests.test_graph_quantization_and_export import TestTFLiteExport
-    from tests.keras_tests.layer_tests.test_layers_runner import LayerTest as TFLayerTest
-    from tests.keras_tests.function_tests.test_symmetric_threshold_selection_weights import \
-        TestSymmetricThresholdSelectionWeights
-    from tests.keras_tests.function_tests.test_uniform_quantize_tensor import TestUniformQuantizeTensor
-    from tests.keras_tests.function_tests.test_uniform_range_selection_weights import TestUniformRangeSelectionWeights
-    from tests.keras_tests.test_keras_hardware_model import TestKerasHWModel
-
-
-if found_pytorch:
-    from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
-    from tests.pytorch_tests.model_tests.test_feature_models_runner import FeatureModelsTestRunner
-    from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
-    from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
-    from tests.pytorch_tests.test_pytorch_hardware_model import TestPytorchHWModel
+#     from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
+#     from tests.keras_tests.function_tests.test_tensorboard_writer import TestLogger
+#     from tests.keras_tests.function_tests.test_lut_quanitzer_params import TestLUTQuantizerParams
+#     from tests.keras_tests.function_tests.test_lp_search_bitwidth import TestLpSearchBitwidth, \
+#         TestSearchBitwidthConfiguration
+#     from tests.keras_tests.function_tests.test_bn_info_collection import TestBNInfoCollection
+#     from tests.keras_tests.graph_tests.test_graph_reading import TestGraphReading
+#     from tests.keras_tests.graph_tests.test_graph_quantization_and_export import TestTFLiteExport
+#     from tests.keras_tests.layer_tests.test_layers_runner import LayerTest as TFLayerTest
+#     from tests.keras_tests.function_tests.test_symmetric_threshold_selection_weights import \
+#         TestSymmetricThresholdSelectionWeights
+#     from tests.keras_tests.function_tests.test_uniform_quantize_tensor import TestUniformQuantizeTensor
+#     from tests.keras_tests.function_tests.test_uniform_range_selection_weights import TestUniformRangeSelectionWeights
+#     from tests.keras_tests.test_keras_hardware_model import TestKerasHWModel
+#
+#
+# if found_pytorch:
+#     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
+#     from tests.pytorch_tests.model_tests.test_feature_models_runner import FeatureModelsTestRunner
+#     from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
+#     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
+#     from tests.pytorch_tests.test_pytorch_hardware_model import TestPytorchHWModel
 
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases
     suiteList = []
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHistogramCollector))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCollectorsManipulations))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFolderLoader))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestThresholdSelection))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(HardwareModelingTest))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(OpsetTest))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(QCOptionsTest))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FusingTest))
+    # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHistogramCollector))
+    # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCollectorsManipulations))
+    # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFolderLoader))
+    # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestThresholdSelection))
+    # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(HardwareModelingTest))
+    # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(OpsetTest))
+    # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(QCOptionsTest))
+    # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FusingTest))
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
+        # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureNetworkTest))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLogger))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLpSearchBitwidth))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSearchBitwidthConfiguration))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestBNInfoCollection))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLUTQuantizerParams))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphReading))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestTFLiteExport))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSymmetricThresholdSelectionWeights))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformQuantizeTensor))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformRangeSelectionWeights))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasHWModel))
-
-        # Keras test layers are supported in TF2.6 or higher versions
-        if tf.__version__ >= "2.6":
-            suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLayerTest))
-
-    if found_pytorch:
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TorchLayerTest))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureModelsTestRunner))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FunctionTestRunner))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ModelTest))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchHWModel))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLogger))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLpSearchBitwidth))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSearchBitwidthConfiguration))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestBNInfoCollection))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLUTQuantizerParams))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphReading))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestTFLiteExport))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSymmetricThresholdSelectionWeights))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformQuantizeTensor))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformRangeSelectionWeights))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasHWModel))
+    #
+    #     # Keras test layers are supported in TF2.6 or higher versions
+    #     if tf.__version__ >= "2.6":
+    #         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLayerTest))
+    #
+    # if found_pytorch:
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TorchLayerTest))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureModelsTestRunner))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FunctionTestRunner))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ModelTest))
+    #     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchHWModel))
 
     # ----------------   Join them together ane run them
     comboSuite = unittest.TestSuite(suiteList)
