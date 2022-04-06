@@ -62,8 +62,6 @@ class ShiftNegaviteActivationNetTest(BasePytorchTest):
         return {
             'all_8bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
                                                mct.QuantizationErrorMethod.NOCLIPPING,
-                                               enable_weights_quantization=True,
-                                               enable_activation_quantization=True,
                                                shift_negative_activation_correction=True,
                                                shift_negative_ratio=np.inf),
         }

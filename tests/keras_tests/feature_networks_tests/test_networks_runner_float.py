@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+import copy
 
 import numpy as np
 import tensorflow as tf
@@ -62,7 +62,7 @@ class NetworkTest(object):
         graph.set_fw_info(DEFAULT_KERAS_INFO)
         graph.set_fw_hw_model(keras_default_hw_model)
         graph = set_quantization_configuration_to_graph(graph,
-                                                        DEFAULTCONFIG)
+                                                        copy.deepcopy(DEFAULTCONFIG))
         ptq_model, _ = model_builder(graph,
                                      mode=ModelBuilderMode.FLOAT)
         self.compare(inputs_list, ptq_model)
@@ -73,9 +73,9 @@ class NetworkTest(object):
                                                           fw_info=fw_info,
                                                           graph=graph)
         graph = substitute(graph,
-                           fw_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
+                           fw_impl.get_substitutions_pre_statistics_collection(copy.deepcopy(DEFAULTCONFIG)))
         graph = set_quantization_configuration_to_graph(graph,
-                                                        DEFAULTCONFIG)
+                                                        copy.deepcopy(DEFAULTCONFIG))
 
         ptq_model, _ = model_builder(graph,
                                      mode=ModelBuilderMode.FLOAT)

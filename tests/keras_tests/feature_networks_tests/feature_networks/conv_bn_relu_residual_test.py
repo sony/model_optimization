@@ -38,6 +38,6 @@ class ConvBnReluResidualTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.Conv2D))
         self.unit_test.assertTrue(quantized_model.layers[3].function == tf.quantization.fake_quant_with_min_max_vars)
         self.unit_test.assertTrue(quantized_model.layers[3].input.ref() == quantized_model.layers[2].output.ref())
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[7], layers.Add))
-        self.unit_test.assertTrue(quantized_model.layers[3].output.ref() in [t.ref() for t in quantized_model.layers[7].input])
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[8], layers.Add))
+        self.unit_test.assertTrue(quantized_model.layers[3].output.ref() in [t.ref() for t in quantized_model.layers[8].input])
         self.unit_test.assertTrue(isinstance(quantized_model.layers[4], layers.BatchNormalization)) # assert not folding

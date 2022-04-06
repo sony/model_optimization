@@ -461,8 +461,7 @@ def _prepare_model_for_quantization(in_model: Any,
     ######################################
     # Shift Negative Activations
     ######################################
-    if quant_config.shift_negative_activation_correction and \
-            quant_config.enable_activation_quantization:
+    if quant_config.shift_negative_activation_correction:
         transformed_graph = fw_impl.shift_negative_correction(transformed_graph,
                                                               quant_config,
                                                               fw_info)

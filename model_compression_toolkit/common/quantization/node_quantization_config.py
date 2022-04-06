@@ -83,7 +83,7 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.activation_quantization_method = op_cfg.activation_quantization_method
         self.activation_n_bits = op_cfg.activation_n_bits
         self.relu_bound_to_power_of_2 = qc.relu_bound_to_power_of_2
-        self.enable_activation_quantization = qc.enable_activation_quantization
+        self.enable_activation_quantization = op_cfg.enable_activation_quantization
         self.activation_channel_equalization = qc.activation_channel_equalization
         self.input_scaling = qc.input_scaling
         self.min_threshold = qc.min_threshold
@@ -217,7 +217,7 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.weights_n_bits = op_cfg.weights_n_bits
         self.weights_bias_correction = qc.weights_bias_correction
         self.weights_per_channel_threshold = qc.weights_per_channel_threshold
-        self.enable_weights_quantization = qc.enable_weights_quantization
+        self.enable_weights_quantization = op_cfg.enable_weights_quantization
         self.min_threshold = qc.min_threshold
         self.l_p_value = qc.l_p_value
 

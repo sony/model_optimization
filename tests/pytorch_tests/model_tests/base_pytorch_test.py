@@ -40,13 +40,22 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         return {
             'no_quantization': generate_fhw_model_pytorch(name="no_quant_pytorch_test",
                                                           hardware_model=generate_test_hw_model({'weights_n_bits': 32,
-                                                                                                 'activation_n_bits': 32})),
+                                                                                                 'activation_n_bits': 32,
+                                                                                                 'enable_weights_quantization': False,
+                                                                                                 'enable_activation_quantization': False
+                                                                                                 })),
             'all_32bit': generate_fhw_model_pytorch(name="32_quant_pytorch_test",
                                                     hardware_model=generate_test_hw_model({'weights_n_bits': 32,
-                                                                                           'activation_n_bits': 32})),
+                                                                                           'activation_n_bits': 32,
+                                                                                           'enable_weights_quantization': True,
+                                                                                           'enable_activation_quantization': True
+                                                                                           })),
             'all_4bit': generate_fhw_model_pytorch(name="4_quant_pytorch_test",
                                                    hardware_model=generate_test_hw_model({'weights_n_bits': 4,
-                                                                                          'activation_n_bits': 4})),
+                                                                                          'activation_n_bits': 4,
+                                                                                          'enable_weights_quantization': True,
+                                                                                          'enable_activation_quantization': True
+                                                                                          })),
         }
 
     # TODO: We can remove this method and refactor Pytorch tests to run only over
@@ -55,19 +64,13 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         return {
             'no_quantization': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
                                                       mct.QuantizationErrorMethod.NOCLIPPING,
-                                                      False, True, True,
-                                                      enable_weights_quantization=False,
-                                                      enable_activation_quantization=False),
+                                                      False, True, True),
             'all_32bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
                                                 mct.QuantizationErrorMethod.NOCLIPPING,
-                                                False, True, True,
-                                                enable_weights_quantization=True,
-                                                enable_activation_quantization=True),
+                                                False, True, True),
             'all_4bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
                                                mct.QuantizationErrorMethod.NOCLIPPING,
-                                               False, False, True,
-                                               enable_weights_quantization=True,
-                                               enable_activation_quantization=True),
+                                               False, False, True),
         }
 
     def create_inputs_shape(self):

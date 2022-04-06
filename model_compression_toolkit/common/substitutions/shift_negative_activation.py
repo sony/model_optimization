@@ -328,12 +328,13 @@ def shift_negative_function(graph: Graph,
                     bypass_candidate_qc.activation_quantization_cfg.activation_quantization_params[SIGNED] = False
                     graph.shift_stats_collector(bypass_node, np.array(shift_value))
 
-    for candidate_qc in add_node.candidates_quantization_cfg:
+    add_node_qco = graph.fw_hw_model.get_qco_by_node(add_node).quantization_config_list
+    for op_qc_idx, candidate_qc in enumerate(add_node.candidates_quantization_cfg):
         candidate_qc.weights_quantization_cfg.enable_weights_quantization = False
 
         candidate_qc.activation_quantization_cfg = create_node_activation_qc(qc,
                                                                              fw_info,
-                                                                             graph.fw_hw_model.get_default_op_qc())
+                                                                             add_node_qco[op_qc_idx])
 
         candidate_qc.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
                                                                                     SIGNED: False})
@@ -461,13 +462,15 @@ def apply_shift_negative_correction(graph: Graph,
     Returns:
         Graph after applying shift negative on selected activations.
     """
-    # Skip substitution if QuantizationMethod is uniform.
-    op_qc = graph.fw_hw_model.get_default_op_qc()
-    if op_qc.activation_quantization_method is QuantizationMethod.UNIFORM:
-        return graph
 
     nodes = list(graph.nodes())
     for n in nodes:
+        # Skip substitution if QuantizationMethod is uniform.
+        node_qco = graph.fw_hw_model.get_qco_by_node(n)
+        if any([op_qc.activation_quantization_method is QuantizationMethod.UNIFORM
+                for op_qc in node_qco.quantization_config_list]):
+            continue
+
         if snc_node_types.apply(n):
             linear_node, pad_node, bypass_nodes = get_next_nodes_to_correct(n,
                                                                             graph,
@@ -476,7 +479,7 @@ def apply_shift_negative_correction(graph: Graph,
                                                                             pad_node_types,
                                                                             is_padding_node_and_node_has_padding
                                                                             )
-            if linear_node is not None:
+            if linear_node is not None and n.is_activation_quantization_enabled():
                 graph = shift_negative_function(graph,
                                                 quant_config,
                                                 n,
