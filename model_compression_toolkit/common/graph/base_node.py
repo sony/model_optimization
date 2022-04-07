@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import copy
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, List
 
 import numpy as np
 
@@ -290,3 +290,12 @@ class BaseNode:
             if attr and self.get_weights_by_keys(attr) is not None:
                 return True
         return False
+
+    def get_total_output_params(self):
+        """
+        Calculates the output size of the node.
+
+        Returns: Output size.
+        """
+        output_shapes = self.output_shape if isinstance(self.output_shape, List) else [self.output_shape]
+        return sum([np.prod([x for x in output_shape if x is not None]) for output_shape in output_shapes])

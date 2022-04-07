@@ -487,25 +487,56 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         sorted_names = [n.name for n in self.get_configurable_sorted_nodes(include_reused_nodes=include_reused_nodes)]
         return sorted_names
 
+    def get_weights_configurable_nodes(self,
+                                       include_reused_nodes: bool = False) -> List[BaseNode]:
+        """
+        Get a list of nodes that their weights can be configured (namely, has one or
+        more weight qc candidate and their weights should be quantized).
+
+        Args:
+            include_reused_nodes: Whether to include reused nodes (False by default).
+
+        Returns:
+            A list of nodes that their weights can be configured (namely, has one or more weight qc candidate).
+        """
+        return list(filter(lambda n: n.is_weights_quantization_enabled()
+                                     and not n.is_all_weights_candidates_equal()
+                                     and (not n.reuse or include_reused_nodes), list(self)))
+
+    def get_activation_configurable_nodes(self) -> List[BaseNode]:
+        """
+        Get a list of nodes that their activation can be configured (namely, has one or
+        more activation qc candidate and their activation should be quantized).
+
+        Returns:
+            A list of nodes that their activation can be configured (namely, has one or more activation qc candidate).
+        """
+        return list(filter(lambda n: n.is_activation_quantization_enabled()
+                                     and not n.is_all_activation_candidates_equal(), list(self)))
+
     def get_configurable_sorted_nodes(self,
                                       include_reused_nodes: bool = False) -> List[BaseNode]:
         """
         Get a list of nodes that can be configured (namely, has one or
-        more weight qc candidate and their weights should be quantized).
+        more qc candidate and their weights or activations should be quantized).
         The nodes are sorted according to the topological order of the graph.
 
         Args:
             include_reused_nodes: Whether or not to include reused nodes (False by default).
 
         Returns:
-            A list of nodes that can be configured (namely, has one or more weight qc candidate) sorted topology.
+             A list of nodes that can be configured (namely, has one or more qc candidate) sorted topology.
 
         """
+        weights_configurable_nodes = self.get_weights_configurable_nodes(include_reused_nodes)
+        activation_configurable_nodes = self.get_activation_configurable_nodes()
+
+        # combine and remove duplications
+        configurable_nodes = list(set(weights_configurable_nodes + activation_configurable_nodes))
+
         sorted_configurable_nodes = []
         sorted_nodes = list(topological_sort(self))
         for n in sorted_nodes:
-            if n.is_weights_quantization_enabled():
-                if not n.reuse or include_reused_nodes:
-                    if len(n.candidates_quantization_cfg) >= 1:
-                        sorted_configurable_nodes.append(n)
+            if n in configurable_nodes:
+                sorted_configurable_nodes.append(n)
         return sorted_configurable_nodes
