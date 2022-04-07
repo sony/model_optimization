@@ -290,3 +290,11 @@ class BaseNode:
             if attr and self.get_weights_by_keys(attr) is not None:
                 return True
         return False
+
+    def get_total_output_params(self):
+        """
+        Calculates the output size of the node.
+
+        Returns: Output size.
+        """
+        return np.prod([x for x in self.output_shape if x is not None])

@@ -173,7 +173,6 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
 
         return self.activation_quantization_fn == other.activation_quantization_fn and \
                self.activation_quantization_params_fn == other.activation_quantization_params_fn and \
-               self.activation_quantization_params == other.activation_quantization_params and \
                self.activation_error_method == other.activation_error_method and \
                self.activation_quantization_method == other.activation_quantization_method and \
                self.activation_n_bits == other.activation_n_bits and \
@@ -298,7 +297,6 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
         return self.weights_quantization_fn == other.weights_quantization_fn and \
                self.weights_quantization_params_fn == other.weights_quantization_params_fn and \
                self.weights_channels_axis == other.weights_channels_axis and \
-               self.weights_quantization_params == other.weights_quantization_params and \
                self.weights_error_method == other.weights_error_method and \
                self.weights_quantization_method == other.weights_quantization_method and \
                self.weights_n_bits == other.weights_n_bits and \
