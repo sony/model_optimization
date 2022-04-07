@@ -20,10 +20,14 @@ hwm = mct.hardware_representation
 
 
 def generate_test_hw_model(edit_params_dict, name=""):
-    base_config, mixed_precision_cfg_list = get_op_quantization_configs()
+    base_config, op_cfg_list = get_op_quantization_configs()
     updated_config = base_config.clone_and_edit(**edit_params_dict)
 
-    return generate_hardware_model(updated_config, mixed_precision_cfg_list, name=name)
+    # the hw model's options config list must contain the given base config
+    # this method only used for non-mixed-precision tests
+    op_cfg_list = [updated_config]
+
+    return generate_hardware_model(updated_config, op_cfg_list, name=name)
 
 
 def generate_mixed_precision_test_hw_model(base_cfg, mp_bitwidth_candidates_list, name=""):
@@ -40,3 +44,9 @@ def get_16bit_fw_hw_model(name):
     hw_model = generate_test_hw_model({'weights_n_bits': 16,
                                        'activation_n_bits': 16})
     return generate_fhw_model_keras(name=name, hardware_model=hw_model)
+
+
+def get_quantization_disabled_keras_hw_model(name):
+    hwm = generate_test_hw_model({'enable_weights_quantization': False,
+                                  'enable_activation_quantization': False})
+    return generate_fhw_model_keras(name=name, hardware_model=hwm)

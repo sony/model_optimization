@@ -3,7 +3,8 @@ from enum import Enum
 from typing import List, Any
 import numpy as np
 
-from model_compression_toolkit import MixedPrecisionQuantizationConfig, DEFAULTCONFIG
+from model_compression_toolkit import MixedPrecisionQuantizationConfig, DEFAULTCONFIG, QuantizationConfig, \
+    QuantizationErrorMethod
 from tests.common_tests.base_test import BaseTest
 
 
@@ -48,12 +49,15 @@ class BaseLayerTest(BaseTest):
         raise NotImplemented
 
     def get_quantization_config(self):
-        qc = copy.deepcopy(DEFAULTCONFIG)
-        qc.weights_bias_correction = False
+        qc = QuantizationConfig(QuantizationErrorMethod.MSE,
+                                QuantizationErrorMethod.MSE,
+                                weights_bias_correction=False)
         if self.current_mode == LayerTestMode.FLOAT:
             # Disable all features that are enabled by default:
-            qc.enable_activation_quantization = False
-            qc.enable_weights_quantization = False
+            qc = QuantizationConfig(QuantizationErrorMethod.MSE,
+                                    QuantizationErrorMethod.MSE,
+                                    weights_bias_correction=False,
+                                    )
         return qc
 
     def run_test(self):

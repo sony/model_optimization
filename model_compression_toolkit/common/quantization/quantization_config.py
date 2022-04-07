@@ -54,8 +54,6 @@ class QuantizationConfig(object):
                  weights_per_channel_threshold: bool = True,
                  input_scaling: bool = False,
                  softmax_shift: bool = False,
-                 enable_weights_quantization: bool = True,
-                 enable_activation_quantization: bool = True,
                  shift_negative_activation_correction: bool = False,
                  activation_channel_equalization: bool = False,
                  z_threshold: float = math.inf,
@@ -74,8 +72,6 @@ class QuantizationConfig(object):
             weights_per_channel_threshold (bool): Whether to quantize the weights per-channel or not (per-tensor).
             input_scaling (bool): Whether to use input scaling or not.
             softmax_shift (bool): Whether to use softmax shift or not.
-            enable_weights_quantization (bool): Whether to quantize the model weights or not.
-            enable_activation_quantization (bool): Whether to quantize the model activations or not.
             shift_negative_activation_correction (bool): Whether to use shifting negative activation correction or not.
             activation_channel_equalization (bool): Whether to use activation channel equalization correction or not.
             z_threshold (float): Value of z score for outliers removal.
@@ -91,7 +87,7 @@ class QuantizationConfig(object):
             enabling relu_bound_to_power_of_2, weights_bias_correction, and quantizing the weights per-channel,
             one can instantiate a quantization configuration:
 
-            >>> qc = QuantizationConfig(activation_error_method=QuantizationErrorMethod.NOCLIPPING,weights_error_method=QuantizationErrorMethod.MSE,activation_quantization_method=QuantizationMethod.POWER_OF_TWO,weights_quantization_method=QuantizationMethod.POWER_OF_TWO,relu_bound_to_power_of_2=True,weights_bias_correction=True,weights_per_channel_threshold=True)
+            >>> qc = QuantizationConfig(activation_error_method=QuantizationErrorMethod.NOCLIPPING,weights_error_method=QuantizationErrorMethod.MSE,relu_bound_to_power_of_2=True,weights_bias_correction=True,weights_per_channel_threshold=True)
 
 
             The QuantizationConfig instanse can then be passed to
@@ -104,8 +100,6 @@ class QuantizationConfig(object):
         self.relu_bound_to_power_of_2 = relu_bound_to_power_of_2
         self.weights_bias_correction = weights_bias_correction
         self.weights_per_channel_threshold = weights_per_channel_threshold
-        self.enable_weights_quantization = enable_weights_quantization
-        self.enable_activation_quantization = enable_activation_quantization
         self.activation_channel_equalization = activation_channel_equalization
         self.input_scaling = input_scaling
         self.softmax_shift = softmax_shift

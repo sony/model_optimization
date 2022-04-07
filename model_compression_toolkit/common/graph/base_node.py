@@ -92,6 +92,10 @@ class BaseNode:
         Returns: Whether node activation quantization is enabled or not.
 
         """
+        if self.final_activation_quantization_cfg:
+            # if we have a final configuration, then we only care to check if it enables activation quantization
+            return self.final_activation_quantization_cfg.enable_activation_quantization
+
         for qc in self.candidates_quantization_cfg:
             assert self.candidates_quantization_cfg[0].activation_quantization_cfg.enable_activation_quantization == \
                    qc.activation_quantization_cfg.enable_activation_quantization
@@ -103,6 +107,10 @@ class BaseNode:
         Returns: Whether node weights quantization is enabled or not.
 
         """
+        if self.final_weights_quantization_cfg:
+            # if we have a final configuration, then we only care to check if it enables weights quantization
+            return self.final_weights_quantization_cfg.enable_weights_quantization
+
         for qc in self.candidates_quantization_cfg:
             assert self.candidates_quantization_cfg[0].weights_quantization_cfg.enable_weights_quantization == \
                    qc.weights_quantization_cfg.enable_weights_quantization

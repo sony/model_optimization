@@ -12,18 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import torch
-from torch.nn import Hardswish, Hardsigmoid, ReLU, Hardtanh, ReLU6, LeakyReLU, PReLU, SiLU, Softmax, \
-    Sigmoid, Softplus, Softsign, Tanh
-from torch.nn.functional import hardswish, hardsigmoid, relu, hardtanh, relu6, leaky_relu, prelu, silu, softmax, \
-    softplus, softsign
-from torch.nn import UpsamplingBilinear2d, AdaptiveAvgPool2d, AvgPool2d, MaxPool2d
-from torch.nn.functional import upsample_bilinear, adaptive_avg_pool2d, avg_pool2d, max_pool2d
-from torch.nn import Conv2d, ConvTranspose2d, Linear, BatchNorm2d
-from torch.nn import Dropout, Flatten
-from torch import add, multiply, mul, sub, flatten, reshape, split, unsqueeze, concat, cat,\
-    mean, dropout, sigmoid, tanh
-import operator
+from torch.nn import Hardsigmoid, ReLU, ReLU6, Softmax, Sigmoid
+from torch.nn.functional import hardsigmoid, relu, relu6, softmax
+from torch.nn import Conv2d, ConvTranspose2d, Linear
+from torch import sigmoid
 
 from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.common.framework_info import FrameworkInfo, ChannelAxis
@@ -35,30 +27,6 @@ from model_compression_toolkit.common.quantization.quantizers.uniform_quantizers
 from model_compression_toolkit.pytorch.constants import KERNEL
 from model_compression_toolkit.pytorch.quantizer.fake_quant_builder import power_of_two_quantization, \
     symmetric_quantization, uniform_quantization
-from model_compression_toolkit.pytorch.quantizer.fake_quant_builder import power_of_two_quantization
-from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder, ConstantHolder
-
-"""
-Division of Pytorch modules by how they should be quantized.
-KERNEL_OPS: Layers that their coefficients should be quantized.
-ACTIVATION: Layers that their activation should be quantized.
-NO_QUANTIZATION: Layers that should not be quantized.
-"""
-
-KERNEL_OPS = [Conv2d, Linear, ConvTranspose2d]
-
-NO_QUANTIZATION = [Dropout, Flatten, ConstantHolder] + \
-                  [dropout, flatten, split, operator.getitem, reshape, unsqueeze]
-
-ACTIVATION = [DummyPlaceHolder] + \
-    [Hardswish, Hardsigmoid, ReLU, Hardtanh, ReLU6, LeakyReLU, PReLU, SiLU, Softmax, Sigmoid, Softplus, Softsign, Tanh] + \
-    [hardswish, hardsigmoid, relu, hardtanh, relu6, leaky_relu, prelu, silu, softmax, sigmoid, softplus, softsign, tanh] + \
-    [torch.relu] + \
-    [UpsamplingBilinear2d, AdaptiveAvgPool2d, AvgPool2d, MaxPool2d] + \
-    [upsample_bilinear, adaptive_avg_pool2d, avg_pool2d, max_pool2d] + \
-    [add, sub, mul, multiply] + \
-    [operator.add, operator.sub, operator.mul] + \
-    [BatchNorm2d, concat, cat, mean]
 
 """
 Map each layer to a list of its' weights attributes that should get quantized.
@@ -121,10 +89,7 @@ Output channel index of the model's layers
 """
 OUTPUT_CHANNEL_INDEX = ChannelAxis.NCHW
 
-DEFAULT_PYTORCH_INFO = FrameworkInfo(KERNEL_OPS,
-                                     ACTIVATION,
-                                     NO_QUANTIZATION,
-                                     ACTIVATION_QUANTIZER_MAPPING,
+DEFAULT_PYTORCH_INFO = FrameworkInfo(ACTIVATION_QUANTIZER_MAPPING,
                                      WEIGHTS_QUANTIZER_MAPPING,
                                      DEFAULT_CHANNEL_AXIS_DICT,
                                      ACTIVATION2MINMAX,
