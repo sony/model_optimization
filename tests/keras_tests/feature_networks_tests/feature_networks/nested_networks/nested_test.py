@@ -43,9 +43,6 @@ class NestedTest(BaseKerasFeatureNetworkTest):
     def get_fw_hw_model(self):
         return get_quantization_disabled_keras_hw_model("nested_test")
 
-    def get_quantization_config(self):
-        return mct.QuantizationConfig()
-
     # Dummy model to test reader's recursively model parsing
     def dummy_model(self, input_shape):
         inputs = layers.Input(shape=input_shape[1:])
