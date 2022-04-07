@@ -34,11 +34,13 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 from model_compression_toolkit.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.common.model_collector import ModelCollector
+
 from model_compression_toolkit import get_model, DEFAULTCONFIG
 from model_compression_toolkit.common.similarity_analyzer import compute_mse
 from model_compression_toolkit.keras.constants import DEFAULT_HWM
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
+from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
 
 
 class TestLpSearchBitwidth(unittest.TestCase):
@@ -76,6 +78,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
 class TestSearchBitwidthConfiguration(unittest.TestCase):
 
     def test_search_engine(self):
+
         qc = MixedPrecisionQuantizationConfig(DEFAULTCONFIG,
                                               compute_mse,
                                               get_average_weights,
@@ -90,7 +93,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         graph = keras_impl.model_reader(in_model, dummy_representative_dataset)  # model reading
         graph.set_fw_info(fw_info)
-        graph.set_fw_hw_model(KERAS_DEFAULT_MODEL)
+        graph.set_fw_hw_model(fw_hw_model)
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=qc)
 
