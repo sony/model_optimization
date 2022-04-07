@@ -19,10 +19,10 @@ import tensorflow as tf
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
-        MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D
+        MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, BatchNormalization
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
-    Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D
+    Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, BatchNormalization
 
 
 hwm = mct.hardware_representation
@@ -57,7 +57,7 @@ def generate_hw_model_with_activation_mp(base_cfg, mp_bitwidth_candidates_list, 
     return generated_hwm
 
 
-def generate_fhw_model_keras(hardware_model, name="activation_mp_keras_hwm"):
+def generate_activation_mp_fhw_model_keras(hardware_model, name="activation_mp_keras_hwm"):
 
     fhwm_keras = hwm.FrameworkHardwareModel(hardware_model,
                                             name=name)
@@ -93,6 +93,7 @@ def generate_fhw_model_keras(hardware_model, name="activation_mp_keras_hwm"):
                                                  hwm.LayerFilterParams(Activation, activation="sigmoid"),
                                                  tf.nn.tanh,
                                                  hwm.LayerFilterParams(Activation, activation="tanh"),
-                                                 InputLayer])
+                                                 InputLayer,
+                                                 BatchNormalization])
 
     return fhwm_keras
