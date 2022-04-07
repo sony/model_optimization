@@ -27,7 +27,10 @@ def generate_test_hw_model(edit_params_dict, name=""):
     # this method only used for non-mixed-precision tests
     op_cfg_list = [updated_config]
 
-    return generate_hardware_model(updated_config, op_cfg_list, name=name)
+    return generate_hardware_model(default_config=updated_config,
+                                   base_config=updated_config,
+                                   mixed_precision_cfg_list=op_cfg_list,
+                                   name=name)
 
 
 def generate_mixed_precision_test_hw_model(base_cfg, mp_bitwidth_candidates_list, name=""):
@@ -37,7 +40,10 @@ def generate_mixed_precision_test_hw_model(base_cfg, mp_bitwidth_candidates_list
                                                 activation_n_bits=activation_n_bits)
         mp_op_cfg_list.append(candidate_cfg)
 
-    return generate_hardware_model(base_cfg, mp_op_cfg_list, name=name)
+    return generate_hardware_model(default_config=base_cfg,
+                                   base_config=base_cfg,
+                                   mixed_precision_cfg_list=mp_op_cfg_list,
+                                   name=name)
 
 
 def get_16bit_fw_hw_model(name):
