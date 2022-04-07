@@ -17,6 +17,8 @@ from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS
 from model_compression_toolkit.keras.gradient_ptq.training_wrapper import gptq_training_wrapper
 from model_compression_toolkit.keras.graph_substitutions.substitutions.activation_decomposition import \
     ActivationDecomposition
+from model_compression_toolkit.keras.graph_substitutions.substitutions.softmax_shift import \
+    keras_softmax_shift
 from model_compression_toolkit.keras.graph_substitutions.substitutions.batchnorm_folding import \
     keras_batchnorm_folding
 from model_compression_toolkit.keras.graph_substitutions.substitutions.input_scaling import InputScaling, \
@@ -218,6 +220,8 @@ class KerasImplementation(FrameworkImplementation):
             A list of the framework substitutions used after we collect statistics.
         """
         substitutions_list = []
+        if quant_config.softmax_shift:
+            substitutions_list.append(keras_softmax_shift())
         if quant_config.input_scaling:
             substitutions_list.append(InputScaling())
             substitutions_list.append(InputScalingWithPad())
