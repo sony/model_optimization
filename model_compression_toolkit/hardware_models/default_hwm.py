@@ -32,7 +32,10 @@ def get_default_hardware_model() -> HardwareModel:
 
     """
     base_config, mixed_precision_cfg_list = get_op_quantization_configs()
-    return generate_hardware_model(base_config, mixed_precision_cfg_list, name='default_hwm')
+    return generate_hardware_model(default_config=base_config,
+                                   base_config=base_config,
+                                   mixed_precision_cfg_list=mixed_precision_cfg_list,
+                                   name='default_hwm')
 
 
 def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig]]:
@@ -72,15 +75,17 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     return eight_bits, mixed_precision_cfg_list
 
 
-def generate_hardware_model(base_config: OpQuantizationConfig,
+def generate_hardware_model(default_config: OpQuantizationConfig,
+                            base_config: OpQuantizationConfig,
                             mixed_precision_cfg_list: List[OpQuantizationConfig],
                             name: str) -> HardwareModel:
     """
     Generates HardwareModel with default defined Operators Sets, based on the given base configuration and
     mixed-precision configurations options list.
 
-    Args:
-        base_config: An OpQuantizationConfig to set as the hardware model base configuration.
+    Args
+        default_config: A default OpQuantizationConfig to set as the hardware model default configuration.
+        base_config: An OpQuantizationConfig to set as the hardware model base configuration for mixed-precision purposes only.
         mixed_precision_cfg_list: A list of OpQuantizationConfig to be used as the hardware model mixed-precision
             quantization configuration options.
         name: The name of the Hardware model.
@@ -92,7 +97,7 @@ def generate_hardware_model(base_config: OpQuantizationConfig,
     # of possible configurations to consider when quantizing a set of operations (in mixed-precision, for example).
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
-    default_configuration_options = hwm.QuantizationConfigOptions([base_config])
+    default_configuration_options = hwm.QuantizationConfigOptions([default_config])
 
     # Create a HardwareModel and set its default quantization config.
     # This default configuration will be used for all operations
