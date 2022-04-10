@@ -40,6 +40,8 @@ from model_compression_toolkit.pytorch.pytorch_node_prior_info import create_nod
 from model_compression_toolkit.pytorch.reader.reader import model_reader
 import model_compression_toolkit.pytorch.constants as pytorch_constants
 from model_compression_toolkit.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
+from model_compression_toolkit.pytorch.graph_substitutions.substitutions.softmax_shift import \
+    pytorch_softmax_shift
 
 
 class PytorchImplementation(FrameworkImplementation):
@@ -193,6 +195,8 @@ class PytorchImplementation(FrameworkImplementation):
             A list of the framework substitutions used after we collect statistics.
         """
         substitutions_list = []
+        if quant_config.softmax_shift:
+            substitutions_list.append(pytorch_softmax_shift())
         if quant_config.input_scaling:
             raise Exception('Input scaling is currently not supported for Pytorch.')
         return substitutions_list

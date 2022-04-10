@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import copy
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, List
 
 import numpy as np
 
@@ -297,4 +297,5 @@ class BaseNode:
 
         Returns: Output size.
         """
-        return np.prod([x for x in self.output_shape if x is not None])
+        output_shapes = self.output_shape if isinstance(self.output_shape, List) else [self.output_shape]
+        return sum([np.prod([x for x in output_shape if x is not None]) for output_shape in output_shapes])
