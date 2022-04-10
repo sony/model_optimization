@@ -18,6 +18,7 @@ import unittest
 from model_compression_toolkit import QuantizationErrorMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_bound_to_power_of_2_test import \
     ReLUBoundToPOTNetTest
+from tests.keras_tests.feature_networks_tests.feature_networks.softmax_shift_test import SoftmaxShiftTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_percision_test import MixedPercisionBaseTest, \
     MixedPercisionSearchTest, MixedPercisionManuallyConfiguredTest, MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest
@@ -297,6 +298,15 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_activation_scaling_relu6(self):
         ReLUBoundToPOTNetTest(self).run_test()
+
+    def test_layer_activation_softmax_shift(self):
+        SoftmaxShiftTest(self, layers.Dense(20, activation='softmax'), None).run_test()
+
+    def test_layer_softmax_shift(self):
+        SoftmaxShiftTest(self, layers.Dense(20), layers.Softmax()).run_test()
+
+    def test_function_softmax_shift(self):
+        SoftmaxShiftTest(self, layers.Dense(20), tf.nn.softmax).run_test()
 
     def test_multiple_inputs_node(self):
         MultipleInputsNodeTests(self).run_test()

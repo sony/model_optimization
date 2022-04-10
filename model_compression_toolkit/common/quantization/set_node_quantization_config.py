@@ -190,14 +190,9 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
         candidates.sort(key=lambda c: (c.weights_quantization_cfg.weights_n_bits,
                                        c.activation_quantization_cfg.activation_n_bits), reverse=True)
     else:
-        op_cfg = node_qc_options.quantization_config_list[0]
-        if len(node_qc_options.quantization_config_list) > 1:
-            op_cfg = node_qc_options.base_config
-            Logger.warning(f"Given multiple candidates configurations for non mixed-precision quantization,"
-                           f"using base_config as the node's configuration")
         candidates.append(create_node_qc_candidate(qc,
                                                    fw_info,
                                                    weight_channel_axis,
-                                                   op_cfg))
+                                                   node_qc_options.base_config))
 
     return candidates
