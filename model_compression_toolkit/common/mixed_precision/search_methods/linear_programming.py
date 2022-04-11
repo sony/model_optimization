@@ -25,6 +25,8 @@ from model_compression_toolkit.common.mixed_precision.kpi import KPI
 def mp_integer_programming_search(layer_to_bitwidth_mapping: Dict[int, List[int]],
                                   compute_metric_fn: Callable,
                                   compute_kpi_fn: Callable,
+                                  min_weights_cfg: List[int],
+                                  min_activation_cfg: List[int],
                                   target_kpi: KPI = None) -> List[int]:
     """
     Searching and returning a mixed-precision configuration using an ILP optimization solution.
@@ -41,6 +43,8 @@ def mp_integer_programming_search(layer_to_bitwidth_mapping: Dict[int, List[int]
         indices).
         compute_metric_fn: Function to compute a metric for a mixed-precision model configuration.
         compute_kpi_fn: Function to compute the KPI of the model for some mixed-precision configuration.
+        min_weights_cfg: Mixed-Precision configuration for minimal weights precision.
+        min_activation_cfg: Mixed-Precision configuration for minimal activation precision.
         target_kpi: KPI to constrain our LP problem with some resources limitations (like model' weights memory
         consumption).
 
@@ -61,7 +65,9 @@ def mp_integer_programming_search(layer_to_bitwidth_mapping: Dict[int, List[int]
     # that maps the bitwidth index to the contribution of configuring this node with this
     # bitwidth to the minimal possible KPI of the model.
     layer_to_kpi_mapping, minimal_kpi = _compute_kpis(layer_to_bitwidth_mapping,
-                                                      compute_kpi_fn)
+                                                      compute_kpi_fn,
+                                                      min_weights_cfg,
+                                                      min_activation_cfg)
 
     assert minimal_kpi.weights_memory <= target_kpi.weights_memory, \
         f'Weights memory in minimal KPI cannot be greater than weights memory in target KPI. ' \
@@ -235,7 +241,9 @@ def _build_layer_to_metrics_mapping(node_to_bitwidth_indices: Dict[int, List[int
 
 
 def _compute_kpis(node_to_bitwidth_indices: Dict[int, List[int]],
-                  compute_kpi_fn: Callable) -> Tuple[Dict[int, Dict[int, KPI]], KPI]:
+                  compute_kpi_fn: Callable,
+                  min_weights_cfg: List[int],
+                  min_activation_cfg: List[int]) -> Tuple[Dict[int, Dict[int, KPI]], KPI]:
     """
     This function computes and returns:
     1. The minimal possible KPI of the graph.
@@ -257,11 +265,9 @@ def _compute_kpis(node_to_bitwidth_indices: Dict[int, List[int]],
     Logger.info('Starting to compute KPIs per node and bitwidth')
     layer_to_kpi_mapping = {}
 
-    # The node's candidates are sorted in a descending order, thus we take the last index of each node.
-    minimal_graph_size_configuration = [node_to_bitwidth_indices[node_idx][-1] for node_idx in
-                                        sorted(node_to_bitwidth_indices.keys())]
-
-    minimal_kpi = compute_kpi_fn(minimal_graph_size_configuration)  # minimal possible kpi
+    minimal_weights_memory = compute_kpi_fn(min_weights_cfg, weights_only=True).weights_memory
+    minimal_activation_memory = compute_kpi_fn(min_activation_cfg, activation_only=True).activation_memory
+    minimal_kpi = KPI(minimal_weights_memory, minimal_activation_memory)
 
     for node_idx, layer_possible_bitwidths_indices in tqdm(node_to_bitwidth_indices.items(),
                                                            total=len(node_to_bitwidth_indices)):
@@ -270,12 +276,15 @@ def _compute_kpis(node_to_bitwidth_indices: Dict[int, List[int]],
 
             # Change the minimal KPI configuration at one node only and
             # compute this change's contribution to the model's KPI.
-            mp_model_configuration = minimal_graph_size_configuration.copy()
-            mp_model_configuration[node_idx] = bitwidth_idx
+            weights_mp_model_configuration = min_weights_cfg.copy()
+            activation_mp_model_configuration = min_activation_cfg.copy()
+            weights_mp_model_configuration[node_idx] = bitwidth_idx
+            activation_mp_model_configuration[node_idx] = bitwidth_idx
 
-            mp_model_kpi = compute_kpi_fn(mp_model_configuration)
-            contribution_to_minimal_model_weights = mp_model_kpi.weights_memory - minimal_kpi.weights_memory
-            contribution_to_minimal_model_activation = mp_model_kpi.activation_memory - minimal_kpi.activation_memory
+            weights_mp_model_kpi = compute_kpi_fn(weights_mp_model_configuration, weights_only=True)
+            activation_mp_model_kpi = compute_kpi_fn(activation_mp_model_configuration, activation_only=True)
+            contribution_to_minimal_model_weights = weights_mp_model_kpi.weights_memory - minimal_kpi.weights_memory
+            contribution_to_minimal_model_activation = activation_mp_model_kpi.activation_memory - minimal_kpi.activation_memory
 
             layer_to_kpi_mapping[node_idx][bitwidth_idx] = KPI(
                 weights_memory=contribution_to_minimal_model_weights,

@@ -15,6 +15,7 @@
 
 from typing import Callable
 from typing import Dict, List
+import numpy as np
 
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
@@ -49,6 +50,8 @@ class MixedPrecisionSearchManager(object):
         self.metrics_weights = self.qc.distance_weighting_method
         self.layer_to_bitwidth_mapping = self.get_search_space()
         self.compute_metric_fn = self.get_sensitivity_metric()
+        self.min_activation_cfg = self.get_min_activation_cfg()
+        self.min_weights_cfg = self.get_min_weights_cfg()
 
     def get_search_space(self) -> Dict[int, List[int]]:
         """
@@ -67,6 +70,17 @@ class MixedPrecisionSearchManager(object):
             indices_mapping[idx] = list(range(len(n.candidates_quantization_cfg)))  # all search_methods space
         return indices_mapping
 
+    def get_min_activation_cfg(self):
+        nodes_to_configure = self.graph.get_configurable_sorted_nodes()
+        nodes_activation_bitwidth_candidates = [[c.activation_quantization_cfg.activation_n_bits for c in
+                                                 n.candidates_quantization_cfg] for n in nodes_to_configure]
+        return [np.argmin(n_candidates) for n_candidates in nodes_activation_bitwidth_candidates]
+
+    def get_min_weights_cfg(self):
+        nodes_to_configure = self.graph.get_configurable_sorted_nodes()
+        nodes_weights_bitwidth_candidates = [[c.weights_quantization_cfg.weights_n_bits for c in
+                                              n.candidates_quantization_cfg] for n in nodes_to_configure]
+        return [np.argmin(n_candidates) for n_candidates in nodes_weights_bitwidth_candidates]
 
     def get_sensitivity_metric(self) -> Callable:
         """
@@ -91,18 +105,25 @@ class MixedPrecisionSearchManager(object):
 
         """
 
-        def _compute_kpi(mp_model_config: List[int]) -> KPI:
+        def _compute_kpi(mp_model_config: List[int],
+                         weights_only: bool = False,
+                         activation_only: bool = False) -> KPI:
             """
             Compute and return the KPI of a graph for a given mixed-precision bitwidth
             configuration.
 
             Args:
                 mp_model_config: Mixed-precision bitwidth configuration (list of integers).
+                weights_only: Flag that specifies to run computation only for weights memory.
+                activation_only: Flag that specifies to run computation only for activation memory.
 
             Returns:
                 KPI of a model when using the passed mixed-precision configuration.
 
             """
+            assert not (weights_only and activation_only), \
+                "Can't compute kpi for only weights and only activation at once"
+
             weights_memory = 0
             activations_memory = 0
 
@@ -132,7 +153,8 @@ class MixedPrecisionSearchManager(object):
 
                 # Weights memory size computation
                 # Consider only the weights that should be quantized.
-                if n.is_weights_quantization_enabled and not n.is_all_weights_candidates_equal():
+                if not activation_only and n.is_weights_quantization_enabled and \
+                        not n.is_all_weights_candidates_equal():
                     node_num_weights_params = 0
                     for attr in self.fw_info.get_kernel_op_attributes(n.type):
                         if attr is not None:
@@ -144,7 +166,8 @@ class MixedPrecisionSearchManager(object):
                     # Activation memory size computation
                     # Currently, consider layer's activation size as size of layer's output,
                     # and total model activations' size as sum of layers' output.
-                if n.is_activation_quantization_enabled and not n.is_all_activation_candidates_equal():
+                if not weights_only and n.is_activation_quantization_enabled and \
+                        not n.is_all_activation_candidates_equal():
                     node_output_size = n.get_total_output_params()
                     node_activation_memory_in_bytes = node_output_size * node_nbits[1] / 8.0
                     activations_memory += node_activation_memory_in_bytes

@@ -88,6 +88,8 @@ def search_bit_width(graph_to_search_cfg: Graph,
     result_bit_cfg = search_method_fn(search_manager.layer_to_bitwidth_mapping,
                                       search_manager.compute_metric_fn,
                                       search_manager.get_kpi_metric(),
+                                      search_manager.min_weights_cfg,
+                                      search_manager.min_activation_cfg,
                                       target_kpi)
 
     return result_bit_cfg
