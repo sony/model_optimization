@@ -28,7 +28,7 @@ from model_compression_toolkit.pytorch.back2framework.instance_builder import no
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder
 from model_compression_toolkit.pytorch.mixed_precision.mixed_precision_wrapper import PytorchMixedPrecisionWrapper
-
+from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
 
 def build_input_tensors_list(node: BaseNode,
                              graph: Graph,
@@ -183,7 +183,8 @@ class PytorchModelBuilder(torch.nn.Module):
 def model_builder(graph: common.Graph,
                   mode: ModelBuilderMode = ModelBuilderMode.QUANTIZED,
                   append2output: List[Any] = None,
-                  fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO) -> Tuple[torch.nn.Module, Any]:
+                  fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
+                  gptq_config: GradientPTQConfig = None) -> Tuple[torch.nn.Module, Any]:
     """
     Build a Pytorch model from a graph representing the model.
     The model is built by converting the graph nodes to torch modules and initializing a PytorchModelBuilder class.
@@ -194,6 +195,7 @@ def model_builder(graph: common.Graph,
         append2output: List of nodes or OutTensor objects. In float building mode,
         when the list contains nodes, all output tensors of all nodes are set as the model outputs.
         fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
+        gptq_config: GPTQ Configuration class.
     Returns:
         A tuple of the model, and an UserInformation object.
     """
