@@ -34,9 +34,6 @@ keras = tf.keras
 layers = keras.layers
 hw_model = mct.hardware_representation
 
-ACTIVATION_8BIT_MEMORY = 3725318.0
-WEIGHTS_8BIT_MEMORY = 2544000.0
-
 
 def get_base_eight_bits_config_op():
     return hw_model.OpQuantizationConfig(
@@ -181,7 +178,15 @@ class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBase
 
     def get_kpi(self):
         # kpi is for 4 bits on average
-        return KPI(weights_memory=WEIGHTS_8BIT_MEMORY * 4 / 8, activation_memory=ACTIVATION_8BIT_MEMORY * 4 / 8)
+        return KPI(weights_memory=2544000 * 4 / 8, activation_memory=3725318 * 4 / 8)
+
+    def get_fw_hw_model(self):
+        eight_bits = get_base_eight_bits_config_op()
+        # set only 8 and 4 bit candidates for test, to verify that all layers get exactly 4 bits
+        mixed_precision_candidates_list = [(8, 8), (8, 4), (4, 8), (4, 4)]
+
+        hwm = generate_hw_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_hwm')
+        return generate_activation_mp_fhw_model_keras(name="mixed_precision_4bit_test", hardware_model=hwm)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # only layers 0, 1, 3  in the test model have activations that need to be quantized
@@ -191,8 +196,11 @@ class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBase
                                                                   activation_layers_idx=[0, 1, 3],
                                                                   model_layers=float_model.layers)
 
-        # verify that at least one layer is quantized with less than 8 bits
-        self.unit_test.assertTrue(np.any(np.asarray([weights_bits + activation_bits]) != 8))
+        # kpi is 4 bit average -> should quantize all layers with 4 bits
+        # only layers 0, 1, 3  in the test model have activations that need to be quantized
+        self.unit_test.assertTrue((activation_bits == [4, 4, 4]))
+        # only layers 1, 2  layers in the test model have weights that need to be quantized
+        self.unit_test.assertTrue((weights_bits == [4, 4]))
 
 
 class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBaseTest):
@@ -201,7 +209,7 @@ class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBase
 
     def get_kpi(self):
         # kpi is for 2 bits on average
-        return KPI(weights_memory=WEIGHTS_8BIT_MEMORY * 2 / 8, activation_memory=ACTIVATION_8BIT_MEMORY * 2 / 8)
+        return KPI(weights_memory=2544000.0 * 2 / 8, activation_memory=3725318.0 * 2 / 8)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         weights_bits, activation_bits = self.get_split_candidates(mp_config=quantization_info.mixed_precision_cfg,
@@ -267,6 +275,44 @@ class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
         self.unit_test.assertTrue(np.isclose(cs, 1, rtol=1e-4), msg=f'fail cosine similarity check:{cs}')
 
 
+class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def get_kpi(self):
+        # return KPI(np.inf, np.inf)
+        return KPI(2700.0 * 4 / 8, 415518.0 * 4 / 8)
+
+    def get_fw_hw_model(self):
+        eight_bits = get_base_eight_bits_config_op()
+        # set only 8 and 4 bit candidates for test, to verify that all layers get exactly 4 bits
+        mixed_precision_candidates_list = [(8, 8), (8, 4), (4, 8), (4, 4)]
+
+        hwm = generate_hw_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_hwm')
+        return generate_activation_mp_fhw_model_keras(name="mixed_precision_depthwise_4bit_test", hardware_model=hwm)
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.DepthwiseConv2D(30)(inputs)
+        x = layers.BatchNormalization()(x)
+        x = layers.ReLU()(x)
+        model = keras.Model(inputs=inputs, outputs=x)
+        return model
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        weights_bits, activation_bits = self.get_split_candidates(mp_config=quantization_info.mixed_precision_cfg,
+                                                                  weights_layers_idx=[1],
+                                                                  activation_layers_idx=[0, 2],
+                                                                  model_layers=float_model.layers)
+
+        # kpi is 4 bit average -> should quantize all layers with 4 bits
+        # only first and third layers in the test model have activations that need to be quantized
+        self.unit_test.assertTrue((activation_bits == [4, 4]))
+
+        # only second layer in the test model have weights that need to be quantized
+        self.unit_test.assertTrue((weights_bits == [4]))
+
+
 class MixedPrecisionActivationSplitLayerTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
@@ -328,7 +374,6 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
 
     def get_fw_hw_model(self):
         eight_bits = get_base_eight_bits_config_op()
-        # sets all combinations of 2, 4, 8 bits for weights and activations
         mixed_precision_candidates_list = [(8, 8), (8, 4), (8, 2)]
 
         hwm = generate_hw_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_hwm')
@@ -375,7 +420,6 @@ class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBa
         eight_bits = get_base_eight_bits_config_op()
         weights_disabled_config = eight_bits.clone_and_edit(enable_weights_quantization=False)
 
-        # sets all combinations of 2, 4, 8 bits for weights and activations
         mixed_precision_candidates_list = [(8, 8), (8, 4), (8, 2)]
 
         hwm = generate_hw_model_with_activation_mp(weights_disabled_config, mixed_precision_candidates_list, name='mp_default_hwm')
