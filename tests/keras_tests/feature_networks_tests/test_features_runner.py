@@ -18,6 +18,8 @@ import unittest
 from model_compression_toolkit import QuantizationErrorMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_bound_to_power_of_2_test import \
     ReLUBoundToPOTNetTest
+from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_dw_test import \
+    BiasCorrectionDepthwiseTest
 from tests.keras_tests.feature_networks_tests.feature_networks.softmax_shift_test import SoftmaxShiftTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_percision_test import MixedPercisionBaseTest, \
     MixedPercisionSearchTest, MixedPercisionManuallyConfiguredTest, MixedPercisionDepthwiseTest, \
@@ -77,6 +79,9 @@ layers = tf.keras.layers
 
 
 class FeatureNetworkTest(unittest.TestCase):
+
+    def test_bias_correction_dw(self):
+        BiasCorrectionDepthwiseTest(self).run_test()
 
     def test_lut_quantizer(self):
         LUTQuantizerTest(self).run_test()
