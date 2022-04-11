@@ -115,13 +115,18 @@ class MixedPrecisionSearchManager(object):
                     node_nbits = (node_qc.weights_quantization_cfg.weights_n_bits,
                                   node_qc.activation_quantization_cfg.activation_n_bits)
                 elif n.is_weights_quantization_enabled() and n.has_weights_to_quantize(self.fw_info):
-                    # The only valid way to get here is if the node is reused (which means that we're not looking
-                    # for its configuration), and we ignore it when computing the KPI (as the base node will acount
-                    # for it).
-                    # In activations - if we sum all inputs as a metric then we don't want to skip reused nodes.
-                    assert n.reuse, "If node has candidates it should be part of the configurable nodes," \
-                                    " unless it's a reused node"
-                    node_nbits = (0, 0)  # Ignore reused nodes is the KPI computation.
+                    # The only two valid ways to get here are:
+                    # 1) If the node is reused (which means that we're not looking for its configuration),
+                    #       and we ignore it when computing the KPI (as the base node will account for it).
+                    #       In activation KPI calculation -
+                    #       if we sum all inputs as a metric then we don't want to skip reused nodes.
+                    # 2) If mixed-precision search is only on activation candidates,
+                    #       and weights quantization n_bits is fixed.
+                    assert n.reuse or n.is_all_weights_candidates_equal(), \
+                        "If node has candidates it should be part of the configurable nodes, unless it's a reused " \
+                        "node or the candidates only differ in activation bitwidth"
+                    node_nbits = (0, 0)  # Ignore reused nodes or weights quantization
+                    # only (if no weights mixed-precision) in the KPI computation.
                 else:  # No quantization
                     node_nbits = (0, 0)
 

@@ -61,9 +61,16 @@ def set_bit_widths(quant_config: QuantizationConfig,
                                    node,
                                    node_index_in_graph)
             else:
-                # TODO: refactor after adding activation mixed precision
+                # We get here in three cases where we are in mixed-precision mode:
+                # 1) The node doesn't have weights and candidates only differ on weights.
+                # 2) Only a single candidate was specified for the node.
+                # 3) The node shouldn't be quantized.
+                # The only case in which we need to set the node's final configuration
+                # is if its activation should be quantized.
+                # NOTE: we assume here that all nodes have activations
                 if node.is_activation_quantization_enabled():
-                    assert node.is_all_activation_candidates_equal, "Activation Mixed Precision is not supported"
+                    assert len(node.candidates_quantization_cfg) > 0, \
+                        "Node need to have at least one quantization configuration in order to quantize its activation"
                     node.final_activation_quantization_cfg = node.candidates_quantization_cfg[
                         0].activation_quantization_cfg
 
