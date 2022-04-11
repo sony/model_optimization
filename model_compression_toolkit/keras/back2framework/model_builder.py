@@ -17,7 +17,7 @@
 import tensorflow as tf
 import tensorflow_model_optimization.quantization.keras.graph_transformations.model_transformer as mt
 from model_compression_toolkit.keras.quantizer.mixed_precision.input_layer_quantize_transform import \
-    InputLayerQuantizeTransform
+    InputLayerMixedPrecisionTransform
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 if tf.__version__ < "2.6":
@@ -319,12 +319,7 @@ def model_builder(graph: common.Graph,
         model_inputs = graph.get_inputs()
         for inp in model_inputs:
             if inp.is_activation_quantization_enabled() and not inp.is_all_activation_candidates_equal():
-                # We use a model transformer to wrap the input layer with QuantizeWrapper,
-                # to allow layer configuration to different bitwidths.
-                # A model transformer allows to modify a layer in an existing model, by applying the given list of
-                # transformers on the model (in this case,
-                # we only apply single transformer - InputLayerQuantizeTransform)
-                input_transformer = mt.ModelTransformer(model, [InputLayerQuantizeTransform(inp, fw_info)])
+                input_transformer = mt.ModelTransformer(model, [InputLayerMixedPrecisionTransform(inp, fw_info)])
                 model = input_transformer.transform()[0]
 
     # Models that were built in float or quantized mode, should not be modified anymore.
