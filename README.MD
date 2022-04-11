@@ -1,12 +1,12 @@
 # Model Compression Toolkit (MCT)
 ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks.yml/badge.svg)
 
+![alt text](MCT_Block_Diagram.png)
+Model Compression Toolkit (MCT) is an open-source project for neural network model optimization under efficient, constrained hardware. <br />
+This project provides researchers, developers, and engineers tools for optimizing and deploying state-of-the-art neural networks on efficient hardware. <br />
+Specifically, this project applies constrained quantization and pruning schemes to a neural network. 
 
-Model Compression Toolkit (MCT) is an open source project for neural network model optimization under efficient, constrained hardware. <br />
-This project provides researchers, developers and engineers tools for optimizing and deploying state-of-the-art neural network on efficient hardware. <br />
-Specifically, this project applies constrained quantization and pruning schemes on a neural network. 
-
-Currently, this project only supports hardware friendly post training quantization (HPTQ) with Tensorflow 2 [1]. 
+Currently, this project only supports hardware-friendly post-training quantization (HPTQ) with Tensorflow 2 and Pytorch [1]. 
 
 The MCT project is developed by researchers and engineers working at Sony Semiconductors Israel.
 
@@ -22,10 +22,10 @@ For more information, please visit our [project website](https://sony.github.io/
 
 ## Getting Started
 
-This section provides a quick starting guide. We begin with installtion via source code or pip server. Then, we provide a short usage example.
+This section provides a quick starting guide. We begin with installation via source code or pip server. Then, we provide a short usage example.
 
 ### Installation
-See the MCT install guide for the pip package, and build from source.
+See the MCT install guide for the pip package, and build from the source.
 
 
 #### From Source
@@ -57,7 +57,7 @@ MCT is tested with:
 * Pytorch version 1.10.0 
 
 ### Usage Example 
-For an example of how to use the post training quantization, using Keras,
+For an example of how to use the post-training quantization, using Keras,
 please use this [link](tutorials/example_keras_mobilenet.py).
 
 For an example using Pytorch (experimental), please use this [link](tutorials/example_pytorch_mobilenet_v2.py).
@@ -69,15 +69,15 @@ For more examples please see the [tutorials' directory](tutorials).
 
 Quantization:
 
-	* Post Training Quantization for Keras models.
-	* Post Training Quantization for Pytorch models (experimental).
-    * Gradient based post training (Experimental, Keras only).
-    * Mixed-precision post training quantization (Experimental).
+   * Post Training Quantization for Keras models.
+   * Post Training Quantization for Pytorch models (experimental).
+    * Gradient-based post-training (Experimental, Keras only).
+    * Mixed-precision post-training quantization (Experimental).
     
 Tensorboard Visualization (Experimental):
 
-    * CS Analyizer: compare a model compressed with the orignal model to analyze large accuracy drops.
-    * Activation statisicis and errors
+    * CS Analyzer: compare a model compressed with the original model to analyze large accuracy drops.
+    * Activation statistics and errors
 
 
 ## Results
