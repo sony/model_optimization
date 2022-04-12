@@ -132,6 +132,24 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
 
         return weights_bits, activation_bits
 
+    def verify_quantization(self, quantized_model, input_x, weights_layers_idx, weights_layers_channels_size,
+                            activation_layers_idx, shape_limit):
+        # verify weights quantization
+        for i in range(len(weights_layers_idx)):
+            for j in range(weights_layers_channels_size[i]):  # quantized per channel
+                self.unit_test.assertTrue(
+                    np.unique(quantized_model.layers[weights_layers_idx[i]].weights[0][:, :, :, j]).flatten().shape[
+                        0] <= shape_limit)
+
+        # verify activation quantization
+        inp = quantized_model.input  # input placeholder
+        out = [layer.output for layer in quantized_model.layers]  # all layer outputs
+        get_outputs = K.function([inp], out)
+        layer_outs = get_outputs([input_x])
+        # verifying fake quant nodes output
+        for idx in activation_layers_idx:
+            self.unit_test.assertTrue(np.unique(layer_outs[idx].flatten()).shape[0] <= shape_limit)
+
 
 class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
@@ -153,23 +171,11 @@ class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
         # only layers 1, 2 in the test model have weights that need to be quantized
         self.unit_test.assertTrue((weights_bits == [8, 8]))
 
-        # verify weights quantization
-        for i in range(30):  # quantized per channel
-            self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[2].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
-        for i in range(50):  # quantized per channel
-            self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[4].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
-
-        # verify activation quantization
-        inp = quantized_model.input  # input placeholder
-        out = [layer.output for layer in quantized_model.layers]  # all layer outputs
-        get_outputs = K.function([inp], out)
-        layer_outs = get_outputs([input_x])
-        # verifying fake quant nodes output
-        self.unit_test.assertTrue(np.unique(layer_outs[1].flatten()).shape[0] <= 256)
-        self.unit_test.assertTrue(np.unique(layer_outs[3].flatten()).shape[0] <= 256)
-        self.unit_test.assertTrue(np.unique(layer_outs[6].flatten()).shape[0] <= 256)
+        self.verify_quantization(quantized_model, input_x,
+                                 weights_layers_idx=[2, 4],
+                                 weights_layers_channels_size=[30, 50],
+                                 activation_layers_idx=[1, 3, 6],
+                                 shape_limit=256)
 
 
 class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBaseTest):
@@ -222,22 +228,11 @@ class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBase
         # only layers 1, 2  layers in the test model have weights that need to be quantized
         self.unit_test.assertTrue((weights_bits == [2, 2]))
 
-        for i in range(30):  # quantized per channel
-            self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[2].weights[0][:, :, :, i]).flatten().shape[0] <= 4)
-        for i in range(50):  # quantized per channel
-            self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[4].weights[0][:, :, :, i]).flatten().shape[0] <= 4)
-
-        # verify activation quantization
-        inp = quantized_model.input  # input placeholder
-        out = [layer.output for layer in quantized_model.layers]  # all layer outputs
-        get_outputs = K.function([inp], out)
-        layer_outs = get_outputs([input_x])
-        # verifying fake quant nodes output
-        self.unit_test.assertTrue(np.unique(layer_outs[1].flatten()).shape[0] <= 4)
-        self.unit_test.assertTrue(np.unique(layer_outs[3].flatten()).shape[0] <= 4)
-        self.unit_test.assertTrue(np.unique(layer_outs[6].flatten()).shape[0] <= 4)
+        self.verify_quantization(quantized_model, input_x,
+                                 weights_layers_idx=[2, 4],
+                                 weights_layers_channels_size=[30, 50],
+                                 activation_layers_idx=[1, 3, 6],
+                                 shape_limit=4)
 
 
 class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
@@ -341,23 +336,11 @@ class MixedPrecisionActivationSplitLayerTest(MixedPrecisionActivationBaseTest):
         # only layers 1, 2 in the test model have weights that need to be quantized
         self.unit_test.assertTrue((weights_bits == [8, 8]))
 
-        # verify weights quantization
-        for i in range(30):  # quantized per channel
-            self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[3].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
-        for i in range(30):  # quantized per channel
-            self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[4].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
-
-        # verify activation quantization
-        inp = quantized_model.input  # input placeholder
-        out = [layer.output for layer in quantized_model.layers]  # all layer outputs
-        get_outputs = K.function([inp], out)
-        layer_outs = get_outputs([input_x])
-        # verifying fake quant nodes output
-        self.unit_test.assertTrue(np.unique(layer_outs[1].flatten()).shape[0] <= 256)
-        self.unit_test.assertTrue(np.unique(layer_outs[5].flatten()).shape[0] <= 256)
-        self.unit_test.assertTrue(np.unique(layer_outs[6].flatten()).shape[0] <= 256)
+        self.verify_quantization(quantized_model, input_x,
+                                 weights_layers_idx=[3, 4],
+                                 weights_layers_channels_size=[30, 30],
+                                 activation_layers_idx=[1, 5, 6],
+                                 shape_limit=256)
 
 
 class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
@@ -393,15 +376,11 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
         # only layers 0, 1, 3 in the test model have activations that need to be quantized
         self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
 
-        # verify activation quantization
-        inp = quantized_model.input  # input placeholder
-        out = [layer.output for layer in quantized_model.layers]  # all layer outputs
-        get_outputs = K.function([inp], out)
-        layer_outs = get_outputs([input_x])
-        # verifying fake quant nodes output
-        self.unit_test.assertTrue(np.unique(layer_outs[1].flatten()).shape[0] <= 256)
-        self.unit_test.assertTrue(np.unique(layer_outs[3].flatten()).shape[0] <= 256)
-        self.unit_test.assertTrue(np.unique(layer_outs[5].flatten()).shape[0] <= 256)
+        self.verify_quantization(quantized_model, input_x,
+                                 weights_layers_idx=[],
+                                 weights_layers_channels_size=[],
+                                 activation_layers_idx=[1, 3, 5],
+                                 shape_limit=256)
 
 
 class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBaseTest):
@@ -439,12 +418,74 @@ class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBa
         # only layers 0, 1, 3 in the test model have activations that need to be quantized
         self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
 
-        # verify activation quantization
-        inp = quantized_model.input  # input placeholder
-        out = [layer.output for layer in quantized_model.layers]  # all layer outputs
-        get_outputs = K.function([inp], out)
-        layer_outs = get_outputs([input_x])
-        # verifying fake quant nodes output
-        self.unit_test.assertTrue(np.unique(layer_outs[1].flatten()).shape[0] <= 256)
-        self.unit_test.assertTrue(np.unique(layer_outs[3].flatten()).shape[0] <= 256)
-        self.unit_test.assertTrue(np.unique(layer_outs[5].flatten()).shape[0] <= 256)
+        self.verify_quantization(quantized_model, input_x,
+                                 weights_layers_idx=[],
+                                 weights_layers_channels_size=[],
+                                 activation_layers_idx=[1, 3, 5],
+                                 shape_limit=256)
+
+
+class MixedPrecisionActivationAddLayerTest(MixedPrecisionActivationBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def get_kpi(self):
+        return KPI(np.inf, np.inf)
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Conv2D(30, 40)(inputs)
+        x = layers.Add()([x, x])
+        model = keras.Model(inputs=inputs, outputs=x)
+        return model
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        weights_bits, activation_bits = self.get_split_candidates(mp_config=quantization_info.mixed_precision_cfg,
+                                                                  weights_layers_idx=[1],
+                                                                  activation_layers_idx=[0, 1, 2],
+                                                                  model_layers=float_model.layers)
+
+        # kpi is infinity -> should give best model - 8bits
+        self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
+        self.unit_test.assertTrue((weights_bits == [8]))
+
+        self.verify_quantization(quantized_model, input_x,
+                                 weights_layers_idx=[2],
+                                 weights_layers_channels_size=[30],
+                                 activation_layers_idx=[1, 3, 5],
+                                 shape_limit=256)
+
+
+class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+        self.num_of_inputs = 3
+
+    def get_kpi(self):
+        return KPI(np.inf, np.inf)
+
+    def get_input_shapes(self):
+        return [[self.val_batch_size, 224, 244, 3] for _ in range(self.num_of_inputs)]
+
+    def create_networks(self):
+        inputs_1 = layers.Input(shape=self.get_input_shapes()[0][1:])
+        inputs_2 = layers.Input(shape=self.get_input_shapes()[0][1:])
+        inputs_3 = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x1 = layers.Conv2D(30, 40)(inputs_1)
+        x2 = layers.Conv2D(30, 40)(inputs_2)
+        x3 = layers.Conv2D(30, 40)(inputs_3)
+        outputs = layers.Concatenate()([x1, x2, x3])
+        model = keras.Model(inputs=[inputs_1, inputs_2, inputs_3], outputs=outputs)
+        return model
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        self.unit_test.assertTrue(len(quantized_model.inputs) == 3)
+        weights_bits, activation_bits = self.get_split_candidates(mp_config=quantization_info.mixed_precision_cfg,
+                                                                  weights_layers_idx=[3, 4, 5],
+                                                                  activation_layers_idx=[0, 1, 2, 3, 4, 5],
+                                                                  model_layers=float_model.layers)
+
+        # kpi is infinity -> should give best model - 8bits
+        self.unit_test.assertTrue((activation_bits == [8, 8, 8, 8, 8, 8]))
+        self.unit_test.assertTrue((weights_bits == [8, 8, 8]))
+

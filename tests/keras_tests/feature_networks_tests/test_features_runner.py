@@ -26,7 +26,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_a
     MixedPrecisionActivationSearchTest, MixedPrecisionActivationSearchKPI4BitsAvgTest, \
     MixedPrecisionActivationSearchKPI2BitsAvgTest, MixedPrecisionActivationDepthwiseTest, \
     MixedPrecisionActivationSplitLayerTest, MixedPrecisionActivationOnlyWeightsDisabledTest, \
-    MixedPrecisionActivationOnlyTest, MixedPrecisionActivationDepthwise4BitTest
+    MixedPrecisionActivationOnlyTest, MixedPrecisionActivationDepthwise4BitTest, MixedPrecisionActivationAddLayerTest, \
+    MixedPrecisionActivationMultipleInputsTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multiple_inputs_node_tests import MultipleInputsNodeTests
 from tests.keras_tests.feature_networks_tests.feature_networks.multiple_outputs_node_tests import \
     MultipleOutputsNodeTests
@@ -134,8 +135,14 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_mixed_precision_activation_dw_4bit(self):
         MixedPrecisionActivationDepthwise4BitTest(self).run_test()
 
+    def test_mixed_precision_activation_add(self):
+        MixedPrecisionActivationAddLayerTest(self).run_test()
+
     def test_mixed_precision_activation_split(self):
         MixedPrecisionActivationSplitLayerTest(self).run_test()
+
+    def test_mixed_precision_activation_multiple_inputs(self):
+        MixedPrecisionActivationMultipleInputsTest(self).run_test()
 
     def test_name_filter(self):
         NameFilterTest(self).run_test()
