@@ -227,7 +227,7 @@ def model_builder(graph: common.Graph,
     # Hold a dictionary from an input node to its corresponding input tensor. It is needed for when
     # building the model. Initially input nodes with input tensors are added to the dictionary,
     # as they're not added later.
-    input_nodes_to_input_tensors = {inode: Input(inode.framework_attr[BATCH_INPUT_SHAPE][1:]) for
+    input_nodes_to_input_tensors = {inode: Input(inode.framework_attr[BATCH_INPUT_SHAPE][1:], name=inode.name) for
                                     inode in graph.get_inputs()}
 
     # Build a list of the model's input tensors. Switching from a dictionary to a list
@@ -317,10 +317,9 @@ def model_builder(graph: common.Graph,
 
         # add configurable input layers in case of activation mixed-precision
         model_inputs = graph.get_inputs()
-        for inp in model_inputs:
-            if inp.is_activation_quantization_enabled() and not inp.is_all_activation_candidates_equal():
-                input_transformer = mt.ModelTransformer(model, [InputLayerMixedPrecisionTransform(inp, fw_info)])
-                model = input_transformer.transform()[0]
+        input_transformer = mt.ModelTransformer(model, [InputLayerMixedPrecisionTransform(inp, fw_info)
+                                                        for inp in model_inputs])
+        model = input_transformer.transform()[0]
 
     # Models that were built in float or quantized mode, should not be modified anymore.
     elif mode == ModelBuilderMode.FLOAT or mode == ModelBuilderMode.QUANTIZED:

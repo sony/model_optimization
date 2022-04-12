@@ -38,6 +38,9 @@ class InputLayerMixedPrecisionTransform(InputLayerQuantize):
         self.fw_info = fw_info
         self.name = self.input_layer.name
 
+    def pattern(self):
+        return transforms.LayerPattern('InputLayer', config={'name': self.name})
+
     def replacement(self, match_layer):
         layer_wrapper = QuantizeWrapper(InputLayer(input_shape=self.input_layer.input_shape),
                                         quantization_config_builder_mixed_precision(self.input_layer, self.fw_info))
