@@ -15,7 +15,10 @@
 import model_compression_toolkit as mct
 import tensorflow as tf
 
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.common.constants import SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
+from model_compression_toolkit.common.network_editors import EditRule, node_filters, actions
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras, \
+    get_default_hwm_keras
 from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model, get_16bit_fw_hw_model
 
 if tf.__version__ < "2.6":
@@ -92,3 +95,40 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
             self.unit_test.assertTrue(np.allclose(b - q_b, shift_nl_out * np.sum(w, axis=0)))
         else:
             raise NotImplementedError
+
+
+class ShiftNegActivationPostAddTest(ShiftNegActivationTest):
+    def __init__(self, unit_test, linear_op_to_test, activation_op_to_test, post_add_nbits=7):
+        super().__init__(unit_test, linear_op_to_test, activation_op_to_test)
+
+        self.post_add_nbits = post_add_nbits
+
+    def get_fw_hw_model(self):
+        return get_default_hwm_keras()
+
+    def get_network_editor(self):
+        return [EditRule(filter=node_filters.NodeNameFilter('activation'),
+                         action=actions.ChangeCandidatesActivationQuantConfigAttr(
+                             activation_n_bits=self.post_add_nbits))]
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        self.unit_test.assertTrue(float_model.output.shape.as_list() == quantized_model.output.shape.as_list(),
+                                  msg=f'Outputs shape mismatch: {float_model.output.shape} != {quantized_model.output.shape}')
+
+        swish_layer_fake_quant = quantized_model.layers[3]
+        swish_nbits = swish_layer_fake_quant.inbound_nodes[0].call_kwargs.get('num_bits')
+        self.unit_test.assertTrue(swish_nbits == SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS,
+                                  f"The non-linear node's activation_n_bits after applying snc should be "
+                                  f"{SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS}, but activation_n_bits is {swish_nbits}")
+
+        post_add_layer_fake_quant = quantized_model.layers[5]
+        post_add_nbits = post_add_layer_fake_quant.inbound_nodes[0].call_kwargs.get('num_bits')
+        self.unit_test.assertTrue(post_add_nbits == self.post_add_nbits,
+                                  f"The post_add layer that's added after the non-linear node "
+                                  f"should be quantized with {self.post_add_nbits}, "
+                                  f"but activation_n_bits is {post_add_nbits}")
+
+
+
+
+

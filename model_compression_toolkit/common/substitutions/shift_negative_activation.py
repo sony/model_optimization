@@ -316,6 +316,8 @@ def shift_negative_function(graph: Graph,
     for candidate_qc in add_node.candidates_quantization_cfg:
         candidate_qc.activation_quantization_cfg.activation_n_bits = \
             non_linear_node_cfg_candidate.activation_n_bits
+
+    original_non_linear_activation_nbits = non_linear_node_cfg_candidate.activation_n_bits
     # The non-linear node's output should be float, so we approximate it by using 16bits quantization.
     for candidate_qc in non_linear_node.candidates_quantization_cfg:
         candidate_qc.activation_quantization_cfg.activation_n_bits = SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
@@ -338,6 +340,7 @@ def shift_negative_function(graph: Graph,
 
         candidate_qc.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
                                                                                     SIGNED: False})
+        candidate_qc.activation_quantization_cfg.activation_n_bits = original_non_linear_activation_nbits
 
     if non_linear_node_cfg_candidate.shift_negative_threshold_recalculation:
         activation_param = get_activations_qparams(activation_quant_cfg=non_linear_node_cfg_candidate,
