@@ -125,6 +125,8 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
             layer_candidates.sort(key=lambda c: (c[0], c[1]), reverse=True)
 
         # get chosen n_bits for each layer (weights and activation separately)
+        # NOTE: we assume that the order of the layers in the configuration is the same as it appears in model.layers,
+        #   if this not the case, then this helper test function isn't valid.
         activation_bits = [activation_candidates[i][bitwidth_idx][1] for i, bitwidth_idx in
                            enumerate(np.array(mp_config)[activation_layers_idx])]
         weights_bits = [weights_candidates[i][bitwidth_idx][0] for i, bitwidth_idx in
@@ -481,11 +483,12 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.inputs) == 3)
         weights_bits, activation_bits = self.get_split_candidates(mp_config=quantization_info.mixed_precision_cfg,
-                                                                  weights_layers_idx=[3, 4, 5],
+                                                                  weights_layers_idx=[],
                                                                   activation_layers_idx=[0, 1, 2, 3, 4, 5],
                                                                   model_layers=float_model.layers)
 
         # kpi is infinity -> should give best model - 8bits
+        # validating just activation config since we can't extract the weights layers
+        # (since the model is not sequential), but all layers have activations.
         self.unit_test.assertTrue((activation_bits == [8, 8, 8, 8, 8, 8]))
-        self.unit_test.assertTrue((weights_bits == [8, 8, 8]))
 
