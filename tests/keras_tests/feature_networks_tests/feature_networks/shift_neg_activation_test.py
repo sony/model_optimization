@@ -107,7 +107,7 @@ class ShiftNegActivationPostAddTest(ShiftNegActivationTest):
         return get_default_hwm_keras()
 
     def get_network_editor(self):
-        return [EditRule(filter=node_filters.NodeNameFilter('activation'),
+        return [EditRule(filter=node_filters.NodeNameScopeFilter('activation'),
                          action=actions.ChangeCandidatesActivationQuantConfigAttr(
                              activation_n_bits=self.post_add_nbits))]
 

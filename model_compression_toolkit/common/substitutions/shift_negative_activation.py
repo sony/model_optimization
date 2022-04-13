@@ -313,10 +313,6 @@ def shift_negative_function(graph: Graph,
                                      quant_config=qc,
                                      fw_hw_model=graph.fw_hw_model)
 
-    for candidate_qc in add_node.candidates_quantization_cfg:
-        candidate_qc.activation_quantization_cfg.activation_n_bits = \
-            non_linear_node_cfg_candidate.activation_n_bits
-
     original_non_linear_activation_nbits = non_linear_node_cfg_candidate.activation_n_bits
     # The non-linear node's output should be float, so we approximate it by using 16bits quantization.
     for candidate_qc in non_linear_node.candidates_quantization_cfg:
