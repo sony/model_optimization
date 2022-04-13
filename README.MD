@@ -4,7 +4,7 @@
 ![alt text](MCT_Block_Diagram.png)
 Model Compression Toolkit (MCT) is an open-source project for neural network model optimization under efficient, constrained hardware. <br />
 This project provides researchers, developers, and engineers tools for optimizing and deploying state-of-the-art neural networks on efficient hardware. <br />
-Specifically, this project applies constrained quantization and pruning schemes to a neural network. 
+Specifically, this project aims to apply quantization and pruning schemes to compress neural networks. 
 
 Currently, this project only supports hardware-friendly post-training quantization (HPTQ) with Tensorflow 2 and Pytorch [1]. 
 
