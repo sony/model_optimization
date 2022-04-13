@@ -36,9 +36,13 @@ from model_compression_toolkit.common.quantization.set_node_quantization_config 
 from model_compression_toolkit.common.model_collector import ModelCollector
 from model_compression_toolkit import get_model, DEFAULTCONFIG
 from model_compression_toolkit.common.similarity_analyzer import compute_mse
+from model_compression_toolkit.hardware_models.default_hwm import get_op_quantization_configs
+from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from model_compression_toolkit.keras.constants import DEFAULT_HWM
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
+from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model, \
+    generate_mixed_precision_test_hw_model
 
 
 class TestLpSearchBitwidth(unittest.TestCase):
@@ -80,7 +84,14 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                               compute_mse,
                                               get_average_weights,
                                               num_of_images=1)
-        KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_HWM)
+
+        # set configuration options for mixed-precision search
+        base_config, mixed_precision_cfg_list = get_op_quantization_configs()
+        updated_config = base_config.clone_and_edit(enable_activation_quantization=False)
+        candidates = [(op.weights_n_bits, op. activation_n_bits) for op in mixed_precision_cfg_list]
+        hw_model = generate_mixed_precision_test_hw_model(updated_config, candidates)
+        fw_hw_model = generate_fhw_model_keras(name="bitwidth_cfg_test", hardware_model=hw_model)
+
         fw_info = DEFAULT_KERAS_INFO
         in_model = MobileNetV2()
         keras_impl = KerasImplementation()
@@ -90,7 +101,8 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         graph = keras_impl.model_reader(in_model, dummy_representative_dataset)  # model reading
         graph.set_fw_info(fw_info)
-        graph.set_fw_hw_model(KERAS_DEFAULT_MODEL)
+        graph.set_fw_hw_model(fw_hw_model)
+        # graph.set_fw_hw_model(KERAS_DEFAULT_MODEL)
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=qc)
 

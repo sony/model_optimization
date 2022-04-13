@@ -15,6 +15,9 @@
 
 
 import tensorflow as tf
+import tensorflow_model_optimization.quantization.keras.graph_transformations.model_transformer as mt
+from model_compression_toolkit.keras.quantizer.mixed_precision.input_layer_quantize_transform import \
+    InputLayerMixedPrecisionTransform
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 if tf.__version__ < "2.6":
@@ -139,10 +142,10 @@ def run_operation(n: BaseNode,
                 # input layer
                 out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
             elif mode in [ModelBuilderMode.MIXEDPRECISION]:
-                # TODO: refactor after implementing activations mixed precision
-                assert n.is_all_activation_candidates_equal()
-                out_tensors_of_n = n.candidates_quantization_cfg[0].activation_quantization_cfg.quantize_node_output(
-                    out_tensors_of_n_float)
+                if n.is_all_activation_candidates_equal():
+                    # otherwise, we want to use the float tensor when building the model for MP search
+                    out_tensors_of_n = n.candidates_quantization_cfg[
+                        0].activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
 
     else:
         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
@@ -165,10 +168,10 @@ def run_operation(n: BaseNode,
             if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ] and n.final_activation_quantization_cfg:
                 out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
             elif mode in [ModelBuilderMode.MIXEDPRECISION]:
-                # TODO: refactor after implementing activations mixed precision
-                assert n.is_all_activation_candidates_equal()
-                out_tensors_of_n = n.candidates_quantization_cfg[0].activation_quantization_cfg.quantize_node_output(
-                    out_tensors_of_n_float)
+                if n.is_all_activation_candidates_equal():
+                    # otherwise, we want to use the float tensor when building the model for MP search
+                    out_tensors_of_n = n.candidates_quantization_cfg[
+                        0].activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
 
     return out_tensors_of_n, out_tensors_of_n_float
 
@@ -224,7 +227,7 @@ def model_builder(graph: common.Graph,
     # Hold a dictionary from an input node to its corresponding input tensor. It is needed for when
     # building the model. Initially input nodes with input tensors are added to the dictionary,
     # as they're not added later.
-    input_nodes_to_input_tensors = {inode: Input(inode.framework_attr[BATCH_INPUT_SHAPE][1:]) for
+    input_nodes_to_input_tensors = {inode: Input(inode.framework_attr[BATCH_INPUT_SHAPE][1:], name=inode.name) for
                                     inode in graph.get_inputs()}
 
     # Build a list of the model's input tensors. Switching from a dictionary to a list
@@ -299,7 +302,7 @@ def model_builder(graph: common.Graph,
             if len(nodes) == 1:
                 node = nodes[0]
                 # Wrap only if its weights should be quantized
-                if node.is_weights_quantization_enabled():
+                if node.is_weights_quantization_enabled() or node.is_activation_quantization_enabled():
                     return QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node, fw_info))
                 return layer
 
@@ -311,6 +314,12 @@ def model_builder(graph: common.Graph,
 
         # clone each layer in the model and apply _quantize to the layer.
         model = tf.keras.models.clone_model(model, input_tensors=None, clone_function=_quantize_multiple_nbits)
+
+        # add configurable input layers in case of activation mixed-precision
+        model_inputs = graph.get_inputs()
+        input_transformer = mt.ModelTransformer(model, [InputLayerMixedPrecisionTransform(inp, fw_info)
+                                                        for inp in model_inputs])
+        model = input_transformer.transform()[0]
 
     # Models that were built in float or quantized mode, should not be modified anymore.
     elif mode == ModelBuilderMode.FLOAT or mode == ModelBuilderMode.QUANTIZED:

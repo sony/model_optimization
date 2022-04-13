@@ -25,8 +25,8 @@ from model_compression_toolkit.common.mixed_precision.mixed_precision_quantizati
 from model_compression_toolkit.common.mixed_precision.sensitivity_evaluation_manager import \
     SensitivityEvaluationManager, compute_mp_distance_measure
 from model_compression_toolkit.keras.back2framework.model_builder import model_builder
-from model_compression_toolkit.keras.quantizer.mixed_precision.selective_weights_quantize_config import \
-    SelectiveWeightsQuantizeConfig
+from model_compression_toolkit.keras.quantizer.mixed_precision.selective_quantize_config import \
+    SelectiveQuantizeConfig
 
 
 def get_sensitivity_evaluation(graph: Graph,
@@ -39,7 +39,7 @@ def get_sensitivity_evaluation(graph: Graph,
     is computed based on the similarity of the interest points' outputs between the MP model
     and the float model).
     First, we build an MP model (a model where layers that can be configured in different bitwidths use
-    a SelectiveWeightsQuantizeConfig) and a baseline model (a float model).
+    a SelectiveQuantizeConfig) and a baseline model (a float model).
     Then, and based on the outputs of these two models (for some batches from the representative_data_gen),
     we build a function to measure the sensitivity of a change in a bitwidth of a model's layer.
     Args:
@@ -102,7 +102,7 @@ def _configure_bitwidths_keras_model(model_mp: Model,
                                      node_idx: List[int]):
     """
     Configure a dynamic Keras model (namely, model with layers that their weights
-    bitwidth can be configured using SelectiveWeightsQuantizeConfig) using a MP
+    bitwidth can be configured using SelectiveQuantizeConfig) using a MP
     model configuration mp_model_configuration.
     Args:
         model_mp: Dynamic Keras model to configure.
@@ -128,14 +128,14 @@ def _set_layer_to_bitwidth(wrapped_layer: Layer,
                            bitwidth_idx: int):
     """
     Configure a layer (which is wrapped in a QuantizeWrapper and holds a
-    SelectiveWeightsQuantizeConfig in its quantize_config) to work with a different bitwidth.
-    The bitwidth_idx is the index of the quantized-weights the quantizer in the SelectiveWeightsQuantizeConfig holds.
+    SelectiveQuantizeConfig  in its quantize_config) to work with a different bitwidth.
+    The bitwidth_idx is the index of the quantized-weights the quantizer in the SelectiveQuantizeConfig  holds.
     Args:
         wrapped_layer: Layer to change its bitwidth.
         bitwidth_idx: Index of the bitwidth the layer should work with.
     """
     assert isinstance(wrapped_layer, QuantizeWrapper) and isinstance(wrapped_layer.quantize_config,
-                                                                     SelectiveWeightsQuantizeConfig)
+                                                                     SelectiveQuantizeConfig)
     # Configure the quantize_config to use a different bitwidth
     # (in practice, to use a different already quantized kernel).
     wrapped_layer.quantize_config.set_bit_width_index(bitwidth_idx)
