@@ -54,9 +54,12 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
                    self.node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization, \
                 "Candidates with different weights/activation enabled properties is currently not supported"
 
-        self.enable_weights_quantization = self.node_q_cfg[0].weights_quantization_cfg.enable_weights_quantization
+        self.enable_weights_quantization = \
+            self.node_q_cfg[0].weights_quantization_cfg.enable_weights_quantization and \
+            not n.is_all_weights_candidates_equal()
         self.enable_activation_quantization = \
-            self.node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization
+            self.node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization and \
+            not n.is_all_activation_candidates_equal()
 
         # Setting layers' weights
         if self.enable_weights_quantization:
@@ -91,6 +94,7 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
 
         if self.enable_activation_quantization:
             # add fake quant to quantize activations with the active number of bits
+            print("Activation Quantized")
             outputs = self.activation_quantizers[self.activation_bitwidth_idx](outputs)
 
         return outputs
