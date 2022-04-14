@@ -98,6 +98,13 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
 
 
 class ShiftNegActivationPostAddTest(ShiftNegActivationTest):
+    """
+    This test is meant to verify that when using shift negative correction, the post_add layer that is added to the
+    model after the non-linear layer that its activations' are bing shifted,
+    has the correct quantization number of bits.
+    It also verifies that the non-linear layer's is quantized with the number of bits that is
+    representative of a float model (since we only want to quantize the post_add layer's activations)
+    """
     def __init__(self, unit_test, linear_op_to_test, activation_op_to_test, post_add_nbits=7):
         super().__init__(unit_test, linear_op_to_test, activation_op_to_test)
 
@@ -115,11 +122,11 @@ class ShiftNegActivationPostAddTest(ShiftNegActivationTest):
         self.unit_test.assertTrue(float_model.output.shape.as_list() == quantized_model.output.shape.as_list(),
                                   msg=f'Outputs shape mismatch: {float_model.output.shape} != {quantized_model.output.shape}')
 
-        swish_layer_fake_quant = quantized_model.layers[3]
-        swish_nbits = swish_layer_fake_quant.inbound_nodes[0].call_kwargs.get('num_bits')
-        self.unit_test.assertTrue(swish_nbits == SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS,
+        non_linear_layer_fake_quant = quantized_model.layers[3]
+        non_linear_nbits = non_linear_layer_fake_quant.inbound_nodes[0].call_kwargs.get('num_bits')
+        self.unit_test.assertTrue(non_linear_nbits == SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS,
                                   f"The non-linear node's activation_n_bits after applying snc should be "
-                                  f"{SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS}, but activation_n_bits is {swish_nbits}")
+                                  f"{SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS}, but activation_n_bits is {non_linear_nbits}")
 
         post_add_layer_fake_quant = quantized_model.layers[5]
         post_add_nbits = post_add_layer_fake_quant.inbound_nodes[0].call_kwargs.get('num_bits')
@@ -127,8 +134,3 @@ class ShiftNegActivationPostAddTest(ShiftNegActivationTest):
                                   f"The post_add layer that's added after the non-linear node "
                                   f"should be quantized with {self.post_add_nbits}, "
                                   f"but activation_n_bits is {post_add_nbits}")
-
-
-
-
-
