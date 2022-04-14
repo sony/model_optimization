@@ -139,4 +139,6 @@ def _set_layer_to_bitwidth(wrapped_layer: Module,
     assert isinstance(wrapped_layer, PytorchMixedPrecisionWrapper) and isinstance(wrapped_layer.layer, Module)
     # Configure the quantize_config to use a different bitwidth
     # (in practice, to use a different already quantized kernel).
+    # TODO: check if we need to separated weights and activation based on what enabled
     wrapped_layer.set_active_weights(bitwidth_idx)
+    wrapped_layer.set_active_activation_quantizer(bitwidth_idx)
