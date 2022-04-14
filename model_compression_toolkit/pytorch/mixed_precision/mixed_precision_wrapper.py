@@ -77,6 +77,8 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
         # Setting layer's activation
         if self.enable_activation_quantization:
             self.activation_quantizers = self._get_activation_quantizers()
+            # TODO: How to handle default? (first isn't necessarily the best activation precision
+            self.activation_bitwidth_idx = 0
 
     def forward(self, x: Any) -> Any:
         """
@@ -85,7 +87,13 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
         Returns:
             torch Tensor which is the output of the wrapped layer on the given input.
         """
-        return self.layer(x)
+        outputs = self.layer(x)
+
+        if self.enable_activation_quantization:
+            # add fake quant to quantize activations with the active number of bits
+            outputs = self.activation_quantizers[self.activation_bitwidth_idx](outputs)
+
+        return outputs
 
     def _get_quantized_weights(self):
         """
@@ -142,14 +150,14 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
     def set_active_activation_quantizer(self,
                                         bitwidth_idx: int):
         """
+        TODO:
         Set a weights' tensor to use by the layer wrapped by the module.
         Args:
             bitwidth_idx: Index of a candidate quantization configuration to use its quantized
             version of the float weight.
-            attr: Attributes of the layer's weights to quantize
         """
         if self.enable_activation_quantization:
-            pass
+            self.activation_bitwidth_idx = bitwidth_idx
 
     def _set_bit_width_index(self,
                              bitwidth_idx: int,
