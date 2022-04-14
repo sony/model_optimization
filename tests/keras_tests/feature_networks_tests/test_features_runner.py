@@ -38,7 +38,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.remove_upper_boun
 from tests.keras_tests.feature_networks_tests.feature_networks.reused_layer_mixed_precision_test import \
     ReusedLayerMixedPrecisionTest, ReusedSeparableMixedPrecisionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.reused_separable_test import ReusedSeparableTest
-from tests.keras_tests.feature_networks_tests.feature_networks.shift_neg_activation_test import ShiftNegActivationTest
+from tests.keras_tests.feature_networks_tests.feature_networks.shift_neg_activation_test import ShiftNegActivationTest, \
+    ShiftNegActivationPostAddTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
     ActivationDecompositionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mark_activation_test import MarkActivationTest, \
@@ -267,6 +268,12 @@ class FeatureNetworkTest(unittest.TestCase):
                                activation_op_to_test=tf.nn.selu, use_pad_layer=True).run_test()
         ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((5, 4), strides=4),
                                activation_op_to_test=tf.nn.swish, use_pad_layer=True).run_test()
+
+    def test_shift_neg_activation_post_add(self):
+        ShiftNegActivationPostAddTest(self,
+                                      linear_op_to_test=layers.Conv2D(3, 4),
+                                      activation_op_to_test=layers.Activation('swish'),
+                                      post_add_nbits=7).run_test()
 
     def test_activation_decomposition(self):
         ActivationDecompositionTest(self, activation_function='swish').run_test()
