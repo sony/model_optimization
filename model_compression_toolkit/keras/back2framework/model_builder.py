@@ -315,7 +315,11 @@ def model_builder(graph: common.Graph,
         # clone each layer in the model and apply _quantize to the layer.
         model = tf.keras.models.clone_model(model, input_tensors=None, clone_function=_quantize_multiple_nbits)
 
-        # add configurable input layers in case of activation mixed-precision
+        # We use a model transformer to wrap the input layer with QuantizeWrapper,
+        # to allow layer configuration to different bitwidths.
+        # A model transformer allows to modify a layer in an existing model, by applying the given list of
+        # transformers on the model (in this case,
+        # we only apply single transformer - InputLayerQuantizeTransform)
         model_inputs = graph.get_inputs()
         input_transformer = mt.ModelTransformer(model, [InputLayerMixedPrecisionTransform(inp, fw_info)
                                                         for inp in model_inputs])

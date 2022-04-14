@@ -23,7 +23,13 @@ from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_d
 from tests.keras_tests.feature_networks_tests.feature_networks.softmax_shift_test import SoftmaxShiftTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_percision_test import MixedPercisionBaseTest, \
     MixedPercisionSearchTest, MixedPercisionManuallyConfiguredTest, MixedPercisionDepthwiseTest, \
-    MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest
+    MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest, MixedPrecisionActivationDisabled
+from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_activation_test import \
+    MixedPrecisionActivationSearchTest, MixedPrecisionActivationSearchKPI4BitsAvgTest, \
+    MixedPrecisionActivationSearchKPI2BitsAvgTest, MixedPrecisionActivationDepthwiseTest, \
+    MixedPrecisionActivationSplitLayerTest, MixedPrecisionActivationOnlyWeightsDisabledTest, \
+    MixedPrecisionActivationOnlyTest, MixedPrecisionActivationDepthwise4BitTest, MixedPrecisionActivationAddLayerTest, \
+    MixedPrecisionActivationMultipleInputsTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multiple_inputs_node_tests import MultipleInputsNodeTests
 from tests.keras_tests.feature_networks_tests.feature_networks.multiple_outputs_node_tests import \
     MultipleOutputsNodeTests
@@ -108,8 +114,41 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_mixed_precision_search(self):
         MixedPercisionSearchTest(self).run_test()
 
+    def test_mixed_precision_activation_disabled(self):
+        MixedPrecisionActivationDisabled(self).run_test()
+
     def test_mixed_precision_dw(self):
         MixedPercisionDepthwiseTest(self).run_test()
+
+    def test_mixed_precision_activation_search(self):
+        MixedPrecisionActivationSearchTest(self).run_test()
+
+    def test_mixed_precision_activation_only(self):
+        MixedPrecisionActivationOnlyTest(self).run_test()
+
+    def test_mixed_precision_activation_only_weights_disabled(self):
+        MixedPrecisionActivationOnlyWeightsDisabledTest(self).run_test()
+
+    def test_mixed_precision_activation_search_kpi_4bits_avg(self):
+        MixedPrecisionActivationSearchKPI4BitsAvgTest(self).run_test()
+
+    def test_mixed_precision_activation_search_kpi_2bits_avg(self):
+        MixedPrecisionActivationSearchKPI2BitsAvgTest(self).run_test()
+
+    def test_mixed_precision_activation_dw(self):
+        MixedPrecisionActivationDepthwiseTest(self).run_test()
+
+    def test_mixed_precision_activation_dw_4bit(self):
+        MixedPrecisionActivationDepthwise4BitTest(self).run_test()
+
+    def test_mixed_precision_activation_add(self):
+        MixedPrecisionActivationAddLayerTest(self).run_test()
+
+    def test_mixed_precision_activation_split(self):
+        MixedPrecisionActivationSplitLayerTest(self).run_test()
+
+    def test_mixed_precision_activation_multiple_inputs(self):
+        MixedPrecisionActivationMultipleInputsTest(self).run_test()
 
     def test_name_filter(self):
         NameFilterTest(self).run_test()
