@@ -1,4 +1,4 @@
-from typing import List, Any, Tuple, Callable
+from typing import List, Any, Tuple, Callable, Type
 
 import numpy as np
 import tensorflow as tf
@@ -14,7 +14,8 @@ from model_compression_toolkit.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.common.user_info import UserInformation
 from model_compression_toolkit.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.keras.gradient_ptq.training_wrapper import gptq_training_wrapper
+from model_compression_toolkit.common.gptq.gptq_training import GPTQTrainer
+from model_compression_toolkit.keras.gradient_ptq.gptq_training import KerasGPTQTrainer
 from model_compression_toolkit.keras.graph_substitutions.substitutions.activation_decomposition import \
     ActivationDecomposition
 from model_compression_toolkit.keras.graph_substitutions.substitutions.softmax_shift import \
@@ -101,7 +102,8 @@ class KerasImplementation(FrameworkImplementation):
                       graph: Graph,
                       mode: ModelBuilderMode,
                       append2output: List[Any] = None,
-                      fw_info: FrameworkInfo = DEFAULT_KERAS_INFO) -> Tuple[Model, UserInformation]:
+                      fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
+                      gptq_config: GradientPTQConfig = None) -> Tuple[Model, UserInformation]:
         """
         Build a Keras model from a graph.
         The mode determines how the model should be build. append2output is a list of Nodes
@@ -112,14 +114,15 @@ class KerasImplementation(FrameworkImplementation):
             mode: Mode for how to build the model.
             append2output: List of Nodes to set as the model's outputs.
             fw_info: FrameworkInfo object with information about the specific framework's model
-
+            gptq_config: GPTQ configuration class
         Returns:
             A tuple of the Keras model that was built and an UserInformation object.
         """
         return model_builder(graph,
                              mode,
                              append2output,
-                             fw_info)
+                             fw_info,
+                             gptq_config)
 
     def run_model_inference(self,
                             model: Any,
@@ -257,32 +260,11 @@ class KerasImplementation(FrameworkImplementation):
 
         return [RemoveReLUUpperBound()]
 
-    def gptq_training(self,
-                      graph_float: Graph,
-                      graph_quant: Graph,
-                      representative_data_gen: Callable,
-                      gptq_config: GradientPTQConfig,
-                      fw_info: FrameworkInfo) -> Graph:
+    def get_gptq_trainer_obj(self) -> Type[GPTQTrainer]:
         """
-        Update a graph using GPTQ after minimizing the loss between the float model's output
-        and the quantized model's outputs.
-
-        Args:
-            graph_float: Graph for reference.
-            graph_quant: Graph to fine-tune.
-            representative_data_gen: Dataset to use for inputs of the models.
-            gptq_config: GradientPTQConfig with configuration for the fine-tuning process.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
-
-        Returns:
-            Updated graph after GPTQ.
+        Returns:  Keras object of GPTQTrainer
         """
-
-        return gptq_training_wrapper(graph_float,
-                                     graph_quant,
-                                     representative_data_gen,
-                                     gptq_config,
-                                     fw_info)
+        return KerasGPTQTrainer
 
     def get_sensitivity_evaluation_fn(self,
                                       graph: Graph,
