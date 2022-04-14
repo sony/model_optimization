@@ -117,24 +117,32 @@ def _compute_bias_correction(kernel: np.ndarray,
     axis_not_input_output_channel = tuple(
         [i for i in range(len(quantization_error.shape)) if i not in [output_channels_axis, input_channels_axis]])
     eps = np.sum(quantization_error, axis=axis_not_input_output_channel)
-    if output_channels_axis == input_channels_axis:
-        correction_term = mu * eps.flatten()
-    else:
-        if output_channels_axis > input_channels_axis:
-            eps = np.transpose(eps)
-        num_groups = int(mu.shape[0] / eps.shape[1])# 1 is always the output channel axis in eps
-        num_out_channels = eps.shape[0]# 0 is always the output channel axis in eps
-        num_out_channels_per_group = int(num_out_channels / num_groups)
 
-        # In Pytorch the output of group conv is separated into respective groups is
-        # viewed as follows: (batch, channel, ngroups, h, w),
-        # i.e each group is consistently viewed one after the other
-        # For an example, check out: https://discuss.pytorch.org/t/group-convolution-output-order/88258
-        mu_split = np.split(mu, num_groups)
-        eps_split = np.split(eps, num_groups, 0)
-        correction_term = np.zeros(num_out_channels)
-        for i, (mu_s, eps_s) in enumerate(zip(mu_split, eps_split)):
-            correction_term[i * num_out_channels_per_group:(i + 1) * num_out_channels_per_group] = np.matmul(eps_s, mu_s)
+    # A special case for Tenesorflow DepthwiseConv2D
+    if output_channels_axis == input_channels_axis:
+        # Tensorflow's kerenl dimensions: [h, w, in_channels, depth_multiplier]
+        eps = np.sum(quantization_error, axis=(0, 1))  # Sum noises over h,w
+        eps = eps.reshape((-1, 1)) # Prepare shape: (num_output_channels, depth_of_each_kernel)
+
+    if output_channels_axis > input_channels_axis:
+        eps = np.transpose(eps)
+
+    # number_of_input_channels <= mu.shape[0]
+    # depth_of_each_kernel <= eps.shape[1]
+
+    num_groups = int(mu.shape[0] / eps.shape[1])# 1 is always the input channel axis in eps
+    num_out_channels = eps.shape[0]# 0 is always the output channel axis in eps
+    num_out_channels_per_group = int(num_out_channels / num_groups)
+
+    # In Pytorch the output of group conv is separated into respective groups is
+    # viewed as follows: (batch, channel, ngroups, h, w),
+    # i.e each group is consistently viewed one after the other
+    # For an example, check out: https://discuss.pytorch.org/t/group-convolution-output-order/88258
+    mu_split = np.split(mu, num_groups)
+    eps_split = np.split(eps, num_groups, 0)
+    correction_term = np.zeros(num_out_channels)
+    for i, (mu_s, eps_s) in enumerate(zip(mu_split, eps_split)):
+        correction_term[i * num_out_channels_per_group:(i + 1) * num_out_channels_per_group] = np.matmul(eps_s, mu_s)
 
     return correction_term
 

@@ -47,16 +47,8 @@ class SelectiveActivationQuantizer(Quantizer):
                 use this quantizer.
         """
         self.node_q_cfg = node_q_cfg
-
-        # Use the node's quantizer. The SelectiveWeightsQuantizer is supported only if
-        # all node's qc candidates use the same quantizer.
-        quantizer_fn = self.node_q_cfg[0].activation_quantization_cfg.activation_quantization_fn
-        for qc in self.node_q_cfg:
-            assert qc.activation_quantization_cfg.activation_quantization_fn == quantizer_fn
-
-        self.quantizer_fn = quantizer_fn
         # TODO: decide how to handle this since configs arrive sorted by weights first
-        self.active_quantization_config_index = 0  # initialize with first (maximal number of bits)
+        self.active_quantization_config_index = 0  # initialize with first config as default
         self.activation_quantizers = []
         self._store_activation_quantizers()
 
@@ -142,7 +134,6 @@ class SelectiveActivationQuantizer(Quantizer):
 
         return {
             'node_q_cfg': self.node_q_cfg,
-            'quantizer_fn': self.quantizer_fn
         }
 
     def __eq__(self, other: Any) -> bool:
@@ -158,8 +149,7 @@ class SelectiveActivationQuantizer(Quantizer):
         if not isinstance(other, SelectiveActivationQuantizer):
             return False
 
-        return (self.node_q_cfg == other.node_q_cfg and
-                self.quantizer_fn == other.quantizer_fn)
+        return self.node_q_cfg == other.node_q_cfg
 
     def __ne__(self, other: Any) -> bool:
         """

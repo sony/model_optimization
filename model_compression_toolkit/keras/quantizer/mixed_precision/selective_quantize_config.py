@@ -73,8 +73,15 @@ class SelectiveQuantizeConfig(QuantizeConfig):
         self.float_weights = float_weights
 
         assert len(node_q_cfg) > 0, 'SelectiveQuantizeConfig has to receive' \
-                                            'at least one weight quantization configuration'
+                                            'at least one quantization configuration'
         assert (not weight_attrs and not float_weights) or len(weight_attrs) == len(float_weights)
+
+        for qc in node_q_cfg:
+            assert qc.weights_quantization_cfg.enable_weights_quantization == \
+                   node_q_cfg[0].weights_quantization_cfg.enable_weights_quantization \
+                   and qc.activation_quantization_cfg.enable_activation_quantization == \
+                   node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization, \
+                "Candidates with different weights/activation enabled properties is currently not supported"
 
         self.node_q_cfg = node_q_cfg
         self.enable_weights_quantization = node_q_cfg[0].weights_quantization_cfg.enable_weights_quantization
@@ -171,8 +178,8 @@ class SelectiveQuantizeConfig(QuantizeConfig):
             [(getattr(layer, self.weight_attrs[i]), self.weight_quantizers[i]) for i in range(len(self.weight_attrs))]
 
     def get_activations_and_quantizers(self, layer: Layer) -> list:
-        # This QuantizeConfig is for quantizing weights only, so no
-        # implementation is needed for activation quantization.
+        # For configurable activations we use get_output_quantizers,
+        # Therefore, we do not need to implement this method.
         return []
 
     def set_quantize_weights(self, layer: Layer, quantize_weights: List[Tensor]):
