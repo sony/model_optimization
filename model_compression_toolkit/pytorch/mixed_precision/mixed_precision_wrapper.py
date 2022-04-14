@@ -108,12 +108,12 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
             quantized_per_attr = []
             for float_weight in self.float_weights:
                 # for each attribute
-                quantized_per_attr.append(self.quantizer_fn_list[index](tensor_data=float_weight,
-                                                                        n_bits=qc.weights_quantization_cfg.weights_n_bits,
-                                                                        signed=True,
-                                                                        quantization_params=qc.weights_quantization_cfg.weights_quantization_params,
-                                                                        per_channel=qc.weights_quantization_cfg.weights_per_channel_threshold,
-                                                                        output_channels_axis=qc.weights_quantization_cfg.weights_channels_axis))
+                quantized_per_attr.append(self.weights_quantizer_fn_list[index](tensor_data=float_weight,
+                                                                                n_bits=qc.weights_quantization_cfg.weights_n_bits,
+                                                                                signed=True,
+                                                                                quantization_params=qc.weights_quantization_cfg.weights_quantization_params,
+                                                                                per_channel=qc.weights_quantization_cfg.weights_per_channel_threshold,
+                                                                                output_channels_axis=qc.weights_quantization_cfg.weights_channels_axis))
             quantized_weights.append(quantized_per_attr)
 
         return quantized_weights
@@ -124,7 +124,7 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
         """
         activation_quantizers = []
         for index, qc in enumerate(self.node_q_cfg):
-            q_activation = self.self.node_q_cfg[index].activation_quantization_cfg(index)
+            q_activation = self.node_q_cfg[index].activation_quantization_cfg
             activation_quantizers.append(q_activation.quantize_node_output)
 
         return activation_quantizers
