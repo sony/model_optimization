@@ -137,6 +137,7 @@ def post_training_quantization(in_model: Any,
                         bit_widths_config)
 
     common.Logger.info(f'Approximated model size (in bytes): {tg.get_memory()}')
+    common.Logger.info(f'Approximated compression ratio: {round(tg.get_float_memory() / tg.get_memory(), 3)}')
 
     quantized_model, user_info = _quantize_fixed_bit_widths_graph(analyze_similarity,
                                                                   fw_info,

@@ -470,6 +470,17 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             memory += n.get_memory_bytes(self.fw_info)
         return memory
 
+    def get_float_memory(self) -> float:
+        """
+
+        Returns: Total memory consumption of the float graph in bytes.
+
+        """
+        memory = 0
+        for n in self.nodes:
+            memory += n.get_float_memory_bytes(self.fw_info)
+        return memory
+
     def get_configurable_sorted_nodes_names(self,
                                             include_reused_nodes: bool = False) -> List[str]:
         """
