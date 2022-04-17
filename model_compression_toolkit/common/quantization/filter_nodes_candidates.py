@@ -13,21 +13,23 @@
 # limitations under the License.
 # ==============================================================================
 import copy
+from typing import List
 
 from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.constants import DEFAULT_CANDIDATE_BITWIDTH
+from model_compression_toolkit.common.quantization.candidate_node_quantization_config import \
+    CandidateNodeQuantizationConfig
 
 
 def filter_nodes_candidates(graph: Graph):
     """
-    TODO: documentation
-    Add quantization configuration for each graph node.
+    Filters the graph's nodes candidates configuration list.
+    We apply this after mark activation operation to eliminate nodes that their activation are no longer being quantized
+    from the mixed-precision search.
+    Updating the lists is preformed inplace on the graph object.
 
     Args:
         graph: Graph for which to add quantization info to each node.
-
-    Returns:
-        The graph with quantization configurations attached to each node in it.
     """
 
     configurable_sorted_nodes = graph.get_configurable_sorted_nodes()
@@ -35,10 +37,13 @@ def filter_nodes_candidates(graph: Graph):
         n.candidates_quantization_cfg = filter_node_candidates(node=n)
 
 
-def filter_node_candidates(node: BaseNode):
+def filter_node_candidates(node: BaseNode) -> List[CandidateNodeQuantizationConfig]:
     """
-    # TODO: documentation
-    Create and set quantization configurations to a node (for both weights and activation).
+    Updates a node's candidates configuration list.
+    If the node's weights quantization is disabled (or it only has activations to quantize), then the updated list
+    will have a candidate with any of the different original activation bitwidths candidates and a default value
+    for its weights bitwidth (that doesn't have any impact on the quantization or the mixed-precision search.
+    If the node's activation quantization is disabled, the same filtering applied for the weights bitwidth candidates.
 
     Args:
         node: Node to set its quantization configurations.
