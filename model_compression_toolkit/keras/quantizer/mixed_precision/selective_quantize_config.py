@@ -77,11 +77,11 @@ class SelectiveQuantizeConfig(QuantizeConfig):
         assert (not weight_attrs and not float_weights) or len(weight_attrs) == len(float_weights)
 
         for qc in node_q_cfg:
-            # Candidates with different weights/activation enabled properties is currently not supported
             assert qc.weights_quantization_cfg.enable_weights_quantization == \
                    node_q_cfg[0].weights_quantization_cfg.enable_weights_quantization \
                    and qc.activation_quantization_cfg.enable_activation_quantization == \
-                   node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization
+                   node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization, \
+                "Candidates with different weights/activation enabled properties is currently not supported"
 
         self.node_q_cfg = node_q_cfg
         self.enable_weights_quantization = node_q_cfg[0].weights_quantization_cfg.enable_weights_quantization

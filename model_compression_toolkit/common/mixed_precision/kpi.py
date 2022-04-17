@@ -22,13 +22,16 @@ class KPI(object):
     """
 
     def __init__(self,
-                 weights_memory: float=np.inf):
+                 weights_memory: float = np.inf,
+                 activation_memory: float = np.inf):
         """
 
         Args:
             weights_memory: Memory of a model's weights in bytes. Note that this includes only coefficients that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value, while the bias will not).
         """
         self.weights_memory = weights_memory
+        self.activation_memory = activation_memory
 
     def __repr__(self):
-        return f"Weights_memory: {self.weights_memory}"
+        return f"Weights_memory: {self.weights_memory}, " \
+               f"Activation_memory: {self.activation_memory}"
