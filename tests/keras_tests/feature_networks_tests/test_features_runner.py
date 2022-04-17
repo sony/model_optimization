@@ -120,35 +120,35 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_mixed_precision_dw(self):
         MixedPercisionDepthwiseTest(self).run_test()
 
-    def test_mixed_precision_activation_search(self):
-        MixedPrecisionActivationSearchTest(self).run_test()
-
-    def test_mixed_precision_activation_only(self):
-        MixedPrecisionActivationOnlyTest(self).run_test()
-
-    def test_mixed_precision_activation_only_weights_disabled(self):
-        MixedPrecisionActivationOnlyWeightsDisabledTest(self).run_test()
-
-    def test_mixed_precision_activation_search_kpi_4bits_avg(self):
-        MixedPrecisionActivationSearchKPI4BitsAvgTest(self).run_test()
-
-    def test_mixed_precision_activation_search_kpi_2bits_avg(self):
-        MixedPrecisionActivationSearchKPI2BitsAvgTest(self).run_test()
-
-    def test_mixed_precision_activation_dw(self):
-        MixedPrecisionActivationDepthwiseTest(self).run_test()
-
-    def test_mixed_precision_activation_dw_4bit(self):
-        MixedPrecisionActivationDepthwise4BitTest(self).run_test()
-
-    def test_mixed_precision_activation_add(self):
-        MixedPrecisionActivationAddLayerTest(self).run_test()
-
-    def test_mixed_precision_activation_split(self):
-        MixedPrecisionActivationSplitLayerTest(self).run_test()
-
-    def test_mixed_precision_activation_multiple_inputs(self):
-        MixedPrecisionActivationMultipleInputsTest(self).run_test()
+    # def test_mixed_precision_activation_search(self):
+    #     MixedPrecisionActivationSearchTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_only(self):
+    #     MixedPrecisionActivationOnlyTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_only_weights_disabled(self):
+    #     MixedPrecisionActivationOnlyWeightsDisabledTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_search_kpi_4bits_avg(self):
+    #     MixedPrecisionActivationSearchKPI4BitsAvgTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_search_kpi_2bits_avg(self):
+    #     MixedPrecisionActivationSearchKPI2BitsAvgTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_dw(self):
+    #     MixedPrecisionActivationDepthwiseTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_dw_4bit(self):
+    #     MixedPrecisionActivationDepthwise4BitTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_add(self):
+    #     MixedPrecisionActivationAddLayerTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_split(self):
+    #     MixedPrecisionActivationSplitLayerTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_multiple_inputs(self):
+    #     MixedPrecisionActivationMultipleInputsTest(self).run_test()
 
     def test_name_filter(self):
         NameFilterTest(self).run_test()
