@@ -36,6 +36,7 @@ from model_compression_toolkit.common.network_editors.actions import EditRule
 from model_compression_toolkit.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
+from model_compression_toolkit.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import \
     compute_bias_correction_of_graph
@@ -407,6 +408,14 @@ def _prepare_model_for_quantization(in_model: Any,
 
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'after_graph_marking')
+
+    ######################################
+    # Filter nodes' candidates
+    ######################################
+    # filter_nodes_candidates(transformed_graph, )
+    #
+    # if tb_w is not None:
+    #     tb_w.add_graph(transformed_graph, 'after_candidates_filtering')
 
     ######################################
     # Graph analyzing (attaching statistics collectors)

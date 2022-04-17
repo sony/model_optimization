@@ -111,28 +111,62 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
         # get sorted candidates of each layer
         activation_layers_candidates = np.array(layers_to_quantize)[activation_layers_idx]
         weights_layers_candidates = np.array(layers_to_quantize)[weights_layers_idx]
-        activation_candidates = [[(qc.weights_n_bits, qc.activation_n_bits) for qc in
-                                 layer2qco.get(type(layer)).quantization_config_list] for layer in
+        # activation_candidates = [[(qc.weights_n_bits, qc.activation_n_bits) for qc in
+        #                          layer2qco.get(type(layer)).quantization_config_list] for layer in
+        #                          activation_layers_candidates]
+        activation_candidates = [[b for b in
+                                  self.filtered_activation_cfgs(candidates=layer2qco.get(type(layer)).quantization_config_list)] for layer in
                                  activation_layers_candidates]
-        weights_candidates = [[(qc.weights_n_bits, qc.activation_n_bits) for qc in
-                              layer2qco.get(type(layer)).quantization_config_list] for layer in
+        # weights_candidates = [[(qc.weights_n_bits, qc.activation_n_bits) for qc in
+        #                       layer2qco.get(type(layer)).quantization_config_list] for layer in
+        #                       weights_layers_candidates]
+        weights_candidates = [[b for b in
+                               self.filtered_weights_cfgs(candidates=layer2qco.get(type(layer)).quantization_config_list)] for layer in
                               weights_layers_candidates]
-
-        for layer_candidates in activation_candidates:
-            layer_candidates.sort(key=lambda c: (c[0], c[1]), reverse=True)
-
-        for layer_candidates in weights_candidates:
-            layer_candidates.sort(key=lambda c: (c[0], c[1]), reverse=True)
+        #
+        # for layer_candidates in activation_candidates:
+        #     layer_candidates.sort(key=lambda c: (c[0], c[1]), reverse=True)
+        #
+        # for layer_candidates in weights_candidates:
+        #     layer_candidates.sort(key=lambda c: (c[0], c[1]), reverse=True)
 
         # get chosen n_bits for each layer (weights and activation separately)
         # NOTE: we assume that the order of the layers in the configuration is the same as it appears in model.layers,
         #   if this not the case, then this helper test function isn't valid.
-        activation_bits = [activation_candidates[i][bitwidth_idx][1] for i, bitwidth_idx in
+        # activation_bits = [activation_candidates[i][bitwidth_idx][1] for i, bitwidth_idx in
+        #                    enumerate(np.array(mp_config)[activation_layers_idx])]
+        # weights_bits = [weights_candidates[i][bitwidth_idx][0] for i, bitwidth_idx in
+        #                 enumerate(np.array(mp_config)[weights_layers_idx])]
+        activation_bits = [activation_candidates[i][bitwidth_idx] for i, bitwidth_idx in
                            enumerate(np.array(mp_config)[activation_layers_idx])]
-        weights_bits = [weights_candidates[i][bitwidth_idx][0] for i, bitwidth_idx in
+        weights_bits = [weights_candidates[i][bitwidth_idx] for i, bitwidth_idx in
                         enumerate(np.array(mp_config)[weights_layers_idx])]
 
         return weights_bits, activation_bits
+
+    def filtered_activation_cfgs(self, candidates):
+        activation_bitwidth = [qc.activation_n_bits for qc in candidates]
+        unique_activation_bitwidth = np.unique(activation_bitwidth)
+
+        weights_bitwidth = [qc.weights_n_bits for qc in candidates]
+        unique_weights_bitwidth = np.unique(weights_bitwidth)
+
+        if len(weights_bitwidth) == len(unique_weights_bitwidth):
+            return unique_activation_bitwidth
+        else:
+            return activation_bitwidth
+
+    def filtered_weights_cfgs(self, candidates):
+        activation_bitwidth = [qc.activation_n_bits for qc in candidates]
+        unique_activation_bitwidth = np.unique(activation_bitwidth)
+
+        weights_bitwidth = [qc.weights_n_bits for qc in candidates]
+        unique_weights_bitwidth = np.unique(weights_bitwidth)
+
+        if len(activation_bitwidth) == len(unique_activation_bitwidth):
+            return unique_weights_bitwidth
+        else:
+            return weights_bitwidth
 
     def verify_quantization(self, quantized_model, input_x, weights_layers_idx, weights_layers_channels_size,
                             activation_layers_idx, shape_limit):
@@ -186,7 +220,7 @@ class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBase
 
     def get_kpi(self):
         # kpi is for 4 bits on average
-        return KPI(weights_memory=2544000 * 4 / 8, activation_memory=3725318 * 4 / 8)
+        return KPI(weights_memory=2544000 * 4 / 8, activation_memory=2513518 * 4 / 8)
 
     def get_fw_hw_model(self):
         eight_bits = get_base_eight_bits_config_op()
@@ -217,7 +251,7 @@ class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBase
 
     def get_kpi(self):
         # kpi is for 2 bits on average
-        return KPI(weights_memory=2544000.0 * 2 / 8, activation_memory=3725318.0 * 2 / 8)
+        return KPI(weights_memory=2544000.0 * 2 / 8, activation_memory=2513518.0 * 2 / 8)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         weights_bits, activation_bits = self.get_split_candidates(mp_config=quantization_info.mixed_precision_cfg,
@@ -278,7 +312,7 @@ class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest
 
     def get_kpi(self):
         # return KPI(np.inf, np.inf)
-        return KPI(2700.0 * 4 / 8, 415518.0 * 4 / 8)
+        return KPI(2700.0 * 4 / 8, 289743.0 * 4 / 8)
 
     def get_fw_hw_model(self):
         eight_bits = get_base_eight_bits_config_op()
