@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,30 +13,23 @@
 # limitations under the License.
 # ==============================================================================
 
-
-from tensorflow.keras.layers import DepthwiseConv2D, Conv2D, Dense, Conv2DTranspose, \
-    Activation, ReLU, ZeroPadding2D
-from tensorflow.nn import relu
+from torch.nn import Conv2d, ReLU, ConvTranspose2d, ZeroPad2d
+from torch.nn.functional import relu
 
 from model_compression_toolkit.common.framework_info import FrameworkInfo
-from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, WalkMatcher, \
-    NodeFrameworkAttrMatcher
+from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, WalkMatcher
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.substitutions.scale_equalization import BaseScaleEqualization
-from model_compression_toolkit.keras.constants import ACTIVATION, KERNEL, BIAS
-from model_compression_toolkit.keras.constants import RELU
+from model_compression_toolkit.pytorch.constants import KERNEL, BIAS
 
-# Match linear layers.
-op2d_node = NodeOperationMatcher(DepthwiseConv2D) | \
-            NodeOperationMatcher(Conv2D) | \
-            NodeOperationMatcher(Conv2DTranspose) | \
-            NodeOperationMatcher(Dense)
+activation_nodes = NodeOperationMatcher(ReLU) | \
+                               NodeOperationMatcher(relu)
 
-activation_nodes = NodeFrameworkAttrMatcher(ACTIVATION, RELU) | \
-                   NodeOperationMatcher(ReLU) | \
-                   NodeOperationMatcher(relu)
+op2d_node = NodeOperationMatcher(Conv2d) | \
+            NodeOperationMatcher(ConvTranspose2d)
 
-zeropad_node = NodeOperationMatcher(ZeroPadding2D)
+zeropad_node = NodeOperationMatcher(ZeroPad2d)
+
 
 MATCHER = WalkMatcher([op2d_node,
                        activation_nodes,
@@ -49,7 +42,7 @@ MATCHER_WITH_PAD = WalkMatcher([op2d_node,
 
 class ScaleEqualization(BaseScaleEqualization):
     """
-    Substitution extends BaseScaleEqualization to Keras
+    Substitution extends BaseScaleEqualization to Pytorch
     """
 
     def __init__(self,

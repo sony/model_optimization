@@ -32,7 +32,7 @@ from model_compression_toolkit.keras.graph_substitutions.substitutions.remove_re
 from model_compression_toolkit.keras.graph_substitutions.substitutions.multi_head_attention_decomposition import \
     MultiHeadAttentionDecomposition
 from model_compression_toolkit.keras.graph_substitutions.substitutions.scale_equalization import \
-    ScaleEqualization, ScaleEqualizationWithPad, ScaleEqualizationMidActivation, ScaleEqualizationMidActivationWithPad
+    ScaleEqualization, ScaleEqualizationWithPad
 from model_compression_toolkit.keras.graph_substitutions.substitutions.separableconv_decomposition import \
     SeparableConvDecomposition
 from model_compression_toolkit.keras.graph_substitutions.substitutions.shift_negative_activation import \
@@ -184,6 +184,25 @@ class KerasImplementation(FrameworkImplementation):
         """
         return [MarkActivation()]
 
+    def get_substitutions_channel_equalization(self,
+                                               quant_config: QuantizationConfig,
+                                               fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
+        """
+        Return a list of the framework substitutions used for channel equalization.
+
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+            fw_info: FrameworkInfo object with information about the specific framework's model.
+
+        Returns:
+            A list of the framework substitutions used after we collect statistics.
+        """
+        substitutions_list = []
+        if quant_config.activation_channel_equalization:
+            substitutions_list.extend([ScaleEqualization(quant_config, fw_info),
+                                       ScaleEqualizationWithPad(quant_config, fw_info)])
+        return substitutions_list
+
     def get_substitutions_prepare_graph(self) -> List[common.BaseSubstitution]:
         """
 
@@ -194,8 +213,8 @@ class KerasImplementation(FrameworkImplementation):
                 MultiHeadAttentionDecomposition(),
                 ActivationDecomposition()]
 
-    def get_substitutions_pre_statistics_collection(self, quant_config: QuantizationConfig) \
-            -> List[common.BaseSubstitution]:
+    def get_substitutions_pre_statistics_collection(self, quant_config: QuantizationConfig) -> \
+            List[common.BaseSubstitution]:
         """
         Return a list of the framework substitutions used before we collect statistics.
 
@@ -228,27 +247,6 @@ class KerasImplementation(FrameworkImplementation):
         if quant_config.input_scaling:
             substitutions_list.append(InputScaling())
             substitutions_list.append(InputScalingWithPad())
-        return substitutions_list
-
-    def get_substitutions_channel_equalization(self,
-                                               quant_config: QuantizationConfig,
-                                               fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
-        """
-        Return a list of the framework substitutions used for channel equalization.
-
-        Args:
-            quant_config: QuantizationConfig to determine which substitutions to return.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
-
-        Returns:
-            A list of the framework substitutions used after we collect statistics.
-        """
-        substitutions_list = []
-        if quant_config.activation_channel_equalization:
-            substitutions_list.extend([ScaleEqualization(quant_config, fw_info),
-                                       ScaleEqualizationWithPad(quant_config, fw_info),
-                                       ScaleEqualizationMidActivation(quant_config, fw_info),
-                                       ScaleEqualizationMidActivationWithPad(quant_config, fw_info)])
         return substitutions_list
 
     def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:

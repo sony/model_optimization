@@ -27,6 +27,7 @@ from model_compression_toolkit.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.user_info import UserInformation
 
+
 class FrameworkImplementation(ABC):
     """
     An abstract class with abstract methods that should be implemented when supporting a new
@@ -173,6 +174,23 @@ class FrameworkImplementation(ABC):
                              f'framework\'s get_substitutions_marking method.')
 
     @abstractmethod
+    def get_substitutions_channel_equalization(self,
+                                               quant_config: QuantizationConfig,
+                                               fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
+        """
+        Return a list of the framework substitutions used for channel equalization.
+
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+            fw_info: FrameworkInfo object with information about the specific framework's model.
+
+        Returns:
+            A list of the framework substitutions used after we collect statistics.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_substitutions_channel_equalization method.')
+
+    @abstractmethod
     def get_substitutions_prepare_graph(self) -> List[common.BaseSubstitution]:
         """
 
@@ -183,8 +201,12 @@ class FrameworkImplementation(ABC):
                              f'framework\'s get_substitutions_prepare_graph method.')
 
     @abstractmethod
-    def get_substitutions_pre_statistics_collection(self) -> List[common.BaseSubstitution]:
+    def get_substitutions_pre_statistics_collection(self, quant_config: QuantizationConfig) -> \
+            List[common.BaseSubstitution]:
         """
+
+        Args:
+            quant_config: Quantization configuration.
 
         Returns: A list of the framework substitutions used before we collect statistics.
 
@@ -216,23 +238,6 @@ class FrameworkImplementation(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_substitutions_post_statistics_collection method.')
-
-    @abstractmethod
-    def get_substitutions_channel_equalization(self,
-                                               quant_config: QuantizationConfig,
-                                               fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
-        """
-        Return a list of the framework substitutions used for channel equalization.
-
-        Args:
-            quant_config: QuantizationConfig to determine which substitutions to return.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
-
-        Returns:
-            A list of the framework substitutions used after we collect statistics.
-        """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s get_substitutions_channel_equalization method.')
 
     @abstractmethod
     def get_gptq_trainer_obj(self):

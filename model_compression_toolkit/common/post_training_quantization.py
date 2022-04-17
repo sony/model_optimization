@@ -406,6 +406,13 @@ def _prepare_model_for_quantization(in_model: Any,
     ######################################
     transformed_graph = substitute(transformed_graph, fw_impl.get_substitutions_marking())
 
+    ######################################
+    # Channel equalization
+    ######################################
+    transformed_graph = substitute(transformed_graph,
+                                   fw_impl.get_substitutions_channel_equalization(quant_config,
+                                                                                  fw_info))
+
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'after_graph_marking')
 
@@ -451,13 +458,6 @@ def _prepare_model_for_quantization(in_model: Any,
     ######################################
     transformed_graph = substitute(transformed_graph,
                                    fw_impl.get_substitutions_post_statistics_collection(quant_config))
-
-    ######################################
-    # Channel equalization
-    ######################################
-    transformed_graph = substitute(transformed_graph,
-                                   fw_impl.get_substitutions_channel_equalization(quant_config,
-                                                                                  fw_info))
 
     ######################################
     # Shift Negative Activations
