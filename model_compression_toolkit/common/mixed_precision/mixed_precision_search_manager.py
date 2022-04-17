@@ -153,7 +153,7 @@ class MixedPrecisionSearchManager(object):
 
                 # Weights memory size computation
                 # Consider only the weights that should be quantized.
-                if not activation_only and n.is_weights_quantization_enabled and \
+                if not activation_only and n.is_weights_quantization_enabled() and \
                         not n.is_all_weights_candidates_equal():
                     node_num_weights_params = 0
                     for attr in self.fw_info.get_kernel_op_attributes(n.type):
@@ -166,7 +166,7 @@ class MixedPrecisionSearchManager(object):
                     # Activation memory size computation
                     # Currently, consider layer's activation size as size of layer's output,
                     # and total model activations' size as sum of layers' output.
-                if not weights_only and n.is_activation_quantization_enabled and \
+                if not weights_only and n.is_activation_quantization_enabled() and \
                         not n.is_all_activation_candidates_equal():
                     node_output_size = n.get_total_output_params()
                     node_activation_memory_in_bytes = node_output_size * node_nbits[1] / 8.0

@@ -186,7 +186,7 @@ class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBase
 
     def get_kpi(self):
         # kpi is for 4 bits on average
-        return KPI(weights_memory=2544000 * 4 / 8, activation_memory=3725318 * 4 / 8)
+        return KPI(weights_memory=2544000 * 4 / 8, activation_memory=2513518 * 4 / 8)
 
     def get_fw_hw_model(self):
         eight_bits = get_base_eight_bits_config_op()
@@ -217,7 +217,7 @@ class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBase
 
     def get_kpi(self):
         # kpi is for 2 bits on average
-        return KPI(weights_memory=2544000.0 * 2 / 8, activation_memory=3725318.0 * 2 / 8)
+        return KPI(weights_memory=2544000.0 * 2 / 8, activation_memory=2513518.0 * 2 / 8)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         weights_bits, activation_bits = self.get_split_candidates(mp_config=quantization_info.mixed_precision_cfg,
@@ -278,7 +278,7 @@ class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest
 
     def get_kpi(self):
         # return KPI(np.inf, np.inf)
-        return KPI(2700.0 * 4 / 8, 415518.0 * 4 / 8)
+        return KPI(2700.0 * 4 / 8, 289743.0 * 4 / 8)
 
     def get_fw_hw_model(self):
         eight_bits = get_base_eight_bits_config_op()
