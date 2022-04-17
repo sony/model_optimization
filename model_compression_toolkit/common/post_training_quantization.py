@@ -412,10 +412,10 @@ def _prepare_model_for_quantization(in_model: Any,
     ######################################
     # Filter nodes' candidates
     ######################################
-    # filter_nodes_candidates(transformed_graph, )
-    #
-    # if tb_w is not None:
-    #     tb_w.add_graph(transformed_graph, 'after_candidates_filtering')
+    filter_nodes_candidates(transformed_graph)
+
+    if tb_w is not None:
+        tb_w.add_graph(transformed_graph, 'after_candidates_filtering')
 
     ######################################
     # Graph analyzing (attaching statistics collectors)
