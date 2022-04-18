@@ -157,7 +157,7 @@ class MixedPercisionActivationSearch2Bit(MixedPercisionActivationBaseTest):
         super().__init__(unit_test)
 
     def get_kpi(self):
-        return KPI(96, 2795)
+        return KPI(96, 2119)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         weights_bits, activation_bits = self.get_split_candidates(quantization_info, quantized_models,
@@ -172,7 +172,7 @@ class MixedPercisionActivationSearch4Bit(MixedPercisionActivationBaseTest):
         super().__init__(unit_test)
 
     def get_kpi(self):
-        return KPI(192, 5590)
+        return KPI(192, 4238)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         weights_bits, activation_bits = self.get_split_candidates(quantization_info, quantized_models,

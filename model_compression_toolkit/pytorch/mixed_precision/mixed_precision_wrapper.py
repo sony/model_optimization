@@ -27,9 +27,10 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
     """
     Class that wraps a Pytorch layer (nn.Module) to be used for mixed precision quantization.
     Allows to maintain quantized weights tensors for each of the layer's attributes that we want to quantize,
-    with each of the candidate bitwidth options specified for the mixed precision model.
-    During MP search, it allows to activate the relevant quantized weights tensor according to a given configuration,
-    and use it for inference.
+    and a list of activation quantizers for each quantization candidate,
+    for each of the candidate bitwidth options specified for the mixed precision model.
+    During MP search, it allows to activate the relevant quantized weights tensor and activation quantizer
+    according to a given configuration, and use it for inference.
     """
     def __init__(self,
                  n: BaseNode,
@@ -80,7 +81,7 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
         # Setting layer's activation
         if self.enable_activation_quantization:
             self.activation_quantizers = self._get_activation_quantizers()
-            # TODO: How to handle default? (first isn't necessarily the best activation precision
+            # TODO: How to handle default? (first isn't necessarily the best activation precision)
             self.activation_bitwidth_idx = 0
 
     def forward(self, x: Any) -> Any:
@@ -126,7 +127,10 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
 
     def _get_activation_quantizers(self):
         """
-        TODO:
+        Builds a list of quantizers for each of the bitwidth candidates for activation quantization,
+        to be stored and used during MP search.
+
+        Returns: a list of activation quantizers - for each bitwidth and layer's attribute to be quantized.
         """
         activation_quantizers = []
         for index, qc in enumerate(self.node_q_cfg):
@@ -148,26 +152,26 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
         if self.enable_weights_quantization:
             if attr is None:  # set bit width to all weights of the layer
                 attr_idxs = [attr_idx for attr_idx in range(len(self.quantized_weights[bitwidth_idx]))]
-                self._set_bit_width_index(bitwidth_idx, attr_idxs)
+                self._set_weights_bit_width_index(bitwidth_idx, attr_idxs)
             else:  # set bit width to a specific attribute
                 attr_idx = self.weight_attrs.index(attr)
-                self._set_bit_width_index(bitwidth_idx, [attr_idx])
+                self._set_weights_bit_width_index(bitwidth_idx, [attr_idx])
 
     def set_active_activation_quantizer(self,
                                         bitwidth_idx: int):
         """
-        TODO:
-        Set a weights' tensor to use by the layer wrapped by the module.
+        Set an activation quantizer to use by the layer wrapped by the module.
+
         Args:
-            bitwidth_idx: Index of a candidate quantization configuration to use its quantized
-            version of the float weight.
+            bitwidth_idx: Index of a candidate quantization configuration to use its quantizer
+            for quantizing the activation.
         """
         if self.enable_activation_quantization:
             self.activation_bitwidth_idx = bitwidth_idx
 
-    def _set_bit_width_index(self,
-                             bitwidth_idx: int,
-                             attr_idxs: List[int]):
+    def _set_weights_bit_width_index(self,
+                                     bitwidth_idx: int,
+                                     attr_idxs: List[int]):
         """
         Sets the wrapped layer's weights state with quantized weights, according to the given configuration.
         Args:
