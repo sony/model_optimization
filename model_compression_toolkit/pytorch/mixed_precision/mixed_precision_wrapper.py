@@ -20,7 +20,7 @@ import copy
 
 from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.common import BaseNode
-from model_compression_toolkit.pytorch.utils import set_model
+from model_compression_toolkit.pytorch.utils import set_model, to_torch_tensor
 
 
 class PytorchMixedPrecisionWrapper(torch.nn.Module):
@@ -94,7 +94,9 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
 
         if self.enable_activation_quantization:
             # add fake quant to quantize activations with the active number of bits
-            print("Activation Quantized")
+            if isinstance(outputs, list):
+                # we assume here that it can't be multiple outputs out of a quantized layer
+                outputs = torch.cat(outputs, dim=0)
             outputs = self.activation_quantizers[self.activation_bitwidth_idx](outputs)
 
         return outputs

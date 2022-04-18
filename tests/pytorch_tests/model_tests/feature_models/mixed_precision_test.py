@@ -18,7 +18,10 @@ from torch.nn import Conv2d
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, KPI
 from model_compression_toolkit.common.user_info import UserInformation
-from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
+from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model, \
+    get_op_quantization_configs
+from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model, \
+    generate_mixed_precision_test_hw_model
 from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import get_layer_test_fw_hw_model_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
@@ -95,6 +98,37 @@ class MixedPercisionSearch2Bit(MixedPercisionBaseTest):
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.compare_results(quantization_info, quantized_models, float_model, 2)
+
+
+class MixedPercisionSearch4Bit(MixedPercisionBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def get_kpi(self):
+        return KPI(192)
+
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        self.compare_results(quantization_info, quantized_models, float_model, 1)
+
+
+class MixedPercisionActivationDisabledTest(MixedPercisionBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def get_fw_hw_model(self):
+        base_config, _ = get_op_quantization_configs()
+        return get_layer_test_fw_hw_model_dict(
+            hardware_model=generate_mixed_precision_test_hw_model(
+                base_cfg=base_config.clone_and_edit(enable_activation_quantization=False),
+                mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)]),
+            test_name='mixed_precision_model',
+            fhwm_name='mixed_precision_pytorch_test')
+
+    def get_kpi(self):
+        return KPI(np.inf)
+
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        self.compare_results(quantization_info, quantized_models, float_model, 0)
 
 
 class MixedPrecisionNet(torch.nn.Module):

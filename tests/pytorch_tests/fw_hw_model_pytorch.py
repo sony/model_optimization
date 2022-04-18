@@ -29,6 +29,13 @@ from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHo
 hwm = mct.hardware_representation
 
 
+def get_mp_activation_pytorch_hwm_dict(hardware_model, test_name, fhwm_name):
+    return {
+        test_name: generate_activation_mp_fhw_model_pytorch(name=fhwm_name,
+                                                            hardware_model=hardware_model),
+    }
+
+
 def generate_activation_mp_fhw_model_pytorch(hardware_model, name="activation_mp_pytorch_hwm"):
     fhwm_torch = hwm.FrameworkHardwareModel(hardware_model,
                                             name=name)
