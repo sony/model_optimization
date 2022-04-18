@@ -136,7 +136,7 @@ def post_training_quantization(in_model: Any,
                         fw_info,
                         bit_widths_config)
 
-    common.Logger.info(f'Approximated model size (in bytes): {tg.get_memory()}')
+    common.Logger.info(f'Approximated model\'s parameters size (in bytes): {tg.get_memory()}')
 
     quantized_model, user_info = _quantize_fixed_bit_widths_graph(analyze_similarity,
                                                                   fw_info,

@@ -50,9 +50,6 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
 
         return MixedPrecisionQuantizationConfig(qc, num_of_images=1)
 
-    def get_bit_widths_config(self):
-        return None
-
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, 3]]
 
@@ -86,11 +83,6 @@ class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
                                     activation_channel_equalization=True)
 
         return MixedPrecisionQuantizationConfig(qc)
-
-    def get_bit_widths_config(self):
-        # First layer should be quantized using 2 bits
-        # Second layer should be quantized using 3 bits
-        return [2, 1]
 
     def get_kpi(self):
         # Return some KPI (it does not really matter the value here as search_methods is not done,
@@ -199,3 +191,41 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
                                     activation_channel_equalization=False)
 
         return MixedPrecisionQuantizationConfig(qc)
+
+
+class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def get_quantization_config(self):
+        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                    mct.QuantizationErrorMethod.MSE,
+                                    relu_bound_to_power_of_2=True,
+                                    weights_bias_correction=True,
+                                    weights_per_channel_threshold=True,
+                                    input_scaling=False,
+                                    activation_channel_equalization=False)
+
+        return MixedPrecisionQuantizationConfig(qc, num_of_images=1)
+
+    def get_fw_hw_model(self):
+        base_config, _ = get_op_quantization_configs()
+        activation_disabled_config = base_config.clone_and_edit(enable_activation_quantization=False)
+
+        mp_hw_model = generate_mixed_precision_test_hw_model(base_cfg=activation_disabled_config,
+                                                             mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)])
+        return generate_fhw_model_keras(name="mp_weights_only_test", hardware_model=mp_hw_model)
+
+    def get_kpi(self):
+        # kpi is infinity -> should give best model - 8bits
+        return KPI(np.inf)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        assert (quantization_info.mixed_precision_cfg == [0,
+                                                          0]).all()  # kpi is infinity -> should give best model - 8bits
+        for i in range(30):  # quantized per channel
+            self.unit_test.assertTrue(
+                np.unique(quantized_model.layers[1].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
+        for i in range(50):  # quantized per channel
+            self.unit_test.assertTrue(
+                np.unique(quantized_model.layers[2].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
