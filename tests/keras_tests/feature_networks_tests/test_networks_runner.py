@@ -20,7 +20,8 @@ import numpy as np
 import unittest
 import model_compression_toolkit as mct
 from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model, get_16bit_fw_hw_model
+from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
+from tests.keras_tests.fw_hw_model_keras import get_16bit_fw_hw_model
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from enum import Enum
 import random
