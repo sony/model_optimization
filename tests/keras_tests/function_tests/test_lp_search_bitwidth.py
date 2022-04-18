@@ -49,7 +49,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
 
         bit_cfg = mp_integer_programming_search({0: [0, 1, 2]},
                                                 lambda x, y: 0,
-                                                lambda x, weights_only=False, activation_only=False:
+                                                lambda x, compute_weights_kpi=True, compute_activation_kpi=True:
                                                 layer_to_kpi_mapping[0][x[0]],
                                                 min_weights_cfg=[2],
                                                 min_activation_cfg=[2],
@@ -62,7 +62,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
         with self.assertRaises(Exception):
             bit_cfg = mp_integer_programming_search({0: [0, 1, 2]},
                                                     lambda x, y: 0,
-                                                    lambda x, weights_only=False, activation_only=False:
+                                                    lambda x, compute_weights_kpi=True, compute_activation_kpi=True:
                                                     layer_to_kpi_mapping[0][x[0]],
                                                     min_weights_cfg=[2],
                                                     min_activation_cfg=[2],
@@ -70,7 +70,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
 
         bit_cfg = mp_integer_programming_search({0: [0, 1, 2]},
                                                 lambda x, y: 0,
-                                                lambda x, weights_only=False, activation_only=False:
+                                                lambda x, compute_weights_kpi=True, compute_activation_kpi=True:
                                                 layer_to_kpi_mapping[0][x[0]],
                                                 min_weights_cfg=[2],
                                                 min_activation_cfg=[2],
@@ -87,7 +87,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
 
         bit_cfg = mp_integer_programming_search({0: [0, 1, 2]},
                                                 lambda x, y: 0,
-                                                lambda x, weights_only=False, activation_only=False:
+                                                lambda x, compute_weights_kpi=True, compute_activation_kpi=True:
                                                 layer_to_kpi_mapping[0][x[0]],
                                                 min_weights_cfg=[2],
                                                 min_activation_cfg=[2],
@@ -100,7 +100,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
         with self.assertRaises(Exception):
             bit_cfg = mp_integer_programming_search({0: [0, 1, 2]},
                                                     lambda x, y: 0,
-                                                    lambda x, weights_only=False, activation_only=False:
+                                                    lambda x, compute_weights_kpi=True, compute_activation_kpi=True:
                                                     layer_to_kpi_mapping[0][x[0]],
                                                     min_weights_cfg=[2],
                                                     min_activation_cfg=[2],
@@ -108,7 +108,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
 
         bit_cfg = mp_integer_programming_search({0: [0, 1, 2]},
                                                 lambda x, y: 0,
-                                                lambda x, weights_only=False, activation_only=False:
+                                                lambda x, compute_weights_kpi=True, compute_activation_kpi=True:
                                                 layer_to_kpi_mapping[0][x[0]],
                                                 min_weights_cfg=[2],
                                                 min_activation_cfg=[2],
@@ -125,7 +125,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
 
         bit_cfg = mp_integer_programming_search({0: [0, 1, 2]},
                                                 lambda x, y: 0,
-                                                lambda x, weights_only=False, activation_only=False:
+                                                lambda x, compute_weights_kpi=True, compute_activation_kpi=True:
                                                 layer_to_kpi_mapping[0][x[0]],
                                                 min_weights_cfg=[2],
                                                 min_activation_cfg=[2],
@@ -138,7 +138,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
         with self.assertRaises(Exception):
             bit_cfg = mp_integer_programming_search({0: [0, 1, 2]},
                                                     lambda x, y: 0,
-                                                    lambda x, weights_only=False, activation_only=False:
+                                                    lambda x, compute_weights_kpi=True, compute_activation_kpi=True:
                                                     layer_to_kpi_mapping[0][x[0]],
                                                     min_weights_cfg=[2],
                                                     min_activation_cfg=[2],
@@ -146,7 +146,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
 
         bit_cfg = mp_integer_programming_search({0: [0, 1, 2]},
                                                 lambda x, y: 0,
-                                                lambda x, weights_only=False, activation_only=False:
+                                                lambda x, compute_weights_kpi=True, compute_activation_kpi=True:
                                                 layer_to_kpi_mapping[0][x[0]],
                                                 min_weights_cfg=[2],
                                                 min_activation_cfg=[2],

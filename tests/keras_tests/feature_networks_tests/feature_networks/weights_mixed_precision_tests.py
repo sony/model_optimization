@@ -50,9 +50,6 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
 
         return MixedPrecisionQuantizationConfig(qc, num_of_images=1)
 
-    def get_bit_widths_config(self):
-        return None
-
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, 3]]
 
@@ -86,11 +83,6 @@ class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
                                     activation_channel_equalization=True)
 
         return MixedPrecisionQuantizationConfig(qc)
-
-    def get_bit_widths_config(self):
-        # First layer should be quantized using 2 bits
-        # Second layer should be quantized using 3 bits
-        return [2, 1]
 
     def get_kpi(self):
         # Return some KPI (it does not really matter the value here as search_methods is not done,

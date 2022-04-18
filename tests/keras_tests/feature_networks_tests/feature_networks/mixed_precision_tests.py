@@ -83,9 +83,6 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
 
         return MixedPrecisionQuantizationConfig(qc, num_of_images=1)
 
-    def get_bit_widths_config(self):
-        return None
-
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, 3]]
 
@@ -104,13 +101,13 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
         raise NotImplementedError
 
     def verify_quantization(self, quantized_model, input_x, weights_layers_idx, weights_layers_channels_size,
-                            activation_layers_idx, shape_limit):
+                            activation_layers_idx, unique_tensor_values):
         # verify weights quantization
         for i in range(len(weights_layers_idx)):
             for j in range(weights_layers_channels_size[i]):  # quantized per channel
                 self.unit_test.assertTrue(
                     np.unique(quantized_model.layers[weights_layers_idx[i]].weights[0][:, :, :, j]).flatten().shape[
-                        0] <= shape_limit)
+                        0] <= unique_tensor_values)
 
         # verify activation quantization
         inp = quantized_model.input  # input placeholder
@@ -119,7 +116,7 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
         layer_outs = get_outputs([input_x])
         # verifying fake quant nodes output
         for idx in activation_layers_idx:
-            self.unit_test.assertTrue(np.unique(layer_outs[idx].flatten()).shape[0] <= shape_limit)
+            self.unit_test.assertTrue(np.unique(layer_outs[idx].flatten()).shape[0] <= unique_tensor_values)
 
 
 class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
@@ -140,7 +137,7 @@ class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
                                  weights_layers_idx=[2, 4],
                                  weights_layers_channels_size=[30, 50],
                                  activation_layers_idx=self.activation_layers_idx,
-                                 shape_limit=256)
+                                 unique_tensor_values=256)
 
 
 class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBaseTest):
@@ -184,7 +181,7 @@ class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBase
                                  weights_layers_idx=[2, 4],
                                  weights_layers_channels_size=[30, 50],
                                  activation_layers_idx=self.activation_layers_idx,
-                                 shape_limit=4)
+                                 unique_tensor_values=4)
 
 
 class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
@@ -272,7 +269,7 @@ class MixedPrecisionActivationSplitLayerTest(MixedPrecisionActivationBaseTest):
                                  weights_layers_idx=[3, 4],
                                  weights_layers_channels_size=[30, 30],
                                  activation_layers_idx=self.activation_layers_idx,
-                                 shape_limit=256)
+                                 unique_tensor_values=256)
 
 
 class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
@@ -308,7 +305,7 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
                                  weights_layers_idx=[],
                                  weights_layers_channels_size=[],
                                  activation_layers_idx=self.activation_layers_idx,
-                                 shape_limit=256)
+                                 unique_tensor_values=256)
 
 
 class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBaseTest):
@@ -346,7 +343,7 @@ class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBa
                                  weights_layers_idx=[],
                                  weights_layers_channels_size=[],
                                  activation_layers_idx=self.activation_layers_idx,
-                                 shape_limit=256)
+                                 unique_tensor_values=256)
 
 
 class MixedPrecisionActivationAddLayerTest(MixedPrecisionActivationBaseTest):
@@ -373,7 +370,7 @@ class MixedPrecisionActivationAddLayerTest(MixedPrecisionActivationBaseTest):
                                  weights_layers_idx=[2],
                                  weights_layers_channels_size=[30],
                                  activation_layers_idx=self.activation_layers_idx,
-                                 shape_limit=256)
+                                 unique_tensor_values=256)
 
 
 class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTest):
@@ -408,5 +405,5 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
                                  weights_layers_idx=[],
                                  weights_layers_channels_size=[],
                                  activation_layers_idx=self.activation_layers_idx,
-                                 shape_limit=256)
+                                 unique_tensor_values=256)
 
