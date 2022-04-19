@@ -44,15 +44,3 @@ def generate_mixed_precision_test_hw_model(base_cfg, mp_bitwidth_candidates_list
                                    base_config=base_cfg,
                                    mixed_precision_cfg_list=mp_op_cfg_list,
                                    name=name)
-
-
-def get_16bit_fw_hw_model(name):
-    hw_model = generate_test_hw_model({'weights_n_bits': 16,
-                                       'activation_n_bits': 16})
-    return generate_fhw_model_keras(name=name, hardware_model=hw_model)
-
-
-def get_quantization_disabled_keras_hw_model(name):
-    hwm = generate_test_hw_model({'enable_weights_quantization': False,
-                                  'enable_activation_quantization': False})
-    return generate_fhw_model_keras(name=name, hardware_model=hwm)
