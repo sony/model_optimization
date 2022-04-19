@@ -20,6 +20,7 @@ from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, Sep
 import numpy as np
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.common.constants import DEFAULT_CANDIDATE_BITWIDTH
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
 from model_compression_toolkit.common.quantization.filter_nodes_candidates import filter_nodes_candidates
@@ -50,11 +51,13 @@ def get_base_config():
     )
 
 
-def prepare_graph(in_model, base_config):
-    bitwidth_candidates = [(4, 8), (4, 4), (4, 2),
-                           (8, 8), (8, 4), (8, 2),
-                           (2, 8), (2, 4), (2, 2)]
+def get_full_bitwidth_candidates():
+    return [(4, 8), (4, 4), (4, 2),
+            (8, 8), (8, 4), (8, 2),
+            (2, 8), (2, 4), (2, 2)]
 
+
+def prepare_graph(in_model, base_config, bitwidth_candidates):
     hwm = generate_hw_model_with_activation_mp(base_config, bitwidth_candidates)
     fw_hw_model = generate_activation_mp_fhw_model_keras(name="candidates_filter_test", hardware_model=hwm)
 
@@ -77,6 +80,12 @@ def create_model_conv2d_only(input_shape):
     return keras.Model(inputs=inputs, outputs=outputs)
 
 
+def create_model_single_conv2d(input_shape):
+    inputs = Input(shape=input_shape)
+    outputs = Conv2D(2, 3)(inputs)
+    return keras.Model(inputs=inputs, outputs=outputs)
+
+
 def create_model_conv2d_relu(input_shape):
     inputs = Input(shape=input_shape)
     x = Conv2D(2, 3)(inputs)
@@ -90,7 +99,9 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         input_shape = (8, 8, 3)
         in_model = create_model_conv2d_relu(input_shape)
 
-        graph = prepare_graph(in_model, base_config=get_base_config())
+        graph = prepare_graph(in_model,
+                              base_config=get_base_config(),
+                              bitwidth_candidates=get_full_bitwidth_candidates())
 
         # Filtering nodes; candidates
         filtered_graph = copy.deepcopy(graph)
@@ -113,7 +124,8 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         in_model = create_model_conv2d_only(input_shape)
 
         graph = prepare_graph(in_model,
-                              base_config=get_base_config().clone_and_edit(enable_weights_quantization=False))
+                              base_config=get_base_config().clone_and_edit(enable_weights_quantization=False),
+                              bitwidth_candidates=get_full_bitwidth_candidates())
 
         # Filtering nodes; candidates
         filtered_graph = copy.deepcopy(graph)
@@ -135,7 +147,8 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         in_model = create_model_conv2d_relu(input_shape)
 
         graph = prepare_graph(in_model,
-                              base_config=get_base_config().clone_and_edit(enable_activation_quantization=False))
+                              base_config=get_base_config().clone_and_edit(enable_activation_quantization=False),
+                              bitwidth_candidates=get_full_bitwidth_candidates())
 
         # Filtering nodes; candidates
         filtered_graph = copy.deepcopy(graph)
@@ -148,6 +161,28 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         conv2d_candidates = filtered_configurable_nodes[0].candidates_quantization_cfg
         self.assertTrue(len(conv2d_candidates) == 3)
         self.assertTrue([c.weights_quantization_cfg.weights_n_bits for c in conv2d_candidates] == [8, 4, 2])
+
+    def test_cfg_filter_multiple_candidates_weights_disabled(self):
+        input_shape = (8, 8, 3)
+        in_model = create_model_single_conv2d(input_shape)
+
+        graph = prepare_graph(in_model,
+                              base_config=get_base_config().clone_and_edit(enable_weights_quantization=False),
+                              bitwidth_candidates=[(8, 8), (4, 8), (2, 8)])
+
+        # Filtering nodes; candidates
+        filtered_graph = copy.deepcopy(graph)
+        filter_nodes_candidates(filtered_graph)
+
+        filtered_graph_nodes = list(filtered_graph.nodes)
+
+        # checking that layers with weights (conv2d) have filtered weights configurations list
+        # when activation quantization is disabled
+        conv2d_candidates = filtered_graph_nodes[1].candidates_quantization_cfg
+        self.assertTrue(len(conv2d_candidates) == 1)
+        candidate = conv2d_candidates[0]
+        self.assertTrue((candidate.weights_quantization_cfg.weights_n_bits,
+                         candidate.activation_quantization_cfg.activation_n_bits) == (DEFAULT_CANDIDATE_BITWIDTH, 8))
 
 
 if __name__ == '__main__':

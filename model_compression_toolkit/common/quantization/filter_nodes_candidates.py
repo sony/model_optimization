@@ -32,8 +32,8 @@ def filter_nodes_candidates(graph: Graph):
         graph: Graph for which to add quantization info to each node.
     """
 
-    configurable_sorted_nodes = graph.get_configurable_sorted_nodes()
-    for n in configurable_sorted_nodes:
+    nodes = list(graph.nodes)
+    for n in nodes:
         n.candidates_quantization_cfg = filter_node_candidates(node=n)
 
 
