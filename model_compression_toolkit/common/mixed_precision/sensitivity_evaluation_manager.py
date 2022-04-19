@@ -51,7 +51,7 @@ class SensitivityEvaluationManager:
 
         # Get interest points for distance measurement and a list of sorted configurable nodes names
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names()
-        self.interest_points = graph.get_configurable_sorted_nodes()
+        self.interest_points = get_mp_interest_points(graph, fw_info)
 
         # Build a mixed-precision model which can be configured to use different bitwidth in different layers.
         # And a baseline model.
@@ -134,6 +134,17 @@ class SensitivityEvaluationManager:
         # Assert we used a correct number of images for computing the distance matrix
         assert distance_matrix.shape[1] == self.quant_config.num_of_images
         return distance_matrix
+
+
+def get_mp_interest_points(graph: Graph, fw_info: FrameworkInfo):
+    sorted_nodes = graph.get_topo_sorted_nodes()
+    kernel_nodes = list(filter(lambda n: fw_info.get_kernel_op_attributes(n.type)[0] is not None, sorted_nodes))
+
+    # We add the last configurable node to the list of interest points, since we need it to be able to include all
+    # configurable nodes in the sensitivity metric computation
+    last_conf_node = graph.get_configurable_sorted_nodes()[-1]
+    interest_points_nodes = kernel_nodes if last_conf_node in kernel_nodes else kernel_nodes + [last_conf_node]
+    return interest_points_nodes
 
 
 def build_models(graph: Graph, fw_info: FrameworkInfo, interest_points: List[BaseNode], model_builder: Callable) -> Any:
