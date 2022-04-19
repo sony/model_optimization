@@ -32,7 +32,7 @@ from model_compression_toolkit.keras.graph_substitutions.substitutions.remove_re
 from model_compression_toolkit.keras.graph_substitutions.substitutions.multi_head_attention_decomposition import \
     MultiHeadAttentionDecomposition
 from model_compression_toolkit.keras.graph_substitutions.substitutions.scale_equalization import \
-    ScaleEqualization, ScaleEqualizationWithPad
+    ScaleEqualization, ScaleEqualizationWithPad, ScaleEqualizationMidActivation, ScaleEqualizationMidActivationWithPad
 from model_compression_toolkit.keras.graph_substitutions.substitutions.separableconv_decomposition import \
     SeparableConvDecomposition
 from model_compression_toolkit.keras.graph_substitutions.substitutions.shift_negative_activation import \
@@ -200,7 +200,9 @@ class KerasImplementation(FrameworkImplementation):
         substitutions_list = []
         if quant_config.activation_channel_equalization:
             substitutions_list.extend([ScaleEqualization(quant_config, fw_info),
-                                       ScaleEqualizationWithPad(quant_config, fw_info)])
+                                       ScaleEqualizationWithPad(quant_config, fw_info),
+                                       ScaleEqualizationMidActivation(quant_config, fw_info),
+                                       ScaleEqualizationMidActivationWithPad(quant_config, fw_info)])
         return substitutions_list
 
     def get_substitutions_prepare_graph(self) -> List[common.BaseSubstitution]:

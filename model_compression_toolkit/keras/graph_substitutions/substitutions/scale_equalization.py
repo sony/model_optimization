@@ -32,19 +32,29 @@ op2d_node = NodeOperationMatcher(DepthwiseConv2D) | \
             NodeOperationMatcher(Conv2DTranspose) | \
             NodeOperationMatcher(Dense)
 
-activation_nodes = NodeFrameworkAttrMatcher(ACTIVATION, RELU) | \
-                   NodeOperationMatcher(ReLU) | \
+
+homogeneous_activation_nodes = op2d_node & NodeFrameworkAttrMatcher(ACTIVATION, RELU)
+
+activation_nodes = NodeOperationMatcher(ReLU) | \
                    NodeOperationMatcher(relu)
 
 zeropad_node = NodeOperationMatcher(ZeroPadding2D)
 
-MATCHER = WalkMatcher([op2d_node,
-                       activation_nodes,
+MATCHER = WalkMatcher([homogeneous_activation_nodes,
                        op2d_node])
-MATCHER_WITH_PAD = WalkMatcher([op2d_node,
-                                activation_nodes,
+
+MATCHER_WITH_PAD = WalkMatcher([homogeneous_activation_nodes,
                                 zeropad_node,
                                 op2d_node])
+
+MATCHER_MID = WalkMatcher([op2d_node,
+                           activation_nodes,
+                           op2d_node])
+
+MATCHER_MID_WITH_PAD = WalkMatcher([op2d_node,
+                                    activation_nodes,
+                                    zeropad_node,
+                                    op2d_node])
 
 
 class ScaleEqualization(BaseScaleEqualization):
@@ -69,14 +79,14 @@ class ScaleEqualization(BaseScaleEqualization):
 
 class ScaleEqualizationWithPad(BaseScaleEqualization):
     """
-    Substitution extends BaseScaleEqualization to the case of Linear-->ZeroPadding-->Linear
+    Substitution extends BaseScaleEqualization to the case of Linear--> ZeroPadding--> Linear
     """
 
     def __init__(self,
                  quant_config: QuantizationConfig,
                  fw_info: FrameworkInfo):
         """
-        Initialize a ScaleEqualization object.
+        Initialize a ScaleEqualizationWithPad object.
         Args:
             quant_config: Quantization configuration.
             fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
@@ -84,4 +94,45 @@ class ScaleEqualizationWithPad(BaseScaleEqualization):
         """
 
         super().__init__(quant_config=quant_config, fw_info=fw_info, matcher_instance=MATCHER_WITH_PAD,
+                         kernel_str=KERNEL, bias_str=BIAS)
+
+
+class ScaleEqualizationMidActivation(BaseScaleEqualization):
+    """
+    Substitution extends BaseScaleEqualization to the case of Linear--> RelU--> Linear
+
+    """
+
+    def __init__(self,
+                 quant_config: QuantizationConfig,
+                 fw_info: FrameworkInfo):
+        """
+        Initialize a ScaleEqualizationMidActivation object.
+        Args:
+            quant_config: Quantization configuration.
+            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
+            groups of layers by how they should be quantized, etc.)
+        """
+
+        super().__init__(quant_config=quant_config, fw_info=fw_info, matcher_instance=MATCHER_MID,
+                         kernel_str=KERNEL, bias_str=BIAS)
+
+
+class ScaleEqualizationMidActivationWithPad(BaseScaleEqualization):
+    """
+    Substitution extends BaseScaleEqualization to the case of Linear--> RelU--> ZeroPadding--> Linear
+    """
+
+    def __init__(self,
+                 quant_config: QuantizationConfig,
+                 fw_info: FrameworkInfo):
+        """
+        Initialize a ScaleEqualizationMidActivationWithPad object.
+        Args:
+            quant_config: Quantization configuration.
+            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
+            groups of layers by how they should be quantized, etc.)
+        """
+
+        super().__init__(quant_config=quant_config, fw_info=fw_info, matcher_instance=MATCHER_MID_WITH_PAD,
                          kernel_str=KERNEL, bias_str=BIAS)

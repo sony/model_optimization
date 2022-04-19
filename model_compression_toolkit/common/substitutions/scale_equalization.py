@@ -25,8 +25,24 @@ from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 
 
-# calc fixed mean after relu
-def fixed_mean_after_relu(mu, std):
+# We assume to have Gaussian distribution before the RelU operation
+# Hence, the activations after the RelU operation have Rectified Gaussian distribution
+# We need to calculate the "fixed" mean and std of the "new" activations
+# For more information about Rectified Gaussian distribution:
+# https://en.wikipedia.org/wiki/Rectified_Gaussian_distribution
+
+def fixed_mean_after_relu(mu: np.ndarray,
+                          std: np.ndarray):
+    """
+    Calculate fixed mean after relu
+
+    Args:
+        mu: Mean vector of the activations before the RelU operation.
+        std: Std vector of the activations before the RelU operation.
+
+    Returns:
+        The fixed mean vector of the activations before the RelU operation.
+    """
     variance = np.power(std, 2)
     mean_pow_2 = np.power(mu, 2)
     prob_const = 1 / np.sqrt(2 * variance * np.pi)
@@ -37,8 +53,18 @@ def fixed_mean_after_relu(mu, std):
     return fixed_mean
 
 
-# calc fixed second moment after relu
-def fixed_second_moment_after_relu(mu, std):
+def fixed_second_moment_after_relu(mu: np.ndarray,
+                                   std: np.ndarray):
+    """
+    Calculate fixed std after relu
+
+    Args:
+        mu: Mean vector of the activations before the RelU operation.
+        std: Std vector of the activations before the RelU operation.
+
+    Returns:
+        The fixed std vector of the activations before the RelU operation.
+    """
     variance = np.power(std, 2)
     mean_pow_2 = np.power(mu, 2)
     prob_const = 1 / np.sqrt(2 * variance * np.pi)
@@ -55,7 +81,7 @@ def scale_reshaping(scale: np.ndarray,
                     kernel_str: str,
                     in_channels: bool = True) -> np.ndarray:
     """
-    Before scaling a kernel, the scale factor needs is reshaped to the correct
+    Before scaling a kernel, the scale factor needs to be reshaped to the correct
     dimensions. This is a function of the layer that is scaled and whether its input channels or
     output channels that should be scaled.
     The index of the correct kernel index is obtained from kernel_channel_mapping.
@@ -87,7 +113,6 @@ def update_linear_nodes(fw_info: FrameworkInfo,
     Scale the weights of two linear nodes with a scale factor. Each node is scaled in
     the opposite scale factor such that the output of the second node is the same as it
     is without the scaling.
-    Thresholds are recalculated as the weights were changed.
     The scale factor contain a scale value per-channel.
 
     Args:
@@ -122,9 +147,7 @@ def update_linear_nodes(fw_info: FrameworkInfo,
 
 def calculate_scale_correction(first_op2d_node: BaseNode) -> tuple:
     """
-    Compute a scale factor by the activation node threshold and its outputs statistics in
-    order to scale all activations such that their maximal values are the activation node's
-    constrained threshold.
+    Compute a scale factor by the activation node's outputs statistics in order to scale the activations by channel.
 
     Args:
         first_op2d_node: Node to calculate the scale factor by.
@@ -151,8 +174,7 @@ def scale_equalization_lnl(fw_info: FrameworkInfo,
                            kernel_str: str,
                            bias_str: str):
     """
-    Compute a scale factor to scale all activation node's outputs such that
-    its maximum per-channel is the constrained threshold of the activation node.
+    Compute a scale factor by the activation node's outputs statistics in order to scale the activations by channel.
     A correction (opposite computed scale) needs to be applied on the linear node that
     follows the activation node to get the same expected output without the scaling.
 
