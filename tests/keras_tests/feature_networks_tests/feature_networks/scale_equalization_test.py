@@ -17,24 +17,34 @@
 import numpy as np
 import tensorflow as tf
 
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+import model_compression_toolkit as mct
+from model_compression_toolkit.common.substitutions.scale_equalization import fixed_second_moment_after_relu, \
+    fixed_mean_after_relu
+from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from tests.keras_tests.fw_hw_model_keras import get_16bit_fw_hw_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-
-import model_compression_toolkit as mct
 
 keras = tf.keras
 layers = keras.layers
 
 
+def gamma_init():
+    return tf.keras.initializers.RandomNormal(mean=10.0, stddev=1.0, seed=None)
+
+
+"""
+This test checks the Channel Scale Equalization feature.
+"""
+
+
 class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
-    def __init__(self, unit_test, first_op2d, second_op2d, mid_activation=False, second_op2d_zero_pad=False):
+    def __init__(self, unit_test, first_op2d, second_op2d, act_node=layers.ReLU(), zero_pad=False):
         self.first_op2d = first_op2d
+        self.act_node = act_node
         self.second_op2d = second_op2d
-        self.mid_act = mid_activation
-        self.second_op2d_zero_pad = second_op2d_zero_pad
+        self.zero_pad = zero_pad
         super().__init__(unit_test,
-                         input_shape=(16,16,3))
+                         input_shape=(16, 16, 3))
 
     def get_fw_hw_model(self):
         return get_16bit_fw_hw_model("scale_equalization_bound_test")
@@ -47,27 +57,57 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = self.first_op2d(inputs)
-        if self.mid_act:
-            x = layers.ReLU()(x)
-        if self.second_op2d_zero_pad:
+        x = layers.BatchNormalization(gamma_initializer=gamma_init())(x)
+        x = self.act_node(x)
+        if self.zero_pad:
             x = layers.ZeroPadding2D()(x)
         outputs = self.second_op2d(x)
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         q_first_linear_op_index = 2
-        q_second_linear_op_index = 4 + int(self.second_op2d_zero_pad) + int(self.mid_act) + int(isinstance(self.first_op2d, (layers.Dense, layers.Conv2DTranspose)) and self.mid_act)
+        q_second_linear_op_index = 5 + int(self.zero_pad) + int(
+            isinstance(self.first_op2d, (layers.Dense, layers.Conv2DTranspose)))
         f_first_linear_op_index = 1
-        f_second_linear_op_index = 2 + int(self.second_op2d_zero_pad) + int(self.mid_act)
+        f_second_linear_op_index = 4 + int(self.zero_pad)
 
+        quantized_model_layer1_weight = quantized_model.layers[q_first_linear_op_index].weights[0]
+        quantized_model_layer2_weight = quantized_model.layers[q_second_linear_op_index].weights[0]
+        float_model_layer1_weight = float_model.layers[f_first_linear_op_index].weights[0]
+        float_model_layer2_weight = float_model.layers[f_second_linear_op_index].weights[0]
 
-        alpha_nonzero_index = quantized_model.layers[q_first_linear_op_index].weights[0].numpy() != 0
-        alpha = ((quantized_model.layers[q_first_linear_op_index].weights[0]) / (float_model.layers[f_first_linear_op_index].weights[0])).numpy()
-        alpha = alpha[alpha_nonzero_index].mean()
+        gamma = np.abs(float_model.layers[f_first_linear_op_index + 1].gamma)
+        bn_beta = float_model.layers[f_first_linear_op_index + 1].beta
 
-        beta_nonzero_index = quantized_model.layers[q_second_linear_op_index].weights[0].numpy() != 0
-        beta = ((float_model.layers[f_second_linear_op_index].weights[0]) / (quantized_model.layers[q_second_linear_op_index].weights[0])).numpy()
-        beta = beta[beta_nonzero_index].mean()
+        fixed_second_moment_vector = fixed_second_moment_after_relu(bn_beta, gamma)
+        fixed_mean_vector = fixed_mean_after_relu(bn_beta, gamma)
+        fixed_std_vector = np.sqrt(fixed_second_moment_vector - np.power(fixed_mean_vector, 2))
+
+        scale_factor = 1.0 / fixed_std_vector
+        scale_factor = np.minimum(scale_factor, 1.0)
+
+        quantized_model_layer1_weight_without_bn_fold = quantized_model_layer1_weight / gamma
+
+        if (type(quantized_model.layers[q_first_linear_op_index]) == layers.DepthwiseConv2D) \
+                or (type(quantized_model.layers[q_second_linear_op_index]) == layers.DepthwiseConv2D):
+            alpha = np.mean(quantized_model_layer1_weight_without_bn_fold / float_model_layer1_weight)
+            beta = np.mean(float_model_layer2_weight / quantized_model_layer2_weight)
+            scale_factor = np.mean(scale_factor)
+        else:
+            first_layer_chn_dim = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(
+                type(quantized_model.layers[q_first_linear_op_index]))[0]
+            second_layer_chn_dim = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(
+                type(quantized_model.layers[q_second_linear_op_index]))[1]
+
+            first_layer_axes = tuple(np.delete(np.arange(quantized_model_layer1_weight.numpy().ndim),
+                                               first_layer_chn_dim))
+            second_layer_axes = tuple(np.delete(np.arange(quantized_model_layer2_weight.numpy().ndim),
+                                                second_layer_chn_dim))
+
+            alpha = np.mean(quantized_model_layer1_weight_without_bn_fold / float_model_layer1_weight,
+                            axis=first_layer_axes)
+            beta = np.mean(float_model_layer2_weight / quantized_model_layer2_weight, axis=second_layer_axes)
 
         self.unit_test.assertTrue(np.allclose(alpha, beta, atol=1e-1))
-
+        self.unit_test.assertTrue((np.isclose(alpha, 1.0, atol=1e-1) + np.less(alpha, 1.0)).all())
+        self.unit_test.assertTrue(np.allclose(alpha, scale_factor, atol=1e-1))

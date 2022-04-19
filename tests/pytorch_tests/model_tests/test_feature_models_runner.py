@@ -23,6 +23,11 @@ from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUB
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
     SoftmaxFunctionNetTest
+from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test import \
+    ScaleEqualizationWithZeroPadNetTest, ScaleEqualizationNetTest, \
+    ScaleEqualizationReluFuncNetTest, ScaleEqualizationReluFuncWithZeroPadNetTest, \
+    ScaleEqualizationConvTransposeWithZeroPadNetTest, ScaleEqualizationReluFuncConvTransposeWithZeroPadNetTest, \
+    ScaleEqualizationConvTransposeReluFuncNetTest
 from tests.pytorch_tests.model_tests.feature_models.layer_name_test import ReuseNameNetTest
 from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTQuantizerTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_test import MixedPercisionSearch8Bit, \
@@ -82,6 +87,52 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the Softmax shift feature with Softmax as function.
         """
         SoftmaxFunctionNetTest(self).run_test()
+
+    def test_scale_equalization(self):
+        """
+        This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a layer
+        """
+        ScaleEqualizationNetTest(self).run_test()
+
+    def test_scale_equalization_with_zero_pad(self):
+        """
+        This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a layer
+        and with zero padding.
+        """
+        ScaleEqualizationWithZeroPadNetTest(self).run_test()
+
+    def test_scale_equalization_with_relu_func(self):
+        """
+        This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a function
+        """
+        ScaleEqualizationReluFuncNetTest(self).run_test()
+
+    def test_scale_equalization_with_relu_func_zero_pad(self):
+        """
+        This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a function
+        and with zero padding.
+        """
+        ScaleEqualizationReluFuncWithZeroPadNetTest(self).run_test()
+
+    def test_scale_equalization_conv_transpose_with_zero_pad(self):
+        """
+        This test checks the Channel Scale Equalization feature in ConvTranspose2D - Relu - Conv2D with Relu as a layer
+        and with zero padding.
+        """
+        ScaleEqualizationConvTransposeWithZeroPadNetTest(self).run_test()
+
+    def test_scale_equalization_with_relu_func_conv_transpose(self):
+        """
+        This test checks the Channel Scale Equalization feature in ConvTranspose2D - Relu - Conv2D with Relu as a function.
+        """
+        ScaleEqualizationConvTransposeReluFuncNetTest(self).run_test()
+
+    def test_scale_equalization_conv_transpose_with_relu_func_zero_pad(self):
+        """
+        This test checks the Channel Scale Equalization feature in Conv2D - Relu - ConvTranspose2D with Relu as a function
+        and with zero padding.
+        """
+        ScaleEqualizationReluFuncConvTransposeWithZeroPadNetTest(self).run_test()
 
     def test_layer_name(self):
         """

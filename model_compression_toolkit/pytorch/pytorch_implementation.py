@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Any, Tuple, Callable
+from typing import List, Any, Tuple, Callable, Type
 import numpy as np
 import torch
 from torch.nn import Module
@@ -23,6 +23,7 @@ from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.common.collectors.statistics_collector_generator import create_stats_collector_for_node
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.common.gptq.gptq_training import GPTQTrainer
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.common.user_info import UserInformation
@@ -33,6 +34,8 @@ from model_compression_toolkit.pytorch.graph_substitutions.substitutions.batchno
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.mark_activation import MarkActivation
+from model_compression_toolkit.pytorch.graph_substitutions.substitutions.scale_equalization import ScaleEqualization, \
+    ScaleEqualizationWithPad
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
     pytorch_apply_shift_negative_correction
 from model_compression_toolkit.pytorch.mixed_precision.sensitivity_evaluation import get_sensitivity_evaluation
@@ -97,7 +100,8 @@ class PytorchImplementation(FrameworkImplementation):
                       graph: Graph,
                       mode: ModelBuilderMode,
                       append2output: List[Any] = None,
-                      fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO) -> Tuple[Module, UserInformation]:
+                      fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
+                      gptq_config: GradientPTQConfig = None) -> Tuple[Module, UserInformation]:
         """
         Build a Pytorch module from a graph.
         The mode determines how the module should be build. append2output is a list of Nodes
@@ -107,13 +111,15 @@ class PytorchImplementation(FrameworkImplementation):
             mode: Mode for how to build the module.
             append2output: List of Nodes to set as the module's outputs.
             fw_info: FrameworkInfo object with information about the specific framework's module
+            gptq_config: GPTQ configuration class
         Returns:
             A tuple of the Pytorch module that was built and an UserInformation object.
         """
         return model_builder(graph,
                              mode,
                              append2output,
-                             fw_info)
+                             fw_info,
+                             gptq_config)
 
     def run_model_inference(self,
                             model: Any,
@@ -167,6 +173,25 @@ class PytorchImplementation(FrameworkImplementation):
         """
         return [MarkActivation()]
 
+    def get_substitutions_channel_equalization(self,
+                                               quant_config: QuantizationConfig,
+                                               fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
+        """
+        Return a list of the framework substitutions used for channel equalization.
+
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+            fw_info: FrameworkInfo object with information about the specific framework's model.
+
+        Returns:
+            A list of the framework substitutions used after we collect statistics.
+        """
+        substitutions_list = []
+        if quant_config.activation_channel_equalization:
+            substitutions_list.extend([ScaleEqualization(quant_config, fw_info),
+                                       ScaleEqualizationWithPad(quant_config, fw_info)])
+        return substitutions_list
+
     def get_substitutions_prepare_graph(self) -> List[common.BaseSubstitution]:
         """
 
@@ -176,8 +201,12 @@ class PytorchImplementation(FrameworkImplementation):
         return []
 
     def get_substitutions_pre_statistics_collection(self,
-                                                    quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
+                                                    quant_config: QuantizationConfig
+                                                    ) -> List[common.BaseSubstitution]:
         """
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+
         Returns: A list of the framework substitutions used before we build a quantized module.
         """
         substitutions_list = [pytorch_batchnorm_folding()]
@@ -201,43 +230,15 @@ class PytorchImplementation(FrameworkImplementation):
             raise Exception('Input scaling is currently not supported for Pytorch.')
         return substitutions_list
 
-    def get_substitutions_channel_equalization(self,
-                                               quant_config: QuantizationConfig,
-                                               fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
-        """
-        Return a list of the framework substitutions used for channel equalization.
-        Args:
-            quant_config: QuantizationConfig to determine which substitutions to return.
-            fw_info: FrameworkInfo object with information about the specific framework's module.
-        Returns:
-            A list of the framework substitutions used after we collect statistics.
-        """
-        if quant_config.activation_channel_equalization:
-            raise Exception('Activation channel equalization is currently not supported for Pytorch.')
-        substitutions_list = []
-        return substitutions_list
-
     def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:
         """
         Returns: A list of the framework substitutions used before we build a quantized module.
         """
         return []
 
-    def gptq_training(self,
-                      graph: Graph,
-                      representative_data_gen: Callable,
-                      gptq_config: GradientPTQConfig,
-                      fw_info: FrameworkInfo) -> Graph:
+    def get_gptq_trainer_obj(self) -> Type[GPTQTrainer]:
         """
-        Update a graph using GPTQ after minimizing the loss between the float module's output
-        and the quantized module's outputs.
-        Args:
-            graph: Graph to fine-tune.
-            representative_data_gen: Dataset to use for inputs of the models.
-            gptq_config: GradientPTQConfig with configuration for the fine-tuning process.
-            fw_info: FrameworkInfo object with information about the specific framework's module.
-        Returns:
-            Updated graph after GPTQ.
+        Returns: GPTQTrainer object
         """
         raise Exception('This feature is currently not yet available for Pytorch models. Work in progress.')
 
