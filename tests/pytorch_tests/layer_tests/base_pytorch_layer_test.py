@@ -111,13 +111,6 @@ def get_layer_weights(layer):
     return weights
 
 
-def get_layer_test_fw_hw_model_dict(hardware_model, test_name, fhwm_name):
-    return {
-        test_name: generate_fhw_model_pytorch(name=fhwm_name,
-                                              hardware_model=hardware_model),
-    }
-
-
 class BasePytorchLayerTest(BaseLayerTest):
     def __init__(self,
                  unit_test,

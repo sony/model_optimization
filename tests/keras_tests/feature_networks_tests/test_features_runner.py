@@ -163,35 +163,49 @@ class FeatureNetworkTest(unittest.TestCase):
         AddSameTest(self).run_test()
 
     def test_scale_equalization(self):
-        ScaleEqualizationTest(self, first_op2d=layers.Dense(30), second_op2d=layers.Dense(30)).run_test()
-        ScaleEqualizationTest(self, first_op2d=layers.Dense(30), second_op2d=layers.Dense(30),
-                              mid_activation=True).run_test()
-        ScaleEqualizationTest(self, first_op2d=layers.Dense(30), second_op2d=layers.Conv2D(3, 4)).run_test()
-        ScaleEqualizationTest(self, first_op2d=layers.Dense(30), second_op2d=layers.Conv2D(3, 4),
-                              mid_activation=True).run_test()
-        ScaleEqualizationTest(self, first_op2d=layers.DepthwiseConv2D(11), second_op2d=layers.Conv2D(3, 4)).run_test()
-        ScaleEqualizationTest(self, first_op2d=layers.DepthwiseConv2D(11), second_op2d=layers.Conv2D(3, 4),
-                              mid_activation=True).run_test()
-        ScaleEqualizationTest(self, first_op2d=layers.Dense(30), second_op2d=layers.DepthwiseConv2D(3)).run_test()
-        ScaleEqualizationTest(self, first_op2d=layers.Dense(30), second_op2d=layers.DepthwiseConv2D(3),
-                              mid_activation=True).run_test()
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2D(3, 4), second_op2d=layers.Conv2D(3, 4)).run_test()
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2D(3, 4), second_op2d=layers.Conv2DTranspose(3, 4)).run_test()
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2D(3, 4), second_op2d=layers.DepthwiseConv2D(3, 4)).run_test()
 
-        ScaleEqualizationTest(self, first_op2d=layers.Dense(30), second_op2d=layers.Dense(30),
-                              second_op2d_zero_pad=True).run_test()
-        ScaleEqualizationTest(self, first_op2d=layers.Dense(30), second_op2d=layers.Dense(30),
-                              mid_activation=True, second_op2d_zero_pad=True).run_test()
-        ScaleEqualizationTest(self, first_op2d=layers.Dense(30), second_op2d=layers.Conv2D(3, 4),
-                              second_op2d_zero_pad=True).run_test()
-        ScaleEqualizationTest(self, first_op2d=layers.Dense(30), second_op2d=layers.Conv2D(3, 4),
-                              mid_activation=True, second_op2d_zero_pad=True).run_test()
-        ScaleEqualizationTest(self, first_op2d=layers.DepthwiseConv2D(11), second_op2d=layers.Conv2D(3, 4),
-                              second_op2d_zero_pad=True).run_test()
-        ScaleEqualizationTest(self, first_op2d=layers.DepthwiseConv2D(11), second_op2d=layers.Conv2D(3, 4),
-                              mid_activation=True, second_op2d_zero_pad=True).run_test()
-        ScaleEqualizationTest(self, first_op2d=layers.Dense(30), second_op2d=layers.DepthwiseConv2D(3),
-                              second_op2d_zero_pad=True).run_test()
-        ScaleEqualizationTest(self, first_op2d=layers.Dense(30), second_op2d=layers.DepthwiseConv2D(3),
-                              mid_activation=True, second_op2d_zero_pad=True).run_test()
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2D(3, 4), second_op2d=layers.Conv2D(3, 4),
+                              zero_pad=True).run_test()
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2D(3, 4), second_op2d=layers.Conv2DTranspose(3, 4),
+                              zero_pad=True).run_test()
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2D(3, 4), second_op2d=layers.DepthwiseConv2D(3, 4),
+                              zero_pad=True).run_test()
+
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2D(3, 4), second_op2d=layers.Conv2D(3, 4),
+                              act_node=tf.nn.relu).run_test()
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2D(3, 4), second_op2d=layers.Conv2DTranspose(3, 4),
+                              act_node=tf.nn.relu).run_test()
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2D(3, 4), second_op2d=layers.DepthwiseConv2D(3, 4),
+                              act_node=tf.nn.relu).run_test()
+
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2D(3, 4), second_op2d=layers.Conv2D(3, 4),
+                              act_node=tf.nn.relu, zero_pad=True).run_test()
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2D(3, 4), second_op2d=layers.Conv2DTranspose(3, 4),
+                              act_node=tf.nn.relu, zero_pad=True).run_test()
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2D(3, 4), second_op2d=layers.DepthwiseConv2D(3, 4),
+                              act_node=tf.nn.relu, zero_pad=True).run_test()
+
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2DTranspose(3, 4), second_op2d=layers.Conv2D(3, 4)).run_test()
+        ScaleEqualizationTest(self, first_op2d=layers.DepthwiseConv2D(3, 4), second_op2d=layers.Conv2DTranspose(3, 4)
+                              ).run_test()
+
+        ScaleEqualizationTest(self, first_op2d=layers.DepthwiseConv2D(3, 4), second_op2d=layers.Conv2D(3, 4),
+                              zero_pad=True).run_test()
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2DTranspose(3, 4), second_op2d=layers.Conv2DTranspose(3, 4),
+                              zero_pad=True).run_test()
+
+        ScaleEqualizationTest(self, first_op2d=layers.DepthwiseConv2D(3, 4), second_op2d=layers.Conv2D(3, 4),
+                              act_node=tf.nn.relu).run_test()
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2DTranspose(3, 4), second_op2d=layers.DepthwiseConv2D(3, 4),
+                              act_node=tf.nn.relu).run_test()
+
+        ScaleEqualizationTest(self, first_op2d=layers.Conv2DTranspose(3, 4), second_op2d=layers.Conv2DTranspose(3, 4),
+                              act_node=tf.nn.relu, zero_pad=True).run_test()
+        ScaleEqualizationTest(self, first_op2d=layers.DepthwiseConv2D(3, 4), second_op2d=layers.DepthwiseConv2D(3, 4),
+                              act_node=tf.nn.relu, zero_pad=True).run_test()
 
     def test_multiple_inputs_model(self):
         MultipleInputsModelTest(self).run_test()

@@ -16,7 +16,7 @@ import model_compression_toolkit as mct
 import tensorflow as tf
 
 from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model, get_16bit_fw_hw_model
+from tests.keras_tests.fw_hw_model_keras import get_16bit_fw_hw_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from model_compression_toolkit.keras.back2framework.model_builder import is_layer_fake_quant

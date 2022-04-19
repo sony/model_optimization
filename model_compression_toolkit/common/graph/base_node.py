@@ -210,6 +210,19 @@ class BaseNode:
 
         return memory
 
+    def get_float_memory_bytes(self, fw_info) -> float:
+        """
+        Compute the number of bytes the node's memory requires.
+
+        Args:
+            fw_info: Framework info to decide which attributes should be quantized.
+
+        Returns: Number of bytes the node's memory requires when in floating point (32 bit).
+
+        """
+        q_params, f_params = self.get_num_parameters(fw_info)
+        return (f_params + q_params) * 32 / 8 # in bytes
+
     def get_unified_weights_candidates_dict(self):
         """
         In Mixed-Precision, a node can have multiple candidates for weights quantization configuration.

@@ -20,7 +20,7 @@ from model_compression_toolkit.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod
 from model_compression_toolkit.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
-from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import get_layer_test_fw_hw_model_dict
+from tests.pytorch_tests.fw_hw_model_pytorch import get_pytorch_test_fw_hw_model_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 hw_model = mct.hardware_representation
@@ -78,9 +78,10 @@ class LUTQuantizerTest(BasePytorchTest):
         self.kernel = 3
 
     def get_fw_hw_model(self):
-        return get_layer_test_fw_hw_model_dict(hardware_model=generate_test_hw_model({"weights_n_bits": self.weights_n_bits}),
-                                               test_name='lut_quantizer_test',
-                                               fhwm_name='lut_quantizer_pytorch_test')
+        return get_pytorch_test_fw_hw_model_dict(
+            hardware_model=generate_test_hw_model({"weights_n_bits": self.weights_n_bits}),
+            test_name='lut_quantizer_test',
+            fhwm_name='lut_quantizer_pytorch_test')
 
     def get_quantization_configs(self):
         return {'lut_quantizer_test': mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
