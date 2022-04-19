@@ -34,6 +34,8 @@ from model_compression_toolkit.pytorch.graph_substitutions.substitutions.batchno
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.mark_activation import MarkActivation
+from model_compression_toolkit.pytorch.graph_substitutions.substitutions.scale_equalization import ScaleEqualization, \
+    ScaleEqualizationWithPad
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
     pytorch_apply_shift_negative_correction
 from model_compression_toolkit.pytorch.mixed_precision.sensitivity_evaluation import get_sensitivity_evaluation
@@ -171,6 +173,25 @@ class PytorchImplementation(FrameworkImplementation):
         """
         return [MarkActivation()]
 
+    def get_substitutions_channel_equalization(self,
+                                               quant_config: QuantizationConfig,
+                                               fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
+        """
+        Return a list of the framework substitutions used for channel equalization.
+
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+            fw_info: FrameworkInfo object with information about the specific framework's model.
+
+        Returns:
+            A list of the framework substitutions used after we collect statistics.
+        """
+        substitutions_list = []
+        if quant_config.activation_channel_equalization:
+            substitutions_list.extend([ScaleEqualization(quant_config, fw_info),
+                                       ScaleEqualizationWithPad(quant_config, fw_info)])
+        return substitutions_list
+
     def get_substitutions_prepare_graph(self) -> List[common.BaseSubstitution]:
         """
 
@@ -180,8 +201,12 @@ class PytorchImplementation(FrameworkImplementation):
         return []
 
     def get_substitutions_pre_statistics_collection(self,
-                                                    quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
+                                                    quant_config: QuantizationConfig
+                                                    ) -> List[common.BaseSubstitution]:
         """
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+
         Returns: A list of the framework substitutions used before we build a quantized module.
         """
         substitutions_list = [pytorch_batchnorm_folding()]
@@ -203,22 +228,6 @@ class PytorchImplementation(FrameworkImplementation):
             substitutions_list.append(pytorch_softmax_shift())
         if quant_config.input_scaling:
             raise Exception('Input scaling is currently not supported for Pytorch.')
-        return substitutions_list
-
-    def get_substitutions_channel_equalization(self,
-                                               quant_config: QuantizationConfig,
-                                               fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
-        """
-        Return a list of the framework substitutions used for channel equalization.
-        Args:
-            quant_config: QuantizationConfig to determine which substitutions to return.
-            fw_info: FrameworkInfo object with information about the specific framework's module.
-        Returns:
-            A list of the framework substitutions used after we collect statistics.
-        """
-        if quant_config.activation_channel_equalization:
-            raise Exception('Activation channel equalization is currently not supported for Pytorch.')
-        substitutions_list = []
         return substitutions_list
 
     def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:
