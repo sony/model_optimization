@@ -28,6 +28,7 @@ class KPI(object):
 
         Args:
             weights_memory: Memory of a model's weights in bytes. Note that this includes only coefficients that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value, while the bias will not).
+            activation_memory: Memory of a model's activation in bytes, according to the given activation kpi metric.
         """
         self.weights_memory = weights_memory
         self.activation_memory = activation_memory

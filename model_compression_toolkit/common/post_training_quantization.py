@@ -29,7 +29,7 @@ from model_compression_toolkit.common import FrameworkInfo
 from model_compression_toolkit.common.constants import NUM_SAMPLES_CS_TENSORBOARD
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.mixed_precision.bit_width_setter import set_bit_widths
-
+from model_compression_toolkit.common.gptq.gptq_training import gptq_training
 from model_compression_toolkit.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.network_editors.actions import EditRule
@@ -247,7 +247,7 @@ def _apply_gptq(gptq_config: GradientPTQConfig,
         tg: Float Reference Graph.
         tg_bias: Graph of quantized model.
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).
-
+        fw_impl: Framework implementation per framework
     Returns:
 
     """
@@ -255,11 +255,12 @@ def _apply_gptq(gptq_config: GradientPTQConfig,
         common.Logger.info("Using experimental Gradient Based PTQ: If you encounter an issue "
                            "please file a bug. To disable it, do not pass a gptq configuration.")
 
-        tg_bias = fw_impl.gptq_training(tg,
-                                        tg_bias,
-                                        representative_data_gen,
-                                        gptq_config,
-                                        fw_info)
+        tg_bias = gptq_training(tg,
+                                tg_bias,
+                                gptq_config,
+                                representative_data_gen,
+                                fw_impl,
+                                fw_info)
 
         if tb_w is not None:
             tb_w.add_graph(tg_bias, 'after_gptq')

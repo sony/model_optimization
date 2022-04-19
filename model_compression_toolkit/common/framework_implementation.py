@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from abc import ABC, abstractmethod
-from typing import Callable, Any, List, Tuple
+from typing import Callable, Any, List, Tuple, Type
 
 import numpy as np
 
@@ -26,7 +26,6 @@ from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.user_info import UserInformation
-
 
 class FrameworkImplementation(ABC):
     """
@@ -90,7 +89,8 @@ class FrameworkImplementation(ABC):
                       graph: Graph,
                       mode: ModelBuilderMode,
                       append2output: List[Any],
-                      fw_info: FrameworkInfo) -> Tuple[Any, UserInformation]:
+                      fw_info: FrameworkInfo,
+                      gptq_config: GradientPTQConfig) -> Tuple[Any, UserInformation]:
         """
         Build a framework model from a graph.
         The mode determines how the model should be build. append2output is a list of Nodes
@@ -101,6 +101,7 @@ class FrameworkImplementation(ABC):
             mode: Mode for how to build the model.
             append2output: List of Nodes to set as the model's outputs.
             fw_info: FrameworkInfo object with information about the specific framework's model
+            gptq_config: GPTQ configuration class
 
         Returns:
             A tuple of the model that was built and an UserInformation object.
@@ -234,29 +235,12 @@ class FrameworkImplementation(ABC):
                              f'framework\'s get_substitutions_channel_equalization method.')
 
     @abstractmethod
-    def gptq_training(self,
-                      graph_float: Graph,
-                      graph_quant: Graph,
-                      representative_data_gen: Callable,
-                      gptq_config: GradientPTQConfig,
-                      fw_info: FrameworkInfo) -> Graph:
+    def get_gptq_trainer_obj(self):
         """
-        Update a graph using GPTQ after minimizing the loss between the float model's output
-        and the quantized model's outputs.
-
-        Args:
-            graph_float: Graph for reference.
-            graph_quant: Graph to fine-tune.
-            representative_data_gen: Dataset to use for inputs of the models.
-            gptq_config: GradientPTQConfig with configuration for the fine-tuning process.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
-
-        Returns:
-            Updated graph after GPTQ.
+        Returns: GPTQTrainer object
         """
-
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s gptq_training method.')
+                             f'framework\'s get_gptq_trainer method.')
 
     @abstractmethod
     def get_sensitivity_evaluation_fn(self,

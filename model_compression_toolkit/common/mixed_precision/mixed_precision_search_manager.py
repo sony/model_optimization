@@ -71,12 +71,24 @@ class MixedPrecisionSearchManager(object):
         return indices_mapping
 
     def get_min_activation_cfg(self):
+        """
+        Builds a mixed-precision config with the bitwidth indexes for model with minimal activation KPI.
+
+        Returns: A mp configuration (list of indices)
+
+        """
         nodes_to_configure = self.graph.get_configurable_sorted_nodes()
         nodes_activation_bitwidth_candidates = [[c.activation_quantization_cfg.activation_n_bits for c in
                                                  n.candidates_quantization_cfg] for n in nodes_to_configure]
         return [np.argmin(n_candidates) for n_candidates in nodes_activation_bitwidth_candidates]
 
     def get_min_weights_cfg(self):
+        """
+        Builds a mixed-precision config with the bitwidth indexes for model with minimal weights KPI.
+
+        Returns: A mp configuration (list of indices)
+
+        """
         nodes_to_configure = self.graph.get_configurable_sorted_nodes()
         nodes_weights_bitwidth_candidates = [[c.weights_quantization_cfg.weights_n_bits for c in
                                               n.candidates_quantization_cfg] for n in nodes_to_configure]
@@ -106,23 +118,23 @@ class MixedPrecisionSearchManager(object):
         """
 
         def _compute_kpi(mp_model_config: List[int],
-                         weights_only: bool = False,
-                         activation_only: bool = False) -> KPI:
+                         compute_weights_kpi: bool = True,
+                         compute_activation_kpi: bool = True) -> KPI:
             """
             Compute and return the KPI of a graph for a given mixed-precision bitwidth
             configuration.
 
             Args:
                 mp_model_config: Mixed-precision bitwidth configuration (list of integers).
-                weights_only: Flag that specifies to run computation only for weights memory.
-                activation_only: Flag that specifies to run computation only for activation memory.
+                compute_weights_kpi: Flag that specifies to run computation for weights memory.
+                compute_activation_kpi: Flag that specifies to run computation for activation memory.
 
             Returns:
                 KPI of a model when using the passed mixed-precision configuration.
 
             """
-            assert not (weights_only and activation_only), \
-                "Can't compute kpi for only weights and only activation at once"
+            assert compute_weights_kpi or compute_activation_kpi, \
+                "Compute KPI need at least one of weights/activation KPI to compute."
 
             weights_memory = 0
             activations_memory = 0
@@ -153,7 +165,7 @@ class MixedPrecisionSearchManager(object):
 
                 # Weights memory size computation
                 # Consider only the weights that should be quantized.
-                if not activation_only and n.is_weights_quantization_enabled() and \
+                if compute_weights_kpi and n.is_weights_quantization_enabled() and \
                         not n.is_all_weights_candidates_equal():
                     node_num_weights_params = 0
                     for attr in self.fw_info.get_kernel_op_attributes(n.type):
@@ -166,7 +178,7 @@ class MixedPrecisionSearchManager(object):
                     # Activation memory size computation
                     # Currently, consider layer's activation size as size of layer's output,
                     # and total model activations' size as sum of layers' output.
-                if not weights_only and n.is_activation_quantization_enabled() and \
+                if compute_activation_kpi and n.is_activation_quantization_enabled() and \
                         not n.is_all_activation_candidates_equal():
                     node_output_size = n.get_total_output_params()
                     node_activation_memory_in_bytes = node_output_size * node_nbits[1] / 8.0

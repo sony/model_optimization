@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Any, Tuple, Callable
+from typing import List, Any, Tuple, Callable, Type
 import numpy as np
 import torch
 from torch.nn import Module
@@ -23,6 +23,7 @@ from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.common.collectors.statistics_collector_generator import create_stats_collector_for_node
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.common.gptq.gptq_training import GPTQTrainer
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.common.user_info import UserInformation
@@ -97,7 +98,8 @@ class PytorchImplementation(FrameworkImplementation):
                       graph: Graph,
                       mode: ModelBuilderMode,
                       append2output: List[Any] = None,
-                      fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO) -> Tuple[Module, UserInformation]:
+                      fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
+                      gptq_config: GradientPTQConfig = None) -> Tuple[Module, UserInformation]:
         """
         Build a Pytorch module from a graph.
         The mode determines how the module should be build. append2output is a list of Nodes
@@ -107,13 +109,15 @@ class PytorchImplementation(FrameworkImplementation):
             mode: Mode for how to build the module.
             append2output: List of Nodes to set as the module's outputs.
             fw_info: FrameworkInfo object with information about the specific framework's module
+            gptq_config: GPTQ configuration class
         Returns:
             A tuple of the Pytorch module that was built and an UserInformation object.
         """
         return model_builder(graph,
                              mode,
                              append2output,
-                             fw_info)
+                             fw_info,
+                             gptq_config)
 
     def run_model_inference(self,
                             model: Any,
@@ -223,21 +227,9 @@ class PytorchImplementation(FrameworkImplementation):
         """
         return []
 
-    def gptq_training(self,
-                      graph: Graph,
-                      representative_data_gen: Callable,
-                      gptq_config: GradientPTQConfig,
-                      fw_info: FrameworkInfo) -> Graph:
+    def get_gptq_trainer_obj(self) -> Type[GPTQTrainer]:
         """
-        Update a graph using GPTQ after minimizing the loss between the float module's output
-        and the quantized module's outputs.
-        Args:
-            graph: Graph to fine-tune.
-            representative_data_gen: Dataset to use for inputs of the models.
-            gptq_config: GradientPTQConfig with configuration for the fine-tuning process.
-            fw_info: FrameworkInfo object with information about the specific framework's module.
-        Returns:
-            Updated graph after GPTQ.
+        Returns: GPTQTrainer object
         """
         raise Exception('This feature is currently not yet available for Pytorch models. Work in progress.')
 
