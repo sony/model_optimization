@@ -28,8 +28,8 @@ keras = tf.keras
 layers = keras.layers
 
 
-def gamma_init():
-    return tf.keras.initializers.RandomNormal(mean=10.0, stddev=1.0, seed=None)
+def w_init():
+    return tf.keras.initializers.RandomUniform(minval=1., maxval=10.)
 
 
 """
@@ -40,8 +40,10 @@ This test checks the Channel Scale Equalization feature.
 class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, first_op2d, second_op2d, act_node=layers.ReLU(), zero_pad=False):
         self.first_op2d = first_op2d
+        self.first_op2d.kernel_initializer = w_init()
         self.act_node = act_node
         self.second_op2d = second_op2d
+        self.second_op2d.kernel_initializer = w_init()
         self.zero_pad = zero_pad
         super().__init__(unit_test,
                          input_shape=(16, 16, 3))
@@ -57,7 +59,7 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = self.first_op2d(inputs)
-        x = layers.BatchNormalization(gamma_initializer=gamma_init())(x)
+        x = layers.BatchNormalization(gamma_initializer=w_init())(x)
         x = self.act_node(x)
         if self.zero_pad:
             x = layers.ZeroPadding2D()(x)
@@ -86,6 +88,13 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
         scale_factor = 1.0 / fixed_std_vector
         scale_factor = np.minimum(scale_factor, 1.0)
 
+        # disable bn folding
+        if type(quantized_model.layers[q_first_linear_op_index]) == layers.DepthwiseConv2D:
+            gamma = gamma.reshape(1, 1, quantized_model_layer1_weight.shape[-2], quantized_model_layer1_weight.shape[-1])
+        elif type(quantized_model.layers[q_first_linear_op_index]) == layers.Conv2DTranspose:
+            gamma = gamma.reshape(1, 1, -1, 1)
+        else:
+            gamma = gamma.reshape(1, 1, 1, -1)
         quantized_model_layer1_weight_without_bn_fold = quantized_model_layer1_weight / gamma
 
         if (type(quantized_model.layers[q_first_linear_op_index]) == layers.DepthwiseConv2D) \
