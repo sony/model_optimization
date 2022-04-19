@@ -24,6 +24,7 @@ from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh
 
 from model_compression_toolkit.common.hardware_representation.hardware2framework import LayerFilterParams
+from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import generate_fhw_model_pytorch
 from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder
 
 hwm = mct.hardware_representation
@@ -68,3 +69,10 @@ def generate_activation_mp_fhw_model_pytorch(hardware_model, name="activation_mp
                                                  DummyPlaceHolder])
 
     return fhwm_torch
+
+
+def get_pytorch_test_fw_hw_model_dict(hardware_model, test_name, fhwm_name):
+    return {
+        test_name: generate_fhw_model_pytorch(name=fhwm_name,
+                                              hardware_model=hardware_model),
+    }
