@@ -21,7 +21,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.common.substitutions.scale_equalization import fixed_second_moment_after_relu, \
     fixed_mean_after_relu
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
-from tests.common_tests.helpers.generate_test_hw_model import get_16bit_fw_hw_model
+from tests.keras_tests.fw_hw_model_keras import get_16bit_fw_hw_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras

@@ -16,10 +16,7 @@
 
 import numpy as np
 import tensorflow as tf
-from keras.layers import TFOpLambda
-
-from tests.common_tests.helpers.activation_mp_hw_model import generate_hw_model_with_activation_mp, \
-    generate_activation_mp_fhw_model_keras
+from tests.common_tests.helpers.activation_mp_hw_model import generate_hw_model_with_activation_mp
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from keras import backend as K
 
@@ -29,6 +26,7 @@ from model_compression_toolkit.common.mixed_precision.mixed_precision_quantizati
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.user_info import UserInformation
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
+from tests.keras_tests.fw_hw_model_keras import generate_activation_mp_fhw_model_keras
 
 keras = tf.keras
 layers = keras.layers

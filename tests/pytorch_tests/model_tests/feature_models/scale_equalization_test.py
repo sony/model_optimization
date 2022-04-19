@@ -22,7 +22,7 @@ from model_compression_toolkit.common.substitutions.scale_equalization import fi
     fixed_mean_after_relu
 from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
 from model_compression_toolkit.pytorch.utils import set_model
-from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import get_layer_test_fw_hw_model_dict
+from tests.pytorch_tests.fw_hw_model_pytorch import get_pytorch_test_fw_hw_model_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 
@@ -46,9 +46,9 @@ class ScaleEqualizationBaseTest(BasePytorchTest):
         return [[self.val_batch_size, 3, 32, 32]]
 
     def get_fw_hw_model(self):
-        return get_layer_test_fw_hw_model_dict(hardware_model=get_default_hardware_model(),
-                                               test_name='8bit_scale_equalization',
-                                               fhwm_name='8bit_scale_equalization_pytorch_test')
+        return get_pytorch_test_fw_hw_model_dict(hardware_model=get_default_hardware_model(),
+                                                 test_name='8bit_scale_equalization',
+                                                 fhwm_name='8bit_scale_equalization_pytorch_test')
 
     def get_quantization_configs(self):
         quant_config = self.get_quantization_config()

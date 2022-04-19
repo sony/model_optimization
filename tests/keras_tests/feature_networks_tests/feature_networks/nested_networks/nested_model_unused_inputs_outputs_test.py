@@ -16,7 +16,7 @@
 import model_compression_toolkit as mct
 import tensorflow as tf
 
-from tests.common_tests.helpers.generate_test_hw_model import get_quantization_disabled_keras_hw_model
+from tests.keras_tests.fw_hw_model_keras import get_quantization_disabled_keras_hw_model
 
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.engine.functional import Functional
