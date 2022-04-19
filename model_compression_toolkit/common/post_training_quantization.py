@@ -69,17 +69,16 @@ def post_training_quantization(in_model: Any,
                                network_editor: List[EditRule] = [],
                                gptq_config: GradientPTQConfig = None,
                                analyze_similarity: bool = False,
-                               target_kpi: KPI = None,):
+                               target_kpi: KPI = None, ):
     """
-    Quantize a trained model using post-training quantization. The model is quantized using a
-    symmetric constraint quantization thresholds (power of two).
-    The model is first optimized using several transformations (e.g. BatchNormalization folding to
-    preceding layers). Then, using a given dataset, statistics (e.g. min/max, histogram, etc.) are
-    being collected for each layer's output (and input, depends on the quantization configuration).
-    Thresholds are then being calculated using the collected statistics and the model is quantized
+    Quantize a trained model using post-training quantization.
+    First, the model graph is optimized using several transformations (e.g. folding BatchNormalization to preceding layers).
+    Second, statistics (e.g. min/max, histogram, etc.) are collected for each layer's output
+    (and input, depends on the quantization configuration) using a given representative dataset.
+    Next, quantization parameters are calculated using the collected statistics and the model is quantized
     (both coefficients and activations by default).
     If a gptq configuration is passed, the quantized weights are optimized using knowledge
-    distillation by comparing points between the float and quantized models, and minimizing the observed loss.
+    distillation. This is done by comparing points between the float and quantized models, and minimizing the observed loss.
 
     Args:
         in_model: Model to quantize.
@@ -88,6 +87,8 @@ def post_training_quantization(in_model: Any,
         quant_config: QuantizationConfig containing parameters of how the model should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/common/quantization/quantization_config.py#L163>`_
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/keras/default_framework_info.py#L114>`_
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+        fw_hw_model: FrameworkHardwareModel object that models the inference target platform and
+                                              the attached framework operator's information.
         network_editor: List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
         gptq_config: Configuration for using gradient-based PTQ (e.g. optimizer).
         analyze_similarity: Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
@@ -100,9 +101,14 @@ def post_training_quantization(in_model: Any,
 
     tb_w = _init_tensorboard_writer(fw_info)
 
-    tg = _prepare_model_for_quantization(in_model,
+    graph = _read_model_to_graph(in_model,
+                                 representative_data_gen,
+                                 fw_hw_model,
+                                 fw_info,
+                                 fw_impl)
+
+    tg = _prepare_model_for_quantization(graph,
                                          representative_data_gen,
-                                         fw_hw_model,
                                          network_editor,
                                          n_iter,
                                          quant_config,
@@ -136,7 +142,8 @@ def post_training_quantization(in_model: Any,
                         fw_info,
                         bit_widths_config)
 
-    common.Logger.info(f'Approximated model\'s parameters size (in bytes): {tg.get_memory()}')
+    common.Logger.info(f'Approximated model size (in bytes): {tg.get_memory()}')
+    common.Logger.info(f'Approximated compression ratio: {round(graph.get_float_memory() / (tg.get_memory() + 1e-8), 3)}')
 
     quantized_model, user_info = _quantize_fixed_bit_widths_graph(analyze_similarity,
                                                                   fw_info,
@@ -326,9 +333,33 @@ def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
     return quantized_model, user_info
 
 
-def _prepare_model_for_quantization(in_model: Any,
+def _read_model_to_graph(in_model: Any,
+                         representative_data_gen: Callable,
+                         fw_hw_model: FrameworkHardwareModel,
+                         fw_info: FrameworkInfo = None,
+                         fw_impl: FrameworkImplementation = None) -> Graph:
+    """
+    Read a model into a graph object.
+    Args:
+        in_model: Keras model to optimize and prepare for quantization.
+        representative_data_gen: Dataset used for calibration.
+        fw_hw_model: FrameworkHardwareModel object that models the inference target platform and
+                      the attached framework operator's information.
+        fw_info: Information needed for quantization about the specific framework (e.g.,
+                kernel channels indices, groups of layers by how they should be quantized, etc.)
+        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+    Returns:
+        Graph object that represents the model.
+    """
+    graph = fw_impl.model_reader(in_model,
+                                 representative_data_gen)
+    graph.set_fw_info(fw_info)
+    graph.set_fw_hw_model(fw_hw_model)
+    return graph
+
+
+def _prepare_model_for_quantization(graph: Graph,
                                     representative_data_gen: Callable,
-                                    fw_hw_model: FrameworkHardwareModel,
                                     network_editor: List[EditRule] = [],
                                     n_iter: int = 500,
                                     quant_config: QuantizationConfig = DEFAULTCONFIG,
@@ -336,16 +367,14 @@ def _prepare_model_for_quantization(in_model: Any,
                                     tb_w: TensorboardWriter = None,
                                     fw_impl: FrameworkImplementation = None) -> Graph:
     """
-    Prepare a trained Keras model for post-training quantization. The model is prepared to be quantized using a
-    symmetric constraint quantization thresholds (power of two).
-    The model is first read into a graph object and being optimized using several transformations (e.g.
-    BatchNormalization folding to preceding layers). Then, using a given dataset, statistics (e.g. min/max,
-    histogram, etc.) are being collected for each layer's output (and input, depends on the quantization configuration).
-    Thresholds are then being calculated using the collected statistics. Finally, more transformations (based on
-    statistics) are applied to increase model's performance.
+    Prepare a trained model for post-training quantization.
+    First, the model graph is optimized using several transformations (e.g. folding BatchNormalization to preceding layers).
+    Second, statistics (e.g. min/max, histogram, etc.) are collected for each layer's output
+    (and input, depends on the quantization configuration) using a given representative dataset.
+    Next, quantization parameters are calculated using the collected statistics.
+    Finally, more transformations (based on the statistics) are applied to increase the model's performance.
 
     Args:
-        in_model (Model): Keras model to optimize and prepare for quantization.
         representative_data_gen (Callable): Dataset used for calibration.
         network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to
         change quantization settings of the filtered nodes.
@@ -358,17 +387,8 @@ def _prepare_model_for_quantization(in_model: Any,
         fw_impl (FrameworkImplementation): FrameworkImplementation object with a specific framework methods implementation.
 
     Returns:
-        Graph object that represents the Keras model, contains thresholds, and ready for quantization.
+        Graph object that represents the model, contains thresholds, and ready for quantization.
     """
-
-    ######################################
-    # Represent model in a graph
-    ######################################
-    graph = fw_impl.model_reader(in_model,
-                                 representative_data_gen)  # model reading
-    graph.set_fw_info(fw_info)
-    graph.set_fw_hw_model(fw_hw_model)
-
     if tb_w is not None:
         tb_w.add_graph(graph, 'initial_graph')
 
