@@ -19,14 +19,19 @@ from tqdm import tqdm
 from typing import Dict, List, Tuple, Callable
 
 from model_compression_toolkit.common import Logger
+from model_compression_toolkit.common.constants import WEIGHTS, ACTIVATION
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
+from model_compression_toolkit.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
+
+# def mp_integer_programming_search(layer_to_bitwidth_mapping: Dict[int, List[int]],
+#                                   compute_metric_fn: Callable,
+#                                   compute_kpi_fn: Callable,
+#                                   min_weights_cfg: List[int],
+#                                   min_activation_cfg: List[int],
+#                                   target_kpi: KPI = None) -> List[int]:
 
 
-def mp_integer_programming_search(layer_to_bitwidth_mapping: Dict[int, List[int]],
-                                  compute_metric_fn: Callable,
-                                  compute_kpi_fn: Callable,
-                                  min_weights_cfg: List[int],
-                                  min_activation_cfg: List[int],
+def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
                                   target_kpi: KPI = None) -> List[int]:
     """
     Searching and returning a mixed-precision configuration using an ILP optimization solution.
@@ -55,8 +60,8 @@ def mp_integer_programming_search(layer_to_bitwidth_mapping: Dict[int, List[int]
 
     # Build a mapping from each layer's index (in the model) to a dictionary that maps the
     # bitwidth index to the observed sensitivity of the model when using that bitwidth for that layer.
-    layer_to_metrics_mapping = _build_layer_to_metrics_mapping(layer_to_bitwidth_mapping,
-                                                               compute_metric_fn)
+    layer_to_metrics_mapping = _build_layer_to_metrics_mapping(search_manager.layer_to_bitwidth_mapping,
+                                                               search_manager.compute_metric_fn)
 
     # Init variables to find their values when solving the lp problem.
     layer_to_indicator_vars_mapping, layer_to_objective_vars_mapping = _init_problem_vars(layer_to_metrics_mapping)
@@ -64,28 +69,33 @@ def mp_integer_programming_search(layer_to_bitwidth_mapping: Dict[int, List[int]
     # Build a mapping from each node's index (in the graph) to a dictionary
     # that maps the bitwidth index to the contribution of configuring this node with this
     # bitwidth to the minimal possible KPI of the model.
-    layer_to_kpi_mapping, minimal_kpi = _compute_kpis(layer_to_bitwidth_mapping,
-                                                      compute_kpi_fn,
-                                                      min_weights_cfg,
-                                                      min_activation_cfg)
+    # layer_to_kpi_mapping, minimal_kpi = _compute_kpis(layer_to_bitwidth_mapping,
+    #                                                   compute_kpi_fn,
+    #                                                   min_weights_cfg,
+    #                                                   min_activation_cfg)
 
-    assert minimal_kpi.weights_memory <= target_kpi.weights_memory, \
-        f'Weights memory in minimal KPI cannot be greater than weights memory in target KPI. ' \
-        f'Weights memory in minimal KPI:{minimal_kpi.weights_memory}, ' \
-        f'weights memory in target KPI:{target_kpi.weights_memory}'
-
-    assert minimal_kpi.activation_memory <= target_kpi.activation_memory, \
-        f'Activation memory in minimal KPI cannot be greater than activation memory in target KPI. ' \
-        f'Activation memory in minimal KPI:{minimal_kpi.activation_memory}, ' \
-        f'activation memory in target KPI:{target_kpi.activation_memory}'
+    # assert minimal_kpi.weights_memory <= target_kpi.weights_memory, \
+    #     f'Weights memory in minimal KPI cannot be greater than weights memory in target KPI. ' \
+    #     f'Weights memory in minimal KPI:{minimal_kpi.weights_memory}, ' \
+    #     f'weights memory in target KPI:{target_kpi.weights_memory}'
+    #
+    # assert minimal_kpi.activation_memory <= target_kpi.activation_memory, \
+    #     f'Activation memory in minimal KPI cannot be greater than activation memory in target KPI. ' \
+    #     f'Activation memory in minimal KPI:{minimal_kpi.activation_memory}, ' \
+    #     f'activation memory in target KPI:{target_kpi.activation_memory}'
 
     # Add all equations and inequalities that define the problem.
+    # lp_problem = _formalize_problem(layer_to_indicator_vars_mapping,
+    #                                 layer_to_metrics_mapping,
+    #                                 layer_to_objective_vars_mapping,
+    #                                 target_kpi,
+    #                                 layer_to_kpi_mapping,
+    #                                 minimal_kpi)
     lp_problem = _formalize_problem(layer_to_indicator_vars_mapping,
                                     layer_to_metrics_mapping,
                                     layer_to_objective_vars_mapping,
                                     target_kpi,
-                                    layer_to_kpi_mapping,
-                                    minimal_kpi)
+                                    search_manager)
 
     lp_problem.solve()  # Try to solve the problem.
     assert lp_problem.status == LpStatusOptimal, Logger.critical(
@@ -138,8 +148,7 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
                        layer_to_metrics_mapping: Dict[int, Dict[int, float]],
                        layer_to_objective_vars_mapping: Dict[int, LpVariable],
                        target_kpi: KPI,
-                       layer_to_kpi_mapping: Dict[int, Dict[int, KPI]],
-                       minimal_kpi: KPI) -> LpProblem:
+                       search_manager: MixedPrecisionSearchManager) -> LpProblem:
     """
     Formalize the LP problem by defining all inequalities that define the solution space.
 
@@ -175,28 +184,76 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
 
     # Bound the feasible solution space with the desired KPI.
     # Creates separate constraints for weights KPI and activation KPI.
+    weights_kpi_metrix = search_manager.compute_kpi_metrix(WEIGHTS)
+    activation_kpi_metrix = search_manager.compute_kpi_metrix(ACTIVATION)
     if target_kpi is not None:
-        total_weights_consumption = []
-        total_activation_consumption = []
+        # TODO: change name to meaningful
+        # TODO: refactor search_manager methods calls
+        indicators = []
         for layer in layer_to_metrics_mapping.keys():
-            if not np.isinf(target_kpi.weights_memory):
-                weights_by_indicators = [indicator * layer_to_kpi_mapping[layer][nbits].weights_memory
-                                         for nbits, indicator in layer_to_indicator_vars_mapping[layer].items()]
-                total_weights_consumption.extend(weights_by_indicators)
-            if not np.isinf(target_kpi.activation_memory):
-                activation_by_indicators = [indicator * layer_to_kpi_mapping[layer][nbits].activation_memory
-                                            for nbits, indicator in layer_to_indicator_vars_mapping[layer].items()]
-                total_activation_consumption.extend(activation_by_indicators)
+            for _, indicator in layer_to_indicator_vars_mapping[layer].items():
+                indicators.append(indicator)
 
-        # Total model memory size is bounded to the given KPI.
-        # Since total_weights_consumption and total_activation_consumption is the contribution
-        # to the minimal possible KPI (for weights and activation respectively),
-        # we bound the problem by the difference of the target KPI to the minimal KPI.
+        indicators_arr = np.array(indicators)
+        indicators_matrix = np.diag(indicators_arr)
+
         if not np.isinf(target_kpi.weights_memory):
-            lp_problem += lpSum(total_weights_consumption) <= target_kpi.weights_memory - minimal_kpi.weights_memory
+            # D_weights_hat = [
+            #     [indicator * weights_kpi_metrix[nbits][layer] for nbits, indicator in
+            #      layer_to_indicator_vars_mapping[layer].items()]
+            #     for layer in layer_to_metrics_mapping.keys()]
+
+            D_weights_hat = np.matmul(weights_kpi_metrix, indicators_matrix)
+
+            v_weights_hat = [
+                sum([D_weights_hat[i][j] for j in range(D_weights_hat.shape[1])]) + search_manager.min_kpi[WEIGHTS][i]
+                for i in range(D_weights_hat.shape[0])]
+
+            aggr_weights_kpi = search_manager.kpi_aggr_methods[WEIGHTS](v_weights_hat)
+
+            for v in aggr_weights_kpi:
+                lp_problem += v <= target_kpi.weights_memory
+
         if not np.isinf(target_kpi.activation_memory):
-            lp_problem += lpSum(
-                total_activation_consumption) <= target_kpi.activation_memory - minimal_kpi.activation_memory
+            # D_activation_hat = [
+            #     [indicator * activation_kpi_metrix[nbits][layer] for nbits, indicator in
+            #      layer_to_indicator_vars_mapping[layer].items()]
+            #     for layer in layer_to_metrics_mapping.keys()]
+
+            D_activation_hat = np.matmul(activation_kpi_metrix, indicators_matrix)
+
+            v_activation_hat = [
+                sum([D_activation_hat[i][j] for j in range(D_activation_hat.shape[1])]) + search_manager.min_kpi[ACTIVATION][i]
+                for i in range(D_activation_hat.shape[0])]
+
+            aggr_activation_kpi = search_manager.kpi_aggr_methods[ACTIVATION](v_activation_hat)
+
+            for v in aggr_activation_kpi:
+                lp_problem += v <= target_kpi.activation_memory
+
+    #
+    # if target_kpi is not None:
+    #     total_weights_consumption = []
+    #     total_activation_consumption = []
+    #     for layer in layer_to_metrics_mapping.keys():
+    #         if not np.isinf(target_kpi.weights_memory):
+    #             weights_by_indicators = [indicator * layer_to_kpi_mapping[layer][nbits].weights_memory
+    #                                      for nbits, indicator in layer_to_indicator_vars_mapping[layer].items()]
+    #             total_weights_consumption.extend(weights_by_indicators)
+    #         if not np.isinf(target_kpi.activation_memory):
+    #             activation_by_indicators = [indicator * layer_to_kpi_mapping[layer][nbits].activation_memory
+    #                                         for nbits, indicator in layer_to_indicator_vars_mapping[layer].items()]
+    #             total_activation_consumption.extend(activation_by_indicators)
+    #
+    #     # Total model memory size is bounded to the given KPI.
+    #     # Since total_weights_consumption and total_activation_consumption is the contribution
+    #     # to the minimal possible KPI (for weights and activation respectively),
+    #     # we bound the problem by the difference of the target KPI to the minimal KPI.
+    #     if not np.isinf(target_kpi.weights_memory):
+    #         lp_problem += lpSum(total_weights_consumption) <= target_kpi.weights_memory - minimal_kpi.weights_memory
+    #     if not np.isinf(target_kpi.activation_memory):
+    #         lp_problem += lpSum(
+    #             total_activation_consumption) <= target_kpi.activation_memory - minimal_kpi.activation_memory
     else:
         raise Exception("Can't run mixed=precision search with given target_kpi=None."
                         "Please provide a valid target_kpi.")

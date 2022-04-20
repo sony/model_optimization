@@ -20,6 +20,9 @@ from typing import Callable, List
 
 from model_compression_toolkit.common import Graph, Logger
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
+from model_compression_toolkit.common.mixed_precision.kpi_aggregation_methods import sum_kpi
+from model_compression_toolkit.common.mixed_precision.kpi_methods import weights_size_kpi, \
+    activation_output_size_kpi
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
@@ -77,7 +80,11 @@ def search_bit_width(graph_to_search_cfg: Graph,
     search_manager = MixedPrecisionSearchManager(graph,
                                                  qc,
                                                  fw_info,
-                                                 get_sensitivity_evaluation)
+                                                 get_sensitivity_evaluation,
+                                                 compute_config_weights_kpi=weights_size_kpi,
+                                                 compute_config_activation_kpi=activation_output_size_kpi,
+                                                 kpi_weights_aggr_method=sum_kpi,
+                                                 kpi_activation_aggr_method=sum_kpi)
 
     if search_method in search_methods:  # Get a specific search function
         search_method_fn = search_methods.get(search_method)
@@ -85,11 +92,12 @@ def search_bit_width(graph_to_search_cfg: Graph,
         raise NotImplemented
 
     # Search for the desired mixed-precision configuration
-    result_bit_cfg = search_method_fn(search_manager.layer_to_bitwidth_mapping,
-                                      search_manager.compute_metric_fn,
-                                      search_manager.get_kpi_metric(),
-                                      search_manager.min_weights_cfg,
-                                      search_manager.min_activation_cfg,
+    result_bit_cfg = search_method_fn(search_manager,
                                       target_kpi)
+    # search_manager.layer_to_bitwidth_mapping,
+    # search_manager.compute_metric_fn,
+    # search_manager.get_kpi_metric(),
+    # search_manager.min_weights_cfg,
+    # search_manager.min_activation_cfg,
 
     return result_bit_cfg

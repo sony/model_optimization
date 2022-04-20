@@ -17,6 +17,7 @@ from typing import Callable
 from typing import Dict, List
 import numpy as np
 
+from model_compression_toolkit.common.constants import ACTIVATION, WEIGHTS
 from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
@@ -33,7 +34,11 @@ class MixedPrecisionSearchManager(object):
                  graph: Graph,
                  qc: MixedPrecisionQuantizationConfig,
                  fw_info: FrameworkInfo,
-                 get_sensitivity_evaluation: Callable):
+                 get_sensitivity_evaluation: Callable,
+                 compute_config_weights_kpi: Callable,
+                 compute_config_activation_kpi: Callable,
+                 kpi_weights_aggr_method: Callable,
+                 kpi_activation_aggr_method: Callable):
         """
 
         Args:
@@ -50,8 +55,16 @@ class MixedPrecisionSearchManager(object):
         self.metrics_weights = self.qc.distance_weighting_method
         self.layer_to_bitwidth_mapping = self.get_search_space()
         self.compute_metric_fn = self.get_sensitivity_metric()
-        self.min_activation_cfg = self.get_min_activation_cfg()
-        self.min_weights_cfg = self.get_min_weights_cfg()
+
+        self.compute_config_kpi = {WEIGHTS: compute_config_weights_kpi, ACTIVATION: compute_config_activation_kpi}
+        self.min_kpi_config = {WEIGHTS: self.get_min_weights_cfg(), ACTIVATION: self.get_min_activation_cfg()}
+        min_kpi = self.compute_min_kpis()
+        self.min_kpi = {WEIGHTS: min_kpi[0], ACTIVATION: min_kpi[1]}
+        self.configurable_nodes_per_target = {WEIGHTS: self.graph.get_weights_configurable_nodes,
+                                              ACTIVATION: self.graph.get_activation_configurable_nodes}
+
+        self.kpi_aggr_methods = {WEIGHTS: kpi_weights_aggr_method,
+                                ACTIVATION: kpi_activation_aggr_method}
 
     def get_search_space(self) -> Dict[int, List[int]]:
         """
@@ -108,6 +121,40 @@ class MixedPrecisionSearchManager(object):
                                                             self.qc,
                                                             self.metrics_weights)
         return compute_metric_fn
+
+    def compute_min_kpis(self):
+        return self.compute_config_kpi[WEIGHTS](self.min_kpi_config[WEIGHTS], self.graph, self.fw_info), \
+               self.compute_config_kpi[ACTIVATION](self.min_kpi_config[ACTIVATION], self.graph, self.fw_info)
+
+    def compute_kpi_metrix(self, target):
+        assert target == WEIGHTS or target == ACTIVATION, \
+            f"{target} is not a valid KPI target, valid KPI targets are {[WEIGHTS, ACTIVATION]}"
+
+        configurable_sorted_nodes = self.graph.get_configurable_sorted_nodes_names()
+        target_configurable_nodes = self.configurable_nodes_per_target[target]()
+
+        kpi_matrix = np.array([
+            [self.compute_config_kpi[target](self.replace_config_in_index(self.min_kpi_config[target],
+                                                                          configurable_sorted_nodes.index(n.name), j) -
+                                             self.min_kpi[target][i],
+                                             self.graph,
+                                             self.fw_info)
+             for j in range(len(n.candidates_quantization_cfg))]
+            for i, n in enumerate(target_configurable_nodes)])
+
+        # kpi_matrix = np.array([
+        #     [self.compute_config_kpi[target](self.replace_config_in_index(self.min_kpi_config[target], i, mp_cfg[j]) -
+        #                                      self.min_kpi[target][i])
+        #      for j in range(len(mp_cfg))]
+        #     for i in dim])
+
+        return kpi_matrix
+
+    @staticmethod
+    def replace_config_in_index(mp_cfg, idx, value):
+        updated_cfg = mp_cfg.copy()
+        updated_cfg[idx] = value
+        return updated_cfg
 
     def get_kpi_metric(self) -> Callable:
         """
