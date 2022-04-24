@@ -545,9 +545,12 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         # combine and remove duplications
         configurable_nodes = list(set(weights_configurable_nodes + activation_configurable_nodes))
 
+        return self.get_sorted_nodes_in_list(configurable_nodes)
+
+    def get_sorted_nodes_in_list(self, nodes_list):
         sorted_configurable_nodes = []
         sorted_nodes = list(topological_sort(self))
         for n in sorted_nodes:
-            if n in configurable_nodes:
+            if n in nodes_list:
                 sorted_configurable_nodes.append(n)
         return sorted_configurable_nodes

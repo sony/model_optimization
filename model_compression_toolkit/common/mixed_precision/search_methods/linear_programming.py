@@ -184,8 +184,6 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
 
     # Bound the feasible solution space with the desired KPI.
     # Creates separate constraints for weights KPI and activation KPI.
-    weights_kpi_metrix = search_manager.compute_kpi_metrix(WEIGHTS)
-    activation_kpi_metrix = search_manager.compute_kpi_metrix(ACTIVATION)
     if target_kpi is not None:
         # TODO: change name to meaningful
         # TODO: refactor search_manager methods calls
@@ -198,11 +196,7 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
         indicators_matrix = np.diag(indicators_arr)
 
         if not np.isinf(target_kpi.weights_memory):
-            # D_weights_hat = [
-            #     [indicator * weights_kpi_metrix[nbits][layer] for nbits, indicator in
-            #      layer_to_indicator_vars_mapping[layer].items()]
-            #     for layer in layer_to_metrics_mapping.keys()]
-
+            weights_kpi_metrix = search_manager.compute_kpi_metrix(WEIGHTS)
             D_weights_hat = np.matmul(weights_kpi_metrix, indicators_matrix)
 
             v_weights_hat = [
@@ -215,11 +209,7 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
                 lp_problem += v <= target_kpi.weights_memory
 
         if not np.isinf(target_kpi.activation_memory):
-            # D_activation_hat = [
-            #     [indicator * activation_kpi_metrix[nbits][layer] for nbits, indicator in
-            #      layer_to_indicator_vars_mapping[layer].items()]
-            #     for layer in layer_to_metrics_mapping.keys()]
-
+            activation_kpi_metrix = search_manager.compute_kpi_metrix(ACTIVATION)
             D_activation_hat = np.matmul(activation_kpi_metrix, indicators_matrix)
 
             v_activation_hat = [

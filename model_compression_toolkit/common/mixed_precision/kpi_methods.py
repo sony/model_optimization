@@ -21,7 +21,7 @@ def weights_size_kpi(mp_cfg, graph, fw_info):
 
     # Go over all nodes that should be taken into consideration when computing the weights KPI.
     mp_nodes = graph.get_configurable_sorted_nodes_names()
-    for n in graph.get_weights_configurable_nodes():
+    for n in graph.get_sorted_nodes_in_list(graph.get_weights_configurable_nodes()):
         node_idx = mp_nodes.index(n.name)
         node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
         node_nbits = node_qc.weights_quantization_cfg.weights_n_bits
@@ -44,7 +44,7 @@ def activation_output_size_kpi(mp_cfg, graph, fw_info):
 
     # Go over all nodes that should be taken into consideration when computing the weights KPI.
     mp_nodes = graph.get_configurable_sorted_nodes_names()
-    for n in graph.get_activation_configurable_nodes():
+    for n in  graph.get_sorted_nodes_in_list(graph.get_activation_configurable_nodes()):
         node_idx = mp_nodes.index(n.name)
         node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
         node_nbits = node_qc.activation_quantization_cfg.activation_n_bits

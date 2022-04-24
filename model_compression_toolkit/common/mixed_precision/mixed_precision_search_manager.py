@@ -130,25 +130,38 @@ class MixedPrecisionSearchManager(object):
         assert target == WEIGHTS or target == ACTIVATION, \
             f"{target} is not a valid KPI target, valid KPI targets are {[WEIGHTS, ACTIVATION]}"
 
-        configurable_sorted_nodes = self.graph.get_configurable_sorted_nodes_names()
-        target_configurable_nodes = self.configurable_nodes_per_target[target]()
+        configurable_sorted_nodes = self.graph.get_configurable_sorted_nodes()
+        target_configurable_nodes = self.graph.get_sorted_nodes_in_list(self.configurable_nodes_per_target[target]())
 
-        kpi_matrix = np.array([
-            [self.compute_config_kpi[target](self.replace_config_in_index(self.min_kpi_config[target],
-                                                                          configurable_sorted_nodes.index(n.name), j) -
-                                             self.min_kpi[target][i],
-                                             self.graph,
-                                             self.fw_info)
-             for j in range(len(n.candidates_quantization_cfg))]
-            for i, n in enumerate(target_configurable_nodes)])
+        kpi_matrix = \
+            [
+                [
+                    [0 if c_n is not t_n else
+                     (self.compute_target_node_kpi(c, t, candidate_idx, target) -
+                      self.get_min_target_kpi(t, target))
+                     for candidate_idx in range(len(t_n.candidates_quantization_cfg))
+                     ]
+                    for c, c_n in enumerate(configurable_sorted_nodes)
+                ]
+                for t, t_n in enumerate(target_configurable_nodes)
+            ]
 
-        # kpi_matrix = np.array([
-        #     [self.compute_config_kpi[target](self.replace_config_in_index(self.min_kpi_config[target], i, mp_cfg[j]) -
-        #                                      self.min_kpi[target][i])
-        #      for j in range(len(mp_cfg))]
-        #     for i in dim])
+        kpi_matrix = np.array(kpi_matrix)
 
-        return kpi_matrix
+        # We need to reshape the returned matrix to a 2D array
+        return np.reshape(kpi_matrix, (kpi_matrix.shape[0], -1))
+
+    def get_min_target_kpi(self, target_node_idx, target):
+        return self.min_kpi[target][target_node_idx]
+
+    def compute_target_node_kpi(self, conf_node_idx, target_list_idx, candidate_idx, target):
+        return self.compute_config_kpi[target](
+            self.replace_config_in_index(
+                self.min_kpi_config[target],
+                conf_node_idx,
+                candidate_idx),
+            self.graph,
+            self.fw_info)[target_list_idx]
 
     @staticmethod
     def replace_config_in_index(mp_cfg, idx, value):
