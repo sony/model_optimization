@@ -21,7 +21,7 @@ from model_compression_toolkit.common.quantization.candidate_node_quantization_c
     CandidateNodeQuantizationConfig
 
 
-def filter_nodes_candidates(graph: Graph):
+def filter_nodes_candidates(graph_to_filter: Graph):
     """
     Filters the graph's nodes candidates configuration list.
     We apply this after mark activation operation to eliminate nodes that their activation are no longer being quantized
@@ -29,12 +29,14 @@ def filter_nodes_candidates(graph: Graph):
     Updating the lists is preformed inplace on the graph object.
 
     Args:
-        graph: Graph for which to add quantization info to each node.
+        graph_to_filter: Graph for which to add quantization info to each node.
     """
-
+    graph = copy.deepcopy(graph_to_filter)
     nodes = list(graph.nodes)
     for n in nodes:
         n.candidates_quantization_cfg = filter_node_candidates(node=n)
+
+    return graph
 
 
 def filter_node_candidates(node: BaseNode) -> List[CandidateNodeQuantizationConfig]:
@@ -52,22 +54,24 @@ def filter_node_candidates(node: BaseNode) -> List[CandidateNodeQuantizationConf
     filtered_candidates = copy.deepcopy(node.candidates_quantization_cfg)
 
     if not node.is_activation_quantization_enabled():
-        # Remove candidates that have duplicated weights bitwidth for node with disabled activation quantization.
+        # Remove candidates that have duplicated weights candidates for node with disabled activation quantization.
         # Replacing the activation n_bits in the remained configurations with default value to prevent confusion.
-        seen_bitwidth = set()
+        seen_candidates = set()
         filtered_candidates = [candidate for candidate in filtered_candidates if
-                               candidate.weights_quantization_cfg.weights_n_bits not in seen_bitwidth
-                               and not seen_bitwidth.add(candidate.weights_quantization_cfg.weights_n_bits)]
+                               candidate.weights_quantization_cfg not in seen_candidates
+                               and not seen_candidates.add(candidate.weights_quantization_cfg)]
+
         for c in filtered_candidates:
             c.activation_quantization_cfg.activation_n_bits = DEFAULT_CANDIDATE_BITWIDTH
 
     elif not node.is_weights_quantization_enabled():
-        # Remove candidates that have duplicated activation bitwidth for node with disabled weights quantization.
+        # Remove candidates that have duplicated activation candidates for node with disabled weights quantization.
         # Replacing the weights n_bits in the remained configurations with default value to prevent confusion.
-        seen_bitwidth = set()
+        seen_candidates = set()
         filtered_candidates = [candidate for candidate in filtered_candidates if
-                               candidate.activation_quantization_cfg.activation_n_bits not in seen_bitwidth
-                               and not seen_bitwidth.add(candidate.activation_quantization_cfg.activation_n_bits)]
+                               candidate.activation_quantization_cfg not in seen_candidates
+                               and not seen_candidates.add(candidate.activation_quantization_cfg)]
+
         for c in filtered_candidates:
             c.weights_quantization_cfg.weights_n_bits = DEFAULT_CANDIDATE_BITWIDTH
 

@@ -440,7 +440,7 @@ def _prepare_model_for_quantization(graph: Graph,
     ######################################
     # Filter nodes' candidates
     ######################################
-    filter_nodes_candidates(transformed_graph)
+    transformed_graph = filter_nodes_candidates(transformed_graph)
 
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'after_candidates_filtering')
