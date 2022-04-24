@@ -94,10 +94,5 @@ def search_bit_width(graph_to_search_cfg: Graph,
     # Search for the desired mixed-precision configuration
     result_bit_cfg = search_method_fn(search_manager,
                                       target_kpi)
-    # search_manager.layer_to_bitwidth_mapping,
-    # search_manager.compute_metric_fn,
-    # search_manager.get_kpi_metric(),
-    # search_manager.min_weights_cfg,
-    # search_manager.min_activation_cfg,
 
     return result_bit_cfg

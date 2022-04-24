@@ -23,13 +23,6 @@ from model_compression_toolkit.common.constants import WEIGHTS, ACTIVATION
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
 
-# def mp_integer_programming_search(layer_to_bitwidth_mapping: Dict[int, List[int]],
-#                                   compute_metric_fn: Callable,
-#                                   compute_kpi_fn: Callable,
-#                                   min_weights_cfg: List[int],
-#                                   min_activation_cfg: List[int],
-#                                   target_kpi: KPI = None) -> List[int]:
-
 
 def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
                                   target_kpi: KPI = None) -> List[int]:
@@ -44,12 +37,7 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
     If a solution could not be found, exception is thrown.
 
     Args:
-        layer_to_bitwidth_mapping: Search space (mapping from each node's index to its possible bitwidth
-        indices).
-        compute_metric_fn: Function to compute a metric for a mixed-precision model configuration.
-        compute_kpi_fn: Function to compute the KPI of the model for some mixed-precision configuration.
-        min_weights_cfg: Mixed-Precision configuration for minimal weights precision.
-        min_activation_cfg: Mixed-Precision configuration for minimal activation precision.
+        search_manager: MixedPrecisionSearchManager object to be used for problem formalization.
         target_kpi: KPI to constrain our LP problem with some resources limitations (like model' weights memory
         consumption).
 
@@ -66,31 +54,7 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
     # Init variables to find their values when solving the lp problem.
     layer_to_indicator_vars_mapping, layer_to_objective_vars_mapping = _init_problem_vars(layer_to_metrics_mapping)
 
-    # Build a mapping from each node's index (in the graph) to a dictionary
-    # that maps the bitwidth index to the contribution of configuring this node with this
-    # bitwidth to the minimal possible KPI of the model.
-    # layer_to_kpi_mapping, minimal_kpi = _compute_kpis(layer_to_bitwidth_mapping,
-    #                                                   compute_kpi_fn,
-    #                                                   min_weights_cfg,
-    #                                                   min_activation_cfg)
-
-    # assert minimal_kpi.weights_memory <= target_kpi.weights_memory, \
-    #     f'Weights memory in minimal KPI cannot be greater than weights memory in target KPI. ' \
-    #     f'Weights memory in minimal KPI:{minimal_kpi.weights_memory}, ' \
-    #     f'weights memory in target KPI:{target_kpi.weights_memory}'
-    #
-    # assert minimal_kpi.activation_memory <= target_kpi.activation_memory, \
-    #     f'Activation memory in minimal KPI cannot be greater than activation memory in target KPI. ' \
-    #     f'Activation memory in minimal KPI:{minimal_kpi.activation_memory}, ' \
-    #     f'activation memory in target KPI:{target_kpi.activation_memory}'
-
     # Add all equations and inequalities that define the problem.
-    # lp_problem = _formalize_problem(layer_to_indicator_vars_mapping,
-    #                                 layer_to_metrics_mapping,
-    #                                 layer_to_objective_vars_mapping,
-    #                                 target_kpi,
-    #                                 layer_to_kpi_mapping,
-    #                                 minimal_kpi)
     lp_problem = _formalize_problem(layer_to_indicator_vars_mapping,
                                     layer_to_metrics_mapping,
                                     layer_to_objective_vars_mapping,

@@ -17,6 +17,20 @@ import numpy as np
 
 
 def weights_size_kpi(mp_cfg, graph, fw_info):
+    """
+    Computes a KPIs vector with the respective weights' memory size for each weigh configurable node,
+    according to the given mixed-precision configuration.
+    Note that the configuration includes an index for each configurable node! (not just weights configurable).
+
+    Args:
+        mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
+        graph: Graph object.
+        fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
+
+    Returns: A vector of node's weights memory sizes.
+    Note that the vector is not necessarily of the same length as the given config.
+
+    """
     weights_memory = []
 
     # Go over all nodes that should be taken into consideration when computing the weights KPI.
@@ -38,6 +52,22 @@ def weights_size_kpi(mp_cfg, graph, fw_info):
 
 
 def activation_output_size_kpi(mp_cfg, graph, fw_info):
+    """
+    Computes a KPIs vector with the respective output memory size for each activation configurable node,
+    according to the given mixed-precision configuration.
+    Note that the configuration includes an index for each configurable node! (not just activation configurable).
+
+    Args:
+        mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
+        graph: Graph object.
+        fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize)
+            (not used in this method).
+
+    Returns: A vector of node's weights memory sizes.
+    Note that the vector is not necessarily of the same length as the given config.
+
+    """
+
     activation_memory = []
 
     # Go over all nodes that should be taken into consideration when computing the weights KPI.

@@ -13,9 +13,17 @@
 # limitations under the License.
 # ==============================================================================
 
-import numpy as np
 from pulp import lpSum
 
 
 def sum_kpi(kpi_vector):
+    """
+    Aggregates KPIs vector to a single KPI measure by summing all values.
+
+    Args:
+        kpi_vector: A vector with nodes' KPI values.
+
+    Returns: A list with an lpSum object for lp problem definition with the vector's sum.
+
+    """
     return [lpSum(kpi_vector)]

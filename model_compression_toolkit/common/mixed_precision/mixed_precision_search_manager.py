@@ -123,10 +123,34 @@ class MixedPrecisionSearchManager(object):
         return compute_metric_fn
 
     def compute_min_kpis(self):
+        """
+        Computes a KPIs vector with the values matching to the minimal mp configuration
+            (i.e., each node is configured with the quantization candidate that would give the minimal size of the
+            node's KPI).
+        The method computes the minimal KPIs vector for minimal weights config and minimal activation config separately.
+
+        Returns: A pair of KPIs vectors for weights and activation minimal configuration, respectively,
+
+        """
         return self.compute_config_kpi[WEIGHTS](self.min_kpi_config[WEIGHTS], self.graph, self.fw_info), \
                self.compute_config_kpi[ACTIVATION](self.min_kpi_config[ACTIVATION], self.graph, self.fw_info)
 
     def compute_kpi_metrix(self, target):
+        """
+        Computes and builds a KPIs metrix, to be used for the mixed-precision search problem formalization.
+        The matrix is constructed as follows (for a given target):
+        - Each row represents the set of KPI values for a specific KPI measure (number of rows should be equal to the
+            length of the output of the respective target compute_kpi function).
+        - Each entry in a specific column represents the KPI value of a given configuration (single layer is configured
+            with specific candidate, all other layer are at the minimal KPI configuration) for the KPI measure of the
+            respective row.
+
+        Args:
+            target: The target for which the KPI is calculated (should be one of 'weights' or 'activation').
+
+        Returns: A KPI matrix.
+
+        """
         assert target == WEIGHTS or target == ACTIVATION, \
             f"{target} is not a valid KPI target, valid KPI targets are {[WEIGHTS, ACTIVATION]}"
 
@@ -152,99 +176,42 @@ class MixedPrecisionSearchManager(object):
         return np.reshape(kpi_matrix, (kpi_matrix.shape[0], -1))
 
     def get_min_target_kpi(self, target_node_idx, target):
+        """
+        Returns the minimal KPI (pre-calculated on initialization) of a specific target for a specific target node.
+
+        Args:
+            target_node_idx: The index of a target node in a sorted target nodes list.
+            target: The target for which the KPI is calculated (should be one of 'weights' or 'activation').
+
+        Returns: Minimal KPI value.
+
+        """
         return self.min_kpi[target][target_node_idx]
 
-    def compute_target_node_kpi(self, conf_node_idx, target_list_idx, candidate_idx, target):
+    def compute_target_node_kpi(self, conf_node_idx, target_node_idx, candidate_idx, target):
+        """
+        Computes a node's KPI for the given target, after replacing the node's configuration candidate in the minimal
+        target configuration with the given candidate index.
+
+        Args:
+            conf_node_idx: The index of a node in a sorted configurable nodes list.
+            target_node_idx: The index of a target node in a sorted target nodes list.
+            candidate_idx: Quantization config candidate to be used for the node's KPI computation.
+            target: The target for which the KPI is calculated (should be one of 'weights' or 'activation').
+
+        Returns: Node's KPI value.
+
+        """
         return self.compute_config_kpi[target](
             self.replace_config_in_index(
                 self.min_kpi_config[target],
                 conf_node_idx,
                 candidate_idx),
             self.graph,
-            self.fw_info)[target_list_idx]
+            self.fw_info)[target_node_idx]
 
     @staticmethod
     def replace_config_in_index(mp_cfg, idx, value):
         updated_cfg = mp_cfg.copy()
         updated_cfg[idx] = value
         return updated_cfg
-
-    def get_kpi_metric(self) -> Callable:
-        """
-
-        Returns: A function to compute the KPI of a graph for a mixed-precision bitwidth
-        configuration.
-
-        """
-
-        def _compute_kpi(mp_model_config: List[int],
-                         compute_weights_kpi: bool = True,
-                         compute_activation_kpi: bool = True) -> KPI:
-            """
-            Compute and return the KPI of a graph for a given mixed-precision bitwidth
-            configuration.
-
-            Args:
-                mp_model_config: Mixed-precision bitwidth configuration (list of integers).
-                compute_weights_kpi: Flag that specifies to run computation for weights memory.
-                compute_activation_kpi: Flag that specifies to run computation for activation memory.
-
-            Returns:
-                KPI of a model when using the passed mixed-precision configuration.
-
-            """
-            assert compute_weights_kpi or compute_activation_kpi, \
-                "Compute KPI need at least one of weights/activation KPI to compute."
-
-            weights_memory = 0
-            activations_memory = 0
-
-            # Go over all nodes that should be taken into consideration when computing the KPI.
-            mp_nodes = self.graph.get_configurable_sorted_nodes_names()
-            for n in self.graph.nodes:
-                if n.name in mp_nodes:
-                    node_idx = mp_nodes.index(n.name)
-                    node_qc = n.candidates_quantization_cfg[mp_model_config[node_idx]]
-                    node_nbits = (node_qc.weights_quantization_cfg.weights_n_bits,
-                                  node_qc.activation_quantization_cfg.activation_n_bits)
-                elif n.is_weights_quantization_enabled() and n.has_weights_to_quantize(self.fw_info):
-                    # The only two valid ways to get here are:
-                    # 1) If the node is reused (which means that we're not looking for its configuration),
-                    #       and we ignore it when computing the KPI (as the base node will account for it).
-                    #       In activation KPI calculation -
-                    #       if we sum all inputs as a metric then we don't want to skip reused nodes.
-                    # 2) If mixed-precision search is only on activation candidates,
-                    #       and weights quantization n_bits is fixed.
-                    assert n.reuse or n.is_all_weights_candidates_equal(), \
-                        "If node has candidates it should be part of the configurable nodes, unless it's a reused " \
-                        "node or the candidates only differ in activation bitwidth"
-                    node_nbits = (0, 0)  # Ignore reused nodes or weights quantization
-                    # only (if no weights mixed-precision) in the KPI computation.
-                else:  # No quantization
-                    node_nbits = (0, 0)
-
-                # Weights memory size computation
-                # Consider only the weights that should be quantized.
-                if compute_weights_kpi and n.is_weights_quantization_enabled() and \
-                        not n.is_all_weights_candidates_equal():
-                    node_num_weights_params = 0
-                    for attr in self.fw_info.get_kernel_op_attributes(n.type):
-                        if attr is not None:
-                            node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
-
-                    node_weights_memory_in_bytes = node_num_weights_params * node_nbits[0] / 8.0
-                    weights_memory += node_weights_memory_in_bytes
-
-                    # Activation memory size computation
-                    # Currently, consider layer's activation size as size of layer's output,
-                    # and total model activations' size as sum of layers' output.
-                if compute_activation_kpi and n.is_activation_quantization_enabled() and \
-                        not n.is_all_activation_candidates_equal():
-                    node_output_size = n.get_total_output_params()
-                    node_activation_memory_in_bytes = node_output_size * node_nbits[1] / 8.0
-                    activations_memory += node_activation_memory_in_bytes
-
-            return KPI(weights_memory=weights_memory,
-                       activation_memory=activations_memory)
-
-        return _compute_kpi
