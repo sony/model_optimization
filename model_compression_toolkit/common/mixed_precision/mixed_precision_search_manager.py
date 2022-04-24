@@ -60,8 +60,8 @@ class MixedPrecisionSearchManager(object):
         self.min_kpi_config = {WEIGHTS: self.get_min_weights_cfg(), ACTIVATION: self.get_min_activation_cfg()}
         min_kpi = self.compute_min_kpis()
         self.min_kpi = {WEIGHTS: min_kpi[0], ACTIVATION: min_kpi[1]}
-        self.configurable_nodes_per_target = {WEIGHTS: self.graph.get_weights_configurable_nodes,
-                                              ACTIVATION: self.graph.get_activation_configurable_nodes}
+        self.configurable_nodes_per_target = {WEIGHTS: self.graph.get_sorted_weights_configurable_nodes,
+                                              ACTIVATION: self.graph.get_sorted_activation_configurable_nodes}
 
         self.kpi_aggr_methods = {WEIGHTS: kpi_weights_aggr_method,
                                 ACTIVATION: kpi_activation_aggr_method}
@@ -131,7 +131,7 @@ class MixedPrecisionSearchManager(object):
             f"{target} is not a valid KPI target, valid KPI targets are {[WEIGHTS, ACTIVATION]}"
 
         configurable_sorted_nodes = self.graph.get_configurable_sorted_nodes()
-        target_configurable_nodes = self.graph.get_sorted_nodes_in_list(self.configurable_nodes_per_target[target]())
+        target_configurable_nodes = self.configurable_nodes_per_target[target]()
 
         kpi_matrix = \
             [

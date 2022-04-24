@@ -160,9 +160,7 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
         layer_to_objective_vars_mapping: Dictionary that maps each node's index to a bitwidth variable we find its
         value.
         target_kpi: KPI to reduce our feasible solution space.
-        layer_to_kpi_mapping: Dictionary that maps each node's index to a dictionary of bitwidth to the KPI
-        contribution of the node to the minimal KPI.
-        minimal_kpi: Minimal possible KPI of the graph.
+        search_manager: MixedPrecisionSearchManager object to be used for kpi constraints formalization.
 
     Returns:
         The formalized LP problem.
@@ -185,8 +183,6 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
     # Bound the feasible solution space with the desired KPI.
     # Creates separate constraints for weights KPI and activation KPI.
     if target_kpi is not None:
-        # TODO: change name to meaningful
-        # TODO: refactor search_manager methods calls
         indicators = []
         for layer in layer_to_metrics_mapping.keys():
             for _, indicator in layer_to_indicator_vars_mapping[layer].items():
@@ -197,53 +193,30 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
 
         if not np.isinf(target_kpi.weights_memory):
             weights_kpi_metrix = search_manager.compute_kpi_metrix(WEIGHTS)
-            D_weights_hat = np.matmul(weights_kpi_metrix, indicators_matrix)
+            indicators_weights_kpi_matrix = np.matmul(weights_kpi_metrix, indicators_matrix)
 
-            v_weights_hat = [
-                sum([D_weights_hat[i][j] for j in range(D_weights_hat.shape[1])]) + search_manager.min_kpi[WEIGHTS][i]
-                for i in range(D_weights_hat.shape[0])]
+            weights_kpi_sum_vector = [
+                sum([indicators_weights_kpi_matrix[i][j] for j in range(indicators_weights_kpi_matrix.shape[1])]) +
+                search_manager.min_kpi[WEIGHTS][i] for i in range(indicators_weights_kpi_matrix.shape[0])]
 
-            aggr_weights_kpi = search_manager.kpi_aggr_methods[WEIGHTS](v_weights_hat)
+            aggr_weights_kpi = search_manager.kpi_aggr_methods[WEIGHTS](weights_kpi_sum_vector)
 
             for v in aggr_weights_kpi:
                 lp_problem += v <= target_kpi.weights_memory
 
         if not np.isinf(target_kpi.activation_memory):
             activation_kpi_metrix = search_manager.compute_kpi_metrix(ACTIVATION)
-            D_activation_hat = np.matmul(activation_kpi_metrix, indicators_matrix)
+            indicators_activation_kpi_matrix = np.matmul(activation_kpi_metrix, indicators_matrix)
 
-            v_activation_hat = [
-                sum([D_activation_hat[i][j] for j in range(D_activation_hat.shape[1])]) + search_manager.min_kpi[ACTIVATION][i]
-                for i in range(D_activation_hat.shape[0])]
+            activation_kpi_sum_vector = [
+                sum([indicators_activation_kpi_matrix[i][j] for j in range(indicators_activation_kpi_matrix.shape[1])])
+                + search_manager.min_kpi[ACTIVATION][i] for i in range(indicators_activation_kpi_matrix.shape[0])]
 
-            aggr_activation_kpi = search_manager.kpi_aggr_methods[ACTIVATION](v_activation_hat)
+            aggr_activation_kpi = search_manager.kpi_aggr_methods[ACTIVATION](activation_kpi_sum_vector)
 
             for v in aggr_activation_kpi:
                 lp_problem += v <= target_kpi.activation_memory
 
-    #
-    # if target_kpi is not None:
-    #     total_weights_consumption = []
-    #     total_activation_consumption = []
-    #     for layer in layer_to_metrics_mapping.keys():
-    #         if not np.isinf(target_kpi.weights_memory):
-    #             weights_by_indicators = [indicator * layer_to_kpi_mapping[layer][nbits].weights_memory
-    #                                      for nbits, indicator in layer_to_indicator_vars_mapping[layer].items()]
-    #             total_weights_consumption.extend(weights_by_indicators)
-    #         if not np.isinf(target_kpi.activation_memory):
-    #             activation_by_indicators = [indicator * layer_to_kpi_mapping[layer][nbits].activation_memory
-    #                                         for nbits, indicator in layer_to_indicator_vars_mapping[layer].items()]
-    #             total_activation_consumption.extend(activation_by_indicators)
-    #
-    #     # Total model memory size is bounded to the given KPI.
-    #     # Since total_weights_consumption and total_activation_consumption is the contribution
-    #     # to the minimal possible KPI (for weights and activation respectively),
-    #     # we bound the problem by the difference of the target KPI to the minimal KPI.
-    #     if not np.isinf(target_kpi.weights_memory):
-    #         lp_problem += lpSum(total_weights_consumption) <= target_kpi.weights_memory - minimal_kpi.weights_memory
-    #     if not np.isinf(target_kpi.activation_memory):
-    #         lp_problem += lpSum(
-    #             total_activation_consumption) <= target_kpi.activation_memory - minimal_kpi.activation_memory
     else:
         raise Exception("Can't run mixed=precision search with given target_kpi=None."
                         "Please provide a valid target_kpi.")
