@@ -19,7 +19,6 @@ import numpy as np
 
 from model_compression_toolkit.common.constants import ACTIVATION, WEIGHTS
 from model_compression_toolkit.common.graph.base_graph import Graph
-from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.framework_info import FrameworkInfo
@@ -155,48 +154,57 @@ class MixedPrecisionSearchManager(object):
             f"{target} is not a valid KPI target, valid KPI targets are {[WEIGHTS, ACTIVATION]}"
 
         configurable_sorted_nodes = self.graph.get_configurable_sorted_nodes()
-        target_configurable_nodes = self.configurable_nodes_per_target[target]()
 
         kpi_matrix = []
-        for t, t_n in enumerate(target_configurable_nodes):
-            configurable_nodes_kpis = []
-            for c, c_n in enumerate(configurable_sorted_nodes):
-                for candidate_idx in range(len(c_n.candidates_quantization_cfg)):
-                    configurable_nodes_kpis.append(self.candidate_kpi(t_n, t, c_n, c, candidate_idx, target))
-            kpi_matrix.append(np.asarray(configurable_nodes_kpis))
+        for c, c_n in enumerate(configurable_sorted_nodes):
+            for candidate_idx in range(len(c_n.candidates_quantization_cfg)):
+                candidate_kpis = self.compute_candidate_relative_kpis(c, candidate_idx, target)
+                kpi_matrix.append(np.asarray(candidate_kpis))
 
-        return np.array(kpi_matrix)
+        # We need to transpose the calculated kpi matrix to allow later multiplication with
+        # the indicators' diagonal matrix
+        return np.transpose(np.array(kpi_matrix))
 
-    def candidate_kpi(self, target_node, target_idx, conf_node, conf_idx, candidate_idx, target):
-        return 0 if conf_node is not target_node else \
-            self.compute_target_node_kpi(conf_idx, target_idx, candidate_idx, target) - \
-            self.get_min_target_kpi(target_idx, target)
-
-    def get_min_target_kpi(self, target_node_idx, target):
+    def compute_candidate_relative_kpis(self, conf_node_idx, candidate_idx, target):
         """
-        Returns the minimal KPI (pre-calculated on initialization) of a specific target for a specific target node.
+        Computes a KPIs vector for a given candidates of a given configurable node, i.e., the matching KPI vector
+        which is obtained by computing the given target's KPI function on a minimal configuration in which the given
+        layer's candidates is changed to the new given one.
+        The result is normalized by subtracting the target's minimal KPIs vector.
 
         Args:
-            target_node_idx: The index of a target node in a sorted target nodes list.
+            conf_node_idx: The index of a node in a sorted configurable nodes list.
+            candidate_idx: The index of a node's quantization configuration candidate.
             target: The target for which the KPI is calculated (should be one of 'weights' or 'activation').
 
-        Returns: Minimal KPI value.
+        Returns: Normalized node's KPIs vector
 
         """
-        return self.min_kpi[target][target_node_idx]
+        return self.compute_node_kpi_for_candidate(conf_node_idx, candidate_idx, target) - self.get_min_target_kpi(target)
 
-    def compute_target_node_kpi(self, conf_node_idx, target_node_idx, candidate_idx, target):
+    def get_min_target_kpi(self, target):
         """
-        Computes a node's KPI for the given target, after replacing the node's configuration candidate in the minimal
+        Returns the minimal KPIs vector (pre-calculated on initialization) of a specific target.
+
+        Args:
+            target: The target for which the KPI is calculated (should be one of 'weights' or 'activation').
+
+        Returns: Minimal KPIs vector.
+
+        """
+        return self.min_kpi[target]
+
+    def compute_node_kpi_for_candidate(self, conf_node_idx, candidate_idx, target):
+        """
+        Computes a KPIs vector after replacing the given node's configuration candidate in the minimal
         target configuration with the given candidate index.
 
         Args:
             conf_node_idx: The index of a node in a sorted configurable nodes list.
-            target_node_idx: The index of a target node in a sorted target nodes list.
             candidate_idx: Quantization config candidate to be used for the node's KPI computation.
             target: The target for which the KPI is calculated (should be one of 'weights' or 'activation').
 
-        Returns: Node's KPI value.
+        Returns: Node's KPIs vector.
 
         """
         return self.compute_config_kpi[target](
@@ -205,10 +213,22 @@ class MixedPrecisionSearchManager(object):
                 conf_node_idx,
                 candidate_idx),
             self.graph,
-            self.fw_info)[target_node_idx]
+            self.fw_info)
 
     @staticmethod
     def replace_config_in_index(mp_cfg, idx, value):
+        """
+        Replacing the quantization configuration candidate in a minimal mixed-precision configuration at the given
+        index (node's index) with the given value (candidate index).
+
+        Args:
+            mp_cfg: Mixed-precision configuration (list of candidates' indices)
+            idx: A configurable node's index.
+            value: A new candidate index to configure.
+
+        Returns: A new mixed-precision configuration.
+
+        """
         updated_cfg = mp_cfg.copy()
         updated_cfg[idx] = value
         return updated_cfg
