@@ -157,23 +157,20 @@ class MixedPrecisionSearchManager(object):
         configurable_sorted_nodes = self.graph.get_configurable_sorted_nodes()
         target_configurable_nodes = self.configurable_nodes_per_target[target]()
 
-        kpi_matrix = \
-            [
-                [
-                    [0 if c_n is not t_n else
-                     (self.compute_target_node_kpi(c, t, candidate_idx, target) -
-                      self.get_min_target_kpi(t, target))
-                     for candidate_idx in range(len(t_n.candidates_quantization_cfg))
-                     ]
-                    for c, c_n in enumerate(configurable_sorted_nodes)
-                ]
-                for t, t_n in enumerate(target_configurable_nodes)
-            ]
+        kpi_matrix = []
+        for t, t_n in enumerate(target_configurable_nodes):
+            configurable_nodes_kpis = []
+            for c, c_n in enumerate(configurable_sorted_nodes):
+                for candidate_idx in range(len(c_n.candidates_quantization_cfg)):
+                    configurable_nodes_kpis.append(self.candidate_kpi(t_n, t, c_n, c, candidate_idx, target))
+            kpi_matrix.append(np.asarray(configurable_nodes_kpis))
 
-        kpi_matrix = np.array(kpi_matrix)
+        return np.array(kpi_matrix)
 
-        # We need to reshape the returned matrix to a 2D array
-        return np.reshape(kpi_matrix, (kpi_matrix.shape[0], -1))
+    def candidate_kpi(self, target_node, target_idx, conf_node, conf_idx, candidate_idx, target):
+        return 0 if conf_node is not target_node else \
+            self.compute_target_node_kpi(conf_idx, target_idx, candidate_idx, target) - \
+            self.get_min_target_kpi(target_idx, target)
 
     def get_min_target_kpi(self, target_node_idx, target):
         """
