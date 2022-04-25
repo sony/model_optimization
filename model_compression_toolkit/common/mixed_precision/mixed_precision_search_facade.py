@@ -20,9 +20,9 @@ from typing import Callable, List
 
 from model_compression_toolkit.common import Graph, Logger
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
-from model_compression_toolkit.common.mixed_precision.kpi_aggregation_methods import sum_kpi
+from model_compression_toolkit.common.mixed_precision.kpi_aggregation_methods import sum_kpi, MpKpiAggregationMethod
 from model_compression_toolkit.common.mixed_precision.kpi_methods import weights_size_kpi, \
-    activation_output_size_kpi
+    activation_output_size_kpi, MpKpiMethod
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
@@ -45,7 +45,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
                      fw_info: FrameworkInfo,
                      target_kpi: KPI,
                      get_sensitivity_evaluation: Callable = None,
-                     search_method: BitWidthSearchMethod = BitWidthSearchMethod.INTEGER_PROGRAMMING) -> List[int]:
+                     search_method: BitWidthSearchMethod = BitWidthSearchMethod.INTEGER_PROGRAMMING,) -> List[int]:
     """
     Search for a MP configuration for a given graph. Given a search_method method (by default, it's linear
     programming), we use the get_sensitivity_evaluation function to get a function to compute an
@@ -81,10 +81,10 @@ def search_bit_width(graph_to_search_cfg: Graph,
                                                  qc,
                                                  fw_info,
                                                  get_sensitivity_evaluation,
-                                                 compute_config_weights_kpi=weights_size_kpi,
-                                                 compute_config_activation_kpi=activation_output_size_kpi,
-                                                 kpi_weights_aggr_method=sum_kpi,
-                                                 kpi_activation_aggr_method=sum_kpi)
+                                                 compute_config_weights_kpi=MpKpiMethod.WEIGHTS_SIZE,
+                                                 compute_config_activation_kpi=MpKpiMethod.ACTIVATION_OUTPUT_SIZE,
+                                                 kpi_weights_aggr_method=MpKpiAggregationMethod.SUM,
+                                                 kpi_activation_aggr_method=MpKpiAggregationMethod.SUM)
 
     if search_method in search_methods:  # Get a specific search function
         search_method_fn = search_methods.get(search_method)

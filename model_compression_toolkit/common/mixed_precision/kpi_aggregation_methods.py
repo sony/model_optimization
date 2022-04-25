@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from enum import Enum
+from functools import partial
 
 from pulp import lpSum
 
@@ -27,3 +29,27 @@ def sum_kpi(kpi_vector):
 
     """
     return [lpSum(kpi_vector)]
+
+
+def max_kpi(kpi_vector):
+    """
+    Aggregates KPIs vector to allow max constraint in the linear programming problem formalization.
+    In order to do so, we need to define a separate constraint on each value in the KPI vector,
+    to be bounded by the target KPI.
+
+    Args:
+        kpi_vector: A vector with nodes' KPI values.
+
+    Returns: A list with the vector's values, to be used to define max constraint
+    in the linear programming problem formalization.
+
+    """
+    return [kpi for kpi in kpi_vector]
+
+
+class MpKpiAggregationMethod(Enum):
+    SUM = partial(sum_kpi)
+    MAX = partial(max_kpi)
+
+    def __call__(self, *args):
+        return self.value(*args)

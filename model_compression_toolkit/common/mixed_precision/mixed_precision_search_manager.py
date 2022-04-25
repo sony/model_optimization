@@ -19,6 +19,7 @@ import numpy as np
 
 from model_compression_toolkit.common.constants import ACTIVATION, WEIGHTS
 from model_compression_toolkit.common.graph.base_graph import Graph
+from model_compression_toolkit.common.mixed_precision.kpi_aggregation_methods import MpKpiAggregationMethod
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.framework_info import FrameworkInfo
@@ -36,8 +37,8 @@ class MixedPrecisionSearchManager(object):
                  get_sensitivity_evaluation: Callable,
                  compute_config_weights_kpi: Callable,
                  compute_config_activation_kpi: Callable,
-                 kpi_weights_aggr_method: Callable,
-                 kpi_activation_aggr_method: Callable):
+                 kpi_weights_aggr_method: MpKpiAggregationMethod,
+                 kpi_activation_aggr_method: MpKpiAggregationMethod):
         """
 
         Args:
@@ -63,7 +64,7 @@ class MixedPrecisionSearchManager(object):
                                               ACTIVATION: self.graph.get_sorted_activation_configurable_nodes}
 
         self.kpi_aggr_methods = {WEIGHTS: kpi_weights_aggr_method,
-                                ACTIVATION: kpi_activation_aggr_method}
+                                 ACTIVATION: kpi_activation_aggr_method}
 
     def get_search_space(self) -> Dict[int, List[int]]:
         """
