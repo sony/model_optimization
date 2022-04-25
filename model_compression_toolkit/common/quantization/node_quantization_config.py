@@ -186,6 +186,22 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
                self.shift_negative_ratio == other.shift_negative_ratio and \
                self.shift_negative_threshold_recalculation == other.shift_negative_threshold_recalculation
 
+    def __hash__(self):
+        return hash((self.activation_quantization_fn,
+                     self.activation_quantization_params_fn,
+                     self.activation_error_method,
+                     self.activation_quantization_method,
+                     self.activation_n_bits,
+                     self.enable_activation_quantization,
+                     self.activation_channel_equalization,
+                     self.input_scaling,
+                     self.min_threshold,
+                     self.l_p_value,
+                     self.shift_negative_activation_correction,
+                     self.z_threshold,
+                     self.shift_negative_ratio,
+                     self.shift_negative_threshold_recalculation))
+
 
 class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
     """
@@ -305,3 +321,16 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
                self.enable_weights_quantization == other.enable_weights_quantization and \
                self.min_threshold == other.min_threshold and \
                self.l_p_value == other.l_p_value
+
+    def __hash__(self):
+        return hash((self.weights_quantization_fn,
+                     self.weights_quantization_params_fn,
+                     self.weights_channels_axis,
+                     self.weights_error_method,
+                     self.weights_quantization_method,
+                     self.weights_n_bits,
+                     self.weights_bias_correction,
+                     self.weights_per_channel_threshold,
+                     self.enable_weights_quantization,
+                     self.min_threshold,
+                     self.l_p_value))
