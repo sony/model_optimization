@@ -111,10 +111,11 @@ def _configure_bitwidths_keras_model(model_mp: Model,
         node_idx: List of nodes' indices to configure (the rest layers are configured as the baseline model).
     """
     # Configure model
-    # Note: the last configurable layer must be included in the interest points for evaluating the metric,
-    # otherwise, it would not be considered throughout the mp optimization search (since it would not
-    # affect the metric value)
-    model_mp_layers_names = [l.name for l in model_mp.layers]
+    # Note: Not all nodes in the graph are included in the MP model that is returned by the model builder.
+    # Thus, the last configurable layer must be included in the interest points for evaluating the metric,
+    # otherwise, not all configurable nodes will be considered throughout the MP optimization search (since
+    # they will not affect the metric value).
+    model_mp_layers_names = [layer.name for layer in model_mp.layers]
     if node_idx is not None:  # configure specific layers in the mp model
         for node_idx_to_configure in node_idx:
             node_name = f'quant_{sorted_configurable_nodes_names[node_idx_to_configure]}'

@@ -142,6 +142,10 @@ def get_mp_interest_points(graph: Graph, fw_info: FrameworkInfo):
 
     # We add the last configurable node to the list of interest points, since we need it to be able to include all
     # configurable nodes in the sensitivity metric computation
+
+    conf_nodes = graph.get_configurable_sorted_nodes()
+    if len(conf_nodes) == 0:
+        raise Exception("No configurable nodes in mixed precision search mode")
     last_conf_node = graph.get_configurable_sorted_nodes()[-1]
     interest_points_nodes = kernel_nodes if last_conf_node in kernel_nodes else kernel_nodes + [last_conf_node]
     return interest_points_nodes
