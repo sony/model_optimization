@@ -47,7 +47,16 @@ def max_kpi(kpi_vector):
     return [kpi for kpi in kpi_vector]
 
 
-class MpKpiAggregationMethod(Enum):
+class MpKpiAggregation(Enum):
+    """
+    Defines kpi aggregation functions that can be used to compute final KPI metric.
+    The enum values can be used to call a function on a set of arguments.
+
+     SUM - applies the sum_kpi function
+
+     MAX - applies the max_kpi function
+
+    """
     SUM = partial(sum_kpi)
     MAX = partial(max_kpi)
 

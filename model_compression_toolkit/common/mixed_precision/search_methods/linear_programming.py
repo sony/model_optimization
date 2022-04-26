@@ -19,8 +19,7 @@ from tqdm import tqdm
 from typing import Dict, List, Tuple, Callable
 
 from model_compression_toolkit.common import Logger
-from model_compression_toolkit.common.constants import WEIGHTS, ACTIVATION
-from model_compression_toolkit.common.mixed_precision.kpi import KPI
+from model_compression_toolkit.common.mixed_precision.kpi import KPI, KPITarget
 from model_compression_toolkit.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
 
 
@@ -156,27 +155,30 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
         indicators_matrix = np.diag(indicators_arr)
 
         if not np.isinf(target_kpi.weights_memory):
-            weights_kpi_metrix = search_manager.compute_kpi_metrix(WEIGHTS)
+            weights_kpi_metrix = search_manager.compute_kpi_metrix(KPITarget.WEIGHTS)
             indicators_weights_kpi_matrix = np.matmul(weights_kpi_metrix, indicators_matrix)
 
             weights_kpi_sum_vector = [
                 sum([indicators_weights_kpi_matrix[i][j] for j in range(indicators_weights_kpi_matrix.shape[1])]) +
-                search_manager.min_kpi[WEIGHTS][i] for i in range(indicators_weights_kpi_matrix.shape[0])]
+                search_manager.min_kpi[KPITarget.WEIGHTS][i] for i in range(indicators_weights_kpi_matrix.shape[0])]
 
-            aggr_weights_kpi = search_manager.kpi_aggr_methods[WEIGHTS](weights_kpi_sum_vector)
+            # search_manager.compute_kpi_functions contains a pair of kpi_metric and kpi_aggregation for each kpi target
+            aggr_weights_kpi = search_manager.compute_kpi_functions[KPITarget.WEIGHTS][1](weights_kpi_sum_vector)
 
             for v in aggr_weights_kpi:
                 lp_problem += v <= target_kpi.weights_memory
 
         if not np.isinf(target_kpi.activation_memory):
-            activation_kpi_metrix = search_manager.compute_kpi_metrix(ACTIVATION)
+            activation_kpi_metrix = search_manager.compute_kpi_metrix(KPITarget.ACTIVATION)
             indicators_activation_kpi_matrix = np.matmul(activation_kpi_metrix, indicators_matrix)
 
             activation_kpi_sum_vector = [
                 sum([indicators_activation_kpi_matrix[i][j] for j in range(indicators_activation_kpi_matrix.shape[1])])
-                + search_manager.min_kpi[ACTIVATION][i] for i in range(indicators_activation_kpi_matrix.shape[0])]
+                + search_manager.min_kpi[KPITarget.ACTIVATION][i] for i in range(indicators_activation_kpi_matrix.shape[0])]
 
-            aggr_activation_kpi = search_manager.kpi_aggr_methods[ACTIVATION](activation_kpi_sum_vector)
+            # search_manager.compute_kpi_functions contains a pair of kpi_metric and kpi_aggregation for each kpi target
+            aggr_activation_kpi = \
+                search_manager.compute_kpi_functions[KPITarget.ACTIVATION][1](activation_kpi_sum_vector)
 
             for v in aggr_activation_kpi:
                 lp_problem += v <= target_kpi.activation_memory

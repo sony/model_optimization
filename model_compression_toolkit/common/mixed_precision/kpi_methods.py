@@ -86,7 +86,17 @@ def activation_output_size_kpi(mp_cfg, graph, fw_info):
     return np.array(activation_memory)
 
 
-class MpKpiMethod(Enum):
+class MpKpiMetric(Enum):
+    """
+    Defines kpi computation functions that can be used to compute KPI for a given target for a given mp config.
+    The enum values can be used to call a function on a set of arguments.
+
+     WEIGHTS_SIZE - applies the weights_size_kpi function
+
+     ACTIVATION_OUTPUT_SIZE - applies the activation_output_size_kpi function
+
+    """
+
     WEIGHTS_SIZE = partial(weights_size_kpi)
     ACTIVATION_OUTPUT_SIZE = partial(activation_output_size_kpi)
 

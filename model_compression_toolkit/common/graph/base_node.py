@@ -312,3 +312,26 @@ class BaseNode:
         """
         output_shapes = self.output_shape if isinstance(self.output_shape, List) else [self.output_shape]
         return sum([np.prod([x for x in output_shape if x is not None]) for output_shape in output_shapes])
+
+    def find_min_candidates_indices(self):
+        """
+        Returns a list with potential minimal candidates.
+        A potential minimal candidate is a candidate which its weights_n_bits and activation_n_bits pair is
+        on the Pareto Front, i.e., there is no other candidates that its n_bits pair exceeds in both entries.
+
+        Returns: A list of indices of potential minimal candidates.
+
+        """
+
+        # We assume that the candidates are sorted according to weights_n_bits first and activation_n_bits second
+        # First, we add the last candidate to the set of minimal candidates (candidate, index)
+        first_min = (len(self.candidates_quantization_cfg) - 1,
+                     self.candidates_quantization_cfg[-1].activation_quantization_cfg.activation_n_bits)
+        min_candidates = [first_min]
+
+        # Iterate over all other candidates, and add ones with higher weights_n_bits but smaller activation_n_bits
+        for i, c in enumerate(self.candidates_quantization_cfg):
+            if c.activation_quantization_cfg.activation_n_bits < first_min[1]:
+                min_candidates.append((i, c))
+
+        return [i for i, a_n_bits in min_candidates]

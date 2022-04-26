@@ -13,13 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Callable
+from typing import Callable, Tuple
 from typing import Dict, List
 import numpy as np
 
-from model_compression_toolkit.common.constants import ACTIVATION, WEIGHTS
 from model_compression_toolkit.common.graph.base_graph import Graph
-from model_compression_toolkit.common.mixed_precision.kpi_aggregation_methods import MpKpiAggregationMethod
+from model_compression_toolkit.common.mixed_precision.kpi import KPITarget
+from model_compression_toolkit.common.mixed_precision.kpi_aggregation_methods import MpKpiAggregation
+from model_compression_toolkit.common.mixed_precision.kpi_methods import MpKpiMetric
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.framework_info import FrameworkInfo
@@ -35,10 +36,7 @@ class MixedPrecisionSearchManager(object):
                  qc: MixedPrecisionQuantizationConfig,
                  fw_info: FrameworkInfo,
                  get_sensitivity_evaluation: Callable,
-                 compute_config_weights_kpi: Callable,
-                 compute_config_activation_kpi: Callable,
-                 kpi_weights_aggr_method: MpKpiAggregationMethod,
-                 kpi_activation_aggr_method: MpKpiAggregationMethod):
+                 kpi_functions: Dict[KPITarget, Tuple[MpKpiMetric, MpKpiAggregation]]):
         """
 
         Args:
@@ -46,6 +44,8 @@ class MixedPrecisionSearchManager(object):
             qc: Quantization configuration for how the graph should be quantized.
             fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
             get_sensitivity_evaluation: Framework specific function to retrieve a metric computation function.
+            kpi_functions: A dictionary with pairs of (MpKpiMethod, MpKpiAggregationMethod) mapping a KPITarget to
+                a couple of kpi metric function and kpi aggregation function.
         """
 
         self.graph = graph
@@ -56,15 +56,12 @@ class MixedPrecisionSearchManager(object):
         self.layer_to_bitwidth_mapping = self.get_search_space()
         self.compute_metric_fn = self.get_sensitivity_metric()
 
-        self.compute_config_kpi = {WEIGHTS: compute_config_weights_kpi, ACTIVATION: compute_config_activation_kpi}
-        self.min_kpi_config = {WEIGHTS: self.get_min_weights_cfg(), ACTIVATION: self.get_min_activation_cfg()}
-        min_kpi = self.compute_min_kpis()
-        self.min_kpi = {WEIGHTS: min_kpi[0], ACTIVATION: min_kpi[1]}
-        self.configurable_nodes_per_target = {WEIGHTS: self.graph.get_sorted_weights_configurable_nodes,
-                                              ACTIVATION: self.graph.get_sorted_activation_configurable_nodes}
+        self.compute_kpi_functions = kpi_functions
 
-        self.kpi_aggr_methods = {WEIGHTS: kpi_weights_aggr_method,
-                                 ACTIVATION: kpi_activation_aggr_method}
+        self.min_kpi_config = {KPITarget.WEIGHTS: self.get_min_cfg(),
+                               KPITarget.ACTIVATION: self.get_min_cfg()}
+
+        self.min_kpi = self.compute_min_kpis()
 
     def get_search_space(self) -> Dict[int, List[int]]:
         """
@@ -83,29 +80,23 @@ class MixedPrecisionSearchManager(object):
             indices_mapping[idx] = list(range(len(n.candidates_quantization_cfg)))  # all search_methods space
         return indices_mapping
 
-    def get_min_activation_cfg(self):
+    def get_min_cfg(self) -> List[int]:
         """
-        Builds a mixed-precision config with the bitwidth indexes for model with minimal activation KPI.
+        Builds a minimal configuration.
+        Note: we assume that a minimal configuration exists, i.e., each configurable node has exactly one candidate
+            with minimal n_bits (in both weight and activation if both are quantized, or in the relevant one if only
+            one of them is quantized)
 
-        Returns: A mp configuration (list of indices)
-
+        Returns: A list of candidate for each node (list on indices)
         """
-        nodes_to_configure = self.graph.get_configurable_sorted_nodes()
-        nodes_activation_bitwidth_candidates = [[c.activation_quantization_cfg.activation_n_bits for c in
-                                                 n.candidates_quantization_cfg] for n in nodes_to_configure]
-        return [np.argmin(n_candidates) for n_candidates in nodes_activation_bitwidth_candidates]
 
-    def get_min_weights_cfg(self):
-        """
-        Builds a mixed-precision config with the bitwidth indexes for model with minimal weights KPI.
+        conf_sorted_nodes = self.graph.get_configurable_sorted_nodes()
+        min_cfg_candidates = [n.find_min_candidates_indices() for n in conf_sorted_nodes]  # list of lists of indices
 
-        Returns: A mp configuration (list of indices)
+        assert all([len(lst) == 1 for lst in min_cfg_candidates]), \
+            f"A minimal config candidate must be defined, but some node have multiple potential minimal candidates"
 
-        """
-        nodes_to_configure = self.graph.get_configurable_sorted_nodes()
-        nodes_weights_bitwidth_candidates = [[c.weights_quantization_cfg.weights_n_bits for c in
-                                              n.candidates_quantization_cfg] for n in nodes_to_configure]
-        return [np.argmin(n_candidates) for n_candidates in nodes_weights_bitwidth_candidates]
+        return [lst[0] for lst in min_cfg_candidates]
 
     def get_sensitivity_metric(self) -> Callable:
         """
@@ -122,20 +113,25 @@ class MixedPrecisionSearchManager(object):
                                                             self.metrics_weights)
         return compute_metric_fn
 
-    def compute_min_kpis(self):
+    def compute_min_kpis(self) -> Dict[KPITarget, np.ndarray]:
         """
         Computes a KPIs vector with the values matching to the minimal mp configuration
-            (i.e., each node is configured with the quantization candidate that would give the minimal size of the
-            node's KPI).
-        The method computes the minimal KPIs vector for minimal weights config and minimal activation config separately.
+        (i.e., each node is configured with the quantization candidate that would give the minimal size of the
+        node's KPI).
+        The method computes the minimal KPIs vector for each kpi target.
 
-        Returns: A pair of KPIs vectors for weights and activation minimal configuration, respectively,
+        Returns: A dictionary mapping each kpi target to its respective minimal KPIs values.
 
         """
-        return self.compute_config_kpi[WEIGHTS](self.min_kpi_config[WEIGHTS], self.graph, self.fw_info), \
-               self.compute_config_kpi[ACTIVATION](self.min_kpi_config[ACTIVATION], self.graph, self.fw_info)
+        min_kpis = {}
+        for kpi_target, kpi_fns in self.compute_kpi_functions.items():
+            # kpi_fns is a pair of kpi computation method and kpi aggregation method (in this method we only need
+            # the first one)
+            min_kpis[kpi_target] = kpi_fns[0](self.min_kpi_config[kpi_target], self.graph, self.fw_info)
 
-    def compute_kpi_metrix(self, target):
+        return min_kpis
+
+    def compute_kpi_metrix(self, target) -> np.ndarray:
         """
         Computes and builds a KPIs metrix, to be used for the mixed-precision search problem formalization.
         The matrix is constructed as follows (for a given target):
@@ -146,13 +142,12 @@ class MixedPrecisionSearchManager(object):
             respective row.
 
         Args:
-            target: The target for which the KPI is calculated (should be one of 'weights' or 'activation').
+            target: The target for which the KPI is calculated (a KPITarget value).
 
         Returns: A KPI matrix.
 
         """
-        assert target == WEIGHTS or target == ACTIVATION, \
-            f"{target} is not a valid KPI target, valid KPI targets are {[WEIGHTS, ACTIVATION]}"
+        assert isinstance(target, KPITarget), f"{target} is not a valid KPI target"
 
         configurable_sorted_nodes = self.graph.get_configurable_sorted_nodes()
 
@@ -166,7 +161,7 @@ class MixedPrecisionSearchManager(object):
         # the indicators' diagonal matrix
         return np.transpose(np.array(kpi_matrix))
 
-    def compute_candidate_relative_kpis(self, conf_node_idx, candidate_idx, target):
+    def compute_candidate_relative_kpis(self, conf_node_idx, candidate_idx, target) -> np.ndarray:
         """
         Computes a KPIs vector for a given candidates of a given configurable node, i.e., the matching KPI vector
         which is obtained by computing the given target's KPI function on a minimal configuration in which the given
@@ -176,19 +171,20 @@ class MixedPrecisionSearchManager(object):
         Args:
             conf_node_idx: The index of a node in a sorted configurable nodes list.
             candidate_idx: The index of a node's quantization configuration candidate.
-            target: The target for which the KPI is calculated (should be one of 'weights' or 'activation').
+            target: The target for which the KPI is calculated (a KPITarget value).
 
         Returns: Normalized node's KPIs vector
 
         """
-        return self.compute_node_kpi_for_candidate(conf_node_idx, candidate_idx, target) - self.get_min_target_kpi(target)
+        return self.compute_node_kpi_for_candidate(conf_node_idx, candidate_idx, target) - \
+               self.get_min_target_kpi(target)
 
-    def get_min_target_kpi(self, target):
+    def get_min_target_kpi(self, target) -> np.ndarray:
         """
         Returns the minimal KPIs vector (pre-calculated on initialization) of a specific target.
 
         Args:
-            target: The target for which the KPI is calculated (should be one of 'weights' or 'activation').
+            target: The target for which the KPI is calculated (a KPITarget value).
 
         Returns: Minimal KPIs vector.
 
@@ -203,12 +199,12 @@ class MixedPrecisionSearchManager(object):
         Args:
             conf_node_idx: The index of a node in a sorted configurable nodes list.
             candidate_idx: Quantization config candidate to be used for the node's KPI computation.
-            target: The target for which the KPI is calculated (should be one of 'weights' or 'activation').
+            target: The target for which the KPI is calculated (a KPITarget value).
 
         Returns: Node's KPIs vector.
 
         """
-        return self.compute_config_kpi[target](
+        return self.compute_kpi_functions[target][0](
             self.replace_config_in_index(
                 self.min_kpi_config[target],
                 conf_node_idx,
@@ -219,7 +215,7 @@ class MixedPrecisionSearchManager(object):
     @staticmethod
     def replace_config_in_index(mp_cfg, idx, value):
         """
-        Replacing the quantization configuration candidate in a minimal mixed-precision configuration at the given
+        Replacing the quantization configuration candidate in a given mixed-precision configuration at the given
         index (node's index) with the given value (candidate index).
 
         Args:
