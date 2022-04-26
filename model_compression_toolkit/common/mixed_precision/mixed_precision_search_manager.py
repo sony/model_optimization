@@ -58,8 +58,7 @@ class MixedPrecisionSearchManager(object):
 
         self.compute_kpi_functions = kpi_functions
 
-        self.min_kpi_config = {KPITarget.WEIGHTS: self.get_min_cfg(),
-                               KPITarget.ACTIVATION: self.get_min_cfg()}
+        self.min_kpi_config = self.get_min_cfg()
 
         self.min_kpi = self.compute_min_kpis()
 
@@ -127,7 +126,7 @@ class MixedPrecisionSearchManager(object):
         for kpi_target, kpi_fns in self.compute_kpi_functions.items():
             # kpi_fns is a pair of kpi computation method and kpi aggregation method (in this method we only need
             # the first one)
-            min_kpis[kpi_target] = kpi_fns[0](self.min_kpi_config[kpi_target], self.graph, self.fw_info)
+            min_kpis[kpi_target] = kpi_fns[0](self.min_kpi_config, self.graph, self.fw_info)
 
         return min_kpis
 
@@ -206,7 +205,7 @@ class MixedPrecisionSearchManager(object):
         """
         return self.compute_kpi_functions[target][0](
             self.replace_config_in_index(
-                self.min_kpi_config[target],
+                self.min_kpi_config,
                 conf_node_idx,
                 candidate_idx),
             self.graph,
