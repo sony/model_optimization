@@ -82,8 +82,8 @@ def torch_tensor_to_numpy(tensor: torch.Tensor) -> np.ndarray:
     elif isinstance(tensor, list):
         return [torch_tensor_to_numpy(t) for t in tensor]
     elif isinstance(tensor, tuple):
-        return (torch_tensor_to_numpy(t) for t in tensor)
+        return tuple([torch_tensor_to_numpy(t) for t in tensor])
     elif isinstance(tensor, torch.Tensor):
-        return tensor.detach().cpu().numpy()
+        return tensor.cpu().detach().contiguous().numpy()
     else:
         raise Exception(f'Conversion of type {type(tensor)} to {type(np.ndarray)} is not supported')
