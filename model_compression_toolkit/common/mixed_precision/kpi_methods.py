@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from enum import Enum
+from functools import partial
 
 import numpy as np
 
@@ -82,3 +84,21 @@ def activation_output_size_kpi(mp_cfg, graph, fw_info):
         activation_memory.append(node_activation_memory_in_bytes)
 
     return np.array(activation_memory)
+
+
+class MpKpiMetric(Enum):
+    """
+    Defines kpi computation functions that can be used to compute KPI for a given target for a given mp config.
+    The enum values can be used to call a function on a set of arguments.
+
+     WEIGHTS_SIZE - applies the weights_size_kpi function
+
+     ACTIVATION_OUTPUT_SIZE - applies the activation_output_size_kpi function
+
+    """
+
+    WEIGHTS_SIZE = partial(weights_size_kpi)
+    ACTIVATION_OUTPUT_SIZE = partial(activation_output_size_kpi)
+
+    def __call__(self, *args):
+        return self.value(*args)

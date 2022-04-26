@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from enum import Enum
+from functools import partial
 
 from pulp import lpSum
 
@@ -27,3 +29,17 @@ def sum_kpi(kpi_vector):
 
     """
     return [lpSum(kpi_vector)]
+
+
+class MpKpiAggregation(Enum):
+    """
+    Defines kpi aggregation functions that can be used to compute final KPI metric.
+    The enum values can be used to call a function on a set of arguments.
+
+     SUM - applies the sum_kpi function
+
+    """
+    SUM = partial(sum_kpi)
+
+    def __call__(self, *args):
+        return self.value(*args)

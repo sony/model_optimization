@@ -12,8 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from enum import Enum
 
 import numpy as np
+
+
+class KPITarget(Enum):
+    """
+    Targets for which we define KPIs metrics for mixed-precision search.
+    For each target that we care to consider in a mixed-precision search, there should be defined a set of
+    kpi computation function, kpi aggregation function, and kpi target (within a KPI object).
+
+    Whenever adding a kpi metric to KPI class we should add a matching target to this enum.
+
+    WEIGHTS - KPI metric for weights quantization
+
+    ACTIVATION - KPI metric for activation quantization
+
+    """
+
+    WEIGHTS = 'weights'
+    ACTIVATION = 'activation'
 
 
 class KPI(object):

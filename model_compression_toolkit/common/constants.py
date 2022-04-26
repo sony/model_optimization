@@ -83,7 +83,3 @@ BOTTOM_FACTOR = 0.7
 UPPER_FACTOR = 1.2
 DEC_RANGE_BOTTOM = 0.97
 DEC_RANGE_UPPER = 1.03
-
-# KPI calculation targets
-WEIGHTS = 'weights'
-ACTIVATION = 'activation'

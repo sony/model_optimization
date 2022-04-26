@@ -19,16 +19,16 @@ from enum import Enum
 from typing import Callable, List
 
 from model_compression_toolkit.common import Graph, Logger
-from model_compression_toolkit.common.mixed_precision.kpi import KPI
-from model_compression_toolkit.common.mixed_precision.kpi_aggregation_methods import sum_kpi
-from model_compression_toolkit.common.mixed_precision.kpi_methods import weights_size_kpi, \
-    activation_output_size_kpi
+from model_compression_toolkit.common.mixed_precision.kpi import KPI, KPITarget
+from model_compression_toolkit.common.mixed_precision.kpi_aggregation_methods import MpKpiAggregation
+from model_compression_toolkit.common.mixed_precision.kpi_methods import MpKpiMetric
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
 from model_compression_toolkit.common.mixed_precision.search_methods.linear_programming import \
     mp_integer_programming_search
 from model_compression_toolkit.common.framework_info import FrameworkInfo
+
 
 # When adding a new search_methods MP configuration method, these enum and factory dictionary
 # should be updated with it's kind and a search_method implementation.
@@ -38,6 +38,11 @@ class BitWidthSearchMethod(Enum):
 
 search_methods = {
     BitWidthSearchMethod.INTEGER_PROGRAMMING: mp_integer_programming_search}
+
+# When adding a KPITarget that we want to consider in our mp search,
+# a matching pair of kpi computation function and a kpi aggregation function should be added to this dictionary
+kpi_functions_factory = {KPITarget.WEIGHTS: (MpKpiMetric.WEIGHTS_SIZE, MpKpiAggregation.SUM),
+                         KPITarget.ACTIVATION: (MpKpiMetric.ACTIVATION_OUTPUT_SIZE, MpKpiAggregation.SUM)}
 
 
 def search_bit_width(graph_to_search_cfg: Graph,
@@ -76,15 +81,16 @@ def search_bit_width(graph_to_search_cfg: Graph,
 
     graph = copy.deepcopy(graph_to_search_cfg)  # Copy graph before searching
 
+    # Each pair of (KPI method, KPI aggregation) should match to a specific provided kpi target
+    # TODO: add CustomKPITarget (inner API) that can overwrite the sets of kpi functions for each target
+    kpi_functions = kpi_functions_factory
+
     # Instantiate a manager object
     search_manager = MixedPrecisionSearchManager(graph,
                                                  qc,
                                                  fw_info,
                                                  get_sensitivity_evaluation,
-                                                 compute_config_weights_kpi=weights_size_kpi,
-                                                 compute_config_activation_kpi=activation_output_size_kpi,
-                                                 kpi_weights_aggr_method=sum_kpi,
-                                                 kpi_activation_aggr_method=sum_kpi)
+                                                 kpi_functions)
 
     if search_method in search_methods:  # Get a specific search function
         search_method_fn = search_methods.get(search_method)

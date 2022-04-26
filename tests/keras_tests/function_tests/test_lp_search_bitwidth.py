@@ -17,14 +17,12 @@ import unittest
 from functools import partial
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
-from model_compression_toolkit.common.constants import WEIGHTS, ACTIVATION
 from model_compression_toolkit.common.mixed_precision.distance_weighting import get_average_weights
-from model_compression_toolkit.common.mixed_precision.kpi import KPI
+from model_compression_toolkit.common.mixed_precision.kpi import KPI, KPITarget
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.mixed_precision.mixed_precision_search_facade import search_bit_width, \
     BitWidthSearchMethod
-from model_compression_toolkit.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
 from model_compression_toolkit.common.mixed_precision.search_methods.linear_programming import \
     mp_integer_programming_search
 from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
@@ -48,14 +46,15 @@ class MockMixedPrecisionSearchManager:
         self.layer_to_bitwidth_mapping = {0: [0, 1, 2]}
         self.layer_to_kpi_mapping = layer_to_kpi_mapping
         self.compute_metric_fn = lambda x, y: 0
-        self.min_kpi = {WEIGHTS: [[1], [1], [1]], ACTIVATION: [[1], [1], [1]]}  # minimal kpi in the tests layer_to_kpi_mapping
-        self.kpi_aggr_methods = {WEIGHTS: lambda v: [sum(v)], ACTIVATION: lambda v: [sum(v)]}
+        self.min_kpi = {KPITarget.WEIGHTS: [[1], [1], [1]], KPITarget.ACTIVATION: [[1], [1], [1]]}  # minimal kpi in the tests layer_to_kpi_mapping
+        self.compute_kpi_functions = {KPITarget.WEIGHTS: (None, lambda v: [sum(v)]),
+                                      KPITarget.ACTIVATION: (None, lambda v: [sum(v)])}
 
     def compute_kpi_metrix(self, target):
         # minus 1 is normalization by the minimal kpi (which is always 1 in this test)
-        if target == WEIGHTS:
+        if target == KPITarget.WEIGHTS:
             kpi_matrix = [np.flip(np.array([kpi.weights_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]
-        elif target == ACTIVATION:
+        elif target == KPITarget.ACTIVATION:
             kpi_matrix = [np.flip(np.array([kpi.activation_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]
         else:
             # not supposed to get here
