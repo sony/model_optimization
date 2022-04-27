@@ -330,7 +330,7 @@ class BaseNode:
         min_candidates = [first_min]
 
         # Iterate over all other candidates, and add ones with higher weights_n_bits but smaller activation_n_bits
-        for i, c in enumerate(self.candidates_quantization_cfg):
+        for i, c in reversed(list(enumerate(self.candidates_quantization_cfg))):
             if c.activation_quantization_cfg.activation_n_bits < first_min[1]:
                 min_candidates.append((i, c))
 
