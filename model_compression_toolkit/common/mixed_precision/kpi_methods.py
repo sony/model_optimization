@@ -17,38 +17,40 @@ from functools import partial
 
 import numpy as np
 
-from model_compression_toolkit.common.mixed_precision.kpi_data import compute_weights_size_kpi, \
-    compute_activation_output_size_kpi
+from model_compression_toolkit.common.mixed_precision.kpi_data import compute_weights_sizes, \
+    compute_activation_output_sizes
 
 
 def weights_size_kpi(mp_cfg, graph, fw_info):
     """
-    Computes a KPIs vector with the respective weights' memory size for each weigh configurable node,
-    according to the given mixed-precision configuration.
+    A metric function to that returns a KPIs vector with the respective weights' memory size for
+    each weight configurable node, according to the given mixed-precision configuration.
     Note that the configuration includes an index for each configurable node! (not just weights configurable).
 
     Args:
         mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
         graph: Graph object.
-        fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
+        fw_info: FrameworkInfo object about the specific framework
+            (e.g., attributes of different layers' weights to quantize).
 
     Returns: A vector of node's weights memory sizes.
     Note that the vector is not necessarily of the same length as the given config.
 
     """
-    return compute_weights_size_kpi(mp_cfg, graph, fw_info)
+    return compute_weights_sizes(mp_cfg, graph, fw_info)
 
 
 def activation_output_size_kpi(mp_cfg, graph, fw_info):
     """
-    Computes a KPIs vector with the respective output memory size for each activation configurable node,
+    A metric function to that returns a  KPIs vector with the output memory size for each activation configurable node,
     according to the given mixed-precision configuration.
     Note that the configuration includes an index for each configurable node! (not just activation configurable).
 
     Args:
         mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
         graph: Graph object.
-        fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize)
+        fw_info: FrameworkInfo object about the specific framework
+            (e.g., attributes of different layers' weights to quantize)
             (not used in this method).
 
     Returns: A vector of node's weights memory sizes.
@@ -56,7 +58,7 @@ def activation_output_size_kpi(mp_cfg, graph, fw_info):
 
     """
 
-    return compute_activation_output_size_kpi(mp_cfg, graph)
+    return compute_activation_output_sizes(mp_cfg, graph)
 
 
 class MpKpiMetric(Enum):

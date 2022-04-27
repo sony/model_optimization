@@ -13,8 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Callable
+from typing import Callable, Dict
 
+from model_compression_toolkit import KPI
+from model_compression_toolkit.common import Logger
 from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
 from model_compression_toolkit.common.mixed_precision.kpi_data import compute_kpi_data
 from model_compression_toolkit.common.framework_info import FrameworkInfo
@@ -36,7 +38,38 @@ if importlib.util.find_spec("tensorflow") is not None\
                        representative_data_gen: Callable,
                        quant_config: QuantizationConfig = DEFAULTCONFIG,
                        fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                       fw_hw_model: FrameworkHardwareModel = KERAS_DEFAULT_MODEL):
+                       fw_hw_model: FrameworkHardwareModel = KERAS_DEFAULT_MODEL) -> Dict[str, KPI]:
+        """
+        Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
+        Builds the computation graph from the given model and hw modeling, and uses it to
+
+        Args:
+            in_model (Model): Keras model to quantize.
+            representative_data_gen (Callable): Dataset used for calibration.
+            quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/common/quantization/quantization_config.py#L154>`_
+            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/keras/default_framework_info.py#L113>`_
+            fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
+
+        Returns:
+            A dictionary, mapping 'min_kpi' and 'max_kpi' to KPI data.
+
+        Examples:
+            Import a Keras model:
+
+            >>> from tensorflow.keras.applications.mobilenet import MobileNet
+            >>> model = MobileNet()
+
+            Create a random dataset generator:
+
+            >>> import numpy as np
+            >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
+
+            Call for KPI data calculation:
+            # TODO: what is the correct way to explain about how to provide fw hw model? (do we need to give example for this if it is not mandatory?)
+
+            >>> kpi_data_dict = keras_kpi_data(model, repr_datagen)
+
+        """
 
         fw_impl = KerasImplementation()
 
@@ -46,3 +79,11 @@ if importlib.util.find_spec("tensorflow") is not None\
                                 fw_hw_model,
                                 fw_info,
                                 fw_impl)
+
+else:
+    # If tensorflow or tensorflow_model_optimization are not installed,
+    # we raise an exception when trying to use this function.
+    def keras_kpi_data(*args, **kwargs):
+        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+                        'when using keras_kpi_data. '
+                        'Could not find Tensorflow package.')
