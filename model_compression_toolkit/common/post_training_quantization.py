@@ -102,11 +102,11 @@ def post_training_quantization(in_model: Any,
 
     tb_w = _init_tensorboard_writer(fw_info)
 
-    graph = _read_model_to_graph(in_model,
-                                 representative_data_gen,
-                                 fw_hw_model,
-                                 fw_info,
-                                 fw_impl)
+    graph = read_model_to_graph(in_model,
+                                representative_data_gen,
+                                fw_hw_model,
+                                fw_info,
+                                fw_impl)
 
     tg = _prepare_model_for_quantization(graph,
                                          representative_data_gen,
@@ -411,11 +411,11 @@ def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
     return quantized_model, user_info
 
 
-def _read_model_to_graph(in_model: Any,
-                         representative_data_gen: Callable,
-                         fw_hw_model: FrameworkHardwareModel,
-                         fw_info: FrameworkInfo = None,
-                         fw_impl: FrameworkImplementation = None) -> Graph:
+def read_model_to_graph(in_model: Any,
+                        representative_data_gen: Callable,
+                        fw_hw_model: FrameworkHardwareModel,
+                        fw_info: FrameworkInfo = None,
+                        fw_impl: FrameworkImplementation = None) -> Graph:
     """
     Read a model into a graph object.
     Args:
