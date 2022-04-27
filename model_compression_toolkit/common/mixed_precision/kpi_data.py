@@ -15,16 +15,16 @@
 from typing import Callable, Any, List, Dict
 import numpy as np
 
-from model_compression_toolkit import QuantizationConfig, FrameworkInfo, KPI
+from model_compression_toolkit import FrameworkInfo, KPI, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common import Graph
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
-from model_compression_toolkit.common.post_training_quantization import read_model_to_graph, get_finalized_graph
+import model_compression_toolkit.common.post_training_quantization as ptq
 
 
 def compute_kpi_data(in_model: Any,
                      representative_data_gen: Callable,
-                     quant_config: QuantizationConfig,
+                     quant_config: MixedPrecisionQuantizationConfig,
                      fw_hw_model: FrameworkHardwareModel,
                      fw_info: FrameworkInfo,
                      fw_impl: FrameworkImplementation) -> Dict[str, KPI]:
@@ -46,17 +46,17 @@ def compute_kpi_data(in_model: Any,
 
     """
 
-    graph = read_model_to_graph(in_model,
-                                representative_data_gen,
-                                fw_hw_model,
-                                fw_info,
-                                fw_impl)
+    graph = ptq.read_model_to_graph(in_model,
+                                    representative_data_gen,
+                                    fw_hw_model,
+                                    fw_info,
+                                    fw_impl)
 
-    transformed_graph = get_finalized_graph(graph,
-                                            quant_config,
-                                            fw_info,
-                                            tb_w=None,
-                                            fw_impl=fw_impl)
+    transformed_graph = ptq.get_finalized_graph(graph,
+                                                quant_config,
+                                                fw_info,
+                                                tb_w=None,
+                                                fw_impl=fw_impl)
 
     min_cfg = transformed_graph.get_min_candidates_config()
     max_cfg = transformed_graph.get_max_candidates_config()
@@ -64,15 +64,15 @@ def compute_kpi_data(in_model: Any,
     ######################################
     # Compute parameters sum
     ######################################
-    min_parameters_sum = np.sum(compute_weights_sizes(mp_cfg=min_cfg, graph=graph, fw_info=fw_info))
-    max_parameters_sum = np.sum(compute_weights_sizes(mp_cfg=min_cfg, graph=graph, fw_info=fw_info))
+    min_parameters_sum = np.sum(compute_weights_sizes(mp_cfg=min_cfg, graph=transformed_graph, fw_info=fw_info))
+    max_parameters_sum = np.sum(compute_weights_sizes(mp_cfg=max_cfg, graph=transformed_graph, fw_info=fw_info))
 
 
     ######################################
     # Compute max activation tensor
     ######################################
-    min_precision_largest_tensor = np.max(compute_activation_output_sizes(mp_cfg=min_cfg, graph=graph))
-    max_precision_largest_tensor = np.max(compute_activation_output_sizes(mp_cfg=max_cfg, graph=graph))
+    min_precision_largest_tensor = np.max(compute_activation_output_sizes(mp_cfg=min_cfg, graph=transformed_graph))
+    max_precision_largest_tensor = np.max(compute_activation_output_sizes(mp_cfg=max_cfg, graph=transformed_graph))
 
     return {"min_kpi": KPI(weights_memory=min_parameters_sum, activation_memory=min_precision_largest_tensor),
             "max_kpi": KPI(weights_memory=max_parameters_sum, activation_memory=max_precision_largest_tensor)}

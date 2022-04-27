@@ -15,11 +15,13 @@
 
 from typing import Callable, Dict
 
-from model_compression_toolkit import KPI
+from model_compression_toolkit import KPI, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common import Logger
 from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
 from model_compression_toolkit.common.mixed_precision.kpi_data import compute_kpi_data
 from model_compression_toolkit.common.framework_info import FrameworkInfo
+from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
+    DEFAULT_MIXEDPRECISION_CONFIG
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG
 from model_compression_toolkit.keras.quantization_facade import KERAS_DEFAULT_MODEL
@@ -36,7 +38,7 @@ if importlib.util.find_spec("tensorflow") is not None\
 
     def keras_kpi_data(in_model: Model,
                        representative_data_gen: Callable,
-                       quant_config: QuantizationConfig = DEFAULTCONFIG,
+                       quant_config: MixedPrecisionQuantizationConfig = DEFAULT_MIXEDPRECISION_CONFIG,
                        fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                        fw_hw_model: FrameworkHardwareModel = KERAS_DEFAULT_MODEL) -> Dict[str, KPI]:
         """
@@ -46,7 +48,7 @@ if importlib.util.find_spec("tensorflow") is not None\
         Args:
             in_model (Model): Keras model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
-            quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/common/quantization/quantization_config.py#L154>`_
+            quant_config (MixedPrecisionQuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/keras/default_framework_info.py#L113>`_
             fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
 
@@ -64,12 +66,16 @@ if importlib.util.find_spec("tensorflow") is not None\
             >>> import numpy as np
             >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
 
-            Call for KPI data calculation:
-            # TODO: what is the correct way to explain about how to provide fw hw model? (do we need to give example for this if it is not mandatory?)
-
+            TODO: what is the correct way to explain about how to provide fw hw model? (do we need to give example for this if it is not mandatory?)
+            Import mct and call for KPI data calculation:
+            >>> import model_compression_toolkit as mct
             >>> kpi_data_dict = keras_kpi_data(model, repr_datagen)
 
         """
+
+        if not isinstance(quant_config, MixedPrecisionQuantizationConfig):
+            Logger.error("KPI data computation can be executed without MixedPrecisionQuantizationConfig object."
+                         "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
 
         fw_impl = KerasImplementation()
 
