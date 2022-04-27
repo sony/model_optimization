@@ -26,6 +26,7 @@ from model_compression_toolkit.common.graph.base_graph import Graph, BaseNode, O
 from model_compression_toolkit.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.common.constants import REUSE, REUSE_GROUP
+from model_compression_toolkit.keras.reader.node_builder import REUSED_IDENTIFIER
 from model_compression_toolkit.keras.constants import KERNEL, BIAS, USE_BIAS, NUM_HEADS, KEY_DIM, VALUE_DIM, \
     QUERY_SHAPE, KEY_SHAPE, VALUE_SHAPE, OUTPUT_SHAPE, ATTENTION_AXES, ACTIVATION, LINEAR, UNITS, AXES, \
     FUNCTION, DIMS, F_RESHAPE, F_STRIDED_SLICE, F_STACK, Q_KERNEL, Q_BIAS, K_KERNEL, K_BIAS, V_KERNEL, V_BIAS, \
@@ -39,7 +40,8 @@ class MHAParams:
     def __init__(self, mha_node):
         """
         Extract MHA params from layer attributes
-        :param mha_node: MHA node
+        Args:
+            mha_node: MHA node
         """
         self.num_heads = mha_node.framework_attr[NUM_HEADS]
         self.use_bias = mha_node.framework_attr[USE_BIAS]
@@ -104,13 +106,16 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
     def _standarize_input_shapes(graph, name, num_input_edges, params):
         """
         Add Permute and tf.reshape nodes to stadarize the inputs. output shape will be [B, Iters, Sequence, Channels]
+        Args:
+            graph: input graph
+            name: MHA node name
+            num_input_edges: number of input to MHA node. Must be either 2 or 3
+            params: MHA params object
 
-        :param graph: input graph
-        :param name: MHA node name
-        :param num_input_edges: number of input to MHA node. Must be either 2 or 3
-        :param params: MHA params object
-        :return: Query, Key & Value nodes to use as inputs to subgraph,
-                 Standarized Query, Key & Value nodes to connect to the rest of the subgraph
+        Returns:
+            Query, Key & Value nodes to use as inputs to subgraph,
+            Standarized Query, Key & Value nodes to connect to the rest of the subgraph
+
         """
         assert num_input_edges in [2, 3]
         q_permute_node = BaseNode(f'{name}_query_input_permute', {DIMS: params.perm_dims[1:]},
@@ -146,28 +151,34 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
     def gen_reuse_params(reuse_index, name, reuse_params):
         """
         Generate reuse parameters kwrags: REUSE & REUSE_GROUP according to reuse_index.
+        Args:
+            reuse_index: index representing how many times the node is reused. None for not reused
+            name: original node name to calculate the REUSE_GROUP that's renamed each call
+            reuse_params: MHA node default params. Defaults to no reuse
 
-        :param reuse_index: index representing how many times the node is reused. None for not reused
-        :param name: original node name to calculate the REUSE_GROUP that's renamed each call
-        :param reuse_params: MHA node default params. Defaults to no reuse
-        :return: dictionaty of reuse params
+        Returns:
+            dictionary of reuse params
+
         """
 
         if reuse_index is None:
             return reuse_params
         else:
             return {REUSE: reuse_index != 0,
-                    REUSE_GROUP: name if reuse_index == 0 else f'{name}_reused_{reuse_index}'
+                    REUSE_GROUP: name if reuse_index == 0 else f'{name}{REUSED_IDENTIFIER}{reuse_index}'
                     }
 
     @staticmethod
     def get_reuse_suffix(reuse_index):
         """
-        Generate node name suffix according to reuse naming
-        :param reuse_index: index representing how many times the node is reused. None for not reused
-        :return: string suffix to be concatenated to resued node name
+
+        Args:
+            reuse_index: index representing how many times the node is reused. None for not reused
+
+        Returns:
+            string suffix to be concatenated to reused node name
         """
-        return '' if reuse_index == 0 or reuse_index is None else f'_reused_{reuse_index}'
+        return '' if reuse_index == 0 or reuse_index is None else f'{REUSED_IDENTIFIER}{reuse_index}'
 
     @staticmethod
     def _slice_per_iteration(graph, name, i_iter, q_reshape_node, k_reshape_node, v_reshape_node, params):
@@ -175,14 +186,17 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
         Prepare MHA data for attention: Slice inputs on Iters axis.
          [B, Iters, Sequence, Channels] --> [B, Sequence, Channels]
 
-        :param graph: input graph
-        :param name: MHA node name
-        :param i_iter: iteration index, from 0..Iters-1
-        :param q_reshape_node: query input after standardization
-        :param k_reshape_node: key input after standardization
-        :param v_reshape_node: value input after standardization
-        :param params: MHA params object
-        :return: inputs to MHA node, per iteration
+        Args:
+            graph: input graph
+            name: MHA node name
+            i_iter: iteration index, from 0..Iters-1
+            q_reshape_node: query input after standardization
+            k_reshape_node: key input after standardization
+            v_reshape_node: value input after standardization
+            params: MHA params object
+
+        Returns:
+            inputs to MHA node, per iteration
         """
         q_slice_node = FunctionalNode(f'{name}_q_slice{i_iter}', {FUNCTION: F_STRIDED_SLICE},
                                       params.q_reshape_shape, params.q_slice_shape, {}, TFOpLambda,
@@ -209,16 +223,22 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
                              iter_index, head_index, params):
         """
         Generate the attention head subgraph: Dot(softmax(Dot(proj(Q), proj(K))), proj(V))
-        :param graph: input graph
-        :param q_reshape_node:
-        :param k_reshape_node:
-        :param v_reshape_node:
-        :param mha_node: MHA node
-        :param iter_index: iteration index
-        :param head_index: head index being generated. used to set correct node names
-        :param params: MHA params object
-        :return: output of attention head
+
+        Args:
+            graph: input graph
+            q_in_node: input query node
+            k_in_node: input key node
+            v_in_node: input value node
+            mha_node: MHA node
+            iter_index: iteration index
+            head_index: head index being generated. used to set correct node names
+            params: MHA params object
+
+        Returns:
+            output of attention head
+
         """
+
         # add norm factor to query kernel and bias
         factor = (params.query_key_dim ** -0.5)
         qk = mha_node.weights[self._get_weight_by_name(mha_node, Q_KERNEL)][:, head_index, :].copy() * factor
@@ -276,12 +296,15 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
     def _concat_heads(graph, name, input_nodes, iter_index, params):
         """
         concatenate attention heads
+        Args:
+            graph: input graph
+            name: MHA node name
+            input_nodes: all the outputs of the attention heads
+            iter_index: iteration index
+            params: MHA params object
 
-        :param graph: input graph
-        :param name: MHA node name
-        :param input_nodes: all the outputs of the attention heads
-        :param params: MHA params object
-        :return: concat node
+        Returns: concat node
+
         """
         concat_node = BaseNode(f'{name}_concat_{iter_index}', {},
                                (params.value_proj_shape,)*params.num_heads, params.concat_shape, {}, Concatenate,
@@ -291,13 +314,16 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
 
     def _project_output(self, graph, mha_node, input_node, iter_index, params):
         """
-        project all attention outputs (after concatenation
+        project all attention outputs (after concatenation)
+        Args:
+            graph: input graph
+            mha_node: MHA node
+            input_node: concat node
+            iter_index: MHA params object
+            params: MHA params object
 
-        :param graph: input graph
-        :param mha_node: MHA node
-        :param input_node: concat node
-        :param params: MHA params object
-        :return: output node of the MHA node
+        Returns:
+            output node of the MHA node
         """
         w_out = mha_node.weights[self._get_weight_by_name(mha_node, OUTPUT_KERNEL)].copy().reshape((-1, params.d_model))
         b_out = mha_node.weights[self._get_weight_by_name(mha_node, OUTPUT_BIAS)].copy()
@@ -312,11 +338,14 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
     def _destandarize_output_shapes(graph, name, output_node, params):
         """
         return output to original MHA output shape
-        :param graph: input graph
-        :param name: MHA node name
-        :param output_node: output node of output projection
-        :param params: MHA params object
-        :return: Destandarized output node, which matches in shape the output of the MHA node
+        Args:
+            graph: input graph
+            name: MHA node name
+            output_node: output node of output projection
+            params: MHA params object
+
+        Returns:
+            Destandarized output node, which matches in shape the output of the MHA node
         """
 
         output_reshape_node = BaseNode(f'{name}_output_reshape', {'target_shape': params.q_perm_shape[1:-1] + (params.d_model,)},
@@ -334,13 +363,16 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
     def _connect_to_graph(graph, mha_node, q_permute_node, k_permute_node, v_permute_node, output_permute_node):
         """
         connect subgraph to input graph
+        Args:
+            graph: input graph
+            mha_node: MHA node to substitute inputs and outputs with
+            q_permute_node: 1st input to MHA node
+            k_permute_node: 2nd input to MHA node
+            v_permute_node: 3rd input to MHA node
+            output_permute_node: output node of MHA node
 
-        :param graph: input graph
-        :param mha_node: MHA node to substitute inputs and outputs with
-        :param q_permute_node: 1st input to MHA node
-        :param k_permute_node: 2nd input to MHA node
-        :param v_permute_node: 3rd input to MHA node
-        :param output_permute_node: output node of MHA node
+        Returns:
+
         """
         if len(graph.in_edges(mha_node)) == 3:
             # MHA node is called with 3 inputs: Query, Value & Key
@@ -364,10 +396,10 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
                    mha_node: BaseNode) -> Graph:
         """
         Removes a MultiHeadAttention node from the graph, and replaces it with
-         a compatible graph that consists of Dense, Dot, Softmax and Concatenate layers.
+         a compatible graph that consists of Dense, strided_slice, Dot, Softmax and Concatenate layers.
         Additional reshape and permute nodes are used to shape the inputs to the standard
-        of [B, Sequence, C]. All attention axes are folded on the Sequence axis. Iteration
-        axes are folded on the Bacth axis
+        of [B, Iters, Sequence, C]. All attention axes are folded on the Sequence axis and iteration axes
+        to the Iters axis.
 
         Args:
             graph: Graph we apply the substitution on.
