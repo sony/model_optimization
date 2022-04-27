@@ -313,7 +313,7 @@ class BaseNode:
         output_shapes = self.output_shape if isinstance(self.output_shape, List) else [self.output_shape]
         return sum([np.prod([x for x in output_shape if x is not None]) for output_shape in output_shapes])
 
-    def find_min_candidates_indices(self):
+    def find_min_candidates_indices(self) -> List[int]:
         """
         Returns a list with potential minimal candidates.
         A potential minimal candidate is a candidate which its weights_n_bits and activation_n_bits pair is
