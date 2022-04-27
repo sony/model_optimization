@@ -1,4 +1,4 @@
-networkx==2.5
+networkx
 tqdm
 Pillow
 numpy
