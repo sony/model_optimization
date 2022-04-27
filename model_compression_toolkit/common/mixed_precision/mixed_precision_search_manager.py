@@ -13,12 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Callable
+from typing import Callable, Tuple
 from typing import Dict, List
 import numpy as np
 
 from model_compression_toolkit.common.graph.base_graph import Graph
-from model_compression_toolkit.common.mixed_precision.kpi import KPI
+from model_compression_toolkit.common.mixed_precision.kpi import KPITarget
+from model_compression_toolkit.common.mixed_precision.kpi_aggregation_methods import MpKpiAggregation
+from model_compression_toolkit.common.mixed_precision.kpi_methods import MpKpiMetric
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.framework_info import FrameworkInfo
@@ -33,7 +35,8 @@ class MixedPrecisionSearchManager(object):
                  graph: Graph,
                  qc: MixedPrecisionQuantizationConfig,
                  fw_info: FrameworkInfo,
-                 get_sensitivity_evaluation: Callable):
+                 get_sensitivity_evaluation: Callable,
+                 kpi_functions: Dict[KPITarget, Tuple[MpKpiMetric, MpKpiAggregation]]):
         """
 
         Args:
@@ -41,6 +44,8 @@ class MixedPrecisionSearchManager(object):
             qc: Quantization configuration for how the graph should be quantized.
             fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
             get_sensitivity_evaluation: Framework specific function to retrieve a metric computation function.
+            kpi_functions: A dictionary with pairs of (MpKpiMethod, MpKpiAggregationMethod) mapping a KPITarget to
+                a couple of kpi metric function and kpi aggregation function.
         """
 
         self.graph = graph
@@ -50,8 +55,12 @@ class MixedPrecisionSearchManager(object):
         self.metrics_weights = self.qc.distance_weighting_method
         self.layer_to_bitwidth_mapping = self.get_search_space()
         self.compute_metric_fn = self.get_sensitivity_metric()
-        self.min_activation_cfg = self.get_min_activation_cfg()
-        self.min_weights_cfg = self.get_min_weights_cfg()
+
+        self.compute_kpi_functions = kpi_functions
+
+        self.min_kpi_config = self.get_min_cfg()
+
+        self.min_kpi = self.compute_min_kpis()
 
     def get_search_space(self) -> Dict[int, List[int]]:
         """
@@ -70,29 +79,23 @@ class MixedPrecisionSearchManager(object):
             indices_mapping[idx] = list(range(len(n.candidates_quantization_cfg)))  # all search_methods space
         return indices_mapping
 
-    def get_min_activation_cfg(self):
+    def get_min_cfg(self) -> List[int]:
         """
-        Builds a mixed-precision config with the bitwidth indexes for model with minimal activation KPI.
+        Builds a minimal configuration.
+        Note: we assume that a minimal configuration exists, i.e., each configurable node has exactly one candidate
+            with minimal n_bits (in both weight and activation if both are quantized, or in the relevant one if only
+            one of them is quantized)
 
-        Returns: A mp configuration (list of indices)
-
+        Returns: A list of candidate for each node (list on indices)
         """
-        nodes_to_configure = self.graph.get_configurable_sorted_nodes()
-        nodes_activation_bitwidth_candidates = [[c.activation_quantization_cfg.activation_n_bits for c in
-                                                 n.candidates_quantization_cfg] for n in nodes_to_configure]
-        return [np.argmin(n_candidates) for n_candidates in nodes_activation_bitwidth_candidates]
 
-    def get_min_weights_cfg(self):
-        """
-        Builds a mixed-precision config with the bitwidth indexes for model with minimal weights KPI.
+        conf_sorted_nodes = self.graph.get_configurable_sorted_nodes()
+        min_cfg_candidates = [n.find_min_candidates_indices() for n in conf_sorted_nodes]  # list of lists of indices
 
-        Returns: A mp configuration (list of indices)
+        assert all([len(lst) == 1 for lst in min_cfg_candidates]), \
+            f"A minimal config candidate must be defined, but some node have multiple potential minimal candidates"
 
-        """
-        nodes_to_configure = self.graph.get_configurable_sorted_nodes()
-        nodes_weights_bitwidth_candidates = [[c.weights_quantization_cfg.weights_n_bits for c in
-                                              n.candidates_quantization_cfg] for n in nodes_to_configure]
-        return [np.argmin(n_candidates) for n_candidates in nodes_weights_bitwidth_candidates]
+        return [lst[0] for lst in min_cfg_candidates]
 
     def get_sensitivity_metric(self) -> Callable:
         """
@@ -109,82 +112,119 @@ class MixedPrecisionSearchManager(object):
                                                             self.metrics_weights)
         return compute_metric_fn
 
-    def get_kpi_metric(self) -> Callable:
+    def compute_min_kpis(self) -> Dict[KPITarget, np.ndarray]:
         """
+        Computes a KPIs vector with the values matching to the minimal mp configuration
+        (i.e., each node is configured with the quantization candidate that would give the minimal size of the
+        node's KPI).
+        The method computes the minimal KPIs vector for each kpi target.
 
-        Returns: A function to compute the KPI of a graph for a mixed-precision bitwidth
-        configuration.
+        Returns: A dictionary mapping each kpi target to its respective minimal KPIs values.
 
         """
+        min_kpis = {}
+        for kpi_target, kpi_fns in self.compute_kpi_functions.items():
+            # kpi_fns is a pair of kpi computation method and kpi aggregation method (in this method we only need
+            # the first one)
+            min_kpis[kpi_target] = kpi_fns[0](self.min_kpi_config, self.graph, self.fw_info)
 
-        def _compute_kpi(mp_model_config: List[int],
-                         compute_weights_kpi: bool = True,
-                         compute_activation_kpi: bool = True) -> KPI:
-            """
-            Compute and return the KPI of a graph for a given mixed-precision bitwidth
-            configuration.
+        return min_kpis
 
-            Args:
-                mp_model_config: Mixed-precision bitwidth configuration (list of integers).
-                compute_weights_kpi: Flag that specifies to run computation for weights memory.
-                compute_activation_kpi: Flag that specifies to run computation for activation memory.
+    def compute_kpi_metrix(self, target) -> np.ndarray:
+        """
+        Computes and builds a KPIs metrix, to be used for the mixed-precision search problem formalization.
+        The matrix is constructed as follows (for a given target):
+        - Each row represents the set of KPI values for a specific KPI measure (number of rows should be equal to the
+            length of the output of the respective target compute_kpi function).
+        - Each entry in a specific column represents the KPI value of a given configuration (single layer is configured
+            with specific candidate, all other layer are at the minimal KPI configuration) for the KPI measure of the
+            respective row.
 
-            Returns:
-                KPI of a model when using the passed mixed-precision configuration.
+        Args:
+            target: The target for which the KPI is calculated (a KPITarget value).
 
-            """
-            assert compute_weights_kpi or compute_activation_kpi, \
-                "Compute KPI need at least one of weights/activation KPI to compute."
+        Returns: A KPI matrix.
 
-            weights_memory = 0
-            activations_memory = 0
+        """
+        assert isinstance(target, KPITarget), f"{target} is not a valid KPI target"
 
-            # Go over all nodes that should be taken into consideration when computing the KPI.
-            mp_nodes = self.graph.get_configurable_sorted_nodes_names()
-            for n in self.graph.nodes:
-                if n.name in mp_nodes:
-                    node_idx = mp_nodes.index(n.name)
-                    node_qc = n.candidates_quantization_cfg[mp_model_config[node_idx]]
-                    node_nbits = (node_qc.weights_quantization_cfg.weights_n_bits,
-                                  node_qc.activation_quantization_cfg.activation_n_bits)
-                elif n.is_weights_quantization_enabled() and n.has_weights_to_quantize(self.fw_info):
-                    # The only two valid ways to get here are:
-                    # 1) If the node is reused (which means that we're not looking for its configuration),
-                    #       and we ignore it when computing the KPI (as the base node will account for it).
-                    #       In activation KPI calculation -
-                    #       if we sum all inputs as a metric then we don't want to skip reused nodes.
-                    # 2) If mixed-precision search is only on activation candidates,
-                    #       and weights quantization n_bits is fixed.
-                    assert n.reuse or n.is_all_weights_candidates_equal(), \
-                        "If node has candidates it should be part of the configurable nodes, unless it's a reused " \
-                        "node or the candidates only differ in activation bitwidth"
-                    node_nbits = (0, 0)  # Ignore reused nodes or weights quantization
-                    # only (if no weights mixed-precision) in the KPI computation.
-                else:  # No quantization
-                    node_nbits = (0, 0)
+        configurable_sorted_nodes = self.graph.get_configurable_sorted_nodes()
 
-                # Weights memory size computation
-                # Consider only the weights that should be quantized.
-                if compute_weights_kpi and n.is_weights_quantization_enabled() and \
-                        not n.is_all_weights_candidates_equal():
-                    node_num_weights_params = 0
-                    for attr in self.fw_info.get_kernel_op_attributes(n.type):
-                        if attr is not None:
-                            node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
+        kpi_matrix = []
+        for c, c_n in enumerate(configurable_sorted_nodes):
+            for candidate_idx in range(len(c_n.candidates_quantization_cfg)):
+                candidate_kpis = self.compute_candidate_relative_kpis(c, candidate_idx, target)
+                kpi_matrix.append(np.asarray(candidate_kpis))
 
-                    node_weights_memory_in_bytes = node_num_weights_params * node_nbits[0] / 8.0
-                    weights_memory += node_weights_memory_in_bytes
+        # We need to transpose the calculated kpi matrix to allow later multiplication with
+        # the indicators' diagonal matrix
+        return np.transpose(np.array(kpi_matrix))
 
-                    # Activation memory size computation
-                    # Currently, consider layer's activation size as size of layer's output,
-                    # and total model activations' size as sum of layers' output.
-                if compute_activation_kpi and n.is_activation_quantization_enabled() and \
-                        not n.is_all_activation_candidates_equal():
-                    node_output_size = n.get_total_output_params()
-                    node_activation_memory_in_bytes = node_output_size * node_nbits[1] / 8.0
-                    activations_memory += node_activation_memory_in_bytes
+    def compute_candidate_relative_kpis(self, conf_node_idx, candidate_idx, target) -> np.ndarray:
+        """
+        Computes a KPIs vector for a given candidates of a given configurable node, i.e., the matching KPI vector
+        which is obtained by computing the given target's KPI function on a minimal configuration in which the given
+        layer's candidates is changed to the new given one.
+        The result is normalized by subtracting the target's minimal KPIs vector.
 
-            return KPI(weights_memory=weights_memory,
-                       activation_memory=activations_memory)
+        Args:
+            conf_node_idx: The index of a node in a sorted configurable nodes list.
+            candidate_idx: The index of a node's quantization configuration candidate.
+            target: The target for which the KPI is calculated (a KPITarget value).
 
-        return _compute_kpi
+        Returns: Normalized node's KPIs vector
+
+        """
+        return self.compute_node_kpi_for_candidate(conf_node_idx, candidate_idx, target) - \
+               self.get_min_target_kpi(target)
+
+    def get_min_target_kpi(self, target) -> np.ndarray:
+        """
+        Returns the minimal KPIs vector (pre-calculated on initialization) of a specific target.
+
+        Args:
+            target: The target for which the KPI is calculated (a KPITarget value).
+
+        Returns: Minimal KPIs vector.
+
+        """
+        return self.min_kpi[target]
+
+    def compute_node_kpi_for_candidate(self, conf_node_idx, candidate_idx, target):
+        """
+        Computes a KPIs vector after replacing the given node's configuration candidate in the minimal
+        target configuration with the given candidate index.
+
+        Args:
+            conf_node_idx: The index of a node in a sorted configurable nodes list.
+            candidate_idx: Quantization config candidate to be used for the node's KPI computation.
+            target: The target for which the KPI is calculated (a KPITarget value).
+
+        Returns: Node's KPIs vector.
+
+        """
+        return self.compute_kpi_functions[target][0](
+            self.replace_config_in_index(
+                self.min_kpi_config,
+                conf_node_idx,
+                candidate_idx),
+            self.graph,
+            self.fw_info)
+
+    @staticmethod
+    def replace_config_in_index(mp_cfg, idx, value):
+        """
+        Replacing the quantization configuration candidate in a given mixed-precision configuration at the given
+        index (node's index) with the given value (candidate index).
+
+        Args:
+            mp_cfg: Mixed-precision configuration (list of candidates' indices)
+            idx: A configurable node's index.
+            value: A new candidate index to configure.
+
+        Returns: A new mixed-precision configuration.
+
+        """
+        updated_cfg = mp_cfg.copy()
+        updated_cfg[idx] = value
+        return updated_cfg
