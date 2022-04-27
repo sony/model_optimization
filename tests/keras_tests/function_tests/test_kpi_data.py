@@ -23,6 +23,9 @@ import unittest
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, SeparableConv2D
 
 from model_compression_toolkit.hardware_models.default_hwm import get_op_quantization_configs
+from model_compression_toolkit.keras.constants import DEPTHWISE_KERNEL, KERNEL
+from model_compression_toolkit.keras.graph_substitutions.substitutions.separableconv_decomposition import \
+    POINTWISE_KERNEL
 from tests.common_tests.helpers.activation_mp_hw_model import generate_hw_model_with_activation_mp
 from tests.keras_tests.fw_hw_model_keras import generate_activation_mp_fhw_model_keras
 
@@ -50,7 +53,7 @@ def basic_model():
     outputs = ReLU()(x_bn)
     model = keras.Model(inputs=inputs, outputs=outputs)
     return model, \
-           getattr(model.layers[1], 'kernel').numpy().flatten().shape[0], \
+           getattr(model.layers[1], KERNEL).numpy().flatten().shape[0], \
            compute_output_size(model.layers[0].output_shape)
 
 
@@ -69,10 +72,10 @@ def complex_model():
     outputs = ReLU()(x)
     model = keras.Model(inputs=inputs, outputs=outputs)
     return model, \
-           getattr(model.layers[1], 'depthwise_kernel').numpy().flatten().shape[0] + \
-           getattr(model.layers[1], 'pointwise_kernel').numpy().flatten().shape[0] + \
-           getattr(model.layers[4], 'depthwise_kernel').numpy().flatten().shape[0] + \
-           getattr(model.layers[4], 'pointwise_kernel').numpy().flatten().shape[0], \
+           getattr(model.layers[1], DEPTHWISE_KERNEL).numpy().flatten().shape[0] + \
+           getattr(model.layers[1], POINTWISE_KERNEL).numpy().flatten().shape[0] + \
+           getattr(model.layers[4], DEPTHWISE_KERNEL).numpy().flatten().shape[0] + \
+           getattr(model.layers[4], POINTWISE_KERNEL).numpy().flatten().shape[0], \
            compute_output_size(model.layers[4].output_shape)
 
 
