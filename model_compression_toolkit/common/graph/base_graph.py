@@ -514,6 +514,21 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                                      and not n.is_all_weights_candidates_equal()
                                      and (not n.reuse or include_reused_nodes), list(self)))
 
+    def get_sorted_weights_configurable_nodes(self,
+                                              include_reused_nodes: bool = False) -> List[BaseNode]:
+        """
+        Get a list of sorted nodes that their weights can be configured (namely, has one or
+        more weight qc candidate and their weights should be quantized).
+
+        Args:
+            include_reused_nodes: Whether to include reused nodes (False by default).
+
+        Returns:
+            A list of nodes that their weights can be configured (namely, has one or more weight qc candidate)
+            sorted topologically.
+        """
+        return self._sort_nodes_in_list(self.get_weights_configurable_nodes(include_reused_nodes))
+
     def get_activation_configurable_nodes(self) -> List[BaseNode]:
         """
         Get a list of nodes that their activation can be configured (namely, has one or
@@ -524,6 +539,17 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         return list(filter(lambda n: n.is_activation_quantization_enabled()
                                      and not n.is_all_activation_candidates_equal(), list(self)))
+
+    def get_sorted_activation_configurable_nodes(self) -> List[BaseNode]:
+        """
+        Get a sorted list of nodes that their activation can be configured (namely, has one or
+        more activation qc candidate and their activation should be quantized).
+
+        Returns:
+            A list of nodes that their activation can be configured (namely, has one or more activation qc candidate)
+            sorted topologically.
+        """
+        return self._sort_nodes_in_list(self.get_activation_configurable_nodes())
 
     def get_configurable_sorted_nodes(self,
                                       include_reused_nodes: bool = False) -> List[BaseNode]:
@@ -545,9 +571,21 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         # combine and remove duplications
         configurable_nodes = list(set(weights_configurable_nodes + activation_configurable_nodes))
 
+        return self._sort_nodes_in_list(configurable_nodes)
+
+    def _sort_nodes_in_list(self, nodes_list: List[BaseNode]) -> List[BaseNode]:
+        """
+        Sorts a list of graph nodes according to the order of the nodes in the topological sort of the graph's nodes.
+
+        Args:
+            nodes_list: A list of nodes to sort.
+
+        Returns: nodes_list sorted topologically.
+
+        """
         sorted_configurable_nodes = []
         sorted_nodes = list(topological_sort(self))
         for n in sorted_nodes:
-            if n in configurable_nodes:
+            if n in nodes_list:
                 sorted_configurable_nodes.append(n)
         return sorted_configurable_nodes
