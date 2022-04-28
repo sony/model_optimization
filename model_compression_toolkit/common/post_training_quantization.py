@@ -259,7 +259,7 @@ def _quantize_model(fw_info: FrameworkInfo,
                     tg: Graph,
                     fw_impl: FrameworkImplementation) -> Tuple[Any, UserInformation]:
     """
-    Quantize graph's weights, and build a quantized Keras model from it.
+    Quantize graph's weights, and build a quantized framework model from it.
 
     Args:
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).
@@ -267,7 +267,7 @@ def _quantize_model(fw_info: FrameworkInfo,
         tg: A prepared for quantization graph.
 
     Returns:
-        Quantize Keras model, and informat the user may need to use the quantized model.
+        Quantized model in the input framework, and information the user may need to in order to use the quantized model.
     """
 
     quantized_tg = quantize_graph_weights(tg,
@@ -419,7 +419,7 @@ def _read_model_to_graph(in_model: Any,
     """
     Read a model into a graph object.
     Args:
-        in_model: Keras model to optimize and prepare for quantization.
+        in_model: Model to optimize and prepare for quantization.
         representative_data_gen: Dataset used for calibration.
         fw_hw_model: FrameworkHardwareModel object that models the inference target platform and
                       the attached framework operator's information.
