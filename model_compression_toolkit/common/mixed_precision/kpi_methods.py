@@ -14,11 +14,15 @@
 # ==============================================================================
 from enum import Enum
 from functools import partial
+from typing import List
 
 import numpy as np
 
+from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.common import Graph
 
-def weights_size_kpi(mp_cfg, graph, fw_info):
+
+def weights_size_kpi(mp_cfg: List[int], graph: Graph, fw_info: FrameworkInfo) -> np.ndarray:
     """
     Computes a KPIs vector with the respective weights' memory size for each weigh configurable node,
     according to the given mixed-precision configuration.
@@ -53,7 +57,7 @@ def weights_size_kpi(mp_cfg, graph, fw_info):
     return np.array(weights_memory)
 
 
-def activation_output_size_kpi(mp_cfg, graph, fw_info):
+def activation_output_size_kpi(mp_cfg: List[int], graph: Graph, fw_info: FrameworkInfo) -> np.ndarray:
     """
     Computes a KPIs vector with the respective output memory size for each activation configurable node,
     according to the given mixed-precision configuration.
