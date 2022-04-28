@@ -85,4 +85,4 @@ DEC_RANGE_BOTTOM = 0.97
 DEC_RANGE_UPPER = 1.03
 
 # KPI computation parameters
-BITS_TO_BYTES = 8
+BITS_TO_BYTES = 8.0
