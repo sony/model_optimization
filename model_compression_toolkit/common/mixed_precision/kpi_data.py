@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable, Any, List, Dict
+from typing import Callable, Any
 import numpy as np
 
 from model_compression_toolkit import FrameworkInfo, KPI, MixedPrecisionQuantizationConfig
@@ -27,11 +27,10 @@ def compute_kpi_data(in_model: Any,
                      quant_config: MixedPrecisionQuantizationConfig,
                      fw_hw_model: FrameworkHardwareModel,
                      fw_info: FrameworkInfo,
-                     fw_impl: FrameworkImplementation) -> Dict[str, KPI]:
+                     fw_impl: FrameworkImplementation) -> KPI:
     """
     Compute KPI information that can be relevant for defining target KPI for mixed precision search.
-    Calculates minimal and maximal mp configs (based on the provided hw capabilities model) and use them to compute
-    maximal activation tensor and sum of weights' parameters (for each of the configurations).
+    Calculates maximal activation tensor and sum of weights' parameters.
 
     Args:
         in_model:  Model to build graph from (the model that intended to be quantized).
@@ -42,7 +41,7 @@ def compute_kpi_data(in_model: Any,
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
-    Returns: A dictionary with the results (KPI object) for the maximal and minimal configurations.
+    Returns: A KPI object with the results.
 
     """
 
@@ -58,34 +57,23 @@ def compute_kpi_data(in_model: Any,
                                                 tb_w=None,
                                                 fw_impl=fw_impl)
 
-    min_cfg = transformed_graph.get_min_candidates_config()
-    max_cfg = transformed_graph.get_max_candidates_config()
-
-    ######################################
     # Compute parameters sum
-    ######################################
-    min_parameters_sum = np.sum(compute_weights_sizes(mp_cfg=min_cfg, graph=transformed_graph, fw_info=fw_info))
-    max_parameters_sum = np.sum(compute_weights_sizes(mp_cfg=max_cfg, graph=transformed_graph, fw_info=fw_info))
+    weights_params = compute_configurable_weights_params(graph=transformed_graph, fw_info=fw_info)
+    total_weights_params = 0 if len(weights_params) == 0 else sum(weights_params)
 
-
-    ######################################
     # Compute max activation tensor
-    ######################################
-    min_precision_largest_tensor = np.max(compute_activation_output_sizes(mp_cfg=min_cfg, graph=transformed_graph))
-    max_precision_largest_tensor = np.max(compute_activation_output_sizes(mp_cfg=max_cfg, graph=transformed_graph))
+    activation_output_sizes = compute_activation_output_sizes(graph=transformed_graph)
+    max_activation_tensor_size = 0 if len(activation_output_sizes) == 0 else max(activation_output_sizes)
 
-    return {"min_kpi": KPI(weights_memory=min_parameters_sum, activation_memory=min_precision_largest_tensor),
-            "max_kpi": KPI(weights_memory=max_parameters_sum, activation_memory=max_precision_largest_tensor)}
+    return KPI(weights_memory=total_weights_params, activation_memory=max_activation_tensor_size)
 
 
-def compute_weights_sizes(mp_cfg: List[int], graph: Graph, fw_info: FrameworkInfo) -> np.ndarray:
+def compute_configurable_weights_params(graph: Graph, fw_info: FrameworkInfo) -> np.ndarray:
     """
-    Computes a KPIs vector with the respective weights' memory size for each weigh configurable node,
-    according to the given mixed-precision configuration.
+    Computes a vector with the respective weights' parameters size for each weight configurable node.
 
     Args:
-        mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
-        graph: Graph object.
+        graph: Finalized Graph object.
         fw_info: FrameworkInfo object about the specific framework
             (e.g., attributes of different layers' weights to quantize).
 
@@ -93,52 +81,34 @@ def compute_weights_sizes(mp_cfg: List[int], graph: Graph, fw_info: FrameworkInf
 
     """
 
-    weights_memory = []
-
-    # Go over all nodes that should be taken into consideration when computing the weights KPI.
-    mp_nodes = graph.get_configurable_sorted_nodes_names()
+    weights_params = []
+    # Go over all nodes that have configurable weights.
     for n in graph.get_sorted_weights_configurable_nodes():
-        node_idx = mp_nodes.index(n.name)
-        node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
-        node_nbits = node_qc.weights_quantization_cfg.weights_n_bits
-
         node_num_weights_params = 0
         for attr in fw_info.get_kernel_op_attributes(n.type):
             if attr is not None:
                 node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
 
-        node_weights_memory_in_bytes = node_num_weights_params * node_nbits / 8.0
-        weights_memory.append(node_weights_memory_in_bytes)
+        weights_params.append(node_num_weights_params)
 
-    return np.array(weights_memory)
+    return np.array(weights_params)
 
 
-def compute_activation_output_sizes(mp_cfg: List[int], graph: Graph) -> np.ndarray:
+def compute_activation_output_sizes(graph: Graph) -> np.ndarray:
     """
-    Computes a KPIs vector with the respective output memory size for each activation configurable node,
-    according to the given mixed-precision configuration.
-    Note that the configuration includes an index for each configurable node! (not just activation configurable).
+    Computes a vector with the respective output tensor size for each activation configurable node.
 
     Args:
-        mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
-        graph: Graph object.
+        graph: Finalized Graph object.
 
-    Returns: A vector of node's weights memory sizes.
-    Note that the vector is not necessarily of the same length as the given config.
+    Returns: A vector of node's activation output size.
 
     """
 
-    activation_memory = []
-
-    # Go over all nodes that should be taken into consideration when computing the activation KPI.
-    mp_nodes = graph.get_configurable_sorted_nodes_names()
+    activation_outputs = []
+    # Go over all nodes that have configurable activation.
     for n in graph.get_sorted_activation_configurable_nodes():
-        node_idx = mp_nodes.index(n.name)
-        node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
-        node_nbits = node_qc.activation_quantization_cfg.activation_n_bits
-
         node_output_size = n.get_total_output_params()
-        node_activation_memory_in_bytes = node_output_size * node_nbits / 8.0
-        activation_memory.append(node_activation_memory_in_bytes)
+        activation_outputs.append(node_output_size)
 
-    return np.array(activation_memory)
+    return np.array(activation_outputs)

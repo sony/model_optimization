@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Callable, Dict
+from typing import Callable
 
 from model_compression_toolkit.common import Logger
 from model_compression_toolkit.common.constants import PYTORCH
@@ -40,20 +40,20 @@ if importlib.util.find_spec("torch") is not None:
                          representative_data_gen: Callable,
                          quant_config: MixedPrecisionQuantizationConfig = DEFAULT_MIXEDPRECISION_CONFIG,
                          fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
-                         fw_hw_model: FrameworkHardwareModel = PYTORCH_DEFAULT_MODEL) -> Dict[str, KPI]:
+                         fw_hw_model: FrameworkHardwareModel = PYTORCH_DEFAULT_MODEL) -> KPI:
         """
         Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
-        Builds the computation graph from the given model and hw modeling, and uses it to
+        Builds the computation graph from the given model and hw modeling, and uses it to compute the KPI data.
 
         Args:
             in_model (Model): Keras model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
-            quant_config (MixedPrecisionQuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized.
+            quant_config (MixedPrecisionQuantizationConfig): MixedPrecisionQuantizationConfig containing parameters of how the model should be quantized.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/keras/default_framework_info.py#L113>`_
             fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
 
         Returns:
-            A dictionary, mapping 'min_kpi' and 'max_kpi' to KPI data.
+            A KPI object with total weights parameters sum and max activation tensor.
 
         Examples:
             Import a Pytorch model:

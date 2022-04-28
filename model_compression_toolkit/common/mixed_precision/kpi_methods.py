@@ -17,9 +17,6 @@ from functools import partial
 
 import numpy as np
 
-from model_compression_toolkit.common.mixed_precision.kpi_data import compute_weights_sizes, \
-    compute_activation_output_sizes
-
 
 def weights_size_kpi(mp_cfg, graph, fw_info):
     """
@@ -37,7 +34,24 @@ def weights_size_kpi(mp_cfg, graph, fw_info):
     Note that the vector is not necessarily of the same length as the given config.
 
     """
-    return compute_weights_sizes(mp_cfg, graph, fw_info)
+    weights_memory = []
+
+    # Go over all nodes that should be taken into consideration when computing the weights KPI.
+    mp_nodes = graph.get_configurable_sorted_nodes_names()
+    for n in graph.get_sorted_weights_configurable_nodes():
+        node_idx = mp_nodes.index(n.name)
+        node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
+        node_nbits = node_qc.weights_quantization_cfg.weights_n_bits
+
+        node_num_weights_params = 0
+        for attr in fw_info.get_kernel_op_attributes(n.type):
+            if attr is not None:
+                node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
+
+        node_weights_memory_in_bytes = node_num_weights_params * node_nbits / BITS_TO_BYTES
+        weights_memory.append(node_weights_memory_in_bytes)
+
+    return np.array(weights_memory)
 
 
 def activation_output_size_kpi(mp_cfg, graph, fw_info):
@@ -58,7 +72,20 @@ def activation_output_size_kpi(mp_cfg, graph, fw_info):
 
     """
 
-    return compute_activation_output_sizes(mp_cfg, graph)
+    activation_memory = []
+
+    # Go over all nodes that should be taken into consideration when computing the weights KPI.
+    mp_nodes = graph.get_configurable_sorted_nodes_names()
+    for n in graph.get_sorted_activation_configurable_nodes():
+        node_idx = mp_nodes.index(n.name)
+        node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
+        node_nbits = node_qc.activation_quantization_cfg.activation_n_bits
+
+        node_output_size = n.get_total_output_params()
+        node_activation_memory_in_bytes = node_output_size * node_nbits / BITS_TO_BYTES
+        activation_memory.append(node_activation_memory_in_bytes)
+
+    return np.array(activation_memory)
 
 
 class MpKpiMetric(Enum):

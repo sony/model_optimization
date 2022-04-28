@@ -88,14 +88,11 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
         mp_bitwidth_candidates_list=mp_bitwidth_candidates_list)
     fw_hw_model = generate_activation_mp_fhw_model_keras(hardware_model=hw_model, name="kpi_data_test")
 
-    kpi_data_dict = mct.keras_kpi_data(in_model=model,
-                                       representative_data_gen=random_datagen,
-                                       fw_hw_model=fw_hw_model)
+    kpi_data = mct.keras_kpi_data(in_model=model,
+                                  representative_data_gen=random_datagen,
+                                  fw_hw_model=fw_hw_model)
 
-    min_kpi = kpi_data_dict['min_kpi']
-    max_kpi = kpi_data_dict['max_kpi']
-
-    return min_kpi, max_kpi
+    return kpi_data
 
 
 class TestKPIData(unittest.TestCase):
@@ -104,53 +101,40 @@ class TestKPIData(unittest.TestCase):
         model, sum_parameters, max_tensor = basic_model()
         mp_bitwidth_candidates_list = [(i, j) for i in [8, 4, 2] for j in [8, 4, 2]]
 
-        min_kpi, max_kpi = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
+        kpi_data = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
 
-        # max should be 8-bit quantization
-        self.verify_results(max_kpi, sum_parameters, max_tensor, expected_bitwidth=8)
-        # min should be 2-bit quantization
-        self.verify_results(min_kpi, sum_parameters, max_tensor, expected_bitwidth=2)
+        self.verify_results(kpi_data, sum_parameters, max_tensor)
 
     def test_kpi_data_basic_partial_bitwidth(self):
         model, sum_parameters, max_tensor = basic_model()
         mp_bitwidth_candidates_list = [(i, j) for i in [4, 2] for j in [4, 2]]
 
-        min_kpi, max_kpi = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
+        kpi_data = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
 
-        # max should be 4-bit quantization
-        self.verify_results(max_kpi, sum_parameters, max_tensor, expected_bitwidth=4)
-        # min should be 2-bit quantization
-        self.verify_results(min_kpi, sum_parameters, max_tensor, expected_bitwidth=2)
+        self.verify_results(kpi_data, sum_parameters, max_tensor)
 
     def test_kpi_data_complex_all_bitwidth(self):
         model, sum_parameters, max_tensor = complex_model()
         mp_bitwidth_candidates_list = [(i, j) for i in [8, 4, 2] for j in [8, 4, 2]]
 
-        min_kpi, max_kpi = prep_test(model, mp_bitwidth_candidates_list, large_random_datagen())
+        kpi_data = prep_test(model, mp_bitwidth_candidates_list, large_random_datagen())
 
-        # max should be 8-bit quantization
-        self.verify_results(max_kpi, sum_parameters, max_tensor, expected_bitwidth=8)
-        # min should be 2-bit quantization
-        self.verify_results(min_kpi, sum_parameters, max_tensor, expected_bitwidth=2)
+        self.verify_results(kpi_data, sum_parameters, max_tensor)
 
     def test_kpi_data_complex_partial_bitwidth(self):
         model, sum_parameters, max_tensor = basic_model()
         mp_bitwidth_candidates_list = [(i, j) for i in [4, 2] for j in [4, 2]]
 
-        min_kpi, max_kpi = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
+        kpi_data = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
 
-        # max should be 4-bit quantization
-        self.verify_results(max_kpi, sum_parameters, max_tensor, expected_bitwidth=4)
-        # min should be 2-bit quantization
-        self.verify_results(min_kpi, sum_parameters, max_tensor, expected_bitwidth=2)
+        self.verify_results(kpi_data, sum_parameters, max_tensor)
 
-    def verify_results(self, kpi, sum_parameters, max_tensor, expected_bitwidth):
-        expected_size_factor = expected_bitwidth / 8
-        self.assertTrue(kpi.weights_memory == sum_parameters * expected_size_factor,
-                        f"Expects weights_memory to be {sum_parameters * expected_size_factor} "
+    def verify_results(self, kpi, sum_parameters, max_tensor):
+        self.assertTrue(kpi.weights_memory == sum_parameters,
+                        f"Expects weights_memory to be {sum_parameters} "
                         f"but result is {kpi.weights_memory}")
-        self.assertTrue(kpi.activation_memory == max_tensor * expected_size_factor,
-                        f"Expects activation_memory to be {max_tensor * expected_size_factor} "
+        self.assertTrue(kpi.activation_memory == max_tensor,
+                        f"Expects activation_memory to be {max_tensor} "
                         f"but result is {kpi.activation_memory}")
 
 
