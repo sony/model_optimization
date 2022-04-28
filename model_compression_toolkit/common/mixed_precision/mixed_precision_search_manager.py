@@ -58,7 +58,7 @@ class MixedPrecisionSearchManager(object):
 
         self.compute_kpi_functions = kpi_functions
 
-        self.min_kpi_config = self.get_min_cfg()
+        self.min_kpi_config = self.graph.get_min_candidates_config()
 
         self.min_kpi = self.compute_min_kpis()
 
@@ -78,24 +78,6 @@ class MixedPrecisionSearchManager(object):
             # (which is a list from 0 to the length of the candidates qc list of the node).
             indices_mapping[idx] = list(range(len(n.candidates_quantization_cfg)))  # all search_methods space
         return indices_mapping
-
-    def get_min_cfg(self) -> List[int]:
-        """
-        Builds a minimal configuration.
-        Note: we assume that a minimal configuration exists, i.e., each configurable node has exactly one candidate
-            with minimal n_bits (in both weight and activation if both are quantized, or in the relevant one if only
-            one of them is quantized)
-
-        Returns: A list of candidate for each node (list on indices)
-        """
-
-        conf_sorted_nodes = self.graph.get_configurable_sorted_nodes()
-        min_cfg_candidates = [n.find_min_candidates_indices() for n in conf_sorted_nodes]  # list of lists of indices
-
-        assert all([len(lst) == 1 for lst in min_cfg_candidates]), \
-            f"A minimal config candidate must be defined, but some node have multiple potential minimal candidates"
-
-        return [lst[0] for lst in min_cfg_candidates]
 
     def get_sensitivity_metric(self) -> Callable:
         """
