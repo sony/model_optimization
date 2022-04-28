@@ -573,7 +573,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         return self._sort_nodes_in_list(configurable_nodes)
 
-    def _sort_nodes_in_list(self, nodes_list):
+    def _sort_nodes_in_list(self, nodes_list: List[BaseNode]) -> List[BaseNode]:
         """
         Sorts a list of graph nodes according to the order of the nodes in the topological sort of the graph's nodes.
 
