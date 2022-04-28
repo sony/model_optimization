@@ -20,6 +20,7 @@ import numpy as np
 
 from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.common import Graph
+from model_compression_toolkit.common.constants import BITS_TO_BYTES
 
 
 def weights_size_kpi(mp_cfg: List[int], graph: Graph, fw_info: FrameworkInfo) -> np.ndarray:
@@ -51,7 +52,7 @@ def weights_size_kpi(mp_cfg: List[int], graph: Graph, fw_info: FrameworkInfo) ->
             if attr is not None:
                 node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
 
-        node_weights_memory_in_bytes = node_num_weights_params * node_nbits / 8.0
+        node_weights_memory_in_bytes = node_num_weights_params * node_nbits / BITS_TO_BYTES
         weights_memory.append(node_weights_memory_in_bytes)
 
     return np.array(weights_memory)
@@ -84,7 +85,7 @@ def activation_output_size_kpi(mp_cfg: List[int], graph: Graph, fw_info: Framewo
         node_nbits = node_qc.activation_quantization_cfg.activation_n_bits
 
         node_output_size = n.get_total_output_params()
-        node_activation_memory_in_bytes = node_output_size * node_nbits / 8.0
+        node_activation_memory_in_bytes = node_output_size * node_nbits / BITS_TO_BYTES
         activation_memory.append(node_activation_memory_in_bytes)
 
     return np.array(activation_memory)
