@@ -212,34 +212,27 @@ class TestKerasHWModel(unittest.TestCase):
         self.assertEqual(p1[1], LayerFilterParams(ReLU, Greater("max_value", 7), negative_slope=0))
 
 
-
 class TestGetKerasHardwareModelAPI(unittest.TestCase):
-
     def test_get_keras_hw_models(self):
-        keras_hw_models = [DEFAULT_HWM,
-                           QNNPACK_HWM,
-                           TFLITE_HWM]
+        fw_hw_model = mct.get_model(TENSORFLOW, DEFAULT_HWM)
+        model = MobileNetV2()
 
-        for hw_name in keras_hw_models:
-            fw_hw_model = mct.get_model(TENSORFLOW, hw_name)
-            model = MobileNetV2()
+        def rep_data():
+            return [np.random.randn(1, 224, 224, 3)]
 
-            def rep_data():
-                return [np.random.randn(1, 224, 224, 3)]
+        quantized_model, _ = mct.keras_post_training_quantization(model,
+                                                                  rep_data,
+                                                                  n_iter=1,
+                                                                  fw_hw_model=fw_hw_model)
 
-            quantized_model, _ = mct.keras_post_training_quantization(model,
-                                                                      rep_data,
-                                                                      n_iter=1,
-                                                                      fw_hw_model=fw_hw_model)
-
-            mp_qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
-            mp_qc.num_of_images = 1
-            quantized_model, _ = mct.keras_post_training_quantization_mixed_precision(model,
-                                                                                      rep_data,
-                                                                                      target_kpi=mct.KPI(np.inf),
-                                                                                      n_iter=1,
-                                                                                      quant_config=mp_qc,
-                                                                                      fw_hw_model=fw_hw_model)
+        mp_qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
+        mp_qc.num_of_images = 1
+        quantized_model, _ = mct.keras_post_training_quantization_mixed_precision(model,
+                                                                                  rep_data,
+                                                                                  target_kpi=mct.KPI(np.inf),
+                                                                                  n_iter=1,
+                                                                                  quant_config=mp_qc,
+                                                                                  fw_hw_model=fw_hw_model)
 
     def test_get_keras_not_supported_model(self):
         with self.assertRaises(Exception) as e:

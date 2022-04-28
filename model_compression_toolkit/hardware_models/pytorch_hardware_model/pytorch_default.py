@@ -16,7 +16,7 @@
 import operator
 
 import torch
-from torch import add, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh
+from torch import add, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, chunk
 from torch.nn import Conv2d, ConvTranspose2d, Linear, BatchNorm2d
 from torch.nn import Dropout, Flatten, Hardtanh
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh
@@ -58,6 +58,7 @@ def generate_fhw_model_pytorch(name: str, hardware_model: HardwareModel):
                                                  reshape,
                                                  unsqueeze,
                                                  BatchNorm2d,
+                                                 chunk,
                                                  torch.Tensor.size])
 
         OperationsSetToLayers("Conv", [Conv2d])

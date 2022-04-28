@@ -50,7 +50,7 @@ class MockMixedPrecisionSearchManager:
         self.compute_kpi_functions = {KPITarget.WEIGHTS: (None, lambda v: [sum(v)]),
                                       KPITarget.ACTIVATION: (None, lambda v: [sum(v)])}
 
-    def compute_kpi_metrix(self, target):
+    def compute_kpi_matrix(self, target):
         # minus 1 is normalization by the minimal kpi (which is always 1 in this test)
         if target == KPITarget.WEIGHTS:
             kpi_matrix = [np.flip(np.array([kpi.weights_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]

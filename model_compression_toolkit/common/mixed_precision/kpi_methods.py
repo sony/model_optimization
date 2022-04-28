@@ -14,21 +14,24 @@
 # ==============================================================================
 from enum import Enum
 from functools import partial
+from typing import List
 
 import numpy as np
 
+from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.common import Graph
 
-def weights_size_kpi(mp_cfg, graph, fw_info):
+
+def weights_size_kpi(mp_cfg: List[int], graph: Graph, fw_info: FrameworkInfo) -> np.ndarray:
     """
-    A metric function to that returns a KPIs vector with the respective weights' memory size for
-    each weight configurable node, according to the given mixed-precision configuration.
+    Computes a KPIs vector with the respective weights' memory size for each weigh configurable node,
+    according to the given mixed-precision configuration.
     Note that the configuration includes an index for each configurable node! (not just weights configurable).
 
     Args:
         mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
         graph: Graph object.
-        fw_info: FrameworkInfo object about the specific framework
-            (e.g., attributes of different layers' weights to quantize).
+        fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
 
     Returns: A vector of node's weights memory sizes.
     Note that the vector is not necessarily of the same length as the given config.
@@ -48,23 +51,22 @@ def weights_size_kpi(mp_cfg, graph, fw_info):
             if attr is not None:
                 node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
 
-        node_weights_memory_in_bytes = node_num_weights_params * node_nbits / BITS_TO_BYTES
+        node_weights_memory_in_bytes = node_num_weights_params * node_nbits / 8.0
         weights_memory.append(node_weights_memory_in_bytes)
 
     return np.array(weights_memory)
 
 
-def activation_output_size_kpi(mp_cfg, graph, fw_info):
+def activation_output_size_kpi(mp_cfg: List[int], graph: Graph, fw_info: FrameworkInfo) -> np.ndarray:
     """
-    A metric function to that returns a  KPIs vector with the output memory size for each activation configurable node,
+    Computes a KPIs vector with the respective output memory size for each activation configurable node,
     according to the given mixed-precision configuration.
     Note that the configuration includes an index for each configurable node! (not just activation configurable).
 
     Args:
         mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
         graph: Graph object.
-        fw_info: FrameworkInfo object about the specific framework
-            (e.g., attributes of different layers' weights to quantize)
+        fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize)
             (not used in this method).
 
     Returns: A vector of node's weights memory sizes.
@@ -82,7 +84,7 @@ def activation_output_size_kpi(mp_cfg, graph, fw_info):
         node_nbits = node_qc.activation_quantization_cfg.activation_n_bits
 
         node_output_size = n.get_total_output_params()
-        node_activation_memory_in_bytes = node_output_size * node_nbits / BITS_TO_BYTES
+        node_activation_memory_in_bytes = node_output_size * node_nbits / 8.0
         activation_memory.append(node_activation_memory_in_bytes)
 
     return np.array(activation_memory)

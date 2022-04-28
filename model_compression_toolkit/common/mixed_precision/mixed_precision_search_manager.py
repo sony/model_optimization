@@ -58,7 +58,7 @@ class MixedPrecisionSearchManager(object):
 
         self.compute_kpi_functions = kpi_functions
 
-        self.min_kpi_config = self.graph.get_min_candidates_config()
+        self.min_kpi_config = self.get_min_cfg()
 
         self.min_kpi = self.compute_min_kpis()
 
@@ -78,6 +78,24 @@ class MixedPrecisionSearchManager(object):
             # (which is a list from 0 to the length of the candidates qc list of the node).
             indices_mapping[idx] = list(range(len(n.candidates_quantization_cfg)))  # all search_methods space
         return indices_mapping
+
+    def get_min_cfg(self) -> List[int]:
+        """
+        Builds a minimal configuration.
+        Note: we assume that a minimal configuration exists, i.e., each configurable node has exactly one candidate
+            with minimal n_bits (in both weight and activation if both are quantized, or in the relevant one if only
+            one of them is quantized)
+
+        Returns: A list of candidate for each node (list on indices)
+        """
+
+        conf_sorted_nodes = self.graph.get_configurable_sorted_nodes()
+        min_cfg_candidates = [n.find_min_candidates_indices() for n in conf_sorted_nodes]  # list of lists of indices
+
+        assert all([len(lst) == 1 for lst in min_cfg_candidates]), \
+            f"A minimal config candidate must be defined, but some node have multiple potential minimal candidates"
+
+        return [lst[0] for lst in min_cfg_candidates]
 
     def get_sensitivity_metric(self) -> Callable:
         """
@@ -112,9 +130,9 @@ class MixedPrecisionSearchManager(object):
 
         return min_kpis
 
-    def compute_kpi_metrix(self, target) -> np.ndarray:
+    def compute_kpi_matrix(self, target: KPITarget) -> np.ndarray:
         """
-        Computes and builds a KPIs metrix, to be used for the mixed-precision search problem formalization.
+        Computes and builds a KPIs matrix, to be used for the mixed-precision search problem formalization.
         The matrix is constructed as follows (for a given target):
         - Each row represents the set of KPI values for a specific KPI measure (number of rows should be equal to the
             length of the output of the respective target compute_kpi function).
@@ -142,7 +160,10 @@ class MixedPrecisionSearchManager(object):
         # the indicators' diagonal matrix
         return np.transpose(np.array(kpi_matrix))
 
-    def compute_candidate_relative_kpis(self, conf_node_idx, candidate_idx, target) -> np.ndarray:
+    def compute_candidate_relative_kpis(self,
+                                        conf_node_idx: int,
+                                        candidate_idx: int,
+                                        target: KPITarget) -> np.ndarray:
         """
         Computes a KPIs vector for a given candidates of a given configurable node, i.e., the matching KPI vector
         which is obtained by computing the given target's KPI function on a minimal configuration in which the given
@@ -160,7 +181,7 @@ class MixedPrecisionSearchManager(object):
         return self.compute_node_kpi_for_candidate(conf_node_idx, candidate_idx, target) - \
                self.get_min_target_kpi(target)
 
-    def get_min_target_kpi(self, target) -> np.ndarray:
+    def get_min_target_kpi(self, target: KPITarget) -> np.ndarray:
         """
         Returns the minimal KPIs vector (pre-calculated on initialization) of a specific target.
 
@@ -172,7 +193,7 @@ class MixedPrecisionSearchManager(object):
         """
         return self.min_kpi[target]
 
-    def compute_node_kpi_for_candidate(self, conf_node_idx, candidate_idx, target):
+    def compute_node_kpi_for_candidate(self, conf_node_idx: int, candidate_idx: int, target: KPITarget) -> np.ndarray:
         """
         Computes a KPIs vector after replacing the given node's configuration candidate in the minimal
         target configuration with the given candidate index.
@@ -194,7 +215,7 @@ class MixedPrecisionSearchManager(object):
             self.fw_info)
 
     @staticmethod
-    def replace_config_in_index(mp_cfg, idx, value):
+    def replace_config_in_index(mp_cfg: List[int], idx: int, value: int) -> List[int]:
         """
         Replacing the quantization configuration candidate in a given mixed-precision configuration at the given
         index (node's index) with the given value (candidate index).

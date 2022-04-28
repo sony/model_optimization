@@ -14,11 +14,13 @@
 # ==============================================================================
 from enum import Enum
 from functools import partial
+from typing import List, Any
+import numpy as np
 
 from pulp import lpSum
 
 
-def sum_kpi(kpi_vector):
+def sum_kpi(kpi_vector: np.ndarray) -> List[Any]:
     """
     Aggregates KPIs vector to a single KPI measure by summing all values.
 
