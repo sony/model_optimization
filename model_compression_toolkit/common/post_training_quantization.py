@@ -57,7 +57,7 @@ from model_compression_toolkit.common.model_collector import ModelCollector
 from model_compression_toolkit.common.visualization.tensorboard_writer import TensorboardWriter
 from model_compression_toolkit.common.bias_correction.apply_bias_correction_to_graph import \
     apply_bias_correction_to_graph
-from model_compression_toolkit.common.hardware_representation.hardware2framework import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
 
 def post_training_quantization(in_model: Any,
@@ -66,7 +66,7 @@ def post_training_quantization(in_model: Any,
                                quant_config: QuantizationConfig,
                                fw_info: FrameworkInfo,
                                fw_impl: FrameworkImplementation,
-                               fw_hw_model: FrameworkHardwareModel,
+                               tpc: TargetPlatformCapabilities,
                                network_editor: List[EditRule] = [],
                                gptq_config: GradientPTQConfig = None,
                                analyze_similarity: bool = False,
@@ -88,8 +88,7 @@ def post_training_quantization(in_model: Any,
         quant_config: QuantizationConfig containing parameters of how the model should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/common/quantization/quantization_config.py#L163>`_
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/keras/default_framework_info.py#L114>`_
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-        fw_hw_model: FrameworkHardwareModel object that models the inference target platform and
-                                              the attached framework operator's information.
+        tpc: TargetPlatformCapabilities object that models the inference target platform and the attached framework operator's information.
         network_editor: List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
         gptq_config: Configuration for using gradient-based PTQ (e.g. optimizer).
         analyze_similarity: Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
@@ -104,7 +103,7 @@ def post_training_quantization(in_model: Any,
 
     graph = _read_model_to_graph(in_model,
                                  representative_data_gen,
-                                 fw_hw_model,
+                                 tpc,
                                  fw_info,
                                  fw_impl)
 
@@ -413,26 +412,26 @@ def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
 
 def _read_model_to_graph(in_model: Any,
                          representative_data_gen: Callable,
-                         fw_hw_model: FrameworkHardwareModel,
+                         tpc: TargetPlatformCapabilities,
                          fw_info: FrameworkInfo = None,
                          fw_impl: FrameworkImplementation = None) -> Graph:
     """
     Read a model into a graph object.
+
     Args:
         in_model: Keras model to optimize and prepare for quantization.
         representative_data_gen: Dataset used for calibration.
-        fw_hw_model: FrameworkHardwareModel object that models the inference target platform and
-                      the attached framework operator's information.
-        fw_info: Information needed for quantization about the specific framework (e.g.,
-                kernel channels indices, groups of layers by how they should be quantized, etc.)
+        tpc: TargetPlatformCapabilities object that models the inference target platform and the attached framework operator's information.
+        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.)
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+
     Returns:
         Graph object that represents the model.
     """
     graph = fw_impl.model_reader(in_model,
                                  representative_data_gen)
     graph.set_fw_info(fw_info)
-    graph.set_fw_hw_model(fw_hw_model)
+    graph.set_tpc(tpc)
     return graph
 
 

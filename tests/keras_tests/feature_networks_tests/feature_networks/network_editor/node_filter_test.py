@@ -19,7 +19,7 @@ from model_compression_toolkit.common.quantization.quantization_params_fn_select
 import model_compression_toolkit as mct
 import tensorflow as tf
 
-from tests.keras_tests.fw_hw_model_keras import get_16bit_fw_hw_model
+from tests.keras_tests.target_platform_capabilities_keras import get_16_bits_target_platform_capabilities_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, \
@@ -29,7 +29,7 @@ from model_compression_toolkit.common.network_editors.actions import ChangeCandi
 
 keras = tf.keras
 layers = keras.layers
-hw_model = mct.hardware_representation
+tp = mct.target_platform
 
 
 def get_uniform_weights(kernel, in_channels, out_channels):
@@ -54,8 +54,8 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         self.conv_w = get_uniform_weights(self.kernel, self.num_conv_channels, self.num_conv_channels)
         super().__init__(unit_test)
 
-    def get_fw_hw_model(self):
-        return get_16bit_fw_hw_model("scope_filter_test")
+    def get_target_platform_capabilities(self):
+        return get_16_bits_target_platform_capabilities_model("scope_filter_test")
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
@@ -128,8 +128,8 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
         self.conv_w = get_uniform_weights(self.kernel, self.num_conv_channels, self.num_conv_channels)
         super().__init__(unit_test)
 
-    def get_fw_hw_model(self):
-        return get_16bit_fw_hw_model("name_filter_test")
+    def get_target_platform_capabilities(self):
+        return get_16_bits_target_platform_capabilities_model("name_filter_test")
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
@@ -188,11 +188,11 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
 
     def params_fn(self):
         return get_weights_quantization_params_fn(
-            hw_model.QuantizationMethod.POWER_OF_TWO,
+            tp.QuantizationMethod.POWER_OF_TWO,
             mct.QuantizationErrorMethod.NOCLIPPING)
 
-    def get_fw_hw_model(self):
-        return get_16bit_fw_hw_model("type_filter_test")
+    def get_target_platform_capabilities(self):
+        return get_16_bits_target_platform_capabilities_model("type_filter_test")
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
@@ -257,13 +257,15 @@ class FilterLogicTest(BaseKerasFeatureNetworkTest):
 
     def params_fn(self):
         return get_weights_quantization_params_fn(
-            model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.POWER_OF_TWO,
-            cmo.QuantizationErrorMethod.NOCLIPPING)
+            mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+            mct.QuantizationErrorMethod.NOCLIPPING)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      model_compression_toolkit.hardware_model.op_quantization_config
-                                      .QuantizationMethod.POWER_OF_TWO, model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.POWER_OF_TWO, 16, 16,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationErrorMethod.MSE,
+                                      mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                                      mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                                      16, 16,
                                       False, False, False)
 
     def get_network_editor(self):

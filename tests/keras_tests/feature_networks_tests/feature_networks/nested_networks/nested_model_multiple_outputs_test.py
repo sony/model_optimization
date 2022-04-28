@@ -17,7 +17,7 @@
 import model_compression_toolkit as mct
 import tensorflow as tf
 
-from tests.keras_tests.fw_hw_model_keras import get_16bit_fw_hw_model
+from tests.keras_tests.target_platform_capabilities_keras import get_16_bits_target_platform_capabilities_model
 
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.engine.functional import Functional
@@ -37,8 +37,8 @@ class NestedModelMultipleOutputsTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, val_batch_size=10)
 
-    def get_fw_hw_model(self):
-        return get_16bit_fw_hw_model("nested_multi_outputs_test")
+    def get_target_platform_capabilities(self):
+        return get_16_bits_target_platform_capabilities_model("nested_multi_outputs_test")
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,

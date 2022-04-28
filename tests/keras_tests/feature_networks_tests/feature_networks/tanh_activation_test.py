@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import model_compression_toolkit.hardware_representation.op_quantization_config
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
@@ -22,16 +21,18 @@ from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers
-
+tp = mct.target_platform
 
 class TanhActivationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      model_compression_toolkit.hardware_model.op_quantization_config
-                                      .QuantizationMethod.POWER_OF_TWO, model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.POWER_OF_TWO, 16, 16,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationErrorMethod.MSE,
+                                      tp.QuantizationMethod.POWER_OF_TWO,
+                                      tp.QuantizationMethod.POWER_OF_TWO,
+                                      16, 16,
                                       True, True, True)
 
 

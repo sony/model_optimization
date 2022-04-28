@@ -16,7 +16,7 @@
 import model_compression_toolkit as mct
 import tensorflow as tf
 
-from tests.keras_tests.fw_hw_model_keras import get_quantization_disabled_keras_hw_model
+from tests.keras_tests.target_platform_capabilities_keras import get_quantization_disabled_keras_tp_model
 
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.engine.functional import Functional
@@ -39,8 +39,8 @@ class NestedModelUnusedInputsOutputsTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, input_shape=(16,16,3))
 
-    def get_fw_hw_model(self):
-        return get_quantization_disabled_keras_hw_model("nested_model_unused_inputs_test")
+    def get_target_platform_capabilities(self):
+        return get_quantization_disabled_keras_tp_model("nested_model_unused_inputs_test")
 
     def inner_functional_model(self, input_shape):
         inputs = layers.Input(shape=input_shape[1:])

@@ -17,8 +17,8 @@ import tensorflow as tf
 
 from model_compression_toolkit.common.constants import SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.common.network_editors import EditRule, node_filters, actions
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import get_default_hwm_keras
-from tests.keras_tests.fw_hw_model_keras import get_16bit_fw_hw_model
+from model_compression_toolkit.target_platform_models.keras_target_platforms.keras_default import get_default_tpc_keras
+from tests.keras_tests.target_platform_capabilities_keras import get_16_bits_target_platform_capabilities_model
 
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers.core import TFOpLambda
@@ -41,8 +41,8 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
         self.bypass_op_list = bypass_op_list
         super().__init__(unit_test, input_shape=input_shape, num_calibration_iter=100)
 
-    def get_fw_hw_model(self):
-        return get_16bit_fw_hw_model("shift_negative_test")
+    def get_target_platform_capabilities(self):
+        return get_16_bits_target_platform_capabilities_model("shift_negative_test")
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
@@ -108,8 +108,8 @@ class ShiftNegActivationPostAddTest(ShiftNegActivationTest):
 
         self.post_add_nbits = post_add_nbits
 
-    def get_fw_hw_model(self):
-        return get_default_hwm_keras()
+    def get_target_platform_capabilities(self):
+        return get_default_tpc_keras()
 
     def get_network_editor(self):
         return [EditRule(filter=node_filters.NodeNameScopeFilter('activation'),

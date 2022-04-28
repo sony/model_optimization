@@ -18,7 +18,7 @@ from model_compression_toolkit import common
 from model_compression_toolkit.common import Logger
 from model_compression_toolkit.common.constants import PYTORCH
 from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
-from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.network_editors.actions import EditRule
@@ -33,11 +33,11 @@ import importlib
 if importlib.util.find_spec("torch") is not None:
     from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
-    from model_compression_toolkit.pytorch.constants import DEFAULT_HWM
+    from model_compression_toolkit.pytorch.constants import DEFAULT_TP_MODEL
     from torch.nn import Module
 
-    from model_compression_toolkit import get_model
-    PYTORCH_DEFAULT_MODEL = get_model(PYTORCH, DEFAULT_HWM)
+    from model_compression_toolkit import get_target_platform_capabilities
+    PYTORCH_DEFAULT_MODEL = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
     def pytorch_post_training_quantization(in_module: Module,
                                            representative_data_gen: Callable,
@@ -47,7 +47,7 @@ if importlib.util.find_spec("torch") is not None:
                                            network_editor: List[EditRule] = [],
                                            gptq_config: GradientPTQConfig = None,
                                            analyze_similarity: bool = False,
-                                           fw_hw_model: FrameworkHardwareModel = PYTORCH_DEFAULT_MODEL):
+                                           tpc: TargetPlatformCapabilities = PYTORCH_DEFAULT_MODEL):
         """
         Quantize a trained Pytorch module using post-training quantization. The module is quantized using a
         symmetric constraint quantization thresholds (power of two).
@@ -57,7 +57,8 @@ if importlib.util.find_spec("torch") is not None:
         Thresholds are then being calculated using the collected statistics and the module is quantized
         (both coefficients and activations by default).
         If a gptq configuration is passed, the quantized weights are optimized using gradient based post
-        training quantization by comparing points between the float and quantized modules, and minimizing the observed loss.
+        training quantization by comparing points between the float and quantized modules, and minimizing the
+        observed loss.
 
         Args:
             in_module (Module): Pytorch module to quantize.
@@ -68,7 +69,7 @@ if importlib.util.find_spec("torch") is not None:
             network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
-            fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
+            tpc (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Pytorch model according to.
 
 
         Returns:
@@ -99,7 +100,7 @@ if importlib.util.find_spec("torch") is not None:
                                           quant_config,
                                           fw_info,
                                           PytorchImplementation(),
-                                          fw_hw_model,
+                                          tpc,
                                           network_editor,
                                           gptq_config,
                                           analyze_similarity)
@@ -114,8 +115,7 @@ if importlib.util.find_spec("torch") is not None:
                                                            network_editor: List[EditRule] = [],
                                                            gptq_config: GradientPTQConfig = None,
                                                            analyze_similarity: bool = False,
-
-                                                           fw_hw_model: FrameworkHardwareModel = PYTORCH_DEFAULT_MODEL):
+                                                           tpc: TargetPlatformCapabilities = PYTORCH_DEFAULT_MODEL):
         """
          Quantize a trained Pytorch model using post-training quantization. The model is quantized using a
          symmetric constraint quantization thresholds (power of two).
@@ -128,7 +128,8 @@ if importlib.util.find_spec("torch") is not None:
          In order to limit the maximal model's size, a target KPI need to be passed after weights_memory
          is set (in bytes).
          If a gptq configuration is passed, the quantized weights are optimized using gradient based post
-         training quantization by comparing points between the float and quantized models, and minimizing the observed loss.
+         training quantization by comparing points between the float and quantized models, and minimizing the
+         observed loss.
          Notice that this feature is experimental.
          **For now, mixed precision is supported for weights only.**
 
@@ -142,7 +143,7 @@ if importlib.util.find_spec("torch") is not None:
              network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
              gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
              analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
-             fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
+             tpc (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Pytorch model according to.
 
          Returns:
              A quantized model and information the user may need to handle the quantized model.
@@ -164,15 +165,18 @@ if importlib.util.find_spec("torch") is not None:
              >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
 
              Create a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
-             The candidates bitwidth for quantization should be defined in the hardware model:
+             The candidates bitwidth for quantization should be defined in the target platform model:
 
              >>> config = mct.MixedPrecisionQuantizationConfig()
 
-             Create a KPI object to limit our returned model's size. Note that this value affects only coefficients that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value, while the bias will not):
+             Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
+             that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
+             while the bias will not):
 
              >>> kpi = mct.KPI(sum(p.numel() for p in module.parameters()) * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
 
-             Pass the model, the representative dataset generator, the configuration and the target KPI to get a quantized model:
+             Pass the model, the representative dataset generator, the configuration and the target KPI to get a
+             quantized model:
 
              >>> quantized_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(module, repr_datagen, n_iter=10, quant_config=config, target_kpi=kpi)
 
@@ -193,7 +197,7 @@ if importlib.util.find_spec("torch") is not None:
                                           quant_config,
                                           fw_info,
                                           PytorchImplementation(),
-                                          fw_hw_model,
+                                          tpc,
                                           network_editor,
                                           gptq_config,
                                           analyze_similarity,

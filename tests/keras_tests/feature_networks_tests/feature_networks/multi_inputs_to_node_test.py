@@ -15,8 +15,8 @@
 import model_compression_toolkit as mct
 import tensorflow as tf
 
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
-from tests.keras_tests.fw_hw_model_keras import get_16bit_fw_hw_model
+from model_compression_toolkit.target_platform_models.keras_target_platforms.keras_default import generate_tpc_for_keras
+from tests.keras_tests.target_platform_capabilities_keras import get_16_bits_target_platform_capabilities_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
@@ -29,8 +29,8 @@ class MultiInputsToNodeTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_fw_hw_model(self):
-        return get_16bit_fw_hw_model("multi_input_test")
+    def get_target_platform_capabilities(self):
+        return get_16_bits_target_platform_capabilities_model("multi_input_test")
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,

@@ -78,16 +78,16 @@ if __name__ == '__main__':
     # Set the number of calibration iterations to 10.
     model = MobileNet()
 
-    # Get a HardwareModel object that models the hardware for the quantized model inference.
+    # Get a TargetPlatformModel object that models the hardware for the quantized model inference.
     # The model determines the quantization methods to use during the MCT optimization process.
     # Here, for example, we use the default model that is attached to a Tensorflow
     # layers representation.
-    hardware_model = mct.get_model('tensorflow', 'default')
+    target_platform_capabilities = mct.get_target_platform_capabilities('tensorflow', 'default')
 
 
     quantized_model, quantization_info = mct.keras_post_training_quantization(model,
                                                                               representative_data_gen,
-                                                                              fw_hw_model=hardware_model,
+                                                                              tpc=target_platform_capabilities,
                                                                               n_iter=10)
 
 

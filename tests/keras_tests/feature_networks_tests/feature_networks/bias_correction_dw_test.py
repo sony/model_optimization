@@ -19,7 +19,7 @@ import numpy as np
 from keras.layers import DepthwiseConv2D
 
 from model_compression_toolkit.keras.constants import ACTIVATION, LINEAR
-from tests.keras_tests.fw_hw_model_keras import get_quantization_disabled_keras_hw_model
+from tests.keras_tests.target_platform_capabilities_keras import get_quantization_disabled_keras_tp_model
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as mct

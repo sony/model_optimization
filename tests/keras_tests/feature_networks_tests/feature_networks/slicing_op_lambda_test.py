@@ -14,7 +14,7 @@
 # ==============================================================================
 import tensorflow as tf
 
-import model_compression_toolkit.hardware_representation.op_quantization_config
+
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 if tf.__version__ < "2.6":
@@ -30,15 +30,19 @@ from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers
-
+tp = mct.target_platform
 
 class SlicingOpLambdaTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, val_batch_size=1)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.POWER_OF_TWO, model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.POWER_OF_TWO, 16, 16,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationErrorMethod.MSE,
+                                      tp.QuantizationMethod.POWER_OF_TWO,
+                                      tp.QuantizationMethod.POWER_OF_TWO,
+                                      16,
+                                      16,
                                       False, False, True)
 
 

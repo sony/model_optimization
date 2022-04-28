@@ -16,21 +16,21 @@
 
 from abc import ABC
 
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.target_platform_models.keras_target_platforms.keras_default import generate_tpc_for_keras
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
 
 from tests.common_tests.base_layer_test import LayerTestMode
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
-from tests.keras_tests.fw_hw_model_keras import get_16bit_fw_hw_model
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.keras_tests.target_platform_capabilities_keras import get_16_bits_target_platform_capabilities_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers
-hw_model = mct.hardware_representation
+tp = mct.target_platform
 
 
 class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
@@ -38,12 +38,12 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
     def __init__(self, unit_test):
         super(BaseBatchNormalizationFolding, self).__init__(unit_test=unit_test)
 
-    def get_fw_hw_model(self):
-        hwm = generate_test_hw_model({'weights_n_bits': 16,
+    def get_target_platform_capabilities(self):
+        tp_model = generate_test_tp_model({'weights_n_bits': 16,
                                       'activation_n_bits': 16,
                                       'enable_weights_quantization': False,
                                       'enable_activation_quantization': False})
-        return generate_fhw_model_keras(name="bn_folding_test", hardware_model=hwm)
+        return generate_tpc_for_keras(name="bn_folding_test", tp_model=tp_model)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,

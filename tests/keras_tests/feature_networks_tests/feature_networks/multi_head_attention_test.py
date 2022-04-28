@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from tests.keras_tests.fw_hw_model_keras import get_quantization_disabled_keras_hw_model
+from tests.keras_tests.target_platform_capabilities_keras import get_quantization_disabled_keras_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 import model_compression_toolkit as mct
@@ -43,8 +43,8 @@ class MultiHeadAttentionTest(BaseKerasFeatureNetworkTest):
         self.separate_key_value = separate_key_value
         self.output_dim = output_dim
 
-    def get_fw_hw_model(self):
-        return get_quantization_disabled_keras_hw_model("multi_head_attention_test")
+    def get_target_platform_capabilities(self):
+        return get_quantization_disabled_keras_tp_model("multi_head_attention_test")
 
     def get_input_shapes(self):
         if self.separate_key_value:

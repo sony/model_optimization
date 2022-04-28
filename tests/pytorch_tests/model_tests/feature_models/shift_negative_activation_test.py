@@ -14,9 +14,9 @@
 # ==============================================================================
 import torch
 
-from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
+from model_compression_toolkit.target_platform_models.default_target_platform import get_default_target_platform_model
 from model_compression_toolkit.pytorch.utils import to_torch_tensor
-from tests.pytorch_tests.fw_hw_model_pytorch import get_pytorch_test_fw_hw_model_dict
+from tests.pytorch_tests.target_platform_capabilities_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
 import numpy as np
@@ -53,10 +53,10 @@ class ShiftNegaviteActivationNetTest(BasePytorchTest):
         i[0][0, 0, 0, 1] = -10
         return i
 
-    def get_fw_hw_model(self):
-        return get_pytorch_test_fw_hw_model_dict(hardware_model=get_default_hardware_model(),
-                                                 test_name='all_8bit',
-                                                 fhwm_name='sn_pytorch_test')
+    def get_target_platform_capabilities(self):
+        return get_pytorch_test_tpc_dict(tp_model=get_default_target_platform_model(),
+                                         test_name='all_8bit',
+                                         tpc_name='sn_pytorch_test')
 
     def get_quantization_configs(self):
         return {

@@ -15,7 +15,7 @@
 import numpy as np
 from typing import Tuple, Dict
 
-from model_compression_toolkit.common.hardware_representation import QuantizationMethod
+from model_compression_toolkit.common.target_platform import QuantizationMethod
 from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.common.constants import SIGNED
 from model_compression_toolkit.common.quantization import quantization_params_generation

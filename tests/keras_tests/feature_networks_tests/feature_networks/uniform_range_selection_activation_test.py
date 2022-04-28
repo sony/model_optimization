@@ -17,14 +17,14 @@
 import tensorflow as tf
 import numpy as np
 
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
+from model_compression_toolkit.target_platform_models.keras_target_platforms.keras_default import generate_tpc_for_keras
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-import model_compression_toolkit as cmo
+import model_compression_toolkit as mct
 
 keras = tf.keras
 layers = keras.layers
-hw_model = cmo.hardware_representation
+tp = mct.target_platform
 
 class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, activation_threshold_method):
@@ -35,13 +35,13 @@ class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
         return [np.random.uniform(low=-7, high=7, size=in_shape) for in_shape in self.get_input_shapes()]
 
     def get_quantization_config(self):
-        return cmo.QuantizationConfig(activation_error_method=self.activation_threshold_method)
+        return mct.QuantizationConfig(activation_error_method=self.activation_threshold_method)
 
-    def get_fw_hw_model(self):
-        hwm = generate_test_hw_model({
-            'activation_quantization_method': hw_model.QuantizationMethod.UNIFORM,
+    def get_target_platform_capabilities(self):
+        tp_model = generate_test_tp_model({
+            'activation_quantization_method': tp.QuantizationMethod.UNIFORM,
             'activation_n_bits': 8})
-        return generate_fhw_model_keras(name="uniform_range_test", hardware_model=hwm)
+        return generate_tpc_for_keras(name="uniform_range_test", tp_model=tp_model)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

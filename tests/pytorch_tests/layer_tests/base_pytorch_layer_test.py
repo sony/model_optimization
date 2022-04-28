@@ -31,15 +31,15 @@ from torch.nn import Module
 
 from model_compression_toolkit import FrameworkInfo, pytorch_post_training_quantization
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
-from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import generate_fhw_model_pytorch
+from model_compression_toolkit.target_platform_models.default_target_platform import get_default_target_platform_model
+from model_compression_toolkit.target_platform_models.pytorch_target_platforms.pytorch_default import generate_tpc_model_pytorch
 from model_compression_toolkit.pytorch.constants import CALL_FUNCTION, OUTPUT, CALL_METHOD, PLACEHOLDER
 from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder, ConstantHolder
 from model_compression_toolkit.pytorch.utils import torch_tensor_to_numpy, to_torch_tensor
 from tests.common_tests.base_layer_test import BaseLayerTest, LayerTestMode
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 
 PYTORCH_LAYER_TEST_OPS = {
@@ -133,16 +133,16 @@ class BasePytorchLayerTest(BaseLayerTest):
                          is_inputs_a_list=is_inputs_a_list,
                          use_cpu=use_cpu)
 
-    def get_fw_hw_model(self):
+    def get_target_platform_capabilities(self):
         if self.current_mode == LayerTestMode.FLOAT:
             # Disable all features that are enabled by default:
-            hwm = generate_test_hw_model({'enable_weights_quantization': False,
+            tp_model = generate_test_tp_model({'enable_weights_quantization': False,
                                           'enable_activation_quantization': False})
-            return generate_fhw_model_pytorch(name="base_layer_test", hardware_model=hwm)
+            return generate_tpc_model_pytorch(name="base_layer_test", tp_model=tp_model)
         elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
-            hwm = generate_test_hw_model({'weights_n_bits': 8,
+            tp_model = generate_test_tp_model({'weights_n_bits': 8,
                                           'activation_n_bits': 8})
-            return generate_fhw_model_pytorch(name="8bit_layer_test", hardware_model=hwm)
+            return generate_tpc_model_pytorch(name="8bit_layer_test", tp_model=tp_model)
         else:
             raise NotImplemented
 

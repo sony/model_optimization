@@ -30,7 +30,7 @@ from model_compression_toolkit.common.quantization.quantization_config import DE
 
 import importlib
 
-from model_compression_toolkit.common.hardware_representation.hardware2framework import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
 
 if importlib.util.find_spec("tensorflow") is not None\
@@ -42,10 +42,9 @@ if importlib.util.find_spec("tensorflow") is not None\
     from tensorflow.keras.models import Model
     from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
     from keras.optimizer_v2.optimizer_v2 import OptimizerV2
-    from model_compression_toolkit.keras.constants import DEFAULT_HWM
-
-    from model_compression_toolkit import get_model
-    KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_HWM)
+    from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit import get_target_platform_capabilities
+    KERAS_DEFAULT_MODEL = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def get_keras_gptq_config(n_iter: int,
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(),
@@ -97,7 +96,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                          network_editor: List[EditRule] = [],
                                          gptq_config: GradientPTQConfig = None,
                                          analyze_similarity: bool = False,
-                                         fw_hw_model: FrameworkHardwareModel = KERAS_DEFAULT_MODEL):
+                                         tpc: TargetPlatformCapabilities = KERAS_DEFAULT_MODEL):
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
         symmetric constraint quantization thresholds (power of two).
@@ -118,7 +117,7 @@ if importlib.util.find_spec("tensorflow") is not None\
             network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
-            fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
+            tpc (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
         Returns:
             A quantized model and information the user may need to handle the quantized model.
@@ -148,7 +147,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                           quant_config,
                                           fw_info,
                                           KerasImplementation(),
-                                          fw_hw_model,
+                                          tpc,
                                           network_editor,
                                           gptq_config,
                                           analyze_similarity)
@@ -163,7 +162,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                                          network_editor: List[EditRule] = [],
                                                          gptq_config: GradientPTQConfig = None,
                                                          analyze_similarity: bool = False,
-                                                         fw_hw_model: FrameworkHardwareModel = KERAS_DEFAULT_MODEL):
+                                                         tpc: TargetPlatformCapabilities = KERAS_DEFAULT_MODEL):
         """
          Quantize a trained Keras model using post-training quantization. The model is quantized using a
          symmetric constraint quantization thresholds (power of two).
@@ -190,7 +189,7 @@ if importlib.util.find_spec("tensorflow") is not None\
              network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
              gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
              analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
-             fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
+             tpc (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
 
          Returns:
@@ -212,7 +211,7 @@ if importlib.util.find_spec("tensorflow") is not None\
              >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
 
              Create a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
-             The candidates bitwidth for quantization should be defined in the hardware model:
+             The candidates bitwidth for quantization should be defined in the target platform model:
 
              >>> config = mct.MixedPrecisionQuantizationConfig()
 
@@ -244,7 +243,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                           quant_config,
                                           fw_info,
                                           KerasImplementation(),
-                                          fw_hw_model,
+                                          tpc,
                                           network_editor,
                                           gptq_config,
                                           analyze_similarity,
