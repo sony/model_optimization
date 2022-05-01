@@ -33,6 +33,22 @@ def sum_kpi(kpi_vector: np.ndarray) -> List[Any]:
     return [lpSum(kpi_vector)]
 
 
+def max_kpi(kpi_vector) -> List[float]:
+    """
+    Aggregates KPIs vector to allow max constraint in the linear programming problem formalization.
+    In order to do so, we need to define a separate constraint on each value in the KPI vector,
+    to be bounded by the target KPI.
+
+    Args:
+        kpi_vector: A vector with nodes' KPI values.
+
+    Returns: A list with the vector's values, to be used to define max constraint
+    in the linear programming problem formalization.
+
+    """
+    return [kpi for kpi in kpi_vector]
+
+
 class MpKpiAggregation(Enum):
     """
     Defines kpi aggregation functions that can be used to compute final KPI metric.
@@ -40,8 +56,11 @@ class MpKpiAggregation(Enum):
 
      SUM - applies the sum_kpi function
 
+     MAX - applies the max_kpi function
+
     """
     SUM = partial(sum_kpi)
+    MAX = partial(max_kpi)
 
     def __call__(self, *args):
         return self.value(*args)

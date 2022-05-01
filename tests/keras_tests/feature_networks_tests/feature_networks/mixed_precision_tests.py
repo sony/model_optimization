@@ -56,6 +56,7 @@ def get_base_mp_nbits_candidates():
 
 
 class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
+    # TODO: after implementing CustomKPI, refactor mixed precision tests to reliably cover more test cases
     def __init__(self, unit_test, activation_layers_idx):
         super().__init__(unit_test)
 
@@ -140,11 +141,11 @@ class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
 
 class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[1, 3, 6])
+        super().__init__(unit_test, activation_layers_idx=[3, 6])
 
     def get_kpi(self):
         # kpi is for 4 bits on average
-        return KPI(weights_memory=2544000 * 4 / 8, activation_memory=2513518 * 4 / 8)
+        return KPI(weights_memory=2544000 * 4 / 8, activation_memory=1211800 * 4 / 8)
 
     def get_fw_hw_model(self):
         eight_bits = get_base_eight_bits_config_op()
@@ -156,24 +157,30 @@ class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBase
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
-        # kpi is 4 bit average -> should quantize all layers with 4 bits
+        # kpi is 4 bit average
         activation_bits = [quantized_model.layers[i].inbound_nodes[0].call_kwargs.get('num_bits') for i in self.activation_layers_idx]
-        self.unit_test.assertTrue((activation_bits == [4, 4, 4]))
+        # Note that since we're using default max aggregation for activation KPI, then there is no guarantee that the
+        # activation bitwidth for each layer would be 4-bit, this assertion tests the expected result for this specific
+        # test with its current setup (therefore, we don't check the input layer's bitwidth)
+        self.unit_test.assertTrue((activation_bits == [4, 4]))
 
 
 class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[1, 3, 6])
+        super().__init__(unit_test, activation_layers_idx=[3, 6])
 
     def get_kpi(self):
         # kpi is for 2 bits on average
-        return KPI(weights_memory=2544000.0 * 2 / 8, activation_memory=2513518.0 * 2 / 8)
+        return KPI(weights_memory=2544000.0 * 2 / 8, activation_memory=1211800.0 * 2 / 8)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
-        # kpi is minimal -> should quantize all layers with 2 bits
+        # kpi is minimal
+        # Note that since we're using default max aggregation for activation KPI, then there is no guarantee that the
+        # activation bitwidth for each layer would be 2-bit, this assertion tests the expected result for this specific
+        # test with its current setup (therefore, we don't check the input layer's bitwidth)
         activation_bits = [quantized_model.layers[i].inbound_nodes[0].call_kwargs.get('num_bits') for i in self.activation_layers_idx]
-        self.unit_test.assertTrue((activation_bits == [2, 2, 2]))
+        self.unit_test.assertTrue((activation_bits == [2, 2]))
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[2, 4],
@@ -212,7 +219,7 @@ class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
 
 class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[1, 4])
+        super().__init__(unit_test, activation_layers_idx=[1])
 
     def get_kpi(self):
         # return KPI(np.inf, np.inf)
@@ -236,9 +243,12 @@ class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
-        # kpi is 4 bit average -> should quantize all layers with 4 bits
+        # kpi is 4 bit average
+        # Note that since we're using default max aggregation for activation KPI, then there is no guarantee that the
+        # activation bitwidth for each layer would be 4-bit, this assertion tests the expected result for this specific
+        # test with its current setup (therefore, we don't check the relu layer's bitwidth)
         activation_bits = [quantized_model.layers[i].inbound_nodes[0].call_kwargs.get('num_bits') for i in self.activation_layers_idx]
-        self.unit_test.assertTrue((activation_bits == [4, 4]))
+        self.unit_test.assertTrue((activation_bits == [4]))
 
 
 class MixedPrecisionActivationSplitLayerTest(MixedPrecisionActivationBaseTest):
