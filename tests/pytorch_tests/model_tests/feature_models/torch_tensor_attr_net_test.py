@@ -36,10 +36,10 @@ class TorchTensorAttrNetTest(BasePytorchTest):
     such as torch.Tensor.size and torch.Tensor.view.
     """
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, convert_to_fx=False)
 
     def create_feature_network(self, input_shape):
         return TorchTensorAttrNet()
 
-    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None, convert_fx=False):
-        super(TorchTensorAttrNetTest, self).compare(quantized_models, float_model, input_x=input_x, quantization_info=quantization_info, convert_fx=False)
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        super(TorchTensorAttrNetTest, self).compare(quantized_models, float_model, input_x=input_x, quantization_info=quantization_info)

@@ -47,12 +47,12 @@ class ReshapeNetTest(BasePytorchTest):
     We check that the model after conversion replaces the attributes with static-list-of-ints attributes.
     """
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, convert_to_fx=False)
 
     def create_feature_network(self, input_shape):
         return ReshapeNet()
 
-    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None, convert_fx=False):
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
 
         ######################################################
         # check the 'reshape_with_static_shapes' substitution:
@@ -72,4 +72,4 @@ class ReshapeNetTest(BasePytorchTest):
         ######################################################
         # check the all other comparisons:
         ######################################################
-        super(ReshapeNetTest, self).compare(quantized_models, float_model, input_x=input_x, quantization_info=quantization_info, convert_fx=False)
+        super(ReshapeNetTest, self).compare(quantized_models, float_model, input_x=input_x, quantization_info=quantization_info)
