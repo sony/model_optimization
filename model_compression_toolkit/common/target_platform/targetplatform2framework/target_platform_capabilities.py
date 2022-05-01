@@ -21,7 +21,7 @@ from typing import List, Any, Dict, Tuple
 from model_compression_toolkit.common.logger import Logger
 from model_compression_toolkit.common.target_platform.targetplatform2framework.operations_to_layers import \
     OperationsToLayers, OperationsSetToLayers
-from model_compression_toolkit.common.target_platform.targetplatform2framework.framework_hardware_model_component import FrameworkHardwareModelComponent
+from model_compression_toolkit.common.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
 from model_compression_toolkit.common.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
 from model_compression_toolkit.common.immutable import ImmutableClass
 from model_compression_toolkit.common.graph.base_node import BaseNode
@@ -116,7 +116,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         """
         pprint.pprint(self.get_info(), sort_dicts=False, width=110)
 
-    def append_component(self, hm_component: FrameworkHardwareModelComponent):
+    def append_component(self, hm_component: TargetPlatformCapabilitiesComponent):
         """
         Append a Component (like OperationsSetToLayers) to the TargetPlatformCapabilities.
 

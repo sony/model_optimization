@@ -17,13 +17,13 @@ from typing import List, Any
 
 from model_compression_toolkit.common.logger import Logger
 from model_compression_toolkit.common.target_platform.targetplatform2framework.current_framework_hardware_model import  _current_framework_hardware_model
-from model_compression_toolkit.common.target_platform.targetplatform2framework.framework_hardware_model_component import FrameworkHardwareModelComponent
+from model_compression_toolkit.common.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
 from model_compression_toolkit.common.target_platform.operators import OperatorsSet, OperatorSetConcat, \
     OperatorsSetBase
 
 
 
-class OperationsSetToLayers(FrameworkHardwareModelComponent):
+class OperationsSetToLayers(TargetPlatformCapabilitiesComponent):
     """
     Associate an OperatorsSet to a list of framework's layers.
     """
