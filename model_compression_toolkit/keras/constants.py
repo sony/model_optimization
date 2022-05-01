@@ -49,6 +49,8 @@ DIMS = 'dims'
 # functional nodes attributes
 FUNCTION = 'function'
 F_RESHAPE = 'reshape'
+F_STRIDED_SLICE = 'strided_slice'
+F_STACK = 'stack'
 
 # Layers variables names:
 KERNEL = 'kernel'

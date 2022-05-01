@@ -36,6 +36,7 @@ from model_compression_toolkit.common.network_editors.actions import EditRule
 from model_compression_toolkit.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
+from model_compression_toolkit.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import \
     compute_bias_correction_of_graph
@@ -155,6 +156,83 @@ def post_training_quantization(in_model: Any,
     user_info.mixed_precision_cfg = bit_widths_config
 
     return quantized_model, user_info
+
+
+def get_finalized_graph(initial_graph: Graph,
+                        quant_config: QuantizationConfig = DEFAULTCONFIG,
+                        fw_info: FrameworkInfo = None,
+                        tb_w: TensorboardWriter = None,
+                        fw_impl: FrameworkImplementation = None) -> Graph:
+    """
+    Applies all edit operation (edit, substitutions, etc.) on the model's graph, to prepare it for the quantization
+    process. All future graph substitutions and operations that change the graph shold be added to this method.
+
+    Args:
+        initial_graph (Graph): Graph to apply the changes to.
+        quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be
+        quantized.
+        fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
+        kernel channels indices, groups of layers by how they should be quantized, etc.)
+        tb_w (TensorboardWriter): TensorboardWriter object to use for logging events such as graphs, histograms, etc.
+        fw_impl (FrameworkImplementation): FrameworkImplementation object with a specific framework methods implementation.
+
+    Returns: Graph object that represents the model, after applying all required modifications to it.
+
+    """
+
+    ######################################
+    # Graph substitution (prepare graph)
+    ######################################
+    graph = substitute(initial_graph, fw_impl.get_substitutions_prepare_graph())
+
+    if tb_w is not None:
+        tb_w.add_graph(graph, 'after_graph_preparation')
+
+    #########################################
+    # Set prior info to nodes
+    ##########################################
+    for node in graph.nodes:
+        node.prior_info = fw_impl.get_node_prior_info(node=node,
+                                                      fw_info=fw_info,
+                                                      graph=graph)
+    ######################################
+    # Graph substitution (pre statistics collection)
+    ######################################
+    transformed_graph = substitute(graph, fw_impl.get_substitutions_pre_statistics_collection(quant_config))
+
+    if tb_w is not None:
+        tb_w.add_graph(transformed_graph, 'pre_statistics_collection_substitutions')
+
+    ######################################
+    # Add quantization configurations
+    ######################################
+    transformed_graph = set_quantization_configuration_to_graph(graph=transformed_graph,
+                                                                quant_config=quant_config)
+
+    ######################################
+    # Graph marking points
+    ######################################
+    transformed_graph = substitute(transformed_graph, fw_impl.get_substitutions_marking())
+
+    ######################################
+    # Channel equalization
+    ######################################
+    transformed_graph = substitute(transformed_graph,
+                                   fw_impl.get_substitutions_channel_equalization(quant_config,
+                                                                                  fw_info))
+
+    if tb_w is not None:
+        tb_w.add_graph(transformed_graph, 'after_graph_marking')
+
+    ######################################
+    # Filter nodes' candidates
+    ######################################
+    transformed_graph = filter_nodes_candidates(transformed_graph)
+
+    if tb_w is not None:
+        tb_w.add_graph(transformed_graph, 'after_candidates_filtering')
+
+    return transformed_graph
 
 
 def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
@@ -392,49 +470,11 @@ def _prepare_model_for_quantization(graph: Graph,
     if tb_w is not None:
         tb_w.add_graph(graph, 'initial_graph')
 
-    ######################################
-    # Graph substitution (prepare graph)
-    ######################################
-    graph = substitute(graph, fw_impl.get_substitutions_prepare_graph())
-
-    if tb_w is not None:
-        tb_w.add_graph(graph, 'after_graph_preparation')
-
-    #########################################
-    # Set prior info to nodes
-    ##########################################
-    for node in graph.nodes:
-        node.prior_info = fw_impl.get_node_prior_info(node=node,
-                                                      fw_info=fw_info,
-                                                      graph=graph)
-    ######################################
-    # Graph substitution (pre statistics collection)
-    ######################################
-    transformed_graph = substitute(graph, fw_impl.get_substitutions_pre_statistics_collection(quant_config))
-
-    if tb_w is not None:
-        tb_w.add_graph(transformed_graph, 'pre_statistics_collection_substitutions')
-
-    ######################################
-    # Add quantization configurations
-    ######################################
-    transformed_graph = set_quantization_configuration_to_graph(graph=transformed_graph,
-                                                                quant_config=quant_config)
-
-    ######################################
-    # Graph marking points
-    ######################################
-    transformed_graph = substitute(transformed_graph, fw_impl.get_substitutions_marking())
-
-    ######################################
-    # Channel equalization
-    ######################################
-    transformed_graph = substitute(transformed_graph,
-                                   fw_impl.get_substitutions_channel_equalization(quant_config,
-                                                                                  fw_info))
-
-    if tb_w is not None:
-        tb_w.add_graph(transformed_graph, 'after_graph_marking')
+    transformed_graph = get_finalized_graph(graph,
+                                            quant_config,
+                                            fw_info,
+                                            tb_w,
+                                            fw_impl)
 
     ######################################
     # Graph analyzing (attaching statistics collectors)

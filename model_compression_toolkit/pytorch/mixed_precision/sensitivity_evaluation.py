@@ -115,15 +115,29 @@ def _configure_bitwidths_pytorch_model(model_mp: Module,
         node_idx: List of nodes' indices to configure (the rest layers are configured as the baseline model).
     """
     # Configure model
+    # Note: the last configurable layer must be included in the interest points for evaluating the metric,
+    # otherwise, it would not be considered throughout the mp optimization search (since it would not
+    # affect the metric value)
+    model_mp_layers_names = [l[0] for l in list(model_mp.named_children())]
     if node_idx is not None:  # configure specific layers in the mp model
         for node_idx_to_configure in node_idx:
-            current_layer = model_mp.get_submodule(target=f'{sorted_configurable_nodes_names[node_idx_to_configure]}')
-            _set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
+            node_name = f'{sorted_configurable_nodes_names[node_idx_to_configure]}'
+            if node_name in model_mp_layers_names:
+                current_layer = model_mp.get_submodule(target=node_name)
+                _set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
+            else:
+                raise Exception("The last configurable node is not included in the list of interest points for"
+                                "sensitivity evaluation metric for the mixed-precision search.")
 
     else:  # use the entire mp_model_configuration to configure the model
         for node_idx_to_configure, bitwidth_idx in enumerate(mp_model_configuration):
-            current_layer = model_mp.get_submodule(target=f'{sorted_configurable_nodes_names[node_idx_to_configure]}')
-            _set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
+            node_name = f'{sorted_configurable_nodes_names[node_idx_to_configure]}'
+            if node_name in model_mp_layers_names:
+                current_layer = model_mp.get_submodule(target=node_name)
+                _set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
+            else:
+                raise Exception("The last configurable node is not included in the list of interest points for"
+                                "sensitivity evaluation metric for the mixed-precision search.")
 
 
 def _set_layer_to_bitwidth(wrapped_layer: Module,

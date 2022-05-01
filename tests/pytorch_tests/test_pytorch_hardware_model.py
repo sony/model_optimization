@@ -217,30 +217,25 @@ class TestPytorchHWModel(unittest.TestCase):
 class TestGetPytorchHardwareModelAPI(unittest.TestCase):
 
     def test_get_pytorch_models(self):
-        pytorch_hw_models = [DEFAULT_HWM,
-                             QNNPACK_HWM,
-                             TFLITE_HWM]
+        fw_hw_model = mct.get_model(PYTORCH, DEFAULT_HWM)
+        model = mobilenet_v2(pretrained=True)
 
-        for hw_name in pytorch_hw_models:
-            fw_hw_model = mct.get_model(PYTORCH, hw_name)
-            model = mobilenet_v2(pretrained=True)
+        def rep_data():
+            return [np.random.randn(1, 3, 224, 224)]
 
-            def rep_data():
-                return [np.random.randn(1, 3, 224, 224)]
+        quantized_model, _ = mct.pytorch_post_training_quantization(model,
+                                                                    rep_data,
+                                                                    n_iter=1,
+                                                                    fw_hw_model=fw_hw_model)
 
-            quantized_model, _ = mct.pytorch_post_training_quantization(model,
-                                                                        rep_data,
-                                                                        n_iter=1,
-                                                                        fw_hw_model=fw_hw_model)
-
-            mp_qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
-            mp_qc.num_of_images = 1
-            quantized_model, _ = mct.pytorch_post_training_quantization_mixed_precision(model,
-                                                                                        rep_data,
-                                                                                        target_kpi=mct.KPI(np.inf),
-                                                                                        n_iter=1,
-                                                                                        fw_hw_model=fw_hw_model,
-                                                                                        quant_config=mp_qc)
+        mp_qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
+        mp_qc.num_of_images = 1
+        quantized_model, _ = mct.pytorch_post_training_quantization_mixed_precision(model,
+                                                                                    rep_data,
+                                                                                    target_kpi=mct.KPI(np.inf),
+                                                                                    n_iter=1,
+                                                                                    fw_hw_model=fw_hw_model,
+                                                                                    quant_config=mp_qc)
 
     def test_get_pytorch_not_supported_model(self):
         with self.assertRaises(Exception) as e:
