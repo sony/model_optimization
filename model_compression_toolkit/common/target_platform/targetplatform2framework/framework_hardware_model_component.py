@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.common.target_platform.hardware2framework.current_framework_hardware_model import  _current_framework_hardware_model
+from model_compression_toolkit.common.target_platform.targetplatform2framework.current_framework_hardware_model import  _current_framework_hardware_model
 
 
 class FrameworkHardwareModelComponent:

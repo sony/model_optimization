@@ -30,7 +30,7 @@ from model_compression_toolkit.common.quantization.quantization_config import DE
 
 import importlib
 
-from model_compression_toolkit.common.target_platform.hardware2framework import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform.targetplatform2framework import FrameworkHardwareModel
 
 
 if importlib.util.find_spec("tensorflow") is not None\

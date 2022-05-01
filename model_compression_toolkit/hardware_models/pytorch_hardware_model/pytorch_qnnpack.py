@@ -18,9 +18,9 @@ import torch
 from torch.nn import Conv2d, Linear, BatchNorm2d, ConvTranspose2d, Hardtanh, ReLU, ReLU6
 from torch.nn.functional import relu, relu6, hardtanh
 
-from model_compression_toolkit.common.target_platform.hardware2framework import \
+from model_compression_toolkit.common.target_platform.targetplatform2framework import \
     FrameworkHardwareModel, LayerFilterParams
-from model_compression_toolkit.common.target_platform.hardware2framework import \
+from model_compression_toolkit.common.target_platform.targetplatform2framework import \
     OperationsSetToLayers
 from model_compression_toolkit.hardware_models.qnnpack import get_qnnpack_model
 

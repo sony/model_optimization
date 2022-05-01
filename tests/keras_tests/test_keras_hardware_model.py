@@ -29,8 +29,8 @@ else:
 import model_compression_toolkit as mct
 from model_compression_toolkit.common.constants import TENSORFLOW
 from model_compression_toolkit.common.target_platform import FrameworkHardwareModel
-from model_compression_toolkit.common.target_platform.hardware2framework import LayerFilterParams
-from model_compression_toolkit.common.target_platform.hardware2framework.attribute_filter import Greater, \
+from model_compression_toolkit.common.target_platform.targetplatform2framework import LayerFilterParams
+from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import Greater, \
     Smaller, GreaterEq, Eq, SmallerEq
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG

@@ -23,9 +23,9 @@ from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh
 
 from model_compression_toolkit.common.target_platform import HardwareModel
-from model_compression_toolkit.common.target_platform.hardware2framework import \
+from model_compression_toolkit.common.target_platform.targetplatform2framework import \
     FrameworkHardwareModel, LayerFilterParams
-from model_compression_toolkit.common.target_platform.hardware2framework import \
+from model_compression_toolkit.common.target_platform.targetplatform2framework import \
     OperationsSetToLayers
 from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
 
