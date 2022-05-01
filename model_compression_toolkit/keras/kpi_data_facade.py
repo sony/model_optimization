@@ -17,12 +17,13 @@ from typing import Callable
 
 from model_compression_toolkit import KPI, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common import Logger
+from model_compression_toolkit.common.constants import TENSORFLOW
 from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
 from model_compression_toolkit.common.mixed_precision.kpi_data import compute_kpi_data
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
-from model_compression_toolkit.keras.quantization_facade import KERAS_DEFAULT_MODEL
+from model_compression_toolkit.keras.constants import DEFAULT_HWM
 
 import importlib
 
@@ -32,6 +33,10 @@ if importlib.util.find_spec("tensorflow") is not None\
     from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.keras.keras_implementation import KerasImplementation
     from tensorflow.keras.models import Model
+
+    from model_compression_toolkit import get_model
+
+    KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_HWM)
 
 
     def keras_kpi_data(in_model: Model,
