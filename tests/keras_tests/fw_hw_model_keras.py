@@ -27,7 +27,7 @@ else:
     Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, BatchNormalization
 
 
-hwm = mct.hardware_representation
+hwm = mct.target_platform
 
 
 def get_16bit_fw_hw_model(name):

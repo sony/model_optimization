@@ -30,7 +30,7 @@ from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers
-hw_model = mct.hardware_representation
+hw_model = mct.target_platform
 
 
 class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):

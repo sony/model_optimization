@@ -16,11 +16,11 @@
 import unittest
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.common.hardware_representation import get_default_quantization_config_options, \
+from model_compression_toolkit.common.target_platform import get_default_quantization_config_options, \
     FrameworkHardwareModel
 from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
 
-hwm = mct.hardware_representation
+hwm = mct.target_platform
 
 TEST_QC = hwm.OpQuantizationConfig(enable_activation_quantization=True,
                                    enable_weights_quantization=True,
@@ -41,7 +41,7 @@ class HardwareModelingTest(unittest.TestCase):
 
     def test_not_initialized_hwm(self):
         with self.assertRaises(Exception) as e:
-            mct.hardware_representation.get_default_quantization_config_options()
+            mct.target_platform.get_default_quantization_config_options()
         self.assertEqual('Hardware model is not initialized.', str(e.exception))
 
     def test_get_default_options(self):

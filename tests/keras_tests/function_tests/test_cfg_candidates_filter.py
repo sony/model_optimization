@@ -30,7 +30,7 @@ from model_compression_toolkit.common.substitutions.apply_substitutions import s
 from tests.common_tests.helpers.activation_mp_hw_model import generate_hw_model_with_activation_mp
 from tests.keras_tests.fw_hw_model_keras import generate_activation_mp_fhw_model_keras
 
-hw_model = mct.hardware_representation
+hw_model = mct.target_platform
 
 
 def get_base_config():

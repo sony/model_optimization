@@ -18,7 +18,7 @@ from typing import Callable, Any
 
 import numpy as np
 
-from model_compression_toolkit.common.hardware_representation import OpQuantizationConfig
+from model_compression_toolkit.common.target_platform import OpQuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 
 

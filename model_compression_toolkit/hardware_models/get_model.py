@@ -16,7 +16,7 @@
 import importlib
 
 from model_compression_toolkit.common.constants import TENSORFLOW, PYTORCH
-from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform import FrameworkHardwareModel
 
 
 #############################

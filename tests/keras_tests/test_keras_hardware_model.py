@@ -28,9 +28,9 @@ else:
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.common.constants import TENSORFLOW
-from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
-from model_compression_toolkit.common.hardware_representation.hardware2framework import LayerFilterParams
-from model_compression_toolkit.common.hardware_representation.hardware2framework.attribute_filter import Greater, \
+from model_compression_toolkit.common.target_platform import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform.hardware2framework import LayerFilterParams
+from model_compression_toolkit.common.target_platform.hardware2framework.attribute_filter import Greater, \
     Smaller, GreaterEq, Eq, SmallerEq
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
@@ -38,7 +38,7 @@ from model_compression_toolkit.keras.constants import DEFAULT_HWM, QNNPACK_HWM, 
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from tests.common_tests.test_hardware_model import TEST_QCO, TEST_QC
 
-hwm = mct.hardware_representation
+hwm = mct.target_platform
 
 def get_node(layer):
     i = Input(shape=(3, 16, 16))

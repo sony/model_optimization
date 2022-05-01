@@ -16,8 +16,8 @@
 
 from typing import Any
 
-from model_compression_toolkit.common.hardware_representation.operators import OperatorSetConcat
-from model_compression_toolkit.common.hardware_representation.hardware_model_component import HardwareModelComponent
+from model_compression_toolkit.common.target_platform.operators import OperatorSetConcat
+from model_compression_toolkit.common.target_platform.hardware_model_component import HardwareModelComponent
 
 
 

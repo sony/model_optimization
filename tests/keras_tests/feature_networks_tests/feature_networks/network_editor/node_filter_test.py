@@ -29,7 +29,7 @@ from model_compression_toolkit.common.network_editors.actions import ChangeCandi
 
 keras = tf.keras
 layers = keras.layers
-hw_model = mct.hardware_representation
+hw_model = mct.target_platform
 
 
 def get_uniform_weights(kernel, in_channels, out_channels):

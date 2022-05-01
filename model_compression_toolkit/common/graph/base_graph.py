@@ -31,7 +31,7 @@ from model_compression_toolkit.common.collectors.statistics_collector import Bas
 from model_compression_toolkit.common.collectors.statistics_collector import scale_statistics, shift_statistics
 from model_compression_toolkit.common.user_info import UserInformation
 from model_compression_toolkit.common.logger import Logger
-from model_compression_toolkit.common.hardware_representation.hardware2framework import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform.hardware2framework import FrameworkHardwareModel
 
 OutTensor = namedtuple('OutTensor', 'node node_out_index')
 

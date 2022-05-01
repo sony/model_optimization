@@ -19,7 +19,7 @@ from typing import List, Tuple, Any, Callable
 from model_compression_toolkit.common import FrameworkInfo, Graph, BaseNode
 from model_compression_toolkit.common.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher
-from model_compression_toolkit.common.hardware_representation import QuantizationMethod
+from model_compression_toolkit.common.target_platform import QuantizationMethod
 from model_compression_toolkit.common.quantization.set_node_quantization_config import create_node_activation_qc, \
     set_quantization_configs_to_node
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig

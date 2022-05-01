@@ -14,7 +14,7 @@
 # ==============================================================================
 import model_compression_toolkit as mct
 
-hwm = mct.hardware_representation
+hwm = mct.target_platform
 
 
 def generate_hw_model_with_activation_mp(base_cfg, mp_bitwidth_candidates_list, name="activation_mp_model"):

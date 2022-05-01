@@ -22,7 +22,7 @@ from typing import Dict, Any, List
 
 from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.common.graph.base_node import BaseNode
-from model_compression_toolkit.common.hardware_representation.op_quantization_config import QuantizationMethod
+from model_compression_toolkit.common.target_platform.op_quantization_config import QuantizationMethod
 
 
 class ChannelAxis(Enum):

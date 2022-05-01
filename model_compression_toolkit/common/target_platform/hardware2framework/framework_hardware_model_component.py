@@ -12,29 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Any, Dict
 
-from model_compression_toolkit.common.hardware_representation.current_hardware_model import _current_hardware_model
+from model_compression_toolkit.common.target_platform.hardware2framework.current_framework_hardware_model import  _current_framework_hardware_model
 
 
-class HardwareModelComponent:
-    """
-    Component of HardwareModel (Fusing, OperatorsSet, etc.)
-    """
+class FrameworkHardwareModelComponent:
     def __init__(self, name: str):
-        """
-
-        Args:
-            name: Name of component.
-        """
         self.name = name
-        _current_hardware_model.get().append_component(self)
+        _current_framework_hardware_model.get().append_component(self)
 
-    def get_info(self) -> Dict[str, Any]:
-        """
-
-        Returns: Get information about the component to display (return an empty dictionary.
-        the actual component should fill it with info).
-
-        """
+    def get_info(self):
         return {}
