@@ -28,8 +28,8 @@ from model_compression_toolkit.common.quantization.node_quantization_config impo
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
-from model_compression_toolkit.common.hardware_representation.hardware2framework import FrameworkHardwareModel
-from model_compression_toolkit.common.hardware_representation.op_quantization_config import OpQuantizationConfig, \
+from model_compression_toolkit.common.target_platform.hardware2framework import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform.op_quantization_config import OpQuantizationConfig, \
     QuantizationConfigOptions
 
 

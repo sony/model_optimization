@@ -24,9 +24,9 @@ from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.common.constants import PYTORCH
-from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
-from model_compression_toolkit.common.hardware_representation.hardware2framework import LayerFilterParams
-from model_compression_toolkit.common.hardware_representation.hardware2framework.attribute_filter import Greater, \
+from model_compression_toolkit.common.target_platform import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform.hardware2framework import LayerFilterParams
+from model_compression_toolkit.common.target_platform.hardware2framework.attribute_filter import Greater, \
     Smaller, Eq
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
@@ -35,7 +35,7 @@ from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImpl
 from tests.common_tests.test_hardware_model import TEST_QC, TEST_QCO
 from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import LayerTestModel
 
-hwm = mct.hardware_representation
+hwm = mct.target_platform
 
 
 class TestPytorchHWModel(unittest.TestCase):

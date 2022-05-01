@@ -16,9 +16,9 @@
 from typing import List, Any
 
 from model_compression_toolkit.common.logger import Logger
-from model_compression_toolkit.common.hardware_representation.hardware2framework.current_framework_hardware_model import  _current_framework_hardware_model
-from model_compression_toolkit.common.hardware_representation.hardware2framework.framework_hardware_model_component import FrameworkHardwareModelComponent
-from model_compression_toolkit.common.hardware_representation.operators import OperatorsSet, OperatorSetConcat, \
+from model_compression_toolkit.common.target_platform.hardware2framework.current_framework_hardware_model import  _current_framework_hardware_model
+from model_compression_toolkit.common.target_platform.hardware2framework.framework_hardware_model_component import FrameworkHardwareModelComponent
+from model_compression_toolkit.common.target_platform.operators import OperatorsSet, OperatorSetConcat, \
     OperatorsSetBase
 
 

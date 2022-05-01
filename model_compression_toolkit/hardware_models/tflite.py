@@ -13,8 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit import hardware_representation as hw_model
-from model_compression_toolkit.common.hardware_representation.op_quantization_config import QuantizationMethod
+from model_compression_toolkit import target_platform as hw_model
+from model_compression_toolkit.common.target_platform.op_quantization_config import QuantizationMethod
 
 
 def get_tflite_hw_model():

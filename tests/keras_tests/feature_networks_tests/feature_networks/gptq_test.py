@@ -27,7 +27,7 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 
 keras = tf.keras
 layers = keras.layers
-hw_model = mct.hardware_representation
+hw_model = mct.target_platform
 
 
 class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):

@@ -18,7 +18,7 @@ from model_compression_toolkit import common
 from model_compression_toolkit.common import Logger
 from model_compression_toolkit.common.constants import PYTORCH
 from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
-from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform import FrameworkHardwareModel
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.network_editors.actions import EditRule

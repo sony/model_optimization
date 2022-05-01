@@ -30,7 +30,7 @@ from tests.keras_tests.fw_hw_model_keras import generate_activation_mp_fhw_model
 
 keras = tf.keras
 layers = keras.layers
-hw_model = mct.hardware_representation
+hw_model = mct.target_platform
 
 
 def get_base_eight_bits_config_op():

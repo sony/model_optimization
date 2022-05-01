@@ -23,10 +23,10 @@ else:
 from tensorflow.python.keras.layers.core import SlicingOpLambda
 from tensorflow.python.ops.image_ops_impl import ResizeMethod
 
-from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
-from model_compression_toolkit.common.hardware_representation.hardware2framework import OperationsSetToLayers, \
+from model_compression_toolkit.common.target_platform import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform.hardware2framework import OperationsSetToLayers, \
     LayerFilterParams
-from model_compression_toolkit.common.hardware_representation.hardware2framework.attribute_filter import Eq
+from model_compression_toolkit.common.target_platform.hardware2framework.attribute_filter import Eq
 from model_compression_toolkit.hardware_models.tflite import get_tflite_hw_model
 
 

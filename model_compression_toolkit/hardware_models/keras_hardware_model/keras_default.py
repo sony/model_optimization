@@ -15,7 +15,7 @@
 
 import tensorflow as tf
 
-from model_compression_toolkit.common.hardware_representation import HardwareModel
+from model_compression_toolkit.common.target_platform import HardwareModel
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
@@ -27,7 +27,7 @@ else:
 from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
 
 import model_compression_toolkit as mct
-hwm = mct.hardware_representation
+hwm = mct.target_platform
 
 
 def get_default_hwm_keras():

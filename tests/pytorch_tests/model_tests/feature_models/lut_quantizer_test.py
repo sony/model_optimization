@@ -23,7 +23,7 @@ from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_m
 from tests.pytorch_tests.fw_hw_model_pytorch import get_pytorch_test_fw_hw_model_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
-hw_model = mct.hardware_representation
+hw_model = mct.target_platform
 
 """
 This test checks multiple features:

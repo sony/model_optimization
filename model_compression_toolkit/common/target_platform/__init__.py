@@ -13,16 +13,16 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.common.hardware_representation.fusing import Fusing
-from model_compression_toolkit.common.hardware_representation.hardware2framework import \
+from model_compression_toolkit.common.target_platform.fusing import Fusing
+from model_compression_toolkit.common.target_platform.hardware2framework import \
     FrameworkHardwareModel, OperationsSetToLayers, Smaller, SmallerEq, NotEq, Eq, GreaterEq, Greater, LayerFilterParams, OperationsToLayers, get_current_fw_hw_model
 
-from model_compression_toolkit.common.hardware_representation.hardware_model import \
+from model_compression_toolkit.common.target_platform.hardware_model import \
     get_default_quantization_config_options, HardwareModel
 
-from model_compression_toolkit.common.hardware_representation.op_quantization_config import OpQuantizationConfig, \
+from model_compression_toolkit.common.target_platform.op_quantization_config import OpQuantizationConfig, \
     QuantizationConfigOptions, QuantizationMethod
-from model_compression_toolkit.common.hardware_representation.operators import OperatorsSet, OperatorSetConcat
+from model_compression_toolkit.common.target_platform.operators import OperatorsSet, OperatorSetConcat
 
 
 

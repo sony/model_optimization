@@ -16,7 +16,7 @@
 import tensorflow as tf
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
-from model_compression_toolkit.common.hardware_representation import QuantizationMethod
+from model_compression_toolkit.common.target_platform import QuantizationMethod
 from model_compression_toolkit.common.substitutions.shift_negative_activation import apply_shift_negative_correction
 
 if tf.__version__ < "2.6":

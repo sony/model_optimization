@@ -19,7 +19,7 @@ from model_compression_toolkit.common.quantization import quantization_config
 from model_compression_toolkit.common.mixed_precision import mixed_precision_quantization_config
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig, \
     QuantizationErrorMethod, DEFAULTCONFIG
-from model_compression_toolkit.common import hardware_representation
+from model_compression_toolkit.common import target_platform
 from model_compression_toolkit.hardware_models.get_model import get_model
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
