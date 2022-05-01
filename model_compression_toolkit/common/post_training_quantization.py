@@ -267,7 +267,7 @@ def _quantize_model(fw_info: FrameworkInfo,
         tg: A prepared for quantization graph.
 
     Returns:
-        Quantized model in the input framework, and information the user may need to in order to use the quantized model.
+        Quantized model in the input framework, and information the user may need in order to use the quantized model.
     """
 
     quantized_tg = quantize_graph_weights(tg,

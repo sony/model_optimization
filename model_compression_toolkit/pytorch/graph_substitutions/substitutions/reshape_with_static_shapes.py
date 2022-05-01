@@ -22,7 +22,7 @@ from model_compression_toolkit.common.graph.base_node import BaseNode
 
 class ReshapeWithStaticShapes(common.BaseSubstitution):
     """
-    Shift layer by const before Softmax
+    Replace "reshape" or "view" shape attributes. Shape attributes are replaced to static const values.
     """
 
     def __init__(self):
@@ -54,7 +54,7 @@ class ReshapeWithStaticShapes(common.BaseSubstitution):
         node.input_shape = [node.input_shape[0]]
         nodes_to_check = []
         for in_edge in graph.incoming_edges(node):
-            if in_edge.sink_index > 0:
+            if in_edge.sink_index > 0: # the first input is the tensor to be reshaped
                 nodes_to_check.append(in_edge.source_node)
                 graph.remove_edge(in_edge.source_node, node)
         for n in nodes_to_check:
