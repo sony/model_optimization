@@ -14,7 +14,7 @@
 # ==============================================================================
 
 from model_compression_toolkit.common.target_platform.targetplatform2framework import \
-    FrameworkHardwareModel, LayerFilterParams
+    TargetPlatformCapabilities, LayerFilterParams
 from model_compression_toolkit.common.target_platform.targetplatform2framework import \
     OperationsSetToLayers
 from model_compression_toolkit.hardware_models.qnnpack import get_qnnpack_model
@@ -28,8 +28,8 @@ else:
 
 def get_qnnpack_tensorflow():
     qnnpackhm = get_qnnpack_model()
-    qnnpack_tf = FrameworkHardwareModel(qnnpackhm,
-                                        name='qnnpack_tensorflow')
+    qnnpack_tf = TargetPlatformCapabilities(qnnpackhm,
+                                            name='qnnpack_tensorflow')
 
     with qnnpack_tf:
         OperationsSetToLayers("Conv", [Conv2D,

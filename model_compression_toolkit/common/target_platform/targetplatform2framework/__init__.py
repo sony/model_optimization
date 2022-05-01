@@ -14,7 +14,7 @@
 # ==============================================================================
 
 from model_compression_toolkit.common.target_platform.targetplatform2framework.current_framework_hardware_model import get_current_fw_hw_model
-from model_compression_toolkit.common.target_platform.targetplatform2framework.framework_hardware_model import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform.targetplatform2framework.target_platform_capabilities import TargetPlatformCapabilities
 from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import \
     Eq, GreaterEq, NotEq, SmallerEq, Greater, Smaller
 from model_compression_toolkit.common.target_platform.targetplatform2framework.layer_filter_params import \

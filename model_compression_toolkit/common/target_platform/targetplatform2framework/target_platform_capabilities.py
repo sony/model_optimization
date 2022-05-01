@@ -32,7 +32,7 @@ from model_compression_toolkit.common.target_platform.hardware_model import Hard
 from model_compression_toolkit.common.target_platform.targetplatform2framework.current_framework_hardware_model import _current_framework_hardware_model
 
 
-class FrameworkHardwareModel(ImmutableClass):
+class TargetPlatformCapabilities(ImmutableClass):
     """
     Attach framework information to a modeled hardware.
     """
@@ -43,12 +43,12 @@ class FrameworkHardwareModel(ImmutableClass):
 
         Args:
             hw_model (HardwareModel): Modeled hardware to attach framework information to.
-            name (str): Name of the FrameworkHardwareModel.
+            name (str): Name of the TargetPlatformCapabilities.
         """
 
         super().__init__()
         self.name = name
-        assert isinstance(hw_model, HardwareModel), f'Hardware model that was passed to FrameworkHardwareModel must be of type HardwareModel, but has type of {type(hw_model)}'
+        assert isinstance(hw_model, HardwareModel), f'Hardware model that was passed to TargetPlatformCapabilities must be of type HardwareModel, but has type of {type(hw_model)}'
         self.hw_model = hw_model
         self.op_sets_to_layers = OperationsToLayers() # Init an empty OperationsToLayers
         self.layer2qco, self.filterlayer2qco = {}, {} # Init empty mappings from layers/LayerFilterParams to QC options
@@ -69,7 +69,7 @@ class FrameworkHardwareModel(ImmutableClass):
         """
         opset = self.hw_model.get_opset_by_name(opset_name)
         if opset is None:
-            Logger.warning(f'{opset_name} was not found in FrameworkHardwareModel.')
+            Logger.warning(f'{opset_name} was not found in TargetPlatformCapabilities.')
             return None
         return self.get_layers_by_opset(opset)
 
@@ -101,7 +101,7 @@ class FrameworkHardwareModel(ImmutableClass):
     def get_info(self) -> Dict[str, Any]:
         """
 
-        Returns: Summarization of information in the FrameworkHardwareModel.
+        Returns: Summarization of information in the TargetPlatformCapabilities.
 
         """
         return {"Framework Hardware Model": self.name,
@@ -111,17 +111,17 @@ class FrameworkHardwareModel(ImmutableClass):
     def show(self):
         """
 
-        Display the FrameworkHardwareModel.
+        Display the TargetPlatformCapabilities.
 
         """
         pprint.pprint(self.get_info(), sort_dicts=False, width=110)
 
     def append_component(self, hm_component: FrameworkHardwareModelComponent):
         """
-        Append a Component (like OperationsSetToLayers) to the FrameworkHardwareModel.
+        Append a Component (like OperationsSetToLayers) to the TargetPlatformCapabilities.
 
         Args:
-            hm_component: Component to append to FrameworkHardwareModel.
+            hm_component: Component to append to TargetPlatformCapabilities.
 
         """
         if isinstance(hm_component, OperationsSetToLayers):
@@ -131,14 +131,14 @@ class FrameworkHardwareModel(ImmutableClass):
 
     def __enter__(self):
         """
-        Init a FrameworkHardwareModel object.
+        Init a TargetPlatformCapabilities object.
         """
         _current_framework_hardware_model.set(self)
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
         """
-        Finalize a FrameworkHardwareModel object.
+        Finalize a TargetPlatformCapabilities object.
         """
         if exc_value is not None:
             print(exc_value, exc_value.args)
@@ -153,7 +153,7 @@ class FrameworkHardwareModel(ImmutableClass):
         """
 
         Returns: The default OpQuantizationConfig of the HardwareModel that is attached
-        to the FrameworkHardwareModel.
+        to the TargetPlatformCapabilities.
 
         """
         return self.hw_model.get_default_op_quantization_config()

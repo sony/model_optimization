@@ -25,7 +25,7 @@ def get_current_fw_hw_model():
 
 class _CurrentFrameworkHardwareModel(object):
     """
-    Wrapper of the current FrameworkHardwareModel object that is being accessed and defined.
+    Wrapper of the current TargetPlatformCapabilities object that is being accessed and defined.
     """
     def __init__(self):
         super(_CurrentFrameworkHardwareModel, self).__init__()
@@ -34,28 +34,28 @@ class _CurrentFrameworkHardwareModel(object):
     def get(self):
         """
 
-        Returns: The current FrameworkHardwareModel that is being defined.
+        Returns: The current TargetPlatformCapabilities that is being defined.
 
         """
         if self.fwhw_model is None:
-            raise Exception('FrameworkHardwareModel is not initialized.')
+            raise Exception('TargetPlatformCapabilities is not initialized.')
         return self.fwhw_model
 
     def reset(self):
         """
 
-        Reset the current FrameworkHardwareModel so a new FrameworkHardwareModel can be wrapped and
-        used as the current FrameworkHardwareModel object.
+        Reset the current TargetPlatformCapabilities so a new TargetPlatformCapabilities can be wrapped and
+        used as the current TargetPlatformCapabilities object.
 
         """
         self.fwhw_model = None
 
     def set(self, fwhw_model):
         """
-        Set and wrap a FrameworkHardwareModel as the current FrameworkHardwareModel.
+        Set and wrap a TargetPlatformCapabilities as the current TargetPlatformCapabilities.
 
         Args:
-            fwhw_model: FrameworkHardwareModel to set as the current FrameworkHardwareModel to access and use.
+            fwhw_model: TargetPlatformCapabilities to set as the current TargetPlatformCapabilities to access and use.
 
         """
         self.fwhw_model = fwhw_model

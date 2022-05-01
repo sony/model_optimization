@@ -33,7 +33,7 @@ Initialize data loader:
 
 |
 
-Get a FrameworkHardwareModel:
+Get a TargetPlatformCapabilities:
 
 .. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python

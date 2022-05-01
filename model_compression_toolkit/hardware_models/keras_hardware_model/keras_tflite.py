@@ -23,7 +23,7 @@ else:
 from tensorflow.python.keras.layers.core import SlicingOpLambda
 from tensorflow.python.ops.image_ops_impl import ResizeMethod
 
-from model_compression_toolkit.common.target_platform import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.common.target_platform.targetplatform2framework import OperationsSetToLayers, \
     LayerFilterParams
 from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import Eq
@@ -32,7 +32,7 @@ from model_compression_toolkit.hardware_models.tflite import get_tflite_hw_model
 
 def get_keras_hardware_model_tflite():
     tflite_hm = get_tflite_hw_model()
-    tflite_keras = FrameworkHardwareModel(tflite_hm, name='tflite_keras')
+    tflite_keras = TargetPlatformCapabilities(tflite_hm, name='tflite_keras')
 
     with tflite_keras:
         OperationsSetToLayers("PreserveQuantizationParams", [AveragePooling2D,

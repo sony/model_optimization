@@ -324,20 +324,20 @@ using OperationsSetToLayers just like any other layers:
 
 |
 
-The mapping from OperatorsSets to layers' lists are part of a class called FrameworkHardwareModel
+The mapping from OperatorsSets to layers' lists are part of a class called TargetPlatformCapabilities
 which attaches the layers representations to OperatorsSets in a HardwareModel instance:
 
-FrameworkHardwareModel
-=========================
-.. autoclass:: model_compression_toolkit.hardware_representation.FrameworkHardwareModel
+TargetPlatformCapabilities
+============================
+.. autoclass:: model_compression_toolkit.hardware_representation.TargetPlatformCapabilities
 
 
-To create a FrameworkHardwareModel, a HardwareModel instance should be passed upon the
-FrameworkHardwareModel initialization. Then, OperationsSetToLayers can be created and attached
-to the FrameworkHardwareModel like in the following example:
+To create a TargetPlatformCapabilities, a HardwareModel instance should be passed upon the
+TargetPlatformCapabilities initialization. Then, OperationsSetToLayers can be created and attached
+to the TargetPlatformCapabilities like in the following example:
 
 
-FrameworkHardwareModel Code Example
+TargetPlatformCapabilities Code Example
 =====================================
 
 .. literalinclude:: ../../../../../model_compression_toolkit/hardware_models/keras_hardware_model/keras_default.py

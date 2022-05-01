@@ -28,7 +28,7 @@ else:
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.common.constants import TENSORFLOW
-from model_compression_toolkit.common.target_platform import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.common.target_platform.targetplatform2framework import LayerFilterParams
 from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import Greater, \
     Smaller, GreaterEq, Eq, SmallerEq
@@ -87,7 +87,7 @@ class TestKerasHWModel(unittest.TestCase):
         hm = hwm.HardwareModel(hwm.QuantizationConfigOptions([TEST_QC]))
         with hm:
             op_obj = hwm.OperatorsSet('opsetA')
-        fw_hwm = FrameworkHardwareModel(hm)
+        fw_hwm = TargetPlatformCapabilities(hm)
         with fw_hwm:
             opset_layers = [Conv2D, LayerFilterParams(ReLU, max_value=2)]
             hwm.OperationsSetToLayers('opsetA', opset_layers)
@@ -101,7 +101,7 @@ class TestKerasHWModel(unittest.TestCase):
             op_obj_b = hwm.OperatorsSet('opsetB')
             op_concat = hwm.OperatorSetConcat(op_obj_a, op_obj_b)
 
-        fw_hwm = FrameworkHardwareModel(hm)
+        fw_hwm = TargetPlatformCapabilities(hm)
         with fw_hwm:
             opset_layers_a = [Conv2D]
             opset_layers_b = [LayerFilterParams(ReLU, max_value=2)]
@@ -117,7 +117,7 @@ class TestKerasHWModel(unittest.TestCase):
             hwm.OperatorsSet('opsetA')
             hwm.OperatorsSet('opsetB')
 
-        fw_hwm = FrameworkHardwareModel(hm)
+        fw_hwm = TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with fw_hwm:
                 hwm.OperationsSetToLayers('opsetA', [Conv2D])
@@ -130,7 +130,7 @@ class TestKerasHWModel(unittest.TestCase):
             hwm.OperatorsSet('opsetA')
             hwm.OperatorsSet('opsetB')
 
-        fw_hwm = FrameworkHardwareModel(hm)
+        fw_hwm = TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with fw_hwm:
                 hwm.OperationsSetToLayers('opsetA', [LayerFilterParams(Activation, activation="relu")])
@@ -153,7 +153,7 @@ class TestKerasHWModel(unittest.TestCase):
             hwm.OperatorsSet("tanh", sevenbit_qco)
             hwm.OperatorsSet("relu")
 
-        hm_keras = hwm.FrameworkHardwareModel(hm, name='fw_test')
+        hm_keras = hwm.TargetPlatformCapabilities(hm, name='fw_test')
         with hm_keras:
             hwm.OperationsSetToLayers("conv", [Conv2D])
             hwm.OperationsSetToLayers("tanh", [tf.nn.tanh])
@@ -174,7 +174,7 @@ class TestKerasHWModel(unittest.TestCase):
     def test_opset_not_in_hwm(self):
         default_qco = hwm.QuantizationConfigOptions([TEST_QC])
         hm = hwm.HardwareModel(default_qco)
-        hm_keras = hwm.FrameworkHardwareModel(hm)
+        hm_keras = hwm.TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with hm_keras:
                 hwm.OperationsSetToLayers("conv", [Conv2D])
@@ -192,7 +192,7 @@ class TestKerasHWModel(unittest.TestCase):
             hwm.Fusing([a, b, c])
             hwm.Fusing([a, c])
 
-        hm_keras = hwm.FrameworkHardwareModel(hm)
+        hm_keras = hwm.TargetPlatformCapabilities(hm)
         with hm_keras:
             hwm.OperationsSetToLayers("opA", [Conv2D])
             hwm.OperationsSetToLayers("opB", [tf.nn.tanh])

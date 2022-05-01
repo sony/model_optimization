@@ -44,8 +44,8 @@ def get_quantization_disabled_keras_hw_model(name):
 
 def generate_activation_mp_fhw_model_keras(hardware_model, name="activation_mp_keras_hwm"):
 
-    fhwm_keras = hwm.FrameworkHardwareModel(hardware_model,
-                                            name=name)
+    fhwm_keras = hwm.TargetPlatformCapabilities(hardware_model,
+                                                name=name)
     with fhwm_keras:
         hwm.OperationsSetToLayers("NoQuantization", [Reshape,
                                                      tf.reshape,
