@@ -139,12 +139,16 @@ def nodes_builder(model: GraphModule,
                     input_shape += [list(tensor_meta[TENSOR_META].shape)]
                 elif tensor_meta[TYPE] == tuple:
                     input_shape += [list(n.shape) for n in tensor_meta[TENSOR_META]]
+                elif tensor_meta[TYPE] == int:
+                    input_shape += [[1]]
 
         # extract output shapes
         if node.meta[TYPE] == torch.Tensor:
             output_shape = [list(node.meta[TENSOR_META].shape)]
         elif node.meta[TYPE] in (list, tuple):
             output_shape = [list(m.shape) for m in node.meta[TENSOR_META]]
+        elif node.meta[TYPE] == int:
+            output_shape = [[1]]
         else:
             output_shape = []
 
@@ -165,6 +169,12 @@ def nodes_builder(model: GraphModule,
                             input_counter += 1
                 num_inputs = max(len(node.all_input_nodes), input_counter)
             op_call_args = list(node.args[num_inputs:])
+
+            # remove torch.fx.node.Node from inputs to graph_node_type
+            for arg in op_call_args:
+                if isinstance(arg, torch.fx.node.Node):
+                    op_call_args.remove(arg)
+
             kwargs = {FUNCTIONAL_OP: node_type,
                       OP_CALL_ARGS: op_call_args,
                       OP_CALL_KWARGS: node.kwargs,

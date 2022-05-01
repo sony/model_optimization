@@ -17,6 +17,7 @@ import unittest
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSameNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest
+from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test import ReshapeNetTest
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
@@ -220,6 +221,14 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the Mixed Precision search.
         """
         MixedPercisionSearch2Bit(self).run_test()
+
+    def test_reshape_net(self):
+        """
+        This tests checks the 'reshape_with_static_shapes' substitution.
+        We create a model with dynamic input shape attributes to the operators 'reshape' and 'view'.
+        We check that the model after conversion replaces the attributes with static-list-of-ints attributes.
+        """
+        ReshapeNetTest(self).run_test()
 
 
 if __name__ == '__main__':
