@@ -1,10 +1,10 @@
 :orphan:
 
-.. _ug-hardware_representation:
+.. _ug-target_platform:
 
 
 =================================
-hardware_representation Module
+target_platform Module
 =================================
 
 MCT can be configured to quantize and optimize models for different hardware settings.
@@ -14,7 +14,7 @@ uses `per-tensor weights quantization <https://github.com/pytorch/pytorch/blob/m
 for Conv2d, while when using tflite modeling, Tensorflow uses `per-channel weights quantization for
 Conv2D <https://www.tensorflow.org/lite/performance/quantization_spec#per-axis_vs_per-tensor>`_.
 
-This can be addressed in MCT by using the hardware_representation module, that can configure different
+This can be addressed in MCT by using the target_platform module, that can configure different
 parameters that are hardware-related, and the optimization process will use this to optimize the model accordingly.
 Models for TFLite and qnnpack can be observed `here <https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/hardware_models>`_, and can be used using :ref:`get_model function<ug-get_model>`.
 
@@ -32,7 +32,7 @@ QuantizationMethod
 ==========================
 Select a method to use during quantization:
 
-.. autoclass:: model_compression_toolkit.hardware_representation.QuantizationMethod
+.. autoclass:: model_compression_toolkit.target_platform.QuantizationMethod
 
 
 |
@@ -44,7 +44,7 @@ Quantization configuration of different operators can be created using OpQuantiz
 
 OpQuantizationConfig
 ======================
-.. autoclass:: model_compression_toolkit.hardware_representation.OpQuantizationConfig
+.. autoclass:: model_compression_toolkit.target_platform.OpQuantizationConfig
 
 |
 
@@ -75,7 +75,7 @@ configuration options for an operator:
 
 QuantizationConfigOptions
 ============================
-.. autoclass:: model_compression_toolkit.hardware_representation.QuantizationConfigOptions
+.. autoclass:: model_compression_toolkit.target_platform.QuantizationConfigOptions
 
 If a QuantizationConfigOptions is created with more than
 one OpQuantizationConfig option, a base_config must be passed to the QuantizationConfigOptions
@@ -109,7 +109,7 @@ group operators by common properties and configure patterns of operators to fuse
 
 HardwareModel
 ================
-.. autoclass:: model_compression_toolkit.hardware_representation.HardwareModel
+.. autoclass:: model_compression_toolkit.target_platform.HardwareModel
 
 
 A default QuantizationConfigOptions (containing a single OpQuantizationConfig) must be passed
@@ -134,7 +134,7 @@ Then, we can start defining the model by creating OperatorsSets:
 
 OperatorsSet
 ================
-.. autoclass:: model_compression_toolkit.hardware_representation.OperatorsSet
+.. autoclass:: model_compression_toolkit.target_platform.OperatorsSet
 
 An OperatorsSet gathers group of operators that are labeled by a unique name and can be attached to a
 QuantizationConfigOptions (so MCT will use these options to optimize operators from this set).
@@ -169,7 +169,7 @@ quantization is applied between them when they appear in a model:
 
 Fusing
 ==============
-.. autoclass:: model_compression_toolkit.hardware_representation.Fusing
+.. autoclass:: model_compression_toolkit.target_platform.Fusing
 
 For example, to fuse the previously created two OperatorsSets fc_opset and
 relu_opset we can create the next Fusing:
@@ -220,7 +220,7 @@ When multiple operators should be fused in a similar way, an OperatorSetConcat c
 
 OperatorSetConcat
 ====================
-.. autoclass:: model_compression_toolkit.hardware_representation.OperatorSetConcat
+.. autoclass:: model_compression_toolkit.target_platform.OperatorSetConcat
 
 
 OperatorSetConcat gathers multiple OperatorsSet and can be specified in a fusing operators list.
@@ -259,7 +259,7 @@ an OperationsSetToLayers can be used:
 
 OperationsSetToLayers
 =========================
-.. autoclass:: model_compression_toolkit.hardware_representation.OperationsSetToLayers
+.. autoclass:: model_compression_toolkit.target_platform.OperationsSetToLayers
 
 Using OperationsSetToLayers we can associate an OperatorsSet label to a list of framework's layers:
 
@@ -282,7 +282,7 @@ For that, LayerFilterParams can be used:
 
 LayerFilterParams
 =========================
-.. autoclass:: model_compression_toolkit.hardware_representation.LayerFilterParams
+.. autoclass:: model_compression_toolkit.target_platform.LayerFilterParams
 
 
 LayerFilterParams wraps a layer with several conditions and key-value pairs
@@ -329,7 +329,7 @@ which attaches the layers representations to OperatorsSets in a HardwareModel in
 
 TargetPlatformCapabilities
 ============================
-.. autoclass:: model_compression_toolkit.hardware_representation.TargetPlatformCapabilities
+.. autoclass:: model_compression_toolkit.target_platform.TargetPlatformCapabilities
 
 
 To create a TargetPlatformCapabilities, a HardwareModel instance should be passed upon the

@@ -22,7 +22,7 @@ Modules
 - :ref:`quantization_config<ug-quantization_config>`: Module to configure the quantization process.
 - :ref:`mixed_precision_quantization_config<ug-mixed_precision_quantization_config>`: Module to configure the quantization process when using mixed-precision PTQ.
 - :ref:`network_editor<ug-network_editor>`: Module to edit your model during the quantization process.
-- :ref:`hardware_representation<ug-hardware_representation>`: Module to create and model hardware-related settings to optimize the model according to, by the hardware the optimized model will use during inference.
+- :ref:`target_platform<ug-target_platform>`: Module to create and model hardware-related settings to optimize the model according to, by the hardware the optimized model will use during inference.
 
 Classes
 =========
