@@ -31,7 +31,7 @@ from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test impo
     ScaleEqualizationConvTransposeReluFuncNetTest
 from tests.pytorch_tests.model_tests.feature_models.layer_name_test import ReuseNameNetTest
 from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTQuantizerTest
-from tests.pytorch_tests.model_tests.feature_models.mixed_precision_test import MixedPercisionSearch8Bit, \
+from tests.pytorch_tests.model_tests.feature_models.mixed_precision_weights_test import MixedPercisionSearch8Bit, \
     MixedPercisionSearch2Bit, MixedPercisionSearch4Bit, MixedPercisionActivationDisabledTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_output_nodes_multiple_tensors_test import \
     MultipleOutputsMultipleTensorsNetTest
