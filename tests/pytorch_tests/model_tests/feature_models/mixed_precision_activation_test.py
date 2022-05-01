@@ -18,13 +18,9 @@ from torch.nn import Conv2d
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, KPI
 from model_compression_toolkit.common.user_info import UserInformation
-from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model, \
-    get_op_quantization_configs
+from model_compression_toolkit.hardware_models.default_hwm import get_op_quantization_configs
 from tests.common_tests.helpers.activation_mp_hw_model import generate_hw_model_with_activation_mp
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model, \
-    generate_mixed_precision_test_hw_model
 from tests.pytorch_tests.fw_hw_model_pytorch import get_mp_activation_pytorch_hwm_dict
-from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import get_layer_test_fw_hw_model_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
 
@@ -68,118 +64,45 @@ class MixedPercisionActivationBaseTest(BasePytorchTest):
         # compare things to test.
         raise NotImplementedError
 
-    def get_split_candidates(self, mp_config, weights_layers_idx, activation_layers_idx, model_layers):
-        fw_hw_model = self.get_fw_hw_model()
-        layers_to_quantize = [layer for layer in model_layers
-                              if type(layer) not in fw_hw_model.get_layers_by_opset_name("NoQuantization")]
-        layer2qco = fw_hw_model.layer2qco
-
-        # get sorted candidates of each layer
-        activation_layers_candidates = np.array(layers_to_quantize)[activation_layers_idx]
-        weights_layers_candidates = np.array(layers_to_quantize)[weights_layers_idx]
-        activation_candidates = [[(qc.weights_n_bits, qc.activation_n_bits) for qc in
-                                  layer2qco.get(type(layer)).quantization_config_list] for layer in
-                                 activation_layers_candidates]
-        weights_candidates = [[(qc.weights_n_bits, qc.activation_n_bits) for qc in
-                               layer2qco.get(type(layer)).quantization_config_list] for layer in
-                              weights_layers_candidates]
-
-        for layer_candidates in activation_candidates:
-            layer_candidates.sort(key=lambda c: (c[0], c[1]), reverse=True)
-
-        for layer_candidates in weights_candidates:
-            layer_candidates.sort(key=lambda c: (c[0], c[1]), reverse=True)
-
-        # get chosen n_bits for each layer (weights and activation separately)
-        # NOTE: we assume that the order of the layers in the configuration is the same as it appears in model.layers,
-        #   if this not the case, then this helper test function isn't valid.
-        activation_bits = [activation_candidates[i][bitwidth_idx][1] for i, bitwidth_idx in
-                           enumerate(np.array(mp_config)[activation_layers_idx])]
-        weights_bits = [weights_candidates[i][bitwidth_idx][0] for i, bitwidth_idx in
-                        enumerate(np.array(mp_config)[weights_layers_idx])]
-
-        return weights_bits, activation_bits
-
-    def get_split_candidates(self, quantization_info, quantized_models, activation_layers_idxs, weights_layers_idxs):
-        quantized_model = quantized_models['mixed_precision_activation_model']
-        fw_hw_model = self.get_fw_hw_model()['mixed_precision_activation_model']
-        quantized_model_layers = list(quantized_model.children())
-        layers_with_activations = [layer for layer in quantized_model_layers
-                                   if type(layer) in fw_hw_model.get_layers_by_opset_name('Weights_n_Activation')
-                                   or type(layer) in fw_hw_model.get_layers_by_opset_name('Activation')]
-        layers_with_weights = [layer for layer in quantized_model_layers
-                               if type(layer) in fw_hw_model.get_layers_by_opset_name('Weights_n_Activation')]
-
-        layer2qco = fw_hw_model.layer2qco
-
-        # Get layers' bitwidth candidates
-        activation_candidates = [[(qc.weights_n_bits, qc.activation_n_bits) for qc in
-                                  layer2qco.get(type(layer)).quantization_config_list] for layer in
-                                 layers_with_activations]
-        weights_candidates = [[(qc.weights_n_bits, qc.activation_n_bits) for qc in
-                               layer2qco.get(type(layer)).quantization_config_list] for layer in
-                              layers_with_weights]
-
-        for layer_candidates in activation_candidates:
-            layer_candidates.sort(key=lambda c: (c[0], c[1]), reverse=True)
-
-        for layer_candidates in weights_candidates:
-            layer_candidates.sort(key=lambda c: (c[0], c[1]), reverse=True)
-
-        # get chosen n_bits for each layer (weights and activation separately)
-        # NOTE: we assume that the order of the layers in the configuration is the same as it appears in model.layers,
-        #   if this not the case, then this helper test function isn't valid.
-        activation_bits = [activation_candidates[i][bitwidth_idx][1] for i, bitwidth_idx in
-                           enumerate(np.array(quantization_info.mixed_precision_cfg)[activation_layers_idxs])]
-        weights_bits = [weights_candidates[i][bitwidth_idx][0] for i, bitwidth_idx in
-                        enumerate(np.array(quantization_info.mixed_precision_cfg)[weights_layers_idxs])]
-
-        return weights_bits, activation_bits
+    def verify_config(self, result_config, expected_config):
+        # TODO: Add aditional test that maybe check the actual bitwidth (when refactoring MP tests)
+        self.unit_test.assertTrue(all(result_config == expected_config))
 
 
 class MixedPercisionActivationSearch8Bit(MixedPercisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
+        self.expected_config = [0, 0, 0, 0]
 
     def get_kpi(self):
         return KPI(np.inf, np.inf)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
-        weights_bits, activation_bits = self.get_split_candidates(quantization_info, quantized_models,
-                                                                  activation_layers_idxs=[0, 1, 3],
-                                                                  weights_layers_idxs=[1, 2])
-        self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
-        self.unit_test.assertTrue((weights_bits == [8, 8]))
+        self.verify_config(quantization_info.mixed_precision_cfg , self.expected_config)
 
 
 class MixedPercisionActivationSearch2Bit(MixedPercisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
+        self.expected_config = [2, 8, 2, 2]
 
     def get_kpi(self):
-        return KPI(96, 2119)
+        return KPI(96, 768)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
-        weights_bits, activation_bits = self.get_split_candidates(quantization_info, quantized_models,
-                                                                  activation_layers_idxs=[0, 1, 3],
-                                                                  weights_layers_idxs=[1, 2])
-        self.unit_test.assertTrue((activation_bits == [2, 2, 2]))
-        self.unit_test.assertTrue((weights_bits == [2, 2]))
+        self.verify_config(quantization_info.mixed_precision_cfg , self.expected_config)
 
 
 class MixedPercisionActivationSearch4Bit(MixedPercisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
+        self.expected_config = [1, 4, 1, 1]
 
     def get_kpi(self):
-        return KPI(192, 4238)
+        return KPI(192, 1536)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
-        weights_bits, activation_bits = self.get_split_candidates(quantization_info, quantized_models,
-                                                                  activation_layers_idxs=[0, 1, 3],
-                                                                  weights_layers_idxs=[1, 2])
-        self.unit_test.assertTrue(any(i <= 4 for i in activation_bits))
-        self.unit_test.assertTrue(any(i <= 4 for i in weights_bits))
+        self.verify_config(quantization_info.mixed_precision_cfg , self.expected_config)
 
 
 class MixedPrecisionNet(torch.nn.Module):

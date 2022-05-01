@@ -21,8 +21,7 @@ from model_compression_toolkit.common.user_info import UserInformation
 from tests.pytorch_tests.fw_hw_model_pytorch import get_pytorch_test_fw_hw_model_dict
 from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model, \
     get_op_quantization_configs
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model, \
-    generate_mixed_precision_test_hw_model
+from tests.common_tests.helpers.generate_test_hw_model import generate_mixed_precision_test_hw_model
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
 
