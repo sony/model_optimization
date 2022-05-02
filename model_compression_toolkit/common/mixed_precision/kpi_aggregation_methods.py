@@ -33,7 +33,7 @@ def sum_kpi(kpi_vector: np.ndarray) -> List[Any]:
     return [lpSum(kpi_vector)]
 
 
-def max_kpi(kpi_vector) -> List[float]:
+def max_kpi(kpi_vector: np.ndarray) -> List[float]:
     """
     Aggregates KPIs vector to allow max constraint in the linear programming problem formalization.
     In order to do so, we need to define a separate constraint on each value in the KPI vector,

@@ -35,4 +35,7 @@ from model_compression_toolkit.keras.quantization_facade import get_keras_gptq_c
 from model_compression_toolkit.pytorch.quantization_facade import pytorch_post_training_quantization, \
     pytorch_post_training_quantization_mixed_precision
 
+from model_compression_toolkit.keras.kpi_data_facade import keras_kpi_data
+from model_compression_toolkit.pytorch.kpi_data_facade import pytorch_kpi_data
+
 __version__ = "1.3.0"
