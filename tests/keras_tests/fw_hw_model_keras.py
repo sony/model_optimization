@@ -55,7 +55,8 @@ def generate_activation_mp_fhw_model_keras(hardware_model, name="activation_mp_k
                                                      Dropout,
                                                      MaxPooling2D,
                                                      tf.split,
-                                                     tf.quantization.fake_quant_with_min_max_vars])
+                                                     tf.quantization.fake_quant_with_min_max_vars,
+                                                     tf.math.argmax])
 
         hwm.OperationsSetToLayers("Weights_n_Activation", [Conv2D,
                                                            DepthwiseConv2D,

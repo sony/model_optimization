@@ -56,7 +56,8 @@ def generate_fhw_model_keras(name: str, hardware_model: TargetPlatformModel):
                                                      Dropout,
                                                      MaxPooling2D,
                                                      tf.split,
-                                                     tf.quantization.fake_quant_with_min_max_vars])
+                                                     tf.quantization.fake_quant_with_min_max_vars,
+                                                     tf.math.argmax])
 
         hwm.OperationsSetToLayers("Conv", [Conv2D,
                                            DepthwiseConv2D,
