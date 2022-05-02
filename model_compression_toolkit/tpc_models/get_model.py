@@ -44,9 +44,9 @@ found_torch = importlib.util.find_spec("torch") is not None
 torch_models_dict = {}
 
 if found_torch:
-    from model_compression_toolkit.tpc_models.pytorch_hardware_model.pytorch_default import get_default_hwm_pytorch
-    from model_compression_toolkit.tpc_models.pytorch_hardware_model.pytorch_qnnpack import get_qnnpack_pytorch
-    from model_compression_toolkit.tpc_models.pytorch_hardware_model.pytorch_tflite import get_pytorch_tflite_model
+    from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_default import get_default_hwm_pytorch
+    from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_qnnpack import get_qnnpack_pytorch
+    from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_tflite import get_pytorch_tflite_model
     from model_compression_toolkit.pytorch.constants import DEFAULT_HWM, TFLITE_HWM, QNNPACK_HWM
 
     torch_models_dict = {DEFAULT_HWM: get_default_hwm_pytorch(),
