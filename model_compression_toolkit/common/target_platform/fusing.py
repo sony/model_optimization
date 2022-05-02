@@ -17,12 +17,12 @@
 from typing import Any
 
 from model_compression_toolkit.common.target_platform.operators import OperatorSetConcat
-from model_compression_toolkit.common.target_platform.hardware_model_component import HardwareModelComponent
+from model_compression_toolkit.common.target_platform.target_platform_model_component import TargetPlatformModelComponent
 
 
 
 
-class Fusing(HardwareModelComponent):
+class Fusing(TargetPlatformModelComponent):
 
     def __init__(self, operator_groups_list, name=None):
         assert isinstance(operator_groups_list,

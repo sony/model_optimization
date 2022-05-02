@@ -17,7 +17,7 @@ from typing import Any, Dict
 from model_compression_toolkit.common.target_platform.current_hardware_model import _current_hardware_model
 
 
-class HardwareModelComponent:
+class TargetPlatformModelComponent:
     """
     Component of TargetPlatformModel (Fusing, OperatorsSet, etc.)
     """

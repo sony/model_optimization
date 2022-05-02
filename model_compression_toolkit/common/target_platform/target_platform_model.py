@@ -19,8 +19,8 @@ from typing import Any, Dict
 from model_compression_toolkit.common.target_platform.current_hardware_model import _current_hardware_model, \
     get_current_model
 from model_compression_toolkit.common.target_platform.fusing import Fusing
-from model_compression_toolkit.common.target_platform.hardware_model_component import \
-    HardwareModelComponent
+from model_compression_toolkit.common.target_platform.target_platform_model_component import \
+    TargetPlatformModelComponent
 from model_compression_toolkit.common.target_platform.op_quantization_config import OpQuantizationConfig, \
     QuantizationConfigOptions
 from model_compression_toolkit.common.target_platform.operators import OperatorsSetBase
@@ -141,7 +141,7 @@ class TargetPlatformModel(ImmutableClass):
         return opset_list[0]  # There's one opset with that name
 
     def append_component(self,
-                         hm_component: HardwareModelComponent):
+                         hm_component: TargetPlatformModelComponent):
         """
         Attach a TargetPlatformModel component to the model. Components can be for example:
         Fusing, OperatorsSet, etc.
