@@ -24,7 +24,7 @@ from torch.nn.functional import relu, relu6, prelu, silu, hardtanh
 
 from model_compression_toolkit.common.target_platform import HardwareModel
 from model_compression_toolkit.common.target_platform.hardware2framework import \
-    FrameworkHardwareModel, LayerFilterParams
+    TargetPlatformCapabilities, LayerFilterParams
 from model_compression_toolkit.common.target_platform.hardware2framework import \
     OperationsSetToLayers
 from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
@@ -38,15 +38,15 @@ def get_default_hwm_pytorch():
 
 def generate_fhw_model_pytorch(name: str, hardware_model: HardwareModel):
     """
-    Generates a FrameworkHardwareModel object with default operation sets to layers mapping.
+    Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
     Args:
         name: Name of the framework hardware model.
         hardware_model: HardwareModel object.
-    Returns: a FrameworkHardwareModel object for the given HardwareModel.
+    Returns: a TargetPlatformCapabilities object for the given HardwareModel.
     """
 
-    fhwm_pytorch = FrameworkHardwareModel(hardware_model,
-                                          name=name)
+    fhwm_pytorch = TargetPlatformCapabilities(hardware_model,
+                                              name=name)
 
     with fhwm_pytorch:
         OperationsSetToLayers("NoQuantization", [Dropout,

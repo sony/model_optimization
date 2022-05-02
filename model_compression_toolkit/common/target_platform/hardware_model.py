@@ -32,7 +32,7 @@ def get_default_quantization_config_options() -> QuantizationConfigOptions:
     """
 
     Returns: The default QuantizationConfigOptions of the model. This is the options
-    to use when a layer's options is queried and it wasn't specified in the FrameworkHardwareModel.
+    to use when a layer's options is queried and it wasn't specified in the TargetPlatformCapabilities.
     The default QuantizationConfigOptions always contains a single option.
 
     """
@@ -43,7 +43,7 @@ def get_default_quantization_config():
     """
 
     Returns: The default OpQuantizationConfig of the model. This is the OpQuantizationConfig
-    to use when a layer's options is queried and it wasn't specified in the FrameworkHardwareModel.
+    to use when a layer's options is queried and it wasn't specified in the TargetPlatformCapabilities.
     This OpQuantizationConfig is the single option in the default QuantizationConfigOptions.
 
     """

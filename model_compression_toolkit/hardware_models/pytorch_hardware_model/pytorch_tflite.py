@@ -16,7 +16,7 @@ import torch
 from torch.nn import AvgPool2d, MaxPool2d
 from torch.nn.functional import avg_pool2d, max_pool2d, interpolate
 
-from model_compression_toolkit.common.target_platform import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.common.target_platform.hardware2framework import OperationsSetToLayers, \
     LayerFilterParams
 from model_compression_toolkit.common.target_platform.hardware2framework.attribute_filter import Eq
@@ -26,7 +26,7 @@ import operator
 
 def get_pytorch_tflite_model():
     tflite_hm = get_tflite_hw_model()
-    tflite_torch = FrameworkHardwareModel(tflite_hm, name='tflite_torch')
+    tflite_torch = TargetPlatformCapabilities(tflite_hm, name='tflite_torch')
 
     with tflite_torch:
         OperationsSetToLayers("PreserveQuantizationParams", [AvgPool2d,

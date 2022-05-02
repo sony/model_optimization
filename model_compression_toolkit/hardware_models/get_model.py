@@ -16,7 +16,7 @@
 import importlib
 
 from model_compression_toolkit.common.constants import TENSORFLOW, PYTORCH
-from model_compression_toolkit.common.target_platform import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
 
 
 #############################
@@ -59,18 +59,18 @@ fw_hw_models_dict = {TENSORFLOW: tf_models_dict,
 
 
 def get_model(fw_name: str,
-              hw_name: str) -> FrameworkHardwareModel:
+              hw_name: str) -> TargetPlatformCapabilities:
     """
-    Get a FrameworkHardwareModel by the hardware model name and the framework name.
+    Get a TargetPlatformCapabilities by the hardware model name and the framework name.
     For now, it supports frameworks 'tensorflow' and 'pytorch'. For both of them
     the hardware model can be 'default','tflite', or 'qnnpack'.
 
     Args:
-        fw_name: Framework name of the FrameworkHardwareModel.
+        fw_name: Framework name of the TargetPlatformCapabilities.
         hw_name: Hardware model name the model will use for inference.
 
     Returns:
-        A FrameworkHardwareModel object that models the hardware and attaches
+        A TargetPlatformCapabilities object that models the hardware and attaches
         a framework information to it.
     """
     assert fw_name in fw_hw_models_dict, f'Framework {fw_name} is not supported'

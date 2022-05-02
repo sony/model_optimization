@@ -31,8 +31,8 @@ hwm = mct.target_platform
 
 
 def generate_activation_mp_fhw_model_pytorch(hardware_model, name="activation_mp_pytorch_hwm"):
-    fhwm_torch = hwm.FrameworkHardwareModel(hardware_model,
-                                            name=name)
+    fhwm_torch = hwm.TargetPlatformCapabilities(hardware_model,
+                                                name=name)
     with fhwm_torch:
         hwm.OperationsSetToLayers("NoQuantization", [Dropout,
                                                      Flatten,

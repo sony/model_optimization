@@ -31,7 +31,7 @@ from model_compression_toolkit.common.collectors.statistics_collector import Bas
 from model_compression_toolkit.common.collectors.statistics_collector import scale_statistics, shift_statistics
 from model_compression_toolkit.common.user_info import UserInformation
 from model_compression_toolkit.common.logger import Logger
-from model_compression_toolkit.common.target_platform.hardware2framework import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform.hardware2framework import TargetPlatformCapabilities
 
 OutTensor = namedtuple('OutTensor', 'node node_out_index')
 
@@ -85,11 +85,11 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         self.fw_info = fw_info
 
     def set_fw_hw_model(self,
-                        fw_hw_model: FrameworkHardwareModel):
+                        fw_hw_model: TargetPlatformCapabilities):
         """
         Set the graph's framework hardware model.
         Args:
-            fw_hw_model: FrameworkHardwareModel object.
+            fw_hw_model: TargetPlatformCapabilities object.
         """
         self.fw_hw_model = fw_hw_model
 
