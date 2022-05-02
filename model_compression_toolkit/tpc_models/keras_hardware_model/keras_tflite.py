@@ -27,7 +27,7 @@ from model_compression_toolkit.common.target_platform import TargetPlatformCapab
 from model_compression_toolkit.common.target_platform.targetplatform2framework import OperationsSetToLayers, \
     LayerFilterParams
 from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import Eq
-from model_compression_toolkit.hardware_models.tflite import get_tflite_hw_model
+from model_compression_toolkit.tpc_models.tflite import get_tflite_hw_model
 
 
 def get_keras_hardware_model_tflite():

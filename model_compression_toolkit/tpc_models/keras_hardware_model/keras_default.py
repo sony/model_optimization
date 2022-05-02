@@ -24,7 +24,7 @@ else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
     Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D
 
-from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
+from model_compression_toolkit.tpc_models.default_hwm import get_default_hardware_model
 
 import model_compression_toolkit as mct
 hwm = mct.target_platform

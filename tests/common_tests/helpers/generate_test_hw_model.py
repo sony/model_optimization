@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.hardware_models.default_hwm import get_op_quantization_configs, generate_hardware_model
+from model_compression_toolkit.tpc_models.default_hwm import get_op_quantization_configs, generate_hardware_model
 import model_compression_toolkit as mct
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 
 hwm = mct.target_platform
 

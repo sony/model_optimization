@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import model_compression_toolkit.common.gptq.gptq_config
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 import tensorflow as tf
 import numpy as np

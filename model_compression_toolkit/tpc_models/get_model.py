@@ -27,9 +27,9 @@ found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util
 tf_models_dict = {}
 
 if found_tf:
-    from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import get_default_hwm_keras
-    from model_compression_toolkit.hardware_models.keras_hardware_model.keras_tflite import get_keras_hardware_model_tflite
-    from model_compression_toolkit.hardware_models.keras_hardware_model.keras_qnnpack import get_qnnpack_tensorflow
+    from model_compression_toolkit.tpc_models.keras_hardware_model.keras_default import get_default_hwm_keras
+    from model_compression_toolkit.tpc_models.keras_hardware_model.keras_tflite import get_keras_hardware_model_tflite
+    from model_compression_toolkit.tpc_models.keras_hardware_model.keras_qnnpack import get_qnnpack_tensorflow
     from model_compression_toolkit.keras.constants import DEFAULT_HWM, TFLITE_HWM, QNNPACK_HWM
 
     tf_models_dict = {DEFAULT_HWM: get_default_hwm_keras(),
@@ -44,9 +44,9 @@ found_torch = importlib.util.find_spec("torch") is not None
 torch_models_dict = {}
 
 if found_torch:
-    from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import get_default_hwm_pytorch
-    from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_qnnpack import get_qnnpack_pytorch
-    from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_tflite import get_pytorch_tflite_model
+    from model_compression_toolkit.tpc_models.pytorch_hardware_model.pytorch_default import get_default_hwm_pytorch
+    from model_compression_toolkit.tpc_models.pytorch_hardware_model.pytorch_qnnpack import get_qnnpack_pytorch
+    from model_compression_toolkit.tpc_models.pytorch_hardware_model.pytorch_tflite import get_pytorch_tflite_model
     from model_compression_toolkit.pytorch.constants import DEFAULT_HWM, TFLITE_HWM, QNNPACK_HWM
 
     torch_models_dict = {DEFAULT_HWM: get_default_hwm_pytorch(),

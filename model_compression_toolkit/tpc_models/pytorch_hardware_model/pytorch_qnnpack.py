@@ -22,7 +22,7 @@ from model_compression_toolkit.common.target_platform.targetplatform2framework i
     TargetPlatformCapabilities, LayerFilterParams
 from model_compression_toolkit.common.target_platform.targetplatform2framework import \
     OperationsSetToLayers
-from model_compression_toolkit.hardware_models.qnnpack import get_qnnpack_model
+from model_compression_toolkit.tpc_models.qnnpack import get_qnnpack_model
 
 
 def get_qnnpack_pytorch():
