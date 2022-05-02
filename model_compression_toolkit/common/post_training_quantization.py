@@ -57,7 +57,7 @@ from model_compression_toolkit.common.model_collector import ModelCollector
 from model_compression_toolkit.common.visualization.tensorboard_writer import TensorboardWriter
 from model_compression_toolkit.common.bias_correction.apply_bias_correction_to_graph import \
     apply_bias_correction_to_graph
-from model_compression_toolkit.common.target_platform.hardware2framework import TargetPlatformCapabilities
+from model_compression_toolkit.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
 
 def post_training_quantization(in_model: Any,

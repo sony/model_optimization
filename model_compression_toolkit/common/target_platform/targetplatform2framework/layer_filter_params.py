@@ -16,7 +16,7 @@
 from typing import Any, Dict
 
 from model_compression_toolkit.common.graph.base_node import BaseNode
-from model_compression_toolkit.common.target_platform.hardware2framework.attribute_filter import AttributeFilter
+from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import AttributeFilter
 
 
 class LayerFilterParams:
