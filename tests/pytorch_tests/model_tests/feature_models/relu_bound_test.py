@@ -15,7 +15,7 @@
 import torch
 
 from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod
-from model_compression_toolkit.tpc_models.default_hwm import get_default_hardware_model
+from model_compression_toolkit.tpc_models.default_hwm import get_default_tp_model
 from tests.pytorch_tests.fw_hw_model_pytorch import get_pytorch_test_fw_hw_model_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from torch.nn import Conv2d, ReLU, ReLU6, Hardtanh
@@ -97,7 +97,7 @@ class ReLUBoundToPOTNetTest(BasePytorchTest):
         return [[self.val_batch_size, 3, 32, 32]]
 
     def get_fw_hw_model(self):
-        return get_pytorch_test_fw_hw_model_dict(hardware_model=get_default_hardware_model(),
+        return get_pytorch_test_fw_hw_model_dict(hardware_model=get_default_tp_model(),
                                                  test_name='8bit_relu_bound',
                                                  fhwm_name='relu_bound_pytorch_test')
 
@@ -139,7 +139,7 @@ class HardtanhBoundToPOTNetTest(BasePytorchTest):
         return [[self.val_batch_size, 3, 32, 32]]
 
     def get_fw_hw_model(self):
-        return get_pytorch_test_fw_hw_model_dict(hardware_model=get_default_hardware_model(),
+        return get_pytorch_test_fw_hw_model_dict(hardware_model=get_default_tp_model(),
                                                  test_name='8bit_relu_bound',
                                                  fhwm_name='relu_bound_pytorch_test')
 
