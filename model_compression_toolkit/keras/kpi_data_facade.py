@@ -53,7 +53,7 @@ if importlib.util.find_spec("tensorflow") is not None\
             representative_data_gen (Callable): Dataset used for calibration.
             quant_config (MixedPrecisionQuantizationConfig): MixedPrecisionQuantizationConfig containing parameters of how the model should be quantized.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/keras/default_framework_info.py#L113>`_
-            fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
+            fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to. `Default Keras info <https://github.com/sony/model_optimization/blob/9513796726e72ebdb5b075f5014eb8feae47f3ae/model_compression_toolkit/hardware_models/keras_hardware_model/keras_default.py#L39>`_
 
         Returns:
             A KPI object with total weights parameters sum and max activation tensor.
@@ -69,10 +69,9 @@ if importlib.util.find_spec("tensorflow") is not None\
             >>> import numpy as np
             >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
 
-            TODO: what is the correct way to explain about how to provide fw hw model? (do we need to give example for this if it is not mandatory?)
             Import mct and call for KPI data calculation:
             >>> import model_compression_toolkit as mct
-            >>> kpi_data_dict = keras_kpi_data(model, repr_datagen)
+            >>> kpi_data = keras_kpi_data(model, repr_datagen)
 
         """
 
