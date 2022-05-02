@@ -45,11 +45,11 @@ class HardwareModelingTest(unittest.TestCase):
         self.assertEqual('Hardware model is not initialized.', str(e.exception))
 
     def test_get_default_options(self):
-        with hwm.HardwareModel(TEST_QCO):
+        with hwm.TargetPlatformModel(TEST_QCO):
             self.assertEqual(hwm.get_default_quantization_config_options(), TEST_QCO)
 
     def test_immutable_hwm(self):
-        model = hwm.HardwareModel(TEST_QCO)
+        model = hwm.TargetPlatformModel(TEST_QCO)
         with self.assertRaises(Exception) as e:
             with model:
                 hwm.OperatorsSet("opset")
@@ -59,14 +59,14 @@ class HardwareModelingTest(unittest.TestCase):
     def test_default_options_more_than_single_qc(self):
         test_qco = hwm.QuantizationConfigOptions([TEST_QC, TEST_QC], base_config=TEST_QC)
         with self.assertRaises(Exception) as e:
-            hwm.HardwareModel(test_qco)
+            hwm.TargetPlatformModel(test_qco)
         self.assertEqual('Default QuantizationConfigOptions must contain only one option', str(e.exception))
 
 
 class OpsetTest(unittest.TestCase):
 
     def test_opset_qco(self):
-        hm = hwm.HardwareModel(TEST_QCO, name='test')
+        hm = hwm.TargetPlatformModel(TEST_QCO, name='test')
         opset_name = "ops_3bit"
         with hm:
             qco_3bit = get_default_quantization_config_options().clone_and_edit(activation_n_bits=3)
@@ -80,7 +80,7 @@ class OpsetTest(unittest.TestCase):
         self.assertEqual(hm.get_config_options_by_operators_set(opset_name), qco_3bit)
 
     def test_opset_concat(self):
-        hm = hwm.HardwareModel(TEST_QCO, name='test')
+        hm = hwm.TargetPlatformModel(TEST_QCO, name='test')
         with hm:
             a = hwm.OperatorsSet('opset_A')
             b = hwm.OperatorsSet('opset_B',
@@ -92,7 +92,7 @@ class OpsetTest(unittest.TestCase):
         self.assertTrue(hm.get_config_options_by_operators_set('opset_A_opset_B') is None)
 
     def test_non_unique_opset(self):
-        hm = hwm.HardwareModel(hwm.QuantizationConfigOptions([TEST_QC]))
+        hm = hwm.TargetPlatformModel(hwm.QuantizationConfigOptions([TEST_QC]))
         with self.assertRaises(Exception) as e:
             with hm:
                 hwm.OperatorsSet("conv")
@@ -140,7 +140,7 @@ class QCOptionsTest(unittest.TestCase):
 class FusingTest(unittest.TestCase):
 
     def test_fusing_single_opset(self):
-        hm = hwm.HardwareModel(hwm.QuantizationConfigOptions([TEST_QC]))
+        hm = hwm.TargetPlatformModel(hwm.QuantizationConfigOptions([TEST_QC]))
         with hm:
             add = hwm.OperatorsSet("add")
             with self.assertRaises(Exception) as e:
@@ -148,7 +148,7 @@ class FusingTest(unittest.TestCase):
             self.assertEqual('Fusing can not be created for a single operators group', str(e.exception))
 
     def test_fusing_contains(self):
-        hm = hwm.HardwareModel(hwm.QuantizationConfigOptions([TEST_QC]))
+        hm = hwm.TargetPlatformModel(hwm.QuantizationConfigOptions([TEST_QC]))
         with hm:
             conv = hwm.OperatorsSet("conv")
             add = hwm.OperatorsSet("add")
@@ -164,7 +164,7 @@ class FusingTest(unittest.TestCase):
         self.assertTrue(f1.contains(f1))
 
     def test_fusing_contains_with_opset_concat(self):
-        hm = hwm.HardwareModel(hwm.QuantizationConfigOptions([TEST_QC]))
+        hm = hwm.TargetPlatformModel(hwm.QuantizationConfigOptions([TEST_QC]))
         with hm:
             conv = hwm.OperatorsSet("conv")
             add = hwm.OperatorsSet("add")

@@ -15,7 +15,7 @@
 
 import tensorflow as tf
 
-from model_compression_toolkit.common.target_platform import HardwareModel
+from model_compression_toolkit.common.target_platform import TargetPlatformModel
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
@@ -36,13 +36,13 @@ def get_default_hwm_keras():
                                     hardware_model=default_hwm)
 
 
-def generate_fhw_model_keras(name: str, hardware_model: HardwareModel):
+def generate_fhw_model_keras(name: str, hardware_model: TargetPlatformModel):
     """
     Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
     Args:
         name: Name of the framework hardware model.
-        hardware_model: HardwareModel object.
-    Returns: a TargetPlatformCapabilities object for the given HardwareModel.
+        hardware_model: TargetPlatformModel object.
+    Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
     fhwm_keras = hwm.TargetPlatformCapabilities(hardware_model,

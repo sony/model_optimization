@@ -62,7 +62,7 @@ if __name__ == '__main__':
     def representative_data_gen() -> list:
         return [image_data_loader.sample()]
 
-    # Get a HardwareModel object that models the hardware for the quantized model inference.
+    # Get a TargetPlatformModel object that models the hardware for the quantized model inference.
     # The model determines the quantization methods to use during the MCT optimization process.
     # Here, for example, we use the default model that is attached to a Pytorch
     # layers representation.

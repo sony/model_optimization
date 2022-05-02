@@ -22,7 +22,7 @@ from torch.nn import Dropout, Flatten, Hardtanh
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh
 
-from model_compression_toolkit.common.target_platform import HardwareModel
+from model_compression_toolkit.common.target_platform import TargetPlatformModel
 from model_compression_toolkit.common.target_platform.targetplatform2framework import \
     TargetPlatformCapabilities, LayerFilterParams
 from model_compression_toolkit.common.target_platform.targetplatform2framework import \
@@ -36,13 +36,13 @@ def get_default_hwm_pytorch():
                                       hardware_model=default_hwm)
 
 
-def generate_fhw_model_pytorch(name: str, hardware_model: HardwareModel):
+def generate_fhw_model_pytorch(name: str, hardware_model: TargetPlatformModel):
     """
     Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
     Args:
         name: Name of the framework hardware model.
-        hardware_model: HardwareModel object.
-    Returns: a TargetPlatformCapabilities object for the given HardwareModel.
+        hardware_model: TargetPlatformModel object.
+    Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
     fhwm_pytorch = TargetPlatformCapabilities(hardware_model,

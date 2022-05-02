@@ -15,12 +15,12 @@
 from typing import List, Tuple
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.common.target_platform import OpQuantizationConfig, HardwareModel
+from model_compression_toolkit.common.target_platform import OpQuantizationConfig, TargetPlatformModel
 
 hwm = mct.target_platform
 
 
-def get_default_hardware_model() -> HardwareModel:
+def get_default_hardware_model() -> TargetPlatformModel:
     """
     A method that generates a default hardware model, with base 8-bit quantization configuration and 8, 4, 2
     bits configuration list for mixed-precision quantization.
@@ -28,7 +28,7 @@ def get_default_hardware_model() -> HardwareModel:
     (for tests, experiments, etc.), use this method implementation as a test-case, i.e., override the
     'get_op_quantization_configs' method and use its output to call 'generate_hardware_model' with your configurations.
 
-    Returns: A HardwareModel object.
+    Returns: A TargetPlatformModel object.
 
     """
     base_config, mixed_precision_cfg_list = get_op_quantization_configs()
@@ -78,9 +78,9 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
 def generate_hardware_model(default_config: OpQuantizationConfig,
                             base_config: OpQuantizationConfig,
                             mixed_precision_cfg_list: List[OpQuantizationConfig],
-                            name: str) -> HardwareModel:
+                            name: str) -> TargetPlatformModel:
     """
-    Generates HardwareModel with default defined Operators Sets, based on the given base configuration and
+    Generates TargetPlatformModel with default defined Operators Sets, based on the given base configuration and
     mixed-precision configurations options list.
 
     Args
@@ -90,7 +90,7 @@ def generate_hardware_model(default_config: OpQuantizationConfig,
             quantization configuration options.
         name: The name of the Hardware model.
 
-    Returns: A HardwareModel object.
+    Returns: A TargetPlatformModel object.
 
     """
     # Create a QuantizationConfigOptions, which defines a set
@@ -99,10 +99,10 @@ def generate_hardware_model(default_config: OpQuantizationConfig,
     # this configuration will be used for the operation quantization:
     default_configuration_options = hwm.QuantizationConfigOptions([default_config])
 
-    # Create a HardwareModel and set its default quantization config.
+    # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
-    generated_hwm = hwm.HardwareModel(default_configuration_options, name=name)
+    generated_hwm = hwm.TargetPlatformModel(default_configuration_options, name=name)
 
     # To start defining the model's components (such as operator sets, and fusing patterns),
     # use 'with' the hardware model instance, and create them as below:

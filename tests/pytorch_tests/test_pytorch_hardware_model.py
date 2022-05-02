@@ -75,7 +75,7 @@ class TestPytorchHWModel(unittest.TestCase):
 
     def test_qco_by_pytorch_layer(self):
         default_qco = hwm.QuantizationConfigOptions([TEST_QC])
-        hm = hwm.HardwareModel(default_qco, name='test')
+        hm = hwm.TargetPlatformModel(default_qco, name='test')
         with hm:
             mixed_precision_configuration_options = hwm.QuantizationConfigOptions([TEST_QC,
                                                                                    TEST_QC.clone_and_edit(
@@ -119,7 +119,7 @@ class TestPytorchHWModel(unittest.TestCase):
         self.assertEqual(avg_pool2d_qco, default_qco)
 
     def test_get_layers_by_op(self):
-        hm = hwm.HardwareModel(hwm.QuantizationConfigOptions([TEST_QC]))
+        hm = hwm.TargetPlatformModel(hwm.QuantizationConfigOptions([TEST_QC]))
         with hm:
             op_obj = hwm.OperatorsSet('opsetA')
         fw_hwm = TargetPlatformCapabilities(hm)
@@ -130,7 +130,7 @@ class TestPytorchHWModel(unittest.TestCase):
         self.assertEqual(fw_hwm.get_layers_by_opset(op_obj), opset_layers)
 
     def test_get_layers_by_opconcat(self):
-        hm = hwm.HardwareModel(hwm.QuantizationConfigOptions([TEST_QC]))
+        hm = hwm.TargetPlatformModel(hwm.QuantizationConfigOptions([TEST_QC]))
         with hm:
             op_obj_a = hwm.OperatorsSet('opsetA')
             op_obj_b = hwm.OperatorsSet('opsetB')
@@ -147,7 +147,7 @@ class TestPytorchHWModel(unittest.TestCase):
         self.assertEqual(fw_hwm.get_layers_by_opset(op_concat), opset_layers_a + opset_layers_b)
 
     def test_layer_attached_to_multiple_opsets(self):
-        hm = hwm.HardwareModel(hwm.QuantizationConfigOptions([TEST_QC]))
+        hm = hwm.TargetPlatformModel(hwm.QuantizationConfigOptions([TEST_QC]))
         with hm:
             hwm.OperatorsSet('opsetA')
             hwm.OperatorsSet('opsetB')
@@ -160,7 +160,7 @@ class TestPytorchHWModel(unittest.TestCase):
         self.assertEqual('Found layer Conv2d in more than one OperatorsSet', str(e.exception))
 
     def test_filter_layer_attached_to_multiple_opsets(self):
-        hm = hwm.HardwareModel(hwm.QuantizationConfigOptions([TEST_QC]))
+        hm = hwm.TargetPlatformModel(hwm.QuantizationConfigOptions([TEST_QC]))
         with hm:
             hwm.OperatorsSet('opsetA')
             hwm.OperatorsSet('opsetB')
@@ -174,7 +174,7 @@ class TestPytorchHWModel(unittest.TestCase):
 
     def test_opset_not_in_hwm(self):
         default_qco = hwm.QuantizationConfigOptions([TEST_QC])
-        hm = hwm.HardwareModel(default_qco)
+        hm = hwm.TargetPlatformModel(default_qco)
         hm_pytorch = hwm.TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with hm_pytorch:
@@ -185,7 +185,7 @@ class TestPytorchHWModel(unittest.TestCase):
 
     def test_pytorch_fusing_patterns(self):
         default_qco = hwm.QuantizationConfigOptions([TEST_QC])
-        hm = hwm.HardwareModel(default_qco)
+        hm = hwm.TargetPlatformModel(default_qco)
         with hm:
             a = hwm.OperatorsSet("opA")
             b = hwm.OperatorsSet("opB")

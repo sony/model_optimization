@@ -43,10 +43,10 @@ def get_tflite_hw_model():
     # this configuration will be used for the operation quantization:
     default_configuration_options = hw_model.QuantizationConfigOptions([eight_bits])
 
-    # Create a HardwareModel and set its default quantization config.
+    # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
-    tflite_model = hw_model.HardwareModel(default_configuration_options, name='tflite')
+    tflite_model = hw_model.TargetPlatformModel(default_configuration_options, name='tflite')
 
     # To start defining the model's components (such as operator sets, and fusing patterns),
     # use 'with' the hardware model instance, and create them as below:

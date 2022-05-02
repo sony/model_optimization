@@ -40,7 +40,7 @@ class OperatorsSet(OperatorsSetBase):
         Set of operators that are represented by a unique label.
 
         Args:
-            name (str): Set's label (must be unique in a HardwareModel).
+            name (str): Set's label (must be unique in a TargetPlatformModel).
             qc_options (QuantizationConfigOptions): Configuration options to use for this set of operations.
         """
 

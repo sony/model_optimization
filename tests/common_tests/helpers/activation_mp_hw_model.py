@@ -29,7 +29,7 @@ def generate_hw_model_with_activation_mp(base_cfg, mp_bitwidth_candidates_list, 
     # set hw model
     default_configuration_options = hwm.QuantizationConfigOptions([base_cfg])
 
-    generated_hwm = hwm.HardwareModel(default_configuration_options, name=name)
+    generated_hwm = hwm.TargetPlatformModel(default_configuration_options, name=name)
 
     with generated_hwm:
         hwm.OperatorsSet("NoQuantization",
