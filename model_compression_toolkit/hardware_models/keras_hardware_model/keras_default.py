@@ -38,15 +38,15 @@ def get_default_hwm_keras():
 
 def generate_fhw_model_keras(name: str, hardware_model: HardwareModel):
     """
-    Generates a FrameworkHardwareModel object with default operation sets to layers mapping.
+    Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
     Args:
         name: Name of the framework hardware model.
         hardware_model: HardwareModel object.
-    Returns: a FrameworkHardwareModel object for the given HardwareModel.
+    Returns: a TargetPlatformCapabilities object for the given HardwareModel.
     """
 
-    fhwm_keras = hwm.FrameworkHardwareModel(hardware_model,
-                                            name=name)
+    fhwm_keras = hwm.TargetPlatformCapabilities(hardware_model,
+                                                name=name)
     with fhwm_keras:
         hwm.OperationsSetToLayers("NoQuantization", [Reshape,
                                                      tf.reshape,

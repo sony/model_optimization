@@ -64,7 +64,7 @@ class LUTQuantizerTest(BaseKerasFeatureNetworkTest):
                                            fixed_zero_point=None,
                                            weights_multiplier_nbits=None
                                            )])
-        return hw_model.FrameworkHardwareModel(hw_model.HardwareModel(qco))
+        return hw_model.TargetPlatformCapabilities(hw_model.HardwareModel(qco))
 
     def get_quantization_config(self):
         return cmo.QuantizationConfig(cmo.QuantizationErrorMethod.MSE,
