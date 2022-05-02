@@ -14,12 +14,12 @@
 # ==============================================================================
 from typing import Dict, Any
 
-from model_compression_toolkit.common.target_platform.hardware_model_component import HardwareModelComponent
+from model_compression_toolkit.common.target_platform.target_platform_model_component import TargetPlatformModelComponent
 from model_compression_toolkit.common.target_platform.current_hardware_model import _current_hardware_model
 from model_compression_toolkit.common.target_platform.op_quantization_config import QuantizationConfigOptions
 
 
-class OperatorsSetBase(HardwareModelComponent):
+class OperatorsSetBase(TargetPlatformModelComponent):
     """
     Base class to represent a set of operators.
     """
