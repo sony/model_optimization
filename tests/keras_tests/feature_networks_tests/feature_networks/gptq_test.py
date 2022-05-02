@@ -18,7 +18,7 @@ import tensorflow as tf
 import model_compression_toolkit as mct
 import model_compression_toolkit.common.gptq.gptq_config
 from model_compression_toolkit.common.user_info import UserInformation
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
 from tests.keras_tests.fw_hw_model_keras import get_16bit_fw_hw_model
