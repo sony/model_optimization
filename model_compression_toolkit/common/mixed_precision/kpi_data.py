@@ -18,14 +18,14 @@ import numpy as np
 from model_compression_toolkit import FrameworkInfo, KPI, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common import Graph
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
 import model_compression_toolkit.common.post_training_quantization as ptq
 
 
 def compute_kpi_data(in_model: Any,
                      representative_data_gen: Callable,
                      quant_config: MixedPrecisionQuantizationConfig,
-                     fw_hw_model: FrameworkHardwareModel,
+                     fw_hw_model: TargetPlatformCapabilities,
                      fw_info: FrameworkInfo,
                      fw_impl: FrameworkImplementation) -> KPI:
     """
@@ -36,7 +36,7 @@ def compute_kpi_data(in_model: Any,
         in_model:  Model to build graph from (the model that intended to be quantized).
         representative_data_gen: Dataset used for calibration.
         quant_config: QuantizationConfig containing parameters of how the model should be quantized.
-        fw_hw_model: FrameworkHardwareModel object that models the inference target platform and
+        fw_hw_model: TargetPlatformCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.

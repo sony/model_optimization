@@ -414,7 +414,7 @@ def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
 
 def read_model_to_graph(in_model: Any,
                         representative_data_gen: Callable,
-                        fw_hw_model: FrameworkHardwareModel,
+                        fw_hw_model: TargetPlatformCapabilities,
                         fw_info: FrameworkInfo = None,
                         fw_impl: FrameworkImplementation = None) -> Graph:
 
