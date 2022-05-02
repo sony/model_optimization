@@ -24,7 +24,7 @@ def get_current_model():
 
 class CurrentHardwareModel:
     """
-    Wrapper of the current HardwareModel object that is being accessed and defined.
+    Wrapper of the current TargetPlatformModel object that is being accessed and defined.
     """
 
     def __init__(self):
@@ -34,7 +34,7 @@ class CurrentHardwareModel:
     def get(self):
         """
 
-        Returns: The current HardwareModel that is being defined.
+        Returns: The current TargetPlatformModel that is being defined.
 
         """
         if self.hwm is None:
@@ -44,18 +44,18 @@ class CurrentHardwareModel:
     def reset(self):
         """
 
-        Reset the current HardwareModel so a new HardwareModel can be wrapped and
-        used as the current HardwareModel object.
+        Reset the current TargetPlatformModel so a new TargetPlatformModel can be wrapped and
+        used as the current TargetPlatformModel object.
 
         """
         self.hwm = None
 
     def set(self, hwm):
         """
-        Set and wrap a HardwareModel as the current HardwareModel.
+        Set and wrap a TargetPlatformModel as the current TargetPlatformModel.
 
         Args:
-            hwm: HardwareModel to set as the current HardwareModel to access and use.
+            hwm: TargetPlatformModel to set as the current TargetPlatformModel to access and use.
 
         """
         self.hwm = hwm

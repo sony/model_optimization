@@ -51,7 +51,7 @@ def get_default_quantization_config():
     return get_current_model().get_default_op_quantization_config()
 
 
-class HardwareModel(ImmutableClass):
+class TargetPlatformModel(ImmutableClass):
     """
     Modeling of the hardware the quantized model will use during inference.
     The model contains definition of operators, quantization configurations of them, and
@@ -133,7 +133,7 @@ class HardwareModel(ImmutableClass):
 
         opset_list = [x for x in self.operator_set if x.name == opset_name]
         assert len(opset_list) <= 1, f'Found more than one OperatorsSet in' \
-                                     f' HardwareModel with the name {opset_name}. ' \
+                                     f' TargetPlatformModel with the name {opset_name}. ' \
                                      f'OperatorsSet name must be unique.'
         if len(opset_list) == 0:  # opset_name is not in the model.
             return None
@@ -143,7 +143,7 @@ class HardwareModel(ImmutableClass):
     def append_component(self,
                          hm_component: HardwareModelComponent):
         """
-        Attach a HardwareModel component to the model. Components can be for example:
+        Attach a TargetPlatformModel component to the model. Components can be for example:
         Fusing, OperatorsSet, etc.
 
         Args:
@@ -159,9 +159,9 @@ class HardwareModel(ImmutableClass):
 
     def __enter__(self):
         """
-        Start defining the HardwareModel using 'with'.
+        Start defining the TargetPlatformModel using 'with'.
 
-        Returns: Initialized HardwareModel object.
+        Returns: Initialized TargetPlatformModel object.
 
         """
         _current_hardware_model.set(self)
@@ -169,8 +169,8 @@ class HardwareModel(ImmutableClass):
 
     def __exit__(self, exc_type, exc_value, tb):
         """
-        Finish defining the HardwareModel at the end of the 'with' clause.
-        Returns the final and immutable HardwareModel instance.
+        Finish defining the TargetPlatformModel at the end of the 'with' clause.
+        Returns the final and immutable TargetPlatformModel instance.
         """
 
         if exc_value is not None:
@@ -207,7 +207,7 @@ class HardwareModel(ImmutableClass):
     def get_info(self) -> Dict[str, Any]:
         """
 
-        Returns: Dictionary that summarizes the HardwareModel properties (for display purposes).
+        Returns: Dictionary that summarizes the TargetPlatformModel properties (for display purposes).
 
         """
         return {"Model name": self.name,
@@ -219,7 +219,7 @@ class HardwareModel(ImmutableClass):
     def show(self):
         """
 
-        Display the HardwareModel.
+        Display the TargetPlatformModel.
 
         """
         pprint.pprint(self.get_info(), sort_dicts=False)

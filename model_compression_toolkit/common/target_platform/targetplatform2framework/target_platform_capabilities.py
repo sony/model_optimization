@@ -28,7 +28,7 @@ from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.common.target_platform.op_quantization_config import QuantizationConfigOptions, \
     OpQuantizationConfig
 from model_compression_toolkit.common.target_platform.operators import OperatorsSet, OperatorsSetBase
-from model_compression_toolkit.common.target_platform.hardware_model import HardwareModel
+from model_compression_toolkit.common.target_platform.target_platform_model import TargetPlatformModel
 from model_compression_toolkit.common.target_platform.targetplatform2framework.current_framework_hardware_model import _current_framework_hardware_model
 
 
@@ -37,18 +37,18 @@ class TargetPlatformCapabilities(ImmutableClass):
     Attach framework information to a modeled hardware.
     """
     def __init__(self,
-                 hw_model: HardwareModel,
+                 hw_model: TargetPlatformModel,
                  name: str = "base"):
         """
 
         Args:
-            hw_model (HardwareModel): Modeled hardware to attach framework information to.
+            hw_model (TargetPlatformModel): Modeled hardware to attach framework information to.
             name (str): Name of the TargetPlatformCapabilities.
         """
 
         super().__init__()
         self.name = name
-        assert isinstance(hw_model, HardwareModel), f'Hardware model that was passed to TargetPlatformCapabilities must be of type HardwareModel, but has type of {type(hw_model)}'
+        assert isinstance(hw_model, TargetPlatformModel), f'Hardware model that was passed to TargetPlatformCapabilities must be of type TargetPlatformModel, but has type of {type(hw_model)}'
         self.hw_model = hw_model
         self.op_sets_to_layers = OperationsToLayers() # Init an empty OperationsToLayers
         self.layer2qco, self.filterlayer2qco = {}, {} # Init empty mappings from layers/LayerFilterParams to QC options
@@ -152,7 +152,7 @@ class TargetPlatformCapabilities(ImmutableClass):
     def get_default_op_qc(self) -> OpQuantizationConfig:
         """
 
-        Returns: The default OpQuantizationConfig of the HardwareModel that is attached
+        Returns: The default OpQuantizationConfig of the TargetPlatformModel that is attached
         to the TargetPlatformCapabilities.
 
         """
@@ -162,7 +162,7 @@ class TargetPlatformCapabilities(ImmutableClass):
                         node: BaseNode) -> QuantizationConfigOptions:
         """
         Get the QuantizationConfigOptions of a node in a graph according
-        to the mappings from layers/LayerFilterParams to the OperatorsSet in the HardwareModel.
+        to the mappings from layers/LayerFilterParams to the OperatorsSet in the TargetPlatformModel.
 
         Args:
             node: Node from graph to get its QuantizationConfigOptions.

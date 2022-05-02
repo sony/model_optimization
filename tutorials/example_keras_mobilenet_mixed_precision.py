@@ -95,7 +95,7 @@ if __name__ == '__main__':
     # will not):
     kpi = mct.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
 
-    # Get a HardwareModel object that models the hardware for the quantized model inference.
+    # Get a TargetPlatformModel object that models the hardware for the quantized model inference.
     # The model determines the quantization methods to use during the MCT optimization process.
     # Here, for example, we use the default model that is attached to a Tensorflow
     # layers representation.

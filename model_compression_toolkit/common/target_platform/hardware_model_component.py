@@ -19,7 +19,7 @@ from model_compression_toolkit.common.target_platform.current_hardware_model imp
 
 class HardwareModelComponent:
     """
-    Component of HardwareModel (Fusing, OperatorsSet, etc.)
+    Component of TargetPlatformModel (Fusing, OperatorsSet, etc.)
     """
     def __init__(self, name: str):
         """
