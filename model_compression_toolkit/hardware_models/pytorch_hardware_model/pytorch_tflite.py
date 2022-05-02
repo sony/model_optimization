@@ -17,9 +17,9 @@ from torch.nn import AvgPool2d, MaxPool2d
 from torch.nn.functional import avg_pool2d, max_pool2d, interpolate
 
 from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.common.target_platform.hardware2framework import OperationsSetToLayers, \
+from model_compression_toolkit.common.target_platform.targetplatform2framework import OperationsSetToLayers, \
     LayerFilterParams
-from model_compression_toolkit.common.target_platform.hardware2framework.attribute_filter import Eq
+from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import Eq
 from model_compression_toolkit.hardware_models.tflite import get_tflite_hw_model
 import operator
 

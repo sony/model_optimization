@@ -14,7 +14,7 @@
 # ==============================================================================
 
 from model_compression_toolkit.common.target_platform.fusing import Fusing
-from model_compression_toolkit.common.target_platform.hardware2framework import \
+from model_compression_toolkit.common.target_platform.targetplatform2framework import \
     TargetPlatformCapabilities, OperationsSetToLayers, Smaller, SmallerEq, NotEq, Eq, GreaterEq, Greater, LayerFilterParams, OperationsToLayers, get_current_fw_hw_model
 
 from model_compression_toolkit.common.target_platform.hardware_model import \

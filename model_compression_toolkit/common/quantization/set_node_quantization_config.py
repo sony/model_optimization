@@ -28,7 +28,7 @@ from model_compression_toolkit.common.quantization.node_quantization_config impo
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
-from model_compression_toolkit.common.target_platform.hardware2framework import TargetPlatformCapabilities
+from model_compression_toolkit.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.common.target_platform.op_quantization_config import OpQuantizationConfig, \
     QuantizationConfigOptions
 

@@ -25,8 +25,8 @@ from torchvision.models import mobilenet_v2
 import model_compression_toolkit as mct
 from model_compression_toolkit.common.constants import PYTORCH
 from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.common.target_platform.hardware2framework import LayerFilterParams
-from model_compression_toolkit.common.target_platform.hardware2framework.attribute_filter import Greater, \
+from model_compression_toolkit.common.target_platform.targetplatform2framework import LayerFilterParams
+from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import Greater, \
     Smaller, Eq
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
