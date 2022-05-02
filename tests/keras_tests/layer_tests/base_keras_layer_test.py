@@ -3,7 +3,7 @@ from typing import List, Any, Tuple
 import tensorflow as tf
 
 from model_compression_toolkit.tpc_models.default_hwm import get_default_tp_model
-from model_compression_toolkit.tpc_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_fhw_model_keras
 from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
 from tests.keras_tests.fw_hw_model_keras import get_quantization_disabled_keras_hw_model
 
