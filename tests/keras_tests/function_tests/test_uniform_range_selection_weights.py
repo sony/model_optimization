@@ -94,7 +94,7 @@ class TestUniformRangeSelectionWeights(unittest.TestCase):
                                 weights_per_channel_threshold=per_channel)
 
         hwm = generate_test_hw_model({
-            'weights_quantization_method': mct.hardware_representation.QuantizationMethod.UNIFORM})
+            'weights_quantization_method': mct.target_platform.QuantizationMethod.UNIFORM})
         fw_hw_model = generate_fhw_model_keras(name="uniform_range_selection_test", hardware_model=hwm)
 
         fw_info = DEFAULT_KERAS_INFO

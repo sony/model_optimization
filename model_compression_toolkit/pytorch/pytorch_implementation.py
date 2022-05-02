@@ -34,6 +34,8 @@ from model_compression_toolkit.pytorch.graph_substitutions.substitutions.batchno
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.mark_activation import MarkActivation
+from model_compression_toolkit.pytorch.graph_substitutions.substitutions.reshape_with_static_shapes import \
+    ReshapeWithStaticShapes
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.scale_equalization import ScaleEqualization, \
     ScaleEqualizationWithPad
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
@@ -198,7 +200,7 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: A list of the framework substitutions used before we collect the prior information.
 
         """
-        return []
+        return [ReshapeWithStaticShapes()]
 
     def get_substitutions_pre_statistics_collection(self,
                                                     quant_config: QuantizationConfig

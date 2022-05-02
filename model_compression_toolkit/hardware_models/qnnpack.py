@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit import hardware_representation as hw_model
+from model_compression_toolkit import target_platform as hw_model
 
 
 def get_qnnpack_model():

@@ -16,7 +16,7 @@ from model_compression_toolkit.hardware_models.default_hwm import get_op_quantiz
 import model_compression_toolkit as mct
 from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
 
-hwm = mct.hardware_representation
+hwm = mct.target_platform
 
 
 def generate_test_hw_model(edit_params_dict, name=""):

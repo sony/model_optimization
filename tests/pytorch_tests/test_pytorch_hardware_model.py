@@ -24,9 +24,9 @@ from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.common.constants import PYTORCH
-from model_compression_toolkit.common.hardware_representation import FrameworkHardwareModel
-from model_compression_toolkit.common.hardware_representation.hardware2framework import LayerFilterParams
-from model_compression_toolkit.common.hardware_representation.hardware2framework.attribute_filter import Greater, \
+from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.common.target_platform.hardware2framework import LayerFilterParams
+from model_compression_toolkit.common.target_platform.hardware2framework.attribute_filter import Greater, \
     Smaller, Eq
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
@@ -35,7 +35,7 @@ from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImpl
 from tests.common_tests.test_hardware_model import TEST_QC, TEST_QCO
 from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import LayerTestModel
 
-hwm = mct.hardware_representation
+hwm = mct.target_platform
 
 
 class TestPytorchHWModel(unittest.TestCase):
@@ -94,7 +94,7 @@ class TestPytorchHWModel(unittest.TestCase):
 
             hwm.OperatorsSet("avg_pool2d")
 
-        hm_pytorch = hwm.FrameworkHardwareModel(hm, name='fw_test')
+        hm_pytorch = hwm.TargetPlatformCapabilities(hm, name='fw_test')
         with hm_pytorch:
             hwm.OperationsSetToLayers("conv", [torch.nn.Conv2d])
             hwm.OperationsSetToLayers("tanh", [torch.tanh])
@@ -122,7 +122,7 @@ class TestPytorchHWModel(unittest.TestCase):
         hm = hwm.HardwareModel(hwm.QuantizationConfigOptions([TEST_QC]))
         with hm:
             op_obj = hwm.OperatorsSet('opsetA')
-        fw_hwm = FrameworkHardwareModel(hm)
+        fw_hwm = TargetPlatformCapabilities(hm)
         with fw_hwm:
             opset_layers = [torch.nn.Conv2d, LayerFilterParams(torch.nn.Softmax, dim=1)]
             hwm.OperationsSetToLayers('opsetA', opset_layers)
@@ -136,7 +136,7 @@ class TestPytorchHWModel(unittest.TestCase):
             op_obj_b = hwm.OperatorsSet('opsetB')
             op_concat = hwm.OperatorSetConcat(op_obj_a, op_obj_b)
 
-        fw_hwm = FrameworkHardwareModel(hm)
+        fw_hwm = TargetPlatformCapabilities(hm)
         with fw_hwm:
             opset_layers_a = [torch.nn.Conv2d]
             opset_layers_b = [LayerFilterParams(torch.nn.Softmax, dim=1)]
@@ -152,7 +152,7 @@ class TestPytorchHWModel(unittest.TestCase):
             hwm.OperatorsSet('opsetA')
             hwm.OperatorsSet('opsetB')
 
-        fw_hwm = FrameworkHardwareModel(hm)
+        fw_hwm = TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with fw_hwm:
                 hwm.OperationsSetToLayers('opsetA', [torch.nn.Conv2d])
@@ -165,7 +165,7 @@ class TestPytorchHWModel(unittest.TestCase):
             hwm.OperatorsSet('opsetA')
             hwm.OperatorsSet('opsetB')
 
-        fw_hwm = FrameworkHardwareModel(hm)
+        fw_hwm = TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with fw_hwm:
                 hwm.OperationsSetToLayers('opsetA', [LayerFilterParams(torch.nn.Softmax, dim=2)])
@@ -175,7 +175,7 @@ class TestPytorchHWModel(unittest.TestCase):
     def test_opset_not_in_hwm(self):
         default_qco = hwm.QuantizationConfigOptions([TEST_QC])
         hm = hwm.HardwareModel(default_qco)
-        hm_pytorch = hwm.FrameworkHardwareModel(hm)
+        hm_pytorch = hwm.TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with hm_pytorch:
                 hwm.OperationsSetToLayers("conv", [torch.nn.Conv2d])
@@ -193,7 +193,7 @@ class TestPytorchHWModel(unittest.TestCase):
             hwm.Fusing([a, b, c])
             hwm.Fusing([a, c])
 
-        hm_keras = hwm.FrameworkHardwareModel(hm)
+        hm_keras = hwm.TargetPlatformCapabilities(hm)
         with hm_keras:
             hwm.OperationsSetToLayers("opA", [torch.conv2d])
             hwm.OperationsSetToLayers("opB", [torch.tanh])

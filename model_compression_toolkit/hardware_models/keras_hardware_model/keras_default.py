@@ -15,7 +15,7 @@
 
 import tensorflow as tf
 
-from model_compression_toolkit.common.hardware_representation import HardwareModel
+from model_compression_toolkit.common.target_platform import HardwareModel
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
@@ -27,7 +27,7 @@ else:
 from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
 
 import model_compression_toolkit as mct
-hwm = mct.hardware_representation
+hwm = mct.target_platform
 
 
 def get_default_hwm_keras():
@@ -38,15 +38,15 @@ def get_default_hwm_keras():
 
 def generate_fhw_model_keras(name: str, hardware_model: HardwareModel):
     """
-    Generates a FrameworkHardwareModel object with default operation sets to layers mapping.
+    Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
     Args:
         name: Name of the framework hardware model.
         hardware_model: HardwareModel object.
-    Returns: a FrameworkHardwareModel object for the given HardwareModel.
+    Returns: a TargetPlatformCapabilities object for the given HardwareModel.
     """
 
-    fhwm_keras = hwm.FrameworkHardwareModel(hardware_model,
-                                            name=name)
+    fhwm_keras = hwm.TargetPlatformCapabilities(hardware_model,
+                                                name=name)
     with fhwm_keras:
         hwm.OperationsSetToLayers("NoQuantization", [Reshape,
                                                      tf.reshape,

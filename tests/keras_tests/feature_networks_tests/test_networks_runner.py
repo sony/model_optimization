@@ -28,7 +28,7 @@ import random
 
 keras = tf.keras
 layers = keras.layers
-hw_model = mct.hardware_representation
+hw_model = mct.target_platform
 
 QUANTIZATION_CONFIG = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.MSE,
                                              weights_error_method=mct.QuantizationErrorMethod.MSE,

@@ -95,7 +95,7 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
                                 weights_per_channel_threshold=per_channel)
 
         hwm = generate_test_hw_model({
-            'weights_quantization_method': mct.hardware_representation.QuantizationMethod.SYMMETRIC})
+            'weights_quantization_method': mct.target_platform.QuantizationMethod.SYMMETRIC})
         fw_hw_model = generate_fhw_model_keras(name="symmetric_threshold_selection_test", hardware_model=hwm)
 
         fw_info = DEFAULT_KERAS_INFO

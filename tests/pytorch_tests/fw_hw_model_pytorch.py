@@ -23,16 +23,16 @@ from torch.nn import Dropout, Flatten, Hardtanh
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh
 
-from model_compression_toolkit.common.hardware_representation.hardware2framework import LayerFilterParams
+from model_compression_toolkit.common.target_platform.hardware2framework import LayerFilterParams
 from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import generate_fhw_model_pytorch
 from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder
 
-hwm = mct.hardware_representation
+hwm = mct.target_platform
 
 
 def generate_activation_mp_fhw_model_pytorch(hardware_model, name="activation_mp_pytorch_hwm"):
-    fhwm_torch = hwm.FrameworkHardwareModel(hardware_model,
-                                            name=name)
+    fhwm_torch = hwm.TargetPlatformCapabilities(hardware_model,
+                                                name=name)
     with fhwm_torch:
         hwm.OperationsSetToLayers("NoQuantization", [Dropout,
                                                      Flatten,

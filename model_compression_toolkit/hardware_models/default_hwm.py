@@ -15,9 +15,9 @@
 from typing import List, Tuple
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.common.hardware_representation import OpQuantizationConfig, HardwareModel
+from model_compression_toolkit.common.target_platform import OpQuantizationConfig, HardwareModel
 
-hwm = mct.hardware_representation
+hwm = mct.target_platform
 
 
 def get_default_hardware_model() -> HardwareModel:

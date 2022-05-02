@@ -94,9 +94,13 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TorchLayerTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureModelsTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FunctionTestRunner))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ModelTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromName('test_mobilenet_v2', ModelTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromName('test_mobilenet_v3', ModelTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromName('test_efficientnet_b0', ModelTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromName('test_resnet18', ModelTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromName('test_shufflenet_v2_x1_0', ModelTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchHWModel))
 
-    # ----------------   Join them together ane run them
+    # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)
     unittest.TextTestRunner(verbosity=0).run(comboSuite)

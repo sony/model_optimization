@@ -13,9 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.common.hardware_representation.hardware2framework import \
-    FrameworkHardwareModel, LayerFilterParams
-from model_compression_toolkit.common.hardware_representation.hardware2framework import \
+from model_compression_toolkit.common.target_platform.hardware2framework import \
+    TargetPlatformCapabilities, LayerFilterParams
+from model_compression_toolkit.common.target_platform.hardware2framework import \
     OperationsSetToLayers
 from model_compression_toolkit.hardware_models.qnnpack import get_qnnpack_model
 
@@ -28,8 +28,8 @@ else:
 
 def get_qnnpack_tensorflow():
     qnnpackhm = get_qnnpack_model()
-    qnnpack_tf = FrameworkHardwareModel(qnnpackhm,
-                                        name='qnnpack_tensorflow')
+    qnnpack_tf = TargetPlatformCapabilities(qnnpackhm,
+                                            name='qnnpack_tensorflow')
 
     with qnnpack_tf:
         OperationsSetToLayers("Conv", [Conv2D,

@@ -19,7 +19,7 @@ from torch import sigmoid
 
 from model_compression_toolkit.common.defaultdict import DefaultDict
 from model_compression_toolkit.common.framework_info import FrameworkInfo, ChannelAxis
-from model_compression_toolkit.common.hardware_representation import QuantizationMethod
+from model_compression_toolkit.common.target_platform import QuantizationMethod
 from model_compression_toolkit.common.quantization.quantizers.kmeans_quantizer import kmeans_quantizer
 from model_compression_toolkit.common.quantization.quantizers.lut_kmeans_quantizer import lut_kmeans_quantizer
 from model_compression_toolkit.common.quantization.quantizers.uniform_quantizers import power_of_two_quantizer, \

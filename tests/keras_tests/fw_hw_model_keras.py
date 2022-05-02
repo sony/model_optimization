@@ -27,7 +27,7 @@ else:
     Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, BatchNormalization
 
 
-hwm = mct.hardware_representation
+hwm = mct.target_platform
 
 
 def get_16bit_fw_hw_model(name):
@@ -44,8 +44,8 @@ def get_quantization_disabled_keras_hw_model(name):
 
 def generate_activation_mp_fhw_model_keras(hardware_model, name="activation_mp_keras_hwm"):
 
-    fhwm_keras = hwm.FrameworkHardwareModel(hardware_model,
-                                            name=name)
+    fhwm_keras = hwm.TargetPlatformCapabilities(hardware_model,
+                                                name=name)
     with fhwm_keras:
         hwm.OperationsSetToLayers("NoQuantization", [Reshape,
                                                      tf.reshape,

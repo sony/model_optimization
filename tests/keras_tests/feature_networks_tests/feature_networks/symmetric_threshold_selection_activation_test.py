@@ -22,7 +22,7 @@ from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_m
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as cmo
 
-hw_model = cmo.hardware_representation
+hw_model = cmo.target_platform
 keras = tf.keras
 layers = keras.layers
 

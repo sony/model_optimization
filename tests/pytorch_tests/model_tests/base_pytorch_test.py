@@ -32,9 +32,10 @@ from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_m
 The base test class for the feature networks
 """
 class BasePytorchTest(BaseFeatureNetworkTest):
-    def __init__(self, unit_test, float_reconstruction_error=1e-7):
+    def __init__(self, unit_test, float_reconstruction_error=1e-7, convert_to_fx=True):
         super().__init__(unit_test)
         self.float_reconstruction_error = float_reconstruction_error
+        self.convert_to_fx = convert_to_fx
 
     def get_fw_hw_model(self):
         return {
@@ -83,7 +84,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
     def create_feature_network(self, input_shape):
         pass
 
-    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None, convert_fx=True):
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         set_model(float_model)
         float_result = float_model(*input_x)
         for model_name, quantized_model in quantized_models.items():
@@ -107,7 +108,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                 #########################################
                 # check model export
                 #########################################
-                if convert_fx:
+                if self.convert_to_fx:
                     # check export to fx
                     # cannot convert to fx when the model has torch.Tensor operations (i.e. tensor.size())
                     fx_model = symbolic_trace(quantized_model)

@@ -24,7 +24,7 @@ import model_compression_toolkit as cmo
 
 keras = tf.keras
 layers = keras.layers
-hw_model = cmo.hardware_representation
+hw_model = cmo.target_platform
 
 class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, activation_threshold_method):

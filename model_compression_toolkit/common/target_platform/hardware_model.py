@@ -16,14 +16,14 @@
 import pprint
 from typing import Any, Dict
 
-from model_compression_toolkit.common.hardware_representation.current_hardware_model import _current_hardware_model, \
+from model_compression_toolkit.common.target_platform.current_hardware_model import _current_hardware_model, \
     get_current_model
-from model_compression_toolkit.common.hardware_representation.fusing import Fusing
-from model_compression_toolkit.common.hardware_representation.hardware_model_component import \
+from model_compression_toolkit.common.target_platform.fusing import Fusing
+from model_compression_toolkit.common.target_platform.hardware_model_component import \
     HardwareModelComponent
-from model_compression_toolkit.common.hardware_representation.op_quantization_config import OpQuantizationConfig, \
+from model_compression_toolkit.common.target_platform.op_quantization_config import OpQuantizationConfig, \
     QuantizationConfigOptions
-from model_compression_toolkit.common.hardware_representation.operators import OperatorsSetBase
+from model_compression_toolkit.common.target_platform.operators import OperatorsSetBase
 from model_compression_toolkit.common.immutable import ImmutableClass
 from model_compression_toolkit.common.logger import Logger
 
@@ -32,7 +32,7 @@ def get_default_quantization_config_options() -> QuantizationConfigOptions:
     """
 
     Returns: The default QuantizationConfigOptions of the model. This is the options
-    to use when a layer's options is queried and it wasn't specified in the FrameworkHardwareModel.
+    to use when a layer's options is queried and it wasn't specified in the TargetPlatformCapabilities.
     The default QuantizationConfigOptions always contains a single option.
 
     """
@@ -43,7 +43,7 @@ def get_default_quantization_config():
     """
 
     Returns: The default OpQuantizationConfig of the model. This is the OpQuantizationConfig
-    to use when a layer's options is queried and it wasn't specified in the FrameworkHardwareModel.
+    to use when a layer's options is queried and it wasn't specified in the TargetPlatformCapabilities.
     This OpQuantizationConfig is the single option in the default QuantizationConfigOptions.
 
     """

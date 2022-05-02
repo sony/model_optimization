@@ -14,7 +14,7 @@
 # ==============================================================================
 import tensorflow as tf
 
-import model_compression_toolkit.hardware_representation.op_quantization_config
+import model_compression_toolkit.target_platform.op_quantization_config
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 if tf.__version__ < "2.6":
