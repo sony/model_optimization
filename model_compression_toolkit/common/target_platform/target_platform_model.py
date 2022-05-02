@@ -16,7 +16,7 @@
 import pprint
 from typing import Any, Dict
 
-from model_compression_toolkit.common.target_platform.current_hardware_model import _current_hardware_model, \
+from model_compression_toolkit.common.target_platform.current_tp_model import _current_hardware_model, \
     get_current_model
 from model_compression_toolkit.common.target_platform.fusing import Fusing
 from model_compression_toolkit.common.target_platform.target_platform_model_component import \

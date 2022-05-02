@@ -15,7 +15,7 @@
 from typing import Dict, Any
 
 from model_compression_toolkit.common.target_platform.target_platform_model_component import TargetPlatformModelComponent
-from model_compression_toolkit.common.target_platform.current_hardware_model import _current_hardware_model
+from model_compression_toolkit.common.target_platform.current_tp_model import _current_hardware_model
 from model_compression_toolkit.common.target_platform.op_quantization_config import QuantizationConfigOptions
 
 
