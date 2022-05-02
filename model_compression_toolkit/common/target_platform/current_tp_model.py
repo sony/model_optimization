@@ -22,13 +22,13 @@ def get_current_model():
     return _current_hardware_model.get()
 
 
-class CurrentHardwareModel:
+class CurrentTPModel:
     """
     Wrapper of the current TargetPlatformModel object that is being accessed and defined.
     """
 
     def __init__(self):
-        super(CurrentHardwareModel, self).__init__()
+        super(CurrentTPModel, self).__init__()
         self.hwm = None
 
     def get(self):
@@ -62,4 +62,4 @@ class CurrentHardwareModel:
 
 
 # Use a single instance for the current model.
-_current_hardware_model = CurrentHardwareModel()
+_current_hardware_model = CurrentTPModel()
