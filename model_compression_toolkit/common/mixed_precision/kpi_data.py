@@ -25,7 +25,7 @@ import model_compression_toolkit.common.post_training_quantization as ptq
 def compute_kpi_data(in_model: Any,
                      representative_data_gen: Callable,
                      quant_config: MixedPrecisionQuantizationConfig,
-                     fw_hw_model: TargetPlatformCapabilities,
+                     tpc: TargetPlatformCapabilities,
                      fw_info: FrameworkInfo,
                      fw_impl: FrameworkImplementation) -> KPI:
     """
@@ -36,7 +36,7 @@ def compute_kpi_data(in_model: Any,
         in_model:  Model to build graph from (the model that intended to be quantized).
         representative_data_gen: Dataset used for calibration.
         quant_config: QuantizationConfig containing parameters of how the model should be quantized.
-        fw_hw_model: TargetPlatformCapabilities object that models the inference target platform and
+        tpc: TargetPlatformCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
@@ -47,7 +47,7 @@ def compute_kpi_data(in_model: Any,
 
     graph = ptq.read_model_to_graph(in_model,
                                     representative_data_gen,
-                                    fw_hw_model,
+                                    tpc,
                                     fw_info,
                                     fw_impl)
 
