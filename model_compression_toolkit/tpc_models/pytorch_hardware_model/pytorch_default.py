@@ -27,7 +27,7 @@ from model_compression_toolkit.common.target_platform.targetplatform2framework i
     TargetPlatformCapabilities, LayerFilterParams
 from model_compression_toolkit.common.target_platform.targetplatform2framework import \
     OperationsSetToLayers
-from model_compression_toolkit.tpc_models.default_hwm import get_default_tp_model
+from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
 
 
 def get_default_hwm_pytorch():

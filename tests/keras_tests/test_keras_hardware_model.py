@@ -34,7 +34,7 @@ from model_compression_toolkit.common.target_platform.targetplatform2framework.a
     Smaller, GreaterEq, Eq, SmallerEq
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
-from model_compression_toolkit.keras.constants import DEFAULT_HWM, QNNPACK_HWM, TFLITE_HWM
+from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL, QNNPACK_TP_MODEL, TFLITE_TP_MODEL
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from tests.common_tests.test_hardware_model import TEST_QCO, TEST_QC
 
@@ -214,7 +214,7 @@ class TestKerasHWModel(unittest.TestCase):
 
 class TestGetKerasHardwareModelAPI(unittest.TestCase):
     def test_get_keras_hw_models(self):
-        fw_hw_model = mct.get_model(TENSORFLOW, DEFAULT_HWM)
+        fw_hw_model = mct.get_model(TENSORFLOW, DEFAULT_TP_MODEL)
         model = MobileNetV2()
 
         def rep_data():

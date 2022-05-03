@@ -27,11 +27,11 @@ from model_compression_toolkit.common.target_platform import TargetPlatformCapab
 from model_compression_toolkit.common.target_platform.targetplatform2framework import OperationsSetToLayers, \
     LayerFilterParams
 from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import Eq
-from model_compression_toolkit.tpc_models.tflite import get_tflite_hw_model
+from model_compression_toolkit.tpc_models.tflite import get_tflite_tp_model
 
 
 def get_keras_tp_model_tflite():
-    tflite_hm = get_tflite_hw_model()
+    tflite_hm = get_tflite_tp_model()
     tflite_keras = TargetPlatformCapabilities(tflite_hm, name='tflite_keras')
 
     with tflite_keras:

@@ -20,12 +20,12 @@ from model_compression_toolkit.common.target_platform import TargetPlatformCapab
 from model_compression_toolkit.common.target_platform.targetplatform2framework import OperationsSetToLayers, \
     LayerFilterParams
 from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import Eq
-from model_compression_toolkit.tpc_models.tflite import get_tflite_hw_model
+from model_compression_toolkit.tpc_models.tflite import get_tflite_tp_model
 import operator
 
 
 def get_pytorch_tflite_model():
-    tflite_hm = get_tflite_hw_model()
+    tflite_hm = get_tflite_tp_model()
     tflite_torch = TargetPlatformCapabilities(tflite_hm, name='tflite_torch')
 
     with tflite_torch:

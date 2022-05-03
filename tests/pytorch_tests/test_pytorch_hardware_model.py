@@ -30,7 +30,7 @@ from model_compression_toolkit.common.target_platform.targetplatform2framework.a
     Smaller, Eq
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
-from model_compression_toolkit.pytorch.constants import DEFAULT_HWM, TFLITE_HWM, QNNPACK_HWM
+from model_compression_toolkit.pytorch.constants import DEFAULT_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL
 from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
 from tests.common_tests.test_hardware_model import TEST_QC, TEST_QCO
 from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import LayerTestModel
@@ -217,7 +217,7 @@ class TestPytorchHWModel(unittest.TestCase):
 class TestGetPytorchHardwareModelAPI(unittest.TestCase):
 
     def test_get_pytorch_models(self):
-        fw_hw_model = mct.get_model(PYTORCH, DEFAULT_HWM)
+        fw_hw_model = mct.get_model(PYTORCH, DEFAULT_TP_MODEL)
         model = mobilenet_v2(pretrained=True)
 
         def rep_data():

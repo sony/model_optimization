@@ -27,14 +27,14 @@ found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util
 tf_models_dict = {}
 
 if found_tf:
-    from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import get_default_hwm_keras
+    from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import get_default_keras_tpc
     from model_compression_toolkit.tpc_models.keras_tp_models.keras_tflite import get_keras_tp_model_tflite
     from model_compression_toolkit.tpc_models.keras_tp_models.keras_qnnpack import get_qnnpack_tensorflow
-    from model_compression_toolkit.keras.constants import DEFAULT_HWM, TFLITE_HWM, QNNPACK_HWM
+    from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL
 
-    tf_models_dict = {DEFAULT_HWM: get_default_hwm_keras(),
-                      TFLITE_HWM: get_keras_tp_model_tflite(),
-                      QNNPACK_HWM: get_qnnpack_tensorflow()}
+    tf_models_dict = {DEFAULT_TP_MODEL: get_default_keras_tpc(),
+                      TFLITE_TP_MODEL: get_keras_tp_model_tflite(),
+                      QNNPACK_TP_MODEL: get_qnnpack_tensorflow()}
 
 
 #############################
@@ -47,11 +47,11 @@ if found_torch:
     from model_compression_toolkit.tpc_models.pytorch_hardware_model.pytorch_default import get_default_hwm_pytorch
     from model_compression_toolkit.tpc_models.pytorch_hardware_model.pytorch_qnnpack import get_qnnpack_pytorch
     from model_compression_toolkit.tpc_models.pytorch_hardware_model.pytorch_tflite import get_pytorch_tflite_model
-    from model_compression_toolkit.pytorch.constants import DEFAULT_HWM, TFLITE_HWM, QNNPACK_HWM
+    from model_compression_toolkit.pytorch.constants import DEFAULT_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL
 
-    torch_models_dict = {DEFAULT_HWM: get_default_hwm_pytorch(),
-                         TFLITE_HWM: get_pytorch_tflite_model(),
-                         QNNPACK_HWM: get_qnnpack_pytorch()}
+    torch_models_dict = {DEFAULT_TP_MODEL: get_default_hwm_pytorch(),
+                         TFLITE_TP_MODEL: get_pytorch_tflite_model(),
+                         QNNPACK_TP_MODEL: get_qnnpack_pytorch()}
 
 
 fw_hw_models_dict = {TENSORFLOW: tf_models_dict,

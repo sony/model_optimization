@@ -33,8 +33,8 @@ from model_compression_toolkit.common.quantization.set_node_quantization_config 
 from model_compression_toolkit.common.model_collector import ModelCollector
 from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.common.similarity_analyzer import compute_mse
-from model_compression_toolkit.tpc_models.default_hwm import get_op_quantization_configs
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.default_tp_model import get_op_quantization_configs
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model, \
@@ -151,7 +151,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         hw_model = generate_mixed_precision_test_hw_model(
             base_cfg=base_config,
             mp_bitwidth_candidates_list=[(c.weights_n_bits, c.activation_n_bits) for c in mixed_precision_cfg_list])
-        fw_hw_model = generate_fhw_model_keras(name="bitwidth_cfg_test", hardware_model=hw_model)
+        fw_hw_model = generate_keras_default_tpc(name="bitwidth_cfg_test", tp_model=hw_model)
         fw_info = DEFAULT_KERAS_INFO
         in_model = MobileNetV2()
         keras_impl = KerasImplementation()

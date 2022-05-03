@@ -26,7 +26,7 @@ from model_compression_toolkit import get_model
 from model_compression_toolkit.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.keras.constants import DEFAULT_HWM
+from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.keras.reader.reader import model_reader
@@ -56,7 +56,7 @@ class NetworkTest(object):
         fw_impl = KerasImplementation()
         fw_info = DEFAULT_KERAS_INFO
 
-        keras_default_hw_model = get_model(TENSORFLOW, DEFAULT_HWM)
+        keras_default_hw_model = get_model(TENSORFLOW, DEFAULT_TP_MODEL)
 
         graph = model_reader(self.model_float)  # model reading
         graph.set_fw_info(DEFAULT_KERAS_INFO)

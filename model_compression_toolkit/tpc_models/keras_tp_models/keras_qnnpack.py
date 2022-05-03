@@ -27,8 +27,8 @@ else:
 
 
 def get_qnnpack_tensorflow():
-    qnnpackhm = get_qnnpack_model()
-    qnnpack_tf = TargetPlatformCapabilities(qnnpackhm,
+    qnnpack_tp_model = get_qnnpack_model()
+    qnnpack_tf = TargetPlatformCapabilities(qnnpack_tp_model,
                                             name='qnnpack_tensorflow')
 
     with qnnpack_tf:
