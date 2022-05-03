@@ -17,7 +17,7 @@
 import tensorflow as tf
 import numpy as np
 
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as cmo
@@ -41,7 +41,7 @@ class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
         hwm = generate_test_hw_model({
             'activation_quantization_method': hw_model.QuantizationMethod.UNIFORM,
             'activation_n_bits': 8})
-        return generate_fhw_model_keras(name="uniform_range_test", hardware_model=hwm)
+        return generate_keras_default_tpc(name="uniform_range_test", tp_model=hwm)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

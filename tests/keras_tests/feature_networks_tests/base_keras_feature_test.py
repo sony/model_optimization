@@ -14,7 +14,7 @@
 # ==============================================================================
 from model_compression_toolkit.common.constants import TENSORFLOW
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.keras.constants import DEFAULT_HWM
+from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit import keras_post_training_quantization, \
     keras_post_training_quantization_mixed_precision, FrameworkInfo
@@ -38,7 +38,7 @@ class BaseKerasFeatureNetworkTest(BaseFeatureNetworkTest):
                          input_shape=input_shape)
 
     def get_fw_hw_model(self):
-        return get_model(TENSORFLOW, DEFAULT_HWM)
+        return get_model(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def get_ptq_facade(self):
         return keras_post_training_quantization

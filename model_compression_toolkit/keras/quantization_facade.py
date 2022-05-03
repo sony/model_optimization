@@ -42,10 +42,10 @@ if importlib.util.find_spec("tensorflow") is not None\
     from tensorflow.keras.models import Model
     from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
     from keras.optimizer_v2.optimizer_v2 import OptimizerV2
-    from model_compression_toolkit.keras.constants import DEFAULT_HWM
+    from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL
 
     from model_compression_toolkit import get_model
-    KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_HWM)
+    KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def get_keras_gptq_config(n_iter: int,
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(),

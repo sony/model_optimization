@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import model_compression_toolkit.common.gptq.gptq_config
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 import tensorflow as tf
 import numpy as np
@@ -35,12 +35,12 @@ QUANTIZATION_CONFIG = mct.QuantizationConfig(activation_error_method=mct.Quantiz
                                              relu_bound_to_power_of_2=False, weights_bias_correction=False,
                                              weights_per_channel_threshold=True)
 
-TWO_BIT_QUANTIZATION = generate_fhw_model_keras(name="two_bit_network_test",
-                                                hardware_model=generate_test_hw_model({'weights_n_bits': 2,
+TWO_BIT_QUANTIZATION = generate_keras_default_tpc(name="two_bit_network_test",
+                                                  tp_model=generate_test_hw_model({'weights_n_bits': 2,
                                                                                        'activation_n_bits': 2}))
 
-EIGHT_BIT_QUANTIZATION = generate_fhw_model_keras(name="eight_bit_network_test",
-                                                  hardware_model=generate_test_hw_model({'weights_n_bits': 8,
+EIGHT_BIT_QUANTIZATION = generate_keras_default_tpc(name="eight_bit_network_test",
+                                                    tp_model=generate_test_hw_model({'weights_n_bits': 8,
                                                                                          'activation_n_bits': 8}))
 
 FLOAT_QUANTIZATION = get_16bit_fw_hw_model("float_network_test")

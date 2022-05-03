@@ -21,7 +21,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
 
@@ -69,7 +69,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                 'weights_quantization_method': quantize_method,
                 'weights_n_bits': 8,
                 'activation_n_bits': 16})
-            fw_hw_model = generate_fhw_model_keras(name="quant_config_weights_test", hardware_model=hwm)
+            fw_hw_model = generate_keras_default_tpc(name="quant_config_weights_test", tp_model=hwm)
 
             qc = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
                                         weights_error_method=error_method,
@@ -90,7 +90,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                 'activation_quantization_method': quantize_method,
                 'weights_n_bits': 16,
                 'activation_n_bits': 8})
-            fw_hw_model = generate_fhw_model_keras(name="quant_config_activation_test", hardware_model=hwm)
+            fw_hw_model = generate_keras_default_tpc(name="quant_config_activation_test", tp_model=hwm)
 
             qc = mct.QuantizationConfig(activation_error_method=error_method,
                                         weights_error_method=mct.QuantizationErrorMethod.NOCLIPPING,

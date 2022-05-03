@@ -23,7 +23,7 @@ from model_compression_toolkit.common.mixed_precision.kpi_data import compute_kp
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
-from model_compression_toolkit.keras.constants import DEFAULT_HWM
+from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL
 
 import importlib
 
@@ -36,7 +36,7 @@ if importlib.util.find_spec("tensorflow") is not None\
 
     from model_compression_toolkit import get_model
 
-    KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_HWM)
+    KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
     def keras_kpi_data(in_model: Model,

@@ -24,31 +24,33 @@ else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
     Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D
 
-from model_compression_toolkit.tpc_models.default_hwm import get_default_tp_model
+from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
 
 import model_compression_toolkit as mct
-hwm = mct.target_platform
+tpc = mct.target_platform
 
 
-def get_default_hwm_keras():
-    default_hwm = get_default_tp_model()
-    return generate_fhw_model_keras(name='default_hwm_keras',
-                                    hardware_model=default_hwm)
+def get_default_keras_tpc():
+    default_tp_model = get_default_tp_model()
+    return generate_keras_default_tpc(name='default_keras_tpc',
+                                      tp_model=default_tp_model)
 
 
-def generate_fhw_model_keras(name: str, hardware_model: TargetPlatformModel):
+def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
     """
     Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
+
     Args:
-        name: Name of the framework hardware model.
-        hardware_model: TargetPlatformModel object.
+        name: Name of the TargetPlatformCapabilities.
+        tp_model: TargetPlatformModel object.
+
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
-    fhwm_keras = hwm.TargetPlatformCapabilities(hardware_model,
+    keras_tpc = tpc.TargetPlatformCapabilities(tp_model,
                                                 name=name)
-    with fhwm_keras:
-        hwm.OperationsSetToLayers("NoQuantization", [Reshape,
+    with keras_tpc:
+        tpc.OperationsSetToLayers("NoQuantization", [Reshape,
                                                      tf.reshape,
                                                      Flatten,
                                                      Cropping2D,
@@ -58,32 +60,32 @@ def generate_fhw_model_keras(name: str, hardware_model: TargetPlatformModel):
                                                      tf.split,
                                                      tf.quantization.fake_quant_with_min_max_vars])
 
-        hwm.OperationsSetToLayers("Conv", [Conv2D,
+        tpc.OperationsSetToLayers("Conv", [Conv2D,
                                            DepthwiseConv2D,
                                            tf.nn.conv2d,
                                            tf.nn.depthwise_conv2d])
 
-        hwm.OperationsSetToLayers("FullyConnected", [Dense])
+        tpc.OperationsSetToLayers("FullyConnected", [Dense])
 
-        hwm.OperationsSetToLayers("ConvTranspose", [Conv2DTranspose,
+        tpc.OperationsSetToLayers("ConvTranspose", [Conv2DTranspose,
                                                     tf.nn.conv2d_transpose])
 
-        hwm.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
+        tpc.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                               tf.nn.relu6,
-                                              hwm.LayerFilterParams(ReLU, negative_slope=0.0),
-                                              hwm.LayerFilterParams(Activation, activation="relu")])
+                                              tpc.LayerFilterParams(ReLU, negative_slope=0.0),
+                                              tpc.LayerFilterParams(Activation, activation="relu")])
 
-        hwm.OperationsSetToLayers("Add", [tf.add,
+        tpc.OperationsSetToLayers("Add", [tf.add,
                                           Add])
 
-        hwm.OperationsSetToLayers("PReLU", [PReLU])
+        tpc.OperationsSetToLayers("PReLU", [PReLU])
 
-        hwm.OperationsSetToLayers("Swish", [tf.nn.swish,
-                                            hwm.LayerFilterParams(Activation, activation="swish")])
+        tpc.OperationsSetToLayers("Swish", [tf.nn.swish,
+                                            tpc.LayerFilterParams(Activation, activation="swish")])
 
-        hwm.OperationsSetToLayers("Sigmoid", [tf.nn.sigmoid,
-                                              hwm.LayerFilterParams(Activation, activation="sigmoid")])
+        tpc.OperationsSetToLayers("Sigmoid", [tf.nn.sigmoid,
+                                              tpc.LayerFilterParams(Activation, activation="sigmoid")])
 
-        hwm.OperationsSetToLayers("Tanh", [tf.nn.tanh,
-                                           hwm.LayerFilterParams(Activation, activation="tanh")])
-    return fhwm_keras
+        tpc.OperationsSetToLayers("Tanh", [tf.nn.tanh,
+                                           tpc.LayerFilterParams(Activation, activation="tanh")])
+    return keras_tpc

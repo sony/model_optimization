@@ -31,7 +31,7 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 from model_compression_toolkit.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.common.model_collector import ModelCollector
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
@@ -95,7 +95,7 @@ class TestUniformRangeSelectionWeights(unittest.TestCase):
 
         hwm = generate_test_hw_model({
             'weights_quantization_method': mct.target_platform.QuantizationMethod.UNIFORM})
-        fw_hw_model = generate_fhw_model_keras(name="uniform_range_selection_test", hardware_model=hwm)
+        fw_hw_model = generate_keras_default_tpc(name="uniform_range_selection_test", tp_model=hwm)
 
         fw_info = DEFAULT_KERAS_INFO
         in_model = create_network()

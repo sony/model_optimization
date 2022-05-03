@@ -3,7 +3,7 @@ from typing import List, Any, Tuple
 import tensorflow as tf
 
 from model_compression_toolkit.tpc_models.default_hwm import get_default_tp_model
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
 from tests.keras_tests.fw_hw_model_keras import get_quantization_disabled_keras_hw_model
 
@@ -78,7 +78,7 @@ class BaseKerasLayerTest(BaseLayerTest):
         elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
             hwm = generate_test_hw_model({'weights_n_bits': 8,
                                           'activation_n_bits': 8})
-            return generate_fhw_model_keras(name="8bit_layer_test", hardware_model=hwm)
+            return generate_keras_default_tpc(name="8bit_layer_test", tp_model=hwm)
         else:
             raise NotImplemented
 

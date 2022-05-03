@@ -14,7 +14,7 @@
 # ==============================================================================
 import torch
 
-from model_compression_toolkit.tpc_models.default_hwm import get_default_tp_model
+from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
 from model_compression_toolkit.pytorch.utils import to_torch_tensor
 from tests.pytorch_tests.fw_hw_model_pytorch import get_pytorch_test_fw_hw_model_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest

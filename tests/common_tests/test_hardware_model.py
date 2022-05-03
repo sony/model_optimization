@@ -18,7 +18,7 @@ import unittest
 import model_compression_toolkit as mct
 from model_compression_toolkit.common.target_platform import get_default_quantization_config_options, \
     TargetPlatformCapabilities
-from model_compression_toolkit.tpc_models.default_hwm import get_default_tp_model
+from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
 
 hwm = mct.target_platform
 
