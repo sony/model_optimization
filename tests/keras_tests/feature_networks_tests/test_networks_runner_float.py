@@ -60,7 +60,7 @@ class NetworkTest(object):
 
         graph = model_reader(self.model_float)  # model reading
         graph.set_fw_info(DEFAULT_KERAS_INFO)
-        graph.set_fw_hw_model(keras_default_tpc)
+        graph.set_tpc(keras_default_tpc)
         graph = set_quantization_configuration_to_graph(graph,
                                                         copy.deepcopy(DEFAULTCONFIG))
         ptq_model, _ = model_builder(graph,

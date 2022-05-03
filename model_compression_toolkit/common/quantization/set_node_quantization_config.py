@@ -51,7 +51,7 @@ def set_quantization_configuration_to_graph(graph: Graph,
         set_quantization_configs_to_node(node=n,
                                          quant_config=quant_config,
                                          fw_info=graph.fw_info,
-                                         fw_hw_model=graph.fw_hw_model)
+                                         fw_hw_model=graph.tpc)
     return graph_with_qcs
 
 

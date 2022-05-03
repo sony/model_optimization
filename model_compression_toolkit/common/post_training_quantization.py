@@ -434,7 +434,7 @@ def read_model_to_graph(in_model: Any,
     graph = fw_impl.model_reader(in_model,
                                  representative_data_gen)
     graph.set_fw_info(fw_info)
-    graph.set_fw_hw_model(fw_hw_model)
+    graph.set_tpc(fw_hw_model)
     return graph
 
 

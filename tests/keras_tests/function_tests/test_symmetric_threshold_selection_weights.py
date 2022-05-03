@@ -103,7 +103,7 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
         keras_impl = KerasImplementation()
         graph = keras_impl.model_reader(in_model, None)  # model reading
         graph.set_fw_info(fw_info)
-        graph.set_fw_hw_model(tpc)
+        graph.set_tpc(tpc)
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=qc)
         for node in graph.nodes:
