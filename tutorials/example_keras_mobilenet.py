@@ -87,7 +87,7 @@ if __name__ == '__main__':
 
     quantized_model, quantization_info = mct.keras_post_training_quantization(model,
                                                                               representative_data_gen,
-                                                                              fw_hw_model=hardware_model,
+                                                                              target_platform_capabilities=hardware_model,
                                                                               n_iter=10)
 
 

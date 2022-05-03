@@ -45,7 +45,7 @@ if importlib.util.find_spec("tensorflow") is not None\
     from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL
 
     from model_compression_toolkit import get_model
-    KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_TP_MODEL)
+    DEFAULT_KERAS_TPC = get_model(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def get_keras_gptq_config(n_iter: int,
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(),
@@ -97,7 +97,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                          network_editor: List[EditRule] = [],
                                          gptq_config: GradientPTQConfig = None,
                                          analyze_similarity: bool = False,
-                                         fw_hw_model: TargetPlatformCapabilities = KERAS_DEFAULT_MODEL):
+                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
         symmetric constraint quantization thresholds (power of two).
@@ -127,7 +127,8 @@ if importlib.util.find_spec("tensorflow") is not None\
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled)
             or not.
-            fw_hw_model (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
+            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the
+            Keras model according to.
 
         Returns:
             A quantized model and information the user may need to handle the quantized model.
@@ -157,7 +158,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                           quant_config,
                                           fw_info,
                                           KerasImplementation(),
-                                          fw_hw_model,
+                                          target_platform_capabilities,
                                           network_editor,
                                           gptq_config,
                                           analyze_similarity)
@@ -172,7 +173,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                                          network_editor: List[EditRule] = [],
                                                          gptq_config: GradientPTQConfig = None,
                                                          analyze_similarity: bool = False,
-                                                         fw_hw_model: TargetPlatformCapabilities = KERAS_DEFAULT_MODEL):
+                                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
          Quantize a trained Keras model using post-training quantization. The model is quantized using a
          symmetric constraint quantization thresholds (power of two).
@@ -206,7 +207,8 @@ if importlib.util.find_spec("tensorflow") is not None\
              gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
              analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is
              enabled) or not.
-             fw_hw_model (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
+             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the
+             Keras model according to.
 
 
          Returns:
@@ -228,7 +230,7 @@ if importlib.util.find_spec("tensorflow") is not None\
              >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
 
              Create a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
-             The candidates bitwidth for quantization should be defined in the hardware model:
+             The candidates bitwidth for quantization should be defined in the target platform model:
 
              >>> config = mct.MixedPrecisionQuantizationConfig()
 
@@ -241,10 +243,11 @@ if importlib.util.find_spec("tensorflow") is not None\
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:
 
-             >>> quantized_model, quantization_info = mct.keras_post_training_quantization_mixed_precision(model,
-             repr_datagen, target_kpi=kpi, n_iter=10, quant_config=config)
+             >>> quantized_model, quantization_info = mct.keras_post_training_quantization_mixed_precision(model,repr_datagen, target_kpi=kpi, n_iter=10, quant_config=config)
 
-             For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
+             For more configuration options, please take a look at our `API documentation
+             <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html
+             >`_.
 
          """
         KerasModelValidation(model=in_model,
@@ -264,7 +267,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                           quant_config,
                                           fw_info,
                                           KerasImplementation(),
-                                          fw_hw_model,
+                                          target_platform_capabilities,
                                           network_editor,
                                           gptq_config,
                                           analyze_similarity,

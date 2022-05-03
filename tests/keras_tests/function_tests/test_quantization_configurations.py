@@ -82,7 +82,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                                                               n_iter=1,
                                                                               quant_config=qc,
                                                                               fw_info=DEFAULT_KERAS_INFO,
-                                                                              fw_hw_model=fw_hw_model)
+                                                                              target_platform_capabilities=fw_hw_model)
 
         model = model_gen()
         for quantize_method, error_method, relu_bound_to_power_of_2, shift_negative_correction in activation_test_combinations:
@@ -104,7 +104,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                                                               n_iter=1,
                                                                               quant_config=qc,
                                                                               fw_info=DEFAULT_KERAS_INFO,
-                                                                              fw_hw_model=fw_hw_model)
+                                                                              target_platform_capabilities=fw_hw_model)
 
 
 if __name__ == '__main__':

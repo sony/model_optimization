@@ -141,7 +141,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                                                                                                       network_editor=self.get_network_editor(),
                                                                                                       gptq_config=self.get_gptq_config(),
                                                                                                       target_kpi=self.get_kpi(),
-                                                                                                      fw_hw_model=fw_hw_model)
+                                                                                                      target_platform_capabilities=fw_hw_model)
                 ptq_models.update({model_name: ptq_model})
             else:
                 ptq_model, quantization_info = mct.pytorch_post_training_quantization(model_float,
@@ -150,7 +150,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                                                                                       quant_config=quant_config,
                                                                                       fw_info=DEFAULT_PYTORCH_INFO,
                                                                                       network_editor=self.get_network_editor(),
-                                                                                      fw_hw_model=fw_hw_model)
+                                                                                      target_platform_capabilities=fw_hw_model)
                 ptq_models.update({model_name: ptq_model})
 
         self.compare(ptq_models, model_float, input_x=x, quantization_info=quantization_info)

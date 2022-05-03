@@ -226,7 +226,7 @@ class TestGetPytorchHardwareModelAPI(unittest.TestCase):
         quantized_model, _ = mct.pytorch_post_training_quantization(model,
                                                                     rep_data,
                                                                     n_iter=1,
-                                                                    fw_hw_model=fw_hw_model)
+                                                                    target_platform_capabilities=fw_hw_model)
 
         mp_qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
         mp_qc.num_of_images = 1
@@ -234,7 +234,7 @@ class TestGetPytorchHardwareModelAPI(unittest.TestCase):
                                                                                     rep_data,
                                                                                     target_kpi=mct.KPI(np.inf),
                                                                                     n_iter=1,
-                                                                                    fw_hw_model=fw_hw_model,
+                                                                                    target_platform_capabilities=fw_hw_model,
                                                                                     quant_config=mp_qc)
 
     def test_get_pytorch_not_supported_model(self):

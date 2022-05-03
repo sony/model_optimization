@@ -106,4 +106,4 @@ if __name__ == '__main__':
                                                                                               target_kpi=kpi,
                                                                                               n_iter=num_iter,
                                                                                               quant_config=configuration,
-                                                                                              fw_hw_model=hardware_model)
+                                                                                              target_platform_capabilities=hardware_model)

@@ -108,14 +108,14 @@ class NetworkTest(object):
                                                                                 fw_info=DEFAULT_KERAS_INFO,
                                                                                 n_iter=self.num_calibration_iter,
                                                                                 gptq_config=arc,
-                                                                                fw_hw_model=fw_hw_model)
+                                                                                target_platform_capabilities=fw_hw_model)
         else:
             ptq_model, quantization_info = mct.keras_post_training_quantization(self.model_float,
                                                                                 representative_data_gen,
                                                                                 quant_config=qc,
                                                                                 fw_info=DEFAULT_KERAS_INFO,
                                                                                 n_iter=self.num_calibration_iter,
-                                                                                fw_hw_model=fw_hw_model)
+                                                                                target_platform_capabilities=fw_hw_model)
         self.compare(inputs_list, ptq_model, qc, fw_hw_model)
 
 

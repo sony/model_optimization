@@ -223,7 +223,7 @@ class TestGetKerasHardwareModelAPI(unittest.TestCase):
         quantized_model, _ = mct.keras_post_training_quantization(model,
                                                                   rep_data,
                                                                   n_iter=1,
-                                                                  fw_hw_model=fw_hw_model)
+                                                                  target_platform_capabilities=fw_hw_model)
 
         mp_qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
         mp_qc.num_of_images = 1
@@ -232,7 +232,7 @@ class TestGetKerasHardwareModelAPI(unittest.TestCase):
                                                                                   target_kpi=mct.KPI(np.inf),
                                                                                   n_iter=1,
                                                                                   quant_config=mp_qc,
-                                                                                  fw_hw_model=fw_hw_model)
+                                                                                  target_platform_capabilities=fw_hw_model)
 
     def test_get_keras_not_supported_model(self):
         with self.assertRaises(Exception) as e:
