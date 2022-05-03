@@ -37,23 +37,23 @@ class TargetPlatformCapabilities(ImmutableClass):
     Attach framework information to a modeled hardware.
     """
     def __init__(self,
-                 hw_model: TargetPlatformModel,
+                 tp_model: TargetPlatformModel,
                  name: str = "base"):
         """
 
         Args:
-            hw_model (TargetPlatformModel): Modeled hardware to attach framework information to.
+            tp_model (TargetPlatformModel): Modeled hardware to attach framework information to.
             name (str): Name of the TargetPlatformCapabilities.
         """
 
         super().__init__()
         self.name = name
-        assert isinstance(hw_model, TargetPlatformModel), f'Target platform model that was passed to TargetPlatformCapabilities must be of type TargetPlatformModel, but has type of {type(hw_model)}'
-        self.hw_model = hw_model
+        assert isinstance(tp_model, TargetPlatformModel), f'Target platform model that was passed to TargetPlatformCapabilities must be of type TargetPlatformModel, but has type of {type(tp_model)}'
+        self.tp_model = tp_model
         self.op_sets_to_layers = OperationsToLayers() # Init an empty OperationsToLayers
         self.layer2qco, self.filterlayer2qco = {}, {} # Init empty mappings from layers/LayerFilterParams to QC options
         # Track the unused opsets for warning purposes.
-        self.__hwm_opsets_not_used = [s.name for s in hw_model.operator_set]
+        self.__tp_model_opsets_not_used = [s.name for s in tp_model.operator_set]
         self.remove_fusing_names_from_not_used_list()
 
     def get_layers_by_opset_name(self, opset_name: str) -> List[Any]:
@@ -67,7 +67,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         Returns:
             List of layers/LayerFilterParams that are attached to the opset name.
         """
-        opset = self.hw_model.get_opset_by_name(opset_name)
+        opset = self.tp_model.get_opset_by_name(opset_name)
         if opset is None:
             Logger.warning(f'{opset_name} was not found in TargetPlatformCapabilities.')
             return None
@@ -92,7 +92,7 @@ class TargetPlatformCapabilities(ImmutableClass):
 
         """
         res = []
-        for p in self.hw_model.fusing_patterns:
+        for p in self.tp_model.fusing_patterns:
             ops = [self.get_layers_by_opset(x) for x in p.operator_groups_list]
             res.extend(itertools.product(*ops))
         return [list(x) for x in res]
@@ -105,7 +105,7 @@ class TargetPlatformCapabilities(ImmutableClass):
 
         """
         return {"Target Platform Capabilities": self.name,
-                "Target Platform Model": self.hw_model.get_info(),
+                "Target Platform Model": self.tp_model.get_info(),
                 "Operations to layers": {op2layer.name:[l.__name__ for l in op2layer.layers] for op2layer in self.op_sets_to_layers.op_sets_to_layers}}
 
     def show(self):
@@ -156,7 +156,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         to the TargetPlatformCapabilities.
 
         """
-        return self.hw_model.get_default_op_quantization_config()
+        return self.tp_model.get_default_op_quantization_config()
 
     def get_qco_by_node(self,
                         node: BaseNode) -> QuantizationConfigOptions:
@@ -177,7 +177,7 @@ class TargetPlatformCapabilities(ImmutableClass):
                 return qco
         if node.type in self.layer2qco:
             return self.layer2qco.get(node.type)
-        return self.hw_model.default_qco
+        return self.tp_model.default_qco
 
     def _get_config_options_mapping(self) -> Tuple[Dict[Any, QuantizationConfigOptions],
                                                    Dict[LayerFilterParams, QuantizationConfigOptions]]:
@@ -192,9 +192,9 @@ class TargetPlatformCapabilities(ImmutableClass):
         filterlayer2qco = {}
         for op2layers in self.op_sets_to_layers.op_sets_to_layers:
             for l in op2layers.layers:
-                qco = self.hw_model.get_config_options_by_operators_set(op2layers.name)
+                qco = self.tp_model.get_config_options_by_operators_set(op2layers.name)
                 if qco is None:
-                    qco = self.hw_model.default_qco
+                    qco = self.tp_model.default_qco
                 if isinstance(l, LayerFilterParams):
                     filterlayer2qco.update({l: qco})
                 else:
@@ -207,7 +207,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         Remove OperatorSets names from the list of the unused sets (so a warning
         will not be displayed).
         """
-        for f in self.hw_model.fusing_patterns:
+        for f in self.tp_model.fusing_patterns:
             for s in f.operator_groups_list:
                 self.remove_opset_from_not_used_list(s.name)
 
@@ -220,8 +220,8 @@ class TargetPlatformCapabilities(ImmutableClass):
             opset_to_remove: OperatorsSet name to remove.
 
         """
-        if opset_to_remove in self.__hwm_opsets_not_used:
-            self.__hwm_opsets_not_used.remove(opset_to_remove)
+        if opset_to_remove in self.__tp_model_opsets_not_used:
+            self.__tp_model_opsets_not_used.remove(opset_to_remove)
 
     def raise_warnings(self):
         """
@@ -229,7 +229,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         Log warnings regards unused opsets.
 
         """
-        for op in self.__hwm_opsets_not_used:
+        for op in self.__tp_model_opsets_not_used:
             Logger.warning(f'{op} is defined in TargetPlatformModel, but is not used in TargetPlatformCapabilities.')
 
 

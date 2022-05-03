@@ -42,7 +42,7 @@ class HardwareModelingTest(unittest.TestCase):
     def test_not_initialized_hwm(self):
         with self.assertRaises(Exception) as e:
             mct.target_platform.get_default_quantization_config_options()
-        self.assertEqual('Hardware model is not initialized.', str(e.exception))
+        self.assertEqual('Target platform model is not initialized.', str(e.exception))
 
     def test_get_default_options(self):
         with hwm.TargetPlatformModel(TEST_QCO):

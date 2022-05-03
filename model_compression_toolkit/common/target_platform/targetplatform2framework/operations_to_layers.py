@@ -122,14 +122,14 @@ class OperationsToLayers:
                                                       f'is of type {type(ops2layers)}'
 
             # Assert that opset in the current TargetPlatformCapabilities and has a unique name.
-            is_opset_in_model = _current_tpc.get().hw_model.is_opset_in_model(ops2layers.name)
+            is_opset_in_model = _current_tpc.get().tp_model.is_opset_in_model(ops2layers.name)
             assert is_opset_in_model, f'{ops2layers.name} is not defined in the target platform model that is associated with the target platform capabilities.'
             assert not (ops2layers.name in existing_opset_names), f'OperationsSetToLayers names should be unique, but {ops2layers.name} appears to violate it.'
             existing_opset_names.append(ops2layers.name)
 
             # Assert that a layer does not appear in more than a single OperatorsSet in the TargetPlatformModel.
             for layer in ops2layers.layers:
-                qco_by_opset_name = _current_tpc.get().hw_model.get_config_options_by_operators_set(ops2layers.name)
+                qco_by_opset_name = _current_tpc.get().tp_model.get_config_options_by_operators_set(ops2layers.name)
                 if layer in existing_layers:
                     raise Exception(f'Found layer {layer.__name__} in more than one '
                                     f'OperatorsSet')
