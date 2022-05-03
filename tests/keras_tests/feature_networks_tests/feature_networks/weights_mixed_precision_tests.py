@@ -17,9 +17,9 @@
 import numpy as np
 import tensorflow as tf
 
-from model_compression_toolkit.tpc_models.default_hwm import get_op_quantization_configs
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_fhw_model_keras
-from tests.common_tests.helpers.generate_test_hw_model import generate_mixed_precision_test_hw_model
+from model_compression_toolkit.tpc_models.default_tp_model import get_op_quantization_configs
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import model_compression_toolkit as mct
@@ -32,7 +32,7 @@ from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers
-hw_model = mct.target_platform
+tp = mct.target_platform
 
 
 class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
@@ -70,11 +70,11 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
 
 class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
 
-    def get_fw_hw_model(self):
+    def get_tpc(self):
         base_config, _ = get_op_quantization_configs()
-        mp_hw_model = generate_mixed_precision_test_hw_model(base_cfg=base_config,
+        mp_tp_model = generate_mixed_precision_test_tp_model(base_cfg=base_config,
                                                              mp_bitwidth_candidates_list=[(8, 8), (2, 8), (3, 8)])
-        return generate_fhw_model_keras(name="mp_test", hardware_model=mp_hw_model)
+        return generate_keras_default_tpc(name="mp_test", tp_model=mp_tp_model)
 
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
@@ -172,14 +172,14 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
         cs = cosine_similarity(y, y_hat)
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
 
-    def get_fw_hw_model(self):
+    def get_tpc(self):
         base_config, _ = get_op_quantization_configs()
         base_config = base_config.clone_and_edit(weights_n_bits=16,
                                                  activation_n_bits=16)
-        mp_hw_model = generate_mixed_precision_test_hw_model(base_cfg=base_config,
+        mp_tp_model = generate_mixed_precision_test_tp_model(base_cfg=base_config,
                                                              mp_bitwidth_candidates_list=[(8, 16), (2, 16), (4, 16),
                                                                                           (16, 16)])
-        return generate_fhw_model_keras(name="mp_dw_test", hardware_model=mp_hw_model)
+        return generate_keras_default_tpc(name="mp_dw_test", tp_model=mp_tp_model)
 
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
@@ -208,13 +208,13 @@ class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
 
         return MixedPrecisionQuantizationConfig(qc, num_of_images=1)
 
-    def get_fw_hw_model(self):
+    def get_tpc(self):
         base_config, _ = get_op_quantization_configs()
         activation_disabled_config = base_config.clone_and_edit(enable_activation_quantization=False)
 
-        mp_hw_model = generate_mixed_precision_test_hw_model(base_cfg=activation_disabled_config,
+        mp_tp_model = generate_mixed_precision_test_tp_model(base_cfg=activation_disabled_config,
                                                              mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)])
-        return generate_fhw_model_keras(name="mp_weights_only_test", hardware_model=mp_hw_model)
+        return generate_keras_default_tpc(name="mp_weights_only_test", tp_model=mp_tp_model)
 
     def get_kpi(self):
         # kpi is infinity -> should give best model - 8bits

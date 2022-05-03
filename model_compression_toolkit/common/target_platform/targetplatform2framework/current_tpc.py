@@ -29,7 +29,7 @@ class _CurrentTPC(object):
     """
     def __init__(self):
         super(_CurrentTPC, self).__init__()
-        self.fwhw_model = None
+        self.tpc = None
 
     def get(self):
         """
@@ -37,9 +37,9 @@ class _CurrentTPC(object):
         Returns: The current TargetPlatformCapabilities that is being defined.
 
         """
-        if self.fwhw_model is None:
+        if self.tpc is None:
             raise Exception('TargetPlatformCapabilities is not initialized.')
-        return self.fwhw_model
+        return self.tpc
 
     def reset(self):
         """
@@ -48,17 +48,18 @@ class _CurrentTPC(object):
         used as the current TargetPlatformCapabilities object.
 
         """
-        self.fwhw_model = None
+        self.tpc = None
 
-    def set(self, fwhw_model):
+    def set(self, target_platform_capabilities):
         """
         Set and wrap a TargetPlatformCapabilities as the current TargetPlatformCapabilities.
 
         Args:
-            fwhw_model: TargetPlatformCapabilities to set as the current TargetPlatformCapabilities to access and use.
+            target_platform_capabilities: TargetPlatformCapabilities to set as the current TargetPlatformCapabilities
+            to access and use.
 
         """
-        self.fwhw_model = fwhw_model
+        self.tpc = target_platform_capabilities
 
 
 # Use a single instance for the current model.

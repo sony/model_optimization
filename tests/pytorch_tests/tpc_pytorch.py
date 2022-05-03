@@ -24,17 +24,17 @@ from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh
 
 from model_compression_toolkit.common.target_platform.targetplatform2framework import LayerFilterParams
-from model_compression_toolkit.tpc_models.pytorch_hardware_model.pytorch_default import generate_fhw_model_pytorch
+from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_default import generate_pytorch_tpc
 from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder
 
-hwm = mct.target_platform
+tp = mct.target_platform
 
 
-def generate_activation_mp_fhw_model_pytorch(hardware_model, name="activation_mp_pytorch_hwm"):
-    fhwm_torch = hwm.TargetPlatformCapabilities(hardware_model,
-                                                name=name)
-    with fhwm_torch:
-        hwm.OperationsSetToLayers("NoQuantization", [Dropout,
+def generate_activation_mp_tpc_pytorch(tp_model, name="activation_mp_pytorch_tp"):
+    ftp_torch = tp.TargetPlatformCapabilities(tp_model,
+                                              name=name)
+    with ftp_torch:
+        tp.OperationsSetToLayers("NoQuantization", [Dropout,
                                                      Flatten,
                                                      dropout,
                                                      flatten,
@@ -45,11 +45,11 @@ def generate_activation_mp_fhw_model_pytorch(hardware_model, name="activation_mp
                                                      BatchNorm2d,
                                                      torch.Tensor.size])
 
-        hwm.OperationsSetToLayers("Weights_n_Activation", [Conv2d,
+        tp.OperationsSetToLayers("Weights_n_Activation", [Conv2d,
                                                            Linear,
                                                            ConvTranspose2d])
 
-        hwm.OperationsSetToLayers("Activation", [torch.relu,
+        tp.OperationsSetToLayers("Activation", [torch.relu,
                                                  ReLU,
                                                  ReLU6,
                                                  relu,
@@ -68,11 +68,11 @@ def generate_activation_mp_fhw_model_pytorch(hardware_model, name="activation_mp
                                                  tanh,
                                                  DummyPlaceHolder])
 
-    return fhwm_torch
+    return ftp_torch
 
 
-def get_pytorch_test_fw_hw_model_dict(hardware_model, test_name, fhwm_name):
+def get_pytorch_test_tpc_dict(tp_model, test_name, ftp_name):
     return {
-        test_name: generate_fhw_model_pytorch(name=fhwm_name,
-                                              hardware_model=hardware_model),
+        test_name: generate_pytorch_tpc(name=ftp_name,
+                                        tp_model=tp_model),
     }

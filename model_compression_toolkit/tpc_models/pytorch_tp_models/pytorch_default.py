@@ -27,28 +27,28 @@ from model_compression_toolkit.common.target_platform.targetplatform2framework i
     TargetPlatformCapabilities, LayerFilterParams
 from model_compression_toolkit.common.target_platform.targetplatform2framework import \
     OperationsSetToLayers
-from model_compression_toolkit.tpc_models.default_hwm import get_default_tp_model
+from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
 
 
-def get_default_hwm_pytorch():
-    default_hwm = get_default_tp_model()
-    return generate_fhw_model_pytorch(name='default_hwm_pytorch',
-                                      hardware_model=default_hwm)
+def get_default_pytorch_tpc():
+    default_tp_model = get_default_tp_model()
+    return generate_pytorch_tpc(name='default_pytorch_tpc',
+                                tp_model=default_tp_model)
 
 
-def generate_fhw_model_pytorch(name: str, hardware_model: TargetPlatformModel):
+def generate_pytorch_tpc(name: str, tp_model: TargetPlatformModel):
     """
     Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
     Args:
-        name: Name of the framework hardware model.
-        hardware_model: TargetPlatformModel object.
+        name: Name of the TargetPlatformModel.
+        tp_model: TargetPlatformModel object.
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
-    fhwm_pytorch = TargetPlatformCapabilities(hardware_model,
+    pytorch_tpc = TargetPlatformCapabilities(tp_model,
                                               name=name)
 
-    with fhwm_pytorch:
+    with pytorch_tpc:
         OperationsSetToLayers("NoQuantization", [Dropout,
                                                  Flatten,
                                                  dropout,
@@ -90,4 +90,4 @@ def generate_fhw_model_pytorch(name: str, hardware_model: TargetPlatformModel):
         OperationsSetToLayers("Tanh", [Tanh,
                                        tanh])
 
-    return fhwm_pytorch
+    return pytorch_tpc

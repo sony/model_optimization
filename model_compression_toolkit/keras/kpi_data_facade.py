@@ -23,7 +23,7 @@ from model_compression_toolkit.common.mixed_precision.kpi_data import compute_kp
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
-from model_compression_toolkit.keras.constants import DEFAULT_HWM
+from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL
 
 import importlib
 
@@ -34,16 +34,16 @@ if importlib.util.find_spec("tensorflow") is not None\
     from model_compression_toolkit.keras.keras_implementation import KerasImplementation
     from tensorflow.keras.models import Model
 
-    from model_compression_toolkit import get_model
+    from model_compression_toolkit import get_target_platform_capabilities
 
-    KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_HWM)
+    KERAS_DEFAULT_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
     def keras_kpi_data(in_model: Model,
                        representative_data_gen: Callable,
                        quant_config: MixedPrecisionQuantizationConfig = DEFAULT_MIXEDPRECISION_CONFIG,
                        fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                       fw_hw_model: TargetPlatformCapabilities = KERAS_DEFAULT_MODEL) -> KPI:
+                       target_platform_capabilities: TargetPlatformCapabilities = KERAS_DEFAULT_TPC) -> KPI:
         """
         Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
         Builds the computation graph from the given model and hw modeling, and uses it to compute the KPI data.
@@ -51,9 +51,16 @@ if importlib.util.find_spec("tensorflow") is not None\
         Args:
             in_model (Model): Keras model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
-            quant_config (MixedPrecisionQuantizationConfig): MixedPrecisionQuantizationConfig containing parameters of how the model should be quantized.
-            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/keras/default_framework_info.py#L113>`_
-            fw_hw_model (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to. `Default Keras info <https://github.com/sony/model_optimization/blob/9513796726e72ebdb5b075f5014eb8feae47f3ae/model_compression_toolkit/hardware_models/keras_hardware_model/keras_default.py#L39>`_
+            quant_config (MixedPrecisionQuantizationConfig): MixedPrecisionQuantizationConfig containing parameters
+            of how the model should be quantized.
+            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
+            kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info
+            <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10
+            /model_compression_toolkit/keras/default_framework_info.py#L113>`_
+            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the
+            Keras model according to. `Default Keras info
+            <https://github.com/sony/model_optimization/blob/9513796726e72ebdb5b075f5014eb8feae47f3ae
+            /model_compression_toolkit/hardware_models/keras_hardware_model/keras_default.py#L39>`_
 
         Returns:
             A KPI object with total weights parameters sum and max activation tensor.
@@ -84,7 +91,7 @@ if importlib.util.find_spec("tensorflow") is not None\
         return compute_kpi_data(in_model,
                                 representative_data_gen,
                                 quant_config,
-                                fw_hw_model,
+                                target_platform_capabilities,
                                 fw_info,
                                 fw_impl)
 

@@ -56,7 +56,7 @@ CPU = 'cpu'
 # ReLU bound constants
 RELU_POT_BOUND = 8.0
 
-# Supported HW models names for Pytorch:
-DEFAULT_HWM = 'default'
-TFLITE_HWM = 'tflite'
-QNNPACK_HWM = 'qnnpack'
+# Supported TP models names for Pytorch:
+DEFAULT_TP_MODEL = 'default'
+TFLITE_TP_MODEL = 'tflite'
+QNNPACK_TP_MODEL = 'qnnpack'

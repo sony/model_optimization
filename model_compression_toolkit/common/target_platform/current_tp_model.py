@@ -13,13 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 
-def get_current_model():
+def get_current_tp_model():
     """
 
-    Returns: The current HardwaeModel that is being used and accessed.
+    Returns: The current TargetPlatformModel that is being used and accessed.
 
     """
-    return _current_hardware_model.get()
+    return _current_tp_model.get()
 
 
 class CurrentTPModel:
@@ -29,7 +29,7 @@ class CurrentTPModel:
 
     def __init__(self):
         super(CurrentTPModel, self).__init__()
-        self.hwm = None
+        self.tp_model = None
 
     def get(self):
         """
@@ -37,9 +37,9 @@ class CurrentTPModel:
         Returns: The current TargetPlatformModel that is being defined.
 
         """
-        if self.hwm is None:
-            raise Exception('Hardware model is not initialized.')
-        return self.hwm
+        if self.tp_model is None:
+            raise Exception('Target platform model is not initialized.')
+        return self.tp_model
 
     def reset(self):
         """
@@ -48,18 +48,18 @@ class CurrentTPModel:
         used as the current TargetPlatformModel object.
 
         """
-        self.hwm = None
+        self.tp_model = None
 
-    def set(self, hwm):
+    def set(self, tp_model):
         """
         Set and wrap a TargetPlatformModel as the current TargetPlatformModel.
 
         Args:
-            hwm: TargetPlatformModel to set as the current TargetPlatformModel to access and use.
+            tp_model: TargetPlatformModel to set as the current TargetPlatformModel to access and use.
 
         """
-        self.hwm = hwm
+        self.tp_model = tp_model
 
 
 # Use a single instance for the current model.
-_current_hardware_model = CurrentTPModel()
+_current_tp_model = CurrentTPModel()

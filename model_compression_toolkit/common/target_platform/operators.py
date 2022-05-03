@@ -15,7 +15,7 @@
 from typing import Dict, Any
 
 from model_compression_toolkit.common.target_platform.target_platform_model_component import TargetPlatformModelComponent
-from model_compression_toolkit.common.target_platform.current_tp_model import _current_hardware_model
+from model_compression_toolkit.common.target_platform.current_tp_model import _current_tp_model
 from model_compression_toolkit.common.target_platform.op_quantization_config import QuantizationConfigOptions
 
 
@@ -47,7 +47,7 @@ class OperatorsSet(OperatorsSetBase):
         super().__init__(name)
         self.qc_options = qc_options
         is_fusing_set = qc_options is None
-        self.is_default = _current_hardware_model.get().default_qco == self.qc_options or is_fusing_set
+        self.is_default = _current_tp_model.get().default_qco == self.qc_options or is_fusing_set
 
 
     def get_info(self) -> Dict[str,Any]:

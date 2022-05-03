@@ -14,10 +14,10 @@
 # ==============================================================================
 import model_compression_toolkit as mct
 
-hwm = mct.target_platform
+tp = mct.target_platform
 
 
-def generate_hw_model_with_activation_mp(base_cfg, mp_bitwidth_candidates_list, name="activation_mp_model"):
+def generate_tp_model_with_activation_mp(base_cfg, mp_bitwidth_candidates_list, name="activation_mp_model"):
 
     # prepare mp candidates
     mixed_precision_cfg_list = []
@@ -27,20 +27,20 @@ def generate_hw_model_with_activation_mp(base_cfg, mp_bitwidth_candidates_list, 
         mixed_precision_cfg_list.append(candidate_cfg)
 
     # set hw model
-    default_configuration_options = hwm.QuantizationConfigOptions([base_cfg])
+    default_configuration_options = tp.QuantizationConfigOptions([base_cfg])
 
-    generated_hwm = hwm.TargetPlatformModel(default_configuration_options, name=name)
+    generated_tp = tp.TargetPlatformModel(default_configuration_options, name=name)
 
-    with generated_hwm:
-        hwm.OperatorsSet("NoQuantization",
-                         hwm.get_default_quantization_config_options().clone_and_edit(
+    with generated_tp:
+        tp.OperatorsSet("NoQuantization",
+                         tp.get_default_quantization_config_options().clone_and_edit(
                              enable_weights_quantization=False,
                              enable_activation_quantization=False))
 
-        mixed_precision_configuration_options = hwm.QuantizationConfigOptions(mixed_precision_cfg_list,
+        mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,
                                                                               base_config=base_cfg)
 
-        hwm.OperatorsSet("Weights_n_Activation", mixed_precision_configuration_options)
-        hwm.OperatorsSet("Activation", mixed_precision_configuration_options)
+        tp.OperatorsSet("Weights_n_Activation", mixed_precision_configuration_options)
+        tp.OperatorsSet("Activation", mixed_precision_configuration_options)
 
-    return generated_hwm
+    return generated_tp

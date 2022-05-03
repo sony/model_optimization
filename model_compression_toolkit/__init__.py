@@ -20,7 +20,7 @@ from model_compression_toolkit.common.mixed_precision import mixed_precision_qua
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig, \
     QuantizationErrorMethod, DEFAULTCONFIG
 from model_compression_toolkit.common import target_platform
-from model_compression_toolkit.tpc_models.get_model import get_model
+from model_compression_toolkit.tpc_models.get_target_platform_capabilities import get_target_platform_capabilities
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.logger import set_log_folder

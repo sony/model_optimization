@@ -22,12 +22,12 @@ import keras
 import unittest
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, SeparableConv2D
 
-from model_compression_toolkit.hardware_models.default_hwm import get_op_quantization_configs
+from model_compression_toolkit.tpc_models.default_tp_model import get_op_quantization_configs
 from model_compression_toolkit.keras.constants import DEPTHWISE_KERNEL, KERNEL
 from model_compression_toolkit.keras.graph_substitutions.substitutions.separableconv_decomposition import \
     POINTWISE_KERNEL
-from tests.common_tests.helpers.activation_mp_hw_model import generate_hw_model_with_activation_mp
-from tests.keras_tests.fw_hw_model_keras import generate_activation_mp_fhw_model_keras
+from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
+from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
 
 
 def small_random_datagen():
@@ -83,14 +83,14 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
     base_config, mixed_precision_cfg_list = get_op_quantization_configs()
     base_config = base_config.clone_and_edit(weights_n_bits=mp_bitwidth_candidates_list[0][0],
                                              activation_n_bits=mp_bitwidth_candidates_list[0][1])
-    hw_model = generate_hw_model_with_activation_mp(
+    tp_model = generate_tp_model_with_activation_mp(
         base_cfg=base_config,
         mp_bitwidth_candidates_list=mp_bitwidth_candidates_list)
-    fw_hw_model = generate_activation_mp_fhw_model_keras(hardware_model=hw_model, name="kpi_data_test")
+    tpc = generate_activation_mp_tpc_keras(tp_model=tp_model, name="kpi_data_test")
 
     kpi_data = mct.keras_kpi_data(in_model=model,
                                   representative_data_gen=random_datagen,
-                                  fw_hw_model=fw_hw_model)
+                                  target_platform_capabilities=tpc)
 
     return kpi_data
 

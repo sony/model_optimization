@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 import unittest
 import numpy as np
@@ -20,7 +20,7 @@ import model_compression_toolkit as mct
 import tensorflow as tf
 from tensorflow.keras import layers
 import itertools
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 
 def model_gen():
@@ -55,11 +55,11 @@ class TestQuantizationConfigurations(unittest.TestCase):
         model = model_gen()
         for quantize_method, error_method, per_channel in weights_test_combinations:
 
-            hwm = generate_test_hw_model({
+            tp_model = generate_test_tp_model({
                 'weights_quantization_method': quantize_method,
                 'weights_n_bits': 8,
                 'activation_n_bits': 8})
-            fw_hw_model = generate_fhw_model_keras(name="kl_quant_config_weights_test", hardware_model=hwm)
+            tpc = generate_keras_default_tpc(name="kl_quant_config_weights_test", tp_model=tp_model)
 
             qc = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
                                         weights_error_method=error_method,
@@ -73,16 +73,16 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                                                               n_iter=1,
                                                                               quant_config=qc,
                                                                               fw_info=DEFAULT_KERAS_INFO,
-                                                                              fw_hw_model=fw_hw_model)
+                                                                              target_platform_capabilities=tpc)
 
         model = model_gen()
         for quantize_method, error_method, relu_bound_to_power_of_2 in activation_test_combinations:
-            hwm = generate_test_hw_model({
+            tp = generate_test_tp_model({
                 'activation_quantization_method': quantize_method,
                 'weights_n_bits': 8,
                 'activation_n_bits': 8,
                 'enable_weights_quantization': False})
-            fw_hw_model = generate_fhw_model_keras(name="kl_quant_config_activation_test", hardware_model=hwm)
+            tpc = generate_keras_default_tpc(name="kl_quant_config_activation_test", tp_model=tp)
 
             qc = mct.QuantizationConfig(activation_error_method=error_method,
                                         relu_bound_to_power_of_2=relu_bound_to_power_of_2,
@@ -93,7 +93,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                                                               n_iter=1,
                                                                               quant_config=qc,
                                                                               fw_info=DEFAULT_KERAS_INFO,
-                                                                              fw_hw_model=fw_hw_model)
+                                                                              target_platform_capabilities=tpc)
 
 
 if __name__ == '__main__':

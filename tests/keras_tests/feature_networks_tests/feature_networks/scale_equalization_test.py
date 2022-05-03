@@ -21,7 +21,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.common.substitutions.scale_equalization import fixed_second_moment_after_relu, \
     fixed_mean_after_relu
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
-from tests.keras_tests.fw_hw_model_keras import get_16bit_fw_hw_model
+from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
@@ -48,8 +48,8 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test,
                          input_shape=(16, 16, 3))
 
-    def get_fw_hw_model(self):
-        return get_16bit_fw_hw_model("scale_equalization_bound_test")
+    def get_tpc(self):
+        return get_16bit_tpc("scale_equalization_bound_test")
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,

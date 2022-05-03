@@ -21,8 +21,8 @@ from model_compression_toolkit.common.network_editors.actions import EditRule, C
 import model_compression_toolkit as cmo
 import tensorflow as tf
 
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_fhw_model_keras
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 
@@ -60,11 +60,11 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
         self.conv_w = weight_fn(self.kernel, self.num_conv_channels, self.num_conv_channels)
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
-    def get_fw_hw_model(self):
-        hwm = generate_test_hw_model({'weights_quantization_method': self.quantization_method,
+    def get_tpc(self):
+        tp = generate_test_tp_model({'weights_quantization_method': self.quantization_method,
                                       'weights_n_bits': self.weights_n_bits,
                                       'activation_n_bits': 4})
-        return generate_fhw_model_keras(name="kmean_quantizer_test", hardware_model=hwm)
+        return generate_keras_default_tpc(name="kmean_quantizer_test", tp_model=tp)
 
     def get_quantization_config(self):
         return cmo.QuantizationConfig(cmo.QuantizationErrorMethod.MSE,
