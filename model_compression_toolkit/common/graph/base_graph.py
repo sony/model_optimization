@@ -607,3 +607,11 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             f"A minimal config candidate must be defined, but some node have multiple potential minimal candidates"
 
         return [lst[0] for lst in min_cfg_candidates]
+
+    def get_final_weights_config(self):
+        sorted_conf_weights = self.get_sorted_weights_configurable_nodes()
+        return [(n.type, n.final_weights_quantization_cfg.weights_n_bits) for n in sorted_conf_weights]
+
+    def get_final_activation_config(self):
+        sorted_conf_activation = self.get_sorted_activation_configurable_nodes()
+        return [(n.type, n.final_activation_quantization_cfg.activation_n_bits) for n in sorted_conf_activation]
