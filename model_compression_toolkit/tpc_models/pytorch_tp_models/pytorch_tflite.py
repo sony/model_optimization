@@ -25,8 +25,8 @@ import operator
 
 
 def get_pytorch_tflite_model():
-    tflite_hm = get_tflite_tp_model()
-    tflite_torch = TargetPlatformCapabilities(tflite_hm, name='tflite_torch')
+    tflite_tp_model = get_tflite_tp_model()
+    tflite_torch = TargetPlatformCapabilities(tflite_tp_model, name='tflite_torch')
 
     with tflite_torch:
         OperationsSetToLayers("PreserveQuantizationParams", [AvgPool2d,

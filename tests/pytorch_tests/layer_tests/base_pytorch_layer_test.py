@@ -32,7 +32,7 @@ from torch.nn import Module
 from model_compression_toolkit import FrameworkInfo, pytorch_post_training_quantization
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
-from model_compression_toolkit.tpc_models.pytorch_hardware_model.pytorch_default import generate_fhw_model_pytorch
+from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_default import generate_pytorch_tpc
 from model_compression_toolkit.pytorch.constants import CALL_FUNCTION, OUTPUT, CALL_METHOD, PLACEHOLDER
 from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder, ConstantHolder
 from model_compression_toolkit.pytorch.utils import torch_tensor_to_numpy, to_torch_tensor
@@ -138,11 +138,11 @@ class BasePytorchLayerTest(BaseLayerTest):
             # Disable all features that are enabled by default:
             hwm = generate_test_hw_model({'enable_weights_quantization': False,
                                           'enable_activation_quantization': False})
-            return generate_fhw_model_pytorch(name="base_layer_test", hardware_model=hwm)
+            return generate_pytorch_tpc(name="base_layer_test", tp_model=hwm)
         elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
             hwm = generate_test_hw_model({'weights_n_bits': 8,
                                           'activation_n_bits': 8})
-            return generate_fhw_model_pytorch(name="8bit_layer_test", hardware_model=hwm)
+            return generate_pytorch_tpc(name="8bit_layer_test", tp_model=hwm)
         else:
             raise NotImplemented
 

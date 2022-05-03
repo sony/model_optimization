@@ -26,8 +26,8 @@ from model_compression_toolkit.tpc_models.qnnpack import get_qnnpack_model
 
 
 def get_qnnpack_pytorch():
-    qnnpackhm = get_qnnpack_model()
-    qnnpack_pytorch = TargetPlatformCapabilities(qnnpackhm,
+    qnnpack_tp_model = get_qnnpack_model()
+    qnnpack_pytorch = TargetPlatformCapabilities(qnnpack_tp_model,
                                                  name='qnnpack_pytorch')
 
     with qnnpack_pytorch:

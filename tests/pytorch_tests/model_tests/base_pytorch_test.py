@@ -17,7 +17,7 @@ from torch.fx import symbolic_trace
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, get_target_platform_capabilities
 from model_compression_toolkit.common.constants import PYTORCH
-from model_compression_toolkit.tpc_models.pytorch_hardware_model.pytorch_default import generate_fhw_model_pytorch
+from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_default import generate_pytorch_tpc
 from model_compression_toolkit.pytorch.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.utils import get_working_device, set_model, to_torch_tensor, \
@@ -39,24 +39,24 @@ class BasePytorchTest(BaseFeatureNetworkTest):
 
     def get_fw_hw_model(self):
         return {
-            'no_quantization': generate_fhw_model_pytorch(name="no_quant_pytorch_test",
-                                                          hardware_model=generate_test_hw_model({'weights_n_bits': 32,
+            'no_quantization': generate_pytorch_tpc(name="no_quant_pytorch_test",
+                                                    tp_model=generate_test_hw_model({'weights_n_bits': 32,
                                                                                                  'activation_n_bits': 32,
                                                                                                  'enable_weights_quantization': False,
                                                                                                  'enable_activation_quantization': False
-                                                                                                 })),
-            'all_32bit': generate_fhw_model_pytorch(name="32_quant_pytorch_test",
-                                                    hardware_model=generate_test_hw_model({'weights_n_bits': 32,
+                                                                                     })),
+            'all_32bit': generate_pytorch_tpc(name="32_quant_pytorch_test",
+                                              tp_model=generate_test_hw_model({'weights_n_bits': 32,
                                                                                            'activation_n_bits': 32,
                                                                                            'enable_weights_quantization': True,
                                                                                            'enable_activation_quantization': True
-                                                                                           })),
-            'all_4bit': generate_fhw_model_pytorch(name="4_quant_pytorch_test",
-                                                   hardware_model=generate_test_hw_model({'weights_n_bits': 4,
+                                                                               })),
+            'all_4bit': generate_pytorch_tpc(name="4_quant_pytorch_test",
+                                             tp_model=generate_test_hw_model({'weights_n_bits': 4,
                                                                                           'activation_n_bits': 4,
                                                                                           'enable_weights_quantization': True,
                                                                                           'enable_activation_quantization': True
-                                                                                          })),
+                                                                              })),
         }
 
     # TODO: We can remove this method and refactor Pytorch tests to run only over

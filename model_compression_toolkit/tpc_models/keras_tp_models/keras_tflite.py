@@ -31,8 +31,8 @@ from model_compression_toolkit.tpc_models.tflite import get_tflite_tp_model
 
 
 def get_keras_tp_model_tflite():
-    tflite_hm = get_tflite_tp_model()
-    tflite_keras = TargetPlatformCapabilities(tflite_hm, name='tflite_keras')
+    tflite_tp_model = get_tflite_tp_model()
+    tflite_keras = TargetPlatformCapabilities(tflite_tp_model, name='tflite_keras')
 
     with tflite_keras:
         OperationsSetToLayers("PreserveQuantizationParams", [AveragePooling2D,

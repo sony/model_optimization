@@ -48,7 +48,7 @@ def get_tflite_tp_model():
     tflite_model = tpc.TargetPlatformModel(default_configuration_options, name='tflite')
 
     # To start defining the model's components (such as operator sets, and fusing patterns),
-    # use 'with' the hardware model instance, and create them as below:
+    # use 'with' the target platform model instance, and create them as below:
     with tflite_model:
         # In TFLite, the quantized operator specifications constraint operators quantization
         # differently. For more details:

@@ -22,9 +22,9 @@ tpc = mct.target_platform
 
 def get_default_tp_model() -> TargetPlatformModel:
     """
-    A method that generates a default hardware model, with base 8-bit quantization configuration and 8, 4, 2
+    A method that generates a default target platform model, with base 8-bit quantization configuration and 8, 4, 2
     bits configuration list for mixed-precision quantization.
-    NOTE: in order to generate a hardware model with different configurations but with the same Operators Sets
+    NOTE: in order to generate a target platform model with different configurations but with the same Operators Sets
     (for tests, experiments, etc.), use this method implementation as a test-case, i.e., override the
     'get_op_quantization_configs' method and use its output to call 'generate_tp_model' with your configurations.
 
@@ -86,7 +86,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     Args
         default_config: A default OpQuantizationConfig to set as the TP model default configuration.
         base_config: An OpQuantizationConfig to set as the TargetPlatformModel base configuration for mixed-precision purposes only.
-        mixed_precision_cfg_list: A list of OpQuantizationConfig to be used as the hardware model mixed-precision
+        mixed_precision_cfg_list: A list of OpQuantizationConfig to be used as the TP model mixed-precision
             quantization configuration options.
         name: The name of the TargetPlatformModel.
 
