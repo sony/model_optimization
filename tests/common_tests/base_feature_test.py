@@ -60,7 +60,7 @@ class BaseFeatureNetworkTest(BaseTest):
                                                                                      network_editor=self.get_network_editor(),
                                                                                      gptq_config=self.get_gptq_config(),
                                                                                      target_kpi=self.get_kpi(),
-                                                                                     target_platform_capabilities=self.get_fw_hw_model())
+                                                                                     target_platform_capabilities=self.get_tpc())
             else:
                 ptq_model, quantization_info = self.get_ptq_facade()(model_float,
                                                                      self.representative_data_gen,
@@ -69,7 +69,7 @@ class BaseFeatureNetworkTest(BaseTest):
                                                                      fw_info=self.get_fw_info(),
                                                                      network_editor=self.get_network_editor(),
                                                                      gptq_config=self.get_gptq_config(),
-                                                                     target_platform_capabilities=self.get_fw_hw_model())
+                                                                     target_platform_capabilities=self.get_tpc())
 
             self.compare(ptq_model,
                          model_float,

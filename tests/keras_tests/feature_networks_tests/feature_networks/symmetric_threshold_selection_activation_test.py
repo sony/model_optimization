@@ -18,11 +18,11 @@ import tensorflow as tf
 import numpy as np
 
 from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as cmo
 
-hw_model = cmo.target_platform
+tp = cmo.target_platform
 keras = tf.keras
 layers = keras.layers
 
@@ -35,11 +35,11 @@ class SymmetricThresholdSelectionActivationTest(BaseKerasFeatureNetworkTest):
     def generate_inputs(self):
         return [np.random.uniform(low=-7, high=7, size=in_shape) for in_shape in self.get_input_shapes()]
 
-    def get_fw_hw_model(self):
-        hwm = generate_test_hw_model({
-            'activation_quantization_method': hw_model.QuantizationMethod.SYMMETRIC,
+    def get_tpc(self):
+        tp = generate_test_tp_model({
+            'activation_quantization_method': tp.QuantizationMethod.SYMMETRIC,
             'activation_n_bits': 8})
-        return generate_keras_default_tpc(name="symmetric_threshold_test", tp_model=hwm)
+        return generate_keras_default_tpc(name="symmetric_threshold_test", tp_model=tp)
 
     def get_quantization_config(self):
         return cmo.QuantizationConfig(activation_error_method=self.activation_threshold_method)

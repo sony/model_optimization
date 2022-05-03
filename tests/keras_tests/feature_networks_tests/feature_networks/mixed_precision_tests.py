@@ -16,7 +16,7 @@
 
 import numpy as np
 import tensorflow as tf
-from tests.common_tests.helpers.activation_mp_hw_model import generate_hw_model_with_activation_mp
+from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from keras import backend as K
 
@@ -26,17 +26,17 @@ from model_compression_toolkit.common.mixed_precision.mixed_precision_quantizati
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.user_info import UserInformation
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
-from tests.keras_tests.fw_hw_model_keras import generate_activation_mp_fhw_model_keras
+from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
 
 keras = tf.keras
 layers = keras.layers
-hw_model = mct.target_platform
+tp = mct.target_platform
 
 
 def get_base_eight_bits_config_op():
-    return hw_model.OpQuantizationConfig(
-            activation_quantization_method=hw_model.QuantizationMethod.POWER_OF_TWO,
-            weights_quantization_method=hw_model.QuantizationMethod.POWER_OF_TWO,
+    return tp.OpQuantizationConfig(
+            activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+            weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
             activation_n_bits=8,
             weights_n_bits=8,
             weights_per_channel_threshold=True,
@@ -62,14 +62,14 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
 
         self.activation_layers_idx = activation_layers_idx
 
-    def get_fw_hw_model(self):
+    def get_tpc(self):
         eight_bits = get_base_eight_bits_config_op()
 
         # sets all combinations of 2, 4, 8 bits for weights and activations
         mixed_precision_candidates_list = get_base_mp_nbits_candidates()
 
-        hwm = generate_hw_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_hwm')
-        return generate_activation_mp_fhw_model_keras(name="mixed_precision_activation_test", hardware_model=hwm)
+        tp = generate_tp_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_tp')
+        return generate_activation_mp_tpc_keras(name="mixed_precision_activation_test", tp_model=tp)
 
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
@@ -147,13 +147,13 @@ class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBase
         # kpi is for 4 bits on average
         return KPI(weights_memory=2544000 * 4 / 8, activation_memory=1211800 * 4 / 8)
 
-    def get_fw_hw_model(self):
+    def get_tpc(self):
         eight_bits = get_base_eight_bits_config_op()
         # set only 8 and 4 bit candidates for test, to verify that all layers get exactly 4 bits
         mixed_precision_candidates_list = [(8, 8), (8, 4), (4, 8), (4, 4)]
 
-        hwm = generate_hw_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_hwm')
-        return generate_activation_mp_fhw_model_keras(name="mixed_precision_4bit_test", hardware_model=hwm)
+        tp = generate_tp_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_tp')
+        return generate_activation_mp_tpc_keras(name="mixed_precision_4bit_test", tp_model=tp)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
@@ -225,13 +225,13 @@ class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest
         # return KPI(np.inf, np.inf)
         return KPI(2700.0 * 4 / 8, 289743.0 * 4 / 8)
 
-    def get_fw_hw_model(self):
+    def get_tpc(self):
         eight_bits = get_base_eight_bits_config_op()
         # set only 8 and 4 bit candidates for test, to verify that all layers get exactly 4 bits
         mixed_precision_candidates_list = [(8, 8), (8, 4), (4, 8), (4, 4)]
 
-        hwm = generate_hw_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_hwm')
-        return generate_activation_mp_fhw_model_keras(name="mixed_precision_depthwise_4bit_test", hardware_model=hwm)
+        tp = generate_tp_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_tp')
+        return generate_activation_mp_tpc_keras(name="mixed_precision_depthwise_4bit_test", tp_model=tp)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -292,12 +292,12 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
         model = keras.Model(inputs=inputs, outputs=outputs)
         return model
 
-    def get_fw_hw_model(self):
+    def get_tpc(self):
         eight_bits = get_base_eight_bits_config_op()
         mixed_precision_candidates_list = [(8, 8), (8, 4), (8, 2)]
 
-        hwm = generate_hw_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_hwm')
-        return generate_activation_mp_fhw_model_keras(name="mixed_precision_activation_weights_disabled_test", hardware_model=hwm)
+        tp = generate_tp_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_tp')
+        return generate_activation_mp_tpc_keras(name="mixed_precision_activation_weights_disabled_test", tp_model=tp)
 
     def get_kpi(self):
         # kpi is infinity -> should give best model - 8bits on all layers for both weights and activations
@@ -328,14 +328,14 @@ class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBa
         model = keras.Model(inputs=inputs, outputs=outputs)
         return model
 
-    def get_fw_hw_model(self):
+    def get_tpc(self):
         eight_bits = get_base_eight_bits_config_op()
         weights_disabled_config = eight_bits.clone_and_edit(enable_weights_quantization=False)
 
         mixed_precision_candidates_list = [(8, 8), (8, 4), (8, 2)]
 
-        hwm = generate_hw_model_with_activation_mp(weights_disabled_config, mixed_precision_candidates_list, name='mp_default_hwm')
-        return generate_activation_mp_fhw_model_keras(name="mixed_precision_activation_weights_disabled_test", hardware_model=hwm)
+        tp = generate_tp_model_with_activation_mp(weights_disabled_config, mixed_precision_candidates_list, name='mp_default_tp')
+        return generate_activation_mp_tpc_keras(name="mixed_precision_activation_weights_disabled_test", tp_model=tp)
 
     def get_kpi(self):
         # kpi is infinity -> should give best model - 8bits on all layers for both weights and activations

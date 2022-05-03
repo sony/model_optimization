@@ -37,7 +37,7 @@ class BaseKerasFeatureNetworkTest(BaseFeatureNetworkTest):
                          num_of_inputs=num_of_inputs,
                          input_shape=input_shape)
 
-    def get_fw_hw_model(self):
+    def get_tpc(self):
         return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def get_ptq_facade(self):

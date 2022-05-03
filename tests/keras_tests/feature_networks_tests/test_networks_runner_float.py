@@ -56,11 +56,11 @@ class NetworkTest(object):
         fw_impl = KerasImplementation()
         fw_info = DEFAULT_KERAS_INFO
 
-        keras_default_hw_model = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
+        keras_default_tpc = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
         graph = model_reader(self.model_float)  # model reading
         graph.set_fw_info(DEFAULT_KERAS_INFO)
-        graph.set_fw_hw_model(keras_default_hw_model)
+        graph.set_fw_hw_model(keras_default_tpc)
         graph = set_quantization_configuration_to_graph(graph,
                                                         copy.deepcopy(DEFAULTCONFIG))
         ptq_model, _ = model_builder(graph,

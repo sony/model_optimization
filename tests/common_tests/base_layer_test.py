@@ -45,7 +45,7 @@ class BaseLayerTest(BaseTest):
     def get_layers(self):
         return self.layers
 
-    def get_fw_hw_model(self):
+    def get_tpc(self):
         raise NotImplemented
 
     def get_quantization_config(self):
@@ -73,14 +73,14 @@ class BaseLayerTest(BaseTest):
                                                                                          n_iter=self.num_calibration_iter,
                                                                                          quant_config=qc,
                                                                                          fw_info=self.get_fw_info(),
-                                                                                         target_platform_capabilities=self.get_fw_hw_model())
+                                                                                         target_platform_capabilities=self.get_tpc())
                 else:
                     ptq_model, quantization_info = self.get_ptq_facade()(model_float,
                                                                          self.representative_data_gen,
                                                                          n_iter=self.num_calibration_iter,
                                                                          quant_config=qc,
                                                                          fw_info=self.get_fw_info(),
-                                                                         target_platform_capabilities=self.get_fw_hw_model())
+                                                                         target_platform_capabilities=self.get_tpc())
 
                 self.compare(ptq_model, model_float, input_x=self.representative_data_gen(),
                              quantization_info=quantization_info)

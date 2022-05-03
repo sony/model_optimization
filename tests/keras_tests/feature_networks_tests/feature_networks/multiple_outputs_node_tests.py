@@ -21,7 +21,7 @@ import tensorflow as tf
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
-from tests.keras_tests.fw_hw_model_keras import get_quantization_disabled_keras_hw_model
+from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 
 keras = tf.keras
 layers = keras.layers
@@ -31,8 +31,8 @@ class MultipleOutputsNodeTests(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_fw_hw_model(self):
-        return get_quantization_disabled_keras_hw_model("multiple_outputs_test")
+    def get_tpc(self):
+        return get_quantization_disabled_keras_tpc("multiple_outputs_test")
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

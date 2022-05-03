@@ -21,8 +21,8 @@ from torch.nn import Conv2d, BatchNorm2d, ReLU
 
 from model_compression_toolkit.tpc_models.default_tp_model import get_op_quantization_configs
 from model_compression_toolkit.pytorch.constants import KERNEL
-from tests.common_tests.helpers.activation_mp_hw_model import generate_hw_model_with_activation_mp
-from tests.pytorch_tests.fw_hw_model_pytorch import generate_activation_mp_fhw_model_pytorch
+from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
+from tests.pytorch_tests.tpc_pytorch import generate_activation_mp_tpc_pytorch
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 
@@ -97,14 +97,14 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
     base_config, mixed_precision_cfg_list = get_op_quantization_configs()
     base_config = base_config.clone_and_edit(weights_n_bits=mp_bitwidth_candidates_list[0][0],
                                              activation_n_bits=mp_bitwidth_candidates_list[0][1])
-    hw_model = generate_hw_model_with_activation_mp(
+    tp_model = generate_tp_model_with_activation_mp(
         base_cfg=base_config,
         mp_bitwidth_candidates_list=mp_bitwidth_candidates_list)
-    fw_hw_model = generate_activation_mp_fhw_model_pytorch(hardware_model=hw_model, name="kpi_data_test")
+    tpc = generate_activation_mp_tpc_pytorch(tp_model=tp_model, name="kpi_data_test")
 
     kpi_data = mct.pytorch_kpi_data(in_model=model,
                                     representative_data_gen=random_datagen,
-                                    fw_hw_model=fw_hw_model)
+                                    fw_hw_model=tpc)
 
     return kpi_data
 

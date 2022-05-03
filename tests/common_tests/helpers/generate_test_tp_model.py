@@ -16,14 +16,14 @@ from model_compression_toolkit.tpc_models.default_tp_model import get_op_quantiz
 import model_compression_toolkit as mct
 from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 
-hwm = mct.target_platform
+tp = mct.target_platform
 
 
-def generate_test_hw_model(edit_params_dict, name=""):
+def generate_test_tp_model(edit_params_dict, name=""):
     base_config, op_cfg_list = get_op_quantization_configs()
     updated_config = base_config.clone_and_edit(**edit_params_dict)
 
-    # the hw model's options config list must contain the given base config
+    # the target platform model's options config list must contain the given base config
     # this method only used for non-mixed-precision tests
     op_cfg_list = [updated_config]
 
@@ -33,7 +33,7 @@ def generate_test_hw_model(edit_params_dict, name=""):
                                    name=name)
 
 
-def generate_mixed_precision_test_hw_model(base_cfg, mp_bitwidth_candidates_list, name=""):
+def generate_mixed_precision_test_tp_model(base_cfg, mp_bitwidth_candidates_list, name=""):
     mp_op_cfg_list = []
     for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
         candidate_cfg = base_cfg.clone_and_edit(weights_n_bits=weights_n_bits,

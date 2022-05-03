@@ -34,7 +34,7 @@ from model_compression_toolkit.common.model_collector import ModelCollector
 from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 
 def get_random_weights(kernel, in_channels, out_channels):
@@ -93,15 +93,15 @@ class TestUniformRangeSelectionWeights(unittest.TestCase):
         qc = QuantizationConfig(weights_error_method=threshold_method,
                                 weights_per_channel_threshold=per_channel)
 
-        hwm = generate_test_hw_model({
+        tp = generate_test_tp_model({
             'weights_quantization_method': mct.target_platform.QuantizationMethod.UNIFORM})
-        fw_hw_model = generate_keras_default_tpc(name="uniform_range_selection_test", tp_model=hwm)
+        tpc = generate_keras_default_tpc(name="uniform_range_selection_test", tp_model=tp)
 
         fw_info = DEFAULT_KERAS_INFO
         in_model = create_network()
         keras_impl = KerasImplementation()
         graph = keras_impl.model_reader(in_model, None)  # model reading
-        graph.set_fw_hw_model(fw_hw_model)
+        graph.set_fw_hw_model(tpc)
         graph.set_fw_info(fw_info)
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=qc)

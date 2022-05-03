@@ -36,9 +36,9 @@ from model_compression_toolkit.common.mixed_precision.mixed_precision_quantizati
     DEFAULT_MIXEDPRECISION_CONFIG
 from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL, QNNPACK_TP_MODEL, TFLITE_TP_MODEL
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
-from tests.common_tests.test_hardware_model import TEST_QCO, TEST_QC
+from tests.common_tests.test_tp_model import TEST_QCO, TEST_QC
 
-hwm = mct.target_platform
+tp = mct.target_platform
 
 def get_node(layer):
     i = Input(shape=(3, 16, 16))
@@ -48,7 +48,7 @@ def get_node(layer):
     return graph.get_topo_sorted_nodes()[1]
 
 
-class TestKerasHWModel(unittest.TestCase):
+class TestKerasTPModel(unittest.TestCase):
 
     def test_keras_layers_with_params(self):
         conv_with_params = LayerFilterParams(Conv2D,
@@ -84,80 +84,80 @@ class TestKerasHWModel(unittest.TestCase):
         self.assertTrue(lrelu_with_params.match(get_node(partial(tf.nn.leaky_relu, alpha=0.4))))
 
     def test_get_layers_by_op(self):
-        hm = hwm.TargetPlatformModel(hwm.QuantizationConfigOptions([TEST_QC]))
+        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
         with hm:
-            op_obj = hwm.OperatorsSet('opsetA')
-        fw_hwm = TargetPlatformCapabilities(hm)
-        with fw_hwm:
+            op_obj = tp.OperatorsSet('opsetA')
+        fw_tp = TargetPlatformCapabilities(hm)
+        with fw_tp:
             opset_layers = [Conv2D, LayerFilterParams(ReLU, max_value=2)]
-            hwm.OperationsSetToLayers('opsetA', opset_layers)
-        self.assertEqual(fw_hwm.get_layers_by_opset_name('opsetA'), opset_layers)
-        self.assertEqual(fw_hwm.get_layers_by_opset(op_obj), opset_layers)
+            tp.OperationsSetToLayers('opsetA', opset_layers)
+        self.assertEqual(fw_tp.get_layers_by_opset_name('opsetA'), opset_layers)
+        self.assertEqual(fw_tp.get_layers_by_opset(op_obj), opset_layers)
 
     def test_get_layers_by_opconcat(self):
-        hm = hwm.TargetPlatformModel(hwm.QuantizationConfigOptions([TEST_QC]))
+        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
         with hm:
-            op_obj_a = hwm.OperatorsSet('opsetA')
-            op_obj_b = hwm.OperatorsSet('opsetB')
-            op_concat = hwm.OperatorSetConcat(op_obj_a, op_obj_b)
+            op_obj_a = tp.OperatorsSet('opsetA')
+            op_obj_b = tp.OperatorsSet('opsetB')
+            op_concat = tp.OperatorSetConcat(op_obj_a, op_obj_b)
 
-        fw_hwm = TargetPlatformCapabilities(hm)
-        with fw_hwm:
+        fw_tp = TargetPlatformCapabilities(hm)
+        with fw_tp:
             opset_layers_a = [Conv2D]
             opset_layers_b = [LayerFilterParams(ReLU, max_value=2)]
-            hwm.OperationsSetToLayers('opsetA', opset_layers_a)
-            hwm.OperationsSetToLayers('opsetB', opset_layers_b)
+            tp.OperationsSetToLayers('opsetA', opset_layers_a)
+            tp.OperationsSetToLayers('opsetB', opset_layers_b)
 
-        self.assertEqual(fw_hwm.get_layers_by_opset_name('opsetA_opsetB'), opset_layers_a + opset_layers_b)
-        self.assertEqual(fw_hwm.get_layers_by_opset(op_concat), opset_layers_a + opset_layers_b)
+        self.assertEqual(fw_tp.get_layers_by_opset_name('opsetA_opsetB'), opset_layers_a + opset_layers_b)
+        self.assertEqual(fw_tp.get_layers_by_opset(op_concat), opset_layers_a + opset_layers_b)
 
     def test_layer_attached_to_multiple_opsets(self):
-        hm = hwm.TargetPlatformModel(hwm.QuantizationConfigOptions([TEST_QC]))
+        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
         with hm:
-            hwm.OperatorsSet('opsetA')
-            hwm.OperatorsSet('opsetB')
+            tp.OperatorsSet('opsetA')
+            tp.OperatorsSet('opsetB')
 
-        fw_hwm = TargetPlatformCapabilities(hm)
+        fw_tp = TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
-            with fw_hwm:
-                hwm.OperationsSetToLayers('opsetA', [Conv2D])
-                hwm.OperationsSetToLayers('opsetB', [Conv2D])
+            with fw_tp:
+                tp.OperationsSetToLayers('opsetA', [Conv2D])
+                tp.OperationsSetToLayers('opsetB', [Conv2D])
         self.assertEqual('Found layer Conv2D in more than one OperatorsSet', str(e.exception))
 
     def test_filter_layer_attached_to_multiple_opsets(self):
-        hm = hwm.TargetPlatformModel(hwm.QuantizationConfigOptions([TEST_QC]))
+        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
         with hm:
-            hwm.OperatorsSet('opsetA')
-            hwm.OperatorsSet('opsetB')
+            tp.OperatorsSet('opsetA')
+            tp.OperatorsSet('opsetB')
 
-        fw_hwm = TargetPlatformCapabilities(hm)
+        fw_tp = TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
-            with fw_hwm:
-                hwm.OperationsSetToLayers('opsetA', [LayerFilterParams(Activation, activation="relu")])
-                hwm.OperationsSetToLayers('opsetB', [LayerFilterParams(Activation, activation="relu")])
+            with fw_tp:
+                tp.OperationsSetToLayers('opsetA', [LayerFilterParams(Activation, activation="relu")])
+                tp.OperationsSetToLayers('opsetB', [LayerFilterParams(Activation, activation="relu")])
         self.assertEqual('Found layer Activation(activation=relu) in more than one OperatorsSet', str(e.exception))
 
     def test_qco_by_keras_layer(self):
-        default_qco = hwm.QuantizationConfigOptions([TEST_QC])
-        hm = hwm.TargetPlatformModel(default_qco, name='test')
+        default_qco = tp.QuantizationConfigOptions([TEST_QC])
+        hm = tp.TargetPlatformModel(default_qco, name='test')
         with hm:
-            mixed_precision_configuration_options = hwm.QuantizationConfigOptions([TEST_QC,
+            mixed_precision_configuration_options = tp.QuantizationConfigOptions([TEST_QC,
                                                                                    TEST_QC.clone_and_edit(
                                                                                        weights_n_bits=4),
                                                                                    TEST_QC.clone_and_edit(
                                                                                        weights_n_bits=2)],
                                                                                   base_config=TEST_QC)
 
-            hwm.OperatorsSet("conv", mixed_precision_configuration_options)
+            tp.OperatorsSet("conv", mixed_precision_configuration_options)
             sevenbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=7)
-            hwm.OperatorsSet("tanh", sevenbit_qco)
-            hwm.OperatorsSet("relu")
+            tp.OperatorsSet("tanh", sevenbit_qco)
+            tp.OperatorsSet("relu")
 
-        hm_keras = hwm.TargetPlatformCapabilities(hm, name='fw_test')
+        hm_keras = tp.TargetPlatformCapabilities(hm, name='fw_test')
         with hm_keras:
-            hwm.OperationsSetToLayers("conv", [Conv2D])
-            hwm.OperationsSetToLayers("tanh", [tf.nn.tanh])
-            hwm.OperationsSetToLayers("relu", [LayerFilterParams(Activation, activation="relu")])
+            tp.OperationsSetToLayers("conv", [Conv2D])
+            tp.OperationsSetToLayers("tanh", [tf.nn.tanh])
+            tp.OperationsSetToLayers("relu", [LayerFilterParams(Activation, activation="relu")])
 
         conv_node = get_node(Conv2D(1, 1))
         tanh_node = get_node(tf.nn.tanh)
@@ -171,32 +171,32 @@ class TestKerasHWModel(unittest.TestCase):
         self.assertEqual(tanh_qco, sevenbit_qco)
         self.assertEqual(relu_qco, default_qco)
 
-    def test_opset_not_in_hwm(self):
-        default_qco = hwm.QuantizationConfigOptions([TEST_QC])
-        hm = hwm.TargetPlatformModel(default_qco)
-        hm_keras = hwm.TargetPlatformCapabilities(hm)
+    def test_opset_not_in_tp(self):
+        default_qco = tp.QuantizationConfigOptions([TEST_QC])
+        hm = tp.TargetPlatformModel(default_qco)
+        hm_keras = tp.TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with hm_keras:
-                hwm.OperationsSetToLayers("conv", [Conv2D])
+                tp.OperationsSetToLayers("conv", [Conv2D])
         self.assertEqual(
-            'conv is not defined in the hardware model that is associated with the framework hardware model.',
+            'conv is not defined in the target platform model that is associated with the target platform capabilities.',
             str(e.exception))
 
     def test_keras_fusing_patterns(self):
-        default_qco = hwm.QuantizationConfigOptions([TEST_QC])
-        hm = hwm.TargetPlatformModel(default_qco)
+        default_qco = tp.QuantizationConfigOptions([TEST_QC])
+        hm = tp.TargetPlatformModel(default_qco)
         with hm:
-            a = hwm.OperatorsSet("opA")
-            b = hwm.OperatorsSet("opB")
-            c = hwm.OperatorsSet("opC")
-            hwm.Fusing([a, b, c])
-            hwm.Fusing([a, c])
+            a = tp.OperatorsSet("opA")
+            b = tp.OperatorsSet("opB")
+            c = tp.OperatorsSet("opC")
+            tp.Fusing([a, b, c])
+            tp.Fusing([a, c])
 
-        hm_keras = hwm.TargetPlatformCapabilities(hm)
+        hm_keras = tp.TargetPlatformCapabilities(hm)
         with hm_keras:
-            hwm.OperationsSetToLayers("opA", [Conv2D])
-            hwm.OperationsSetToLayers("opB", [tf.nn.tanh])
-            hwm.OperationsSetToLayers("opC", [LayerFilterParams(ReLU, Greater("max_value", 7), negative_slope=0)])
+            tp.OperationsSetToLayers("opA", [Conv2D])
+            tp.OperationsSetToLayers("opB", [tf.nn.tanh])
+            tp.OperationsSetToLayers("opC", [LayerFilterParams(ReLU, Greater("max_value", 7), negative_slope=0)])
 
         fusings = hm_keras.get_fusing_patterns()
         self.assertEqual(len(fusings), 2)
@@ -212,9 +212,9 @@ class TestKerasHWModel(unittest.TestCase):
         self.assertEqual(p1[1], LayerFilterParams(ReLU, Greater("max_value", 7), negative_slope=0))
 
 
-class TestGetKerasHardwareModelAPI(unittest.TestCase):
-    def test_get_keras_hw_models(self):
-        fw_hw_model = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
+class TestGetKerasTPC(unittest.TestCase):
+    def test_get_keras_tpc(self):
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
         model = MobileNetV2()
 
         def rep_data():
@@ -223,7 +223,7 @@ class TestGetKerasHardwareModelAPI(unittest.TestCase):
         quantized_model, _ = mct.keras_post_training_quantization(model,
                                                                   rep_data,
                                                                   n_iter=1,
-                                                                  target_platform_capabilities=fw_hw_model)
+                                                                  target_platform_capabilities=tpc)
 
         mp_qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
         mp_qc.num_of_images = 1
@@ -232,9 +232,9 @@ class TestGetKerasHardwareModelAPI(unittest.TestCase):
                                                                                   target_kpi=mct.KPI(np.inf),
                                                                                   n_iter=1,
                                                                                   quant_config=mp_qc,
-                                                                                  target_platform_capabilities=fw_hw_model)
+                                                                                  target_platform_capabilities=tpc)
 
     def test_get_keras_not_supported_model(self):
         with self.assertRaises(Exception) as e:
             mct.get_target_platform_capabilities(TENSORFLOW, 'should_not_support')
-        self.assertEqual('Hardware model named should_not_support is not supported for framework tensorflow', str(e.exception))
+        self.assertEqual('Target platform model named should_not_support is not supported for framework tensorflow', str(e.exception))
