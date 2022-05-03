@@ -29,7 +29,7 @@ from model_compression_toolkit.common.target_platform.op_quantization_config imp
     OpQuantizationConfig
 from model_compression_toolkit.common.target_platform.operators import OperatorsSet, OperatorsSetBase
 from model_compression_toolkit.common.target_platform.target_platform_model import TargetPlatformModel
-from model_compression_toolkit.common.target_platform.targetplatform2framework.current_framework_hardware_model import _current_framework_hardware_model
+from model_compression_toolkit.common.target_platform.targetplatform2framework.current_tpc import _current_tpc
 
 
 class TargetPlatformCapabilities(ImmutableClass):
@@ -133,7 +133,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         """
         Init a TargetPlatformCapabilities object.
         """
-        _current_framework_hardware_model.set(self)
+        _current_tpc.set(self)
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
@@ -145,7 +145,7 @@ class TargetPlatformCapabilities(ImmutableClass):
             raise exc_value
         self.raise_warnings()
         self.layer2qco, self.filterlayer2qco = self._get_config_options_mapping()
-        _current_framework_hardware_model.reset()
+        _current_tpc.reset()
         self.initialized_done()
         return self
 

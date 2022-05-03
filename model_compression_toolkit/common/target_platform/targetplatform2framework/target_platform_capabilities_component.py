@@ -13,13 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.common.target_platform.targetplatform2framework.current_framework_hardware_model import  _current_framework_hardware_model
+from model_compression_toolkit.common.target_platform.targetplatform2framework.current_tpc import  _current_tpc
 
 
 class TargetPlatformCapabilitiesComponent:
     def __init__(self, name: str):
         self.name = name
-        _current_framework_hardware_model.get().append_component(self)
+        _current_tpc.get().append_component(self)
 
     def get_info(self):
         return {}

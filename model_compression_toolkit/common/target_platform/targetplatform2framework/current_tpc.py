@@ -14,21 +14,21 @@
 # ==============================================================================
 
 
-def get_current_fw_hw_model():
+def get_current_tpc():
     """
 
-    Returns: The current FrameworkHardwaeModel that is being used and accessed.
+    Returns: The current TargetPlatformCapabilities that is being used and accessed.
 
     """
-    return _current_framework_hardware_model.get()
+    return _current_tpc.get()
 
 
-class _CurrentFrameworkHardwareModel(object):
+class _CurrentTPC(object):
     """
     Wrapper of the current TargetPlatformCapabilities object that is being accessed and defined.
     """
     def __init__(self):
-        super(_CurrentFrameworkHardwareModel, self).__init__()
+        super(_CurrentTPC, self).__init__()
         self.fwhw_model = None
 
     def get(self):
@@ -62,4 +62,4 @@ class _CurrentFrameworkHardwareModel(object):
 
 
 # Use a single instance for the current model.
-_current_framework_hardware_model = _CurrentFrameworkHardwareModel()
+_current_tpc = _CurrentTPC()
