@@ -36,10 +36,10 @@ class SymmetricThresholdSelectionActivationTest(BaseKerasFeatureNetworkTest):
         return [np.random.uniform(low=-7, high=7, size=in_shape) for in_shape in self.get_input_shapes()]
 
     def get_tpc(self):
-        tp = generate_test_tp_model({
+        tp_model = generate_test_tp_model({
             'activation_quantization_method': tp.QuantizationMethod.SYMMETRIC,
             'activation_n_bits': 8})
-        return generate_keras_default_tpc(name="symmetric_threshold_test", tp_model=tp)
+        return generate_keras_default_tpc(name="symmetric_threshold_test", tp_model=tp_model)
 
     def get_quantization_config(self):
         return cmo.QuantizationConfig(activation_error_method=self.activation_threshold_method)
