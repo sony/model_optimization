@@ -87,7 +87,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
     def set_tpc(self,
                 tpc: TargetPlatformCapabilities):
         """
-        Set the graph's framework hardware model.
+        Set the graph's TPC.
         Args:
             tpc: TargetPlatformCapabilities object.
         """

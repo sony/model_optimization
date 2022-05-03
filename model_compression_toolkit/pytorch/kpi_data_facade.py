@@ -43,7 +43,7 @@ if importlib.util.find_spec("torch") is not None:
                          target_platform_capabilities: TargetPlatformCapabilities = PYTORCH_DEFAULT_TPC) -> KPI:
         """
         Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
-        Builds the computation graph from the given model and hw modeling, and uses it to compute the KPI data.
+        Builds the computation graph from the given model and target platform capabilities, and uses it to compute the KPI data.
 
         Args:
             in_model (Model): Keras model to quantize.
