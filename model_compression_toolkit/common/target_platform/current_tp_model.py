@@ -19,7 +19,7 @@ def get_current_model():
     Returns: The current HardwaeModel that is being used and accessed.
 
     """
-    return _current_hardware_model.get()
+    return _current_tp_model.get()
 
 
 class CurrentTPModel:
@@ -62,4 +62,4 @@ class CurrentTPModel:
 
 
 # Use a single instance for the current model.
-_current_hardware_model = CurrentTPModel()
+_current_tp_model = CurrentTPModel()

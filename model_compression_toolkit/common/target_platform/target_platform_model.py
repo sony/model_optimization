@@ -16,7 +16,7 @@
 import pprint
 from typing import Any, Dict
 
-from model_compression_toolkit.common.target_platform.current_tp_model import _current_hardware_model, \
+from model_compression_toolkit.common.target_platform.current_tp_model import _current_tp_model, \
     get_current_model
 from model_compression_toolkit.common.target_platform.fusing import Fusing
 from model_compression_toolkit.common.target_platform.target_platform_model_component import \
@@ -164,7 +164,7 @@ class TargetPlatformModel(ImmutableClass):
         Returns: Initialized TargetPlatformModel object.
 
         """
-        _current_hardware_model.set(self)
+        _current_tp_model.set(self)
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
@@ -177,7 +177,7 @@ class TargetPlatformModel(ImmutableClass):
             print(exc_value, exc_value.args)
             raise exc_value
         self.__validate_model()  # Assert that model is valid.
-        _current_hardware_model.reset()
+        _current_tp_model.reset()
         self.initialized_done()  # Make model immutable.
         return self
 
