@@ -13,10 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
-def get_current_model():
+def get_current_tp_model():
     """
 
-    Returns: The current HardwaeModel that is being used and accessed.
+    Returns: The current TargetPlatformModel that is being used and accessed.
 
     """
     return _current_tp_model.get()

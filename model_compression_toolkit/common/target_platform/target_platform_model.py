@@ -17,7 +17,7 @@ import pprint
 from typing import Any, Dict
 
 from model_compression_toolkit.common.target_platform.current_tp_model import _current_tp_model, \
-    get_current_model
+    get_current_tp_model
 from model_compression_toolkit.common.target_platform.fusing import Fusing
 from model_compression_toolkit.common.target_platform.target_platform_model_component import \
     TargetPlatformModelComponent
@@ -36,7 +36,7 @@ def get_default_quantization_config_options() -> QuantizationConfigOptions:
     The default QuantizationConfigOptions always contains a single option.
 
     """
-    return get_current_model().default_qco
+    return get_current_tp_model().default_qco
 
 
 def get_default_quantization_config():
@@ -48,7 +48,7 @@ def get_default_quantization_config():
 
     """
 
-    return get_current_model().get_default_op_quantization_config()
+    return get_current_tp_model().get_default_op_quantization_config()
 
 
 class TargetPlatformModel(ImmutableClass):
@@ -102,7 +102,7 @@ class TargetPlatformModel(ImmutableClass):
         """
         assert len(self.default_qco.quantization_config_list) == 1, \
             f'Default quantization configuration options must contain only one option,' \
-            f' but found {len(get_current_model().default_qco.quantization_config_list)} configurations.'
+            f' but found {len(get_current_tp_model().default_qco.quantization_config_list)} configurations.'
         return self.default_qco.quantization_config_list[0]
 
     def is_opset_in_model(self,
