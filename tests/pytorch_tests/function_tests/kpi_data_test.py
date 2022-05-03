@@ -104,7 +104,7 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
 
     kpi_data = mct.pytorch_kpi_data(in_model=model,
                                     representative_data_gen=random_datagen,
-                                    fw_hw_model=tpc)
+                                    target_platform_capabilities=tpc)
 
     return kpi_data
 
