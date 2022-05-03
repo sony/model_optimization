@@ -116,18 +116,18 @@ class TargetPlatformCapabilities(ImmutableClass):
         """
         pprint.pprint(self.get_info(), sort_dicts=False, width=110)
 
-    def append_component(self, hm_component: TargetPlatformCapabilitiesComponent):
+    def append_component(self, tpc_component: TargetPlatformCapabilitiesComponent):
         """
         Append a Component (like OperationsSetToLayers) to the TargetPlatformCapabilities.
 
         Args:
-            hm_component: Component to append to TargetPlatformCapabilities.
+            tpc_component: Component to append to TargetPlatformCapabilities.
 
         """
-        if isinstance(hm_component, OperationsSetToLayers):
-            self.op_sets_to_layers += hm_component
+        if isinstance(tpc_component, OperationsSetToLayers):
+            self.op_sets_to_layers += tpc_component
         else:
-            raise Exception(f'Trying to append an unfamiliar TargetPlatformCapabilitiesComponent of type: {type(hm_component)}')
+            raise Exception(f'Trying to append an unfamiliar TargetPlatformCapabilitiesComponent of type: {type(tpc_component)}')
 
     def __enter__(self):
         """

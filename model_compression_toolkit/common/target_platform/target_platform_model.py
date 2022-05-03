@@ -60,7 +60,7 @@ class TargetPlatformModel(ImmutableClass):
 
     def __init__(self,
                  default_qco: QuantizationConfigOptions,
-                 name="default_hm"):
+                 name="default_tp_model"):
         """
 
         Args:
@@ -141,21 +141,21 @@ class TargetPlatformModel(ImmutableClass):
         return opset_list[0]  # There's one opset with that name
 
     def append_component(self,
-                         hm_component: TargetPlatformModelComponent):
+                         tp_model_component: TargetPlatformModelComponent):
         """
         Attach a TargetPlatformModel component to the model. Components can be for example:
         Fusing, OperatorsSet, etc.
 
         Args:
-            hm_component: Component to attach to the model.
+            tp_model_component: Component to attach to the model.
 
         """
-        if isinstance(hm_component, Fusing):
-            self.fusing_patterns.append(hm_component)
-        elif isinstance(hm_component, OperatorsSetBase):
-            self.operator_set.append(hm_component)
+        if isinstance(tp_model_component, Fusing):
+            self.fusing_patterns.append(tp_model_component)
+        elif isinstance(tp_model_component, OperatorsSetBase):
+            self.operator_set.append(tp_model_component)
         else:
-            raise Exception(f'Trying to append an unfamiliar TargetPlatformModelComponent of type: {type(hm_component)}')
+            raise Exception(f'Trying to append an unfamiliar TargetPlatformModelComponent of type: {type(tp_model_component)}')
 
     def __enter__(self):
         """
