@@ -34,9 +34,9 @@ if importlib.util.find_spec("tensorflow") is not None\
     from model_compression_toolkit.keras.keras_implementation import KerasImplementation
     from tensorflow.keras.models import Model
 
-    from model_compression_toolkit import get_model
+    from model_compression_toolkit import get_target_platform_capabilities
 
-    KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_TP_MODEL)
+    KERAS_DEFAULT_MODEL = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
     def keras_kpi_data(in_model: Model,

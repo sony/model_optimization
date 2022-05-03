@@ -32,8 +32,8 @@ if importlib.util.find_spec("torch") is not None:
     from model_compression_toolkit.pytorch.constants import DEFAULT_TP_MODEL
     from torch.nn import Module
 
-    from model_compression_toolkit import get_model
-    PYTORCH_DEFAULT_MODEL = get_model(PYTORCH, DEFAULT_TP_MODEL)
+    from model_compression_toolkit import get_target_platform_capabilities
+    PYTORCH_DEFAULT_MODEL = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
 
     def pytorch_kpi_data(in_model: Module,

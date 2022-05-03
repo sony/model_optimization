@@ -217,7 +217,7 @@ class TestPytorchHWModel(unittest.TestCase):
 class TestGetPytorchHardwareModelAPI(unittest.TestCase):
 
     def test_get_pytorch_models(self):
-        fw_hw_model = mct.get_model(PYTORCH, DEFAULT_TP_MODEL)
+        fw_hw_model = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
         model = mobilenet_v2(pretrained=True)
 
         def rep_data():
@@ -239,7 +239,7 @@ class TestGetPytorchHardwareModelAPI(unittest.TestCase):
 
     def test_get_pytorch_not_supported_model(self):
         with self.assertRaises(Exception) as e:
-            mct.get_model(PYTORCH, 'should_not_support')
+            mct.get_target_platform_capabilities(PYTORCH, 'should_not_support')
         self.assertEqual('Hardware model named should_not_support is not supported for framework pytorch',
                          str(e.exception))
 

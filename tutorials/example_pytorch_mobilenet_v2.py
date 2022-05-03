@@ -66,7 +66,7 @@ if __name__ == '__main__':
     # The model determines the quantization methods to use during the MCT optimization process.
     # Here, for example, we use the default model that is attached to a Pytorch
     # layers representation.
-    hardware_model = mct.get_model('pytorch', 'default')
+    hardware_model = mct.get_target_platform_capabilities('pytorch', 'default')
 
 
     # Create a model and quantize it using the representative_data_gen as the calibration images.

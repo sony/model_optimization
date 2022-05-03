@@ -214,7 +214,7 @@ class TestKerasHWModel(unittest.TestCase):
 
 class TestGetKerasHardwareModelAPI(unittest.TestCase):
     def test_get_keras_hw_models(self):
-        fw_hw_model = mct.get_model(TENSORFLOW, DEFAULT_TP_MODEL)
+        fw_hw_model = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
         model = MobileNetV2()
 
         def rep_data():
@@ -236,5 +236,5 @@ class TestGetKerasHardwareModelAPI(unittest.TestCase):
 
     def test_get_keras_not_supported_model(self):
         with self.assertRaises(Exception) as e:
-            mct.get_model(TENSORFLOW, 'should_not_support')
+            mct.get_target_platform_capabilities(TENSORFLOW, 'should_not_support')
         self.assertEqual('Hardware model named should_not_support is not supported for framework tensorflow', str(e.exception))

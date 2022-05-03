@@ -82,7 +82,7 @@ if __name__ == '__main__':
     # The model determines the quantization methods to use during the MCT optimization process.
     # Here, for example, we use the default model that is attached to a Tensorflow
     # layers representation.
-    hardware_model = mct.get_model('tensorflow', 'default')
+    hardware_model = mct.get_target_platform_capabilities('tensorflow', 'default')
 
 
     quantized_model, quantization_info = mct.keras_post_training_quantization(model,

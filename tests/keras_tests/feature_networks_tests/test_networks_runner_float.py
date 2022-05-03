@@ -22,7 +22,7 @@ from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.common.constants import TENSORFLOW
 from model_compression_toolkit.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
-from model_compression_toolkit import get_model
+from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
@@ -56,7 +56,7 @@ class NetworkTest(object):
         fw_impl = KerasImplementation()
         fw_info = DEFAULT_KERAS_INFO
 
-        keras_default_hw_model = get_model(TENSORFLOW, DEFAULT_TP_MODEL)
+        keras_default_hw_model = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
         graph = model_reader(self.model_float)  # model reading
         graph.set_fw_info(DEFAULT_KERAS_INFO)

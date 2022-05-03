@@ -44,8 +44,8 @@ if importlib.util.find_spec("tensorflow") is not None\
     from keras.optimizer_v2.optimizer_v2 import OptimizerV2
     from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL
 
-    from model_compression_toolkit import get_model
-    DEFAULT_KERAS_TPC = get_model(TENSORFLOW, DEFAULT_TP_MODEL)
+    from model_compression_toolkit import get_target_platform_capabilities
+    DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def get_keras_gptq_config(n_iter: int,
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(),
