@@ -31,7 +31,7 @@ from torch.nn import Module
 
 from model_compression_toolkit import FrameworkInfo, pytorch_post_training_quantization
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.tpc_models.default_hwm import get_default_hardware_model
+from model_compression_toolkit.tpc_models.default_hwm import get_default_tp_model
 from model_compression_toolkit.tpc_models.pytorch_hardware_model.pytorch_default import generate_fhw_model_pytorch
 from model_compression_toolkit.pytorch.constants import CALL_FUNCTION, OUTPUT, CALL_METHOD, PLACEHOLDER
 from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder, ConstantHolder

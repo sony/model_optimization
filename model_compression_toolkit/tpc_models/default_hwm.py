@@ -20,7 +20,7 @@ from model_compression_toolkit.common.target_platform import OpQuantizationConfi
 hwm = mct.target_platform
 
 
-def get_default_hardware_model() -> TargetPlatformModel:
+def get_default_tp_model() -> TargetPlatformModel:
     """
     A method that generates a default hardware model, with base 8-bit quantization configuration and 8, 4, 2
     bits configuration list for mixed-precision quantization.

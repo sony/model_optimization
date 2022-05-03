@@ -24,14 +24,14 @@ else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
     Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D
 
-from model_compression_toolkit.tpc_models.default_hwm import get_default_hardware_model
+from model_compression_toolkit.tpc_models.default_hwm import get_default_tp_model
 
 import model_compression_toolkit as mct
 hwm = mct.target_platform
 
 
 def get_default_hwm_keras():
-    default_hwm = get_default_hardware_model()
+    default_hwm = get_default_tp_model()
     return generate_fhw_model_keras(name='default_hwm_keras',
                                     hardware_model=default_hwm)
 

@@ -18,7 +18,7 @@ import unittest
 import model_compression_toolkit as mct
 from model_compression_toolkit.common.target_platform import get_default_quantization_config_options, \
     TargetPlatformCapabilities
-from model_compression_toolkit.tpc_models.default_hwm import get_default_hardware_model
+from model_compression_toolkit.tpc_models.default_hwm import get_default_tp_model
 
 hwm = mct.target_platform
 
@@ -131,7 +131,7 @@ class QCOptionsTest(unittest.TestCase):
             str(e.exception))
 
     def test_get_qco_for_none(self):
-        fw_hwm = TargetPlatformCapabilities(get_default_hardware_model())
+        fw_hwm = TargetPlatformCapabilities(get_default_tp_model())
         with self.assertRaises(Exception) as e:
             fw_hwm.get_qco_by_node(None)
         self.assertEqual('Can not retrieve QC options for None node', str(e.exception))
