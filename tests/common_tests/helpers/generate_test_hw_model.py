@@ -14,7 +14,7 @@
 # ==============================================================================
 from model_compression_toolkit.tpc_models.default_hwm import get_op_quantization_configs, generate_hardware_model
 import model_compression_toolkit as mct
-from model_compression_toolkit.tpc_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_fhw_model_keras
 
 hwm = mct.target_platform
 

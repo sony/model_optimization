@@ -31,7 +31,7 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
     calculate_quantization_params
 from model_compression_toolkit.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
-from model_compression_toolkit.tpc_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_fhw_model_keras
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model

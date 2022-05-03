@@ -16,7 +16,7 @@
 from keras.engine.input_layer import InputLayer
 import tensorflow as tf
 import model_compression_toolkit as mct
-from model_compression_toolkit.tpc_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_fhw_model_keras
 from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
 
 if tf.__version__ < "2.6":
