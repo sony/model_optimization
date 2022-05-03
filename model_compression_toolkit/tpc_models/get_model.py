@@ -28,12 +28,12 @@ tf_models_dict = {}
 
 if found_tf:
     from model_compression_toolkit.tpc_models.keras_hardware_model.keras_default import get_default_hwm_keras
-    from model_compression_toolkit.tpc_models.keras_hardware_model.keras_tflite import get_keras_hardware_model_tflite
+    from model_compression_toolkit.tpc_models.keras_hardware_model.keras_tflite import get_keras_tp_model_tflite
     from model_compression_toolkit.tpc_models.keras_hardware_model.keras_qnnpack import get_qnnpack_tensorflow
     from model_compression_toolkit.keras.constants import DEFAULT_HWM, TFLITE_HWM, QNNPACK_HWM
 
     tf_models_dict = {DEFAULT_HWM: get_default_hwm_keras(),
-                      TFLITE_HWM: get_keras_hardware_model_tflite(),
+                      TFLITE_HWM: get_keras_tp_model_tflite(),
                       QNNPACK_HWM: get_qnnpack_tensorflow()}
 
 

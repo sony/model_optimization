@@ -30,7 +30,7 @@ from model_compression_toolkit.common.target_platform.targetplatform2framework.a
 from model_compression_toolkit.tpc_models.tflite import get_tflite_hw_model
 
 
-def get_keras_hardware_model_tflite():
+def get_keras_tp_model_tflite():
     tflite_hm = get_tflite_hw_model()
     tflite_keras = TargetPlatformCapabilities(tflite_hm, name='tflite_keras')
 
