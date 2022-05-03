@@ -38,7 +38,7 @@ class CurrentTPModel:
 
         """
         if self.hwm is None:
-            raise Exception('Hardware model is not initialized.')
+            raise Exception('Target platform model is not initialized.')
         return self.hwm
 
     def reset(self):

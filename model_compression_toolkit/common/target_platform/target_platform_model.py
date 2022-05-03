@@ -97,7 +97,7 @@ class TargetPlatformModel(ImmutableClass):
     def get_default_op_quantization_config(self) -> OpQuantizationConfig:
         """
 
-        Returns: The default OpQuantizationConfig of the hardware model.
+        Returns: The default OpQuantizationConfig of the TargetPlatformModel.
 
         """
         assert len(self.default_qco.quantization_config_list) == 1, \
@@ -155,7 +155,7 @@ class TargetPlatformModel(ImmutableClass):
         elif isinstance(hm_component, OperatorsSetBase):
             self.operator_set.append(hm_component)
         else:
-            raise Exception(f'Trying to append an unfamiliar HardwareModelComponent of type: {type(hm_component)}')
+            raise Exception(f'Trying to append an unfamiliar TargetPlatformModelComponent of type: {type(hm_component)}')
 
     def __enter__(self):
         """

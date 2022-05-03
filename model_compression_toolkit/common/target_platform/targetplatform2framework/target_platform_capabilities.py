@@ -48,7 +48,7 @@ class TargetPlatformCapabilities(ImmutableClass):
 
         super().__init__()
         self.name = name
-        assert isinstance(hw_model, TargetPlatformModel), f'Hardware model that was passed to TargetPlatformCapabilities must be of type TargetPlatformModel, but has type of {type(hw_model)}'
+        assert isinstance(hw_model, TargetPlatformModel), f'Target platform model that was passed to TargetPlatformCapabilities must be of type TargetPlatformModel, but has type of {type(hw_model)}'
         self.hw_model = hw_model
         self.op_sets_to_layers = OperationsToLayers() # Init an empty OperationsToLayers
         self.layer2qco, self.filterlayer2qco = {}, {} # Init empty mappings from layers/LayerFilterParams to QC options
@@ -104,8 +104,8 @@ class TargetPlatformCapabilities(ImmutableClass):
         Returns: Summarization of information in the TargetPlatformCapabilities.
 
         """
-        return {"Framework Hardware Model": self.name,
-                "Hardware model": self.hw_model.get_info(),
+        return {"Target Platform Capabilities": self.name,
+                "Target Platform Model": self.hw_model.get_info(),
                 "Operations to layers": {op2layer.name:[l.__name__ for l in op2layer.layers] for op2layer in self.op_sets_to_layers.op_sets_to_layers}}
 
     def show(self):
@@ -127,7 +127,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         if isinstance(hm_component, OperationsSetToLayers):
             self.op_sets_to_layers += hm_component
         else:
-            raise Exception(f'Trying to append an unfamiliar HardwareModelComponent of type: {type(hm_component)}')
+            raise Exception(f'Trying to append an unfamiliar TargetPlatformCapabilitiesComponent of type: {type(hm_component)}')
 
     def __enter__(self):
         """
@@ -230,6 +230,6 @@ class TargetPlatformCapabilities(ImmutableClass):
 
         """
         for op in self.__hwm_opsets_not_used:
-            Logger.warning(f'{op} is defined in hardware model, but is not used in framework hardware model.')
+            Logger.warning(f'{op} is defined in TargetPlatformModel, but is not used in TargetPlatformCapabilities.')
 
 

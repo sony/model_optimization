@@ -52,7 +52,7 @@ class OperationsSetToLayers(TargetPlatformCapabilitiesComponent):
 
 class OperationsToLayers:
     """
-    Gather multiple OperationsSetToLayers to represent mapping of framework's layers to HardwareModel OperatorsSet.
+    Gather multiple OperationsSetToLayers to represent mapping of framework's layers to TargetPlatformModel OperatorsSet.
     """
     def __init__(self,
                  op_sets_to_layers: List[OperationsSetToLayers]=None):
@@ -123,11 +123,11 @@ class OperationsToLayers:
 
             # Assert that opset in the current TargetPlatformCapabilities and has a unique name.
             is_opset_in_model = _current_tpc.get().hw_model.is_opset_in_model(ops2layers.name)
-            assert is_opset_in_model, f'{ops2layers.name} is not defined in the hardware model that is associated with the framework hardware model.'
+            assert is_opset_in_model, f'{ops2layers.name} is not defined in the target platform model that is associated with the target platform capabilities.'
             assert not (ops2layers.name in existing_opset_names), f'OperationsSetToLayers names should be unique, but {ops2layers.name} appears to violate it.'
             existing_opset_names.append(ops2layers.name)
 
-            # Assert that a layer does not appear in more than a single OperatorsSet in the HardwareModel.
+            # Assert that a layer does not appear in more than a single OperatorsSet in the TargetPlatformModel.
             for layer in ops2layers.layers:
                 qco_by_opset_name = _current_tpc.get().hw_model.get_config_options_by_operators_set(ops2layers.name)
                 if layer in existing_layers:
