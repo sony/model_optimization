@@ -51,14 +51,14 @@ def set_quantization_configuration_to_graph(graph: Graph,
         set_quantization_configs_to_node(node=n,
                                          quant_config=quant_config,
                                          fw_info=graph.fw_info,
-                                         fw_hw_model=graph.tpc)
+                                         tpc=graph.tpc)
     return graph_with_qcs
 
 
 def set_quantization_configs_to_node(node: BaseNode,
                                      quant_config: QuantizationConfig,
                                      fw_info: FrameworkInfo,
-                                     fw_hw_model: TargetPlatformCapabilities):
+                                     tpc: TargetPlatformCapabilities):
     """
     Create and set quantization configurations to a node (for both weights and activation).
 
@@ -66,10 +66,10 @@ def set_quantization_configs_to_node(node: BaseNode,
         node: Node to set its quantization configurations.
         quant_config: Quantization configuration to generate the node's configurations from.
         fw_info: Information needed for quantization about the specific framework.
-        fw_hw_model: TargetPlatformCapabilities to get default OpQuantizationConfig.
+        tpc: TargetPlatformCapabilities to get default OpQuantizationConfig.
 
     """
-    node_qc_options = fw_hw_model.get_qco_by_node(node)
+    node_qc_options = tpc.get_qco_by_node(node)
 
     # Create QC candidates for weights and activation combined
     weight_channel_axis = fw_info.kernel_channels_mapping.get(node.type)[0]
