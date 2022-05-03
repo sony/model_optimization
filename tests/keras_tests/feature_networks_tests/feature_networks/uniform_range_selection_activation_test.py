@@ -38,10 +38,10 @@ class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
         return cmo.QuantizationConfig(activation_error_method=self.activation_threshold_method)
 
     def get_tpc(self):
-        tp = generate_test_tp_model({
+        tp_model = generate_test_tp_model({
             'activation_quantization_method': tp.QuantizationMethod.UNIFORM,
             'activation_n_bits': 8})
-        return generate_keras_default_tpc(name="uniform_range_test", tp_model=tp)
+        return generate_keras_default_tpc(name="uniform_range_test", tp_model=tp_model)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
