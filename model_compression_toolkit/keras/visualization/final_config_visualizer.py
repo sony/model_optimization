@@ -52,18 +52,19 @@ class KerasWeightsConfigVisualizer:
         self.node_final_bitwidth = [node_cfg[1] for node_cfg in self.final_config]
         self.bitwidth_colors_map = {2: 'tomato', 4: 'royalblue', 8: 'limegreen'}
         self.configs_colors = [self.bitwidth_colors_map[b] for b in self.node_final_bitwidth]
-        self.bar_width = 0.8
+        self.bar_width = 2
 
     def plot_config_bitwidth(self) -> Figure:
-        layers_loc = [10 * i * self.bar_width for i in range(len(self.node_reps_names))]
+        layers_loc = [4*i for i in range(len(self.node_reps_names))]
         fig, ax = plt.subplots()
         plt.bar(layers_loc, self.node_final_bitwidth, color=self.configs_colors, width=self.bar_width, align='center')
-        plt.grid()
+        # plt.grid()
         plt.xticks(layers_loc, self.node_reps_names, rotation='vertical')
         plt.rc('xtick', labelsize=4)
         plt.rc('ytick', labelsize=4)
         plt.xlabel('Layers', fontsize=12)
         plt.ylabel('Number of bits', fontsize=12)
+        plt.tight_layout()
         return fig
 
 
