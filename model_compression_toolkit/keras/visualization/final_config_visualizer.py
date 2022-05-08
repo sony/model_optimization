@@ -72,7 +72,16 @@ class KerasActivationConfigVisualizer:
 
     def __init__(self,
                  final_config: List[Tuple[type, int]]):
-        pass
+        self.final_config = final_config
+        self.node_final_bitwidth = [node_cfg[1] for node_cfg in self.final_config]
+        self.bar_width = 1
 
     def plot_config_bitwidth(self) -> Figure:
-        pass
+        layers_loc = [i for i in range(1, len(self.node_final_bitwidth) + 1)]
+        fig, ax = plt.subplots()
+        plt.bar(layers_loc, self.node_final_bitwidth, width=self.bar_width, align='center')
+        plt.grid()
+        plt.xlabel('Layer Index', fontsize=12)
+        plt.ylabel('Number of bits', fontsize=12)
+        plt.tight_layout()
+        return fig
