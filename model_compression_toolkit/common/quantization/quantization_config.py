@@ -58,6 +58,7 @@ class QuantizationConfig:
                  z_threshold: float = math.inf,
                  min_threshold: float = MIN_THRESHOLD,
                  l_p_value: int = 2,
+                 block_collapsing: bool = True,
                  shift_negative_ratio: float = 0.05,
                  shift_negative_threshold_recalculation: bool = False):
         """
@@ -76,6 +77,7 @@ class QuantizationConfig:
             z_threshold (float): Value of z score for outliers removal.
             min_threshold (float): Minimum threshold to use during thresholds selection.
             l_p_value (int): The p value of L_p norm threshold selection.
+            block_collapsing (bool): Whether to collapse block one to another in the input network
             shift_negative_ratio (float): Value for the ratio between the minimal negative value of a non-linearity output to its activation threshold, which above it - shifting negative activation should occur if enabled.
             shift_negative_threshold_recalculation (bool): Whether or not to recompute the threshold after shifting negative activation.
 
@@ -106,6 +108,7 @@ class QuantizationConfig:
         self.shift_negative_activation_correction = shift_negative_activation_correction
         self.z_threshold = z_threshold
         self.l_p_value = l_p_value
+        self.block_collapsing = block_collapsing
         self.shift_negative_ratio = shift_negative_ratio
         self.shift_negative_threshold_recalculation = shift_negative_threshold_recalculation
 

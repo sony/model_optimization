@@ -31,6 +31,8 @@ from model_compression_toolkit.pytorch.back2framework.model_builder import model
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
     pytorch_batchnorm_folding
+from model_compression_toolkit.pytorch.graph_substitutions.substitutions.linear_collapsing import \
+    pytorch_linear_collapsing
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.mark_activation import MarkActivation
@@ -215,6 +217,12 @@ class PytorchImplementation(FrameworkImplementation):
         if quant_config.relu_bound_to_power_of_2:
             substitutions_list.append(ReLUBoundToPowerOfTwo())
         return substitutions_list
+
+    def get_linear_collapsing_substitution(self) -> common.BaseSubstitution:
+        """
+        Returns: linear collapsing substitution
+        """
+        return pytorch_linear_collapsing()
 
     def get_substitutions_post_statistics_collection(self,
                                                      quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
