@@ -75,6 +75,7 @@ class KerasActivationConfigVisualizer:
         self.final_config = final_config
         self.node_final_bitwidth = [node_cfg[1] for node_cfg in self.final_config]
         self.bar_width = 1
+        self.vis_comp_rates = {4.0: 'tomato', 8.0: 'orange', 12.0: 'limegreen'}
 
     def plot_config_bitwidth(self) -> Figure:
         layers_loc = [i for i in range(1, len(self.node_final_bitwidth) + 1)]
@@ -83,5 +84,26 @@ class KerasActivationConfigVisualizer:
         plt.grid()
         plt.xlabel('Layer Index', fontsize=12)
         plt.ylabel('Number of bits', fontsize=12)
+        plt.tight_layout()
+        return fig
+
+    def plot_tensor_sizes(self, graph: Graph) -> Figure:
+        tensors_sizes = [4.0 * n.get_total_output_params() / 1000000.0
+                         for n in graph.get_sorted_activation_configurable_nodes()]  # in MB
+        max_tensor_size = max(tensors_sizes)
+        max_lines = [(rate, max_tensor_size / rate, color) for rate, color in self.vis_comp_rates.items()]
+
+        layers_loc = [i for i in range(1, len(self.final_config) + 1)]
+        fig, ax = plt.subplots()
+        plt.bar(layers_loc, tensors_sizes, width=self.bar_width, align='center')
+        plt.grid()
+        plt.xlabel('Layer Index', fontsize=12)
+        plt.ylabel('Tensor Size [MB]', fontsize=12)
+
+        # add max tensor lines
+        for rate, t_size, color in max_lines:
+            plt.plot([layers_loc[0], layers_loc[-1]], [t_size, t_size], "k--", color=color, label=f"ACR = {rate}")
+
+        plt.legend()
         plt.tight_layout()
         return fig
