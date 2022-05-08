@@ -17,6 +17,7 @@ from typing import Callable, Any, List
 
 from model_compression_toolkit import FrameworkInfo, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common import Graph, BaseNode
+from model_compression_toolkit.common.constants import NUM_INTEREST_POINTS_BOUND
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 
 
@@ -136,9 +137,23 @@ class SensitivityEvaluationManager:
         return distance_matrix
 
 
-def get_mp_interest_points(graph: Graph, fw_info: FrameworkInfo):
+def get_mp_interest_points(graph: Graph, fw_info: FrameworkInfo) -> List[BaseNode]:
+    """
+    Gets a list of interest points for the mixed precision metric computation.
+    The list is constructed from a filtered set of the convolutions nodes in the graph.
+
+    Args:
+        graph: Graph to search for its MP configuration.
+        fw_info: FrameworkInfo object about the specific framework
+                (e.g., attributes of different layers' weights to quantize).
+
+    Returns: A list of interest points (nodes in the graph).
+
+    """
     sorted_nodes = graph.get_topo_sorted_nodes()
     kernel_nodes = list(filter(lambda n: fw_info.get_kernel_op_attributes(n.type)[0] is not None, sorted_nodes))
+
+    interest_points_nodes = bound_num_interest_points(kernel_nodes)
 
     # We add the last configurable node to the list of interest points, since we need it to be able to include all
     # configurable nodes in the sensitivity metric computation
@@ -147,8 +162,29 @@ def get_mp_interest_points(graph: Graph, fw_info: FrameworkInfo):
     if len(conf_nodes) == 0:
         raise Exception("No configurable nodes in mixed precision search mode")
     last_conf_node = graph.get_configurable_sorted_nodes()[-1]
-    interest_points_nodes = kernel_nodes if last_conf_node in kernel_nodes else kernel_nodes + [last_conf_node]
-    return interest_points_nodes
+    interest_points = interest_points_nodes if last_conf_node in interest_points_nodes \
+        else interest_points_nodes + [last_conf_node]
+    return interest_points
+
+
+def bound_num_interest_points(sorted_ip_list: List[BaseNode]) -> List[BaseNode]:
+    """
+    Filters the list of interest points and returns a shorter list with number of interest points smaller than some
+    default threshold.
+
+    Args:
+        sorted_ip_list: List of nodes which are considered as interest points for the metric computation.
+
+    Returns: A new list of interest points (list of nodes).
+
+    """
+
+    if len(sorted_ip_list) > NUM_INTEREST_POINTS_BOUND:
+        # Take NUM_INTEREST_POINTS_BOUND evenly spaced interest points from the original list
+        indices = np.round(np.linspace(0, len(sorted_ip_list) - 1, NUM_INTEREST_POINTS_BOUND)).astype(int)
+        return [sorted_ip_list[i] for i in indices]
+
+    return sorted_ip_list
 
 
 def build_models(graph: Graph, fw_info: FrameworkInfo, interest_points: List[BaseNode], model_builder: Callable) -> Any:
