@@ -84,9 +84,16 @@ def run_operation(n: BaseNode,
         out_tensors_of_n = op_func(*input_tensors + op_call_args, **functional_kwargs)
 
     # Add a fake quant node if the node has an activation threshold.
-    if mode == ModelBuilderMode.QUANTIZED and n.is_activation_quantization_enabled() \
-            and n.final_activation_quantization_cfg:
-        out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n)
+    if n.is_activation_quantization_enabled():
+        if mode == ModelBuilderMode.QUANTIZED and n.final_activation_quantization_cfg:
+            out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n)
+        elif mode == ModelBuilderMode.MIXEDPRECISION and n.is_all_activation_candidates_equal():
+            # otherwise, we want to use the float tensor when building the model for MP search
+            # TODO: make sure it is what we need to do here in any case
+            if isinstance(out_tensors_of_n, list):
+                out_tensors_of_n = torch.cat(out_tensors_of_n, dim=0)
+            out_tensors_of_n = n.candidates_quantization_cfg[
+                0].activation_quantization_cfg.quantize_node_output(out_tensors_of_n)
 
     return out_tensors_of_n
 
@@ -160,6 +167,7 @@ class PytorchModelBuilder(torch.nn.Module):
                                                      self.graph,
                                                      args,
                                                      node_to_output_tensors_dict)
+
             out_tensors_of_n = run_operation(n,  # Run node operation and fetch outputs
                                              input_tensors,
                                              op_func=n.type if isinstance(n, FunctionalNode) else getattr(self, n.name),

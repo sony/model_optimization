@@ -18,7 +18,8 @@ from torch.nn import Conv2d
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, KPI
 from model_compression_toolkit.common.user_info import UserInformation
-from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
+from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model, get_op_quantization_configs
+from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
@@ -95,6 +96,37 @@ class MixedPercisionSearch2Bit(MixedPercisionBaseTest):
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.compare_results(quantization_info, quantized_models, float_model, 2)
+
+
+class MixedPercisionSearch4Bit(MixedPercisionBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def get_kpi(self):
+        return KPI(192)
+
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        self.compare_results(quantization_info, quantized_models, float_model, 1)
+
+
+class MixedPercisionActivationDisabledTest(MixedPercisionBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def get_fw_hw_model(self):
+        base_config, _ = get_op_quantization_configs()
+        return get_pytorch_test_tpc_dict(
+            tp_model=generate_mixed_precision_test_tp_model(
+                base_cfg=base_config.clone_and_edit(enable_activation_quantization=False),
+                mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)]),
+            test_name='mixed_precision_model',
+            ftp_name='mixed_precision_pytorch_test')
+
+    def get_kpi(self):
+        return KPI(np.inf)
+
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        self.compare_results(quantization_info, quantized_models, float_model, 0)
 
 
 class MixedPrecisionNet(torch.nn.Module):

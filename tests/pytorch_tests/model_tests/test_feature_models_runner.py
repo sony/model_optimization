@@ -18,6 +18,8 @@ from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTe
 from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSameNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest
 from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test import ReshapeNetTest
+from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
+    MixedPercisionActivationSearch8Bit, MixedPercisionActivationSearch2Bit, MixedPercisionActivationSearch4Bit
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
@@ -29,8 +31,8 @@ from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test impo
     ScaleEqualizationConvTransposeReluFuncNetTest
 from tests.pytorch_tests.model_tests.feature_models.layer_name_test import ReuseNameNetTest
 from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTQuantizerTest
-from tests.pytorch_tests.model_tests.feature_models.mixed_precision_test import MixedPercisionSearch8Bit, \
-    MixedPercisionSearch2Bit
+from tests.pytorch_tests.model_tests.feature_models.mixed_precision_weights_test import MixedPercisionSearch8Bit, \
+    MixedPercisionSearch2Bit, MixedPercisionSearch4Bit, MixedPercisionActivationDisabledTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_output_nodes_multiple_tensors_test import \
     MultipleOutputsMultipleTensorsNetTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_outputs_node_test import MultipleOutputsNetTest
@@ -229,6 +231,36 @@ class FeatureModelsTestRunner(unittest.TestCase):
         We check that the model after conversion replaces the attributes with static-list-of-ints attributes.
         """
         ReshapeNetTest(self).run_test()
+
+    def test_mixed_precision_4bit(self):
+        """
+        This test checks the Mixed Precision search.
+        """
+        MixedPercisionSearch4Bit(self).run_test()
+
+    def test_mixed_precision_activation_disabled(self):
+        """
+        This test checks the Mixed Precision search.
+        """
+        MixedPercisionActivationDisabledTest(self).run_test()
+
+    def test_mixed_precision_activation_8bit(self):
+        """
+        This test checks the activation Mixed Precision search.
+        """
+        MixedPercisionActivationSearch8Bit(self).run_test()
+
+    def test_mixed_precision_activation_2bit(self):
+        """
+        This test checks the activation Mixed Precision search.
+        """
+        MixedPercisionActivationSearch2Bit(self).run_test()
+
+    def test_mixed_precision_activation_4bit(self):
+        """
+        This test checks the activation Mixed Precision search.
+        """
+        MixedPercisionActivationSearch4Bit(self)
 
 
 if __name__ == '__main__':

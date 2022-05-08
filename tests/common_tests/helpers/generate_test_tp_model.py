@@ -41,6 +41,6 @@ def generate_mixed_precision_test_tp_model(base_cfg, mp_bitwidth_candidates_list
         mp_op_cfg_list.append(candidate_cfg)
 
     return generate_tp_model(default_config=base_cfg,
-                                   base_config=base_cfg,
-                                   mixed_precision_cfg_list=mp_op_cfg_list,
-                                   name=name)
+                             base_config=base_cfg,
+                             mixed_precision_cfg_list=mp_op_cfg_list,
+                             name=name)

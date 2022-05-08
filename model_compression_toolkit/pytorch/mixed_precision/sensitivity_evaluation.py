@@ -154,3 +154,4 @@ def _set_layer_to_bitwidth(wrapped_layer: Module,
     # Configure the quantize_config to use a different bitwidth
     # (in practice, to use a different already quantized kernel).
     wrapped_layer.set_active_weights(bitwidth_idx)
+    wrapped_layer.set_active_activation_quantizer(bitwidth_idx)
