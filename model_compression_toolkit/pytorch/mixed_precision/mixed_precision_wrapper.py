@@ -62,6 +62,11 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
             self.node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization and \
             not n.is_all_activation_candidates_equal()
 
+        max_cfg_candidates = n.find_min_candidates_indices()
+        assert len(max_cfg_candidates) == 1, \
+            f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
+        max_candidate_idx = max_cfg_candidates[0]
+
         # Setting layers' weights
         if self.enable_weights_quantization:
             # loading the weights from the graph node (weights of the trained model)
@@ -77,12 +82,13 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
             self.weights_quantizer_fn_list = [qc.weights_quantization_cfg.weights_quantization_fn
                                               for qc in self.node_q_cfg]
             self.quantized_weights = self._get_quantized_weights()
+            # Setting the model with the initial quantized weights (the highest precision)
+            self.set_active_weights(bitwidth_idx=max_candidate_idx)
 
         # Setting layer's activation
         if self.enable_activation_quantization:
             self.activation_quantizers = self._get_activation_quantizers()
-            # TODO: How to handle default? (first isn't necessarily the best activation precision)
-            self.activation_bitwidth_idx = 0
+            self.activation_bitwidth_idx = max_candidate_idx
 
     def forward(self, x: Any) -> Any:
         """
@@ -97,7 +103,9 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
             # add fake quant to quantize activations with the active number of bits
             if isinstance(outputs, list):
                 # we assume here that it can't be multiple outputs out of a quantized layer
+                assert (len(outputs) == 1, "Activation quantization for node with multiple outputs is not supported.")
                 outputs = torch.cat(outputs, dim=0)
+
             outputs = self.activation_quantizers[self.activation_bitwidth_idx](outputs)
 
         return outputs
@@ -125,7 +133,7 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
 
         return quantized_weights
 
-    def _get_activation_quantizers(self):
+    def _get_activation_quantizers(self) -> List[Any]:
         """
         Builds a list of quantizers for each of the bitwidth candidates for activation quantization,
         to be stored and used during MP search.
