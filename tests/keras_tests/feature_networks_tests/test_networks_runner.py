@@ -13,37 +13,37 @@
 # limitations under the License.
 # ==============================================================================
 import model_compression_toolkit.common.gptq.gptq_config
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 import tensorflow as tf
 import numpy as np
 import unittest
 import model_compression_toolkit as mct
 from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
-from tests.keras_tests.fw_hw_model_keras import get_16bit_fw_hw_model
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from enum import Enum
 import random
 
 keras = tf.keras
 layers = keras.layers
-hw_model = mct.hardware_representation
+tp = mct.target_platform
 
 QUANTIZATION_CONFIG = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.MSE,
                                              weights_error_method=mct.QuantizationErrorMethod.MSE,
                                              relu_bound_to_power_of_2=False, weights_bias_correction=False,
                                              weights_per_channel_threshold=True)
 
-TWO_BIT_QUANTIZATION = generate_fhw_model_keras(name="two_bit_network_test",
-                                                hardware_model=generate_test_hw_model({'weights_n_bits': 2,
+TWO_BIT_QUANTIZATION = generate_keras_default_tpc(name="two_bit_network_test",
+                                                  tp_model=generate_test_tp_model({'weights_n_bits': 2,
                                                                                        'activation_n_bits': 2}))
 
-EIGHT_BIT_QUANTIZATION = generate_fhw_model_keras(name="eight_bit_network_test",
-                                                  hardware_model=generate_test_hw_model({'weights_n_bits': 8,
+EIGHT_BIT_QUANTIZATION = generate_keras_default_tpc(name="eight_bit_network_test",
+                                                    tp_model=generate_test_tp_model({'weights_n_bits': 8,
                                                                                          'activation_n_bits': 8}))
 
-FLOAT_QUANTIZATION = get_16bit_fw_hw_model("float_network_test")
+FLOAT_QUANTIZATION = get_16bit_tpc("float_network_test")
 
 
 
@@ -53,10 +53,10 @@ class RunMode(Enum):
     FLOAT = 2
 
 
-def run_mode(fw_hw_model):
-    if fw_hw_model is FLOAT_QUANTIZATION:
+def run_mode(tpc):
+    if tpc is FLOAT_QUANTIZATION:
         return RunMode.FLOAT
-    elif fw_hw_model is EIGHT_BIT_QUANTIZATION:
+    elif tpc is EIGHT_BIT_QUANTIZATION:
         return RunMode.EIGHT
     else:
         return RunMode.TWO
@@ -70,21 +70,21 @@ class NetworkTest(object):
         self.num_calibration_iter = num_calibration_iter
         self.gptq = gptq
 
-    def compare(self, inputs_list, quantized_model, qc, fw_hw_model):
+    def compare(self, inputs_list, quantized_model, qc, tpc):
         output_q = quantized_model.predict(inputs_list)
         output_f = self.model_float.predict(inputs_list)
         if isinstance(output_f, list):
             cs = np.mean([cosine_similarity(oq, of) for oq, of, in zip(output_q, output_f)])
         else:
             cs = cosine_similarity(output_f, output_q)
-        if run_mode(fw_hw_model) == RunMode.FLOAT:
+        if run_mode(tpc) == RunMode.FLOAT:
             self.unit_test.assertTrue(np.isclose(cs, 1, 0.001), msg=f'fail cosine similarity check: {cs}')
-        elif run_mode(fw_hw_model) == RunMode.EIGHT:
+        elif run_mode(tpc) == RunMode.EIGHT:
             pass  # remove the cs check for 8 bit quantizaiton at this stage
             # self.unit_test.assertTrue(np.isclose(cs, 1, atol=0.6), msg=f'fail cosine similarity check:{cs}')
-        elif run_mode(fw_hw_model) == RunMode.TWO:
+        elif run_mode(tpc) == RunMode.TWO:
             self.unit_test.assertTrue(np.isclose(cs, 0, atol=0.5), msg=f'fail cosine similarity check:{cs}')
-        if run_mode(fw_hw_model) == RunMode.EIGHT:
+        if run_mode(tpc) == RunMode.EIGHT:
             # TFLite Converter only support eight bit quantization
             try:
                 converter = tf.lite.TFLiteConverter.from_keras_model(quantized_model)
@@ -93,7 +93,7 @@ class NetworkTest(object):
                 error_msg = e.message if hasattr(e, 'message') else str(e)
                 self.unit_test.assertTrue(False, f'fail TFLite convertion with the following error: {error_msg}')
 
-    def run_network(self, inputs_list, qc, fw_hw_model):
+    def run_network(self, inputs_list, qc, tpc):
         def representative_data_gen():
             return inputs_list
 
@@ -108,15 +108,15 @@ class NetworkTest(object):
                                                                                 fw_info=DEFAULT_KERAS_INFO,
                                                                                 n_iter=self.num_calibration_iter,
                                                                                 gptq_config=arc,
-                                                                                fw_hw_model=fw_hw_model)
+                                                                                target_platform_capabilities=tpc)
         else:
             ptq_model, quantization_info = mct.keras_post_training_quantization(self.model_float,
                                                                                 representative_data_gen,
                                                                                 quant_config=qc,
                                                                                 fw_info=DEFAULT_KERAS_INFO,
                                                                                 n_iter=self.num_calibration_iter,
-                                                                                fw_hw_model=fw_hw_model)
-        self.compare(inputs_list, ptq_model, qc, fw_hw_model)
+                                                                                target_platform_capabilities=tpc)
+        self.compare(inputs_list, ptq_model, qc, tpc)
 
 
 def set_seed():

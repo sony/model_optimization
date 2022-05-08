@@ -14,15 +14,14 @@
 # ==============================================================================
 import torch
 import numpy as np
-from torch.nn import Conv2d
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, KPI
 from model_compression_toolkit.common.user_info import UserInformation
-from model_compression_toolkit.hardware_models.default_hwm import get_op_quantization_configs
-from tests.common_tests.helpers.activation_mp_hw_model import generate_hw_model_with_activation_mp
-from tests.pytorch_tests.fw_hw_model_pytorch import get_mp_activation_pytorch_hwm_dict
+from model_compression_toolkit.tpc_models.default_tp_model import get_op_quantization_configs
+from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
+from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
 
 """
 This test checks the Mixed Precision feature.
@@ -33,17 +32,16 @@ class MixedPercisionActivationBaseTest(BasePytorchTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_fw_hw_model(self):
+    def get_tpc(self):
         base_config, _ = get_op_quantization_configs()
-        # return get_mp_activation_pytorch_hwm_dict
-        return get_mp_activation_pytorch_hwm_dict(
-            hardware_model=generate_hw_model_with_activation_mp(
+        return get_mp_activation_pytorch_tpc_dict(
+            tpc_model=generate_tp_model_with_activation_mp(
                 base_cfg=base_config,
                 mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
                                              (4, 8), (4, 4), (4, 2),
                                              (2, 8), (2, 4), (2, 2)]),
             test_name='mixed_precision_activation_model',
-            fhwm_name='mixed_precision_activation_pytorch_test')
+            tpc_name='mixed_precision_activation_pytorch_test')
 
     def get_quantization_configs(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,

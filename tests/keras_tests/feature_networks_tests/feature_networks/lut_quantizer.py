@@ -27,7 +27,7 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 
 keras = tf.keras
 layers = keras.layers
-hw_model = cmo.hardware_representation
+tp = cmo.target_platform
 
 def get_uniform_weights(kernel, in_channels, out_channels):
     return np.array([i - np.round((in_channels * kernel * kernel * out_channels) / 2) for i in
@@ -50,21 +50,21 @@ class LUTQuantizerTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
 
-    def get_fw_hw_model(self):
-        qco = hw_model.QuantizationConfigOptions(
-            [hw_model.OpQuantizationConfig(activation_quantization_method=hw_model.QuantizationMethod.POWER_OF_TWO,
-                                           weights_quantization_method=hw_model.QuantizationMethod.LUT_QUANTIZER,
-                                           activation_n_bits=8,
-                                           weights_n_bits=8,
-                                           weights_per_channel_threshold=True,
-                                           enable_weights_quantization=True,
-                                           enable_activation_quantization=True,
-                                           quantization_preserving=False,
-                                           fixed_scale=None,
-                                           fixed_zero_point=None,
-                                           weights_multiplier_nbits=None
-                                           )])
-        return hw_model.FrameworkHardwareModel(hw_model.HardwareModel(qco))
+    def get_tpc(self):
+        qco = tp.QuantizationConfigOptions(
+            [tp.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+                                     weights_quantization_method=tp.QuantizationMethod.LUT_QUANTIZER,
+                                     activation_n_bits=8,
+                                     weights_n_bits=8,
+                                     weights_per_channel_threshold=True,
+                                     enable_weights_quantization=True,
+                                     enable_activation_quantization=True,
+                                     quantization_preserving=False,
+                                     fixed_scale=None,
+                                     fixed_zero_point=None,
+                                     weights_multiplier_nbits=None
+                                     )])
+        return tp.TargetPlatformCapabilities(tp.TargetPlatformModel(qco))
 
     def get_quantization_config(self):
         return cmo.QuantizationConfig(cmo.QuantizationErrorMethod.MSE,
@@ -78,7 +78,7 @@ class LUTQuantizerTest(BaseKerasFeatureNetworkTest):
     def get_network_editor(self):
         return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
                          action=ChangeCandidatesWeightsQuantizationMethod(
-                             weights_quantization_method=cmo.hardware_representation.QuantizationMethod.POWER_OF_TWO))]
+                             weights_quantization_method=cmo.target_platform.QuantizationMethod.POWER_OF_TWO))]
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, self.num_conv_channels]]

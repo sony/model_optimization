@@ -17,6 +17,8 @@ import unittest
 from tests.pytorch_tests.function_tests.bn_info_collection_test import BNInfoCollectionTest, \
     Conv2D2BNInfoCollectionTest, Conv2DBNChainInfoCollectionTest, BNChainInfoCollectionTest, \
     BNLayerInfoCollectionTest, INP2BNInfoCollectionTest
+from tests.pytorch_tests.function_tests.kpi_data_test import TestKPIDataBasicAllBitwidth, \
+    TestKPIDataBasicPartialBitwidth, TestKPIDataComplexPartialBitwidth, TestKPIDataComplesAllBitwidth
 
 
 class FunctionTestRunner(unittest.TestCase):
@@ -59,6 +61,30 @@ class FunctionTestRunner(unittest.TestCase):
         This test checks the BatchNorm info collection with 2 parallel BN layer.
         """
         INP2BNInfoCollectionTest(self).run_test()
+
+    def test_kpi_data_basic_all(self):
+        """
+        This test checks the KPI data Pytorch API.
+        """
+        TestKPIDataBasicAllBitwidth(self).run_test()
+
+    def test_kpi_data_basic_partial(self):
+        """
+        This test checks the KPI data Pytorch API.
+        """
+        TestKPIDataBasicPartialBitwidth(self).run_test()
+
+    def test_kpi_data_complex_all(self):
+        """
+        This test checks the KPI data Pytorch API.
+        """
+        TestKPIDataComplesAllBitwidth(self).run_test()
+
+    def test_kpi_data_complex_partial(self):
+        """
+        This test checks the KPI data Pytorch API.
+        """
+        TestKPIDataComplexPartialBitwidth(self).run_test()
 
 
 if __name__ == '__main__':

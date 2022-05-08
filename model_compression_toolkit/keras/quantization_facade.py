@@ -30,7 +30,7 @@ from model_compression_toolkit.common.quantization.quantization_config import DE
 
 import importlib
 
-from model_compression_toolkit.common.hardware_representation.hardware2framework import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
 
 if importlib.util.find_spec("tensorflow") is not None\
@@ -42,10 +42,10 @@ if importlib.util.find_spec("tensorflow") is not None\
     from tensorflow.keras.models import Model
     from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
     from keras.optimizer_v2.optimizer_v2 import OptimizerV2
-    from model_compression_toolkit.keras.constants import DEFAULT_HWM
+    from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL
 
-    from model_compression_toolkit import get_model
-    KERAS_DEFAULT_MODEL = get_model(TENSORFLOW, DEFAULT_HWM)
+    from model_compression_toolkit import get_target_platform_capabilities
+    DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def get_keras_gptq_config(n_iter: int,
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(),
@@ -97,7 +97,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                          network_editor: List[EditRule] = [],
                                          gptq_config: GradientPTQConfig = None,
                                          analyze_similarity: bool = False,
-                                         fw_hw_model: FrameworkHardwareModel = KERAS_DEFAULT_MODEL):
+                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
         symmetric constraint quantization thresholds (power of two).
@@ -107,18 +107,28 @@ if importlib.util.find_spec("tensorflow") is not None\
         Thresholds are then being calculated using the collected statistics and the model is quantized
         (both coefficients and activations by default).
         If a gptq configuration is passed, the quantized weights are optimized using gradient based post
-        training quantization by comparing points between the float and quantized models, and minimizing the observed loss.
+        training quantization by comparing points between the float and quantized models, and minimizing the observed
+        loss.
 
         Args:
             in_model (Model): Keras model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
             n_iter (int): Number of calibration iterations to run.
-            quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/common/quantization/quantization_config.py#L154>`_
-            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/keras/default_framework_info.py#L113>`_
-            network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
+            quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be
+            quantized. `Default configuration.
+            <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10
+            /model_compression_toolkit/common/quantization/quantization_config.py#L154>`_
+            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
+            kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info
+            <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10
+            /model_compression_toolkit/keras/default_framework_info.py#L113>`_
+            network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action
+            to change quantization settings of the filtered nodes.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
-            analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
-            fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
+            analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled)
+            or not.
+            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the
+            Keras model according to.
 
         Returns:
             A quantized model and information the user may need to handle the quantized model.
@@ -148,7 +158,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                           quant_config,
                                           fw_info,
                                           KerasImplementation(),
-                                          fw_hw_model,
+                                          target_platform_capabilities,
                                           network_editor,
                                           gptq_config,
                                           analyze_similarity)
@@ -163,7 +173,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                                          network_editor: List[EditRule] = [],
                                                          gptq_config: GradientPTQConfig = None,
                                                          analyze_similarity: bool = False,
-                                                         fw_hw_model: FrameworkHardwareModel = KERAS_DEFAULT_MODEL):
+                                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
          Quantize a trained Keras model using post-training quantization. The model is quantized using a
          symmetric constraint quantization thresholds (power of two).
@@ -176,7 +186,8 @@ if importlib.util.find_spec("tensorflow") is not None\
          In order to limit the maximal model's size, a target KPI need to be passed after weights_memory
          is set (in bytes).
          If a gptq configuration is passed, the quantized weights are optimized using gradient based post
-         training quantization by comparing points between the float and quantized models, and minimizing the observed loss.
+         training quantization by comparing points between the float and quantized models, and minimizing the
+         observed loss.
          Notice that this feature is experimental.
          **For now, mixed precision is supported for weights only.**
 
@@ -185,12 +196,19 @@ if importlib.util.find_spec("tensorflow") is not None\
              representative_data_gen (Callable): Dataset used for calibration.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              n_iter (int): Number of calibration iterations to run.
-             quant_config (MixedPrecisionQuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized.
-             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/keras/default_framework_info.py#L100>`_
-             network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
+             quant_config (MixedPrecisionQuantizationConfig): QuantizationConfig containing parameters of how the
+             model should be quantized.
+             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
+             kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info
+             <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/keras
+             /default_framework_info.py#L100>`_
+             network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an
+             action to change quantization settings of the filtered nodes.
              gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
-             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
-             fw_hw_model (FrameworkHardwareModel): FrameworkHardwareModel to optimize the Keras model according to.
+             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is
+             enabled) or not.
+             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the
+             Keras model according to.
 
 
          Returns:
@@ -212,19 +230,24 @@ if importlib.util.find_spec("tensorflow") is not None\
              >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
 
              Create a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
-             The candidates bitwidth for quantization should be defined in the hardware model:
+             The candidates bitwidth for quantization should be defined in the target platform model:
 
              >>> config = mct.MixedPrecisionQuantizationConfig()
 
-             Create a KPI object to limit our returned model's size. Note that this value affects only coefficients that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value, while the bias will not):
+             Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
+             that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
+             while the bias will not):
 
              >>> kpi = mct.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
 
-             Pass the model, the representative dataset generator, the configuration and the target KPI to get a quantized model:
+             Pass the model, the representative dataset generator, the configuration and the target KPI to get a
+             quantized model:
 
-             >>> quantized_model, quantization_info = mct.keras_post_training_quantization_mixed_precision(model, repr_datagen, target_kpi=kpi, n_iter=10, quant_config=config)
+             >>> quantized_model, quantization_info = mct.keras_post_training_quantization_mixed_precision(model,repr_datagen, target_kpi=kpi, n_iter=10, quant_config=config)
 
-             For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
+             For more configuration options, please take a look at our `API documentation
+             <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html
+             >`_.
 
          """
         KerasModelValidation(model=in_model,
@@ -244,7 +267,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                           quant_config,
                                           fw_info,
                                           KerasImplementation(),
-                                          fw_hw_model,
+                                          target_platform_capabilities,
                                           network_editor,
                                           gptq_config,
                                           analyze_similarity,

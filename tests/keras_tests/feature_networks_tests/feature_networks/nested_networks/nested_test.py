@@ -15,7 +15,7 @@
 
 import tensorflow as tf
 
-from tests.keras_tests.fw_hw_model_keras import get_quantization_disabled_keras_hw_model
+from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.engine.functional import Functional
@@ -40,8 +40,8 @@ class NestedTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test,
                          input_shape=(16,16,3))
 
-    def get_fw_hw_model(self):
-        return get_quantization_disabled_keras_hw_model("nested_test")
+    def get_tpc(self):
+        return get_quantization_disabled_keras_tpc("nested_test")
 
     # Dummy model to test reader's recursively model parsing
     def dummy_model(self, input_shape):

@@ -20,8 +20,9 @@ class BaseModelTest(BasePytorchTest):
     def __init__(self,
                  unit_test,
                  model,
-                 float_reconstruction_error=1e-5):
-        super().__init__(unit_test, float_reconstruction_error)
+                 float_reconstruction_error=1e-5,
+                 convert_to_fx=True):
+        super().__init__(unit_test, float_reconstruction_error, convert_to_fx)
         self.model = model
 
     def create_inputs_shape(self):

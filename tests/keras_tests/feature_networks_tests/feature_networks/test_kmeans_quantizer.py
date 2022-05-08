@@ -15,14 +15,14 @@
 
 import unittest
 
-from model_compression_toolkit import hardware_representation
+from model_compression_toolkit import target_platform
 from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.common.network_editors.actions import EditRule, ChangeCandidatesWeightsQuantConfigAttr
 import model_compression_toolkit as cmo
 import tensorflow as tf
 
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 
@@ -48,7 +48,7 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
 
     def __init__(self,
                  unit_test,
-                 quantization_method: hardware_representation.QuantizationMethod.KMEANS,
+                 quantization_method: target_platform.QuantizationMethod.KMEANS,
                  weight_fn=get_uniform_weights,
                  weights_n_bits: int = 3):
 
@@ -60,11 +60,11 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
         self.conv_w = weight_fn(self.kernel, self.num_conv_channels, self.num_conv_channels)
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
-    def get_fw_hw_model(self):
-        hwm = generate_test_hw_model({'weights_quantization_method': self.quantization_method,
+    def get_tpc(self):
+        tp = generate_test_tp_model({'weights_quantization_method': self.quantization_method,
                                       'weights_n_bits': self.weights_n_bits,
                                       'activation_n_bits': 4})
-        return generate_fhw_model_keras(name="kmean_quantizer_test", hardware_model=hwm)
+        return generate_keras_default_tpc(name="kmean_quantizer_test", tp_model=tp)
 
     def get_quantization_config(self):
         return cmo.QuantizationConfig(cmo.QuantizationErrorMethod.MSE,
@@ -90,7 +90,7 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
 
     def get_network_editor(self):
         return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
-                         action=ChangeCandidatesWeightsQuantConfigAttr(weights_quantization_method=hardware_representation.QuantizationMethod.POWER_OF_TWO))]
+                         action=ChangeCandidatesWeightsQuantConfigAttr(weights_quantization_method=target_platform.QuantizationMethod.POWER_OF_TWO))]
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv's weights have different values since they where quantized
@@ -106,7 +106,7 @@ class KmeansQuantizerTest(KmeansQuantizerTestBase):
 
     def __init__(self,
                  unit_test,
-                 quantization_method: hardware_representation.QuantizationMethod.KMEANS,
+                 quantization_method: target_platform.QuantizationMethod.KMEANS,
                  weights_n_bits: int = 3):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
@@ -122,7 +122,7 @@ class KmeansQuantizerTestManyClasses(KmeansQuantizerTestBase):
     This test checks the chosen quantization method is different that symmetric uniform
     '''
 
-    def __init__(self, unit_test, quantization_method: hardware_representation.QuantizationMethod.KMEANS, weights_n_bits: int = 8):
+    def __init__(self, unit_test, quantization_method: target_platform.QuantizationMethod.KMEANS, weights_n_bits: int = 8):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -138,7 +138,7 @@ class KmeansQuantizerTestZeroWeights(KmeansQuantizerTestBase):
     '''
 
     def __init__(self, unit_test,
-                 quantization_method: hardware_representation.QuantizationMethod.KMEANS,
+                 quantization_method: target_platform.QuantizationMethod.KMEANS,
                  weights_n_bits: int = 3):
         super().__init__(unit_test, quantization_method, get_zero_as_weights, weights_n_bits)
 
@@ -153,37 +153,37 @@ class KmeansQuantizerTestZeroWeights(KmeansQuantizerTestBase):
 # This test checks that the Kmeans quantization has a different result than symmetric uniform quantization
 class RunKmeansTest(unittest.TestCase):
     def test_kmeans_quantizer(self):
-        KmeansQuantizerTest(self, hardware_representation.QuantizationMethod.KMEANS).run_test()
+        KmeansQuantizerTest(self, target_platform.QuantizationMethod.KMEANS).run_test()
 
 
 # This test checks that the LUT- Kmeans quantization has a different result than symmetric uniform quantization
 class RunLutKmeansTest(unittest.TestCase):
     def test_kmeans_quantizer(self):
-        KmeansQuantizerTest(self, hardware_representation.QuantizationMethod.LUT_QUANTIZER).run_test()
+        KmeansQuantizerTest(self, target_platform.QuantizationMethod.LUT_QUANTIZER).run_test()
 
 
 # In this test we have weights with less unique values than the number of clusters
 class RunKmeansTestManyClasses(unittest.TestCase):
     def test_kmeans_quantizer(self):
-        KmeansQuantizerTestManyClasses(self, hardware_representation.QuantizationMethod.KMEANS, weights_n_bits=8).run_test()
+        KmeansQuantizerTestManyClasses(self, target_platform.QuantizationMethod.KMEANS, weights_n_bits=8).run_test()
 
 
 # In this test we have weights with less unique values than the number of clusters
 class RunLutKmeansTestManyClasses(unittest.TestCase):
     def test_kmeans_quantizer(self):
-        KmeansQuantizerTestManyClasses(self, hardware_representation.QuantizationMethod.LUT_QUANTIZER, weights_n_bits=8).run_test()
+        KmeansQuantizerTestManyClasses(self, target_platform.QuantizationMethod.LUT_QUANTIZER, weights_n_bits=8).run_test()
 
 
 # This test checks the case where all the weight values are zero
 class RunKmeansTestZeroWeights(unittest.TestCase):
     def test_kmeans_quantizer_zero_weights(self):
-        KmeansQuantizerTest(self, hardware_representation.QuantizationMethod.KMEANS).run_test()
+        KmeansQuantizerTest(self, target_platform.QuantizationMethod.KMEANS).run_test()
 
 
 # This test checks the case where all the weight values are zero
 class RunLutKmeansTestZeroWeights(unittest.TestCase):
     def test_kmeans_quantizer_zero_weights(self):
-        KmeansQuantizerTest(self, hardware_representation.QuantizationMethod.LUT_QUANTIZER).run_test()
+        KmeansQuantizerTest(self, target_platform.QuantizationMethod.LUT_QUANTIZER).run_test()
 
 
 if __name__ == '__main__':

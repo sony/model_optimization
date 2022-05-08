@@ -23,7 +23,7 @@ from tests.common_tests.function_tests.test_histogram_collector import TestHisto
 from tests.common_tests.function_tests.test_collectors_manipulation import TestCollectorsManipulations
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
-from tests.common_tests.test_hardware_model import HardwareModelingTest, OpsetTest, QCOptionsTest, FusingTest
+from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
 
 
 found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
@@ -47,7 +47,7 @@ if found_tf:
         TestSymmetricThresholdSelectionWeights
     from tests.keras_tests.function_tests.test_uniform_quantize_tensor import TestUniformQuantizeTensor
     from tests.keras_tests.function_tests.test_uniform_range_selection_weights import TestUniformRangeSelectionWeights
-    from tests.keras_tests.test_keras_hardware_model import TestKerasHWModel
+    from tests.keras_tests.test_keras_tp_model import TestKerasTPModel
 
 
 if found_pytorch:
@@ -55,7 +55,7 @@ if found_pytorch:
     from tests.pytorch_tests.model_tests.test_feature_models_runner import FeatureModelsTestRunner
     from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
-    from tests.pytorch_tests.test_pytorch_hardware_model import TestPytorchHWModel
+    from tests.pytorch_tests.test_pytorch_tp_model import TestPytorchTPModel
 
 
 if __name__ == '__main__':
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCollectorsManipulations))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFolderLoader))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestThresholdSelection))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(HardwareModelingTest))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TargetPlatformModelingTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(OpsetTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(QCOptionsTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FusingTest))
@@ -84,7 +84,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSymmetricThresholdSelectionWeights))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformQuantizeTensor))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformRangeSelectionWeights))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasHWModel))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasTPModel))
 
         # Keras test layers are supported in TF2.6 or higher versions
         if tf.__version__ >= "2.6":
@@ -94,9 +94,13 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TorchLayerTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureModelsTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FunctionTestRunner))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ModelTest))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchHWModel))
+        suiteList.append(unittest.TestLoader().loadTestsFromName('test_mobilenet_v2', ModelTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromName('test_mobilenet_v3', ModelTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromName('test_efficientnet_b0', ModelTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromName('test_resnet18', ModelTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromName('test_shufflenet_v2_x1_0', ModelTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchTPModel))
 
-    # ----------------   Join them together ane run them
+    # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)
     unittest.TextTestRunner(verbosity=0).run(comboSuite)

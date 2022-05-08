@@ -2,10 +2,10 @@ from typing import List, Any, Tuple
 
 import tensorflow as tf
 
-from model_compression_toolkit.hardware_models.default_hwm import get_default_hardware_model
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
-from tests.keras_tests.fw_hw_model_keras import get_quantization_disabled_keras_hw_model
+from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers.core import TFOpLambda
@@ -71,14 +71,14 @@ class BaseKerasLayerTest(BaseLayerTest):
                          is_inputs_a_list=is_inputs_a_list,
                          use_cpu=use_cpu)
 
-    def get_fw_hw_model(self):
+    def get_tpc(self):
         if self.current_mode == LayerTestMode.FLOAT:
             # Disable all features that are enabled by default:
-            return get_quantization_disabled_keras_hw_model("float_layer_test")
+            return get_quantization_disabled_keras_tpc("float_layer_test")
         elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
-            hwm = generate_test_hw_model({'weights_n_bits': 8,
+            tp = generate_test_tp_model({'weights_n_bits': 8,
                                           'activation_n_bits': 8})
-            return generate_fhw_model_keras(name="8bit_layer_test", hardware_model=hwm)
+            return generate_keras_default_tpc(name="8bit_layer_test", tp_model=tp)
         else:
             raise NotImplemented
 

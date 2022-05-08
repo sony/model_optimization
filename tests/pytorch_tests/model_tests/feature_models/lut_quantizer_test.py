@@ -19,11 +19,11 @@ from model_compression_toolkit.common.network_editors.node_filters import NodeNa
 from model_compression_toolkit.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod
 from model_compression_toolkit.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
-from tests.pytorch_tests.fw_hw_model_pytorch import get_pytorch_test_fw_hw_model_dict
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
-hw_model = mct.hardware_representation
+tp = mct.target_platform
 
 """
 This test checks multiple features:
@@ -77,11 +77,11 @@ class LUTQuantizerTest(BasePytorchTest):
         self.num_conv_channels = 3
         self.kernel = 3
 
-    def get_fw_hw_model(self):
-        return get_pytorch_test_fw_hw_model_dict(
-            hardware_model=generate_test_hw_model({"weights_n_bits": self.weights_n_bits}),
+    def get_tpc(self):
+        return get_pytorch_test_tpc_dict(
+            tp_model=generate_test_tp_model({"weights_n_bits": self.weights_n_bits}),
             test_name='lut_quantizer_test',
-            fhwm_name='lut_quantizer_pytorch_test')
+            ftp_name='lut_quantizer_pytorch_test')
 
     def get_quantization_configs(self):
         return {'lut_quantizer_test': mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
@@ -90,7 +90,7 @@ class LUTQuantizerTest(BasePytorchTest):
     def get_network_editor(self):
         return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
                          action=ChangeCandidatesWeightsQuantizationMethod(
-                             weights_quantization_method=hw_model.QuantizationMethod.LUT_QUANTIZER))]
+                             weights_quantization_method=tp.QuantizationMethod.LUT_QUANTIZER))]
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 16, 16], [self.val_batch_size, 3, 16, 16]]

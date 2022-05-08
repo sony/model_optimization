@@ -31,7 +31,7 @@ from model_compression_toolkit.common.collectors.statistics_collector import Bas
 from model_compression_toolkit.common.collectors.statistics_collector import scale_statistics, shift_statistics
 from model_compression_toolkit.common.user_info import UserInformation
 from model_compression_toolkit.common.logger import Logger
-from model_compression_toolkit.common.hardware_representation.hardware2framework import FrameworkHardwareModel
+from model_compression_toolkit.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
 OutTensor = namedtuple('OutTensor', 'node node_out_index')
 
@@ -84,14 +84,14 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         self.fw_info = fw_info
 
-    def set_fw_hw_model(self,
-                        fw_hw_model: FrameworkHardwareModel):
+    def set_tpc(self,
+                tpc: TargetPlatformCapabilities):
         """
-        Set the graph's framework hardware model.
+        Set the graph's TPC.
         Args:
-            fw_hw_model: FrameworkHardwareModel object.
+            tpc: TargetPlatformCapabilities object.
         """
-        self.fw_hw_model = fw_hw_model
+        self.tpc = tpc
 
 
     def get_topo_sorted_nodes(self):
@@ -589,3 +589,21 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             if n in nodes_list:
                 sorted_configurable_nodes.append(n)
         return sorted_configurable_nodes
+
+    def get_min_candidates_config(self) -> List[int]:
+        """
+        Builds a minimal configuration.
+        Note: we assume that a minimal configuration exists, i.e., each configurable node has exactly one candidate
+            with minimal n_bits (in both weight and activation if both are quantized, or in the relevant one if only
+            one of them is quantized)
+
+        Returns: A list of candidate for each node (list on indices)
+        """
+
+        conf_sorted_nodes = self.get_configurable_sorted_nodes()
+        min_cfg_candidates = [n.find_min_candidates_indices() for n in conf_sorted_nodes]  # list of lists of indices
+
+        assert all([len(lst) == 1 for lst in min_cfg_candidates]), \
+            f"A minimal config candidate must be defined, but some node have multiple potential minimal candidates"
+
+        return [lst[0] for lst in min_cfg_candidates]

@@ -62,11 +62,11 @@ if __name__ == '__main__':
     def representative_data_gen() -> list:
         return [image_data_loader.sample()]
 
-    # Get a HardwareModel object that models the hardware for the quantized model inference.
+    # Get a TargetPlatformModel object that models the hardware for the quantized model inference.
     # The model determines the quantization methods to use during the MCT optimization process.
     # Here, for example, we use the default model that is attached to a Pytorch
     # layers representation.
-    hardware_model = mct.get_model('pytorch', 'default')
+    hardware_model = mct.get_target_platform_capabilities('pytorch', 'default')
 
 
     # Create a model and quantize it using the representative_data_gen as the calibration images.
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     # run post training quantization on the model to get the quantized model output
     quantized_model, quantization_info = mct.pytorch_post_training_quantization(model,
                                                                                 representative_data_gen,
-                                                                                fw_hw_model=hardware_model,
+                                                                                target_platform_capabilities=hardware_model,
                                                                                 n_iter=20)
 
 
