@@ -336,7 +336,7 @@ class BaseNode:
 
         return [i for i, a_n_bits in min_candidates]
 
-    def find_max_candidates_indices(self):
+    def find_max_candidates_indices(self) -> List[int]:
         """
         Returns a list with potential maximal candidates.
         A potential maximal candidate is a candidate which its weights_n_bits and activation_n_bits pair is
