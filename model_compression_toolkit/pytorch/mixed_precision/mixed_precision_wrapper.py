@@ -103,7 +103,7 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
             # add fake quant to quantize activations with the active number of bits
             if isinstance(outputs, list):
                 # we assume here that it can't be multiple outputs out of a quantized layer
-                assert (len(outputs) == 1, "Activation quantization for node with multiple outputs is not supported.")
+                assert len(outputs) == 1, "Activation quantization for node with multiple outputs is not supported."
                 outputs = torch.cat(outputs, dim=0)
 
             outputs = self.activation_quantizers[self.activation_bitwidth_idx](outputs)
