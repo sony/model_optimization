@@ -14,19 +14,14 @@
 # ==============================================================================
 from typing import Tuple, List
 
-import numpy as np
 from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
-from model_compression_toolkit.common.defaultdict import DefaultDict
 
 from model_compression_toolkit.common import Graph
-from model_compression_toolkit.common.similarity_analyzer import compute_cs
-from model_compression_toolkit.keras.back2framework.model_builder import model_builder
-from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
-from model_compression_toolkit.common.graph.base_node import BaseNode
 
 
+# Layers that have weights attributes that can be quantized
 WEIGHTS_LAYERS_NAMES = {
     Conv2D: 'Conv2D',
     DepthwiseConv2D: 'DW',
@@ -36,6 +31,16 @@ WEIGHTS_LAYERS_NAMES = {
 
 
 def get_layer_represent_name(layer_type):
+    """
+    Returns the mapping between a layer's type and its name to appear in the visualization figure.
+
+    Args:
+        layer_type: A Keras Layer type.
+
+    Returns: The name of the layer to appear in the visualization.
+
+    """
+
     name = WEIGHTS_LAYERS_NAMES.get(layer_type)
     if name is None:
         raise Exception(f"Layer type {layer_type} is not familiar for config visualization purposes")
@@ -43,9 +48,18 @@ def get_layer_represent_name(layer_type):
 
 
 class KerasWeightsConfigVisualizer:
-
+    """
+    Class to visualize the chosen bit-width configuration for weights configurable layers in mixed-precision mode.
+    KerasWeightsConfigVisualizer draws a bar plot with the bit-width value of each layer.
+    Note: works for weights mp only (if both weights and activation are configurable, then it might not work correctly)
+    """
     def __init__(self,
                  final_config: List[Tuple[type, int]]):
+        """
+        Initialize a KerasWeightsConfigVisualizer object.
+        Args:
+            final_config: Mixed-precision configuration (list of indices).
+        """
 
         self.final_config = final_config
         self.node_reps_names = [get_layer_represent_name(node_cfg[0]) for node_cfg in self.final_config]
@@ -56,6 +70,13 @@ class KerasWeightsConfigVisualizer:
         self.gap = self.bar_width + 3
 
     def plot_config_bitwidth(self) -> Figure:
+        """
+        Plots a bar figure with the layers' bit-width values according to the chosen config.
+
+        Returns:
+            Figure of the layers' bit-width values.
+        """
+
         layers_loc = [i for i in range(self.bar_width, self.bar_width + self.gap * len(self.node_reps_names), self.gap)]
         fig, ax = plt.subplots(figsize=(20, 10))
         plt.bar(layers_loc, self.node_final_bitwidth, color=self.configs_colors, width=self.bar_width, align='center')
@@ -69,15 +90,36 @@ class KerasWeightsConfigVisualizer:
 
 
 class KerasActivationConfigVisualizer:
+    """
+    Class to visualize the activation configuration attributes.
+    KerasActivationConfigVisualizer can draw a figure of the chosen bit-width configuration for activation configurable
+    layers in mixed-precision mode.
+    It also allows to draw a figure with the activation tensors memory size.
+    Note: works for activation mp only (if both weights and activation are configurable,
+        then it might not work correctly)
+    """
 
     def __init__(self,
                  final_config: List[Tuple[type, int]]):
+        """
+        Initialize a KerasActivationConfigVisualizer object.
+        Args:
+            final_config: Mixed-precision configuration (list of indices).
+        """
+
         self.final_config = final_config
         self.node_final_bitwidth = [node_cfg[1] for node_cfg in self.final_config]
         self.bar_width = 1
         self.vis_comp_rates = {4.0: 'tomato', 8.0: 'orange', 12.0: 'limegreen'}
 
     def plot_config_bitwidth(self) -> Figure:
+        """
+        Plots a bar figure with the layers' bit-width values according to the chosen config.
+
+        Returns:
+            Figure of the layers' bit-width values.
+        """
+
         layers_loc = [i for i in range(1, len(self.node_final_bitwidth) + 1)]
         fig, ax = plt.subplots()
         plt.bar(layers_loc, self.node_final_bitwidth, width=self.bar_width, align='center')
@@ -88,6 +130,17 @@ class KerasActivationConfigVisualizer:
         return fig
 
     def plot_tensor_sizes(self, graph: Graph) -> Figure:
+        """
+        Plots a bar figure with the layers' activation tensors sizes.
+        Also, adds horizontal line indicators for the max tensor size (in MB) for the defined set of compression rates.
+
+        Args:
+            graph: A Graph object to be used for calculating the layers' activation tensor sizes.
+
+        Returns:
+            Figure of the layers' activation tensors sizes.
+        """
+
         tensors_sizes = [4.0 * n.get_total_output_params() / 1000000.0
                          for n in graph.get_sorted_activation_configurable_nodes()]  # in MB
         max_tensor_size = max(tensors_sizes)
