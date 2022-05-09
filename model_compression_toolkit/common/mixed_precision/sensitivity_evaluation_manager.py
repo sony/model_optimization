@@ -18,6 +18,7 @@ from typing import Callable, Any, List
 from model_compression_toolkit import FrameworkInfo, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
+from model_compression_toolkit.common import Logger
 
 
 class SensitivityEvaluationManager:
@@ -181,6 +182,8 @@ def bound_num_interest_points(sorted_ip_list: List[BaseNode], num_ip_factor: flo
     """
     if num_ip_factor < 1.0:
         num_interest_points = int(num_ip_factor * len(sorted_ip_list))
+        Logger.info(f'Using {num_interest_points} for mixed-precision metric evaluation out of total '
+                    f'{len(sorted_ip_list)} potential interest points.')
         # Take num_interest_points evenly spaced interest points from the original list
         indices = np.round(np.linspace(0, len(sorted_ip_list) - 1, num_interest_points)).astype(int)
         return [sorted_ip_list[i] for i in indices]
