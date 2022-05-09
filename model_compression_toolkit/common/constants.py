@@ -86,6 +86,3 @@ DEC_RANGE_UPPER = 1.03
 
 # KPI computation parameters
 BITS_TO_BYTES = 8.0
-
-# Mixed precision search defaults
-NUM_INTEREST_POINTS_BOUND = 60

@@ -28,7 +28,8 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
                  compute_distance_fn: Callable = compute_mse,
                  distance_weighting_method: Callable = get_average_weights,
                  num_of_images: int = 32,
-                 configuration_overwrite: List[int] = None):
+                 configuration_overwrite: List[int] = None,
+                 num_interest_points_factor: float = 1.0):
         """
         Class to wrap all different parameters the library quantize the input model according to.
         Unlike QuantizationConfig, number of bits for quantization is a list of possible bit widths to
@@ -48,6 +49,12 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
         self.distance_weighting_method = distance_weighting_method
         self.num_of_images = num_of_images
         self.configuration_overwrite = configuration_overwrite
+
+        assert 0.0 < num_interest_points_factor <= 1.0, "num_interest_points_factor should represent a percentage of " \
+                                                        "the base set of interest points that are required to be " \
+                                                        "used for mixed-precision metric evaluation, " \
+                                                        "thus, it should be between 0 to 1"
+        self.num_interest_points_factor = num_interest_points_factor
 
 
 # Default quantization configuration the library use.

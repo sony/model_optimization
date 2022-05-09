@@ -16,7 +16,6 @@ import unittest
 from keras.applications.densenet import DenseNet121
 from keras.applications.mobilenet_v2 import MobileNetV2
 
-from model_compression_toolkit.common.constants import NUM_INTEREST_POINTS_BOUND
 from model_compression_toolkit.common.mixed_precision.distance_weighting import get_average_weights
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
@@ -32,11 +31,12 @@ from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import g
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 
 
-def build_ip_list_for_test(in_model):
+def build_ip_list_for_test(in_model, num_interest_points_factor):
     qc = MixedPrecisionQuantizationConfig(DEFAULTCONFIG,
                                           compute_mse,
                                           get_average_weights,
-                                          num_of_images=1)
+                                          num_of_images=1,
+                                          num_interest_points_factor=num_interest_points_factor)
     fw_info = DEFAULT_KERAS_INFO
     keras_impl = KerasImplementation()
 
@@ -57,7 +57,8 @@ def build_ip_list_for_test(in_model):
                                                     quant_config=qc)
 
     ips = get_mp_interest_points(graph=graph,
-                                 fw_info=fw_info)
+                                 fw_info=fw_info,
+                                 num_ip_factor=qc.num_interest_points_factor)
 
     return ips, graph, fw_info
 
@@ -66,30 +67,33 @@ class TestSensitivityMetricInterestPOints(unittest.TestCase):
 
     def test_filtered_interest_points_set(self):
         in_model = DenseNet121()
-        ips, graph, fw_info = build_ip_list_for_test(in_model)
+        ips, graph, fw_info = build_ip_list_for_test(in_model, num_interest_points_factor=0.5)
         sorted_nodes = graph.get_topo_sorted_nodes()
         kernel_nodes = list(filter(lambda n: fw_info.get_kernel_op_attributes(n.type)[0] is not None, sorted_nodes))
 
-        self.assertTrue(len(ips) <= NUM_INTEREST_POINTS_BOUND,
-                        f"Filtered interest points list should include less than {NUM_INTEREST_POINTS_BOUND}, but it"
+        self.assertTrue(len(ips) <= 0.5 * len(kernel_nodes),
+                        f"Filtered interest points list should include not more than {0.5 * len(kernel_nodes)}, but it"
                         f"includes {len(ips)}")
-        self.assertTrue(len(ips) != len(kernel_nodes), f"Model {in_model.name} should originally have more interest "
-                                                       f"points than allowed, thus, the returned list is supposed to "
-                                                       f"be smaller")
 
     def test_nonfiltered_interest_points_set(self):
         in_model = MobileNetV2()
-        ips, graph, fw_info = build_ip_list_for_test(in_model)
+        ips, graph, fw_info = build_ip_list_for_test(in_model, num_interest_points_factor=1.0)
         sorted_nodes = graph.get_topo_sorted_nodes()
         kernel_nodes = list(filter(lambda n: fw_info.get_kernel_op_attributes(n.type)[0] is not None, sorted_nodes))
 
-        self.assertTrue(len(ips) <= NUM_INTEREST_POINTS_BOUND,
-                        f"Filtered interest points list should include less than {NUM_INTEREST_POINTS_BOUND}, but it"
-                        f"includes {len(ips)}")
         self.assertTrue(len(ips) == len(kernel_nodes),
-                        f"Model {in_model.name} should originally have less interest "
-                        f"points than the upper bound, thus, the returned list is supposed to "
-                        f"be similar")
+                        f"Filtered interest points list should include exactly {len(kernel_nodes)}, but it"
+                        f"includes {len(ips)}")
+
+    def test_invalid_interest_points_factor(self):
+        in_model = MobileNetV2()
+
+        with self.assertRaises(Exception):
+            ips, graph, fw_info = build_ip_list_for_test(in_model, num_interest_points_factor=1.1)
+        with self.assertRaises(Exception):
+            ips, graph, fw_info = build_ip_list_for_test(in_model, num_interest_points_factor=0)
+
+
 
 
 if __name__ == '__main__':
