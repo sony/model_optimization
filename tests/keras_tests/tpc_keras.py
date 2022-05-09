@@ -20,12 +20,12 @@ from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import g
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 if tf.__version__ < "2.6":
-    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
+    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
+        Dropout, \
         MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, BatchNormalization
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
-    Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, BatchNormalization
-
+        Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, BatchNormalization
 
 tp = mct.target_platform
 
@@ -38,48 +38,50 @@ def get_16bit_tpc(name):
 
 def get_quantization_disabled_keras_tpc(name):
     tp = generate_test_tp_model({'enable_weights_quantization': False,
-                                  'enable_activation_quantization': False})
+                                 'enable_activation_quantization': False})
     return generate_keras_default_tpc(name=name, tp_model=tp)
 
 
 def generate_activation_mp_tpc_keras(tp_model, name="activation_mp_keras_tp"):
-
     ftp_keras = tp.TargetPlatformCapabilities(tp_model,
                                               name=name)
     with ftp_keras:
         tp.OperationsSetToLayers("NoQuantization", [Reshape,
-                                                     tf.reshape,
-                                                     Flatten,
-                                                     Cropping2D,
-                                                     ZeroPadding2D,
-                                                     Dropout,
-                                                     MaxPooling2D,
-                                                     tf.split,
-                                                     tf.quantization.fake_quant_with_min_max_vars,
-                                                    tf.math.argmax])
+                                                    tf.reshape,
+                                                    Flatten,
+                                                    Cropping2D,
+                                                    ZeroPadding2D,
+                                                    Dropout,
+                                                    MaxPooling2D,
+                                                    tf.split,
+                                                    tf.quantization.fake_quant_with_min_max_vars,
+                                                    tf.math.argmax,
+                                                    tf.shape,
+                                                    tf.image.resize,
+                                                    tf.__operators__.getitem])
 
         tp.OperationsSetToLayers("Weights_n_Activation", [Conv2D,
-                                                           DepthwiseConv2D,
-                                                           tf.nn.conv2d,
-                                                           tf.nn.depthwise_conv2d,
-                                                           Dense,
-                                                           Conv2DTranspose,
-                                                           tf.nn.conv2d_transpose])
+                                                          DepthwiseConv2D,
+                                                          tf.nn.conv2d,
+                                                          tf.nn.depthwise_conv2d,
+                                                          Dense,
+                                                          Conv2DTranspose,
+                                                          tf.nn.conv2d_transpose])
 
         tp.OperationsSetToLayers("Activation", [tf.nn.relu,
-                                                 tf.nn.relu6,
-                                                 tp.LayerFilterParams(ReLU, negative_slope=0.0),
-                                                 tp.LayerFilterParams(Activation, activation="relu"),
-                                                 tf.add,
-                                                 Add,
-                                                 PReLU,
-                                                 tf.nn.swish,
-                                                 tp.LayerFilterParams(Activation, activation="swish"),
-                                                 tf.nn.sigmoid,
-                                                 tp.LayerFilterParams(Activation, activation="sigmoid"),
-                                                 tf.nn.tanh,
-                                                 tp.LayerFilterParams(Activation, activation="tanh"),
-                                                 InputLayer,
-                                                 BatchNormalization])
+                                                tf.nn.relu6,
+                                                tp.LayerFilterParams(ReLU, negative_slope=0.0),
+                                                tp.LayerFilterParams(Activation, activation="relu"),
+                                                tf.add,
+                                                Add,
+                                                PReLU,
+                                                tf.nn.swish,
+                                                tp.LayerFilterParams(Activation, activation="swish"),
+                                                tf.nn.sigmoid,
+                                                tp.LayerFilterParams(Activation, activation="sigmoid"),
+                                                tf.nn.tanh,
+                                                tp.LayerFilterParams(Activation, activation="tanh"),
+                                                InputLayer,
+                                                BatchNormalization])
 
     return ftp_keras
