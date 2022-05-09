@@ -67,12 +67,12 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
             f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
         max_candidate_idx = max_cfg_candidates[0]
 
+        # loading the weights (if exists) from the graph node (weights of the trained model)
+        self.layer.load_state_dict({k: torch.Tensor(v) for k, v in n.weights.items()}, strict=False)
+        set_model(self.layer)
+
         # Setting layers' weights
         if self.enable_weights_quantization:
-            # loading the weights from the graph node (weights of the trained model)
-            self.layer.load_state_dict({k: torch.Tensor(v) for k, v in n.weights.items()}, strict=False)
-            set_model(self.layer)
-
             self.weight_attrs = fw_info.get_kernel_op_attributes(n.type)
             # float_weights is a list of weights for each attribute that we want to quantize.
             self.float_weights = [n.get_weights_by_keys(attr) for attr in
