@@ -297,12 +297,14 @@ def model_builder(graph: common.Graph,
     # in a QuantizeWrapper containing QuantizeConfig that holds a quantizer that
     # stores the quantized weights using all possible bitwidths.
     elif mode == ModelBuilderMode.MIXEDPRECISION:
+        conf_nodes_names = graph.get_configurable_sorted_nodes_names()
+
         def _quantize_multiple_nbits(layer):
             nodes = graph.find_node_by_name(get_node_name_from_layer(layer))
             if len(nodes) == 1:
                 node = nodes[0]
                 # Wrap only if its weights should be quantized
-                if node.is_weights_quantization_enabled() or node.is_activation_quantization_enabled():
+                if node.name in conf_nodes_names:
                     return QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node, fw_info))
                 return layer
 

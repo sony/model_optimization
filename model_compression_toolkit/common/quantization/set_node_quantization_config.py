@@ -17,6 +17,12 @@
 import copy
 from typing import List, Dict
 
+import tensorflow as tf
+if tf.__version__ < "2.6":
+    from tensorflow.python.keras.layers.core import TFOpLambda, SlicingOpLambda
+else:
+    from keras.layers.core import TFOpLambda, SlicingOpLambda
+
 from model_compression_toolkit.common import Logger, BaseNode
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.base_graph import Graph
@@ -76,7 +82,8 @@ def set_quantization_configs_to_node(node: BaseNode,
     node.candidates_quantization_cfg = _create_node_candidates_qc(quant_config,
                                                                   fw_info,
                                                                   weight_channel_axis,
-                                                                  node_qc_options)
+                                                                  node_qc_options,
+                                                                  node.layer_class)
 
     for candidate_qc in node.candidates_quantization_cfg:
         candidate_qc.weights_quantization_cfg.enable_weights_quantization = \
@@ -163,7 +170,8 @@ def create_node_qc_candidate(qc: QuantizationConfig,
 def _create_node_candidates_qc(qc: QuantizationConfig,
                                fw_info: FrameworkInfo,
                                weight_channel_axis: int,
-                               node_qc_options: QuantizationConfigOptions) -> List[CandidateNodeQuantizationConfig]:
+                               node_qc_options: QuantizationConfigOptions,
+                               layer_class: type = None) -> List[CandidateNodeQuantizationConfig]:
     """
     Create a list of candidates of weights and activation quantization configurations for a node.
 
@@ -179,6 +187,11 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
 
     candidates = []
     if isinstance(qc, MixedPrecisionQuantizationConfig):
+        if layer_class in [TFOpLambda, SlicingOpLambda] and len(node_qc_options.quantization_config_list) > 1:
+            raise Exception(f"Activation mixed-precision is not supported for layers of type {layer_class}."
+                            f"Please modify the TargetPlatformModel object, "
+                            f"such that layers of type {layer_class} won't have more than one quantization"
+                            f"configuration option.")
         for op_cfg in node_qc_options.quantization_config_list:
             candidate_nbits_qc = copy.deepcopy(qc)
             candidates.append(create_node_qc_candidate(candidate_nbits_qc,
