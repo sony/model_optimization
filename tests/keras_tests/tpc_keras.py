@@ -57,7 +57,6 @@ def generate_activation_mp_tpc_keras(tp_model, name="activation_mp_keras_tp"):
                                                     tf.quantization.fake_quant_with_min_max_vars,
                                                     tf.math.argmax,
                                                     tf.shape,
-                                                    tf.image.resize,
                                                     tf.__operators__.getitem])
 
         tp.OperationsSetToLayers("Weights_n_Activation", [Conv2D,
