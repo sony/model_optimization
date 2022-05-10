@@ -22,12 +22,12 @@ from model_compression_toolkit.keras.quantizer.mixed_precision.input_layer_quant
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Input
-    from tensorflow.python.keras.layers.core import TFOpLambda
+    from tensorflow.python.keras.layers.core import TFOpLambda, SlicingOpLambda
     from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
     from tensorflow.python.keras.layers import Layer
 else:
     from keras import Input
-    from keras.layers.core import TFOpLambda
+    from keras.layers.core import TFOpLambda, SlicingOpLambda
     from keras.engine.base_layer import TensorFlowOpLayer, Layer
 
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
@@ -297,12 +297,19 @@ def model_builder(graph: common.Graph,
     # in a QuantizeWrapper containing QuantizeConfig that holds a quantizer that
     # stores the quantized weights using all possible bitwidths.
     elif mode == ModelBuilderMode.MIXEDPRECISION:
+        conf_nodes_names = graph.get_configurable_sorted_nodes_names()
+
         def _quantize_multiple_nbits(layer):
             nodes = graph.find_node_by_name(get_node_name_from_layer(layer))
             if len(nodes) == 1:
                 node = nodes[0]
                 # Wrap only if its weights should be quantized
-                if node.is_weights_quantization_enabled() or node.is_activation_quantization_enabled():
+                if node.name in conf_nodes_names:
+                    if node.layer_class in [TFOpLambda, SlicingOpLambda]:
+                        Logger.critical(f"Activation mixed-precision is not supported for layers of type "
+                                        f"{node.layer_class}. Please modify the TargetPlatformModel object, "
+                                        f"such that layers of type {node.layer_class} "
+                                        f"won't have more than one quantization configuration option.")
                     return QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node, fw_info))
                 return layer
 
