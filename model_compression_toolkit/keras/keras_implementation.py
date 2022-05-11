@@ -24,6 +24,8 @@ from model_compression_toolkit.keras.graph_substitutions.substitutions.batchnorm
     keras_batchnorm_folding
 from model_compression_toolkit.keras.graph_substitutions.substitutions.linear_collapsing import \
     keras_linear_collapsing
+from model_compression_toolkit.keras.graph_substitutions.substitutions.residual_collapsing import \
+    keras_residual_collapsing
 from model_compression_toolkit.keras.graph_substitutions.substitutions.input_scaling import InputScaling, \
     InputScalingWithPad
 from model_compression_toolkit.keras.graph_substitutions.substitutions.mark_activation import MarkActivation
@@ -232,6 +234,13 @@ class KerasImplementation(FrameworkImplementation):
         substitutions_list = [keras_batchnorm_folding()]
         if quant_config.relu_bound_to_power_of_2:
             substitutions_list.append(ReLUBoundToPowerOfTwo())
+        return substitutions_list
+
+    def get_residual_collapsing_substitution(self) -> List[common.BaseSubstitution]:
+        """
+        Returns: A list of the framework substitutions used for residual collapsing
+        """
+        substitutions_list = [keras_residual_collapsing()]
         return substitutions_list
 
     def get_linear_collapsing_substitution(self) -> common.BaseSubstitution:
