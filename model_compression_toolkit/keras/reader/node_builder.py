@@ -88,6 +88,7 @@ def build_node(node: KerasNode,
         op_call_args = op_call_args[int(inputs_as_list):]
         if isinstance(keras_layer, TensorFlowOpLayer):
             op_function = keras_layer.node_def.op
+            # print(op_function)
         else:
             op_function = keras_layer.function
         node = FunctionalNode(node_name,

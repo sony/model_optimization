@@ -31,7 +31,7 @@ class TFOpLayerTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, input_shape=(320,320,3))
 
     def create_networks(self):
-        model_path = '/Vols/vol_design/tools/swat/users/liord/model_zoo/google_model_zoo/ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8/keras_model_inference_model.h5'
+        model_path = '/data/projects/swat/network_database/ModelZoo/Float-Keras-Models/SSD_MobileNetV2_FPNLite/SSD_MobileNet_V2_FPNLite_320x320_no_pp.h5'
         return tf.keras.models.load_model(model_path, compile=False)
 
 

@@ -129,6 +129,26 @@ class AttributeFilter(Filter):
         return f'{self.attr} {self.op_as_str()} {self.value}'
 
 
+class NestedAttributeFilter(AttributeFilter):
+    def __init__(self,
+                 attr: str,
+                 value: Any):
+        super().__init__(attr=attr, value=value, op=operator.eq)
+
+    def match(self,
+              layer_config: Dict[str, Any]) -> bool:
+        nested_attrs = self.attr.split('.')
+        config_dict = layer_config
+        for attr in nested_attrs:
+            if attr not in config_dict:
+                return False
+            config_dict = config_dict.get(attr)
+        return self.op(config_dict, self.value)
+
+    def op_as_str(self):
+        return "nested ="
+
+
 class OrAttributeFilter(Filter):
     """
     AttributeFilter to filter by multiple filters with logic OR between them.

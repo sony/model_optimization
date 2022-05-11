@@ -16,7 +16,9 @@
 import tensorflow as tf
 from keras.engine.base_layer import TensorFlowOpLayer
 
-from model_compression_toolkit.common.target_platform import TargetPlatformModel, LayerFilterParams
+from model_compression_toolkit.common.target_platform import TargetPlatformModel, LayerFilterParams, Eq
+from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import \
+    NestedAttributeFilter
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
@@ -60,10 +62,7 @@ def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
                                                      MaxPooling2D,
                                                      tf.split,
                                                      tf.quantization.fake_quant_with_min_max_vars,
-                                                     tf.math.argmax,
-                                                     LayerFilterParams(TensorFlowOpLayer, op='CombinedNonMaxSuppression')
-                                                     # tf.image.combined_non_max_suppression
-                                                     ])
+                                                     tf.math.argmax] + get_default_tfoplayer_filters())
 
         tpc.OperationsSetToLayers("Conv", [Conv2D,
                                            DepthwiseConv2D,
@@ -94,3 +93,26 @@ def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
         tpc.OperationsSetToLayers("Tanh", [tf.nn.tanh,
                                            tpc.LayerFilterParams(Activation, activation="tanh")])
     return keras_tpc
+
+
+def get_default_tfoplayer_filters():
+    return [
+        LayerFilterParams(TensorFlowOpLayer,
+                          NestedAttributeFilter('node_def.op',
+                                                'StridedSlice')),
+        LayerFilterParams(TensorFlowOpLayer,
+                          NestedAttributeFilter('node_def.op',
+                                                'Shape')),
+        LayerFilterParams(TensorFlowOpLayer,
+                          NestedAttributeFilter('node_def.op',
+                                                'ConcatV2')),
+        LayerFilterParams(TensorFlowOpLayer,
+                          NestedAttributeFilter('node_def.op',
+                                                'Reshape')),
+        LayerFilterParams(TensorFlowOpLayer,
+                          NestedAttributeFilter('node_def.op',
+                                                'Pack')),
+        LayerFilterParams(TensorFlowOpLayer,
+                          NestedAttributeFilter('node_def.op',
+                                                'Identity'))
+    ]
