@@ -62,7 +62,7 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
             self.node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization and \
             not n.is_all_activation_candidates_equal()
 
-        max_cfg_candidates = n.find_min_candidates_indices()
+        max_cfg_candidates = n.find_max_candidates_indices()
         assert len(max_cfg_candidates) == 1, \
             f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
         max_candidate_idx = max_cfg_candidates[0]
