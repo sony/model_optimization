@@ -17,7 +17,7 @@ from typing import List
 import tensorflow as tf
 from keras.engine.base_layer import TensorFlowOpLayer
 
-from model_compression_toolkit.common.target_platform import TargetPlatformModel, LayerFilterParams, Eq
+from model_compression_toolkit.common.target_platform import TargetPlatformModel, LayerFilterParams
 from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import \
     NestedAttributeFilter
 
