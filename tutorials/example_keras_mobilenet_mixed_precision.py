@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     # Set the path to the folder of images to load and use for the representative dataset.
     # Notice that the folder have to contain at least one image.
-    folder = '/path/to/images/folder'
+    folder = '/data/projects/swat/datasets_src/cifar10_images'#'/path/to/images/folder'
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
@@ -90,20 +90,31 @@ if __name__ == '__main__':
     # The candidates bitwidth for quantization should be defined in the hardware model:
     configuration = MixedPrecisionQuantizationConfig()
 
-    # Create a KPI object to limit our returned model's size. Note that this value affects only coefficients that
-    # should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value, while the bias
-    # will not):
-    kpi = mct.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
+    # Get a TargetPlatformCapabilities object that models the hardware for the quantized model inference.
+    # Here, for example, we use the default platform that is attached to a Tensorflow layers representation.
+    target_platform_cap = mct.get_target_platform_capabilities('tensorflow', 'default')
 
-    # Get a TargetPlatformModel object that models the hardware for the quantized model inference.
-    # The model determines the quantization methods to use during the MCT optimization process.
-    # Here, for example, we use the default model that is attached to a Tensorflow
-    # layers representation.
-    hardware_model = mct.get_target_platform_capabilities('tensorflow', 'default')
+    # Get KPI information to constraint your model's memory size.
+    # Retrieve a KPI object with helpful information of each KPI metric,
+    # to constraint the quantized model to the desired memory size.
+    kpi_data = mct.keras_kpi_data(model,
+                                  representative_data_gen,
+                                  configuration,
+                                  target_platform_capabilities=target_platform_cap)
+
+    # Set a constraint for each of the KPI metrics.
+    # Create a KPI object to limit our returned model's size. Note that this values affects only layers and attributes
+    # that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
+    # while the bias will not):
+    kpi = mct.KPI(kpi_data.weights_memory * 0.75,  # About 0.75 of the model's weights memory size when quantized with 8 bits.
+                  kpi_data.activation_memory * 0.5)  # About 0.5 of the model's activation size when quantized with 8 bits.
+
+    # It is also possible to constraint only part of the KPI metric, e.g., by providing only weights_memory target
+    # in the past KPI object, e.g., kpi = mct.KPI(kpi_data.weights_memory * 0.75)
 
     quantized_model, quantization_info = mct.keras_post_training_quantization_mixed_precision(model,
                                                                                               representative_data_gen,
                                                                                               target_kpi=kpi,
                                                                                               n_iter=num_iter,
                                                                                               quant_config=configuration,
-                                                                                              target_platform_capabilities=hardware_model)
+                                                                                              target_platform_capabilities=target_platform_cap)
