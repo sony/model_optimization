@@ -529,7 +529,8 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         return self._sort_nodes_in_list(self.get_weights_configurable_nodes(include_reused_nodes))
 
-    def get_activation_configurable_nodes(self) -> List[BaseNode]:
+    def get_activation_configurable_nodes(self,
+                                          include_reused_nodes: bool = False) -> List[BaseNode]:
         """
         Get a list of nodes that their activation can be configured (namely, has one or
         more activation qc candidate and their activation should be quantized).
@@ -538,7 +539,8 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             A list of nodes that their activation can be configured (namely, has one or more activation qc candidate).
         """
         return list(filter(lambda n: n.is_activation_quantization_enabled()
-                                     and not n.is_all_activation_candidates_equal(), list(self)))
+                                     and not n.is_all_activation_candidates_equal()
+                                     and (not n.reuse or include_reused_nodes), list(self)))
 
     def get_sorted_activation_configurable_nodes(self) -> List[BaseNode]:
         """
