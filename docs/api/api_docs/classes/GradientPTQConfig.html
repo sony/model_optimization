@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>GradientPTQConfig Class &#8212; MCT Documentation: ver 1.3.0</title>
+    <title>GradientPTQConfig Class &#8212; MCT Documentation: ver 1.4.0</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
@@ -30,7 +30,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.3.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.4.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">GradientPTQConfig Class</a></li> 
       </ul>
     </div>  
@@ -53,8 +53,9 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n_iter</strong> (<em>int</em>) – Number of iterations to train.</p></li>
 <li><p><strong>optimizer</strong> (<em>Any</em>) – Optimizer to use.</p></li>
-<li><p><strong>loss</strong> (<em>Callable</em>) – The loss to use. should accept 4 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors,
-the 3rd is a list of quantized weights and the 4th is a list of float weights.</p></li>
+<li><p><strong>loss</strong> (<em>Callable</em>) – The loss to use. should accept 6 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors,
+the 3rd is a list of quantized weights, the 4th is a list of float weights, the 5th and 6th lists are the mean and std of the tensors
+accordingly. see example in multiple_tensors_mse_loss</p></li>
 <li><p><strong>log_function</strong> (<em>Callable</em>) – Function to log information about the GPTQ process.</p></li>
 <li><p><strong>train_bias</strong> (<em>bool</em>) – Whether to update the bias during the training or not.</p></li>
 <li><p><strong>lsb_change_per_bit_width</strong> (<em>dict</em>) – Whether to update the bias during the training or not.</p></li>
@@ -92,13 +93,13 @@ the 3rd is a list of quantized weights and the 4th is a list of float weights.</
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.3.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.4.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">GradientPTQConfig Class</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
     </div>
   </body>
 </html>
