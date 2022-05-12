@@ -21,19 +21,22 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG
+from keras.engine.base_layer import TensorFlowOpLayer
 
 keras = tf.keras
 layers = keras.layers
 
 
-class TFOpLayerTest(BaseKerasFeatureNetworkTest):
+class TFOpLayerActivationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, input_shape=(320,320,3))
+        super().__init__(unit_test)
 
     def create_networks(self):
-        model_path = '/data/projects/swat/network_database/ModelZoo/Float-Keras-Models/SSD_MobileNetV2_FPNLite/SSD_MobileNet_V2_FPNLite_320x320_no_pp.h5'
-        return tf.keras.models.load_model(model_path, compile=False)
-
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Conv2D(3, 4)(inputs)
+        x = layers.BatchNormalization()(x)
+        # x = TensorFlowOpLayer('tanh')(x)
+        return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         pass

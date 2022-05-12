@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import List
 
 import tensorflow as tf
 from keras.engine.base_layer import TensorFlowOpLayer
@@ -51,8 +52,9 @@ def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
     """
 
     keras_tpc = tpc.TargetPlatformCapabilities(tp_model,
-                                                name=name)
+                                               name=name)
     with keras_tpc:
+        default_tfoplayer_filters = get_default_tfoplayer_filters()
         tpc.OperationsSetToLayers("NoQuantization", [Reshape,
                                                      tf.reshape,
                                                      Flatten,
@@ -62,7 +64,7 @@ def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
                                                      MaxPooling2D,
                                                      tf.split,
                                                      tf.quantization.fake_quant_with_min_max_vars,
-                                                     tf.math.argmax] + get_default_tfoplayer_filters())
+                                                     tf.math.argmax] + default_tfoplayer_filters)
 
         tpc.OperationsSetToLayers("Conv", [Conv2D,
                                            DepthwiseConv2D,
@@ -95,7 +97,16 @@ def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
     return keras_tpc
 
 
-def get_default_tfoplayer_filters():
+def get_default_tfoplayer_filters() -> List[LayerFilterParams]:
+    """
+    Builds and returns a list of operation set filters for TensorFlowOpLayers.
+    Each returned filter indicates a type of operator wrapped, that when being wrapped with a TensorFlowOpLayer type,
+    would be matched by the operator set where it is being used.
+
+    Returns: A list of LayerFilterParams for TensorFlowOpLayer layer type.
+
+    """
+
     return [
         LayerFilterParams(TensorFlowOpLayer,
                           NestedAttributeFilter('node_def.op',

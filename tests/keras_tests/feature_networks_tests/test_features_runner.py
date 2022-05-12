@@ -21,7 +21,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_b
 from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_dw_test import \
     BiasCorrectionDepthwiseTest
 from tests.keras_tests.feature_networks_tests.feature_networks.softmax_shift_test import SoftmaxShiftTest
-from tests.keras_tests.feature_networks_tests.feature_networks.tfoplayer_test import TFOpLayerTest
+from tests.keras_tests.feature_networks_tests.feature_networks.tfoplayer_test import TFOpLayerTest, \
+    TFOpLayerActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import MixedPercisionBaseTest, \
     MixedPercisionSearchTest, MixedPercisionManuallyConfiguredTest, MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest, MixedPrecisionActivationDisabled
@@ -91,9 +92,6 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_bias_correction_dw(self):
         BiasCorrectionDepthwiseTest(self).run_test()
 
-    def test_tfoplayer(self):
-        TFOpLayerTest(self).run_test()
-
     def test_lut_quantizer(self):
         LUTQuantizerTest(self).run_test()
 
@@ -108,6 +106,9 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_reuse_separable(self):
         ReusedSeparableTest(self).run_test()
+
+    def test_tfoplayer_activation(self):
+        TFOpLayerActivationTest(self).run_test()
 
     def test_mixed_precision_search_kpi_2bits_avg(self):
         MixedPercisionSearchKPI2BitsAvgTest(self).run_test()
