@@ -1,10 +1,10 @@
 :orphan:
 
-.. _ug-hardware_representation:
+.. _ug-target_platform:
 
 
 =================================
-hardware_representation Module
+target_platform Module
 =================================
 
 MCT can be configured to quantize and optimize models for different hardware settings.
@@ -14,13 +14,13 @@ uses `per-tensor weights quantization <https://github.com/pytorch/pytorch/blob/m
 for Conv2d, while when using tflite modeling, Tensorflow uses `per-channel weights quantization for
 Conv2D <https://www.tensorflow.org/lite/performance/quantization_spec#per-axis_vs_per-tensor>`_.
 
-This can be addressed in MCT by using the hardware_representation module, that can configure different
+This can be addressed in MCT by using the target_platform module, that can configure different
 parameters that are hardware-related, and the optimization process will use this to optimize the model accordingly.
-Models for TFLite and qnnpack can be observed `here <https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/hardware_models>`_, and can be used using :ref:`get_model function<ug-get_model>`.
+Models for TFLite and qnnpack can be observed `here <https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/tpc_models>`_, and can be used using :ref:`get_target_platform_capabilities function<ug-get_target_platform_capabilities>`.
 
 |
 
-.. include:: ../notes/hwm_note.rst
+.. include:: ../notes/tpc_note.rst
 
 |
 
@@ -32,7 +32,7 @@ QuantizationMethod
 ==========================
 Select a method to use during quantization:
 
-.. autoclass:: model_compression_toolkit.hardware_representation.QuantizationMethod
+.. autoclass:: model_compression_toolkit.target_platform.QuantizationMethod
 
 
 |
@@ -44,7 +44,7 @@ Quantization configuration of different operators can be created using OpQuantiz
 
 OpQuantizationConfig
 ======================
-.. autoclass:: model_compression_toolkit.hardware_representation.OpQuantizationConfig
+.. autoclass:: model_compression_toolkit.target_platform.OpQuantizationConfig
 
 |
 
@@ -75,7 +75,7 @@ configuration options for an operator:
 
 QuantizationConfigOptions
 ============================
-.. autoclass:: model_compression_toolkit.hardware_representation.QuantizationConfigOptions
+.. autoclass:: model_compression_toolkit.target_platform.QuantizationConfigOptions
 
 If a QuantizationConfigOptions is created with more than
 one OpQuantizationConfig option, a base_config must be passed to the QuantizationConfigOptions
@@ -102,19 +102,19 @@ OpQuantizationConfigs, and gather them under a single QuantizationConfigOptions 
 
 
 
-The main class to define the hardware-related properties, is called HardwareModel. Using a HardwareModel
+The main class to define the hardware-related properties, is called TargetPlatformModel. Using a TargetPlatformModel
 object we can create operator sets, configure how these operators sets will be quantized,
 group operators by common properties and configure patterns of operators to fuse:
 
 
-HardwareModel
-================
-.. autoclass:: model_compression_toolkit.hardware_representation.HardwareModel
+TargetPlatformModel
+=======================
+.. autoclass:: model_compression_toolkit.target_platform.TargetPlatformModel
 
 
 A default QuantizationConfigOptions (containing a single OpQuantizationConfig) must be passed
-when instancing a HardwareModel object. It comes to use when MCT needs to optimize
-an operator that is not defined explicitly in the HardwareModel. In this case, the OpQuantizationConfig
+when instancing a TargetPlatformModel object. It comes to use when MCT needs to optimize
+an operator that is not defined explicitly in the TargetPlatformModel. In this case, the OpQuantizationConfig
 in the default QuantizationConfigOptions will guide MCT how this operator should be optimized. For example:
 
 .. code-block:: python
@@ -123,10 +123,10 @@ in the default QuantizationConfigOptions will guide MCT how this operator should
     # a default configuration options.
     default_configuration_options = QuantizationConfigOptions([op_qc_8bit])
 
-    # Create a HardwareModel and set its default quantization config.
+    # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise:
-    my_model = HardwareModel(default_configuration_options, name='my_model')
+    my_model = TargetPlatformModel(default_configuration_options, name='my_model')
 
 |
 
@@ -134,7 +134,7 @@ Then, we can start defining the model by creating OperatorsSets:
 
 OperatorsSet
 ================
-.. autoclass:: model_compression_toolkit.hardware_representation.OperatorsSet
+.. autoclass:: model_compression_toolkit.target_platform.OperatorsSet
 
 An OperatorsSet gathers group of operators that are labeled by a unique name and can be attached to a
 QuantizationConfigOptions (so MCT will use these options to optimize operators from this set).
@@ -151,7 +151,7 @@ OperatorsSet using the previously created mixed_precision_configuration_options:
 
 The QuantizationConfigOptions is optional. An OperatorsSet can be also created
 without any attached QuantizationConfigOptions. Operators in this kind of OperatorsSets
-are attached implicitly to the default QuantizationConfigOptions of the HardwareModel
+are attached implicitly to the default QuantizationConfigOptions of the TargetPlatformModel
 they are part of:
 
 .. code-block:: python
@@ -162,14 +162,14 @@ they are part of:
 
 |
 
-Another component of a HardwareModel is Fusing. Fusing defines a list
+Another component of a TargetPlatformModel is Fusing. Fusing defines a list
 of operators that should be combined and treated as a single operator, hence no
 quantization is applied between them when they appear in a model:
 
 
 Fusing
 ==============
-.. autoclass:: model_compression_toolkit.hardware_representation.Fusing
+.. autoclass:: model_compression_toolkit.target_platform.Fusing
 
 For example, to fuse the previously created two OperatorsSets fc_opset and
 relu_opset we can create the next Fusing:
@@ -220,7 +220,7 @@ When multiple operators should be fused in a similar way, an OperatorSetConcat c
 
 OperatorSetConcat
 ====================
-.. autoclass:: model_compression_toolkit.hardware_representation.OperatorSetConcat
+.. autoclass:: model_compression_toolkit.target_platform.OperatorSetConcat
 
 
 OperatorSetConcat gathers multiple OperatorsSet and can be specified in a fusing operators list.
@@ -240,12 +240,12 @@ can be used as follows:
 |
 
 
-HardwareModel Code Example
-==============================
+TargetPlatformModel Code Example
+===================================
 
-.. literalinclude:: ../../../../../model_compression_toolkit/hardware_models/default_hwm.py
+.. literalinclude:: ../../../../../model_compression_toolkit/tpc_models/default_tp_model.py
     :language: python
-    :lines: 16-98
+    :lines: 15-151
 
 |
 
@@ -254,12 +254,12 @@ attached to a specific framework information in order to associate the operators
 hardware model to layers in different representations of a framework.
 For example, if we created an OperatorsSet for "Add" operator, in Tensorflow this operator
 can be used by two different layers: keras.layers.Add, tf.add.
-To attach a list of framework's layers to an OperatorsSet that is defined in the HardwareModel,
+To attach a list of framework's layers to an OperatorsSet that is defined in the TargetPlatformModel,
 an OperationsSetToLayers can be used:
 
 OperationsSetToLayers
 =========================
-.. autoclass:: model_compression_toolkit.hardware_representation.OperationsSetToLayers
+.. autoclass:: model_compression_toolkit.target_platform.OperationsSetToLayers
 
 Using OperationsSetToLayers we can associate an OperatorsSet label to a list of framework's layers:
 
@@ -282,7 +282,7 @@ For that, LayerFilterParams can be used:
 
 LayerFilterParams
 =========================
-.. autoclass:: model_compression_toolkit.hardware_representation.LayerFilterParams
+.. autoclass:: model_compression_toolkit.target_platform.LayerFilterParams
 
 
 LayerFilterParams wraps a layer with several conditions and key-value pairs
@@ -309,7 +309,7 @@ a value different than the value that was passed (in this case - None). More fil
 and passed to the LayerFilterParams in order to create more detailed filter.
 More filters and usage examples are detailed :ref:`here<ug-layer_filters>`.
 
-These LayerFilterParams instances can now be attached to OperatorsSets in the HardwareModel
+These LayerFilterParams instances can now be attached to OperatorsSets in the TargetPlatformModel
 using OperationsSetToLayers just like any other layers:
 
 .. code-block:: python
@@ -324,25 +324,25 @@ using OperationsSetToLayers just like any other layers:
 
 |
 
-The mapping from OperatorsSets to layers' lists are part of a class called FrameworkHardwareModel
-which attaches the layers representations to OperatorsSets in a HardwareModel instance:
+The mapping from OperatorsSets to layers' lists are part of a class called TargetPlatformCapabilities
+which attaches the layers representations to OperatorsSets in a TargetPlatformModel instance:
 
-FrameworkHardwareModel
-=========================
-.. autoclass:: model_compression_toolkit.hardware_representation.FrameworkHardwareModel
-
-
-To create a FrameworkHardwareModel, a HardwareModel instance should be passed upon the
-FrameworkHardwareModel initialization. Then, OperationsSetToLayers can be created and attached
-to the FrameworkHardwareModel like in the following example:
+TargetPlatformCapabilities
+=============================
+.. autoclass:: model_compression_toolkit.target_platform.TargetPlatformCapabilities
 
 
-FrameworkHardwareModel Code Example
-=====================================
+To create a TargetPlatformCapabilities, a TargetPlatformModel instance should be passed upon the
+TargetPlatformCapabilities initialization. Then, OperationsSetToLayers can be created and attached
+to the TargetPlatformCapabilities like in the following example:
 
-.. literalinclude:: ../../../../../model_compression_toolkit/hardware_models/keras_hardware_model/keras_default.py
+
+TargetPlatformCapabilities Code Example
+===========================================
+
+.. literalinclude:: ../../../../../model_compression_toolkit/tpc_models/keras_tp_models/keras_default.py
     :language: python
-    :lines: 23-70
+    :lines: 15-94
 
 
 

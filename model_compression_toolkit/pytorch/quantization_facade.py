@@ -49,14 +49,15 @@ if importlib.util.find_spec("torch") is not None:
                                            analyze_similarity: bool = False,
                                            target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
-        Quantize a trained Pytorch module using post-training quantization. The module is quantized using a
-        symmetric constraint quantization thresholds (power of two).
+        Quantize a trained Pytorch module using post-training quantization.
+        By default, the module is quantized using a symmetric constraint quantization thresholds
+        (power of two) as defined in the default TargetPlatformCapabilities.
         The module is first optimized using several transformations (e.g. BatchNormalization folding to
         preceding layers). Then, using a given dataset, statistics (e.g. min/max, histogram, etc.) are
         being collected for each layer's output (and input, depends on the quantization configuration).
         Thresholds are then being calculated using the collected statistics and the module is quantized
         (both coefficients and activations by default).
-        If a gptq configuration is passed, the quantized weights are optimized using gradient based post
+        If gptq_config is passed, the quantized weights are optimized using gradient based post
         training quantization by comparing points between the float and quantized modules, and minimizing the
         observed loss.
 
@@ -65,11 +66,11 @@ if importlib.util.find_spec("torch") is not None:
             representative_data_gen (Callable): Dataset used for calibration.
             n_iter (int): Number of calibration iterations to run.
             quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the module should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/common/quantization/quantization_config.py#L154>`_
-            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Pytorch info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/pytorch/default_framework_info.py#L113>`_
+            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default PyTorch info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pytorch/default_framework_info.py>`_
             network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
-            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
+            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to. `Default Keras TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/tpc_models/pytorch_tp_models/pytorch_default.py>`_
 
 
         Returns:
@@ -117,21 +118,22 @@ if importlib.util.find_spec("torch") is not None:
                                                            analyze_similarity: bool = False,
                                                            target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
-         Quantize a trained Pytorch model using post-training quantization. The model is quantized using a
-         symmetric constraint quantization thresholds (power of two).
+         Quantize a pretrained Pytorch model using post-training quantization. By default, the model is
+         quantized using a symmetric constraint quantization thresholds (power of two) as defined in the
+         default TargetPlatformCapabilities.
          The model is first optimized using several transformations (e.g. BatchNormalization folding to
          preceding layers). Then, using a given dataset, statistics (e.g. min/max, histogram, etc.) are
          being collected for each layer's output (and input, depends on the quantization configuration).
          For each possible bit width (per layer) a threshold is then being calculated using the collected
          statistics. Then, using an ILP solver we find a mixed-precision configuration, and set a bit width
-         for each layer. The model is then quantized (both coefficients and activations by default).
+         for each quantizer (for both activations and weights quantizers, by default).
          In order to limit the maximal model's size, a target KPI need to be passed after weights_memory
          is set (in bytes).
-         If a gptq configuration is passed, the quantized weights are optimized using gradient based post
+         The model is then quantized (both coefficients and activations by default).
+         If gptq_config is passed, the quantized weights are optimized using gradient based post
          training quantization by comparing points between the float and quantized models, and minimizing the
          observed loss.
          Notice that this feature is experimental.
-         **For now, mixed precision is supported for weights only.**
 
          Args:
              in_model (Model): Pytorch model to quantize.
@@ -139,11 +141,11 @@ if importlib.util.find_spec("torch") is not None:
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              n_iter (int): Number of calibration iterations to run.
              quant_config (MixedPrecisionQuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized.
-             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pytorch/default_framework_info.py#L100>`_
+             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default PyTorch info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pytorch/default_framework_info.py>`_
              network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
              gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
              analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
-             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
+             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to. `Default Keras TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/tpc_models/pytorch_tp_models/pytorch_default.py>`_
 
          Returns:
              A quantized model and information the user may need to handle the quantized model.
