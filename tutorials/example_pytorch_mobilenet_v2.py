@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from torchvision.models import mobilenet_v2
-from PIL import Image
-from torchvision import transforms
-import model_compression_toolkit as mct
 
 """
 This tutorial demonstrates how a model (more specifically, MobileNetV2) can be
-quantized and optimized using the Model Compression Toolkit (MCT). 
+quantized and optimized using the Model Compression Toolkit (MCT).
 """
+
+from torchvision.models import mobilenet_v2
+import model_compression_toolkit as mct
+
+from PIL import Image
+from torchvision import transforms
 
 
 def np_to_pil(img):
@@ -66,7 +68,7 @@ if __name__ == '__main__':
     # The model determines the quantization methods to use during the MCT optimization process.
     # Here, for example, we use the default model that is attached to a Pytorch
     # layers representation.
-    hardware_model = mct.get_target_platform_capabilities('pytorch', 'default')
+    target_platform_cap = mct.get_target_platform_capabilities('pytorch', 'default')
 
 
     # Create a model and quantize it using the representative_data_gen as the calibration images.
