@@ -81,7 +81,7 @@ if __name__ == '__main__':
     # run post training quantization on the model to get the quantized model output
     quantized_model, quantization_info = mct.pytorch_post_training_quantization(model,
                                                                                 representative_data_gen,
-                                                                                target_platform_capabilities=hardware_model,
+                                                                                target_platform_capabilities=target_platform_cap,
                                                                                 n_iter=20)
 
 
