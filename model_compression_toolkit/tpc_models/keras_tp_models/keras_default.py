@@ -64,7 +64,9 @@ def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
                                                      MaxPooling2D,
                                                      tf.split,
                                                      tf.quantization.fake_quant_with_min_max_vars,
-                                                     tf.math.argmax] + default_tfoplayer_filters)
+                                                     tf.math.argmax,
+                                                     tf.shape,
+                                                     tf.__operators__.getitem] + default_tfoplayer_filters)
 
         tpc.OperationsSetToLayers("Conv", [Conv2D,
                                            DepthwiseConv2D,
