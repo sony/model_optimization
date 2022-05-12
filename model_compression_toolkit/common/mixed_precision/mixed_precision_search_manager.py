@@ -59,6 +59,7 @@ class MixedPrecisionSearchManager(object):
         self.compute_kpi_functions = kpi_functions
 
         self.min_kpi_config = self.graph.get_min_candidates_config()
+        self.max_kpi_config = self.graph.get_max_candidates_config()
 
         self.min_kpi = self.compute_min_kpis()
 

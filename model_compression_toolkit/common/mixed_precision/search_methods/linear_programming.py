@@ -48,7 +48,8 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
     # Build a mapping from each layer's index (in the model) to a dictionary that maps the
     # bitwidth index to the observed sensitivity of the model when using that bitwidth for that layer.
     layer_to_metrics_mapping = _build_layer_to_metrics_mapping(search_manager.layer_to_bitwidth_mapping,
-                                                               search_manager.compute_metric_fn)
+                                                               search_manager.compute_metric_fn,
+                                                               search_manager.max_kpi_config)
 
     # Init variables to find their values when solving the lp problem.
     layer_to_indicator_vars_mapping, layer_to_objective_vars_mapping = _init_problem_vars(layer_to_metrics_mapping)
@@ -199,7 +200,8 @@ def _add_set_of_kpi_constraints(search_manager: MixedPrecisionSearchManager,
 
 
 def _build_layer_to_metrics_mapping(node_to_bitwidth_indices: Dict[int, List[int]],
-                                    compute_metric_fn: Callable) -> Dict[int, Dict[int, float]]:
+                                    compute_metric_fn: Callable,
+                                    max_config: List[int]) -> Dict[int, Dict[int, float]]:
     """
     This function measures the sensitivity of a change in a bitwidth of a layer on the entire model.
     It builds a mapping from a node's index, to its bitwidht's effect on the model sensitivity.
@@ -221,13 +223,20 @@ def _build_layer_to_metrics_mapping(node_to_bitwidth_indices: Dict[int, List[int
     Logger.info('Starting to evaluate metrics')
     layer_to_metrics_mapping = {}
 
+    max_config_value = compute_metric_fn(max_config)
+
     for node_idx, layer_possible_bitwidths_indices in tqdm(node_to_bitwidth_indices.items(),
                                                            total=len(node_to_bitwidth_indices)):
         layer_to_metrics_mapping[node_idx] = {}
 
         for bitwidth_idx in layer_possible_bitwidths_indices:
+            if max_config[node_idx] == bitwidth_idx:
+                # This is a computation of the metric for the max configuration, assign pre-calculated value
+                layer_to_metrics_mapping[node_idx][bitwidth_idx] = max_config_value
+                continue
+
             # Create a configuration that differs at one layer only from the baseline model
-            mp_model_configuration = [0] * len(node_to_bitwidth_indices)
+            mp_model_configuration = max_config.copy()
             mp_model_configuration[node_idx] = bitwidth_idx
 
             # Build a distance matrix using the function we got from the framework implementation.
