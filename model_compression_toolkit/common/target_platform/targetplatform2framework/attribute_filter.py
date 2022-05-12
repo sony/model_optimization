@@ -129,26 +129,6 @@ class AttributeFilter(Filter):
         return f'{self.attr} {self.op_as_str()} {self.value}'
 
 
-class NestedAttributeFilter(AttributeFilter):
-    def __init__(self,
-                 attr: str,
-                 value: Any):
-        super().__init__(attr=attr, value=value, op=operator.eq)
-
-    def match(self,
-              layer_config: Dict[str, Any]) -> bool:
-        nested_attrs = self.attr.split('.')
-        config_dict = layer_config
-        for attr in nested_attrs:
-            if attr not in config_dict:
-                return False
-            config_dict = config_dict.get(attr)
-        return self.op(config_dict, self.value)
-
-    def op_as_str(self):
-        return "nested ="
-
-
 class OrAttributeFilter(Filter):
     """
     AttributeFilter to filter by multiple filters with logic OR between them.
@@ -217,6 +197,43 @@ class AndAttributeFilter(Filter):
 
         """
         return ' & '.join([str(f) for f in self.filters])
+
+
+class NestedAttributeFilter(AttributeFilter):
+    """
+    Filter configurations such that it matches nested attributes in the configuration, and checks if its value
+    is equal to the given filter value.
+    """
+    def __init__(self,
+                 attr: str,
+                 value: Any):
+        super().__init__(attr=attr, value=value, op=operator.eq)
+
+    def match(self,
+              layer_config: Dict[str, Any]) -> bool:
+        """
+        Check if the passed configuration have the nested required attribute and whether its value matches the filter.
+
+        Args:
+            layer_config: Layer's configuration to check.
+
+        Returns:
+            Whether the passed configuration matches the filter or not.
+        """
+
+        nested_attrs = self.attr.split('.')
+        config_dict = layer_config
+        for attr in nested_attrs:
+            if attr not in config_dict:
+                return False
+            config_dict = config_dict.get(attr)
+        return self.op(config_dict, self.value)
+
+    def op_as_str(self) -> str:
+        """
+        Returns: A string representation for the filter.
+        """
+        return "(nested =)"
 
 
 class Greater(AttributeFilter):
