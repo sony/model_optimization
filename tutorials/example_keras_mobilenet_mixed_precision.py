@@ -20,8 +20,8 @@ from tensorflow.keras.applications.mobilenet import MobileNet
 Mixed precision is a method for quantizing a model using different bit widths
 for different layers of the model. 
 This tutorial demonstrates how to use mixed-precision in MCT to
-quantize MobileNetV1.
-For now, MCT supports mixed-precision for weights only. 
+quantize MobileNetV2.
+MCT supports mixed-precision for both weights and activation. 
 """
 
 ####################################
