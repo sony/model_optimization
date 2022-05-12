@@ -13,7 +13,7 @@ Import MCT and mobilenet_v2 from torchvision.models:
 
 .. literalinclude:: ../../../tutorials/example_pytorch_mobilenet_v2.py
     :language: python
-    :lines: 15-16
+    :lines: 20-23
 
 |
 
@@ -21,7 +21,7 @@ Data preprocessing functions:
 
 .. literalinclude:: ../../../tutorials/example_pytorch_mobilenet_v2.py
     :language: python
-    :lines: 17-27
+    :lines: 23-30
 
 |
 
@@ -29,15 +29,15 @@ Initialize data loader:
 
 .. literalinclude:: ../../../tutorials/example_pytorch_mobilenet_v2.py
     :language: python
-    :lines: 32-63
+    :lines: 33-66
 
 |
 
-Get a FrameworkHardwareModel:
+Get a TargetPlatformCapabilities:
 
 .. literalinclude:: ../../../tutorials/example_pytorch_mobilenet_v2.py
     :language: python
-    :lines: 64-70
+    :lines: 66-72
 
 |
 
@@ -46,5 +46,5 @@ Run Post Training Quantization:
 
 .. literalinclude:: ../../../tutorials/example_pytorch_mobilenet_v2.py
     :language: python
-    :lines: 71-84
+    :lines: 73-87
 
