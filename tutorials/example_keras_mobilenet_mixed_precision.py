@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     # Set the path to the folder of images to load and use for the representative dataset.
     # Notice that the folder have to contain at least one image.
-    folder = '/data/projects/swat/datasets_src/cifar10_images'#'/path/to/images/folder'
+    folder = '/path/to/images/folder'
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
