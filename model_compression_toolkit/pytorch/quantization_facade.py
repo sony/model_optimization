@@ -64,21 +64,12 @@ if importlib.util.find_spec("torch") is not None:
             in_module (Module): Pytorch module to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
             n_iter (int): Number of calibration iterations to run.
-            quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the module should be
-            quantized. `Default configuration.
-            <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10
-            /model_compression_toolkit/common/quantization/quantization_config.py#L154>`_
-            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
-            kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Pytorch info
-            <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10
-            /model_compression_toolkit/pytorch/default_framework_info.py#L113>`_
-            network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action
-            to change quantization settings of the filtered nodes.
+            quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the module should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/common/quantization/quantization_config.py#L154>`_
+            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Pytorch info <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/pytorch/default_framework_info.py#L113>`_
+            network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
-            analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled)
-            or not.
-            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the
-            Keras model according to.
+            analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
+            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
 
         Returns:
@@ -147,19 +138,12 @@ if importlib.util.find_spec("torch") is not None:
              representative_data_gen (Callable): Dataset used for calibration.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              n_iter (int): Number of calibration iterations to run.
-             quant_config (MixedPrecisionQuantizationConfig): QuantizationConfig containing parameters of how the
-             model should be quantized.
-             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
-             kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info
-             <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pytorch
-             /default_framework_info.py#L100>`_
-             network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an
-             action to change quantization settings of the filtered nodes.
+             quant_config (MixedPrecisionQuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized.
+             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pytorch/default_framework_info.py#L100>`_
+             network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
              gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
-             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is
-             enabled) or not.
-             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the
-             Keras model according to.
+             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
+             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
          Returns:
              A quantized model and information the user may need to handle the quantized model.
@@ -189,20 +173,17 @@ if importlib.util.find_spec("torch") is not None:
              that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
              while the bias will not):
 
-             >>> kpi = mct.KPI(sum(p.numel() for p in module.parameters()) * 0.75)  # About 0.75 of the model size
-             when quantized with 8 bits.
+             >>> kpi = mct.KPI(sum(p.numel() for p in module.parameters()) * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
 
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:
 
-             >>> quantized_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(module,
-             repr_datagen, n_iter=10, quant_config=config, target_kpi=kpi)
+             >>> quantized_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(module, repr_datagen, n_iter=10, quant_config=config, target_kpi=kpi)
 
-             For more configuration options, please take a look at our `API documentation
-             <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html
-             >`_.
+             For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 
          """
+
         if not isinstance(quant_config, MixedPrecisionQuantizationConfig):
             common.Logger.error("Given quantization config to mixed-precision facade is not of type "
                                 "MixedPrecisionQuantizationConfig. Please use pytorch_post_training_quantization API, "
