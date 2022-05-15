@@ -213,6 +213,7 @@ def _build_layer_to_metrics_mapping(node_to_bitwidth_indices: Dict[int, List[int
     Args:
         node_to_bitwidth_indices: Possible bitwidth indices for the different nodes.
         compute_metric_fn: Function to measure a sensitivity metric.
+        max_config: A mixed-precision config which sets the maximal bitwidth candidate for each node.
 
     Returns:
         Mapping from each node's index in a graph, to a dictionary from the bitwidth index (of this node) to
