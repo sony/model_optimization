@@ -89,7 +89,6 @@ def run_operation(n: BaseNode,
             out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n)
         elif mode == ModelBuilderMode.MIXEDPRECISION and n.is_all_activation_candidates_equal():
             # otherwise, we want to use the float tensor when building the model for MP search
-            # TODO: make sure it is what we need to do here in any case
             if isinstance(out_tensors_of_n, list):
                 out_tensors_of_n = torch.cat(out_tensors_of_n, dim=0)
             out_tensors_of_n = n.candidates_quantization_cfg[
@@ -143,10 +142,10 @@ class PytorchModelBuilder(torch.nn.Module):
         if mode == ModelBuilderMode.MIXEDPRECISION:
             configurable_nodes = self.graph.get_configurable_sorted_nodes()
             for n in self.node_sort:
-                if not isinstance(n, FunctionalNode):
-                    if n in configurable_nodes:
-                        self.add_module(n.name, PytorchMixedPrecisionWrapper(n, fw_info))
-                    else:
+                if n in configurable_nodes:
+                    self.add_module(n.name, PytorchMixedPrecisionWrapper(n, fw_info))
+                else:
+                    if not isinstance(n, FunctionalNode):
                         self.add_module(n.name, node_builder(n))
         else:
             for n in self.node_sort:
@@ -162,15 +161,17 @@ class PytorchModelBuilder(torch.nn.Module):
             torch Tensor/s which is/are the output of the model logic.
         """
         node_to_output_tensors_dict = dict()
+        configurable_nodes = self.graph.get_configurable_sorted_nodes_names()
         for n in self.node_sort:
             input_tensors = build_input_tensors_list(n,
                                                      self.graph,
                                                      args,
                                                      node_to_output_tensors_dict)
 
+            op_func = self.get_op_func(n, configurable_nodes)
             out_tensors_of_n = run_operation(n,  # Run node operation and fetch outputs
                                              input_tensors,
-                                             op_func=n.type if isinstance(n, FunctionalNode) else getattr(self, n.name),
+                                             op_func=op_func,
                                              mode=self.mode)
             if isinstance(out_tensors_of_n, list):
                 node_to_output_tensors_dict.update({n: out_tensors_of_n})
@@ -186,6 +187,22 @@ class PytorchModelBuilder(torch.nn.Module):
             if len(outputs) == 1:
                 outputs = outputs[0]
         return outputs
+
+    def get_op_func(self, n: BaseNode, configurable_nodes_names: List[str]) -> Any:
+        """
+        Gets the operation function that runs the actual inference of the nodes compatible layer.
+
+        Args:
+            n: The corresponding node of the layer it runs.
+            configurable_nodes_names: A list of names of configurable nodes in the quantized model.
+
+        Returns: Module/functional to apply to the input tensors.
+
+        """
+        if self.mode == ModelBuilderMode.MIXEDPRECISION and n.name in configurable_nodes_names:
+            return getattr(self, n.name)
+        else:
+            return n.type if isinstance(n, FunctionalNode) else getattr(self, n.name)
 
 
 def model_builder(graph: common.Graph,
