@@ -38,4 +38,4 @@ from model_compression_toolkit.pytorch.quantization_facade import pytorch_post_t
 from model_compression_toolkit.keras.kpi_data_facade import keras_kpi_data
 from model_compression_toolkit.pytorch.kpi_data_facade import pytorch_kpi_data
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"

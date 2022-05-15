@@ -311,6 +311,10 @@ class BaseNode:
         Returns: Output size.
         """
         output_shapes = self.output_shape if isinstance(self.output_shape, List) else [self.output_shape]
+
+        # remove batch size (first element) from output shape
+        output_shapes = [s[1:] for s in output_shapes]
+
         return sum([np.prod([x for x in output_shape if x is not None]) for output_shape in output_shapes])
 
     def find_min_candidates_indices(self) -> List[int]:

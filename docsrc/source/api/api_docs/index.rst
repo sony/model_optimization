@@ -15,14 +15,17 @@ Functions
 - :ref:`keras_post_training_quantization<ug-keras_post_training_quantization>`: Function to use for post training quantization of Keras models.
 - :ref:`keras_post_training_quantization_mixed_precision<ug-keras_post_training_quantization_mixed_precision>`: Function to use for mixed-precision post training quantization of Keras models (experimental).
 - :ref:`get_keras_gptq_config<ug-get_keras_gptq_config>`: Function to create a GradientPTQConfig instance to use for Keras models when using GPTQ (experimental).
-- :ref:`get_model<ug-get_model>`: Function to get a hardware model for Tensorflow and Pytorch.
+- :ref:`get_target_platform_capabilities<ug-get_target_platform_capabilities>`: Function to get a target platform model for Tensorflow and Pytorch.
+- :ref:`keras_kpi_data<ug-keras_kpi_data>`: Function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of Keras models.
+- :ref:`pytorch_kpi_data<ug-pytorch_kpi_data>`: Function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of PyTorch models.
+
 
 Modules
 =========
 - :ref:`quantization_config<ug-quantization_config>`: Module to configure the quantization process.
 - :ref:`mixed_precision_quantization_config<ug-mixed_precision_quantization_config>`: Module to configure the quantization process when using mixed-precision PTQ.
 - :ref:`network_editor<ug-network_editor>`: Module to edit your model during the quantization process.
-- :ref:`hardware_representation<ug-hardware_representation>`: Module to create and model hardware-related settings to optimize the model according to, by the hardware the optimized model will use during inference.
+- :ref:`target_platform<ug-target_platform>`: Module to create and model hardware-related settings to optimize the model according to, by the hardware the optimized model will use during inference.
 
 Classes
 =========

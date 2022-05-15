@@ -40,6 +40,7 @@ def large_random_datagen():
 
 def compute_output_size(output_shape):
     output_shapes = output_shape if isinstance(output_shape, List) else [output_shape]
+    output_shapes = [s[1:] for s in output_shapes]
     return sum([np.prod([x for x in output_shape if x is not None]) for output_shape in output_shapes])
 
 

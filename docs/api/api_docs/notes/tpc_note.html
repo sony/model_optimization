@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Enable a Logger &#8212; MCT Documentation: ver 1.4.0</title>
+    <title>&lt;no title&gt; &#8212; MCT Documentation: ver 1.4.0</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
@@ -31,7 +31,7 @@
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.4.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Enable a Logger</a></li> 
+        <li class="nav-item nav-item-this"><a href="">&lt;no title&gt;</a></li> 
       </ul>
     </div>  
 
@@ -40,23 +40,17 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="enable-a-logger">
-<span id="ug-set-logger-path"></span><h1>Enable a Logger<a class="headerlink" href="#enable-a-logger" title="Permalink to this headline">¶</a></h1>
-<dl class="py function">
-<dt class="sig sig-object py" id="model_compression_toolkit.set_log_folder">
-<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">set_log_folder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">logging.INFO</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.set_log_folder" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set a directory path for saving a log file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>folder</strong> (<em>str</em>) – Folder path to save the log file.</p></li>
-<li><p><strong>level</strong> (<em>int</em>) – Level of verbosity to set to the logger.</p></li>
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For now, fusing operators information from <a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformModel" title="model_compression_toolkit.target_platform.TargetPlatformModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TargetPlatformModel</span></code></a>
+is ignored during the optimization process (fusing still occurs but using an existing mechanism).
+Also, parts of <a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.OpQuantizationConfig" title="model_compression_toolkit.target_platform.OpQuantizationConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">OpQuantizationConfig</span></code></a> is ignored (currently,
+the quantizer type, number of bits, and quantization enable/disable information is used during the
+optimization process).</p>
+<ul class="simple">
+<li><p>MCT will use more information from <a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformModel" title="model_compression_toolkit.target_platform.TargetPlatformModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TargetPlatformModel</span></code></a>, in the future.</p></li>
 </ul>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
+</div>
 
 
             <div class="clearer"></div>
@@ -86,7 +80,7 @@
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
         <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.4.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Enable a Logger</a></li> 
+        <li class="nav-item nav-item-this"><a href="">&lt;no title&gt;</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
