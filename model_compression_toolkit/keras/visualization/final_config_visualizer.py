@@ -51,19 +51,18 @@ class KerasWeightsConfigVisualizer:
     """
     Class to visualize the chosen bit-width configuration for weights configurable layers in mixed-precision mode.
     KerasWeightsConfigVisualizer draws a bar plot with the bit-width value of each layer.
-    Note: works for weights mp only (if both weights and activation are configurable, then it might not work correctly)
     """
     def __init__(self,
-                 final_config: List[Tuple[type, int]]):
+                 final_weights_nodes_config: List[Tuple[type, int]]):
         """
         Initialize a KerasWeightsConfigVisualizer object.
         Args:
-            final_config: Mixed-precision configuration (list of indices).
+            final_weights_nodes_config: List of candidates' indices of sorted weights configurable nodes.
         """
 
-        self.final_config = final_config
-        self.node_reps_names = [get_layer_represent_name(node_cfg[0]) for node_cfg in self.final_config]
-        self.node_final_bitwidth = [node_cfg[1] for node_cfg in self.final_config]
+        self.final_weights_nodes_config = final_weights_nodes_config
+        self.node_reps_names = [get_layer_represent_name(node_cfg[0]) for node_cfg in self.final_weights_nodes_config]
+        self.node_final_bitwidth = [node_cfg[1] for node_cfg in self.final_weights_nodes_config]
         self.bitwidth_colors_map = {2: 'tomato', 4: 'royalblue', 8: 'limegreen'}
         self.configs_colors = [self.bitwidth_colors_map[b] for b in self.node_final_bitwidth]
         self.bar_width = 2
@@ -95,20 +94,18 @@ class KerasActivationConfigVisualizer:
     KerasActivationConfigVisualizer can draw a figure of the chosen bit-width configuration for activation configurable
     layers in mixed-precision mode.
     It also allows to draw a figure with the activation tensors memory size.
-    Note: works for activation mp only (if both weights and activation are configurable,
-        then it might not work correctly)
     """
 
     def __init__(self,
-                 final_config: List[Tuple[type, int]]):
+                 final_activation_nodes_config: List[Tuple[type, int]]):
         """
         Initialize a KerasActivationConfigVisualizer object.
         Args:
-            final_config: Mixed-precision configuration (list of indices).
+            final_activation_nodes_config: List of candidates' indices of sorted activation configurable nodes.
         """
 
-        self.final_config = final_config
-        self.node_final_bitwidth = [node_cfg[1] for node_cfg in self.final_config]
+        self.final_activation_nodes_config = final_activation_nodes_config
+        self.node_final_bitwidth = [node_cfg[1] for node_cfg in self.final_activation_nodes_config]
         self.bar_width = 1
         self.vis_comp_rates = {4.0: 'tomato', 8.0: 'orange', 12.0: 'limegreen'}
 
@@ -146,7 +143,7 @@ class KerasActivationConfigVisualizer:
         max_tensor_size = max(tensors_sizes)
         max_lines = [(rate, max_tensor_size / rate, color) for rate, color in self.vis_comp_rates.items()]
 
-        layers_loc = [i for i in range(1, len(self.final_config) + 1)]
+        layers_loc = [i for i in range(1, len(self.final_activation_nodes_config) + 1)]
         fig, ax = plt.subplots()
         plt.bar(layers_loc, tensors_sizes, width=self.bar_width, align='center')
         plt.grid()

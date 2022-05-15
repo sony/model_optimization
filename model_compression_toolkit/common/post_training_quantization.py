@@ -164,8 +164,6 @@ def post_training_quantization(in_model: Any,
             visual = KerasActivationConfigVisualizer(activation_conf_nodes_bitwidth)
             figure = visual.plot_config_bitwidth()
             tb_w.add_figure(figure, f'Activation final config bit-width')
-            figure = visual.plot_tensor_sizes(tg)
-            tb_w.add_figure(figure, f'Activation tensors sizes')
 
     quantized_model, user_info = _quantize_fixed_bit_widths_graph(analyze_similarity,
                                                                   fw_info,
