@@ -101,7 +101,7 @@ class LayerFilterParams:
             Whether the node matches to the LayerFilterParams properties.
         """
         # Check the node has the same type as the layer in LayerFilterParams
-        if self.layer != node.type and self.layer != node.layer_class:
+        if self.layer != node.type:
             return False
 
         # Get attributes from node to filter

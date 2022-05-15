@@ -12,14 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List
 
 import tensorflow as tf
-from keras.engine.base_layer import TensorFlowOpLayer
 
-from model_compression_toolkit.common.target_platform import TargetPlatformModel, LayerFilterParams
-from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import \
-    NestedAttributeFilter
+from model_compression_toolkit.common.target_platform import TargetPlatformModel
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
@@ -52,9 +48,8 @@ def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
     """
 
     keras_tpc = tpc.TargetPlatformCapabilities(tp_model,
-                                               name=name)
+                                                name=name)
     with keras_tpc:
-        default_tfoplayer_filters = get_default_tfoplayer_filters()
         tpc.OperationsSetToLayers("NoQuantization", [Reshape,
                                                      tf.reshape,
                                                      Flatten,
@@ -66,7 +61,7 @@ def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
                                                      tf.quantization.fake_quant_with_min_max_vars,
                                                      tf.math.argmax,
                                                      tf.shape,
-                                                     tf.__operators__.getitem] + default_tfoplayer_filters)
+                                                     tf.__operators__.getitem])
 
         tpc.OperationsSetToLayers("Conv", [Conv2D,
                                            DepthwiseConv2D,
@@ -97,35 +92,3 @@ def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
         tpc.OperationsSetToLayers("Tanh", [tf.nn.tanh,
                                            tpc.LayerFilterParams(Activation, activation="tanh")])
     return keras_tpc
-
-
-def get_default_tfoplayer_filters() -> List[LayerFilterParams]:
-    """
-    Builds and returns a list of operation set filters for TensorFlowOpLayers.
-    Each returned filter indicates a type of operator wrapped, that when being wrapped with a TensorFlowOpLayer type,
-    would be matched by the operator set where it is being used.
-
-    Returns: A list of LayerFilterParams for TensorFlowOpLayer layer type.
-
-    """
-
-    return [
-        LayerFilterParams(TensorFlowOpLayer,
-                          NestedAttributeFilter('node_def.op',
-                                                'StridedSlice')),
-        LayerFilterParams(TensorFlowOpLayer,
-                          NestedAttributeFilter('node_def.op',
-                                                'Shape')),
-        LayerFilterParams(TensorFlowOpLayer,
-                          NestedAttributeFilter('node_def.op',
-                                                'ConcatV2')),
-        LayerFilterParams(TensorFlowOpLayer,
-                          NestedAttributeFilter('node_def.op',
-                                                'Reshape')),
-        LayerFilterParams(TensorFlowOpLayer,
-                          NestedAttributeFilter('node_def.op',
-                                                'Pack')),
-        LayerFilterParams(TensorFlowOpLayer,
-                          NestedAttributeFilter('node_def.op',
-                                                'Identity'))
-    ]
