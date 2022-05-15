@@ -133,6 +133,9 @@ class BaseNode:
         Returns:
             A node's weight (by its name).
         """
+        if name is None:
+            return None
+
         res = [k for k in self.weights.keys() if name in k]
         if len(res) == 1:  # Make sure there are no duplicates
             return self.weights[res[0]]
