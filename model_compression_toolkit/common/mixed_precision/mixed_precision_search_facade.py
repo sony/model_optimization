@@ -23,7 +23,7 @@ from model_compression_toolkit.common.mixed_precision.kpi import KPI, KPITarget
 from model_compression_toolkit.common.mixed_precision.kpi_aggregation_methods import MpKpiAggregation
 from model_compression_toolkit.common.mixed_precision.kpi_methods import MpKpiMetric
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig
+    MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
 from model_compression_toolkit.common.mixed_precision.search_methods.linear_programming import \
     mp_integer_programming_search
@@ -46,7 +46,7 @@ kpi_functions_factory = {KPITarget.WEIGHTS: (MpKpiMetric.WEIGHTS_SIZE, MpKpiAggr
 
 
 def search_bit_width(graph_to_search_cfg: Graph,
-                     qc: MixedPrecisionQuantizationConfig,
+                     qc: MixedPrecisionQuantizationConfigV2,
                      fw_info: FrameworkInfo,
                      target_kpi: KPI,
                      get_sensitivity_evaluation: Callable = None,
@@ -61,7 +61,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
 
     Args:
         graph_to_search_cfg: Graph to search a MP configuration for.
-        qc: MixedPrecisionQuantizationConfig the graph was prepared according to.
+        qc: MixedPrecisionQuantizationConfigV2 the graph was prepared according to.
         fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
         target_kpi: Target KPI to bound our feasible solution space s.t the configuration does not violates it.
         get_sensitivity_evaluation: Function specific to the model's framework, which builds and returns

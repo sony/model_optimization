@@ -15,7 +15,7 @@
 from typing import Callable, Any
 import numpy as np
 
-from model_compression_toolkit import FrameworkInfo, KPI, MixedPrecisionQuantizationConfig
+from model_compression_toolkit import FrameworkInfo, KPI, MixedPrecisionQuantizationConfig, QuantizationConfig, CoreConfig
 from model_compression_toolkit.common import Graph
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
@@ -24,7 +24,7 @@ import model_compression_toolkit.common.post_training_quantization as ptq
 
 def compute_kpi_data(in_model: Any,
                      representative_data_gen: Callable,
-                     quant_config: MixedPrecisionQuantizationConfig,
+                     quant_config: MixedPrecisionQuantizationConfig,  # TODO: change to core_conffig
                      tpc: TargetPlatformCapabilities,
                      fw_info: FrameworkInfo,
                      fw_impl: FrameworkImplementation) -> KPI:
@@ -55,7 +55,55 @@ def compute_kpi_data(in_model: Any,
                                                 quant_config,
                                                 fw_info,
                                                 tb_w=None,
-                                                fw_impl=fw_impl)
+                                                fw_impl=fw_impl,
+                                                mixed_precision_enable=isinstance(quant_config, MixedPrecisionQuantizationConfig))
+
+    # Compute parameters sum
+    weights_params = compute_configurable_weights_params(graph=transformed_graph, fw_info=fw_info)
+    total_weights_params = 0 if len(weights_params) == 0 else sum(weights_params)
+
+    # Compute max activation tensor
+    activation_output_sizes = compute_activation_output_sizes(graph=transformed_graph)
+    max_activation_tensor_size = 0 if len(activation_output_sizes) == 0 else max(activation_output_sizes)
+
+    return KPI(weights_memory=total_weights_params, activation_memory=max_activation_tensor_size)
+
+
+def compute_kpi_data_experimental(in_model: Any,
+                                  representative_data_gen: Callable,
+                                  core_config: CoreConfig,  # TODO: change doc
+                                  tpc: TargetPlatformCapabilities,
+                                  fw_info: FrameworkInfo,
+                                  fw_impl: FrameworkImplementation) -> KPI:
+    """
+    Compute KPI information that can be relevant for defining target KPI for mixed precision search.
+    Calculates maximal activation tensor and sum of weights' parameters.
+
+    Args:
+        in_model:  Model to build graph from (the model that intended to be quantized).
+        representative_data_gen: Dataset used for calibration.
+        quant_config: QuantizationConfig containing parameters of how the model should be quantized.
+        tpc: TargetPlatformCapabilities object that models the inference target platform and
+                                              the attached framework operator's information.
+        fw_info: Information needed for quantization about the specific framework.
+        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+
+    Returns: A KPI object with the results.
+
+    """
+
+    graph = ptq.read_model_to_graph(in_model,
+                                    representative_data_gen,
+                                    tpc,
+                                    fw_info,
+                                    fw_impl)
+
+    transformed_graph = ptq.get_finalized_graph(graph,
+                                                core_config.quantization_config,
+                                                fw_info,
+                                                tb_w=None,
+                                                fw_impl=fw_impl,
+                                                mixed_precision_enable=core_config.mixed_precision_enable)
 
     # Compute parameters sum
     weights_params = compute_configurable_weights_params(graph=transformed_graph, fw_info=fw_info)

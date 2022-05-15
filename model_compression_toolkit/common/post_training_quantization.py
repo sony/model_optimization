@@ -44,6 +44,7 @@ from model_compression_toolkit.common.bias_correction.compute_bias_correction_of
 from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
+from model_compression_toolkit.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
 
@@ -63,14 +64,14 @@ from model_compression_toolkit.common.target_platform.targetplatform2framework i
 def post_training_quantization(in_model: Any,
                                representative_data_gen: Callable,
                                n_iter: int,
-                               quant_config: QuantizationConfig,
+                               core_config: CoreConfig,
                                fw_info: FrameworkInfo,
                                fw_impl: FrameworkImplementation,
                                tpc: TargetPlatformCapabilities,
                                network_editor: List[EditRule] = [],
                                gptq_config: GradientPTQConfig = None,
                                analyze_similarity: bool = False,
-                               target_kpi: KPI = None, ):
+                               target_kpi: KPI = None):
     """
     Quantize a trained model using post-training quantization.
     First, the model graph is optimized using several transformations (e.g. folding BatchNormalization to preceding
@@ -120,7 +121,7 @@ def post_training_quantization(in_model: Any,
                                          representative_data_gen,
                                          network_editor,
                                          n_iter,
-                                         quant_config,
+                                         core_config,
                                          fw_info,
                                          tb_w,
                                          fw_impl)
@@ -128,11 +129,12 @@ def post_training_quantization(in_model: Any,
     ######################################
     # Finalize bit widths
     ######################################
+    # TODO: handle as core_config
     if target_kpi is not None:
-        assert isinstance(quant_config, MixedPrecisionQuantizationConfig)
-        if quant_config.configuration_overwrite is None:
+        assert core_config.mixed_precision_enable
+        if core_config.mixed_precision_config.configuration_overwrite is None:
             bit_widths_config = search_bit_width(tg,
-                                                 quant_config,
+                                                 core_config.mixed_precision_config,
                                                  fw_info,
                                                  target_kpi,
                                                  partial(fw_impl.get_sensitivity_evaluation_fn,
@@ -140,13 +142,13 @@ def post_training_quantization(in_model: Any,
                                                          fw_info=fw_info))
         else:
             Logger.warning(
-                f'Mixed Precision has overwrite bitwidth configuration{quant_config.configuration_overwrite}')
-            bit_widths_config = quant_config.configuration_overwrite
+                f'Mixed Precision has overwrite bitwidth configuration{core_config.mixed_precision_config.configuration_overwrite}')
+            bit_widths_config = core_config.mixed_precision_config.configuration_overwrite
 
     else:
         bit_widths_config = None
 
-    tg = set_bit_widths(quant_config,
+    tg = set_bit_widths(core_config.mixed_precision_enable,
                         tg,
                         fw_info,
                         bit_widths_config)
@@ -167,13 +169,14 @@ def post_training_quantization(in_model: Any,
 
 
 def get_finalized_graph(initial_graph: Graph,
-                        quant_config: QuantizationConfig = DEFAULTCONFIG,
+                        quant_config: QuantizationConfig = DEFAULTCONFIG,  # TODO: change doc
                         fw_info: FrameworkInfo = None,
                         tb_w: TensorboardWriter = None,
-                        fw_impl: FrameworkImplementation = None) -> Graph:
+                        fw_impl: FrameworkImplementation = None,
+                        mixed_precision_enable: bool = False) -> Graph:
     """
     Applies all edit operation (edit, substitutions, etc.) on the model's graph, to prepare it for the quantization
-    process. All future graph substitutions and operations that change the graph shold be added to this method.
+    process. All future graph substitutions and operations that change the graph should be added to this method.
 
     Args:
         initial_graph (Graph): Graph to apply the changes to.
@@ -215,7 +218,8 @@ def get_finalized_graph(initial_graph: Graph,
     # Add quantization configurations
     ######################################
     transformed_graph = set_quantization_configuration_to_graph(graph=transformed_graph,
-                                                                quant_config=quant_config)
+                                                                quant_config=quant_config,
+                                                                mixed_precision_enable=mixed_precision_enable)
 
     ######################################
     # Graph marking points
@@ -419,7 +423,6 @@ def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
     return quantized_model, user_info
 
 
-
 def read_model_to_graph(in_model: Any,
                         representative_data_gen: Callable,
                         tpc: TargetPlatformCapabilities,
@@ -450,7 +453,7 @@ def _prepare_model_for_quantization(graph: Graph,
                                     representative_data_gen: Callable,
                                     network_editor: List[EditRule] = [],
                                     n_iter: int = 500,
-                                    quant_config: QuantizationConfig = DEFAULTCONFIG,
+                                    core_config: CoreConfig = DEFAULTCONFIG,  # TODO: change to core_config
                                     fw_info: FrameworkInfo = None,
                                     tb_w: TensorboardWriter = None,
                                     fw_impl: FrameworkImplementation = None) -> Graph:
@@ -481,10 +484,11 @@ def _prepare_model_for_quantization(graph: Graph,
         tb_w.add_graph(graph, 'initial_graph')
 
     transformed_graph = get_finalized_graph(graph,
-                                            quant_config,
+                                            core_config.quantization_config,
                                             fw_info,
                                             tb_w,
-                                            fw_impl)
+                                            fw_impl,
+                                            mixed_precision_enable=core_config.mixed_precision_enable)
 
     ######################################
     # Graph analyzing (attaching statistics collectors)
@@ -492,7 +496,7 @@ def _prepare_model_for_quantization(graph: Graph,
     analyzer_graph(fw_impl.attach_sc_to_node,
                    transformed_graph,
                    fw_info,
-                   quant_config)  # Mark points for statistics collection
+                   core_config.quantization_config)  # Mark points for statistics collection
 
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'after_analyzer_graph')
@@ -527,14 +531,14 @@ def _prepare_model_for_quantization(graph: Graph,
     # Graph substitution (post statistics collection)
     ######################################
     transformed_graph = substitute(transformed_graph,
-                                   fw_impl.get_substitutions_post_statistics_collection(quant_config))
+                                   fw_impl.get_substitutions_post_statistics_collection(core_config.quantization_config))
 
     ######################################
     # Shift Negative Activations
     ######################################
-    if quant_config.shift_negative_activation_correction:
+    if core_config.quantization_config.shift_negative_activation_correction:
         transformed_graph = fw_impl.shift_negative_correction(transformed_graph,
-                                                              quant_config,
+                                                              core_config,
                                                               fw_info)
         if tb_w is not None:
             tb_w.add_graph(transformed_graph, 'after_shift_negative_correction')

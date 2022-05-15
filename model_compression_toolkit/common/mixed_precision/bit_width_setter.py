@@ -17,15 +17,12 @@ import copy
 
 from typing import Any, List
 
-from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.logger import Logger
-from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig
 
 
-def set_bit_widths(quant_config: QuantizationConfig,
+def set_bit_widths(mixed_precision_enable,  # TODO: edit doc
                    graph_to_set_bit_widths: Graph,
                    fw_info: FrameworkInfo = None,
                    bit_widths_config: List[int] = None) -> Graph:
@@ -44,7 +41,7 @@ def set_bit_widths(quant_config: QuantizationConfig,
     """
     graph = copy.deepcopy(graph_to_set_bit_widths)
 
-    if isinstance(quant_config, MixedPrecisionQuantizationConfig):
+    if mixed_precision_enable:
         assert all([len(n.candidates_quantization_cfg) > 0 for n in graph.get_configurable_sorted_nodes()]), \
             "All configurable nodes in graph should have at least one candidate configuration in mixed precision mode"
 

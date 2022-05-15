@@ -35,7 +35,7 @@ class KPITarget(Enum):
     ACTIVATION = 'activation'
 
 
-class KPI(object):
+class KPI:
     """
     Class to represent measurements of performance.
     """
