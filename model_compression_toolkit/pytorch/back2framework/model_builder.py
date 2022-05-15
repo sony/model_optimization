@@ -188,7 +188,7 @@ class PytorchModelBuilder(torch.nn.Module):
                 outputs = outputs[0]
         return outputs
 
-    def get_op_func(self, n: BaseNode, configurable_nodes_names: List[str]) -> any:
+    def get_op_func(self, n: BaseNode, configurable_nodes_names: List[str]) -> Any:
         """
         Gets the operation function that runs the actual inference of the nodes compatible layer.
 

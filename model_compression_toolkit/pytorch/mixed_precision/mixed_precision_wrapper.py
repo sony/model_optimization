@@ -98,7 +98,7 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
     def forward(self, x: Any, *args: Any) -> Any:
         """
         Args:
-            x: input tensors to model.
+            x: input tensors to layer.
         Returns:
             torch Tensor which is the output of the wrapped layer on the given input.
         """
