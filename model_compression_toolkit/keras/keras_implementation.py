@@ -28,7 +28,6 @@ from model_compression_toolkit.keras.graph_substitutions.substitutions.residual_
     keras_residual_collapsing
 from model_compression_toolkit.keras.graph_substitutions.substitutions.input_scaling import InputScaling, \
     InputScalingWithPad
-from model_compression_toolkit.keras.graph_substitutions.substitutions.mark_activation import MarkActivation
 from model_compression_toolkit.keras.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
 from model_compression_toolkit.keras.graph_substitutions.substitutions.remove_relu_upper_bound import \
@@ -47,7 +46,7 @@ from model_compression_toolkit.keras.reader.reader import model_reader
 from model_compression_toolkit.common.collectors.statistics_collector_generator import create_stats_collector_for_node
 import model_compression_toolkit.keras.constants as keras_constants
 from model_compression_toolkit.keras.tf_tensor_numpy import tf_tensor_to_numpy, to_tf_tensor
-
+from model_compression_toolkit.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
 class KerasImplementation(FrameworkImplementation):
     """
@@ -178,15 +177,6 @@ class KerasImplementation(FrameworkImplementation):
         """
         return create_stats_collector_for_node(node,
                                                output_channel_index=output_channel_index)
-
-    def get_substitutions_marking(self) -> List[common.BaseSubstitution]:
-        """
-
-        Returns: A list of the framework substitutions used for marking
-        points we fuse.
-
-        """
-        return [MarkActivation()]
 
     def get_substitutions_channel_equalization(self,
                                                quant_config: QuantizationConfig,

@@ -27,7 +27,7 @@ from model_compression_toolkit.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.common.user_info import UserInformation
-
+from model_compression_toolkit.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
 class FrameworkImplementation(ABC):
     """
@@ -162,17 +162,6 @@ class FrameworkImplementation(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s attach_sc_to_node method.')
-
-    @abstractmethod
-    def get_substitutions_marking(self) -> List[common.BaseSubstitution]:
-        """
-
-        Returns: A list of the framework substitutions used for marking
-        points we fuse.
-
-        """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s get_substitutions_marking method.')
 
     @abstractmethod
     def get_substitutions_channel_equalization(self,

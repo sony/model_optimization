@@ -53,8 +53,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.shift_neg_activat
     ShiftNegActivationPostAddTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
     ActivationDecompositionTest
-from tests.keras_tests.feature_networks_tests.feature_networks.mark_activation_test import MarkActivationTest, \
-    AssertNoMarkActivationTest
+from tests.keras_tests.feature_networks_tests.feature_networks.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, LayerFusingTest4
 from tests.keras_tests.feature_networks_tests.feature_networks.reused_layer_test import ReusedLayerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.nested_networks.nested_test import NestedTest
 from tests.keras_tests.feature_networks_tests.feature_networks.nested_networks.nested_model_multiple_inputs_test import \
@@ -348,29 +347,11 @@ class FeatureNetworkTest(unittest.TestCase):
         ActivationDecompositionTest(self, activation_function='tanh').run_test()
         ActivationDecompositionTest(self, activation_function='softmax').run_test()
 
-    def test_mark_activation(self):
-        MarkActivationTest(self, layers.Conv2D, layers.ReLU()).run_test()
-        MarkActivationTest(self, layers.DepthwiseConv2D, layers.Activation('relu')).run_test()
-        tfoplambda_activations = [tf.nn.swish,
-                                  tf.nn.silu,
-                                  tf.nn.sigmoid,
-                                  tf.nn.tanh,
-                                  tf.nn.relu,
-                                  tf.nn.relu6,
-                                  tf.nn.leaky_relu,
-                                  tf.nn.gelu,
-                                  tf.nn.elu,
-                                  tf.nn.selu,
-                                  tf.nn.softplus,
-                                  ]
-        for act_op in tfoplambda_activations:
-            MarkActivationTest(self, layers.Conv2D, act_op).run_test()
-        AssertNoMarkActivationTest(self, layers.Dense, layers.Activation('softmax'))
-        AssertNoMarkActivationTest(self, layers.DepthwiseConv2D, layers.Activation('softmax')).run_test()
-        AssertNoMarkActivationTest(self, layers.Conv2D, layers.Activation('softmax')).run_test()
-        AssertNoMarkActivationTest(self, layers.Dense, tf.nn.softmax)
-        AssertNoMarkActivationTest(self, layers.DepthwiseConv2D, tf.nn.softmax)
-        AssertNoMarkActivationTest(self, layers.Conv2D, tf.nn.softmax)
+    def test_layer_fusing(self):
+        LayerFusingTest1(self).run_test()
+        LayerFusingTest2(self).run_test()
+        LayerFusingTest3(self).run_test()
+        LayerFusingTest4(self).run_test()
 
     def test_conv2d_bn_concant(self):
         Conv2DBNConcatnFoldingTest(self).run_test()

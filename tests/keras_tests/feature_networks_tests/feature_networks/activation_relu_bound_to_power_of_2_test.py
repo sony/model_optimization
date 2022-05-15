@@ -48,9 +48,9 @@ class ReLUBoundToPOTNetTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         alpha_1 = (quantized_model.layers[2].weights[0] / float_model.layers[1].weights[0]).numpy().mean()
-        beta_1 = (quantized_model.layers[6].weights[0] / float_model.layers[3].weights[0]).numpy().mean()
-        alpha_2 = (quantized_model.layers[8].weights[0] / float_model.layers[4].weights[0]).numpy().mean()
-        beta_2 = (quantized_model.layers[12].weights[0] / float_model.layers[6].weights[0]).numpy().mean()
+        beta_1 = (quantized_model.layers[5].weights[0] / float_model.layers[3].weights[0]).numpy().mean()
+        alpha_2 = (quantized_model.layers[7].weights[0] / float_model.layers[4].weights[0]).numpy().mean()
+        beta_2 = (quantized_model.layers[10].weights[0] / float_model.layers[6].weights[0]).numpy().mean()
 
         self.unit_test.assertTrue(np.allclose(alpha_1 * beta_1, 1, atol=1e-1))
         self.unit_test.assertTrue(np.allclose(alpha_1 * 6 / 8, 1, atol=1e-1))

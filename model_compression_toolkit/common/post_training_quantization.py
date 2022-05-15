@@ -48,6 +48,7 @@ from model_compression_toolkit.common.quantization.quantization_params_generatio
 from model_compression_toolkit.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 
+from model_compression_toolkit.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.common.substitutions.linear_collapsing_substitution import linear_collapsing_substitute
 from model_compression_toolkit.common.user_info import UserInformation
@@ -112,6 +113,7 @@ def post_training_quantization(in_model: Any,
 
     tg = _prepare_model_for_quantization(graph,
                                          representative_data_gen,
+                                         tpc,
                                          core_config,
                                          fw_info,
                                          tb_w,
@@ -177,6 +179,7 @@ def post_training_quantization(in_model: Any,
 
 
 def get_finalized_graph(initial_graph: Graph,
+                        tpc: TargetPlatformCapabilities,
                         quant_config: QuantizationConfig = DEFAULTCONFIG,
                         fw_info: FrameworkInfo = None,
                         tb_w: TensorboardWriter = None,
@@ -188,6 +191,7 @@ def get_finalized_graph(initial_graph: Graph,
 
     Args:
         initial_graph (Graph): Graph to apply the changes to.
+        tpc (TargetPlatformCapabilities): TargetPlatformCapabilities object which holds target specific capabilities
         quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be
         quantized.
         fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
@@ -235,9 +239,9 @@ def get_finalized_graph(initial_graph: Graph,
                                                                 mixed_precision_enable=mixed_precision_enable)
 
     ######################################
-    # Graph marking points
+    # Layer fusing
     ######################################
-    transformed_graph = substitute(transformed_graph, fw_impl.get_substitutions_marking())
+    transformed_graph = fusion(transformed_graph, tpc)
 
     ######################################
     # Channel equalization
@@ -464,6 +468,7 @@ def read_model_to_graph(in_model: Any,
 
 def _prepare_model_for_quantization(graph: Graph,
                                     representative_data_gen: Callable,
+                                    tpc: TargetPlatformCapabilities,
                                     core_config: CoreConfig = CoreConfig(),
                                     fw_info: FrameworkInfo = None,
                                     tb_w: TensorboardWriter = None,
@@ -478,7 +483,7 @@ def _prepare_model_for_quantization(graph: Graph,
 
     Args:
         representative_data_gen (Callable): Dataset used for calibration.
-        change quantization settings of the filtered nodes.
+        tpc (TargetPlatformCapabilities): TargetPlatformCapabilities object which holds target specific capabilities.
         core_config (CoreConfig): CoreConfig containing parameters of how the model should be
         quantized.
         fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
@@ -493,6 +498,7 @@ def _prepare_model_for_quantization(graph: Graph,
         tb_w.add_graph(graph, 'initial_graph')
 
     transformed_graph = get_finalized_graph(graph,
+                                            tpc,
                                             core_config.quantization_config,
                                             fw_info,
                                             tb_w,
