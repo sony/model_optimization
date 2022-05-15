@@ -74,20 +74,19 @@ if __name__ == '__main__':
     def representative_data_gen() -> list:
         return [image_data_loader.sample()]
 
+    # Get a TargetPlatformModel object that models the hardware for the quantized model inference.
+    # The model determines the quantization methods to use during the MCT optimization process.
+    # Here, for example, we use the default target platform model that is attached to a Tensorflow
+    # layers representation.
+    target_platform_cap = mct.get_target_platform_capabilities('tensorflow', 'default')
+
     # Create a model and quantize it using the representative_data_gen as the calibration images.
     # Set the number of calibration iterations to 10.
     model = MobileNet()
 
-    # Get a TargetPlatformModel object that models the hardware for the quantized model inference.
-    # The model determines the quantization methods to use during the MCT optimization process.
-    # Here, for example, we use the default model that is attached to a Tensorflow
-    # layers representation.
-    hardware_model = mct.get_model('tensorflow', 'default')
-
-
     quantized_model, quantization_info = mct.keras_post_training_quantization(model,
                                                                               representative_data_gen,
-                                                                              fw_hw_model=hardware_model,
+                                                                              target_platform_capabilities=target_platform_cap,
                                                                               n_iter=10)
 
 

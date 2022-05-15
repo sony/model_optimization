@@ -7,7 +7,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     env:
       COVERAGE_THRESHOlD: 80
     steps:

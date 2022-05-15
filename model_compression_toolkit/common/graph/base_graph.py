@@ -84,14 +84,14 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         self.fw_info = fw_info
 
-    def set_fw_hw_model(self,
-                        fw_hw_model: TargetPlatformCapabilities):
+    def set_tpc(self,
+                tpc: TargetPlatformCapabilities):
         """
-        Set the graph's framework hardware model.
+        Set the graph's TPC.
         Args:
-            fw_hw_model: TargetPlatformCapabilities object.
+            tpc: TargetPlatformCapabilities object.
         """
-        self.fw_hw_model = fw_hw_model
+        self.tpc = tpc
 
 
     def get_topo_sorted_nodes(self):

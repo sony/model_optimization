@@ -311,6 +311,10 @@ class BaseNode:
         Returns: Output size.
         """
         output_shapes = self.output_shape if isinstance(self.output_shape, List) else [self.output_shape]
+
+        # remove batch size (first element) from output shape
+        output_shapes = [s[1:] for s in output_shapes]
+
         return sum([np.prod([x for x in output_shape if x is not None]) for output_shape in output_shapes])
 
     def find_min_candidates_indices(self) -> List[int]:
@@ -335,3 +339,24 @@ class BaseNode:
                 min_candidates.append((i, c))
 
         return [i for i, a_n_bits in min_candidates]
+
+    def find_max_candidates_indices(self) -> List[int]:
+        """
+        Returns a list with potential maximal candidates.
+        A potential maximal candidate is a candidate which its weights_n_bits and activation_n_bits pair is
+        on the Pareto Front, i.e., there is no other candidates that its n_bits pair is lower in both entries.
+
+        Returns: A list of indices of potential maximal candidates.
+        """
+
+        # We assume that the candidates are sorted according to weights_n_bits first and activation_n_bits second
+        # First, we add the first candidate to the set of maximal candidates (candidate, index)
+        first_max = (0, self.candidates_quantization_cfg[0].activation_quantization_cfg.activation_n_bits)
+        max_candidates = [first_max]
+
+        # Iterate over all other candidates, and add ones with higher weights_n_bits but smaller activation_n_bits
+        for i, c in enumerate(self.candidates_quantization_cfg):
+            if c.activation_quantization_cfg.activation_n_bits > first_max[1]:
+                max_candidates.append((i, c))
+
+        return [i for i, a_n_bits in max_candidates]

@@ -47,7 +47,7 @@ For using with Pytorch please install the package:
 `torch <https://pytorch.org/>`_
 
 MCT is tested with:
-* Tensorflow version 2.7
+* Tensorflow version 2.8
 * Pytorch version 1.10.0.
 
 Supported Features

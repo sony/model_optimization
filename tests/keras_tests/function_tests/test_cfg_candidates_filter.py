@@ -27,16 +27,16 @@ from model_compression_toolkit.common.quantization.set_node_quantization_config 
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
-from tests.common_tests.helpers.activation_mp_hw_model import generate_hw_model_with_activation_mp
-from tests.keras_tests.fw_hw_model_keras import generate_activation_mp_fhw_model_keras
+from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
+from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
 
-hw_model = mct.target_platform
+tp = mct.target_platform
 
 
 def get_base_config():
-    return hw_model.OpQuantizationConfig(
-        activation_quantization_method=hw_model.QuantizationMethod.POWER_OF_TWO,
-        weights_quantization_method=hw_model.QuantizationMethod.POWER_OF_TWO,
+    return tp.OpQuantizationConfig(
+        activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
         activation_n_bits=8,
         weights_n_bits=8,
         weights_per_channel_threshold=True,
@@ -56,13 +56,13 @@ def get_full_bitwidth_candidates():
 
 
 def prepare_graph(in_model, base_config, bitwidth_candidates):
-    hwm = generate_hw_model_with_activation_mp(base_config, bitwidth_candidates)
-    fw_hw_model = generate_activation_mp_fhw_model_keras(name="candidates_filter_test", hardware_model=hwm)
+    tp = generate_tp_model_with_activation_mp(base_config, bitwidth_candidates)
+    tpc = generate_activation_mp_tpc_keras(name="candidates_filter_test", tp_model=tp)
 
     fw_info = DEFAULT_KERAS_INFO
     keras_impl = KerasImplementation()
     graph = keras_impl.model_reader(in_model, None)  # model reading
-    graph.set_fw_hw_model(fw_hw_model)
+    graph.set_tpc(tpc)
     graph.set_fw_info(fw_info)
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=DEFAULT_MIXEDPRECISION_CONFIG)

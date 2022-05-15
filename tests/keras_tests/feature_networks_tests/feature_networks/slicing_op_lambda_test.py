@@ -38,7 +38,7 @@ class SlicingOpLambdaTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.POWER_OF_TWO, model_compression_toolkit.hardware_model.op_quantization_config.QuantizationMethod.POWER_OF_TWO, 16, 16,
+                                      model_compression_toolkit.target_platform.op_quantization_config.QuantizationMethod.POWER_OF_TWO, model_compression_toolkit.target_platform.op_quantization_config.QuantizationMethod.POWER_OF_TWO, 16, 16,
                                       False, False, True)
 
 

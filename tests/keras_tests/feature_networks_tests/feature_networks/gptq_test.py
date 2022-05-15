@@ -18,16 +18,16 @@ import tensorflow as tf
 import model_compression_toolkit as mct
 import model_compression_toolkit.common.gptq.gptq_config
 from model_compression_toolkit.common.user_info import UserInformation
-from model_compression_toolkit.hardware_models.keras_hardware_model.keras_default import generate_fhw_model_keras
+from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
-from tests.keras_tests.fw_hw_model_keras import get_16bit_fw_hw_model
+from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
 layers = keras.layers
-hw_model = mct.target_platform
+tp = mct.target_platform
 
 
 class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
@@ -35,8 +35,8 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test,
                          input_shape=(1,16,16,3))
 
-    def get_fw_hw_model(self):
-        return get_16bit_fw_hw_model("gptq_test")
+    def get_tpc(self):
+        return get_16bit_tpc("gptq_test")
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
@@ -72,20 +72,20 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         model_float = self.create_networks()
 
         qc = self.get_quantization_config()
-        fw_hw_model = self.get_fw_hw_model()
+        tpc = self.get_tpc()
         ptq_model, quantization_info = mct.keras_post_training_quantization(model_float, representative_data_gen,
                                                                             n_iter=self.num_calibration_iter,
                                                                             quant_config=qc,
                                                                             fw_info=DEFAULT_KERAS_INFO,
                                                                             network_editor=self.get_network_editor(),
-                                                                            fw_hw_model=fw_hw_model)
+                                                                            target_platform_capabilities=tpc)
         ptq_gptq_model, quantization_info = mct.keras_post_training_quantization(model_float, representative_data_gen,
                                                                                  n_iter=self.num_calibration_iter,
                                                                                  quant_config=qc,
                                                                                  fw_info=DEFAULT_KERAS_INFO,
                                                                                  network_editor=self.get_network_editor(),
                                                                                  gptq_config=self.get_gptq_config(),
-                                                                                 fw_hw_model=fw_hw_model)
+                                                                                 target_platform_capabilities=tpc)
 
         self.compare(ptq_model, ptq_gptq_model, input_x=x, quantization_info=quantization_info)
 

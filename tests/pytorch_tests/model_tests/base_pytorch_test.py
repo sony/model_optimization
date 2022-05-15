@@ -15,10 +15,10 @@
 import random
 from torch.fx import symbolic_trace
 
-from model_compression_toolkit import MixedPrecisionQuantizationConfig, get_model
+from model_compression_toolkit import MixedPrecisionQuantizationConfig, get_target_platform_capabilities
 from model_compression_toolkit.common.constants import PYTORCH
-from model_compression_toolkit.hardware_models.pytorch_hardware_model.pytorch_default import generate_fhw_model_pytorch
-from model_compression_toolkit.pytorch.constants import DEFAULT_HWM
+from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_default import generate_pytorch_tpc
+from model_compression_toolkit.pytorch.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.pytorch.utils import get_working_device, set_model, to_torch_tensor, \
     torch_tensor_to_numpy
@@ -26,7 +26,7 @@ import model_compression_toolkit as mct
 import torch
 import numpy as np
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
-from tests.common_tests.helpers.generate_test_hw_model import generate_test_hw_model
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 """
 The base test class for the feature networks
@@ -37,26 +37,26 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         self.float_reconstruction_error = float_reconstruction_error
         self.convert_to_fx = convert_to_fx
 
-    def get_fw_hw_model(self):
+    def get_tpc(self):
         return {
-            'no_quantization': generate_fhw_model_pytorch(name="no_quant_pytorch_test",
-                                                          hardware_model=generate_test_hw_model({'weights_n_bits': 32,
+            'no_quantization': generate_pytorch_tpc(name="no_quant_pytorch_test",
+                                                    tp_model=generate_test_tp_model({'weights_n_bits': 32,
                                                                                                  'activation_n_bits': 32,
                                                                                                  'enable_weights_quantization': False,
                                                                                                  'enable_activation_quantization': False
-                                                                                                 })),
-            'all_32bit': generate_fhw_model_pytorch(name="32_quant_pytorch_test",
-                                                    hardware_model=generate_test_hw_model({'weights_n_bits': 32,
+                                                                                     })),
+            'all_32bit': generate_pytorch_tpc(name="32_quant_pytorch_test",
+                                              tp_model=generate_test_tp_model({'weights_n_bits': 32,
                                                                                            'activation_n_bits': 32,
                                                                                            'enable_weights_quantization': True,
                                                                                            'enable_activation_quantization': True
-                                                                                           })),
-            'all_4bit': generate_fhw_model_pytorch(name="4_quant_pytorch_test",
-                                                   hardware_model=generate_test_hw_model({'weights_n_bits': 4,
+                                                                               })),
+            'all_4bit': generate_pytorch_tpc(name="4_quant_pytorch_test",
+                                             tp_model=generate_test_tp_model({'weights_n_bits': 4,
                                                                                           'activation_n_bits': 4,
                                                                                           'enable_weights_quantization': True,
                                                                                           'enable_activation_quantization': True
-                                                                                          })),
+                                                                              })),
         }
 
     # TODO: We can remove this method and refactor Pytorch tests to run only over
@@ -131,7 +131,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         quant_config_dict = self.get_quantization_configs()
         for model_name in quant_config_dict.keys():
             quant_config = quant_config_dict[model_name]
-            fw_hw_model = self.get_fw_hw_model()[model_name]
+            tpc = self.get_tpc()[model_name]
             if isinstance(quant_config, MixedPrecisionQuantizationConfig):
                 ptq_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(model_float,
                                                                                                       representative_data_gen,
@@ -141,7 +141,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                                                                                                       network_editor=self.get_network_editor(),
                                                                                                       gptq_config=self.get_gptq_config(),
                                                                                                       target_kpi=self.get_kpi(),
-                                                                                                      fw_hw_model=fw_hw_model)
+                                                                                                      target_platform_capabilities=tpc)
                 ptq_models.update({model_name: ptq_model})
             else:
                 ptq_model, quantization_info = mct.pytorch_post_training_quantization(model_float,
@@ -150,7 +150,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                                                                                       quant_config=quant_config,
                                                                                       fw_info=DEFAULT_PYTORCH_INFO,
                                                                                       network_editor=self.get_network_editor(),
-                                                                                      fw_hw_model=fw_hw_model)
+                                                                                      target_platform_capabilities=tpc)
                 ptq_models.update({model_name: ptq_model})
 
         self.compare(ptq_models, model_float, input_x=x, quantization_info=quantization_info)

@@ -30,11 +30,19 @@ Filters
 Actions
 ==========
 
+.. autoclass:: model_compression_toolkit.network_editor.ChangeFinalWeightsQuantConfigAttr
+
+|
+
 .. autoclass:: model_compression_toolkit.network_editor.ChangeCandidatesWeightsQuantConfigAttr
 
 |
 
-.. autoclass:: model_compression_toolkit.network_editor.ChangeActivationQuantConfigAttr
+.. autoclass:: model_compression_toolkit.network_editor.ChangeFinalActivationQuantConfigAttr
+
+|
+
+.. autoclass:: model_compression_toolkit.network_editor.ChangeCandidatesActivationQuantConfigAttr
 
 |
 
@@ -42,13 +50,13 @@ Actions
 
 |
 
-.. autoclass:: model_compression_toolkit.network_editor.ChangeActivationQuantizationMethod
-
-|
-
 .. autoclass:: model_compression_toolkit.network_editor.ChangeFinalWeightsQuantizationMethod
 
 |
 
-.. autoclass:: model_compression_toolkit.network_editor.ChangeCandidtaesWeightsQuantizationMethod
+.. autoclass:: model_compression_toolkit.network_editor.ChangeCandidatesWeightsQuantizationMethod
+
+|
+
+.. autoclass:: model_compression_toolkit.network_editor.ChangeCandidatesActivationQuantizationMethod
 

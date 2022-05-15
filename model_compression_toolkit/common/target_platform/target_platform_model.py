@@ -16,11 +16,11 @@
 import pprint
 from typing import Any, Dict
 
-from model_compression_toolkit.common.target_platform.current_hardware_model import _current_hardware_model, \
-    get_current_model
+from model_compression_toolkit.common.target_platform.current_tp_model import _current_tp_model, \
+    get_current_tp_model
 from model_compression_toolkit.common.target_platform.fusing import Fusing
-from model_compression_toolkit.common.target_platform.hardware_model_component import \
-    HardwareModelComponent
+from model_compression_toolkit.common.target_platform.target_platform_model_component import \
+    TargetPlatformModelComponent
 from model_compression_toolkit.common.target_platform.op_quantization_config import OpQuantizationConfig, \
     QuantizationConfigOptions
 from model_compression_toolkit.common.target_platform.operators import OperatorsSetBase
@@ -36,7 +36,7 @@ def get_default_quantization_config_options() -> QuantizationConfigOptions:
     The default QuantizationConfigOptions always contains a single option.
 
     """
-    return get_current_model().default_qco
+    return get_current_tp_model().default_qco
 
 
 def get_default_quantization_config():
@@ -48,7 +48,7 @@ def get_default_quantization_config():
 
     """
 
-    return get_current_model().get_default_op_quantization_config()
+    return get_current_tp_model().get_default_op_quantization_config()
 
 
 class TargetPlatformModel(ImmutableClass):
@@ -60,7 +60,7 @@ class TargetPlatformModel(ImmutableClass):
 
     def __init__(self,
                  default_qco: QuantizationConfigOptions,
-                 name="default_hm"):
+                 name="default_tp_model"):
         """
 
         Args:
@@ -97,12 +97,12 @@ class TargetPlatformModel(ImmutableClass):
     def get_default_op_quantization_config(self) -> OpQuantizationConfig:
         """
 
-        Returns: The default OpQuantizationConfig of the hardware model.
+        Returns: The default OpQuantizationConfig of the TargetPlatformModel.
 
         """
         assert len(self.default_qco.quantization_config_list) == 1, \
             f'Default quantization configuration options must contain only one option,' \
-            f' but found {len(get_current_model().default_qco.quantization_config_list)} configurations.'
+            f' but found {len(get_current_tp_model().default_qco.quantization_config_list)} configurations.'
         return self.default_qco.quantization_config_list[0]
 
     def is_opset_in_model(self,
@@ -141,21 +141,21 @@ class TargetPlatformModel(ImmutableClass):
         return opset_list[0]  # There's one opset with that name
 
     def append_component(self,
-                         hm_component: HardwareModelComponent):
+                         tp_model_component: TargetPlatformModelComponent):
         """
         Attach a TargetPlatformModel component to the model. Components can be for example:
         Fusing, OperatorsSet, etc.
 
         Args:
-            hm_component: Component to attach to the model.
+            tp_model_component: Component to attach to the model.
 
         """
-        if isinstance(hm_component, Fusing):
-            self.fusing_patterns.append(hm_component)
-        elif isinstance(hm_component, OperatorsSetBase):
-            self.operator_set.append(hm_component)
+        if isinstance(tp_model_component, Fusing):
+            self.fusing_patterns.append(tp_model_component)
+        elif isinstance(tp_model_component, OperatorsSetBase):
+            self.operator_set.append(tp_model_component)
         else:
-            raise Exception(f'Trying to append an unfamiliar HardwareModelComponent of type: {type(hm_component)}')
+            raise Exception(f'Trying to append an unfamiliar TargetPlatformModelComponent of type: {type(tp_model_component)}')
 
     def __enter__(self):
         """
@@ -164,7 +164,7 @@ class TargetPlatformModel(ImmutableClass):
         Returns: Initialized TargetPlatformModel object.
 
         """
-        _current_hardware_model.set(self)
+        _current_tp_model.set(self)
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
@@ -177,7 +177,7 @@ class TargetPlatformModel(ImmutableClass):
             print(exc_value, exc_value.args)
             raise exc_value
         self.__validate_model()  # Assert that model is valid.
-        _current_hardware_model.reset()
+        _current_tp_model.reset()
         self.initialized_done()  # Make model immutable.
         return self
 

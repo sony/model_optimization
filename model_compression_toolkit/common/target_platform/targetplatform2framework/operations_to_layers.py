@@ -16,14 +16,14 @@
 from typing import List, Any
 
 from model_compression_toolkit.common.logger import Logger
-from model_compression_toolkit.common.target_platform.targetplatform2framework.current_framework_hardware_model import  _current_framework_hardware_model
-from model_compression_toolkit.common.target_platform.targetplatform2framework.framework_hardware_model_component import FrameworkHardwareModelComponent
+from model_compression_toolkit.common.target_platform.targetplatform2framework.current_tpc import  _current_tpc
+from model_compression_toolkit.common.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
 from model_compression_toolkit.common.target_platform.operators import OperatorsSet, OperatorSetConcat, \
     OperatorsSetBase
 
 
 
-class OperationsSetToLayers(FrameworkHardwareModelComponent):
+class OperationsSetToLayers(TargetPlatformCapabilitiesComponent):
     """
     Associate an OperatorsSet to a list of framework's layers.
     """
@@ -38,7 +38,7 @@ class OperationsSetToLayers(FrameworkHardwareModelComponent):
         """
         self.layers = layers
         super(OperationsSetToLayers, self).__init__(name=op_set_name)
-        _current_framework_hardware_model.get().remove_opset_from_not_used_list(op_set_name)
+        _current_tpc.get().remove_opset_from_not_used_list(op_set_name)
 
     def __repr__(self) -> str:
         """
@@ -52,7 +52,7 @@ class OperationsSetToLayers(FrameworkHardwareModelComponent):
 
 class OperationsToLayers:
     """
-    Gather multiple OperationsSetToLayers to represent mapping of framework's layers to HardwareModel OperatorsSet.
+    Gather multiple OperationsSetToLayers to represent mapping of framework's layers to TargetPlatformModel OperatorsSet.
     """
     def __init__(self,
                  op_sets_to_layers: List[OperationsSetToLayers]=None):
@@ -122,14 +122,14 @@ class OperationsToLayers:
                                                       f'is of type {type(ops2layers)}'
 
             # Assert that opset in the current TargetPlatformCapabilities and has a unique name.
-            is_opset_in_model = _current_framework_hardware_model.get().hw_model.is_opset_in_model(ops2layers.name)
-            assert is_opset_in_model, f'{ops2layers.name} is not defined in the hardware model that is associated with the framework hardware model.'
+            is_opset_in_model = _current_tpc.get().tp_model.is_opset_in_model(ops2layers.name)
+            assert is_opset_in_model, f'{ops2layers.name} is not defined in the target platform model that is associated with the target platform capabilities.'
             assert not (ops2layers.name in existing_opset_names), f'OperationsSetToLayers names should be unique, but {ops2layers.name} appears to violate it.'
             existing_opset_names.append(ops2layers.name)
 
-            # Assert that a layer does not appear in more than a single OperatorsSet in the HardwareModel.
+            # Assert that a layer does not appear in more than a single OperatorsSet in the TargetPlatformModel.
             for layer in ops2layers.layers:
-                qco_by_opset_name = _current_framework_hardware_model.get().hw_model.get_config_options_by_operators_set(ops2layers.name)
+                qco_by_opset_name = _current_tpc.get().tp_model.get_config_options_by_operators_set(ops2layers.name)
                 if layer in existing_layers:
                     raise Exception(f'Found layer {layer.__name__} in more than one '
                                     f'OperatorsSet')

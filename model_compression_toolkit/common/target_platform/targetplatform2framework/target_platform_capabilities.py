@@ -21,7 +21,7 @@ from typing import List, Any, Dict, Tuple
 from model_compression_toolkit.common.logger import Logger
 from model_compression_toolkit.common.target_platform.targetplatform2framework.operations_to_layers import \
     OperationsToLayers, OperationsSetToLayers
-from model_compression_toolkit.common.target_platform.targetplatform2framework.framework_hardware_model_component import FrameworkHardwareModelComponent
+from model_compression_toolkit.common.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
 from model_compression_toolkit.common.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
 from model_compression_toolkit.common.immutable import ImmutableClass
 from model_compression_toolkit.common.graph.base_node import BaseNode
@@ -29,7 +29,7 @@ from model_compression_toolkit.common.target_platform.op_quantization_config imp
     OpQuantizationConfig
 from model_compression_toolkit.common.target_platform.operators import OperatorsSet, OperatorsSetBase
 from model_compression_toolkit.common.target_platform.target_platform_model import TargetPlatformModel
-from model_compression_toolkit.common.target_platform.targetplatform2framework.current_framework_hardware_model import _current_framework_hardware_model
+from model_compression_toolkit.common.target_platform.targetplatform2framework.current_tpc import _current_tpc
 
 
 class TargetPlatformCapabilities(ImmutableClass):
@@ -37,23 +37,23 @@ class TargetPlatformCapabilities(ImmutableClass):
     Attach framework information to a modeled hardware.
     """
     def __init__(self,
-                 hw_model: TargetPlatformModel,
+                 tp_model: TargetPlatformModel,
                  name: str = "base"):
         """
 
         Args:
-            hw_model (TargetPlatformModel): Modeled hardware to attach framework information to.
+            tp_model (TargetPlatformModel): Modeled hardware to attach framework information to.
             name (str): Name of the TargetPlatformCapabilities.
         """
 
         super().__init__()
         self.name = name
-        assert isinstance(hw_model, TargetPlatformModel), f'Hardware model that was passed to TargetPlatformCapabilities must be of type TargetPlatformModel, but has type of {type(hw_model)}'
-        self.hw_model = hw_model
+        assert isinstance(tp_model, TargetPlatformModel), f'Target platform model that was passed to TargetPlatformCapabilities must be of type TargetPlatformModel, but has type of {type(tp_model)}'
+        self.tp_model = tp_model
         self.op_sets_to_layers = OperationsToLayers() # Init an empty OperationsToLayers
         self.layer2qco, self.filterlayer2qco = {}, {} # Init empty mappings from layers/LayerFilterParams to QC options
         # Track the unused opsets for warning purposes.
-        self.__hwm_opsets_not_used = [s.name for s in hw_model.operator_set]
+        self.__tp_model_opsets_not_used = [s.name for s in tp_model.operator_set]
         self.remove_fusing_names_from_not_used_list()
 
     def get_layers_by_opset_name(self, opset_name: str) -> List[Any]:
@@ -67,7 +67,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         Returns:
             List of layers/LayerFilterParams that are attached to the opset name.
         """
-        opset = self.hw_model.get_opset_by_name(opset_name)
+        opset = self.tp_model.get_opset_by_name(opset_name)
         if opset is None:
             Logger.warning(f'{opset_name} was not found in TargetPlatformCapabilities.')
             return None
@@ -92,7 +92,7 @@ class TargetPlatformCapabilities(ImmutableClass):
 
         """
         res = []
-        for p in self.hw_model.fusing_patterns:
+        for p in self.tp_model.fusing_patterns:
             ops = [self.get_layers_by_opset(x) for x in p.operator_groups_list]
             res.extend(itertools.product(*ops))
         return [list(x) for x in res]
@@ -104,8 +104,8 @@ class TargetPlatformCapabilities(ImmutableClass):
         Returns: Summarization of information in the TargetPlatformCapabilities.
 
         """
-        return {"Framework Hardware Model": self.name,
-                "Hardware model": self.hw_model.get_info(),
+        return {"Target Platform Capabilities": self.name,
+                "Target Platform Model": self.tp_model.get_info(),
                 "Operations to layers": {op2layer.name:[l.__name__ for l in op2layer.layers] for op2layer in self.op_sets_to_layers.op_sets_to_layers}}
 
     def show(self):
@@ -116,24 +116,24 @@ class TargetPlatformCapabilities(ImmutableClass):
         """
         pprint.pprint(self.get_info(), sort_dicts=False, width=110)
 
-    def append_component(self, hm_component: FrameworkHardwareModelComponent):
+    def append_component(self, tpc_component: TargetPlatformCapabilitiesComponent):
         """
         Append a Component (like OperationsSetToLayers) to the TargetPlatformCapabilities.
 
         Args:
-            hm_component: Component to append to TargetPlatformCapabilities.
+            tpc_component: Component to append to TargetPlatformCapabilities.
 
         """
-        if isinstance(hm_component, OperationsSetToLayers):
-            self.op_sets_to_layers += hm_component
+        if isinstance(tpc_component, OperationsSetToLayers):
+            self.op_sets_to_layers += tpc_component
         else:
-            raise Exception(f'Trying to append an unfamiliar HardwareModelComponent of type: {type(hm_component)}')
+            raise Exception(f'Trying to append an unfamiliar TargetPlatformCapabilitiesComponent of type: {type(tpc_component)}')
 
     def __enter__(self):
         """
         Init a TargetPlatformCapabilities object.
         """
-        _current_framework_hardware_model.set(self)
+        _current_tpc.set(self)
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
@@ -145,7 +145,7 @@ class TargetPlatformCapabilities(ImmutableClass):
             raise exc_value
         self.raise_warnings()
         self.layer2qco, self.filterlayer2qco = self._get_config_options_mapping()
-        _current_framework_hardware_model.reset()
+        _current_tpc.reset()
         self.initialized_done()
         return self
 
@@ -156,7 +156,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         to the TargetPlatformCapabilities.
 
         """
-        return self.hw_model.get_default_op_quantization_config()
+        return self.tp_model.get_default_op_quantization_config()
 
     def get_qco_by_node(self,
                         node: BaseNode) -> QuantizationConfigOptions:
@@ -177,7 +177,7 @@ class TargetPlatformCapabilities(ImmutableClass):
                 return qco
         if node.type in self.layer2qco:
             return self.layer2qco.get(node.type)
-        return self.hw_model.default_qco
+        return self.tp_model.default_qco
 
     def _get_config_options_mapping(self) -> Tuple[Dict[Any, QuantizationConfigOptions],
                                                    Dict[LayerFilterParams, QuantizationConfigOptions]]:
@@ -192,9 +192,9 @@ class TargetPlatformCapabilities(ImmutableClass):
         filterlayer2qco = {}
         for op2layers in self.op_sets_to_layers.op_sets_to_layers:
             for l in op2layers.layers:
-                qco = self.hw_model.get_config_options_by_operators_set(op2layers.name)
+                qco = self.tp_model.get_config_options_by_operators_set(op2layers.name)
                 if qco is None:
-                    qco = self.hw_model.default_qco
+                    qco = self.tp_model.default_qco
                 if isinstance(l, LayerFilterParams):
                     filterlayer2qco.update({l: qco})
                 else:
@@ -207,7 +207,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         Remove OperatorSets names from the list of the unused sets (so a warning
         will not be displayed).
         """
-        for f in self.hw_model.fusing_patterns:
+        for f in self.tp_model.fusing_patterns:
             for s in f.operator_groups_list:
                 self.remove_opset_from_not_used_list(s.name)
 
@@ -220,8 +220,8 @@ class TargetPlatformCapabilities(ImmutableClass):
             opset_to_remove: OperatorsSet name to remove.
 
         """
-        if opset_to_remove in self.__hwm_opsets_not_used:
-            self.__hwm_opsets_not_used.remove(opset_to_remove)
+        if opset_to_remove in self.__tp_model_opsets_not_used:
+            self.__tp_model_opsets_not_used.remove(opset_to_remove)
 
     def raise_warnings(self):
         """
@@ -229,7 +229,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         Log warnings regards unused opsets.
 
         """
-        for op in self.__hwm_opsets_not_used:
-            Logger.warning(f'{op} is defined in hardware model, but is not used in framework hardware model.')
+        for op in self.__tp_model_opsets_not_used:
+            Logger.warning(f'{op} is defined in TargetPlatformModel, but is not used in TargetPlatformCapabilities.')
 
 
