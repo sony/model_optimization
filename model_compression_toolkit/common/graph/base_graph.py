@@ -609,9 +609,21 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return [lst[0] for lst in min_cfg_candidates]
 
     def get_final_weights_config(self):
+        """
+        Gets the final number of bits for quantization of each weights' configurable layer.
+
+        Returns: A list of pairs of (node type, nod's weights quantization bitwidth).
+
+        """
         sorted_conf_weights = self.get_sorted_weights_configurable_nodes()
         return [(n.type, n.final_weights_quantization_cfg.weights_n_bits) for n in sorted_conf_weights]
 
     def get_final_activation_config(self):
+        """
+        Gets the final number of bits for quantization of each activation configurable layer.
+
+        Returns: A list of pairs of (node type, nod's activation quantization bitwidth).
+
+        """
         sorted_conf_activation = self.get_sorted_activation_configurable_nodes()
         return [(n.type, n.final_activation_quantization_cfg.activation_n_bits) for n in sorted_conf_activation]
