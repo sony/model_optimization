@@ -15,7 +15,7 @@
 
 from typing import Callable
 
-from model_compression_toolkit import KPI, MixedPrecisionQuantizationConfig, CoreConfig
+from model_compression_toolkit import KPI, MixedPrecisionQuantizationConfig, CoreConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.common import Logger
 from model_compression_toolkit.common.constants import TENSORFLOW
 from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
@@ -133,7 +133,7 @@ if importlib.util.find_spec("tensorflow") is not None\
 
         """
 
-        if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):  # TODO: edit doc and comment
+        if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):  # TODO: edit doc and comment
             Logger.error("KPI data computation can be executed without MixedPrecisionQuantizationConfig object."
                          "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
 

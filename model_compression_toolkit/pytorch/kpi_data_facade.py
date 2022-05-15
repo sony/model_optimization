@@ -20,9 +20,10 @@ from model_compression_toolkit.common.constants import PYTORCH
 from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.framework_info import FrameworkInfo
-from model_compression_toolkit.common.mixed_precision.kpi_data import compute_kpi_data
+from model_compression_toolkit.common.mixed_precision.kpi_data import compute_kpi_data, compute_kpi_data_experimental
+from model_compression_toolkit.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig, DEFAULT_MIXEDPRECISION_CONFIG
+    MixedPrecisionQuantizationConfig, DEFAULT_MIXEDPRECISION_CONFIG, MixedPrecisionQuantizationConfigV2
 
 import importlib
 
@@ -86,6 +87,59 @@ if importlib.util.find_spec("torch") is not None:
                                 target_platform_capabilities,
                                 fw_info,
                                 fw_impl)
+
+
+    def pytorch_kpi_data_experimental(in_model: Module,
+                                      representative_data_gen: Callable,
+                                      core_config: CoreConfig = CoreConfig(),
+                                      fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
+                                      target_platform_capabilities: TargetPlatformCapabilities = PYTORCH_DEFAULT_TPC) -> KPI:
+        """
+        TODO: edit doc
+        Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
+        Builds the computation graph from the given model and target platform capabilities, and uses it to compute the KPI data.
+
+        Args:
+            in_model (Model): Keras model to quantize.
+            representative_data_gen (Callable): Dataset used for calibration.
+            quant_config (MixedPrecisionQuantizationConfig): MixedPrecisionQuantizationConfig containing parameters of how the model should be quantized.
+            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default PyTorch info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pytorch/default_framework_info.py>`_
+            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to. `Default Keras TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/tpc_models/pytorch_tp_models/pytorch_default.py>`_
+
+        Returns:
+            A KPI object with total weights parameters sum and max activation tensor.
+
+        Examples:
+
+            Import a Pytorch model:
+
+            >>> import torchvision.models.mobilenet_v2 as models
+            >>> module = models.mobilenet_v2()
+
+            Create a random dataset generator:
+
+            >>> import numpy as np
+            >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
+
+            Import mct and call for KPI data calculation:
+
+            >>> import model_compression_toolkit as mct
+            >>> kpi_data = mct.pytorch_kpi_data(module, repr_datagen)
+
+        """
+
+        if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
+            Logger.error("KPI data computation can be executed without MixedPrecisionQuantizationConfig object."
+                         "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
+
+        fw_impl = PytorchImplementation()
+
+        return compute_kpi_data_experimental(in_model,
+                                             representative_data_gen,
+                                             core_config,
+                                             target_platform_capabilities,
+                                             fw_info,
+                                             fw_impl)
 
 else:
     # If torch is not installed,

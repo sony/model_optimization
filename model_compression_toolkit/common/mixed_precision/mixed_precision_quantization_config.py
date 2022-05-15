@@ -77,5 +77,6 @@ class MixedPrecisionQuantizationConfigV2:
 
 
 # Default quantization configuration the library use.
-DEFAULT_MIXEDPRECISION_CONFIG = MixedPrecisionQuantizationConfig(compute_mse,
+DEFAULT_MIXEDPRECISION_CONFIG = MixedPrecisionQuantizationConfig(DEFAULTCONFIG,
+                                                                 compute_mse,
                                                                  get_average_weights)

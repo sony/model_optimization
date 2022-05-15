@@ -246,6 +246,7 @@ if importlib.util.find_spec("tensorflow") is not None\
         common.Logger.info("Using experimental mixed-precision quantization. "
                            "If you encounter an issue please file a bug.")
 
+        # TODO: move to MixedPrecisionQuantizationConfig as a function to that returns the QuantizationConfig & MixedPrecisionQuantizationConfigV2
         _dummy_quant_config = QuantizationConfig()
         _dummy_mp_config = MixedPrecisionQuantizationConfig()
         _dummy_mp_config_experimental = MixedPrecisionQuantizationConfigV2()
