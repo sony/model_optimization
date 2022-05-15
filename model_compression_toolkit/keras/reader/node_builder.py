@@ -15,7 +15,6 @@
 from typing import Any
 
 import tensorflow as tf
-from keras.engine.base_layer import TensorFlowOpLayer
 
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers.core import TFOpLambda, SlicingOpLambda
@@ -77,7 +76,7 @@ def build_node(node: KerasNode,
     input_shape = keras_layer.get_input_shape_at(io_index)
     output_shape = keras_layer.get_output_shape_at(io_index)
 
-    if layer_class in [TFOpLambda, SlicingOpLambda, TensorFlowOpLayer]:
+    if layer_class in [TFOpLambda, SlicingOpLambda]:
         # Some functional ops (such as tf.concat) should receive the input tensors as a list
         # and some are not (such as tf.multiply), so each FunctionalNode holds
         # a flag to indicate that.
@@ -86,10 +85,6 @@ def build_node(node: KerasNode,
         # not needed. Thus, if the first element in op_call_args is a list of
         # Keras tensors, remove it from op_call_args.
         op_call_args = op_call_args[int(inputs_as_list):]
-        if isinstance(keras_layer, TensorFlowOpLayer):
-            op_function = keras_layer.node_def.op
-        else:
-            op_function = keras_layer.function
         node = FunctionalNode(node_name,
                               layer_config,
                               input_shape,
@@ -100,7 +95,7 @@ def build_node(node: KerasNode,
                               {k: v for k, v in op_call_kwargs.items() if not isinstance(v, KerasTensor)}, # In TF2.5 tensors are in kwargs as well.
                               is_reused,
                               reuse_group,
-                              functional_op=op_function,
+                              functional_op=keras_layer.function,
                               inputs_as_list=inputs_as_list)
     else:
         node = BaseNode(node_name,
