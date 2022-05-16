@@ -19,7 +19,7 @@ body:
   - type: markdown
     attributes:
       value: | 
-        You can obtain the MCT version with: <br> `python -c "import  model-compression-toolkit as mct; print(mct.__version__)"`
+        You can obtain the MCT version with: <br> `python -c "import  model_compression_toolkit as mct; print(mct.__version__)"`
 
   - type: dropdown
     id: source

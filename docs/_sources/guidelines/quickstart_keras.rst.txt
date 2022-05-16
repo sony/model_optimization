@@ -21,7 +21,7 @@ Data preprocessing functions:
 
 .. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
-    :lines: 27-48
+    :lines: 23-49
 
 |
 
@@ -29,15 +29,15 @@ Initialize data loader:
 
 .. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
-    :lines: 53-75
+    :lines: 53-76
 
 |
 
-Get a FrameworkHardwareModel:
+Get a TargetPlatformCapabilities:
 
 .. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
-    :lines: 80-86
+    :lines: 76-82
 
 |
 
@@ -45,5 +45,5 @@ Run Post Training Quantization:
 
 .. literalinclude:: ../../../tutorials/example_keras_mobilenet.py
     :language: python
-    :lines: 87-92
+    :lines: 82-92
 
