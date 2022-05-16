@@ -41,14 +41,19 @@ from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_m
     generate_mixed_precision_test_tp_model
 
 
+def compute_metric_function(x, y=None):
+    return 0
+
+
 class MockMixedPrecisionSearchManager:
     def __init__(self, layer_to_kpi_mapping):
         self.layer_to_bitwidth_mapping = {0: [0, 1, 2]}
         self.layer_to_kpi_mapping = layer_to_kpi_mapping
-        self.compute_metric_fn = lambda x, y: 0
+        self.compute_metric_fn = compute_metric_function
         self.min_kpi = {KPITarget.WEIGHTS: [[1], [1], [1]], KPITarget.ACTIVATION: [[1], [1], [1]]}  # minimal kpi in the tests layer_to_kpi_mapping
         self.compute_kpi_functions = {KPITarget.WEIGHTS: (None, lambda v: [sum(v)]),
                                       KPITarget.ACTIVATION: (None, lambda v: [sum(v)])}
+        self.max_kpi_config = [0]
 
     def compute_kpi_matrix(self, target):
         # minus 1 is normalization by the minimal kpi (which is always 1 in this test)
