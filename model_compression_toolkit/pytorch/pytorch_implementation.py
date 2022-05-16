@@ -18,7 +18,7 @@ import torch
 from torch.nn import Module
 
 from model_compression_toolkit import QuantizationConfig, FrameworkInfo, common, GradientPTQConfig, \
-    MixedPrecisionQuantizationConfig
+    MixedPrecisionQuantizationConfig, CoreConfig
 from model_compression_toolkit.common import Graph, BaseNode
 from model_compression_toolkit.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.common.collectors.statistics_collector_generator import create_stats_collector_for_node
@@ -138,7 +138,7 @@ class PytorchImplementation(FrameworkImplementation):
 
     def shift_negative_correction(self,
                                   graph: Graph,
-                                  qc: QuantizationConfig,
+                                  core_config: CoreConfig,
                                   fw_info: FrameworkInfo) -> Graph:
         """
         Apply shift negative correction (SNC) on a graph.

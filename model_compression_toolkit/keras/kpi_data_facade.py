@@ -77,7 +77,7 @@ if importlib.util.find_spec("tensorflow") is not None\
         """
 
         if not isinstance(quant_config, MixedPrecisionQuantizationConfig):
-            Logger.error("KPI data computation can be executed without MixedPrecisionQuantizationConfig object."
+            Logger.error("KPI data computation can't be executed without MixedPrecisionQuantizationConfig object."
                          "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
 
         fw_impl = KerasImplementation()
@@ -92,7 +92,7 @@ if importlib.util.find_spec("tensorflow") is not None\
 
     def keras_kpi_data_experimental(in_model: Model,
                                     representative_data_gen: Callable,
-                                    core_config: CoreConfig,  # TODO: edit doc
+                                    core_config: CoreConfig,
                                     fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                                     target_platform_capabilities: TargetPlatformCapabilities = KERAS_DEFAULT_TPC) -> KPI:
         """
@@ -102,7 +102,7 @@ if importlib.util.find_spec("tensorflow") is not None\
         Args:
             in_model (Model): Keras model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
-            quant_config (MixedPrecisionQuantizationConfig): MixedPrecisionQuantizationConfig containing parameters
+            core_config (CoreConfig): CoreConfig containing parameters for quantization and mixed precision
             of how the model should be quantized.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
             kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info
@@ -133,9 +133,9 @@ if importlib.util.find_spec("tensorflow") is not None\
 
         """
 
-        if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):  # TODO: edit doc and comment
-            Logger.error("KPI data computation can be executed without MixedPrecisionQuantizationConfig object."
-                         "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
+        if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
+            Logger.error("KPI data computation can't be executed without MixedPrecisionQuantizationConfigV2 object."
+                         "Given quant_config is not of type MixedPrecisionQuantizationConfigV2.")
 
         fw_impl = KerasImplementation()
 

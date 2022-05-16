@@ -49,6 +49,27 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
         self.num_of_images = num_of_images
         self.configuration_overwrite = configuration_overwrite
 
+    def separate_configs(self):
+        _dummy_quant_config = QuantizationConfig()
+        _dummy_mp_config_experimental = MixedPrecisionQuantizationConfigV2()
+        qc_dict = {}
+        mp_dict = {}
+        for k, v in self.__dict__.items():
+            if hasattr(_dummy_quant_config, k):
+                qc_dict.update({k: v})
+            elif hasattr(_dummy_mp_config_experimental, k):
+                mp_dict.update({k: v})
+            else:
+                raise Exception(f'Attribute "{k}" mismatch: exists in MixedPrecisionQuantizationConfig but not in MixedPrecisionQuantizationConfigV2')
+
+        return QuantizationConfig(**qc_dict), MixedPrecisionQuantizationConfigV2(**mp_dict)
+
+
+# Default quantization configuration the library use.
+DEFAULT_MIXEDPRECISION_CONFIG = MixedPrecisionQuantizationConfig(DEFAULTCONFIG,
+                                                                 compute_mse,
+                                                                 get_average_weights)
+
 
 class MixedPrecisionQuantizationConfigV2:
 
@@ -74,9 +95,3 @@ class MixedPrecisionQuantizationConfigV2:
         self.distance_weighting_method = distance_weighting_method
         self.num_of_images = num_of_images
         self.configuration_overwrite = configuration_overwrite
-
-
-# Default quantization configuration the library use.
-DEFAULT_MIXEDPRECISION_CONFIG = MixedPrecisionQuantizationConfig(DEFAULTCONFIG,
-                                                                 compute_mse,
-                                                                 get_average_weights)

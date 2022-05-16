@@ -246,23 +246,10 @@ if importlib.util.find_spec("tensorflow") is not None\
         common.Logger.info("Using experimental mixed-precision quantization. "
                            "If you encounter an issue please file a bug.")
 
-        # TODO: move to MixedPrecisionQuantizationConfig as a function to that returns the QuantizationConfig & MixedPrecisionQuantizationConfigV2
-        _dummy_quant_config = QuantizationConfig()
-        _dummy_mp_config = MixedPrecisionQuantizationConfig()
-        _dummy_mp_config_experimental = MixedPrecisionQuantizationConfigV2()
-        qc_dict = {}
-        mp_dict = {}
-        for k, v in quant_config.__dict__.items():
-            if hasattr(_dummy_quant_config, k):
-                qc_dict.update({k: v})
-            elif hasattr(_dummy_mp_config_experimental, k):
-                mp_dict.update({k: v})
-            else:
-                raise Exception(f'Attribute "{k}" mismatch: exists in MixedPrecisionQuantizationConfig but not in MixedPrecisionQuantizationConfigV2')
-
+        quantization_config, mp_config = quant_config.separate_configs()
         core_config = CoreConfig(n_iter,
-                                 quantization_config=QuantizationConfig(**qc_dict),
-                                 mixed_precision_config=MixedPrecisionQuantizationConfigV2(**mp_dict),
+                                 quantization_config=quantization_config,
+                                 mixed_precision_config=mp_config,
                                  network_editor=network_editor)
 
         return post_training_quantization(in_model,
@@ -280,10 +267,10 @@ if importlib.util.find_spec("tensorflow") is not None\
 
     def keras_gradient_post_training_quantization_experimental(in_model: Model,
                                                                representative_data_gen: Callable,
-                                                               target_kpi: KPI,
+                                                               gptq_config: GradientPTQConfig,
+                                                               target_kpi: KPI = None,
                                                                core_config: CoreConfig = CoreConfig(),
                                                                fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                                                               gptq_config: GradientPTQConfig = None,  # move to before default
                                                                analyze_similarity: bool = False,
                                                                target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
@@ -292,27 +279,25 @@ if importlib.util.find_spec("tensorflow") is not None\
         The model is first optimized using several transformations (e.g. BatchNormalization folding to
         preceding layers). Then, using a given dataset, statistics (e.g. min/max, histogram, etc.) are
         being collected for each layer's output (and input, depends on the quantization configuration).
-        Thresholds are then being calculated using the collected statistics and the model is quantized
+        For each possible bit width (per layer) a threshold is then being calculated using the collected
+        statistics. Then, if given a mixed precision config in the core_config, using an ILP solver we find
+        a mixed-precision configuration, and set a bit width for each layer. The model is then quantized
         (both coefficients and activations by default).
-        If a gptq configuration is passed, the quantized weights are optimized using gradient based post
+        In order to limit the maximal model's size, a target KPI need to be passed after weights_memory
+        is set (in bytes).
+        Then, the quantized weights are optimized using gradient based post
         training quantization by comparing points between the float and quantized models, and minimizing the observed
         loss.
 
         Args:
             in_model (Model): Keras model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
-            n_iter (int): Number of calibration iterations to run.
-            core_config: quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be
-            quantized. `Default configuration.
-            <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10
-            /model_compression_toolkit/common/quantization/quantization_config.py#L154>`_
+            gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
+            target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
+            core_config (CoreConfig): configuration object containing parameters of how the model should be
+            quantized, including mixed precision parameters. `Default configuration.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
             kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info
-            <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10
-            /model_compression_toolkit/keras/default_framework_info.py#L113>`_
-            network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action
-            to change quantization settings of the filtered nodes.
-            gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled)
             or not.
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the
@@ -332,10 +317,35 @@ if importlib.util.find_spec("tensorflow") is not None\
             >>> import numpy as np
             >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
 
-            Import mct and pass the model with the representative dataset generator to get a quantized model:
+
+            Import mct:
 
             >>> import model_compression_toolkit as mct
-            >>> quantized_model, quantization_info = mct.keras_post_training_quantization(model, repr_datagen, n_iter=1)
+
+            Create a MCT core config, containing the quantization configuration:
+
+            >>> config = mct.CoreConfig()
+
+            If mixed precision is desired, create a the MCT core config with a mixed-precision configuration, to quantize a model
+            with different bitwidths for different layers.
+            The candidates bitwidth for quantization should be defined in the target platform model:
+
+            >>> config = mct.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
+
+            For mixed-precision set a target KPI object:
+            Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
+            that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
+            while the bias will not):
+
+            >>> kpi = mct.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
+
+            Create GPTQ config:
+
+            >>> gptq_config = get_keras_gptq_config(2000)
+
+            Pass the model with the representative dataset generator to get a quantized model:
+
+            >>> quantized_model, quantization_info = mct.keras_post_training_quantization(model, repr_datagen, gptq_config, target_kpi=kpi, core_config=config)
 
         """
         KerasModelValidation(model=in_model,
@@ -365,9 +375,9 @@ if importlib.util.find_spec("tensorflow") is not None\
 
     def keras_post_training_quantization_experimental(in_model: Model,
                                                       representative_data_gen: Callable,
-                                                      target_kpi: KPI,
+                                                      target_kpi: KPI = None,
                                                       core_config: CoreConfig = CoreConfig(),
-                                                      fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,  # remove from API
+                                                      fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                                                       analyze_similarity: bool = False,  # move to debug_config inside core_config (put model_editor there too)
                                                       target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
@@ -377,30 +387,22 @@ if importlib.util.find_spec("tensorflow") is not None\
          preceding layers). Then, using a given dataset, statistics (e.g. min/max, histogram, etc.) are
          being collected for each layer's output (and input, depends on the quantization configuration).
          For each possible bit width (per layer) a threshold is then being calculated using the collected
-         statistics. Then, using an ILP solver we find a mixed-precision configuration, and set a bit width
-         for each layer. The model is then quantized (both coefficients and activations by default).
+         statistics. Then, if given a mixed precision config in the core_config, using an ILP solver we find
+         a mixed-precision configuration, and set a bit-width for each layer. The model is then quantized
+         (both coefficients and activations by default).
          In order to limit the maximal model's size, a target KPI need to be passed after weights_memory
          is set (in bytes).
-         If a gptq configuration is passed, the quantized weights are optimized using gradient based post
-         training quantization by comparing points between the float and quantized models, and minimizing the
-         observed loss.
-         Notice that this feature is experimental.
-         **For now, mixed precision is supported for weights only.**
 
          Args:
              in_model (Model): Keras model to quantize.
              representative_data_gen (Callable): Dataset used for calibration.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
-             n_iter (int): Number of calibration iterations to run.
-             quant_config (MixedPrecisionQuantizationConfig): QuantizationConfig containing parameters of how the
-             model should be quantized.
+             core_config (CoreConfig): configuration object containing parameters of how the model should be
+             quantized, including mixed precision parameters.
              fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
              kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info
              <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/keras
              /default_framework_info.py#L100>`_
-             network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an
-             action to change quantization settings of the filtered nodes.
-             gptq_config (GradientPTQConfig): Configuration for using GPTQ (e.g. optimizer).
              analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is
              enabled) or not.
              target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the
@@ -425,11 +427,17 @@ if importlib.util.find_spec("tensorflow") is not None\
              >>> import numpy as np
              >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
 
-             Create a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
+             Create a MCT core config, containing the quantization configuration:
+
+             >>> config = mct.CoreConfig()
+
+             If mixed precision is desired, create a the MCT core config with a mixed-precision configuration, to quantize a model
+              with different bitwidths for different layers.
              The candidates bitwidth for quantization should be defined in the target platform model:
 
-             >>> config = mct.MixedPrecisionQuantizationConfig()
+             >>> config = mct.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
 
+             For mixed-precision set a target KPI object:
              Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
              that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
              while the bias will not):
@@ -439,7 +447,7 @@ if importlib.util.find_spec("tensorflow") is not None\
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:
 
-             >>> quantized_model, quantization_info = mct.keras_post_training_quantization_mixed_precision(model,repr_datagen, target_kpi=kpi, n_iter=10, quant_config=config)
+             >>> quantized_model, quantization_info = mct.keras_post_training_quantization_experimental(model, repr_datagen, kpi, core_config=config)
 
              For more configuration options, please take a look at our `API documentation
              <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html
@@ -477,7 +485,7 @@ else:
                         'when using keras_post_training_quantization. '
                         'Could not find Tensorflow package.')
 
-    def keras_gradient_post_training_quantization(*args, **kwargs):
+    def keras_post_training_quantization_mixed_precision(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                         'when using keras_post_training_quantization_mixed_precision. '
                         'Could not find Tensorflow package.')
@@ -489,10 +497,10 @@ else:
 
     def keras_post_training_quantization_experimental(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
-                        'when using keras_post_training_quantization_mixed_precision. '
+                        'when using keras_post_training_quantization_experimental. '
                         'Could not find Tensorflow package.')
 
     def keras_gradient_post_training_quantization_experimental(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
-                        'when using keras_post_training_quantization_mixed_precision. '
+                        'when using keras_gradient_post_training_quantization_experimental. '
                         'Could not find Tensorflow package.')

@@ -22,7 +22,7 @@ from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.logger import Logger
 
 
-def set_bit_widths(mixed_precision_enable,  # TODO: edit doc
+def set_bit_widths(mixed_precision_enable,
                    graph_to_set_bit_widths: Graph,
                    fw_info: FrameworkInfo = None,
                    bit_widths_config: List[int] = None) -> Graph:
@@ -31,7 +31,7 @@ def set_bit_widths(mixed_precision_enable,  # TODO: edit doc
     in bit_widths_config to finalize the node weights and activation quantization configuration.
 
     Args:
-        quant_config: MixedPrecisionQuantizationConfig the graph was computed according to.
+        mixed_precision_enable: is mixed precision enabled.
         graph_to_set_bit_widths: A prepared for quantization graph to set its bit widths.
         fw_info: Information needed for quantization about the specific framework (e.g., kernel
         channels indices, groups of layers by how they should be quantized, etc.)

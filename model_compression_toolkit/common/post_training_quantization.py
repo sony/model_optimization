@@ -34,8 +34,6 @@ from model_compression_toolkit.common.mixed_precision.mixed_precision_search_fac
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.network_editors.actions import EditRule
 from model_compression_toolkit.common.network_editors.edit_network import edit_network_graph
-from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig
 from model_compression_toolkit.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import \
@@ -88,7 +86,7 @@ def post_training_quantization(in_model: Any,
         in_model: Model to quantize.
         representative_data_gen: Dataset used for calibration.
         n_iter: Number of calibration iterations to run.
-        quant_config: QuantizationConfig containing parameters of how the model should be quantized. `Default
+        core_config: CoreConfig containing parameters of how the model should be quantized. `Default
         configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10
         /model_compression_toolkit/common/quantization/quantization_config.py#L163>`_
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
@@ -129,7 +127,6 @@ def post_training_quantization(in_model: Any,
     ######################################
     # Finalize bit widths
     ######################################
-    # TODO: handle as core_config
     if target_kpi is not None:
         assert core_config.mixed_precision_enable
         if core_config.mixed_precision_config.configuration_overwrite is None:
@@ -142,7 +139,7 @@ def post_training_quantization(in_model: Any,
                                                          fw_info=fw_info))
         else:
             Logger.warning(
-                f'Mixed Precision has overwrite bitwidth configuration{core_config.mixed_precision_config.configuration_overwrite}')
+                f'Mixed Precision has overwrite bit-width configuration{core_config.mixed_precision_config.configuration_overwrite}')
             bit_widths_config = core_config.mixed_precision_config.configuration_overwrite
 
     else:
@@ -169,7 +166,7 @@ def post_training_quantization(in_model: Any,
 
 
 def get_finalized_graph(initial_graph: Graph,
-                        quant_config: QuantizationConfig = DEFAULTCONFIG,  # TODO: change doc
+                        quant_config: QuantizationConfig = DEFAULTCONFIG,
                         fw_info: FrameworkInfo = None,
                         tb_w: TensorboardWriter = None,
                         fw_impl: FrameworkImplementation = None,
@@ -186,6 +183,7 @@ def get_finalized_graph(initial_graph: Graph,
         kernel channels indices, groups of layers by how they should be quantized, etc.)
         tb_w (TensorboardWriter): TensorboardWriter object to use for logging events such as graphs, histograms, etc.
         fw_impl (FrameworkImplementation): FrameworkImplementation object with a specific framework methods implementation.
+        mixed_precision_enable: is mixed precision enabled.
 
     Returns: Graph object that represents the model, after applying all required modifications to it.
 
@@ -453,7 +451,7 @@ def _prepare_model_for_quantization(graph: Graph,
                                     representative_data_gen: Callable,
                                     network_editor: List[EditRule] = [],
                                     n_iter: int = 500,
-                                    core_config: CoreConfig = DEFAULTCONFIG,  # TODO: change to core_config
+                                    core_config: CoreConfig = CoreConfig(),
                                     fw_info: FrameworkInfo = None,
                                     tb_w: TensorboardWriter = None,
                                     fw_impl: FrameworkImplementation = None) -> Graph:
@@ -470,7 +468,7 @@ def _prepare_model_for_quantization(graph: Graph,
         network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to
         change quantization settings of the filtered nodes.
         n_iter (int): Number of calibration iterations to run.
-        quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be
+        core_config (CoreConfig): CoreConfig containing parameters of how the model should be
         quantized.
         fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
         kernel channels indices, groups of layers by how they should be quantized, etc.)

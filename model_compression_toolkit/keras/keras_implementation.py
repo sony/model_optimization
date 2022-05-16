@@ -148,7 +148,7 @@ class KerasImplementation(FrameworkImplementation):
 
         Args:
             graph: Graph to apply SNC on.
-            qc: Quantization configuration.
+            core_config: Quantization configuration.
             fw_info: FrameworkInfo object with information about the specific framework's model.
 
         Returns:

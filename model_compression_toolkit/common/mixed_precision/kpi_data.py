@@ -15,7 +15,7 @@
 from typing import Callable, Any
 import numpy as np
 
-from model_compression_toolkit import FrameworkInfo, KPI, MixedPrecisionQuantizationConfig, QuantizationConfig, CoreConfig
+from model_compression_toolkit import FrameworkInfo, KPI, MixedPrecisionQuantizationConfig, CoreConfig
 from model_compression_toolkit.common import Graph
 from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
@@ -24,7 +24,7 @@ import model_compression_toolkit.common.post_training_quantization as ptq
 
 def compute_kpi_data(in_model: Any,
                      representative_data_gen: Callable,
-                     quant_config: MixedPrecisionQuantizationConfig,  # TODO: change to core_conffig
+                     quant_config: MixedPrecisionQuantizationConfig,
                      tpc: TargetPlatformCapabilities,
                      fw_info: FrameworkInfo,
                      fw_impl: FrameworkImplementation) -> KPI:
@@ -35,7 +35,7 @@ def compute_kpi_data(in_model: Any,
     Args:
         in_model:  Model to build graph from (the model that intended to be quantized).
         representative_data_gen: Dataset used for calibration.
-        quant_config: QuantizationConfig containing parameters of how the model should be quantized.
+        quant_config: MixedPrecisionQuantizationConfig containing parameters of how the model should be quantized.
         tpc: TargetPlatformCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework.
@@ -71,7 +71,7 @@ def compute_kpi_data(in_model: Any,
 
 def compute_kpi_data_experimental(in_model: Any,
                                   representative_data_gen: Callable,
-                                  core_config: CoreConfig,  # TODO: change doc
+                                  core_config: CoreConfig,
                                   tpc: TargetPlatformCapabilities,
                                   fw_info: FrameworkInfo,
                                   fw_impl: FrameworkImplementation) -> KPI:
@@ -82,7 +82,7 @@ def compute_kpi_data_experimental(in_model: Any,
     Args:
         in_model:  Model to build graph from (the model that intended to be quantized).
         representative_data_gen: Dataset used for calibration.
-        quant_config: QuantizationConfig containing parameters of how the model should be quantized.
+        core_config: CoreConfig containing parameters of how the model should be quantized.
         tpc: TargetPlatformCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework.

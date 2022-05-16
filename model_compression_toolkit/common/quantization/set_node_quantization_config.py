@@ -35,13 +35,14 @@ from model_compression_toolkit.common.target_platform.op_quantization_config imp
 
 def set_quantization_configuration_to_graph(graph: Graph,
                                             quant_config: QuantizationConfig,
-                                            mixed_precision_enable: bool = False) -> Graph:  # TODO: edit doc
+                                            mixed_precision_enable: bool = False) -> Graph:
     """
     Add quantization configuration for each graph node.
 
     Args:
         graph: Graph for which to add quantization info to each node.
         quant_config: Quantization configuration containing parameters for how the graph should be quantized.
+        mixed_precision_enable: is mixed precision enabled
 
     Returns:
         The graph with quantization configurations attached to each node in it.
@@ -61,7 +62,7 @@ def set_quantization_configs_to_node(node: BaseNode,
                                      quant_config: QuantizationConfig,
                                      fw_info: FrameworkInfo,
                                      tpc: TargetPlatformCapabilities,
-                                     mixed_precision_enable: bool = False):  # TODO: edit doc
+                                     mixed_precision_enable: bool = False):
     """
     Create and set quantization configurations to a node (for both weights and activation).
 
@@ -70,7 +71,7 @@ def set_quantization_configs_to_node(node: BaseNode,
         quant_config: Quantization configuration to generate the node's configurations from.
         fw_info: Information needed for quantization about the specific framework.
         tpc: TargetPlatformCapabilities to get default OpQuantizationConfig.
-
+        mixed_precision_enable: is mixed precision enabled
     """
     node_qc_options = tpc.get_qco_by_node(node)
 
@@ -168,7 +169,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
                                fw_info: FrameworkInfo,
                                weight_channel_axis: int,
                                node_qc_options: QuantizationConfigOptions,
-                               mixed_precision_enable: bool = False) -> List[CandidateNodeQuantizationConfig]:  # TODO: edit doc
+                               mixed_precision_enable: bool = False) -> List[CandidateNodeQuantizationConfig]:
     """
     Create a list of candidates of weights and activation quantization configurations for a node.
 
@@ -177,6 +178,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
         fw_info: Framework information (e.g., which layers should have their kernels' quantized).
         weight_channel_axis: Output channel index of the node's kernel.
         node_qc_options: QuantizationConfigOptions for the node with quantization candidates information.
+        mixed_precision_enable: is mixed precision enabled
 
     Returns:
         List of candidates of weights quantization configurations to set for a node.

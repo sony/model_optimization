@@ -13,8 +13,7 @@ class CoreConfig:
         """
 
         Args:
-
-            kpi: Model maximal memory size (in bytes) for mixed precision optimization for weights & activations quantization
+            n_iter (int): Number of calibration iterations to run
             quantization_config: quantization config
             mixed_precision_config: mixed precision config (optional)
         """

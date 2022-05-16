@@ -195,22 +195,10 @@ if importlib.util.find_spec("torch") is not None:
         common.Logger.info("Using experimental mixed-precision quantization. "
                            "If you encounter an issue please file a bug.")
 
-        _dummy_quant_config = QuantizationConfig()
-        _dummy_mp_config = MixedPrecisionQuantizationConfig()
-        _dummy_mp_config_experimental = MixedPrecisionQuantizationConfigV2()
-        qc_dict = {}
-        mp_dict = {}
-        for k, v in quant_config.__dict__.items():
-            if hasattr(_dummy_quant_config, k):
-                qc_dict.update({k: v})
-            elif hasattr(_dummy_mp_config_experimental, k):
-                mp_dict.update({k: v})
-            else:
-                raise Exception(f'Attribute "{k}" mismatch: exists in MixedPrecisionQuantizationConfig but not in MixedPrecisionQuantizationConfigV2')
-
+        quantization_config, mp_config = quant_config.separate_configs()
         core_config = CoreConfig(n_iter,
-                                 quantization_config=QuantizationConfig(**qc_dict),
-                                 mixed_precision_config=MixedPrecisionQuantizationConfigV2(**mp_dict),
+                                 quantization_config=quantization_config,
+                                 mixed_precision_config=mp_config,
                                  network_editor=network_editor)
 
         return post_training_quantization(in_model,
@@ -228,10 +216,9 @@ if importlib.util.find_spec("torch") is not None:
 
     def pytorch_post_training_quantization_experimental(in_module: Module,
                                                         representative_data_gen: Callable,
-                                                        target_kpi: KPI,
+                                                        target_kpi: KPI = None,
                                                         core_config: CoreConfig = CoreConfig(),
                                                         fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
-                                                        # gptq_config: GradientPTQConfig = None,
                                                         analyze_similarity: bool = False,  # TODO: move to debug config
                                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
@@ -250,11 +237,10 @@ if importlib.util.find_spec("torch") is not None:
         Args:
             in_module (Module): Pytorch module to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
-            n_iter (int): Number of calibration iterations to run.
-            quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the module should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/common/quantization/quantization_config.py#L154>`_
+            target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
+            core_config (CoreConfig): configuration object containing parameters of how the model should be
+            quantized, including mixed precision parameters.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default PyTorch info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pytorch/default_framework_info.py>`_
-            network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
-            gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to. `Default Keras TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/tpc_models/pytorch_tp_models/pytorch_default.py>`_
 
@@ -282,9 +268,9 @@ if importlib.util.find_spec("torch") is not None:
         """
 
         if core_config.mixed_precision_enable:
-            if core_config.mixed_precision_config is None:  # TODO: edit comment
+            if isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
                 common.Logger.error("Given quantization config to mixed-precision facade is not of type "
-                                    "MixedPrecisionQuantizationConfig. Please use pytorch_post_training_quantization API,"
+                                    "MixedPrecisionQuantizationConfigV2. Please use pytorch_post_training_quantization API,"
                                     "or pass a valid mixed precision configuration.")
 
             common.Logger.info("Using experimental mixed-precision quantization. "
@@ -298,14 +284,13 @@ if importlib.util.find_spec("torch") is not None:
                                           PytorchImplementation(),
                                           target_platform_capabilities,
                                           core_config.network_editor,
-                                          # gptq_config,
                                           analyze_similarity=analyze_similarity,
                                           target_kpi=target_kpi)
 
 
     def pytorch_gradient_post_training_quantization_experimental(in_module: Module,
                                                                  representative_data_gen: Callable,
-                                                                 target_kpi: KPI,
+                                                                 target_kpi: KPI = None,
                                                                  core_config: CoreConfig = CoreConfig(),
                                                                  fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                                                                  gptq_config: GradientPTQConfig = None,
@@ -327,10 +312,10 @@ if importlib.util.find_spec("torch") is not None:
         Args:
             in_module (Module): Pytorch module to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
-            n_iter (int): Number of calibration iterations to run.
-            quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the module should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/common/quantization/quantization_config.py#L154>`_
+            target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
+            core_config (CoreConfig): configuration object containing parameters of how the model should be
+            quantized, including mixed precision parameters.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default PyTorch info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pytorch/default_framework_info.py>`_
-            network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to. `Default Keras TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/tpc_models/pytorch_tp_models/pytorch_default.py>`_
@@ -359,9 +344,9 @@ if importlib.util.find_spec("torch") is not None:
         """
 
         if core_config.mixed_precision_enable:
-            if core_config.mixed_precision_config is None:  # TODO: edit comment
+            if isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
                 common.Logger.error("Given quantization config to mixed-precision facade is not of type "
-                                    "MixedPrecisionQuantizationConfig. Please use pytorch_post_training_quantization API,"
+                                    "MixedPrecisionQuantizationConfigV2. Please use pytorch_post_training_quantization API,"
                                     "or pass a valid mixed precision configuration.")
 
             common.Logger.info("Using experimental mixed-precision quantization. "

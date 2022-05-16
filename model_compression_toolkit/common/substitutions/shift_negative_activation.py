@@ -25,7 +25,7 @@ from model_compression_toolkit.common.quantization.set_node_quantization_config 
 from model_compression_toolkit.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
-from model_compression_toolkit.keras.constants import PADDING
+
 
 """
 This substitution aims to solve an issue of activation with negative outputs where
@@ -200,7 +200,7 @@ def shift_negative_function(graph: Graph,
 
     Args:
         graph: Graph to apply the shifting and correction.
-        qc: Quantization configuration to build the substitutions list according to.
+        core_config: Quantization configuration to build the substitutions list according to.
         non_linear_node: Non-linear node with negative values to shift.
         op2d_node: Linear node to correct its bias to overcome the expected error due to
         the shifting.
@@ -445,7 +445,7 @@ def apply_shift_negative_correction(graph: Graph,
 
     Args:
         graph: Graph to apply the substitution on.
-        quant_config: Quantization configuration to build the substitutions list according to.
+        core_config: Quantization configuration to build the substitutions list according to.
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         groups of layers by how they should be quantized, etc.)
         snc_node_types: Types of activation nodes with negative outputs to consider.

@@ -76,7 +76,7 @@ if importlib.util.find_spec("torch") is not None:
         """
 
         if not isinstance(quant_config, MixedPrecisionQuantizationConfig):
-            Logger.error("KPI data computation can be executed without MixedPrecisionQuantizationConfig object."
+            Logger.error("KPI data computation can't be executed without MixedPrecisionQuantizationConfig object."
                          "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
 
         fw_impl = PytorchImplementation()
@@ -95,14 +95,13 @@ if importlib.util.find_spec("torch") is not None:
                                       fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                                       target_platform_capabilities: TargetPlatformCapabilities = PYTORCH_DEFAULT_TPC) -> KPI:
         """
-        TODO: edit doc
         Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
         Builds the computation graph from the given model and target platform capabilities, and uses it to compute the KPI data.
 
         Args:
             in_model (Model): Keras model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
-            quant_config (MixedPrecisionQuantizationConfig): MixedPrecisionQuantizationConfig containing parameters of how the model should be quantized.
+            core_config (CoreConfig): CoreConfig containing parameters for quantization and mixed precision
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default PyTorch info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pytorch/default_framework_info.py>`_
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to. `Default Keras TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/tpc_models/pytorch_tp_models/pytorch_default.py>`_
 
@@ -129,8 +128,8 @@ if importlib.util.find_spec("torch") is not None:
         """
 
         if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
-            Logger.error("KPI data computation can be executed without MixedPrecisionQuantizationConfig object."
-                         "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
+            Logger.error("KPI data computation can't be executed without MixedPrecisionQuantizationConfigV2 object."
+                         "Given quant_config is not of type MixedPrecisionQuantizationConfigV2.")
 
         fw_impl = PytorchImplementation()
 
