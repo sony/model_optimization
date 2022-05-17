@@ -23,6 +23,7 @@ from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.network_editors.actions import EditRule
 from model_compression_toolkit.common.quantization.core_config import CoreConfig
+from model_compression_toolkit.common.quantization.debug_config import DebugConfig
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig, DEFAULT_MIXEDPRECISION_CONFIG, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.common.post_training_quantization import post_training_quantization
@@ -99,7 +100,9 @@ if importlib.util.find_spec("torch") is not None:
         return post_training_quantization(in_module,
                                           representative_data_gen,
                                           n_iter,
-                                          CoreConfig(n_iter, quant_config, network_editor=network_editor),
+                                          CoreConfig(n_iter, quant_config,
+                                                     debug_config=DebugConfig(analyze_similarity=analyze_similarity,
+                                                                              network_editor=network_editor)),
                                           fw_info,
                                           PytorchImplementation(),
                                           target_platform_capabilities,
@@ -199,7 +202,8 @@ if importlib.util.find_spec("torch") is not None:
         core_config = CoreConfig(n_iter,
                                  quantization_config=quantization_config,
                                  mixed_precision_config=mp_config,
-                                 network_editor=network_editor)
+                                 debug_config=DebugConfig(analyze_similarity=analyze_similarity,
+                                                          network_editor=network_editor))
 
         return post_training_quantization(in_model,
                                           representative_data_gen,
@@ -219,7 +223,6 @@ if importlib.util.find_spec("torch") is not None:
                                                         target_kpi: KPI = None,
                                                         core_config: CoreConfig = CoreConfig(),
                                                         fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
-                                                        analyze_similarity: bool = False,  # TODO: move to debug config
                                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
         Quantize a trained Pytorch module using post-training quantization.
@@ -241,7 +244,6 @@ if importlib.util.find_spec("torch") is not None:
             core_config (CoreConfig): configuration object containing parameters of how the model should be
             quantized, including mixed precision parameters.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default PyTorch info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pytorch/default_framework_info.py>`_
-            analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to. `Default Keras TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/tpc_models/pytorch_tp_models/pytorch_default.py>`_
 
 
@@ -283,8 +285,8 @@ if importlib.util.find_spec("torch") is not None:
                                           fw_info,
                                           PytorchImplementation(),
                                           target_platform_capabilities,
-                                          core_config.network_editor,
-                                          analyze_similarity=analyze_similarity,
+                                          core_config.debug_config.network_editor,
+                                          analyze_similarity=core_config.debug_config.analyze_similarity,
                                           target_kpi=target_kpi)
 
 
@@ -294,7 +296,6 @@ if importlib.util.find_spec("torch") is not None:
                                                                  core_config: CoreConfig = CoreConfig(),
                                                                  fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                                                                  gptq_config: GradientPTQConfig = None,
-                                                                 analyze_similarity: bool = False,  # TODO: move to debug config
                                                                  target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
         Quantize a trained Pytorch module using post-training quantization.
@@ -317,7 +318,6 @@ if importlib.util.find_spec("torch") is not None:
             quantized, including mixed precision parameters.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default PyTorch info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pytorch/default_framework_info.py>`_
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
-            analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to. `Default Keras TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/tpc_models/pytorch_tp_models/pytorch_default.py>`_
 
 
@@ -359,9 +359,9 @@ if importlib.util.find_spec("torch") is not None:
                                           fw_info,
                                           PytorchImplementation(),
                                           target_platform_capabilities,
-                                          core_config.network_editor,
+                                          core_config.debug_config.network_editor,
                                           gptq_config,
-                                          analyze_similarity=analyze_similarity,
+                                          analyze_similarity=core_config.debug_config.analyze_similarity,
                                           target_kpi=target_kpi)
 
 

@@ -27,6 +27,7 @@ from model_compression_toolkit.common.mixed_precision.mixed_precision_quantizati
 from model_compression_toolkit.common.post_training_quantization import post_training_quantization
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.quantization.core_config import CoreConfig
+from model_compression_toolkit.common.quantization.debug_config import DebugConfig
 from model_compression_toolkit.common.quantization.quantization_config import DEFAULTCONFIG
 
 import importlib
@@ -144,10 +145,17 @@ if importlib.util.find_spec("tensorflow") is not None\
         """
         KerasModelValidation(model=in_model,
                              fw_info=fw_info).validate()
+
+        core_config = CoreConfig(n_iter,
+                                 quantization_config=quant_config,
+                                 debug_config=DebugConfig(analyze_similarity=analyze_similarity,
+                                                          network_editor=network_editor)
+                                 )
+
         return post_training_quantization(in_model,
                                           representative_data_gen,
                                           n_iter,
-                                          CoreConfig(n_iter, quant_config, network_editor=network_editor),
+                                          core_config,
                                           fw_info,
                                           KerasImplementation(),
                                           target_platform_capabilities,
@@ -250,7 +258,9 @@ if importlib.util.find_spec("tensorflow") is not None\
         core_config = CoreConfig(n_iter,
                                  quantization_config=quantization_config,
                                  mixed_precision_config=mp_config,
-                                 network_editor=network_editor)
+                                 debug_config=DebugConfig(analyze_similarity=analyze_similarity,
+                                                          network_editor=network_editor)
+                                 )
 
         return post_training_quantization(in_model,
                                           representative_data_gen,
@@ -271,7 +281,6 @@ if importlib.util.find_spec("tensorflow") is not None\
                                                                target_kpi: KPI = None,
                                                                core_config: CoreConfig = CoreConfig(),
                                                                fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                                                               analyze_similarity: bool = False,
                                                                target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
@@ -298,8 +307,6 @@ if importlib.util.find_spec("tensorflow") is not None\
             quantized, including mixed precision parameters. `Default configuration.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
             kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info
-            analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is enabled)
-            or not.
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the
             Keras model according to.
 
@@ -367,9 +374,9 @@ if importlib.util.find_spec("tensorflow") is not None\
                                           fw_info=fw_info,
                                           fw_impl=KerasImplementation(),
                                           tpc=target_platform_capabilities,
-                                          network_editor=core_config.network_editor,
+                                          network_editor=core_config.debug_config.network_editor,
                                           gptq_config=gptq_config,
-                                          analyze_similarity=analyze_similarity,
+                                          analyze_similarity=core_config.debug_config.analyze_similarity,
                                           target_kpi=target_kpi)
 
 
@@ -378,7 +385,6 @@ if importlib.util.find_spec("tensorflow") is not None\
                                                       target_kpi: KPI = None,
                                                       core_config: CoreConfig = CoreConfig(),
                                                       fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                                                      analyze_similarity: bool = False,  # move to debug_config inside core_config (put model_editor there too)
                                                       target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
          Quantize a trained Keras model using post-training quantization. The model is quantized using a
@@ -403,8 +409,6 @@ if importlib.util.find_spec("tensorflow") is not None\
              kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info
              <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/keras
              /default_framework_info.py#L100>`_
-             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is
-             enabled) or not.
              target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the
              Keras model according to.
 
@@ -473,8 +477,8 @@ if importlib.util.find_spec("tensorflow") is not None\
                                           fw_info=fw_info,
                                           fw_impl=KerasImplementation(),
                                           tpc=target_platform_capabilities,
-                                          network_editor=core_config.network_editor,
-                                          analyze_similarity=analyze_similarity,
+                                          network_editor=core_config.debug_config.network_editor,
+                                          analyze_similarity=core_config.debug_config.analyze_similarity,
                                           target_kpi=target_kpi)
 
 else:

@@ -144,13 +144,13 @@ class PytorchImplementation(FrameworkImplementation):
         Apply shift negative correction (SNC) on a graph.
         Args:
             graph: Graph to apply SNC on.
-            qc: Quantization configuration.
+            core_config: Quantization configuration.
             fw_info: FrameworkInfo object with information about the specific framework's module.
         Returns:
             Graph after SNC.
         """
         return pytorch_apply_shift_negative_correction(graph,
-                                                       qc,
+                                                       core_config,
                                                        fw_info)
 
     def attach_sc_to_node(self,
