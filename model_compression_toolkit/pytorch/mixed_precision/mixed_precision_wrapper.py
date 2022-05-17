@@ -20,6 +20,7 @@ import copy
 
 from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.common import BaseNode
+from model_compression_toolkit.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.pytorch.utils import set_model, to_torch_tensor
 
 
@@ -45,8 +46,11 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
 
         assert n.candidates_quantization_cfg is not None
         self.node_q_cfg = n.candidates_quantization_cfg
-        framework_attr = copy.copy(n.framework_attr)
-        self.layer = n.type(**framework_attr)
+        if isinstance(n, FunctionalNode):
+            self.layer = n.type
+        else:
+            framework_attr = copy.copy(n.framework_attr)
+            self.layer = n.type(**framework_attr)
 
         for qc in self.node_q_cfg:
             assert qc.weights_quantization_cfg.enable_weights_quantization == \
@@ -67,12 +71,13 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
             f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
         max_candidate_idx = max_cfg_candidates[0]
 
-        # Setting layers' weights
-        if self.enable_weights_quantization:
-            # loading the weights from the graph node (weights of the trained model)
+        if not isinstance(n, FunctionalNode):
+            # loading the weights (if exists) from the graph node (weights of the trained model)
             self.layer.load_state_dict({k: torch.Tensor(v) for k, v in n.weights.items()}, strict=False)
             set_model(self.layer)
 
+        # Setting layers' weights
+        if self.enable_weights_quantization:
             self.weight_attrs = fw_info.get_kernel_op_attributes(n.type)
             # float_weights is a list of weights for each attribute that we want to quantize.
             self.float_weights = [n.get_weights_by_keys(attr) for attr in
@@ -90,14 +95,14 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
             self.activation_quantizers = self._get_activation_quantizers()
             self.activation_bitwidth_idx = max_candidate_idx
 
-    def forward(self, x: Any) -> Any:
+    def forward(self, x: Any, *args: Any) -> Any:
         """
         Args:
-            x: input tensors to model.
+            x: input tensors to layer.
         Returns:
             torch Tensor which is the output of the wrapped layer on the given input.
         """
-        outputs = self.layer(x)
+        outputs = self.layer(x, *args)
 
         if self.enable_activation_quantization:
             # add fake quant to quantize activations with the active number of bits

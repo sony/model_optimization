@@ -19,7 +19,8 @@ from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSame
 from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest
 from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test import ReshapeNetTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
-    MixedPercisionActivationSearch8Bit, MixedPercisionActivationSearch2Bit, MixedPercisionActivationSearch4Bit
+    MixedPercisionActivationSearch8Bit, MixedPercisionActivationSearch2Bit, MixedPercisionActivationSearch4Bit, \
+    MixedPercisionActivationSearch4BitFunctional
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
@@ -260,7 +261,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the activation Mixed Precision search.
         """
-        MixedPercisionActivationSearch4Bit(self)
+        MixedPercisionActivationSearch4Bit(self).run_test()
+
+    def test_mixed_precision_activation_4bit_functional(self):
+        """
+        This test checks the activation Mixed Precision search with functional node.
+        """
+        MixedPercisionActivationSearch4BitFunctional(self).run_test()
 
 
 if __name__ == '__main__':

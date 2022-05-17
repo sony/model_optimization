@@ -24,7 +24,7 @@ from model_compression_toolkit.common.target_platform import TargetPlatformCapab
 #############################
 
 found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec("tensorflow_model_optimization") is not None
-tf_models_dict = {}
+tf_models_dict = None
 
 if found_tf:
     from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import get_default_keras_tpc
@@ -41,7 +41,7 @@ if found_tf:
 # Build Pytorch models:
 #############################
 found_torch = importlib.util.find_spec("torch") is not None
-torch_models_dict = {}
+torch_models_dict = None
 
 if found_torch:
     from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_default import get_default_pytorch_tpc
@@ -75,6 +75,9 @@ def get_target_platform_capabilities(fw_name: str,
     """
     assert fw_name in tpc_dict, f'Framework {fw_name} is not supported'
     supported_models_by_fw = tpc_dict.get(fw_name)
-    assert target_platform_name in supported_models_by_fw, f'Target platform model named {target_platform_name} is not' \
-                                              f' supported for framework {fw_name}'
+    assert supported_models_by_fw is not None, f'Supported models for {fw_name} is empty. Make sure the relevant ' \
+                                               f'packages are installed when using MCT for optimizing a {fw_name} model. ' \
+                                               f'For Tensorflow, please install tensorflow and tensorflow-model-optimization. ' \
+                                               f'For PyTorch, please install torch.'
+    assert target_platform_name in supported_models_by_fw, f'Target platform model named {target_platform_name} is not supported for framework {fw_name}'
     return tpc_dict.get(fw_name).get(target_platform_name)

@@ -21,6 +21,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.python.util.object_identity import Reference as TFReference
 
+from model_compression_toolkit.common import Logger
 from model_compression_toolkit.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.common.quantization.quantizers.uniform_quantizers import threshold_is_power_of_two
 
@@ -140,6 +141,9 @@ def q(x: TFReference, min_value, max_value, activation_n_bits) -> TFReference:
     Returns:
         The fake-quantized input tensor.
     """
+    if x.dtype != tf.float32:
+        Logger.critical(f"Trying to quantize tensor of type {x.dtype} which is not supported, expected type float32")
+
     return tf.quantization.fake_quant_with_min_max_vars(x,
                                                         min=min_value,
                                                         max=max_value,

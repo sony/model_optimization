@@ -14,7 +14,6 @@
 # ==============================================================================
 from model_compression_toolkit.tpc_models.default_tp_model import get_op_quantization_configs, generate_tp_model
 import model_compression_toolkit as mct
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 
 tp = mct.target_platform
 

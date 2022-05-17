@@ -150,7 +150,7 @@ def _set_layer_to_bitwidth(wrapped_layer: Module,
         wrapped_layer: Layer to change its bitwidth.
         bitwidth_idx: Index of the bitwidth the layer should work with.
     """
-    assert isinstance(wrapped_layer, PytorchMixedPrecisionWrapper) and isinstance(wrapped_layer.layer, Module)
+    assert isinstance(wrapped_layer, PytorchMixedPrecisionWrapper)
     # Configure the quantize_config to use a different bitwidth
     # (in practice, to use a different already quantized kernel).
     wrapped_layer.set_active_weights(bitwidth_idx)
