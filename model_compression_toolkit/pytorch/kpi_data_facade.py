@@ -146,3 +146,8 @@ else:
     def pytorch_kpi_data(*args, **kwargs):
         Logger.critical('Installing torch is mandatory when using pytorch_kpi_data. '
                         'Could not find Tensorflow package.')
+
+
+    def pytorch_kpi_data_experimental(*args, **kwargs):
+        Logger.critical('Installing torch is mandatory when using pytorch_kpi_data. '
+                        'Could not find Tensorflow package.')
