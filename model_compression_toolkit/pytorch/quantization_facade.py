@@ -270,7 +270,7 @@ if importlib.util.find_spec("torch") is not None:
         """
 
         if core_config.mixed_precision_enable:
-            if isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
+            if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
                 common.Logger.error("Given quantization config to mixed-precision facade is not of type "
                                     "MixedPrecisionQuantizationConfigV2. Please use pytorch_post_training_quantization API,"
                                     "or pass a valid mixed precision configuration.")
@@ -344,7 +344,7 @@ if importlib.util.find_spec("torch") is not None:
         """
 
         if core_config.mixed_precision_enable:
-            if isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
+            if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
                 common.Logger.error("Given quantization config to mixed-precision facade is not of type "
                                     "MixedPrecisionQuantizationConfigV2. Please use pytorch_post_training_quantization API,"
                                     "or pass a valid mixed precision configuration.")
