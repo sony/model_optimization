@@ -17,6 +17,8 @@ import unittest
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSameNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest
+from tests.pytorch_tests.model_tests.feature_models.linear_collapsing_test import TwoConv2DCollapsingTest, \
+    ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest
 from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test import ReshapeNetTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPercisionActivationSearch8Bit, MixedPercisionActivationSearch2Bit, MixedPercisionActivationSearch4Bit, \
@@ -65,6 +67,15 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the BatchNorm folding feature, plus adding a residual connection.
         """
         BNFoldingNetTest(self).run_test()
+
+    def test_linear_collapsing(self):
+        """
+        This test checks the linear collapsing feature
+        """
+        TwoConv2DCollapsingTest(self).run_test()
+        ThreeConv2DCollapsingTest(self).run_test()
+        FourConv2DCollapsingTest(self).run_test()
+        SixConv2DCollapsingTest(self).run_test()
 
     def test_relu_bound_to_power_of_2(self):
         """

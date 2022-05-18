@@ -26,10 +26,13 @@ class ReuseNameNet(torch.nn.Module):
         self.conv1 = torch.nn.Conv2d(3, 3, kernel_size=1, stride=1)
         self.conv1_1 = torch.nn.Conv2d(3, 3, kernel_size=1, stride=1)
         self.conv2 = torch.nn.Conv2d(1, 3, kernel_size=1, stride=1)
+        self.identity = torch.nn.Identity()
 
     def forward(self, x, y):
         x = self.conv1(x)
+        x = self.identity(x)
         x = self.conv1(x)
+        x = self.identity(x)
         return self.conv1(x), self.conv1_1(y)
 
 
