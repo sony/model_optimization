@@ -165,6 +165,10 @@ def run_operation(n: BaseNode,
 
         # Add a fake quant node if the node has an activation threshold.
         if n.is_activation_quantization_enabled():
+            if out_tensors_of_n_float.dtype != tf.float32:
+                Logger.critical(
+                    f"Trying to quantize node {n.name} activation of type {out_tensors_of_n_float.dtype} "
+                    f"which is not supported, expected type float32")
             if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ] and n.final_activation_quantization_cfg:
                 out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
             elif mode in [ModelBuilderMode.MIXEDPRECISION]:

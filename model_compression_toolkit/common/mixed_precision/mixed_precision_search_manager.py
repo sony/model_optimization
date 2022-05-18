@@ -22,18 +22,18 @@ from model_compression_toolkit.common.mixed_precision.kpi import KPITarget
 from model_compression_toolkit.common.mixed_precision.kpi_aggregation_methods import MpKpiAggregation
 from model_compression_toolkit.common.mixed_precision.kpi_methods import MpKpiMetric
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig
+    MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 
 
-class MixedPrecisionSearchManager(object):
+class MixedPrecisionSearchManager:
     """
     Class to wrap and manage the search process of a mixed-precision configuration.
     """
 
     def __init__(self,
                  graph: Graph,
-                 qc: MixedPrecisionQuantizationConfig,
+                 mp_config: MixedPrecisionQuantizationConfigV2,
                  fw_info: FrameworkInfo,
                  get_sensitivity_evaluation: Callable,
                  kpi_functions: Dict[KPITarget, Tuple[MpKpiMetric, MpKpiAggregation]]):
@@ -41,7 +41,7 @@ class MixedPrecisionSearchManager(object):
 
         Args:
             graph: Graph to search for its MP configuration.
-            qc: Quantization configuration for how the graph should be quantized.
+            mp_config: Quantization configuration for how the graph should be quantized.
             fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
             get_sensitivity_evaluation: Framework specific function to retrieve a metric computation function.
             kpi_functions: A dictionary with pairs of (MpKpiMethod, MpKpiAggregationMethod) mapping a KPITarget to
@@ -49,10 +49,10 @@ class MixedPrecisionSearchManager(object):
         """
 
         self.graph = graph
-        self.qc = qc
+        self.mp_config = mp_config
         self.fw_info = fw_info
         self.get_sensitivity_evaluation = get_sensitivity_evaluation
-        self.metrics_weights = self.qc.distance_weighting_method
+        self.metrics_weights = self.mp_config.distance_weighting_method
         self.layer_to_bitwidth_mapping = self.get_search_space()
         self.compute_metric_fn = self.get_sensitivity_metric()
 
@@ -75,7 +75,7 @@ class MixedPrecisionSearchManager(object):
         nodes_to_configure = self.graph.get_configurable_sorted_nodes()
         for idx, n in enumerate(nodes_to_configure):
             # For each node, get all possible bitwidth indices for it
-            # (which is a list from 0 to the length of the candidates qc list of the node).
+            # (which is a list from 0 to the length of the candidates mp_config list of the node).
             indices_mapping[idx] = list(range(len(n.candidates_quantization_cfg)))  # all search_methods space
         return indices_mapping
 
@@ -90,7 +90,7 @@ class MixedPrecisionSearchManager(object):
         # Get from the framework an evaluation function on how a MP configuration,
         # affects the expected loss.
         compute_metric_fn = self.get_sensitivity_evaluation(self.graph,
-                                                            self.qc,
+                                                            self.mp_config,
                                                             self.metrics_weights)
         return compute_metric_fn
 

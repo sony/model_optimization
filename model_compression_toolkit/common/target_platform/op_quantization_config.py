@@ -39,8 +39,6 @@ class QuantizationMethod(Enum):
     UNIFORM = 4
 
 
-
-
 class OpQuantizationConfig:
     """
     OpQuantizationConfig is a class to configure the quantization parameters of an operator.

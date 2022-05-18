@@ -17,7 +17,8 @@ from typing import List
 
 from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.graph.base_graph import Graph
-from model_compression_toolkit.common.network_editors.actions import EditRule
+from model_compression_toolkit.common.network_editors import EditRule
+
 
 
 def edit_network_graph(graph: Graph,
