@@ -415,7 +415,7 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
 
         mha_in_edges = graph.in_edges(mha_node)
 
-        # input permutation and reshape to standard shape: (batch, sequence, channels)
+        # input permutation and reshape to standard shape: (batch, iterations, sequence, channels)
         q_permute_node, k_permute_node, v_permute_node, \
         q_reshape_node, k_reshape_node, v_reshape_node = \
             self._standarize_input_shapes(graph, mha_node.name, len(mha_in_edges), params)

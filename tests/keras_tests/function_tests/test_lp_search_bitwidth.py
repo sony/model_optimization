@@ -20,7 +20,8 @@ from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 from model_compression_toolkit.common.mixed_precision.distance_weighting import get_average_weights
 from model_compression_toolkit.common.mixed_precision.kpi import KPI, KPITarget
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig
+    MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.common.mixed_precision.mixed_precision_search_facade import search_bit_width, \
     BitWidthSearchMethod
 from model_compression_toolkit.common.mixed_precision.search_methods.linear_programming import \
@@ -141,10 +142,10 @@ class TestLpSearchBitwidth(unittest.TestCase):
 class TestSearchBitwidthConfiguration(unittest.TestCase):
 
     def test_search_engine(self):
-        qc = MixedPrecisionQuantizationConfig(DEFAULTCONFIG,
-                                              compute_mse,
-                                              get_average_weights,
-                                              num_of_images=1)
+        core_config = CoreConfig(n_iter=1, quantization_config=DEFAULTCONFIG,
+                                 mixed_precision_config=MixedPrecisionQuantizationConfigV2(compute_mse,
+                                                                                           get_average_weights,
+                                                                                           num_of_images=1))
 
         base_config, mixed_precision_cfg_list = get_op_quantization_configs()
         base_config = base_config.clone_and_edit(enable_activation_quantization=False)
@@ -163,7 +164,8 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         graph.set_fw_info(fw_info)
         graph.set_tpc(tpc)
         graph = set_quantization_configuration_to_graph(graph=graph,
-                                                        quant_config=qc)
+                                                        quant_config=core_config.quantization_config,
+                                                        mixed_precision_enable=core_config.mixed_precision_enable)
 
         for node in graph.nodes:
             node.prior_info = keras_impl.get_node_prior_info(node=node,
@@ -189,7 +191,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                   fw_info=fw_info)
 
         cfg = search_bit_width(graph,
-                               qc,
+                               core_config.mixed_precision_config,
                                DEFAULT_KERAS_INFO,
                                KPI(np.inf),
                                keras_sens_eval,
@@ -197,7 +199,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         with self.assertRaises(Exception):
             cfg = search_bit_width(graph,
-                                   qc,
+                                   core_config.mixed_precision_config,
                                    DEFAULT_KERAS_INFO,
                                    KPI(np.inf),
                                    keras_sens_eval,
@@ -205,7 +207,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         with self.assertRaises(Exception):
             cfg = search_bit_width(graph,
-                                   qc,
+                                   core_config.mixed_precision_config,
                                    DEFAULT_KERAS_INFO,
                                    None,
                                    keras_sens_eval,

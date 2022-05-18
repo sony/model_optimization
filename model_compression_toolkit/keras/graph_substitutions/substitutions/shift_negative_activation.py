@@ -29,7 +29,7 @@ from tensorflow.keras.layers import Activation, Conv2D, Dense, DepthwiseConv2D, 
     GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU
 from typing import Tuple, Any
 
-from model_compression_toolkit import common, QuantizationConfig, FrameworkInfo
+from model_compression_toolkit import common, CoreConfig, FrameworkInfo
 from model_compression_toolkit.common import BaseNode, Graph
 from model_compression_toolkit.common.constants import FLOAT_32, DATA_TYPE
 from model_compression_toolkit.keras.constants import NEGATIVE_SLOPE, PADDING, PAD_SAME, PAD_VALID, BIAS, USE_BIAS
@@ -271,14 +271,14 @@ def is_padding_node_and_node_has_padding(pad_node_to_consider: BaseNode,
 
 
 def keras_apply_shift_negative_correction(graph: Graph,
-                                          quant_config: QuantizationConfig,
+                                          core_config: CoreConfig,
                                           fw_info: FrameworkInfo) -> Graph:
     """
     Apply shift negative correction (SNC) on a graph built from a Keras model.
 
     Args:
         graph: Graph to apply SNC on.
-        quant_config: Quantization configuration.
+        core_config: Quantization configuration.
         fw_info: FrameworkInfo object with information about the specific framework's module.
 
     Returns:
@@ -287,7 +287,7 @@ def keras_apply_shift_negative_correction(graph: Graph,
     snc_node, linear_node, bypass_node, pad_node = shift_negative_activation_node_matchers()
 
     return apply_shift_negative_correction(graph,
-                                           quant_config,
+                                           core_config,
                                            fw_info,
                                            snc_node,
                                            linear_node,

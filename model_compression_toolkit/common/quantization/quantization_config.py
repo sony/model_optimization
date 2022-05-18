@@ -43,8 +43,7 @@ class QuantizationErrorMethod(Enum):
     LP = 5
 
 
-
-class QuantizationConfig(object):
+class QuantizationConfig:
 
     def __init__(self,
                  activation_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE,
@@ -122,4 +121,3 @@ DEFAULTCONFIG = QuantizationConfig(QuantizationErrorMethod.MSE,
                                    weights_per_channel_threshold=True,
                                    input_scaling=False,
                                    softmax_shift=False)
-
