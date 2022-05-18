@@ -14,7 +14,12 @@
 # ==============================================================================
 from typing import Tuple, List
 
-from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose
+import tensorflow as tf
+if tf.__version__ < "2.6":
+    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose
+else:
+    from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose
+
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 
