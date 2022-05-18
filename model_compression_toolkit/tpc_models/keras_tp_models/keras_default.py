@@ -61,7 +61,8 @@ def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
                                                      tf.quantization.fake_quant_with_min_max_vars,
                                                      tf.math.argmax,
                                                      tf.shape,
-                                                     tf.__operators__.getitem])
+                                                     tf.__operators__.getitem,
+                                                     tf.compat.v1.shape])
 
         tpc.OperationsSetToLayers("Conv", [Conv2D,
                                            DepthwiseConv2D,
