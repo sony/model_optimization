@@ -303,8 +303,8 @@ if importlib.util.find_spec("tensorflow") is not None\
             representative_data_gen (Callable): Dataset used for calibration.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
-            core_config (CoreConfig): configuration object containing parameters of how the model should be
-            quantized, including mixed precision parameters. `Default configuration.
+            core_config (CoreConfig): Configuration object containing parameters of how the model should be
+            quantized, including mixed precision parameters.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
             kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the
@@ -359,9 +359,9 @@ if importlib.util.find_spec("tensorflow") is not None\
                              fw_info=fw_info).validate()
 
         if core_config.mixed_precision_enable:
-            if core_config.mixed_precision_config is None:
+            if isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
                 common.Logger.error("Given quantization config to mixed-precision facade is not of type "
-                                    "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization API,"
+                                    "MixedPrecisionQuantizationConfigV2. Please use keras_post_training_quantization API,"
                                     "or pass a valid mixed precision configuration.")
 
             common.Logger.info("Using experimental mixed-precision quantization. "
@@ -403,7 +403,7 @@ if importlib.util.find_spec("tensorflow") is not None\
              in_model (Model): Keras model to quantize.
              representative_data_gen (Callable): Dataset used for calibration.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
-             core_config (CoreConfig): configuration object containing parameters of how the model should be
+             core_config (CoreConfig): Configuration object containing parameters of how the model should be
              quantized, including mixed precision parameters.
              fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
              kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info
@@ -462,9 +462,9 @@ if importlib.util.find_spec("tensorflow") is not None\
                              fw_info=fw_info).validate()
 
         if core_config.mixed_precision_enable:
-            if core_config.mixed_precision_config is None:
+            if isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
                 common.Logger.error("Given quantization config to mixed-precision facade is not of type "
-                                    "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization API,"
+                                    "MixedPrecisionQuantizationConfigV2. Please use keras_post_training_quantization API,"
                                     "or pass a valid mixed precision configuration.")
 
             common.Logger.info("Using experimental mixed-precision quantization. "

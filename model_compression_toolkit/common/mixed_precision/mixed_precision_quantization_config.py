@@ -21,6 +21,32 @@ from model_compression_toolkit.common.quantization.quantization_config import Qu
 from model_compression_toolkit.common.similarity_analyzer import compute_mse
 
 
+class MixedPrecisionQuantizationConfigV2:
+
+    def __init__(self,
+                 compute_distance_fn: Callable = compute_mse,
+                 distance_weighting_method: Callable = get_average_weights,
+                 num_of_images: int = 32,
+                 configuration_overwrite: List[int] = None):
+        """
+        Class with mixed precision parameters to quantize the input model.
+        Unlike QuantizationConfig, number of bits for quantization is a list of possible bit widths to
+        support mixed-precision model quantization.
+
+        Args:
+            compute_distance_fn (Callable): Function to compute a distance between two tensors.
+            distance_weighting_method (Callable): Function to use when weighting the distances among different layers when computing the sensitivity metric.
+            num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
+            configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
+
+        """
+
+        self.compute_distance_fn = compute_distance_fn
+        self.distance_weighting_method = distance_weighting_method
+        self.num_of_images = num_of_images
+        self.configuration_overwrite = configuration_overwrite
+
+
 class MixedPrecisionQuantizationConfig(QuantizationConfig):
 
     def __init__(self,
@@ -49,7 +75,14 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
         self.num_of_images = num_of_images
         self.configuration_overwrite = configuration_overwrite
 
-    def separate_configs(self):
+    def separate_configs(self) -> Tuple[QuantizationConfig, MixedPrecisionQuantizationConfigV2]:
+        """
+        A function to separate the old MixedPrecisionQuantizationConfig into QuantizationConfig
+        and MixedPrecisionQuantizationConfigV2
+
+        Returns: QuantizationConfig, MixedPrecisionQuantizationConfigV2
+
+        """
         _dummy_quant_config = QuantizationConfig()
         _dummy_mp_config_experimental = MixedPrecisionQuantizationConfigV2()
         qc_dict = {}
@@ -69,29 +102,3 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
 DEFAULT_MIXEDPRECISION_CONFIG = MixedPrecisionQuantizationConfig(DEFAULTCONFIG,
                                                                  compute_mse,
                                                                  get_average_weights)
-
-
-class MixedPrecisionQuantizationConfigV2:
-
-    def __init__(self,
-                 compute_distance_fn: Callable = compute_mse,
-                 distance_weighting_method: Callable = get_average_weights,
-                 num_of_images: int = 32,
-                 configuration_overwrite: List[int] = None):
-        """
-        Class with mixed precision parameters to quantize the input model.
-        Unlike QuantizationConfig, number of bits for quantization is a list of possible bit widths to
-        support mixed-precision model quantization.
-
-        Args:
-            compute_distance_fn (Callable): Function to compute a distance between two tensors.
-            distance_weighting_method (Callable): Function to use when weighting the distances among different layers when computing the sensitivity metric.
-            num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
-            configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
-
-        """
-
-        self.compute_distance_fn = compute_distance_fn
-        self.distance_weighting_method = distance_weighting_method
-        self.num_of_images = num_of_images
-        self.configuration_overwrite = configuration_overwrite

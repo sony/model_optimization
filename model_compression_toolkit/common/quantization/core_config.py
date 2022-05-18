@@ -6,7 +6,7 @@ from model_compression_toolkit.common.mixed_precision.mixed_precision_quantizati
 
 class CoreConfig:
     """
-    A class to hold the configurations classes of the MCT-core
+    A class to hold the configurations classes of the MCT-core.
     """
     def __init__(self, n_iter: int = 500,
                  quantization_config: QuantizationConfig = QuantizationConfig(),
@@ -16,10 +16,11 @@ class CoreConfig:
         """
 
         Args:
-            n_iter (int): Number of calibration iterations to run
-            quantization_config: config for quantization
-            mixed_precision_config: config for mixed precision quantization (optional)
-            debug_config: config for debugging and editing the network quantization process
+            n_iter (int): Number of calibration iterations to run.
+            quantization_config (QuantizationConfig): Config for quantization.
+            mixed_precision_config (MixedPrecisionQuantizationConfigV2): Config for mixed precision quantization (optional,
+            default=None).
+            debug_config (DebugConfig): Config for debugging and editing the network quantization process.
         """
         self.n_iter = n_iter
         self.quantization_config = quantization_config
