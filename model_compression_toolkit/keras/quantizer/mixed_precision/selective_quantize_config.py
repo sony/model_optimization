@@ -93,11 +93,12 @@ class SelectiveQuantizeConfig(QuantizeConfig):
         self.weight_quantizers = []
         if self.enable_weights_quantization:
             self.weight_quantizers = [SelectiveWeightsQuantizer(node_q_cfg,
-                                                                float_weight=float_weight) for float_weight
+                                                                float_weight=float_weight,
+                                                                max_candidate_idx=max_candidate_idx) for float_weight
                                       in float_weights]
 
         self.activation_selective_quantizer = None if not self.enable_activation_quantization else \
-            SelectiveActivationQuantizer(node_q_cfg)
+            SelectiveActivationQuantizer(node_q_cfg, max_candidate_idx=max_candidate_idx)
 
     def get_candidate_nbits(self) -> List[Tuple[int, int]]:
         """
