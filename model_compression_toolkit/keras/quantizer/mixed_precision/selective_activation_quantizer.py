@@ -38,17 +38,18 @@ class SelectiveActivationQuantizer(Quantizer):
     """
 
     def __init__(self,
-                 node_q_cfg: List[CandidateNodeQuantizationConfig]):
+                 node_q_cfg: List[CandidateNodeQuantizationConfig],
+                 max_candidate_idx: int):
         """
         Init a selective quantizer.
 
         Args:
             node_q_cfg: Quantization configuration candidate of the node that generated the layer that will
                 use this quantizer.
+            max_candidate_idx: Index of the node's candidate that has the maximal bitwidth (must exist absolute max).
         """
         self.node_q_cfg = node_q_cfg
-        # TODO: decide how to handle this since configs arrive sorted by weights first
-        self.active_quantization_config_index = 0  # initialize with first config as default
+        self.active_quantization_config_index = max_candidate_idx  # initialize with first config as default
         self.activation_quantizers = []
         self._store_activation_quantizers()
 

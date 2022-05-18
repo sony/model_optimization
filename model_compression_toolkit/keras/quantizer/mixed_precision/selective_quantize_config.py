@@ -50,7 +50,8 @@ class SelectiveQuantizeConfig(QuantizeConfig):
     def __init__(self,
                  node_q_cfg: List[CandidateNodeQuantizationConfig],
                  float_weights: List[np.ndarray] = None,
-                 weight_attrs: List[str] = None):
+                 weight_attrs: List[str] = None,
+                 max_candidate_idx: int = 0):
         """
         Init a SelectiveQuantizeConfig instance.
 
@@ -60,6 +61,7 @@ class SelectiveQuantizeConfig(QuantizeConfig):
             float_weights: Float weights of the layer, the SelectiveQuantizeConfig is attached to.
             node_q_cfg: Candidates quantization config the node has (the node from which
             we built the layer that is attached to SelectiveQuantizeConfig).
+            max_candidate_idx: Index of the node's candidate that has the maximal bitwidth (must exist absolute max).
         """
         # Make sure the candidates configurations arrived in a descending order.
         curmax = (np.inf, np.inf)

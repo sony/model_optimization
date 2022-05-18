@@ -38,7 +38,8 @@ class SelectiveWeightsQuantizer(Quantizer):
 
     def __init__(self,
                  node_q_cfg: List[CandidateNodeQuantizationConfig],
-                 float_weight: np.ndarray):
+                 float_weight: np.ndarray,
+                 max_candidate_idx: int):
         """
         Init a selective quantizer.
 
@@ -46,13 +47,14 @@ class SelectiveWeightsQuantizer(Quantizer):
             node_q_cfg: Quantization configuration candidates of the node that generated the layer that will
                 use this quantizer.
             float_weight: Float weights of the layer.
+            max_candidate_idx: Index of the node's candidate that has the maximal bitwidth (must exist absolute max).
         """
 
         self.node_q_cfg = node_q_cfg
         self.quantizer_fn_list = [qc.weights_quantization_cfg.weights_quantization_fn for qc in self.node_q_cfg]
         self.float_weight = float_weight
         self.quantized_weights = []
-        self.active_quantization_config_index = 0  # initialize with first (maximal number of bits)
+        self.active_quantization_config_index = max_candidate_idx
         self._store_quantized_weights()
 
     def _quantize_by_qc(self, index: int) -> np.ndarray:
