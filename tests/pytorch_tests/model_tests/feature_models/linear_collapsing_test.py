@@ -19,7 +19,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_default import generate_pytorch_tpc
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 tp = mct.target_platform
@@ -34,7 +34,7 @@ class BaseConv2DCollapsingTest(BasePytorchFeatureNetworkTest, ABC):
                                      'activation_n_bits': 32,
                                      'enable_weights_quantization': False,
                                      'enable_activation_quantization': False})
-        return generate_keras_default_tpc(name="linear_collapsing_test", tp_model=tp)
+        return generate_pytorch_tpc(name="linear_collapsing_test", tp_model=tp)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,

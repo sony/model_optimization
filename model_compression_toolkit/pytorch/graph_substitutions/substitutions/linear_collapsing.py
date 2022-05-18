@@ -78,7 +78,7 @@ def conv2d_collapsing_fn(first_node: BaseNode,
                                       int(np.floor((y_pad - 1) / 2))))
 
         # Run first Conv2D
-        conv1_out = F.conv2d(input=in_tensor, weight=to_torch_tensor(kernel1), stride=strides1, padding=(0,0))
+        conv1_out = F.conv2d(input=to_torch_tensor(in_tensor), weight=to_torch_tensor(kernel1), stride=strides1, padding=(0,0))
 
         # Run second Conv2D
         kernel2_torch = to_torch_tensor(kernel2)
