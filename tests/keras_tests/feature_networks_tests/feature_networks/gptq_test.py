@@ -52,7 +52,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(3, 4)(inputs)
         x = layers.BatchNormalization()(x)
-        x = layers.Activation('relu')(x)
+        x = layers.PReLU()(x)
         x = layers.Conv2D(7, 8)(x)
         x = layers.BatchNormalization()(x)
         outputs = layers.ReLU()(x)
@@ -110,9 +110,12 @@ class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
         self.unit_test.assertTrue(len(quantized_model.weights) == len(quantized_gptq_model.weights),
                                   msg='float model number of weights different from quantized model: ' +
                                       f'{len(quantized_gptq_model.weights)} != {len(quantized_model.weights)}')
-        # check all weights were updated
-        weights_diff = [np.any(w_q.numpy() != w_f.numpy()) for w_q, w_f in zip(quantized_model.weights,
-                                                                               quantized_gptq_model.weights)]
+        # check relevant weights were updated
+        weights_diff = []
+        for l_q, l_f in zip(quantized_model.layers, quantized_gptq_model.layers):
+            if self.get_fw_info().get_kernel_op_attributes(type(l_q))[0] is not None:
+                for w_q, w_f in zip(l_q.weights, l_f.weights):
+                    weights_diff.append(np.any(w_q.numpy() != w_f.numpy()))
         self.unit_test.assertTrue(all(weights_diff), msg="Some weights weren't updated")
 
 

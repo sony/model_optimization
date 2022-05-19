@@ -27,7 +27,7 @@ def get_compare_points(input_graph: Graph) -> Tuple[List[BaseNode], List[str], L
 
     Returns:
         A list of nodes in a graph
-        A list of the their names.
+        A list of their names.
         A list of nodes mean collected from BatchNorms in the graph
         A list of nodes std collected from BatchNorms in the graph
     """
@@ -36,7 +36,7 @@ def get_compare_points(input_graph: Graph) -> Tuple[List[BaseNode], List[str], L
     compare_points_std = []
     compare_points_name = []
     for n in input_graph.get_topo_sorted_nodes():
-        if len(n.weights) > 0:
+        if len(n.weights) > 0 and n.is_weights_quantization_enabled():
             compare_points.append(n)
             compare_points_name.append(n.name)
             compare_points_std.append(n.prior_info.std_output)
