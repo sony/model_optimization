@@ -216,6 +216,14 @@ class FrameworkImplementation(ABC):
                              f'framework\'s get_substitutions_pre_statistics_collection method.')
 
     @abstractmethod
+    def get_linear_collapsing_substitution(self) -> common.BaseSubstitution:
+        """
+        Returns: linear collapsing substitution
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_linear_collapsing_substitution method.')
+
+    @abstractmethod
     def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:
         """
 
