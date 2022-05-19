@@ -23,7 +23,7 @@ from model_compression_toolkit.common.mixed_precision.kpi import KPI, KPITarget
 from model_compression_toolkit.common.mixed_precision.kpi_aggregation_methods import MpKpiAggregation
 from model_compression_toolkit.common.mixed_precision.kpi_methods import MpKpiMetric
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig
+    MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
 from model_compression_toolkit.common.mixed_precision.search_methods.linear_programming import \
     mp_integer_programming_search
@@ -46,7 +46,7 @@ kpi_functions_factory = {KPITarget.WEIGHTS: (MpKpiMetric.WEIGHTS_SIZE, MpKpiAggr
 
 
 def search_bit_width(graph_to_search_cfg: Graph,
-                     qc: MixedPrecisionQuantizationConfig,
+                     mp_config: MixedPrecisionQuantizationConfigV2,
                      fw_info: FrameworkInfo,
                      target_kpi: KPI,
                      get_sensitivity_evaluation: Callable = None,
@@ -54,30 +54,30 @@ def search_bit_width(graph_to_search_cfg: Graph,
     """
     Search for a MP configuration for a given graph. Given a search_method method (by default, it's linear
     programming), we use the get_sensitivity_evaluation function to get a function to compute an
-    evaluation for the expected sensitivity for a bitwidth configuration.
-    Then, and after computing the KPI for each node in the graph for each bitwidth in the search space,
+    evaluation for the expected sensitivity for a bit-width configuration.
+    Then, and after computing the KPI for each node in the graph for each bit-width in the search space,
     we search for the optimal solution, given some target_kpi, the solution should fit.
     target_kpi have to be passed. If it was not passed, the facade is not supposed to get here by now.
 
     Args:
         graph_to_search_cfg: Graph to search a MP configuration for.
-        qc: MixedPrecisionQuantizationConfig the graph was prepared according to.
+        mp_config: MixedPrecisionQuantizationConfigV2 the graph was prepared according to.
         fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
-        target_kpi: Target KPI to bound our feasible solution space s.t the configuration does not violates it.
+        target_kpi: Target KPI to bound our feasible solution space s.t the configuration does not violate it.
         get_sensitivity_evaluation: Function specific to the model's framework, which builds and returns
-        a function that evaluates the sensitivity of a bitwidth configuration for the MP model.
+        a function that evaluates the sensitivity of a bit-width configuration for the MP model.
         search_method: BitWidthSearchMethod to define which searching method to use.
 
     Returns:
         A MP configuration for the graph (list of integers, where the index in the list, is the node's
         index in the graph, when the graph is topology sorted, and the value in this index is the
-        bitwidth index on the node).
+        bit-width index on the node).
 
     """
 
     # target_kpi have to be passed. If it was not passed, the facade is not supposed to get here by now.
     if target_kpi is None:
-        Logger.critical('Target KPI have to be passed for search_methods bitwidth configuration')
+        Logger.critical('Target KPI have to be passed for search_methods bit-width configuration')
 
     graph = copy.deepcopy(graph_to_search_cfg)  # Copy graph before searching
 
@@ -87,7 +87,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
 
     # Instantiate a manager object
     search_manager = MixedPrecisionSearchManager(graph,
-                                                 qc,
+                                                 mp_config,
                                                  fw_info,
                                                  get_sensitivity_evaluation,
                                                  kpi_functions)

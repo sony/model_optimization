@@ -19,7 +19,7 @@ from keras import Input, Model
 from keras.layers import Conv2D, Conv2DTranspose
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod
+from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod, CoreConfig
 from model_compression_toolkit.common.bias_correction.compute_bias_correction_of_graph import \
     compute_bias_correction_of_graph
 from model_compression_toolkit.common.constants import THRESHOLD
@@ -93,6 +93,7 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
     def run_test_for_threshold_method(self, threshold_method, per_channel=True):
         qc = QuantizationConfig(weights_error_method=threshold_method,
                                 weights_per_channel_threshold=per_channel)
+        core_config = CoreConfig(n_iter=1, quantization_config=qc)
 
         tp = generate_test_tp_model({
             'weights_quantization_method': mct.target_platform.QuantizationMethod.SYMMETRIC})
@@ -105,7 +106,8 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
         graph.set_fw_info(fw_info)
         graph.set_tpc(tpc)
         graph = set_quantization_configuration_to_graph(graph=graph,
-                                                        quant_config=qc)
+                                                        quant_config=core_config.quantization_config,
+                                                        mixed_precision_enable=core_config.mixed_precision_enable)
         for node in graph.nodes:
             node.prior_info = keras_impl.get_node_prior_info(node=node,
                                                              fw_info=fw_info,
@@ -125,7 +127,7 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
         tg = compute_bias_correction_of_graph(graph,
                                               fw_info,
                                               keras_impl)
-        tg = set_bit_widths(qc,
+        tg = set_bit_widths(core_config.mixed_precision_enable,
                             tg,
                             fw_info,
                             None)

@@ -48,7 +48,7 @@ def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
     """
 
     keras_tpc = tpc.TargetPlatformCapabilities(tp_model,
-                                                name=name)
+                                               name=name)
     with keras_tpc:
         tpc.OperationsSetToLayers("NoQuantization", [Reshape,
                                                      tf.reshape,

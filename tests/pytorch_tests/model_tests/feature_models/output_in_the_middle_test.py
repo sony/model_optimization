@@ -24,12 +24,14 @@ class OutputInTheMiddleNet(torch.nn.Module):
         super(OutputInTheMiddleNet, self).__init__()
         self.conv1 = torch.nn.Conv2d(3, 3, kernel_size=1, stride=1)
         self.conv2 = torch.nn.Conv2d(3, 3, kernel_size=1, stride=1)
+        self.identity = torch.nn.Identity()
 
     def forward(self, x):
         x1 = self.conv1(x)
-        x2 = self.conv2(x1)
-        x3 = torch.relu(x2)
-        return x, x1, x2, x3
+        x2 = self.identity(x1)
+        x3 = self.conv2(x2)
+        x4 = torch.relu(x3)
+        return x, x1, x2, x3, x4
 
 
 class OutputInTheMiddleNetTest(BasePytorchTest):
