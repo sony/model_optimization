@@ -48,6 +48,7 @@ CHANNELS_FORMAT_FIRST = 'channels_first'
 CHANNELS_FORMAT_LAST = 'channels_last'
 AXES = 'axes'
 DIMS = 'dims'
+TARGET_SHAPE = 'target_shape'
 
 # functional nodes attributes
 FUNCTION = 'function'
