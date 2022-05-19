@@ -13,56 +13,38 @@
 # limitations under the License.
 # ==============================================================================
 from typing import Tuple, List
-
-import tensorflow as tf
-if tf.__version__ < "2.6":
-    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose
-else:
-    from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose
-
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 
 from model_compression_toolkit.common import Graph
 
 
-# Layers that have weights attributes that can be quantized
-WEIGHTS_LAYERS_NAMES = {
-    Conv2D: 'Conv2D',
-    DepthwiseConv2D: 'DW',
-    Dense: 'FC',
-    Conv2DTranspose: 'Conv2D-T'
-}
-
-
-def get_layer_represent_name(layer_type):
+def get_layer_represent_name(node):
     """
     Returns the mapping between a layer's type and its name to appear in the visualization figure.
 
     Args:
-        layer_type: A Keras Layer type.
+        node: A graph node representing a model's layer.
 
     Returns: The name of the layer to appear in the visualization.
 
     """
 
-    name = WEIGHTS_LAYERS_NAMES.get(layer_type)
-    if name is None:
-        raise Exception(f"Layer type {layer_type} is not familiar for config visualization purposes")
-    return name
+    return node.type.__name__
 
 
-class KerasWeightsConfigVisualizer:
+class WeightsFinalBitwidthConfigVisualizer:
     """
     Class to visualize the chosen bit-width configuration for weights configurable layers in mixed-precision mode.
-    KerasWeightsConfigVisualizer draws a bar plot with the bit-width value of each layer.
+    WeightsFinalBitwidthConfigVisualizer draws a bar plot with the bit-width value of each layer.
     """
     def __init__(self,
                  final_weights_nodes_config: List[Tuple[type, int]]):
         """
-        Initialize a KerasWeightsConfigVisualizer object.
+        Initialize a WeightsFinalBitwidthConfigVisualizer object.
         Args:
-            final_weights_nodes_config: List of candidates' indices of sorted weights configurable nodes.
+            final_weights_nodes_config: List of candidates' indices of sorted weights configurable nodes
+                (expects a list of tuples - (node, node's final weights bitwidth).
         """
 
         self.final_weights_nodes_config = final_weights_nodes_config
@@ -93,20 +75,21 @@ class KerasWeightsConfigVisualizer:
         return fig
 
 
-class KerasActivationConfigVisualizer:
+class ActivationFinalBitwidthConfigVisualizer:
     """
     Class to visualize the activation configuration attributes.
-    KerasActivationConfigVisualizer can draw a figure of the chosen bit-width configuration for activation configurable
-    layers in mixed-precision mode.
+    ActivationFinalBitwidthConfigVisualizer can draw a figure of the chosen bit-width configuration for activation
+    configurable layers in mixed-precision mode.
     It also allows to draw a figure with the activation tensors memory size.
     """
 
     def __init__(self,
                  final_activation_nodes_config: List[Tuple[type, int]]):
         """
-        Initialize a KerasActivationConfigVisualizer object.
+        Initialize a ActivationFinalBitwidthConfigVisualizer object.
         Args:
             final_activation_nodes_config: List of candidates' indices of sorted activation configurable nodes.
+                (expects a list of tuples - (node, node's final activation bitwidth).
         """
 
         self.final_activation_nodes_config = final_activation_nodes_config

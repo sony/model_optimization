@@ -636,7 +636,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         sorted_conf_weights = self.get_sorted_weights_configurable_nodes()
-        return [(n.type, n.final_weights_quantization_cfg.weights_n_bits) for n in sorted_conf_weights]
+        return [(n, n.final_weights_quantization_cfg.weights_n_bits) for n in sorted_conf_weights]
 
     def get_final_activation_config(self):
         """
@@ -646,4 +646,4 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         sorted_conf_activation = self.get_sorted_activation_configurable_nodes()
-        return [(n.type, n.final_activation_quantization_cfg.activation_n_bits) for n in sorted_conf_activation]
+        return [(n, n.final_activation_quantization_cfg.activation_n_bits) for n in sorted_conf_activation]
