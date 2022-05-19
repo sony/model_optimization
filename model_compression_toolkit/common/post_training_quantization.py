@@ -50,6 +50,7 @@ from model_compression_toolkit.common.quantization.set_node_quantization_config 
     set_quantization_configuration_to_graph
 
 from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
+from model_compression_toolkit.common.substitutions.linear_collapsing_substitution import linear_collapsing_substitute
 from model_compression_toolkit.common.user_info import UserInformation
 from model_compression_toolkit.common.model_collector import ModelCollector
 
@@ -227,6 +228,8 @@ def get_finalized_graph(initial_graph: Graph,
     # Graph substitution (pre statistics collection)
     ######################################
     transformed_graph = substitute(graph, fw_impl.get_substitutions_pre_statistics_collection(quant_config))
+    transformed_graph = linear_collapsing_substitute(transformed_graph, fw_impl.get_linear_collapsing_substitution(), quant_config.block_collapsing)
+
 
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'pre_statistics_collection_substitutions')

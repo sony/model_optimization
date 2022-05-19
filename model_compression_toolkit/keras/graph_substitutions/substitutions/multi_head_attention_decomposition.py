@@ -29,7 +29,7 @@ from model_compression_toolkit.common.constants import REUSE, REUSE_GROUP
 from model_compression_toolkit.keras.reader.node_builder import REUSED_IDENTIFIER
 from model_compression_toolkit.keras.constants import KERNEL, BIAS, USE_BIAS, NUM_HEADS, KEY_DIM, VALUE_DIM, \
     QUERY_SHAPE, KEY_SHAPE, VALUE_SHAPE, OUTPUT_SHAPE, ATTENTION_AXES, ACTIVATION, LINEAR, UNITS, AXES, \
-    FUNCTION, DIMS, F_RESHAPE, F_STRIDED_SLICE, F_STACK, Q_KERNEL, Q_BIAS, K_KERNEL, K_BIAS, V_KERNEL, V_BIAS, \
+    FUNCTION, DIMS, TARGET_SHAPE, F_STRIDED_SLICE, F_STACK, Q_KERNEL, Q_BIAS, K_KERNEL, K_BIAS, V_KERNEL, V_BIAS, \
     OUTPUT_KERNEL, OUTPUT_BIAS
 
 
@@ -125,10 +125,10 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
                                   params.value_shape, params.v_perm_shape, {}, Permute, **params.reuse_params)
         graph.add_node(v_permute_node)
 
-        q_reshape_node = BaseNode(f'{name}_query_input_reshape', {'target_shape': params.q_reshape_shape[1:]},  # TODO: set target shape as constant
+        q_reshape_node = BaseNode(f'{name}_query_input_reshape', {TARGET_SHAPE: params.q_reshape_shape[1:]},
                                         params.q_perm_shape, params.q_reshape_shape, {}, Reshape, **params.reuse_params)
         graph.add_node_with_in_edges(q_reshape_node, [q_permute_node])
-        v_reshape_node = BaseNode(f'{name}_value_input_reshape', {'target_shape': params.v_reshape_shape[1:]},  # TODO: set target shape as constant
+        v_reshape_node = BaseNode(f'{name}_value_input_reshape', {TARGET_SHAPE: params.v_reshape_shape[1:]},
                                         params.v_perm_shape, params.v_reshape_shape, {}, Reshape, **params.reuse_params)
         graph.add_node_with_in_edges(v_reshape_node, [v_permute_node])
         if num_input_edges == 3:
@@ -136,7 +136,7 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
             k_permute_node = BaseNode(f'{name}_key_input_permute', {DIMS: params.perm_dims[1:]},
                                       params.key_shape, params.k_perm_shape, {}, Permute, **params.reuse_params)
             graph.add_node(k_permute_node)
-            k_reshape_node = BaseNode(f'{name}_key_input_reshape', {'target_shape': params.k_reshape_shape[1:]},  # TODO: set target shape as constant
+            k_reshape_node = BaseNode(f'{name}_key_input_reshape', {TARGET_SHAPE: params.k_reshape_shape[1:]},
                                             params.k_perm_shape, params.k_reshape_shape, {}, Reshape, **params.reuse_params)
             graph.add_node_with_in_edges(k_reshape_node, [k_permute_node])
         else:
@@ -348,7 +348,7 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
             Destandarized output node, which matches in shape the output of the MHA node
         """
 
-        output_reshape_node = BaseNode(f'{name}_output_reshape', {'target_shape': params.q_perm_shape[1:-1] + (params.d_model,)},
+        output_reshape_node = BaseNode(f'{name}_output_reshape', {TARGET_SHAPE: params.q_perm_shape[1:-1] + (params.d_model,)},
                                        params.stacked_output_shape, params.q_perm_shape[:-1] + (params.d_model,), {},
                                        Reshape, **params.reuse_params)
         graph.add_node_with_in_edges(output_reshape_node, [output_node])

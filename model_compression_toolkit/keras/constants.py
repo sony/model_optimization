@@ -26,9 +26,12 @@ SELU = 'selu'
 GELU = 'gelu'
 
 # Layers attributes constants:
-PADDING = 'padding'
-STRIDES = 'strides'
 KERNEL_SIZE = 'kernel_size'
+PADDING = 'padding'
+GROUPS = 'groups'
+STRIDES = 'strides'
+DILATIONS = 'dilation_rate'
+DATA_FORMAT = 'data_format'
 LAYER_NAME = 'name'
 TRAINABLE = 'trainable'
 ACTIVATION = 'activation'
@@ -45,6 +48,7 @@ CHANNELS_FORMAT_FIRST = 'channels_first'
 CHANNELS_FORMAT_LAST = 'channels_last'
 AXES = 'axes'
 DIMS = 'dims'
+TARGET_SHAPE = 'target_shape'
 
 # functional nodes attributes
 FUNCTION = 'function'
