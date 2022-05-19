@@ -65,7 +65,8 @@ def prepare_graph(in_model, base_config, bitwidth_candidates):
     graph.set_tpc(tpc)
     graph.set_fw_info(fw_info)
     graph = set_quantization_configuration_to_graph(graph=graph,
-                                                    quant_config=DEFAULT_MIXEDPRECISION_CONFIG)
+                                                    quant_config=DEFAULT_MIXEDPRECISION_CONFIG,
+                                                    mixed_precision_enable=True)
     graph = substitute(graph, keras_impl.get_substitutions_marking())
 
     return graph
