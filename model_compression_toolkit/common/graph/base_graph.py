@@ -609,3 +609,21 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             f"A minimal config candidate must be defined, but some node have multiple potential minimal candidates"
 
         return [lst[0] for lst in min_cfg_candidates]
+
+    def get_max_candidates_config(self) -> List[int]:
+        """
+        Builds a maximal configuration.
+        Note: we assume that a maximal configuration exists, i.e., each configurable node has exactly one candidate
+            with maximal n_bits (in both weight and activation if both are quantized, or in the relevant one if only
+            one of them is quantized)
+
+        Returns: A list of candidate for each node (list on indices)
+        """
+
+        conf_sorted_nodes = self.get_configurable_sorted_nodes()
+        max_cfg_candidates = [n.find_max_candidates_indices() for n in conf_sorted_nodes]  # list of lists of indices
+
+        assert all([len(lst) == 1 for lst in max_cfg_candidates]), \
+            f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
+
+        return [lst[0] for lst in max_cfg_candidates]
