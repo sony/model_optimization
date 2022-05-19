@@ -25,6 +25,7 @@ from model_compression_toolkit.common.graph.base_graph import Graph
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
+from model_compression_toolkit.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.common.user_info import UserInformation
 
 
@@ -130,7 +131,7 @@ class FrameworkImplementation(ABC):
     @abstractmethod
     def shift_negative_correction(self,
                                   graph: Graph,
-                                  qc: QuantizationConfig,
+                                  core_config: CoreConfig,
                                   fw_info: FrameworkInfo) -> Graph:
         """
         Apply shift negative correction (SNC) on a graph.
@@ -213,6 +214,14 @@ class FrameworkImplementation(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_substitutions_pre_statistics_collection method.')
+
+    @abstractmethod
+    def get_linear_collapsing_substitution(self) -> common.BaseSubstitution:
+        """
+        Returns: linear collapsing substitution
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_linear_collapsing_substitution method.')
 
     @abstractmethod
     def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:

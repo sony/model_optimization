@@ -22,10 +22,10 @@ from model_compression_toolkit.common.graph.graph_matchers import NodeOperationM
 from model_compression_toolkit.common.target_platform import QuantizationMethod
 from model_compression_toolkit.common.quantization.set_node_quantization_config import create_node_activation_qc, \
     set_quantization_configs_to_node
-from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
+from model_compression_toolkit.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
-from model_compression_toolkit.keras.constants import PADDING
+
 
 """
 This substitution aims to solve an issue of activation with negative outputs where
@@ -176,7 +176,7 @@ def remove_node_between_two_nodes(graph: Graph,
 
 
 def shift_negative_function(graph: Graph,
-                            qc: QuantizationConfig,
+                            core_config: CoreConfig,
                             non_linear_node: BaseNode,
                             op2d_node: BaseNode,
                             fw_info: FrameworkInfo,
@@ -200,7 +200,7 @@ def shift_negative_function(graph: Graph,
 
     Args:
         graph: Graph to apply the shifting and correction.
-        qc: Quantization configuration to build the substitutions list according to.
+        core_config: Quantization configuration to build the substitutions list according to.
         non_linear_node: Non-linear node with negative values to shift.
         op2d_node: Linear node to correct its bias to overcome the expected error due to
         the shifting.
@@ -291,8 +291,9 @@ def shift_negative_function(graph: Graph,
         # Set quantization configuration to node, even though we do not quantize it:
         set_quantization_configs_to_node(fw_info=fw_info,
                                          node=pad_node,
-                                         quant_config=qc,
-                                         tpc=graph.tpc)
+                                         quant_config=core_config.quantization_config,
+                                         tpc=graph.tpc,
+                                         mixed_precision_enable=core_config.mixed_precision_enable)
 
         for candidate_qc in pad_node.candidates_quantization_cfg:
             candidate_qc.weights_quantization_cfg.enable_weights_quantization = False
@@ -310,8 +311,9 @@ def shift_negative_function(graph: Graph,
 
     set_quantization_configs_to_node(fw_info=fw_info,
                                      node=add_node,
-                                     quant_config=qc,
-                                     tpc=graph.tpc)
+                                     quant_config=core_config.quantization_config,
+                                     tpc=graph.tpc,
+                                     mixed_precision_enable=core_config.mixed_precision_enable)
 
     original_non_linear_activation_nbits = non_linear_node_cfg_candidate.activation_n_bits
     # The non-linear node's output should be float, so we approximate it by using 16bits quantization.
@@ -330,7 +332,7 @@ def shift_negative_function(graph: Graph,
     for op_qc_idx, candidate_qc in enumerate(add_node.candidates_quantization_cfg):
         candidate_qc.weights_quantization_cfg.enable_weights_quantization = False
 
-        candidate_qc.activation_quantization_cfg = create_node_activation_qc(qc,
+        candidate_qc.activation_quantization_cfg = create_node_activation_qc(core_config.quantization_config,
                                                                              fw_info,
                                                                              add_node_qco[op_qc_idx])
 
@@ -424,7 +426,7 @@ def get_next_nodes_to_correct(n: BaseNode,
 
 
 def apply_shift_negative_correction(graph: Graph,
-                                    quant_config: QuantizationConfig,
+                                    core_config: CoreConfig,
                                     fw_info: FrameworkInfo,
                                     snc_node_types: NodeOperationMatcher,
                                     linear_node_types: NodeOperationMatcher,
@@ -443,7 +445,7 @@ def apply_shift_negative_correction(graph: Graph,
 
     Args:
         graph: Graph to apply the substitution on.
-        quant_config: Quantization configuration to build the substitutions list according to.
+        core_config: Quantization configuration to build the substitutions list according to.
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         groups of layers by how they should be quantized, etc.)
         snc_node_types: Types of activation nodes with negative outputs to consider.
@@ -480,7 +482,7 @@ def apply_shift_negative_correction(graph: Graph,
                                                                             )
             if linear_node is not None and n.is_activation_quantization_enabled():
                 graph = shift_negative_function(graph,
-                                                quant_config,
+                                                core_config,
                                                 n,
                                                 linear_node,
                                                 fw_info,

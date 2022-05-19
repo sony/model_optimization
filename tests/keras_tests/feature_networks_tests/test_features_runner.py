@@ -40,6 +40,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.input_scaling_tes
 from tests.keras_tests.feature_networks_tests.feature_networks.bn_folding_test import Conv2DBNFoldingTest, \
     DepthwiseConv2DBNFoldingTest, DepthwiseConv2DBNFoldingHighMultiplierTest, Conv2DTransposeBNFoldingTest, \
     Conv2DBNConcatnFoldingTest, SeparableConv2DBNFoldingTest
+from tests.keras_tests.feature_networks_tests.feature_networks.linear_collapsing_test import TwoConv2DCollapsingTest, \
+    ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest
 from tests.keras_tests.feature_networks_tests.feature_networks.remove_upper_bound_test import RemoveUpperBoundTest
 from tests.keras_tests.feature_networks_tests.feature_networks.reused_layer_mixed_precision_test import \
     ReusedLayerMixedPrecisionTest, ReusedSeparableMixedPrecisionTest
@@ -393,6 +395,12 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_conv2dtransposebn_folding(self):
         Conv2DTransposeBNFoldingTest(self).run_test()
+
+    def test_linear_collapsing(self):
+        TwoConv2DCollapsingTest(self).run_test()
+        ThreeConv2DCollapsingTest(self).run_test()
+        FourConv2DCollapsingTest(self).run_test()
+        SixConv2DCollapsingTest(self).run_test()
 
     def test_decompose_separable_conv(self):
         DecomposeSeparableConvTest(self).run_test()
