@@ -27,7 +27,8 @@ class MixedPrecisionQuantizationConfigV2:
                  compute_distance_fn: Callable = compute_mse,
                  distance_weighting_method: Callable = get_average_weights,
                  num_of_images: int = 32,
-                 configuration_overwrite: List[int] = None):
+                 configuration_overwrite: List[int] = None,
+                 num_interest_points_factor: float = 1.0):
         """
         Class with mixed precision parameters to quantize the input model.
         Unlike QuantizationConfig, number of bits for quantization is a list of possible bit widths to
@@ -38,6 +39,7 @@ class MixedPrecisionQuantizationConfigV2:
             distance_weighting_method (Callable): Function to use when weighting the distances among different layers when computing the sensitivity metric.
             num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
             configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
+            num_interest_points_factor: A multiplication factor between zero and one (represents percentage) to reduce the number of interest points used to calculate the distance metric.
 
         """
 
@@ -45,6 +47,12 @@ class MixedPrecisionQuantizationConfigV2:
         self.distance_weighting_method = distance_weighting_method
         self.num_of_images = num_of_images
         self.configuration_overwrite = configuration_overwrite
+
+        assert 0.0 < num_interest_points_factor <= 1.0, "num_interest_points_factor should represent a percentage of " \
+                                                        "the base set of interest points that are required to be " \
+                                                        "used for mixed-precision metric evaluation, " \
+                                                        "thus, it should be between 0 to 1"
+        self.num_interest_points_factor = num_interest_points_factor
 
 
 class MixedPrecisionQuantizationConfig(QuantizationConfig):
@@ -54,7 +62,8 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
                  compute_distance_fn: Callable = compute_mse,
                  distance_weighting_method: Callable = get_average_weights,
                  num_of_images: int = 32,
-                 configuration_overwrite: List[int] = None):
+                 configuration_overwrite: List[int] = None,
+                 num_interest_points_factor: float = 1.0):
         """
         Class to wrap all different parameters the library quantize the input model according to.
         Unlike QuantizationConfig, number of bits for quantization is a list of possible bit widths to
@@ -66,6 +75,7 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
             distance_weighting_method (Callable): Function to use when weighting the distances among different layers when computing the sensitivity metric.
             num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
             configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
+            num_interest_points_factor: A multiplication factor between zero and one (represents percentage) to reduce the number of interest points used to calculate the distance metric.
 
         """
 
@@ -74,6 +84,12 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
         self.distance_weighting_method = distance_weighting_method
         self.num_of_images = num_of_images
         self.configuration_overwrite = configuration_overwrite
+
+        assert 0.0 < num_interest_points_factor <= 1.0, "num_interest_points_factor should represent a percentage of " \
+                                                        "the base set of interest points that are required to be " \
+                                                        "used for mixed-precision metric evaluation, " \
+                                                        "thus, it should be between 0 to 1"
+        self.num_interest_points_factor = num_interest_points_factor
 
     def separate_configs(self) -> Tuple[QuantizationConfig, MixedPrecisionQuantizationConfigV2]:
         """
