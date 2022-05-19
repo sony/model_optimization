@@ -45,8 +45,14 @@ def quantization_config_builder_mixed_precision(n: common.BaseNode,
 
     float_weights = [n.get_weights_by_keys(attr) for attr in fw_info.get_kernel_op_attributes(n.type)]
 
+    max_cfg_candidates = n.find_max_candidates_indices()
+    assert len(max_cfg_candidates) == 1, \
+        f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
+    max_candidate_idx = max_cfg_candidates[0]
+
     # Create a SelectiveQuantizeConfig that holds the float and quantized weights (every weight is
     # quantized using all possible bitwidhts in the node's candidates weights quantization configurations).
     return SelectiveQuantizeConfig(node_q_cfg=node_q_cfg_candidates,
                                    float_weights=float_weights,
-                                   weight_attrs=fw_info.get_kernel_op_attributes(n.type))
+                                   weight_attrs=fw_info.get_kernel_op_attributes(n.type),
+                                   max_candidate_idx=max_candidate_idx)

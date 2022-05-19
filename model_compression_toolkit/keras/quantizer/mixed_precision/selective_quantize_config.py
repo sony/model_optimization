@@ -50,7 +50,8 @@ class SelectiveQuantizeConfig(QuantizeConfig):
     def __init__(self,
                  node_q_cfg: List[CandidateNodeQuantizationConfig],
                  float_weights: List[np.ndarray] = None,
-                 weight_attrs: List[str] = None):
+                 weight_attrs: List[str] = None,
+                 max_candidate_idx: int = 0):
         """
         Init a SelectiveQuantizeConfig instance.
 
@@ -60,6 +61,7 @@ class SelectiveQuantizeConfig(QuantizeConfig):
             float_weights: Float weights of the layer, the SelectiveQuantizeConfig is attached to.
             node_q_cfg: Candidates quantization config the node has (the node from which
             we built the layer that is attached to SelectiveQuantizeConfig).
+            max_candidate_idx: Index of the node's candidate that has the maximal bitwidth (must exist absolute max).
         """
         # Make sure the candidates configurations arrived in a descending order.
         curmax = (np.inf, np.inf)
@@ -91,11 +93,12 @@ class SelectiveQuantizeConfig(QuantizeConfig):
         self.weight_quantizers = []
         if self.enable_weights_quantization:
             self.weight_quantizers = [SelectiveWeightsQuantizer(node_q_cfg,
-                                                                float_weight=float_weight) for float_weight
+                                                                float_weight=float_weight,
+                                                                max_candidate_idx=max_candidate_idx) for float_weight
                                       in float_weights]
 
         self.activation_selective_quantizer = None if not self.enable_activation_quantization else \
-            SelectiveActivationQuantizer(node_q_cfg)
+            SelectiveActivationQuantizer(node_q_cfg, max_candidate_idx=max_candidate_idx)
 
     def get_candidate_nbits(self) -> List[Tuple[int, int]]:
         """
