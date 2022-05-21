@@ -54,7 +54,8 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
     tpc = generate_keras_default_tpc(name="sem_test", tp_model=tp_model)
     graph.set_tpc(tpc)
     graph = set_quantization_configuration_to_graph(graph=graph,
-                                                    quant_config=qc)
+                                                    quant_config=qc,
+                                                    mixed_precision_enable=True)
 
     ips = get_mp_interest_points(graph=graph,
                                  fw_info=fw_info,
@@ -63,7 +64,7 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
     return ips, graph, fw_info
 
 
-class TestSensitivityMetricInterestPOints(unittest.TestCase):
+class TestSensitivityMetricInterestPoints(unittest.TestCase):
 
     def test_filtered_interest_points_set(self):
         in_model = DenseNet121()
