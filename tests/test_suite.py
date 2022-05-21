@@ -25,7 +25,6 @@ from tests.common_tests.function_tests.test_threshold_selection import TestThres
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
 
-
 found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
     "tensorflow_model_optimization") is not None
 found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util.find_spec(
@@ -48,6 +47,8 @@ if found_tf:
     from tests.keras_tests.function_tests.test_uniform_quantize_tensor import TestUniformQuantizeTensor
     from tests.keras_tests.function_tests.test_uniform_range_selection_weights import TestUniformRangeSelectionWeights
     from tests.keras_tests.test_keras_tp_model import TestKerasTPModel
+    from tests.keras_tests.function_tests.test_sensitivity_metric_interest_points import \
+        TestSensitivityMetricInterestPoints
 
 
 if found_pytorch:
@@ -72,6 +73,7 @@ if __name__ == '__main__':
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityMetricInterestPoints))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureNetworkTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLogger))
