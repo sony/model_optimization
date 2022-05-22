@@ -42,6 +42,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.bn_folding_test i
     Conv2DBNConcatnFoldingTest, SeparableConv2DBNFoldingTest
 from tests.keras_tests.feature_networks_tests.feature_networks.linear_collapsing_test import TwoConv2DCollapsingTest, \
     ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest
+from tests.keras_tests.feature_networks_tests.feature_networks.residual_collapsing_test import ResidualCollapsingTest1, \
+    ResidualCollapsingTest2
 from tests.keras_tests.feature_networks_tests.feature_networks.remove_upper_bound_test import RemoveUpperBoundTest
 from tests.keras_tests.feature_networks_tests.feature_networks.reused_layer_mixed_precision_test import \
     ReusedLayerMixedPrecisionTest, ReusedSeparableMixedPrecisionTest
@@ -383,6 +385,10 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_conv2dbn_folding(self):
         Conv2DBNFoldingTest(self).run_test()
+
+    def test_residual_collapsing(self):
+        ResidualCollapsingTest1(self).run_test()
+        ResidualCollapsingTest2(self).run_test()
 
     def test_separableconv2dbn_folding(self):
         SeparableConv2DBNFoldingTest(self).run_test()
