@@ -32,7 +32,6 @@ from model_compression_toolkit.common.mixed_precision.bit_width_setter import se
 from model_compression_toolkit.common.gptq.gptq_training import gptq_training
 from model_compression_toolkit.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
-from model_compression_toolkit.common.network_editors.actions import EditRule
 from model_compression_toolkit.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.common.quantization.quantize_graph_weights import quantize_graph_weights
@@ -62,14 +61,11 @@ from model_compression_toolkit.common.target_platform.targetplatform2framework i
 
 def post_training_quantization(in_model: Any,
                                representative_data_gen: Callable,
-                               n_iter: int,
                                core_config: CoreConfig,
                                fw_info: FrameworkInfo,
                                fw_impl: FrameworkImplementation,
                                tpc: TargetPlatformCapabilities,
-                               network_editor: List[EditRule] = [],
                                gptq_config: GradientPTQConfig = None,
-                               analyze_similarity: bool = False,
                                target_kpi: KPI = None):
     """
     Quantize a trained model using post-training quantization.
@@ -86,7 +82,6 @@ def post_training_quantization(in_model: Any,
     Args:
         in_model: Model to quantize.
         representative_data_gen: Dataset used for calibration.
-        n_iter: Number of calibration iterations to run.
         core_config: CoreConfig containing parameters of how the model should be quantized. `Default
         configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10
         /model_compression_toolkit/common/quantization/quantization_config.py#L163>`_
@@ -97,10 +92,7 @@ def post_training_quantization(in_model: Any,
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tpc: TargetPlatformCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
-        network_editor: List of EditRules. Each EditRule consists of a node filter and an action to change
-        quantization settings of the filtered nodes.
         gptq_config: Configuration for using gradient-based PTQ (e.g. optimizer).
-        analyze_similarity: Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
         target_kpi: KPI to constraint the search of the mixed-precision configuration for the model.
 
     Returns:
@@ -118,8 +110,6 @@ def post_training_quantization(in_model: Any,
 
     tg = _prepare_model_for_quantization(graph,
                                          representative_data_gen,
-                                         network_editor,
-                                         n_iter,
                                          core_config,
                                          fw_info,
                                          tb_w,
@@ -154,7 +144,7 @@ def post_training_quantization(in_model: Any,
     common.Logger.info(f'Approximated model size (in bytes): {tg.get_memory()}')
     common.Logger.info(f'Approximated compression ratio: {round(graph.get_float_memory() / (tg.get_memory() + 1e-8), 3)}')
 
-    quantized_model, user_info = _quantize_fixed_bit_widths_graph(analyze_similarity,
+    quantized_model, user_info = _quantize_fixed_bit_widths_graph(core_config.debug_config.analyze_similarity,
                                                                   fw_info,
                                                                   gptq_config,
                                                                   representative_data_gen,
@@ -454,8 +444,6 @@ def read_model_to_graph(in_model: Any,
 
 def _prepare_model_for_quantization(graph: Graph,
                                     representative_data_gen: Callable,
-                                    network_editor: List[EditRule] = [],
-                                    n_iter: int = 500,
                                     core_config: CoreConfig = CoreConfig(),
                                     fw_info: FrameworkInfo = None,
                                     tb_w: TensorboardWriter = None,
@@ -470,9 +458,7 @@ def _prepare_model_for_quantization(graph: Graph,
 
     Args:
         representative_data_gen (Callable): Dataset used for calibration.
-        network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to
         change quantization settings of the filtered nodes.
-        n_iter (int): Number of calibration iterations to run.
         core_config (CoreConfig): CoreConfig containing parameters of how the model should be
         quantized.
         fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
@@ -511,13 +497,13 @@ def _prepare_model_for_quantization(graph: Graph,
                         fw_impl,
                         fw_info)
 
-    for _ in tqdm(range(n_iter)):
+    for _ in tqdm(range(core_config.n_iter)):
         mi.infer(representative_data_gen())
 
     ######################################
     # Edit network according to user specific settings
     ######################################
-    edit_network_graph(transformed_graph, fw_info, network_editor)
+    edit_network_graph(transformed_graph, fw_info, core_config.debug_config.network_editor)
 
     ######################################
     # Calculate quantization params
