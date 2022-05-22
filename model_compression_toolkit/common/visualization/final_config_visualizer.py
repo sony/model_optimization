@@ -16,12 +16,14 @@ from typing import Tuple, List
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 
-from model_compression_toolkit.common import Graph
+from model_compression_toolkit.common import Graph, BaseNode
 
 
-def get_layer_represent_name(node):
+def get_kernel_layer_represent_name(node: BaseNode) -> str:
     """
     Returns the mapping between a layer's type and its name to appear in the visualization figure.
+    We apply this function only to map types of layers that have kernels (other layers do not appear by name
+    in the figures)
 
     Args:
         node: A graph node representing a model's layer.
@@ -39,7 +41,7 @@ class WeightsFinalBitwidthConfigVisualizer:
     WeightsFinalBitwidthConfigVisualizer draws a bar plot with the bit-width value of each layer.
     """
     def __init__(self,
-                 final_weights_nodes_config: List[Tuple[type, int]]):
+                 final_weights_nodes_config: List[Tuple[BaseNode, int]]):
         """
         Initialize a WeightsFinalBitwidthConfigVisualizer object.
         Args:
@@ -48,7 +50,7 @@ class WeightsFinalBitwidthConfigVisualizer:
         """
 
         self.final_weights_nodes_config = final_weights_nodes_config
-        self.node_reps_names = [get_layer_represent_name(node_cfg[0]) for node_cfg in self.final_weights_nodes_config]
+        self.node_reps_names = [get_kernel_layer_represent_name(node_cfg[0]) for node_cfg in self.final_weights_nodes_config]
         self.node_final_bitwidth = [node_cfg[1] for node_cfg in self.final_weights_nodes_config]
         self.bitwidth_colors_map = {2: 'tomato', 4: 'royalblue', 8: 'limegreen'}
         self.configs_colors = [self.bitwidth_colors_map[b] for b in self.node_final_bitwidth]
@@ -84,7 +86,7 @@ class ActivationFinalBitwidthConfigVisualizer:
     """
 
     def __init__(self,
-                 final_activation_nodes_config: List[Tuple[type, int]]):
+                 final_activation_nodes_config: List[Tuple[BaseNode, int]]):
         """
         Initialize a ActivationFinalBitwidthConfigVisualizer object.
         Args:
