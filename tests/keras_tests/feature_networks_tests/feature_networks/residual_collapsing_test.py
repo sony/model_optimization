@@ -46,7 +46,7 @@ class BaseResidualCollapsingTest(BaseKerasFeatureNetworkTest):
         y_hat = quantized_model.predict(input_x)
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'fail: out shape is not as expected!')
         for layer in quantized_model.layers:
-            self.unit_test.assertFalse(type(layer) == layers.Add, msg=f'fail: add residual is still in the model')
+            self.unit_test.assertFalse(type(layer) == layers.Add or type(layer) == tf.add, msg=f'fail: add residual is still in the model')
         cs = cosine_similarity(y, y_hat)
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail: cosine similarity check:{cs}')
 
@@ -72,7 +72,7 @@ class ResidualCollapsingTest2(BaseResidualCollapsingTest):
         x = layers.Conv2D(filters=3, kernel_size=(3, 4), padding='same', bias_initializer='glorot_uniform')(inputs)
         x1 = layers.Add()([x, inputs])
         x2 = layers.Conv2D(filters=3, kernel_size=(2, 2), padding='same', bias_initializer='glorot_uniform')(x1)
-        x3 = layers.Add()([x2, x1])
+        x3 = tf.add(x2, x1)
         x3 = layers.ReLU()(x3)
         x4 = layers.Conv2D(filters=3, kernel_size=(1, 3), padding='same')(x3)
         y = layers.Add()([x3, x4])

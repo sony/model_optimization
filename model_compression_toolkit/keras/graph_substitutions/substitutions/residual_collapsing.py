@@ -14,6 +14,7 @@
 # ==============================================================================
 from typing import Tuple
 import numpy as np
+import tensorflow as tf
 from tensorflow.keras.layers import Conv2D, Add
 from model_compression_toolkit.common import BaseNode
 from model_compression_toolkit.common.graph.graph_matchers import NodeOperationMatcher, \
@@ -30,7 +31,7 @@ def residual_collapsing_node_matchers() -> Tuple[NodeOperationMatcher, NodeOpera
         Matcher for Conv2D node and Add node
     """
     first_node = NodeOperationMatcher(Conv2D)
-    second_node = NodeOperationMatcher(Add)
+    second_node = NodeOperationMatcher(Add) | NodeOperationMatcher(tf.add)
     activation_linear = NodeFrameworkAttrMatcher(ACTIVATION, LINEAR)
     first_node = first_node & activation_linear
     return first_node, second_node

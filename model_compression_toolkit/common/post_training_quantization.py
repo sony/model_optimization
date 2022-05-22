@@ -205,12 +205,13 @@ def get_finalized_graph(initial_graph: Graph,
         node.prior_info = fw_impl.get_node_prior_info(node=node,
                                                       fw_info=fw_info,
                                                       graph=graph)
-    ######################################
+    ##################################################
     # Graph substitution (pre statistics collection)
-    ######################################
+    ##################################################
     transformed_graph = substitute(graph, fw_impl.get_substitutions_pre_statistics_collection(quant_config))
-    if quant_config.block_collapsing:
+    if quant_config.linear_collapsing:
         transformed_graph = linear_collapsing_substitute(transformed_graph, fw_impl.get_linear_collapsing_substitution())
+    if quant_config.residual_collapsing:
         transformed_graph = substitute(transformed_graph, fw_impl.get_residual_collapsing_substitution())
 
     if tb_w is not None:
