@@ -415,3 +415,13 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=256)
 
+
+class MixedPrecisionTotalKPISearchTest(MixedPrecisionActivationBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test, 0)
+
+    def get_kpi(self):
+        return KPI(np.inf, np.inf, total_memory=(2544000 + 1211800) * 4 / 8)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
+        pass
