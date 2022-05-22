@@ -25,9 +25,8 @@ from model_compression_toolkit.common.constants import BITS_TO_BYTES
 
 def weights_size_kpi(mp_cfg: List[int], graph: Graph, fw_info: FrameworkInfo) -> np.ndarray:
     """
-    Computes a KPIs vector with the respective weights' memory size for each weigh configurable node,
+    Computes a KPIs vector with the respective weights' memory size for each weight configurable node,
     according to the given mixed-precision configuration.
-    Note that the configuration includes an index for each configurable node! (not just weights configurable).
 
     Args:
         mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
@@ -62,7 +61,6 @@ def activation_output_size_kpi(mp_cfg: List[int], graph: Graph, fw_info: Framewo
     """
     Computes a KPIs vector with the respective output memory size for each activation configurable node,
     according to the given mixed-precision configuration.
-    Note that the configuration includes an index for each configurable node! (not just activation configurable).
 
     Args:
         mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
@@ -91,8 +89,53 @@ def activation_output_size_kpi(mp_cfg: List[int], graph: Graph, fw_info: Framewo
     return np.array(activation_memory)
 
 
+def total_weights_activation_kpi(mp_cfg: List[int], graph: Graph, fw_info: FrameworkInfo) -> np.ndarray:
+    """
+    TODO: documentation
+    Computes a KPIs vector with the respective output memory size for each activation configurable node,
+    according to the given mixed-precision configuration.
+
+    Args:
+        mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
+        graph: Graph object.
+        fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize)
+            (not used in this method).
+
+    Returns: A vector of node's weights memory sizes.
+    Note that the vector is not necessarily of the same length as the given config.
+
+    """
+    weights_activation_memory = []
+
+    # Go over all nodes that should be taken into consideration when computing the weights or
+    # activation KPI (all configurable nodes).
+    mp_nodes = graph.get_configurable_sorted_nodes_names()
+    for node_idx, n in enumerate(graph.get_configurable_sorted_nodes()):
+        node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
+        node_weights_nbits = node_qc.weights_quantization_cfg.weights_n_bits
+        node_activation_nbits = node_qc.activation_quantization_cfg.activation_n_bits
+
+        # Compute node's weights memory (if no weights to quantize then set to 0)
+        node_num_weights_params = 0
+        for attr in fw_info.get_kernel_op_attributes(n.type):
+            if attr is not None:
+                node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
+        node_weights_memory_in_bytes = node_num_weights_params * node_weights_nbits / BITS_TO_BYTES
+
+        # Compute node's activation memory (if node's activation are not being quantized then set to 0)
+        node_activation_memory_in_bytes = 0
+        if n.is_activation_quantization_enabled():
+            node_output_size = n.get_total_output_params()
+            node_activation_memory_in_bytes = node_output_size * node_activation_nbits / BITS_TO_BYTES
+
+        weights_activation_memory.append(np.array([node_weights_memory_in_bytes, node_activation_memory_in_bytes]))
+
+    return np.array(weights_activation_memory)
+
+
 class MpKpiMetric(Enum):
     """
+    TODO: documentation
     Defines kpi computation functions that can be used to compute KPI for a given target for a given mp config.
     The enum values can be used to call a function on a set of arguments.
 
@@ -104,6 +147,7 @@ class MpKpiMetric(Enum):
 
     WEIGHTS_SIZE = partial(weights_size_kpi)
     ACTIVATION_OUTPUT_SIZE = partial(activation_output_size_kpi)
+    TOTAL_WEIGHTS_ACTIVATION_SIZE = partial(total_weights_activation_kpi)
 
     def __call__(self, *args):
         return self.value(*args)

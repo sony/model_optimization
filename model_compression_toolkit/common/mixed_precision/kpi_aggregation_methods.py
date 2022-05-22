@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 from enum import Enum
 from functools import partial
 from typing import List, Any
@@ -49,6 +50,30 @@ def max_kpi(kpi_vector: np.ndarray) -> List[float]:
     return [kpi for kpi in kpi_vector]
 
 
+def total_kpi(kpi_vector: np.ndarray) -> List[float]:
+    """
+    TODO: documentation
+        Also = assuming we get here a vector of tuples (weights, activation)
+    Aggregates KPIs vector to allow max constraint in the linear programming problem formalization.
+    In order to do so, we need to define a separate constraint on each value in the KPI vector,
+    to be bounded by the target KPI.
+
+    Args:
+        kpi_vector: A vector with nodes' KPI values.
+
+    Returns: A list with the vector's values, to be used to define max constraint
+    in the linear programming problem formalization.
+
+    """
+    weights_kpi = [kpi[0] for kpi in kpi_vector]
+    total_kpis = []
+    for _, activation_kpi in kpi_vector:
+        combined = copy.deepcopy(weights_kpi)
+        combined.append(activation_kpi)
+        total_kpis.append(lpSum(combined))
+    return total_kpis
+
+
 class MpKpiAggregation(Enum):
     """
     Defines kpi aggregation functions that can be used to compute final KPI metric.
@@ -61,6 +86,7 @@ class MpKpiAggregation(Enum):
     """
     SUM = partial(sum_kpi)
     MAX = partial(max_kpi)
+    TOTAL = partial(total_kpi)
 
     def __call__(self, *args):
         return self.value(*args)
