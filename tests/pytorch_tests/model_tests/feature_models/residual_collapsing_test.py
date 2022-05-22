@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from abc import ABC
 import torch
 import torch.nn as nn
 import numpy as np
@@ -25,10 +24,10 @@ from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 tp = mct.target_platform
 
-class BaseResidualCollapsingTest(BasePytorchFeatureNetworkTest, ABC):
+class BaseResidualCollapsingTest(BasePytorchFeatureNetworkTest):
 
     def __init__(self, unit_test):
-        super().__init__(unit_test=unit_test, input_shape=(16,32,32))
+        super().__init__(unit_test=unit_test, input_shape=(3,16,16))
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 32,
@@ -58,7 +57,7 @@ class ResidualCollapsingTest1(BaseResidualCollapsingTest):
     class ResidualCollapsingNet(nn.Module):
         def __init__(self):
             super().__init__()
-            self.conv1 = nn.Conv2d(16, 16, kernel_size=(3,3), padding='same')
+            self.conv1 = nn.Conv2d(3, 3, kernel_size=(3,3), padding='same')
             self.relu = nn.ReLU()
 
         def forward(self, x):
@@ -77,9 +76,9 @@ class ResidualCollapsingTest2(BaseResidualCollapsingTest):
     class ResidualCollapsingNet(nn.Module):
         def __init__(self):
             super().__init__()
-            self.conv1 = nn.Conv2d(16, 16, kernel_size=(3,4), padding='same')
-            self.conv2 = nn.Conv2d(16, 16, kernel_size=(2,2), padding='same')
-            self.conv3 = nn.Conv2d(16, 16, kernel_size=(1,3), padding='same', bias=False)
+            self.conv1 = nn.Conv2d(3, 3, kernel_size=(3,4), padding='same')
+            self.conv2 = nn.Conv2d(3, 3, kernel_size=(2,2), padding='same')
+            self.conv3 = nn.Conv2d(3, 3, kernel_size=(1,3), padding='same', bias=False)
             self.relu = nn.ReLU()
 
         def forward(self, x):

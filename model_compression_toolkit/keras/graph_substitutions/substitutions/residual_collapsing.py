@@ -39,8 +39,8 @@ def residual_collapsing_node_matchers() -> Tuple[NodeOperationMatcher, NodeOpera
 def residual_collapsing_fn(first_node: BaseNode,
                            kernel_str: str) -> np.ndarray:
     """
-    # Collapsing residual addition into
-    # Inspired by https://arxiv.org/pdf/2103.09404.pdf - Algorithm2
+    Collapsing residual addition into
+    Inspired by https://arxiv.org/pdf/2103.09404.pdf - Algorithm2
     Args:
         first_node: First layer node to collapse into.
         kernel_str: The framework specific attribute name of the convolution layer's weight/kernel.

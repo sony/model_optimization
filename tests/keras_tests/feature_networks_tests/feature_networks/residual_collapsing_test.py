@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-from abc import ABC
 import model_compression_toolkit as mct
 import tensorflow as tf
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
@@ -27,10 +25,10 @@ layers = keras.layers
 tp = mct.target_platform
 
 
-class BaseResidualCollapsingTest(BaseKerasFeatureNetworkTest, ABC):
+class BaseResidualCollapsingTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test):
-        super(BaseResidualCollapsingTest, self).__init__(unit_test=unit_test, input_shape=(32,32,16))
+        super(BaseResidualCollapsingTest, self).__init__(unit_test=unit_test, input_shape=(16,16,3))
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 32,
@@ -59,7 +57,7 @@ class ResidualCollapsingTest1(BaseResidualCollapsingTest):
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(filters=16, kernel_size=(3, 3), padding='same', bias_initializer='glorot_uniform')(inputs)
+        x = layers.Conv2D(filters=3, kernel_size=(3, 3), padding='same', bias_initializer='glorot_uniform')(inputs)
         y = layers.Add()([x, inputs])
         y = layers.ReLU()(y)
         return tf.keras.models.Model(inputs=inputs, outputs=y)
@@ -71,12 +69,12 @@ class ResidualCollapsingTest2(BaseResidualCollapsingTest):
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(filters=16, kernel_size=(3, 4), padding='same', bias_initializer='glorot_uniform')(inputs)
+        x = layers.Conv2D(filters=3, kernel_size=(3, 4), padding='same', bias_initializer='glorot_uniform')(inputs)
         x1 = layers.Add()([x, inputs])
-        x2 = layers.Conv2D(filters=16, kernel_size=(2, 2), padding='same', bias_initializer='glorot_uniform')(x1)
+        x2 = layers.Conv2D(filters=3, kernel_size=(2, 2), padding='same', bias_initializer='glorot_uniform')(x1)
         x3 = layers.Add()([x2, x1])
         x3 = layers.ReLU()(x3)
-        x4 = layers.Conv2D(filters=16, kernel_size=(1, 3), padding='same')(x3)
+        x4 = layers.Conv2D(filters=3, kernel_size=(1, 3), padding='same')(x3)
         y = layers.Add()([x3, x4])
         y = layers.ReLU()(y)
         return tf.keras.models.Model(inputs=inputs, outputs=y)
