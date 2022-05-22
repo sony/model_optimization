@@ -46,7 +46,7 @@ from model_compression_toolkit.keras.reader.reader import model_reader
 from model_compression_toolkit.common.collectors.statistics_collector_generator import create_stats_collector_for_node
 import model_compression_toolkit.keras.constants as keras_constants
 from model_compression_toolkit.keras.tf_tensor_numpy import tf_tensor_to_numpy, to_tf_tensor
-from model_compression_toolkit.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
+
 
 class KerasImplementation(FrameworkImplementation):
     """

@@ -19,7 +19,7 @@ from model_compression_toolkit.common.graph.base_node import BaseNode
 from model_compression_toolkit.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.common.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
 
-def filter_fusing_patterns(fusing_patterns: List[List[Any]], node: BaseNode, idx: int = 0):
+def filter_fusing_patterns(fusing_patterns: List[List[Any]], node: BaseNode, idx: int = 0) -> List[List[Any]]:
     """
     Update relevant fusing patterns object if layer number 'idx' inside the fusion matches the node
     Args:
@@ -52,14 +52,12 @@ def mark_fusing_activation(nodes: List[BaseNode]):
 
 def fusion(graph: Graph, tpc: TargetPlatformCapabilities) -> Graph:
     """
-    There are cases (layers fusion) we do not need to quantize a layer's output since there is an
-    activation layer that follows it. Thus, in these cases we set the node's attribute
-    that indicates whether the output should be quantized to False.
-    tpc (TargetPlatformCapabilities) holds the fusing information.
-    This function searches and marks activation for no quantization if fusion is found.
+    Fusing defines a list of operators that should be combined and treated as a single operator,
+    hence no quantization is applied between them when they appear in the graph.
+    This function search and disable quantization for such patterns.
     Args:
         graph: Graph we apply the fusion on.
-        tpc: TargetPlatformCapabilities object which holds fusion configuration
+        tpc: TargetPlatformCapabilities object that describes the desired inference target platform (includes fusing patterns MCT should handle).
     Returns:
         Graph after applying fusion activation marking.
     """
@@ -67,16 +65,17 @@ def fusion(graph: Graph, tpc: TargetPlatformCapabilities) -> Graph:
     if len(fusing_patterns) == 0:
         return graph
 
-    max_layers_fusing = 0
-    for fusing_pattern in fusing_patterns:
-        num_layers_fusing = len(fusing_pattern)
-        max_layers_fusing = max(num_layers_fusing, max_layers_fusing)
+    # Find max fusion
+    max_layers_fusing = 0 if len(fusing_patterns) == 0 else max([len(fusing_pattern) for fusing_pattern in fusing_patterns])
+
 
     # -------------------------------- #
     # Fusion algorithm
     # -------------------------------- #
+    fused_graph = copy.deepcopy(graph)
+
     # Travel along the graph to find layers for fusing
-    nodes = graph.get_topo_sorted_nodes()
+    nodes = fused_graph.get_topo_sorted_nodes()
     fused_nodes = []  # nodes that are participating in fusing
     for node in nodes:
         # Skip if already in fusing
@@ -91,7 +90,7 @@ def fusion(graph: Graph, tpc: TargetPlatformCapabilities) -> Graph:
             if len(patterns) == 0: # Give up if no more fusion pattern
                 break
             fusing_nodes.append(next_nodes[0])
-            next_nodes = graph.get_next_nodes(fusing_nodes[-1])
+            next_nodes = fused_graph.get_next_nodes(fusing_nodes[-1])
             if len(next_nodes) != 1:  # Give up if node has more than one connection (not supported for fusion)
                 break
 
@@ -100,6 +99,6 @@ def fusion(graph: Graph, tpc: TargetPlatformCapabilities) -> Graph:
         # New fusion: mark all nodes in the fusion except last one
         if len(fusing_nodes) > 1:
             mark_fusing_activation(fusing_nodes[:-1])
-            graph.user_info.add_fusion(fusing_nodes)
+            fused_graph.user_info.add_fusion(fusing_nodes)
 
-    return graph
+    return fused_graph

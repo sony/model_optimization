@@ -15,18 +15,19 @@
 from abc import ABC
 import torch
 import torch.nn as nn
-from torch.nn import Conv2d, ReLU, Tanh, SiLU, Sigmoid, Linear
+from torch.nn import Conv2d, ReLU, Tanh, SiLU, Sigmoid, Linear, Hardtanh
 from torch.nn.functional import relu, relu6
 import model_compression_toolkit as mct
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from model_compression_toolkit.tpc_models.default_tp_model import get_op_quantization_configs
+from model_compression_toolkit.common.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
 
 tp = mct.target_platform
 
-class BaseLayerFusingTest(BasePytorchFeatureNetworkTest, ABC):
+class BaseLayerFusingTest(BasePytorchFeatureNetworkTest):
 
     def __init__(self, unit_test):
-        super().__init__(unit_test=unit_test, input_shape=(16, 32, 32))
+        super().__init__(unit_test=unit_test, input_shape=(3, 16, 16))
         self.expected_fusions = []
 
     def get_type(self, fusion):
@@ -69,8 +70,8 @@ class LayerFusingTest1(BaseLayerFusingTest):
     class LayerFusingNetTest(nn.Module):
         def __init__(self):
             super().__init__()
-            self.conv1 = nn.Conv2d(16, 32, kernel_size=(3,3))
-            self.conv2 = nn.Conv2d(32, 64, kernel_size=(1,1))
+            self.conv1 = nn.Conv2d(3, 16, kernel_size=(3,3))
+            self.conv2 = nn.Conv2d(16, 32, kernel_size=(1,1))
             self.relu = nn.ReLU()
 
         def forward(self, x):
@@ -86,7 +87,7 @@ class LayerFusingTest1(BaseLayerFusingTest):
 class LayerFusingTest2(BaseLayerFusingTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_fusions = [[Conv2d, Tanh], [Conv2d, ReLU], [Conv2d, Sigmoid], [Conv2d, SiLU]]
+        self.expected_fusions = [[Conv2d, Hardtanh], [Conv2d, ReLU], [Conv2d, Sigmoid], [Conv2d, SiLU]]
 
     def get_tpc(self):
         generated_tp, mixed_precision_configuration_options = super().get_tpc()
@@ -99,19 +100,19 @@ class LayerFusingTest2(BaseLayerFusingTest):
         pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp, name='layer_fusing_test')
         with pytorch_tpc:
             tp.OperationsSetToLayers("Conv", [Conv2d])
-            tp.OperationsSetToLayers("AnyAct", [ReLU,relu6,relu,SiLU,Sigmoid,Tanh])
+            tp.OperationsSetToLayers("AnyAct", [ReLU,relu6,relu,SiLU,Sigmoid,LayerFilterParams(Hardtanh, min_val=0)])
         return pytorch_tpc
 
     class LayerFusingNetTest(nn.Module):
         def __init__(self):
             super().__init__()
-            self.conv1 = nn.Conv2d(16, 32, kernel_size=(3,3))
+            self.conv1 = nn.Conv2d(3, 32, kernel_size=(3,3))
             self.conv2 = nn.Conv2d(32, 32, kernel_size=(1,1))
             self.conv3 = nn.Conv2d(32, 32, kernel_size=(3,3))
             self.conv4 = nn.Conv2d(32, 64, kernel_size=(1,1))
             self.conv5 = nn.Conv2d(64, 64, kernel_size=(2,2))
             self.relu = nn.ReLU()
-            self.tanh = nn.Tanh()
+            self.tanh = Hardtanh(min_val=0)
             self.swish = nn.SiLU()
             self.sigmoid = nn.Sigmoid()
 
@@ -153,7 +154,7 @@ class LayerFusingTest3(BaseLayerFusingTest):
     class LayerFusingNetTest(nn.Module):
         def __init__(self):
             super().__init__()
-            self.conv1 = nn.Conv2d(16, 32, kernel_size=(3,3))
+            self.conv1 = nn.Conv2d(3, 32, kernel_size=(3,3))
             self.conv2 = nn.Conv2d(32, 32, kernel_size=(1,1))
             self.conv3 = nn.Conv2d(32, 32, kernel_size=(3,3))
             self.conv4 = nn.Conv2d(32, 64, kernel_size=(1,1))
@@ -211,16 +212,16 @@ class LayerFusingTest4(BaseLayerFusingTest):
     class LayerFusingNetTest(nn.Module):
         def __init__(self):
             super().__init__()
-            self.conv1 = nn.Conv2d(16, 16, kernel_size=(3,3), padding='same')
-            self.conv2 = nn.Conv2d(16, 16, kernel_size=(1,1), padding='same')
-            self.conv3 = nn.Conv2d(16, 16, kernel_size=(3,3), padding='same')
-            self.conv4 = nn.Conv2d(16, 16, kernel_size=(1,1), padding='same')
-            self.conv5 = nn.Conv2d(16, 16, kernel_size=(3,3), padding='same')
-            self.conv6 = nn.Conv2d(16, 16, kernel_size=(1,1), padding='same')
+            self.conv1 = nn.Conv2d(3, 3, kernel_size=(3,3), padding='same')
+            self.conv2 = nn.Conv2d(3, 3, kernel_size=(1,1), padding='same')
+            self.conv3 = nn.Conv2d(3, 3, kernel_size=(3,3), padding='same')
+            self.conv4 = nn.Conv2d(3, 3, kernel_size=(1,1), padding='same')
+            self.conv5 = nn.Conv2d(3, 3, kernel_size=(3,3), padding='same')
+            self.conv6 = nn.Conv2d(3, 3, kernel_size=(1,1), padding='same')
             self.relu = nn.ReLU()
             self.swish = nn.SiLU()
             self.flatten = nn.Flatten()
-            self.dense1 = nn.Linear(16384, out_features=16)
+            self.dense1 = nn.Linear(768, out_features=16)
             self.dense2 = nn.Linear(16, out_features=16)
 
         def forward(self, inputs):

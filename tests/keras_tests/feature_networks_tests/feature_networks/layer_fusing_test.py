@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from abc import ABC
 import tensorflow as tf
 from model_compression_toolkit.tpc_models.default_tp_model import get_op_quantization_configs
 import model_compression_toolkit as mct
@@ -28,10 +27,10 @@ activations = keras.activations
 tp = mct.target_platform
 
 
-class BaseLayerFusingTest(BaseKerasFeatureNetworkTest, ABC):
+class BaseLayerFusingTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test):
-        super(BaseLayerFusingTest, self).__init__(unit_test=unit_test, input_shape=(32, 32, 16))
+        super(BaseLayerFusingTest, self).__init__(unit_test=unit_test, input_shape=(16, 16, 3))
         self.expected_fusions = []
 
     def get_type(self, fusion):
@@ -75,8 +74,8 @@ class LayerFusingTest1(BaseLayerFusingTest):
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(filters=32, kernel_size=(3, 3))(inputs)
-        y = layers.Conv2D(filters=32, kernel_size=(1, 1), activation='relu')(x)
+        x = layers.Conv2D(filters=16, kernel_size=(3, 3))(inputs)
+        y = layers.Conv2D(filters=16, kernel_size=(1, 1), activation='relu')(x)
         return tf.keras.models.Model(inputs=inputs, outputs=y)
 
 
@@ -110,20 +109,20 @@ class LayerFusingTest2(BaseLayerFusingTest):
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(filters=32, kernel_size=(3, 3))(inputs)
-        x = layers.Conv2D(filters=32, kernel_size=(1, 1), activation='tanh')(x)
-        x = layers.Conv2D(filters=32, kernel_size=(3, 3))(x)
+        x = layers.Conv2D(filters=16, kernel_size=(3, 3))(inputs)
+        x = layers.Conv2D(filters=16, kernel_size=(1, 1), activation='tanh')(x)
+        x = layers.Conv2D(filters=16, kernel_size=(3, 3))(x)
         x = layers.ReLU()(x)
-        x = layers.Conv2D(filters=32, kernel_size=(1, 1))(x)
+        x = layers.Conv2D(filters=16, kernel_size=(1, 1))(x)
         x = activations.sigmoid(x)
-        y = layers.Conv2D(filters=32, kernel_size=(1, 1), activation='swish')(x)
+        y = layers.Conv2D(filters=16, kernel_size=(1, 1), activation='swish')(x)
         return tf.keras.models.Model(inputs=inputs, outputs=y)
 
 
 class LayerFusingTest3(BaseLayerFusingTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_fusions = [[Conv2D, ReLU]]
+        self.expected_fusions = [[Conv2D, Activation]]
 
     def get_tpc(self):
         generated_tp, mixed_precision_configuration_options = super().get_tpc()
@@ -143,13 +142,12 @@ class LayerFusingTest3(BaseLayerFusingTest):
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(filters=32, kernel_size=(3, 3))(inputs)
-        x = layers.Conv2D(filters=32, kernel_size=(1, 1), activation='tanh')(x)
-        x = layers.Conv2D(filters=32, kernel_size=(3, 3))(x)
-        x = layers.ReLU()(x)
-        x = layers.Conv2D(filters=32, kernel_size=(1, 1))(x)
+        x = layers.Conv2D(filters=16, kernel_size=(3, 3))(inputs)
+        x = layers.Conv2D(filters=16, kernel_size=(1, 1), activation='tanh')(x)
+        x = layers.Conv2D(filters=16, kernel_size=(3, 3), activation='relu')(x)
+        x = layers.Conv2D(filters=16, kernel_size=(1, 1))(x)
         x = activations.sigmoid(x)
-        y = layers.Conv2D(filters=32, kernel_size=(1, 1), activation='swish')(x)
+        y = layers.Conv2D(filters=16, kernel_size=(1, 1), activation='swish')(x)
         return tf.keras.models.Model(inputs=inputs, outputs=y)
 
 
@@ -187,12 +185,12 @@ class LayerFusingTest4(BaseLayerFusingTest):
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(filters=16, kernel_size=(1, 1), padding='same', activation='swish')(inputs)
+        x = layers.Conv2D(filters=3, kernel_size=(1, 1), padding='same', activation='swish')(inputs)
         x1 = layers.Add()([x, inputs])
-        x2 = layers.Conv2D(filters=16, kernel_size=(2, 2), padding='same', activation='swish')(x1)
+        x2 = layers.Conv2D(filters=3, kernel_size=(2, 2), padding='same', activation='swish')(x1)
         x2 = layers.Add()([x1, x2])
-        x2 = layers.Conv2D(filters=16, kernel_size=(1, 1), padding='same', activation='relu')(x2)
-        x3 = layers.Conv2D(filters=16, kernel_size=(2, 2), padding='same')(x2)
+        x2 = layers.Conv2D(filters=3, kernel_size=(1, 1), padding='same', activation='relu')(x2)
+        x3 = layers.Conv2D(filters=3, kernel_size=(2, 2), padding='same')(x2)
         x3 = layers.ReLU()(x3)
         x3 = layers.Add()([x2, x3])
         x3 = layers.Flatten()(x3)

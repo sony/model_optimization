@@ -27,7 +27,6 @@ from model_compression_toolkit.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.common.user_info import UserInformation
-from model_compression_toolkit.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
 class FrameworkImplementation(ABC):
     """
