@@ -28,6 +28,7 @@ from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUB
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
     SoftmaxFunctionNetTest
+from tests.pytorch_tests.model_tests.feature_models.multi_head_attention_test import MHALayerNetTest
 from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test import \
     ScaleEqualizationWithZeroPadNetTest, ScaleEqualizationNetTest, \
     ScaleEqualizationReluFuncNetTest, ScaleEqualizationReluFuncWithZeroPadNetTest, \
@@ -296,6 +297,19 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the activation Mixed Precision search with functional node.
         """
         MixedPercisionActivationSearch4BitFunctional(self).run_test()
+
+    def test_mha_layer_test(self):
+        """
+        This test checks the MultiHeadAttentionDecomposition feature.
+        """
+        num_heads = [3, 7, 5, 11]
+        q_seq_len, kv_seq_len = [8, 11, 4, 18], [13, 9, 2, 11]
+        qdim, kdim, vdim = [7, 23, 2, 4], [9, None, 7, None], [11, 17, 7, None]
+        for iter in range(len(num_heads)):
+            MHALayerNetTest(self, num_heads[iter], q_seq_len[iter], qdim[iter] * num_heads[iter],
+                            kv_seq_len[iter], kdim[iter], vdim[iter], bias=True).run_test()
+            MHALayerNetTest(self, num_heads[iter], q_seq_len[iter], qdim[iter] * num_heads[iter],
+                            kv_seq_len[iter], kdim[iter], vdim[iter], bias=False).run_test()
 
 
 if __name__ == '__main__':
