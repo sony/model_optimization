@@ -50,27 +50,23 @@ def max_kpi(kpi_vector: np.ndarray) -> List[float]:
     return [kpi for kpi in kpi_vector]
 
 
-def total_kpi(kpi_vector: np.ndarray) -> List[float]:
+def total_kpi(kpi_tensor: np.ndarray) -> List[float]:
     """
-    TODO: documentation
-        Also = assuming we get here a vector of tuples (weights, activation)
-    Aggregates KPIs vector to allow max constraint in the linear programming problem formalization.
-    In order to do so, we need to define a separate constraint on each value in the KPI vector,
-    to be bounded by the target KPI.
+    Aggregates KPIs vector to allow weights and activation total kpi constraint in the linear programming
+    problem formalization. In order to do so, we need to define a separate constraint on each activation value in
+    the KPI vector, combined with the sum weights kpi.
+    Note that the given kpi_tensor should contain weights and activation kpi values in each entry.
 
     Args:
-        kpi_vector: A vector with nodes' KPI values.
+        kpi_tensor: A tensor with nodes' KPI values for weights and activation.
 
-    Returns: A list with the vector's values, to be used to define max constraint
+    Returns: A list with lpSum objects, to be used to define total constraint
     in the linear programming problem formalization.
 
     """
-    weights_kpi = [kpi[0] for kpi in kpi_vector]
-    total_kpis = []
-    for _, activation_kpi in kpi_vector:
-        combined = copy.deepcopy(weights_kpi)
-        combined.append(activation_kpi)
-        total_kpis.append(lpSum(combined))
+    weights_kpi = lpSum([kpi[0] for kpi in kpi_tensor])
+    total_kpis = [weights_kpi + activation_kpi for _, activation_kpi in kpi_tensor]
+
     return total_kpis
 
 
@@ -82,6 +78,8 @@ class MpKpiAggregation(Enum):
      SUM - applies the sum_kpi function
 
      MAX - applies the max_kpi function
+
+     TOTAL - applies the total_kpi function
 
     """
     SUM = partial(sum_kpi)

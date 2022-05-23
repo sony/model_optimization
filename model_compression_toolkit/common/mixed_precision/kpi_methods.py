@@ -68,7 +68,7 @@ def activation_output_size_kpi(mp_cfg: List[int], graph: Graph, fw_info: Framewo
         fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize)
             (not used in this method).
 
-    Returns: A vector of node's weights memory sizes.
+    Returns: A vector of node's activation memory sizes.
     Note that the vector is not necessarily of the same length as the given config.
 
     """
@@ -91,8 +91,7 @@ def activation_output_size_kpi(mp_cfg: List[int], graph: Graph, fw_info: Framewo
 
 def total_weights_activation_kpi(mp_cfg: List[int], graph: Graph, fw_info: FrameworkInfo) -> np.ndarray:
     """
-    TODO: documentation
-    Computes a KPIs vector with the respective output memory size for each activation configurable node,
+    Computes KPIs tensor with the respective weights size and output memory size for each activation configurable node,
     according to the given mixed-precision configuration.
 
     Args:
@@ -101,7 +100,7 @@ def total_weights_activation_kpi(mp_cfg: List[int], graph: Graph, fw_info: Frame
         fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize)
             (not used in this method).
 
-    Returns: A vector of node's weights memory sizes.
+    Returns: A 2D tensor of nodes' weights memory sizes and activation output memory size.
     Note that the vector is not necessarily of the same length as the given config.
 
     """
@@ -109,7 +108,6 @@ def total_weights_activation_kpi(mp_cfg: List[int], graph: Graph, fw_info: Frame
 
     # Go over all nodes that should be taken into consideration when computing the weights or
     # activation KPI (all configurable nodes).
-    mp_nodes = graph.get_configurable_sorted_nodes_names()
     for node_idx, n in enumerate(graph.get_configurable_sorted_nodes()):
         node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
         node_weights_nbits = node_qc.weights_quantization_cfg.weights_n_bits
@@ -135,13 +133,14 @@ def total_weights_activation_kpi(mp_cfg: List[int], graph: Graph, fw_info: Frame
 
 class MpKpiMetric(Enum):
     """
-    TODO: documentation
     Defines kpi computation functions that can be used to compute KPI for a given target for a given mp config.
     The enum values can be used to call a function on a set of arguments.
 
      WEIGHTS_SIZE - applies the weights_size_kpi function
 
      ACTIVATION_OUTPUT_SIZE - applies the activation_output_size_kpi function
+
+     TOTAL_WEIGHTS_ACTIVATION_SIZE - applies the total_weights_activation_kpi function
 
     """
 

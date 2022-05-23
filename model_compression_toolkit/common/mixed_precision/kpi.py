@@ -19,7 +19,6 @@ import numpy as np
 
 class KPITarget(Enum):
     """
-    TODO: documentation
     Targets for which we define KPIs metrics for mixed-precision search.
     For each target that we care to consider in a mixed-precision search, there should be defined a set of
     kpi computation function, kpi aggregation function, and kpi target (within a KPI object).
@@ -29,6 +28,8 @@ class KPITarget(Enum):
     WEIGHTS - KPI metric for weights quantization
 
     ACTIVATION - KPI metric for activation quantization
+
+    TOTAL - KPI metric for total weights and activation.
 
     """
 
@@ -51,7 +52,7 @@ class KPI:
         Args:
             weights_memory: Memory of a model's weights in bytes. Note that this includes only coefficients that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value, while the bias will not).
             activation_memory: Memory of a model's activation in bytes, according to the given activation kpi metric.
-            TODO: documentation
+            total_memory: The sum of model's activation and weights memory in bytes, according to the given total kpi metric.
         """
         self.weights_memory = weights_memory
         self.activation_memory = activation_memory
