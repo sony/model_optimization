@@ -103,3 +103,18 @@ the models, and the cosine similarity at the output of different layers are comp
 
 .. image:: ../../images/tbwriter/tbwriter_cosinesimilarity.png
   :scale: 50%
+
+|
+
+========================================
+Mixed-precision Configuration Bit-width
+========================================
+
+When running mixed-precision quantization, it is possible to present the chosen bit-width configuration for
+each configurable layer of the model using tensorboard.
+The figures can be viewed under 'Images'.
+For instance, when running mixed-precision quantization on MobileNetV2 for both weights and activation quantization
+we would expect to get the following figures (the first one displaying the activation configuration
+and the second one the weights configuration):
+
+.. image:: ../../images/mp_bitwidth_config.png

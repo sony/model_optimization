@@ -15,7 +15,7 @@
 from collections import namedtuple
 
 from copy import copy, deepcopy
-from typing import List
+from typing import List, Tuple
 
 import networkx as nx
 import numpy as np
@@ -627,3 +627,23 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
 
         return [lst[0] for lst in max_cfg_candidates]
+
+    def get_final_weights_config(self) -> List[Tuple[BaseNode, int]]:
+        """
+        Gets the final number of bits for quantization of each weights' configurable layer.
+
+        Returns: A list of pairs of (node type, node's weights quantization bitwidth).
+
+        """
+        sorted_conf_weights = self.get_sorted_weights_configurable_nodes()
+        return [(n, n.final_weights_quantization_cfg.weights_n_bits) for n in sorted_conf_weights]
+
+    def get_final_activation_config(self) -> List[Tuple[BaseNode, int]]:
+        """
+        Gets the final number of bits for quantization of each activation configurable layer.
+
+        Returns: A list of pairs of (node type, nod's activation quantization bitwidth).
+
+        """
+        sorted_conf_activation = self.get_sorted_activation_configurable_nodes()
+        return [(n, n.final_activation_quantization_cfg.activation_n_bits) for n in sorted_conf_activation]
