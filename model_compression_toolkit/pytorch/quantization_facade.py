@@ -99,16 +99,13 @@ if importlib.util.find_spec("torch") is not None:
 
         return post_training_quantization(in_module,
                                           representative_data_gen,
-                                          n_iter,
                                           CoreConfig(n_iter, quant_config,
                                                      debug_config=DebugConfig(analyze_similarity=analyze_similarity,
                                                                               network_editor=network_editor)),
                                           fw_info,
                                           PytorchImplementation(),
                                           target_platform_capabilities,
-                                          network_editor,
-                                          gptq_config,
-                                          analyze_similarity)
+                                          gptq_config)
 
 
     def pytorch_post_training_quantization_mixed_precision(in_model: Module,
@@ -207,14 +204,11 @@ if importlib.util.find_spec("torch") is not None:
 
         return post_training_quantization(in_model,
                                           representative_data_gen,
-                                          n_iter,
                                           core_config,
                                           fw_info,
                                           PytorchImplementation(),
                                           target_platform_capabilities,
-                                          network_editor,
                                           gptq_config,
-                                          analyze_similarity,
                                           target_kpi)
 
 
@@ -280,13 +274,10 @@ if importlib.util.find_spec("torch") is not None:
 
         return post_training_quantization(in_module,
                                           representative_data_gen,
-                                          core_config.n_iter,
                                           core_config,
                                           fw_info,
                                           PytorchImplementation(),
                                           target_platform_capabilities,
-                                          core_config.debug_config.network_editor,
-                                          analyze_similarity=core_config.debug_config.analyze_similarity,
                                           target_kpi=target_kpi)
 
 
@@ -354,14 +345,11 @@ if importlib.util.find_spec("torch") is not None:
 
         return post_training_quantization(in_module,
                                           representative_data_gen,
-                                          core_config.n_iter,
                                           core_config,
                                           fw_info,
                                           PytorchImplementation(),
                                           target_platform_capabilities,
-                                          core_config.debug_config.network_editor,
                                           gptq_config,
-                                          analyze_similarity=core_config.debug_config.analyze_similarity,
                                           target_kpi=target_kpi)
 
 

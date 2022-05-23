@@ -154,14 +154,11 @@ if importlib.util.find_spec("tensorflow") is not None\
 
         return post_training_quantization(in_model,
                                           representative_data_gen,
-                                          n_iter,
                                           core_config,
                                           fw_info,
                                           KerasImplementation(),
                                           target_platform_capabilities,
-                                          network_editor,
-                                          gptq_config,
-                                          analyze_similarity)
+                                          gptq_config)
 
 
     def keras_post_training_quantization_mixed_precision(in_model: Model,
@@ -264,14 +261,11 @@ if importlib.util.find_spec("tensorflow") is not None\
 
         return post_training_quantization(in_model,
                                           representative_data_gen,
-                                          n_iter,
                                           core_config,
                                           fw_info,
                                           KerasImplementation(),
                                           target_platform_capabilities,
-                                          network_editor,
                                           gptq_config,
-                                          analyze_similarity,
                                           target_kpi)
 
 
@@ -369,14 +363,11 @@ if importlib.util.find_spec("tensorflow") is not None\
 
         return post_training_quantization(in_model=in_model,
                                           representative_data_gen=representative_data_gen,
-                                          n_iter=core_config.n_iter,
                                           core_config=core_config,
                                           fw_info=fw_info,
                                           fw_impl=KerasImplementation(),
                                           tpc=target_platform_capabilities,
-                                          network_editor=core_config.debug_config.network_editor,
                                           gptq_config=gptq_config,
-                                          analyze_similarity=core_config.debug_config.analyze_similarity,
                                           target_kpi=target_kpi)
 
 
@@ -472,13 +463,10 @@ if importlib.util.find_spec("tensorflow") is not None\
 
         return post_training_quantization(in_model=in_model,
                                           representative_data_gen=representative_data_gen,
-                                          n_iter=core_config.n_iter,
                                           core_config=core_config,
                                           fw_info=fw_info,
                                           fw_impl=KerasImplementation(),
                                           tpc=target_platform_capabilities,
-                                          network_editor=core_config.debug_config.network_editor,
-                                          analyze_similarity=core_config.debug_config.analyze_similarity,
                                           target_kpi=target_kpi)
 
 else:
