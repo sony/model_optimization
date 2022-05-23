@@ -24,60 +24,13 @@ import model_compression_toolkit.common.post_training_quantization as ptq
 
 def compute_kpi_data(in_model: Any,
                      representative_data_gen: Callable,
-                     quant_config: MixedPrecisionQuantizationConfig,
+                     core_config: CoreConfig,
                      tpc: TargetPlatformCapabilities,
                      fw_info: FrameworkInfo,
                      fw_impl: FrameworkImplementation) -> KPI:
     """
     Compute KPI information that can be relevant for defining target KPI for mixed precision search.
-    Calculates maximal activation tensor and sum of weights' parameters.
-
-    Args:
-        in_model:  Model to build graph from (the model that intended to be quantized).
-        representative_data_gen: Dataset used for calibration.
-        quant_config: MixedPrecisionQuantizationConfig containing parameters of how the model should be quantized.
-        tpc: TargetPlatformCapabilities object that models the inference target platform and
-                                              the attached framework operator's information.
-        fw_info: Information needed for quantization about the specific framework.
-        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-
-    Returns: A KPI object with the results.
-
-    """
-
-    graph = ptq.read_model_to_graph(in_model,
-                                    representative_data_gen,
-                                    tpc,
-                                    fw_info,
-                                    fw_impl)
-
-    transformed_graph = ptq.get_finalized_graph(graph,
-                                                quant_config,
-                                                fw_info,
-                                                tb_w=None,
-                                                fw_impl=fw_impl,
-                                                mixed_precision_enable=isinstance(quant_config, MixedPrecisionQuantizationConfig))
-
-    # Compute parameters sum
-    weights_params = compute_configurable_weights_params(graph=transformed_graph, fw_info=fw_info)
-    total_weights_params = 0 if len(weights_params) == 0 else sum(weights_params)
-
-    # Compute max activation tensor
-    activation_output_sizes = compute_activation_output_sizes(graph=transformed_graph)
-    max_activation_tensor_size = 0 if len(activation_output_sizes) == 0 else max(activation_output_sizes)
-
-    return KPI(weights_memory=total_weights_params, activation_memory=max_activation_tensor_size)
-
-
-def compute_kpi_data_experimental(in_model: Any,
-                                  representative_data_gen: Callable,
-                                  core_config: CoreConfig,
-                                  tpc: TargetPlatformCapabilities,
-                                  fw_info: FrameworkInfo,
-                                  fw_impl: FrameworkImplementation) -> KPI:
-    """
-    Compute KPI information that can be relevant for defining target KPI for mixed precision search.
-    Calculates maximal activation tensor and sum of weights' parameters.
+    Calculates maximal activation tensor, sum of weights' parameters and total (sum of both).
 
     Args:
         in_model:  Model to build graph from (the model that intended to be quantized).
@@ -113,7 +66,12 @@ def compute_kpi_data_experimental(in_model: Any,
     activation_output_sizes = compute_activation_output_sizes(graph=transformed_graph)
     max_activation_tensor_size = 0 if len(activation_output_sizes) == 0 else max(activation_output_sizes)
 
-    return KPI(weights_memory=total_weights_params, activation_memory=max_activation_tensor_size)
+    # Compute total kpi - parameters sum + max activation tensor
+    total_size = total_weights_params + max_activation_tensor_size
+
+    return KPI(weights_memory=total_weights_params,
+               activation_memory=max_activation_tensor_size,
+               total_memory=total_size)
 
 
 def compute_configurable_weights_params(graph: Graph, fw_info: FrameworkInfo) -> np.ndarray:

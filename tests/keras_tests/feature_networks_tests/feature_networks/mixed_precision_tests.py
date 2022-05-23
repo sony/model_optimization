@@ -458,23 +458,23 @@ class MixedPrecisionMultipleKPIsTightSearchTest(MixedPrecisionActivationBaseTest
                                  unique_tensor_values=16)
 
 
-class MixedPrecisionMultipleKPIsLooseSearchTest(MixedPrecisionActivationBaseTest):
+class MixedPrecisionReducedTotalKPISearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, activation_layers_idx=[3, 6])
 
     def get_kpi(self):
         weights = 2544000 * 4 / 8
         activation = 1211800 * 4 / 8
-        return KPI(weights * 1.5, activation * 1.5, total_memory=(weights + activation) * 2)
+        return KPI(weights, activation, total_memory=(weights + activation) / 2)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
         # verify chosen activation bitwidth config
         activation_bits = [quantized_model.layers[i].inbound_nodes[0].call_kwargs.get('num_bits') for i in
                            self.activation_layers_idx]
-        self.unit_test.assertTrue((activation_bits == [4, 4]))
+        self.unit_test.assertTrue((activation_bits == [2, 2]))
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[2, 4],
                                  weights_layers_channels_size=[30, 50],
                                  activation_layers_idx=self.activation_layers_idx,
-                                 unique_tensor_values=256)
+                                 unique_tensor_values=16)
