@@ -18,8 +18,7 @@ import copy
 from model_compression_toolkit import common
 
 def linear_collapsing_substitute(graph: common.Graph,
-                                 linear_collapsing_substitution: common.BaseSubstitution,
-                                 block_collapsing: bool = True) -> common.Graph:
+                                 linear_collapsing_substitution: common.BaseSubstitution) -> common.Graph:
     """
     Apply a list of linear collapsing substitutions on a graph.
     We run on the graph and find matches. For each valid match we do substitution.
@@ -29,14 +28,9 @@ def linear_collapsing_substitute(graph: common.Graph,
     Args:
         graph: Graph to transform.
         linear_collapsing_substitution: substitution to apply on the graph.
-        block_collapsing: Whether to collapse block one to another in the input network
     Returns:
         Transformed graph after applying all linear collapsing substitutions.
     """
-    # Skip collapsing by configuration
-    if not block_collapsing:
-        return graph
-
     graph = copy.deepcopy(graph)
     matched_nodes = graph.filter(linear_collapsing_substitution.matcher_instance)
     matched_nodes_list = []

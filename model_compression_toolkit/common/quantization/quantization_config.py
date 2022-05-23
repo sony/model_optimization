@@ -58,7 +58,8 @@ class QuantizationConfig:
                  z_threshold: float = math.inf,
                  min_threshold: float = MIN_THRESHOLD,
                  l_p_value: int = 2,
-                 block_collapsing: bool = True,
+                 linear_collapsing: bool = True,
+                 residual_collapsing: bool = True,
                  shift_negative_ratio: float = 0.05,
                  shift_negative_threshold_recalculation: bool = False):
         """
@@ -108,7 +109,8 @@ class QuantizationConfig:
         self.shift_negative_activation_correction = shift_negative_activation_correction
         self.z_threshold = z_threshold
         self.l_p_value = l_p_value
-        self.block_collapsing = block_collapsing
+        self.linear_collapsing = linear_collapsing
+        self.residual_collapsing = residual_collapsing
         self.shift_negative_ratio = shift_negative_ratio
         self.shift_negative_threshold_recalculation = shift_negative_threshold_recalculation
 

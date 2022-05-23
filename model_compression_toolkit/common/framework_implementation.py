@@ -224,6 +224,14 @@ class FrameworkImplementation(ABC):
                              f'framework\'s get_linear_collapsing_substitution method.')
 
     @abstractmethod
+    def get_residual_collapsing_substitution(self) -> List[common.BaseSubstitution]:
+        """
+        Returns: A list of the framework substitutions used for residual collapsing
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_residual_collapsing_substitution method.')
+
+    @abstractmethod
     def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:
         """
 
