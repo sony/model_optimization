@@ -60,5 +60,5 @@ class KPI:
 
     def __repr__(self):
         return f"Weights_memory: {self.weights_memory}, " \
-               f"Activation_memory: {self.activation_memory}" \
+               f"Activation_memory: {self.activation_memory}, " \
                f"Total_memory: {self.total_memory}"
