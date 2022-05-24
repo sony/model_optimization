@@ -22,6 +22,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_d
     BiasCorrectionDepthwiseTest
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.edit_error_method_test import \
     EditActivationErrorMethod
+from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.change_qc_attr_test import \
+    ChangeFinalWeightQCAttrTest, ChangeFinalActivationQCAttrTest
 from tests.keras_tests.feature_networks_tests.feature_networks.softmax_shift_test import SoftmaxShiftTest
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import MixedPercisionBaseTest, \
     MixedPercisionSearchTest, MixedPercisionManuallyConfiguredTest, MixedPercisionDepthwiseTest, \
@@ -95,6 +97,10 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_edit_error_method(self):
         EditActivationErrorMethod(self).run_test()
+
+    def test_change_qc_attr(self):
+        ChangeFinalWeightQCAttrTest(self).run_test()
+        ChangeFinalActivationQCAttrTest(self).run_test()
 
     def test_bias_correction_dw(self):
         BiasCorrectionDepthwiseTest(self).run_test()

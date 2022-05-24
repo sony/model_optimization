@@ -129,7 +129,6 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
                                               keras_impl)
         tg = set_bit_widths(core_config.mixed_precision_enable,
                             tg,
-                            fw_info,
                             None)
 
         quantized_model, user_info = _quantize_fixed_bit_widths_graph(False,
