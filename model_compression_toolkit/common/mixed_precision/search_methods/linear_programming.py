@@ -242,7 +242,8 @@ def _build_layer_to_metrics_mapping(node_to_bitwidth_indices: Dict[int, List[int
 
             # Build a distance matrix using the function we got from the framework implementation.
             layer_to_metrics_mapping[node_idx][bitwidth_idx] = compute_metric_fn(mp_model_configuration,
-                                                                                 [node_idx])
+                                                                                 [node_idx],
+                                                                                 max_config)
 
     return layer_to_metrics_mapping
 
