@@ -169,6 +169,13 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
                                         indicators_matrix=indicators_matrix,
                                         lp_problem=lp_problem)
 
+        if not np.isinf(target_kpi.total_memory):
+            _add_set_of_kpi_constraints(search_manager=search_manager,
+                                        target=KPITarget.TOTAL,
+                                        target_memory=target_kpi.total_memory,
+                                        indicators_matrix=indicators_matrix,
+                                        lp_problem=lp_problem)
+
     else:
         raise Exception("Can't run mixed-precision search with given target_kpi=None."
                         "Please provide a valid target_kpi.")
@@ -183,13 +190,16 @@ def _add_set_of_kpi_constraints(search_manager: MixedPrecisionSearchManager,
 
     kpi_matrix = search_manager.compute_kpi_matrix(target)
     indicated_kpi_matrix = np.matmul(kpi_matrix, indicators_matrix)
+    # Need to re-organize the tensor such that the configurations' axis will be second,
+    # and all metric values' axis will come afterword
+    indicated_kpi_matrix = np.moveaxis(indicated_kpi_matrix, source=len(indicated_kpi_matrix.shape) - 1, destination=1)
 
     # In order to get the result KPI according to a chosen set of indicators, we sum each row in the result matrix.
     # Each row represents the KPI values for a specific KPI metric, such that only elements corresponding
     # to a configuration which implied by the set of indicators will have some positive value different than 0
     # (and will contribute to the total KPI).
     kpi_sum_vector = np.array([
-        sum([indicated_kpi_matrix[i][j] for j in range(indicated_kpi_matrix.shape[1])]) +
+        np.sum(indicated_kpi_matrix[i], axis=0) +  # sum of metric values over all configurations in a row
         search_manager.min_kpi[target][i] for i in range(indicated_kpi_matrix.shape[0])])
 
     # search_manager.compute_kpi_functions contains a pair of kpi_metric and kpi_aggregation for each kpi target

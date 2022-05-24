@@ -140,8 +140,12 @@ class MixedPrecisionSearchManager:
                 kpi_matrix.append(np.asarray(candidate_kpis))
 
         # We need to transpose the calculated kpi matrix to allow later multiplication with
-        # the indicators' diagonal matrix
-        return np.transpose(np.array(kpi_matrix))
+        # the indicators' diagonal matrix.
+        # We only move the first axis (num of configurations) to be last,
+        # the remaining axes include the metric specific nodes (rows dimension of the new tensor)
+        # and the kpi metric values (if they are non-scalars)
+        np_kpi_matrix = np.array(kpi_matrix)
+        return np.moveaxis(np_kpi_matrix, source=0, destination=len(np_kpi_matrix.shape) - 1)
 
     def compute_candidate_relative_kpis(self,
                                         conf_node_idx: int,
