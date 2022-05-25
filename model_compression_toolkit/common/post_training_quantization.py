@@ -191,7 +191,7 @@ def get_finalized_graph(initial_graph: Graph,
 
     Args:
         initial_graph (Graph): Graph to apply the changes to.
-        tpc (TargetPlatformCapabilities): TargetPlatformCapabilities object which holds target specific capabilities
+        tpc (TargetPlatformCapabilities): TargetPlatformCapabilities object that describes the desired inference target platform (includes fusing patterns MCT should handle).
         quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be
         quantized.
         fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,

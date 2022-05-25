@@ -418,7 +418,7 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
 
 class MixedPrecisionTotalKPISearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[3, 6])
+        super().__init__(unit_test, activation_layers_idx=[3, 5])
 
     def get_kpi(self):
         return KPI(np.inf, np.inf, total_memory=(2544000 + 1211800) * 4 / 8)
@@ -438,7 +438,7 @@ class MixedPrecisionTotalKPISearchTest(MixedPrecisionActivationBaseTest):
 
 class MixedPrecisionMultipleKPIsTightSearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[3, 6])
+        super().__init__(unit_test, activation_layers_idx=[3, 5])
 
     def get_kpi(self):
         weights = 2544000 * 4 / 8
@@ -460,7 +460,7 @@ class MixedPrecisionMultipleKPIsTightSearchTest(MixedPrecisionActivationBaseTest
 
 class MixedPrecisionReducedTotalKPISearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[3, 6])
+        super().__init__(unit_test, activation_layers_idx=[3, 5])
 
     def get_kpi(self):
         weights = 2544000 * 4 / 8
