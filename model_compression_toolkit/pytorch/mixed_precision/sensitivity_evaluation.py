@@ -74,6 +74,8 @@ def get_sensitivity_evaluation(graph: Graph,
         Args:
             mp_model_configuration: Bitwidth configuration to use to configure the MP model.
             node_idx: A list of nodes' indices to configure (instead of using the entire mp_model_configuration).
+            baseline_mp_configuration: A mixed-precision configuration to set the model back to after modifying it to
+                compute the metric for the given configuration.
         Returns:
             The sensitivity metric of the MP model for a given configuration.
         """
