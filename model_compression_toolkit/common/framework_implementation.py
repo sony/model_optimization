@@ -28,7 +28,6 @@ from model_compression_toolkit.common.quantization.quantization_config import Qu
 from model_compression_toolkit.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.common.user_info import UserInformation
 
-
 class FrameworkImplementation(ABC):
     """
     An abstract class with abstract methods that should be implemented when supporting a new
@@ -162,17 +161,6 @@ class FrameworkImplementation(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s attach_sc_to_node method.')
-
-    @abstractmethod
-    def get_substitutions_marking(self) -> List[common.BaseSubstitution]:
-        """
-
-        Returns: A list of the framework substitutions used for marking
-        points we fuse.
-
-        """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s get_substitutions_marking method.')
 
     @abstractmethod
     def get_substitutions_channel_equalization(self,

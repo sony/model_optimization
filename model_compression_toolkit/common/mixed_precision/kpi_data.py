@@ -52,6 +52,7 @@ def compute_kpi_data(in_model: Any,
                                     fw_impl)
 
     transformed_graph = ptq.get_finalized_graph(graph,
+                                                tpc,
                                                 core_config.quantization_config,
                                                 fw_info,
                                                 tb_w=None,
