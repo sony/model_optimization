@@ -63,9 +63,9 @@ def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List[BaseNode]) -> 
     return False
 
 
-def mark_fusing_activation(nodes: List[BaseNode]):
+def disable_nodes_activation_quantization(nodes: List[BaseNode]):
     """
-    Mark activation for non-quantization needed due to fusion
+    Disable activation for non-quantization needed due to fusion
     Args:
         nodes: nodes to update their activation quantization
     """
@@ -121,7 +121,7 @@ def fusion(graph: Graph, tpc: TargetPlatformCapabilities) -> Graph:
         # New fusion: mark all nodes in the fusion except last one
         if is_valid_fusion(fusing_patterns, fusing_nodes):
             fused_nodes.extend(fusing_nodes)
-            mark_fusing_activation(fusing_nodes[:-1])
+            disable_nodes_activation_quantization(fusing_nodes[:-1])
             fused_graph.user_info.add_fusion(fusing_nodes)
 
     return fused_graph
