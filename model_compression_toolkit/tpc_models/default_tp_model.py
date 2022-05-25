@@ -136,12 +136,14 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         swish = tpc.OperatorsSet("Swish")
         sigmoid = tpc.OperatorsSet("Sigmoid")
         tanh = tpc.OperatorsSet("Tanh")
+        hardswish = tpc.OperatorsSet("HardSwish")
+        hardsigmoid = tpc.OperatorsSet("HardSigmoid")
 
         # Combine multiple operators into a single operator to avoid quantization between
         # them. To do this we define fusing patterns using the OperatorsSets that were created.
         # To group multiple sets with regard to fusing, an OperatorSetConcat can be created
-        activations_after_conv_to_fuse = tpc.OperatorSetConcat(any_relu, swish, prelu, sigmoid, tanh)
-        activations_after_fc_to_fuse = tpc.OperatorSetConcat(any_relu, swish, sigmoid)
+        activations_after_conv_to_fuse = tpc.OperatorSetConcat(any_relu, swish, prelu, sigmoid, tanh, hardswish)
+        activations_after_fc_to_fuse = tpc.OperatorSetConcat(any_relu, swish, sigmoid, hardsigmoid)
 
         tpc.Fusing([conv, activations_after_conv_to_fuse])
         tpc.Fusing([fc, activations_after_fc_to_fuse])
