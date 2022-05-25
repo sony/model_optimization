@@ -56,6 +56,8 @@ if __name__ == '__main__':
     # Set the path to the folder of images to load and use for the representative dataset.
     # Notice that the folder have to contain at least one image.
     folder = '/path/to/images/folder'
+    folder = '/data/projects/swat/datasets_src/cifar10_images'
+
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
@@ -78,7 +80,7 @@ if __name__ == '__main__':
     # The model determines the quantization methods to use during the MCT optimization process.
     # Here, for example, we use the default target platform model that is attached to a Tensorflow
     # layers representation.
-    target_platform_cap = mct.get_target_platform_capabilities('tensorflow', 'default')
+    target_platform_cap = mct.get_target_platform_capabilities('tensorflow', 'default', '1.1')
 
     # Create a model and quantize it using the representative_data_gen as the calibration images.
     # Set the number of calibration iterations to 10.

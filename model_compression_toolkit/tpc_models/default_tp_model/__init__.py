@@ -1,0 +1,2 @@
+from model_compression_toolkit.tpc_models.default_tp_model.get_default_tp_model import get_default_tp_model
+

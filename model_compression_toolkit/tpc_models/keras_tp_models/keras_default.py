@@ -16,6 +16,7 @@
 import tensorflow as tf
 
 from model_compression_toolkit.common.target_platform import TargetPlatformModel
+from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
@@ -24,14 +25,16 @@ else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
     Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D
 
+
 from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
 from tensorflow.keras.activations import hard_sigmoid
 import model_compression_toolkit as mct
+
 tpc = mct.target_platform
 
 
-def get_default_keras_tpc():
-    default_tp_model = get_default_tp_model()
+def get_default_keras_tpc(version: str):
+    default_tp_model = get_default_tp_model(version=version)
     return generate_keras_default_tpc(name='default_keras_tpc',
                                       tp_model=default_tp_model)
 
