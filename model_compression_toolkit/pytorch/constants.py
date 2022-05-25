@@ -47,6 +47,7 @@ HARDTANH_MAX_VAL = 'max_val'
 
 # # Layers variables names:
 KERNEL = 'weight'
+KERNEL_SIZE = 'kernel_size'
 BIAS = 'bias'
 GAMMA = 'weight'
 BETA = 'bias'
@@ -54,6 +55,9 @@ IN_CHANNELS = 'in_channels'
 MOVING_MEAN = 'running_mean'
 MOVING_VARIANCE = 'running_var'
 EPSILON = 'eps'
+DIM = 'dim'
+IN_CHANNELS = 'in_channels'
+OUT_CHANNELS = 'out_channels'
 
 # torch devices
 CUDA = 'cuda'
@@ -66,3 +70,21 @@ RELU_POT_BOUND = 8.0
 DEFAULT_TP_MODEL = 'default'
 TFLITE_TP_MODEL = 'tflite'
 QNNPACK_TP_MODEL = 'qnnpack'
+
+# MultiHeadAttention layer attributes:
+EMBED_DIM = 'embed_dim'
+NUM_HEADS = 'num_heads'
+DROPOUT = 'dropout'
+ADD_ZERO_ATTN = 'add_zero_attn'
+KEY_DIM = "kdim"
+VALUE_DIM = 'vdim'
+BATCH_FIRST = 'batch_first'
+OUT_PROJ_WEIGHT = 'out_proj.weight'
+OUT_PROJ_BIAS = 'out_proj.bias'
+V_PROJ_WEIGHT = 'v_proj_weight'
+K_PROJ_WEIGHT = 'k_proj_weight'
+Q_PROJ_WEIGHT = 'q_proj_weight'
+IN_PROJ_WEIGHT = 'in_proj_weight'
+IN_PROJ_BIAS = 'in_proj_bias'
+BIAS_K = 'bias_k'
+BIAS_V = 'bias_v'

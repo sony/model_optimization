@@ -50,6 +50,8 @@ import model_compression_toolkit.pytorch.constants as pytorch_constants
 from model_compression_toolkit.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.softmax_shift import \
     pytorch_softmax_shift
+from model_compression_toolkit.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
+    import MultiHeadAttentionDecomposition
 
 
 class PytorchImplementation(FrameworkImplementation):
@@ -196,7 +198,8 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: A list of the framework substitutions used before we collect the prior information.
 
         """
-        return [ReshapeWithStaticShapes()]
+        return [ReshapeWithStaticShapes(),
+                MultiHeadAttentionDecomposition()]
 
     def get_substitutions_pre_statistics_collection(self,
                                                     quant_config: QuantizationConfig
