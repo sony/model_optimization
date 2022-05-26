@@ -111,6 +111,7 @@ if importlib.util.find_spec("tensorflow") is not None\
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to. `Default Keras TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/tpc_models/keras_tp_models/keras_default.py>`_
 
         Returns:
+
             A KPI object with total weights parameters sum and max activation tensor.
 
         Examples:

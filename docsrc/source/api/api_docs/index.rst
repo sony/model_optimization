@@ -7,6 +7,8 @@
 API Docs
 =========
 
+.. note:: This API is deprecated. Please switch to the :ref:`new API<ug-experimental_api_docs>`
+
 **Init module for MCT API.**
 
 .. literalinclude:: ../../../../tutorials/example_keras_mobilenet.py
@@ -37,7 +39,6 @@ Classes
 - :ref:`GradientPTQConfig<ug-GradientPTQConfig>`: Class to configure GradientPTQC options for gradient based post training quantization.
 - :ref:`FolderImageLoader<ug-FolderImageLoader>`: Class to use an images directory as a representative dataset.
 - :ref:`FrameworkInfo<ug-FrameworkInfo>`: Class to wrap framework information to be used by MCT when optimizing models.
-
 
 Indices and tables
 ==================
