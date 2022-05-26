@@ -39,9 +39,33 @@ def filter_fusing_patterns(fusing_patterns: List[List[Any]], node: BaseNode, idx
     return valid_fusing_patterns
 
 
-def mark_fusing_activation(nodes: List[BaseNode]):
+def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List[BaseNode]) -> bool:
     """
-    Mark activation for non-quantization needed due to fusion
+    Check if the fusion is valid: exist in fusing_patterns
+    Args:
+        fusing_patterns: supported fusings
+        nodes: nodes which are participating in fusion
+    Returns:
+        whether the fusion in valid
+    """
+    fusion_depth = len(nodes)
+    if fusion_depth <= 1:
+        return False
+    for fusing_pattern in fusing_patterns:
+        if fusion_depth != len(fusing_pattern):
+            continue
+        counter = 0
+        for i,layer in enumerate(fusing_pattern):
+            if (type(layer) == LayerFilterParams and layer.match(nodes[i])) or layer == nodes[i].type:
+                counter += 1
+        if counter == fusion_depth:
+            return True
+    return False
+
+
+def disable_nodes_activation_quantization(nodes: List[BaseNode]):
+    """
+    Disable activation for non-quantization needed due to fusion
     Args:
         nodes: nodes to update their activation quantization
     """
@@ -94,11 +118,10 @@ def fusion(graph: Graph, tpc: TargetPlatformCapabilities) -> Graph:
             if len(next_nodes) != 1:  # Give up if node has more than one connection (not supported for fusion)
                 break
 
-        fused_nodes.extend(fusing_nodes)
-
         # New fusion: mark all nodes in the fusion except last one
-        if len(fusing_nodes) > 1:
-            mark_fusing_activation(fusing_nodes[:-1])
+        if is_valid_fusion(fusing_patterns, fusing_nodes):
+            fused_nodes.extend(fusing_nodes)
+            disable_nodes_activation_quantization(fusing_nodes[:-1])
             fused_graph.user_info.add_fusion(fusing_nodes)
 
     return fused_graph

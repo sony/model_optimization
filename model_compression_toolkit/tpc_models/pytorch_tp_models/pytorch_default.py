@@ -19,8 +19,8 @@ import torch
 from torch import add, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, chunk
 from torch.nn import Conv2d, ConvTranspose2d, Linear, BatchNorm2d
 from torch.nn import Dropout, Flatten, Hardtanh
-from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh
-from torch.nn.functional import relu, relu6, prelu, silu, hardtanh
+from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, Hardsigmoid
+from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, hardsigmoid
 
 from model_compression_toolkit.common.target_platform import TargetPlatformModel
 from model_compression_toolkit.common.target_platform.targetplatform2framework import \
@@ -89,5 +89,11 @@ def generate_pytorch_tpc(name: str, tp_model: TargetPlatformModel):
 
         OperationsSetToLayers("Tanh", [Tanh,
                                        tanh])
+
+        OperationsSetToLayers("HardSwish", [Hardswish,
+                                            hardswish])
+
+        OperationsSetToLayers("HardSigmoid", [Hardsigmoid,
+                                              hardsigmoid])
 
     return pytorch_tpc

@@ -25,7 +25,7 @@ else:
     Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D
 
 from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
-
+from tensorflow.keras.activations import hard_sigmoid
 import model_compression_toolkit as mct
 tpc = mct.target_platform
 
@@ -92,4 +92,8 @@ def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
 
         tpc.OperationsSetToLayers("Tanh", [tf.nn.tanh,
                                            tpc.LayerFilterParams(Activation, activation="tanh")])
+
+
+        tpc.OperationsSetToLayers("HardSigmoid", [hard_sigmoid])
+
     return keras_tpc

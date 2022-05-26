@@ -72,7 +72,7 @@ class OperationsToLayers:
                          op: OperatorsSetBase) -> Any:
         """
         Get list of layers that are associated with an OperatorsSet object.
-        If op is not in OperationsToLayers - return None.
+        If op is not in OperationsToLayers - return an empty list.
 
         Args:
             op: OperatorsSetBase object to get its layers.
@@ -89,7 +89,7 @@ class OperationsToLayers:
                 layers.extend(self.get_layers_by_op(o))
             return layers
         Logger.warning(f'{op.name} is not in model.')
-        return None
+        return []
 
     def __add__(self,
                 op_set_to_layers: OperationsSetToLayers):
