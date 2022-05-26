@@ -17,9 +17,12 @@
 from typing import Callable, Any
 
 import numpy as np
+from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
+    get_activation_quantization_params_fn, get_weights_quantization_params_fn
 
+from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig, \
+    QuantizationErrorMethod
 from model_compression_toolkit.common.target_platform import OpQuantizationConfig
-from model_compression_toolkit.common.quantization.quantization_config import QuantizationConfig
 
 
 ##########################################
@@ -45,7 +48,7 @@ class BaseNodeNodeQuantizationConfig(object):
         """
 
         if hasattr(self, attr_name):
-            self.__dict__[attr_name] = attr_value
+            setattr(self, attr_name, attr_value)
 
     def __repr__(self) -> str:
         """
@@ -79,8 +82,8 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.activation_quantization_fn = activation_quantization_fn
         self.activation_quantization_params_fn = activation_quantization_params_fn
         self.activation_quantization_params = {}
-        self.activation_error_method = qc.activation_error_method
         self.activation_quantization_method = op_cfg.activation_quantization_method
+        self.activation_error_method = qc.activation_error_method
         self.activation_n_bits = op_cfg.activation_n_bits
         self.relu_bound_to_power_of_2 = qc.relu_bound_to_power_of_2
         self.enable_activation_quantization = op_cfg.enable_activation_quantization
@@ -110,6 +113,26 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
         if fake_quant is None:
             raise Exception('Layer is meant to be quantized but fake_quant function is None')
         return fake_quant(tensors)
+
+    @property
+    def activation_error_method(self) -> QuantizationErrorMethod:
+        """
+        activation_error_method getter.
+        """
+        return self._activation_error_method
+
+    @activation_error_method.setter
+    def activation_error_method(self, value: QuantizationErrorMethod):
+        """
+        activation_error_method setter.
+
+        Args:
+            value: New activation_error_method to set to the node activation configuration.
+
+        """
+        self._activation_error_method = value
+        self.activation_quantization_params_fn = get_activation_quantization_params_fn(activation_quantization_method=self.activation_quantization_method,
+                                                                                       activation_error_method=value)
 
     def set_activation_quantization_fn(self, activation_quantization_fn: Callable):
         """
@@ -227,14 +250,36 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.weights_quantization_params_fn = weights_quantization_params_fn
         self.weights_channels_axis = weights_channels_axis
         self.weights_quantization_params = {}
-        self.weights_error_method = qc.weights_error_method
         self.weights_quantization_method = op_cfg.weights_quantization_method
+        self.weights_error_method = qc.weights_error_method
         self.weights_n_bits = op_cfg.weights_n_bits
         self.weights_bias_correction = qc.weights_bias_correction
         self.weights_per_channel_threshold = qc.weights_per_channel_threshold
         self.enable_weights_quantization = op_cfg.enable_weights_quantization
         self.min_threshold = qc.min_threshold
         self.l_p_value = qc.l_p_value
+
+
+    @property
+    def weights_error_method(self) -> QuantizationErrorMethod:
+        """
+        weights_error_method getter.
+        """
+        return self._weights_error_method
+
+    @weights_error_method.setter
+    def weights_error_method(self, value: QuantizationErrorMethod):
+        """
+        weights_error_method setter.
+
+        Args:
+            value: New weights_error_method to set to the node weights configuration.
+
+        """
+        self._weights_error_method = value
+        self.weights_quantization_params_fn = get_weights_quantization_params_fn(weights_quantization_method=self.weights_quantization_method,
+                                                                                 weights_error_method=value)
+
 
     def set_weights_quantization_fn(self, weights_quantization_fn: Callable):
         """

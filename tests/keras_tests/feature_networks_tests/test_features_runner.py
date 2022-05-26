@@ -20,6 +20,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_b
     ReLUBoundToPOTNetTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_dw_test import \
     BiasCorrectionDepthwiseTest
+from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.edit_error_method_test import \
+    EditActivationErrorMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.softmax_shift_test import SoftmaxShiftTest
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import MixedPercisionBaseTest, \
     MixedPercisionSearchTest, MixedPercisionManuallyConfiguredTest, MixedPercisionDepthwiseTest, \
@@ -90,6 +92,9 @@ layers = tf.keras.layers
 
 
 class FeatureNetworkTest(unittest.TestCase):
+
+    def test_edit_error_method(self):
+        EditActivationErrorMethod(self).run_test()
 
     def test_bias_correction_dw(self):
         BiasCorrectionDepthwiseTest(self).run_test()
