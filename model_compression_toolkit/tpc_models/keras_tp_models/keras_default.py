@@ -93,7 +93,6 @@ def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
         tpc.OperationsSetToLayers("Tanh", [tf.nn.tanh,
                                            tpc.LayerFilterParams(Activation, activation="tanh")])
 
-        tpc.OperationsSetToLayers("HardSwish", [])
 
         tpc.OperationsSetToLayers("HardSigmoid", [hard_sigmoid])
 
