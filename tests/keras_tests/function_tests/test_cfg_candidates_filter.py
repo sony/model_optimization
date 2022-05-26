@@ -26,7 +26,7 @@ from model_compression_toolkit.common.quantization.set_node_quantization_config 
     set_quantization_configuration_to_graph
 from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.keras.keras_implementation import KerasImplementation
-from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
+from model_compression_toolkit.common.fusion.layer_fusing import fusion
 from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
 from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
 
@@ -67,7 +67,7 @@ def prepare_graph(in_model, base_config, bitwidth_candidates):
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=DEFAULT_MIXEDPRECISION_CONFIG,
                                                     mixed_precision_enable=True)
-    graph = substitute(graph, keras_impl.get_substitutions_marking())
+    graph = fusion(graph, tpc)
 
     return graph
 
