@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-
+from model_compression_toolkit.common.quantization.debug_config import DebugConfig
 from model_compression_toolkit.common.gptq.gptq_config import GradientPTQConfig
 from model_compression_toolkit.common.quantization import quantization_config
 from model_compression_toolkit.common.mixed_precision import mixed_precision_quantization_config
