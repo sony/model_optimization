@@ -98,7 +98,7 @@ Please visit the MCT API documentation here
     :titlesonly:
     :maxdepth: 1
 
-    API Documentation<../api/api_docs/index>
+    API Documentation<../api/experimental_api_docs/index>
 
 Technical Constraints
 =========================

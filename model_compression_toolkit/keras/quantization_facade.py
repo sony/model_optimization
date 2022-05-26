@@ -67,7 +67,8 @@ if importlib.util.find_spec("tensorflow") is not None\
         returns:
             a GradientPTQConfig object to use when fine-tuning the quantized model using gptq.
 
-        examples:
+        Examples:
+
             Create a GradientPTQConfig to run for 5 iteration:
 
             >>> gptq_conf = get_keras_gptq_config(n_iter=5)
@@ -127,6 +128,7 @@ if importlib.util.find_spec("tensorflow") is not None\
             A quantized model and information the user may need to handle the quantized model.
 
         Examples:
+
             Import a Keras model:
 
             >>> from tensorflow.keras.applications.mobilenet import MobileNet
@@ -207,6 +209,7 @@ if importlib.util.find_spec("tensorflow") is not None\
              A quantized model and information the user may need to handle the quantized model.
 
          Examples:
+
              Import MCT:
 
              >>> import model_compression_toolkit as mct
@@ -284,7 +287,7 @@ if importlib.util.find_spec("tensorflow") is not None\
         being collected for each layer's output (and input, depends on the quantization configuration).
         For each possible bit width (per layer) a threshold is then being calculated using the collected
         statistics. Then, if given a mixed precision config in the core_config, using an ILP solver we find
-        a mixed-precision configuration, and set a bit width for each layer. The model is then quantized
+        a mixed-precision configuration, and set a bit-width for each layer. The model is then quantized
         (both coefficients and activations by default).
         In order to limit the maximal model's size, a target KPI need to be passed after weights_memory
         is set (in bytes).
@@ -297,17 +300,16 @@ if importlib.util.find_spec("tensorflow") is not None\
             representative_data_gen (Callable): Dataset used for calibration.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
-            core_config (CoreConfig): Configuration object containing parameters of how the model should be
-            quantized, including mixed precision parameters.
-            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
-            kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info
-            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the
-            Keras model according to.
+            core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
+            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/keras/default_framework_info.py>`_
+            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
         Returns:
+
             A quantized model and information the user may need to handle the quantized model.
 
         Examples:
+
             Import a Keras model:
 
             >>> from tensorflow.keras.applications.mobilenet import MobileNet
@@ -318,16 +320,15 @@ if importlib.util.find_spec("tensorflow") is not None\
             >>> import numpy as np
             >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
 
-
             Import mct:
 
             >>> import model_compression_toolkit as mct
 
-            Create a MCT core config, containing the quantization configuration:
+            Create an MCT core config, containing the quantization configuration:
 
             >>> config = mct.CoreConfig()
 
-            If mixed precision is desired, create a the MCT core config with a mixed-precision configuration, to quantize a model
+            If mixed precision is desired, create an MCT core config with a mixed-precision configuration, to quantize a model
             with different bitwidths for different layers.
             The candidates bitwidth for quantization should be defined in the target platform model:
 
@@ -394,20 +395,16 @@ if importlib.util.find_spec("tensorflow") is not None\
              in_model (Model): Keras model to quantize.
              representative_data_gen (Callable): Dataset used for calibration.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
-             core_config (CoreConfig): Configuration object containing parameters of how the model should be
-             quantized, including mixed precision parameters.
-             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
-             kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info
-             <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/keras
-             /default_framework_info.py#L100>`_
-             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the
-             Keras model according to.
-
+             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
+             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).  `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/keras/default_framework_info.py>`_
+             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
          Returns:
+
              A quantized model and information the user may need to handle the quantized model.
 
          Examples:
+
              Import MCT:
 
              >>> import model_compression_toolkit as mct
@@ -426,8 +423,7 @@ if importlib.util.find_spec("tensorflow") is not None\
 
              >>> config = mct.CoreConfig()
 
-             If mixed precision is desired, create a the MCT core config with a mixed-precision configuration, to quantize a model
-              with different bitwidths for different layers.
+             If mixed precision is desired, create a MCT core config with a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
              The candidates bitwidth for quantization should be defined in the target platform model:
 
              >>> config = mct.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
@@ -444,9 +440,7 @@ if importlib.util.find_spec("tensorflow") is not None\
 
              >>> quantized_model, quantization_info = mct.keras_post_training_quantization_experimental(model, repr_datagen, kpi, core_config=config)
 
-             For more configuration options, please take a look at our `API documentation
-             <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html
-             >`_.
+             For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 
          """
         KerasModelValidation(model=in_model,
