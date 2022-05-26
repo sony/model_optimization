@@ -14,7 +14,7 @@
 # ==============================================================================
 
 from typing import List
-
+from model_compression_toolkit.common.graph.base_graph import BaseNode
 
 class UserInformation(object):
     """
@@ -28,6 +28,7 @@ class UserInformation(object):
         self.input_scale = 1
         self.gptq_info_dict = dict()
         self.mixed_precision_cfg = None
+        self.fusions = []
 
     def set_input_scale(self, scale_value: float):
         """
@@ -42,3 +43,10 @@ class UserInformation(object):
     def set_mixed_precision_cfg(self, mp_cfg:List[int]):
         self.mixed_precision_cfg = mp_cfg
 
+    def add_fusion(self, fusing_nodes: List[BaseNode]):
+        """
+        Add fusion to fusion list
+        Args:
+            fusing_nodes: List of fused nodes
+        """
+        self.fusions.append(fusing_nodes)

@@ -37,7 +37,6 @@ from model_compression_toolkit.pytorch.graph_substitutions.substitutions.residua
     pytorch_residual_collapsing
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
-from model_compression_toolkit.pytorch.graph_substitutions.substitutions.mark_activation import MarkActivation
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.reshape_with_static_shapes import \
     ReshapeWithStaticShapes
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.scale_equalization import ScaleEqualization, \
@@ -51,6 +50,8 @@ import model_compression_toolkit.pytorch.constants as pytorch_constants
 from model_compression_toolkit.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from model_compression_toolkit.pytorch.graph_substitutions.substitutions.softmax_shift import \
     pytorch_softmax_shift
+from model_compression_toolkit.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
+    import MultiHeadAttentionDecomposition
 
 
 class PytorchImplementation(FrameworkImplementation):
@@ -172,13 +173,6 @@ class PytorchImplementation(FrameworkImplementation):
         return create_stats_collector_for_node(node,
                                                output_channel_index=output_channel_index)
 
-    def get_substitutions_marking(self) -> List[common.BaseSubstitution]:
-        """
-        Returns: A list of the framework substitutions used for marking
-        points we fuse.
-        """
-        return [MarkActivation()]
-
     def get_substitutions_channel_equalization(self,
                                                quant_config: QuantizationConfig,
                                                fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
@@ -204,7 +198,8 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: A list of the framework substitutions used before we collect the prior information.
 
         """
-        return [ReshapeWithStaticShapes()]
+        return [ReshapeWithStaticShapes(),
+                MultiHeadAttentionDecomposition()]
 
     def get_substitutions_pre_statistics_collection(self,
                                                     quant_config: QuantizationConfig

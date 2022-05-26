@@ -20,7 +20,7 @@ from model_compression_toolkit.common.constants import PYTORCH
 from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.framework_info import FrameworkInfo
-from model_compression_toolkit.common.mixed_precision.kpi_data import compute_kpi_data, compute_kpi_data_experimental
+from model_compression_toolkit.common.mixed_precision.kpi_data import compute_kpi_data
 from model_compression_toolkit.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig, DEFAULT_MIXEDPRECISION_CONFIG, MixedPrecisionQuantizationConfigV2
@@ -54,7 +54,7 @@ if importlib.util.find_spec("torch") is not None:
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to. `Default Keras TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/tpc_models/pytorch_tp_models/pytorch_default.py>`_
 
         Returns:
-            A KPI object with total weights parameters sum and max activation tensor.
+            A KPI object with total weights parameters sum, max activation tensor and total kpi.
 
         Examples:
 
@@ -81,9 +81,13 @@ if importlib.util.find_spec("torch") is not None:
 
         fw_impl = PytorchImplementation()
 
+        quantization_config, mp_config = quant_config.separate_configs()
+        core_config = CoreConfig(quantization_config=quantization_config,
+                                 mixed_precision_config=mp_config)
+
         return compute_kpi_data(in_model,
                                 representative_data_gen,
-                                quant_config,
+                                core_config,
                                 target_platform_capabilities,
                                 fw_info,
                                 fw_impl)
@@ -133,12 +137,12 @@ if importlib.util.find_spec("torch") is not None:
 
         fw_impl = PytorchImplementation()
 
-        return compute_kpi_data_experimental(in_model,
-                                             representative_data_gen,
-                                             core_config,
-                                             target_platform_capabilities,
-                                             fw_info,
-                                             fw_impl)
+        return compute_kpi_data(in_model,
+                                representative_data_gen,
+                                core_config,
+                                target_platform_capabilities,
+                                fw_info,
+                                fw_impl)
 
 else:
     # If torch is not installed,

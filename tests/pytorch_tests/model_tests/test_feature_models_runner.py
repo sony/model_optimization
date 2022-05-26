@@ -28,6 +28,7 @@ from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUB
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
     SoftmaxFunctionNetTest
+from tests.pytorch_tests.model_tests.feature_models.multi_head_attention_test import MHALayerNetTest
 from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test import \
     ScaleEqualizationWithZeroPadNetTest, ScaleEqualizationNetTest, \
     ScaleEqualizationReluFuncNetTest, ScaleEqualizationReluFuncWithZeroPadNetTest, \
@@ -46,7 +47,7 @@ from tests.pytorch_tests.model_tests.feature_models.reuse_layer_net_test import 
 from tests.pytorch_tests.model_tests.feature_models.shift_negative_activation_test import ShiftNegaviteActivationNetTest
 from tests.pytorch_tests.model_tests.feature_models.split_concat_net_test import SplitConcatNetTest
 from tests.pytorch_tests.model_tests.feature_models.torch_tensor_attr_net_test import TorchTensorAttrNetTest
-
+from tests.pytorch_tests.model_tests.feature_models.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, LayerFusingTest4
 
 class FeatureModelsTestRunner(unittest.TestCase):
 
@@ -225,6 +226,15 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         SplitConcatNetTest(self).run_test()
 
+    def test_layer_fusing(self):
+        """
+        This test checks layer fusing: skipping activation quantization for layers in the fusion
+        """
+        LayerFusingTest1(self).run_test()
+        LayerFusingTest2(self).run_test()
+        LayerFusingTest3(self).run_test()
+        LayerFusingTest4(self).run_test()
+
     def test_torch_tensor_attr_net(self):
         """
         This tests checks a model that has calls to torch.Tensor functions,
@@ -287,6 +297,19 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the activation Mixed Precision search with functional node.
         """
         MixedPercisionActivationSearch4BitFunctional(self).run_test()
+
+    def test_mha_layer_test(self):
+        """
+        This test checks the MultiHeadAttentionDecomposition feature.
+        """
+        num_heads = [3, 7, 5, 11]
+        q_seq_len, kv_seq_len = [8, 11, 4, 18], [13, 9, 2, 11]
+        qdim, kdim, vdim = [7, 23, 2, 4], [9, None, 7, None], [11, 17, 7, None]
+        for iter in range(len(num_heads)):
+            MHALayerNetTest(self, num_heads[iter], q_seq_len[iter], qdim[iter] * num_heads[iter],
+                            kv_seq_len[iter], kdim[iter], vdim[iter], bias=True).run_test()
+            MHALayerNetTest(self, num_heads[iter], q_seq_len[iter], qdim[iter] * num_heads[iter],
+                            kv_seq_len[iter], kdim[iter], vdim[iter], bias=False).run_test()
 
 
 if __name__ == '__main__':

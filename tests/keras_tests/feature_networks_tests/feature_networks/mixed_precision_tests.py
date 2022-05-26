@@ -120,7 +120,7 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
 
 class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[1, 3, 6])
+        super().__init__(unit_test, activation_layers_idx=[1, 3, 7])
 
     def get_kpi(self):
         # kpi is infinity -> should give best model - 8bits on all layers for both weights and activations
@@ -141,7 +141,7 @@ class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
 
 class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[3, 6])
+        super().__init__(unit_test, activation_layers_idx=[3, 5])
 
     def get_kpi(self):
         # kpi is for 4 bits on average
@@ -167,7 +167,7 @@ class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBase
 
 class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[3, 6])
+        super().__init__(unit_test, activation_layers_idx=[3, 5])
 
     def get_kpi(self):
         # kpi is for 2 bits on average
@@ -191,7 +191,7 @@ class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBase
 
 class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[1, 4])
+        super().__init__(unit_test, activation_layers_idx=[1, 5])
 
     def get_kpi(self):
         return KPI(np.inf, np.inf)
@@ -213,8 +213,8 @@ class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)
         cs = cosine_similarity(y, y_hat)
-        # quantifying both weights and activation so similarity is approximately within error range of 1e-4
-        self.unit_test.assertTrue(np.isclose(cs, 1, rtol=1e-4), msg=f'fail cosine similarity check:{cs}')
+        # quantifying both weights and activation so similarity is approximately within error range of 1e-3
+        self.unit_test.assertTrue(np.isclose(cs, 1, rtol=1e-3), msg=f'fail cosine similarity check:{cs}')
 
 
 class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest):
@@ -415,3 +415,66 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=256)
 
+
+class MixedPrecisionTotalKPISearchTest(MixedPrecisionActivationBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test, activation_layers_idx=[3, 5])
+
+    def get_kpi(self):
+        return KPI(np.inf, np.inf, total_memory=(2544000 + 1211800) * 4 / 8)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
+        # verify chosen activation bitwidth config
+        activation_bits = [quantized_model.layers[i].inbound_nodes[0].call_kwargs.get('num_bits') for i in
+                           self.activation_layers_idx]
+        self.unit_test.assertTrue((activation_bits == [4, 4]))
+
+        self.verify_quantization(quantized_model, input_x,
+                                 weights_layers_idx=[2, 4],
+                                 weights_layers_channels_size=[30, 50],
+                                 activation_layers_idx=self.activation_layers_idx,
+                                 unique_tensor_values=16)
+
+
+class MixedPrecisionMultipleKPIsTightSearchTest(MixedPrecisionActivationBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test, activation_layers_idx=[3, 5])
+
+    def get_kpi(self):
+        weights = 2544000 * 4 / 8
+        activation = 1211800 * 4 / 8
+        return KPI(weights, activation, total_memory=weights + activation)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
+        # verify chosen activation bitwidth config
+        activation_bits = [quantized_model.layers[i].inbound_nodes[0].call_kwargs.get('num_bits') for i in
+                           self.activation_layers_idx]
+        self.unit_test.assertTrue((activation_bits == [4, 4]))
+
+        self.verify_quantization(quantized_model, input_x,
+                                 weights_layers_idx=[2, 4],
+                                 weights_layers_channels_size=[30, 50],
+                                 activation_layers_idx=self.activation_layers_idx,
+                                 unique_tensor_values=16)
+
+
+class MixedPrecisionReducedTotalKPISearchTest(MixedPrecisionActivationBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test, activation_layers_idx=[3, 5])
+
+    def get_kpi(self):
+        weights = 2544000 * 4 / 8
+        activation = 1211800 * 4 / 8
+        return KPI(weights, activation, total_memory=(weights + activation) / 2)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
+        # verify chosen activation bitwidth config
+        activation_bits = [quantized_model.layers[i].inbound_nodes[0].call_kwargs.get('num_bits') for i in
+                           self.activation_layers_idx]
+        self.unit_test.assertTrue((activation_bits == [2, 2]))
+
+        self.verify_quantization(quantized_model, input_x,
+                                 weights_layers_idx=[2, 4],
+                                 weights_layers_channels_size=[30, 50],
+                                 activation_layers_idx=self.activation_layers_idx,
+                                 unique_tensor_values=16)

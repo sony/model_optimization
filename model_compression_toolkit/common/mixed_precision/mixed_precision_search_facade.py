@@ -42,7 +42,8 @@ search_methods = {
 # When adding a KPITarget that we want to consider in our mp search,
 # a matching pair of kpi computation function and a kpi aggregation function should be added to this dictionary
 kpi_functions_factory = {KPITarget.WEIGHTS: (MpKpiMetric.WEIGHTS_SIZE, MpKpiAggregation.SUM),
-                         KPITarget.ACTIVATION: (MpKpiMetric.ACTIVATION_OUTPUT_SIZE, MpKpiAggregation.MAX)}
+                         KPITarget.ACTIVATION: (MpKpiMetric.ACTIVATION_OUTPUT_SIZE, MpKpiAggregation.MAX),
+                         KPITarget.TOTAL: (MpKpiMetric.TOTAL_WEIGHTS_ACTIVATION_SIZE, MpKpiAggregation.TOTAL)}
 
 
 def search_bit_width(graph_to_search_cfg: Graph,

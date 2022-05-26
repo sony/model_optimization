@@ -82,7 +82,7 @@ class MixedPercisionActivationSearch8Bit(MixedPercisionActivationBaseTest):
 class MixedPercisionActivationSearch2Bit(MixedPercisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [2, 8, 2, 2]
+        self.expected_config = [2, 8, 8, 2]
 
     def get_kpi(self):
         return KPI(96, 768)
@@ -94,7 +94,7 @@ class MixedPercisionActivationSearch2Bit(MixedPercisionActivationBaseTest):
 class MixedPercisionActivationSearch4Bit(MixedPercisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [1, 4, 1, 1]
+        self.expected_config = [1, 4, 4, 1]
 
     def get_kpi(self):
         return KPI(192, 1536)
