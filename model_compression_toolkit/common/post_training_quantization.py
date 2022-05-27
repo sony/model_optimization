@@ -146,9 +146,7 @@ def post_training_quantization(in_model: Any,
 
     # Edit the graph again after finalizing the configurations.
     # This is since some actions regard the final configuration and should be edited.
-    tg = edit_network_graph(tg,
-                            fw_info,
-                            core_config.debug_config.network_editor)
+    edit_network_graph(tg, fw_info, core_config.debug_config.network_editor)
 
     # Retrive lists of tuples (node, node's final weights/activation bitwidth)
     weights_conf_nodes_bitwidth = tg.get_final_weights_config()
@@ -537,7 +535,7 @@ def _prepare_model_for_quantization(graph: Graph,
     # Notice that not all actions affect at this stage (for example, actions that edit the final configuration as
     # there are no final configurations at this stage of the optimization). For this reason we edit the graph
     # again at the end of the optimization process.
-    transformed_graph = edit_network_graph(transformed_graph, fw_info, core_config.debug_config.network_editor)
+    edit_network_graph(transformed_graph, fw_info, core_config.debug_config.network_editor)
 
     ######################################
     # Calculate quantization params

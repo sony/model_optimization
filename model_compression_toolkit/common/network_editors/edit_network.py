@@ -21,7 +21,7 @@ from model_compression_toolkit.common.network_editors import EditRule
 
 
 
-def edit_network_graph(graph_to_edit: Graph,
+def edit_network_graph(graph: Graph,
                        fw_info: FrameworkInfo,
                        network_editor: List[EditRule]):
     """
@@ -37,9 +37,9 @@ def edit_network_graph(graph_to_edit: Graph,
         The graph after it has been applied the edit rules from the network editor list.
 
     """
-    graph = copy.deepcopy(graph_to_edit)
+    # graph = copy.deepcopy(graph_to_edit)
     for edit_rule in network_editor:
         filtered_nodes = graph.filter(edit_rule.filter)
         for node in filtered_nodes:
             edit_rule.action.apply(node, graph, fw_info)
-    return graph
+    # return graph
