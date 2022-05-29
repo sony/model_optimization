@@ -65,7 +65,8 @@ def get_sensitivity_evaluation(graph: Graph,
     sem.init_baseline_tensors_list()
 
     def _compute_metric(mp_model_configuration: List[int],
-                        node_idx: List[int] = None) -> float:
+                        node_idx: List[int] = None,
+                        baseline_mp_configuration: List[int] = None) -> float:
         """
         Compute the sensitivity metric of the MP model for a given configuration (the sensitivity
         is computed based on the similarity of the interest points' outputs between the MP model
@@ -73,6 +74,8 @@ def get_sensitivity_evaluation(graph: Graph,
         Args:
             mp_model_configuration: Bitwidth configuration to use to configure the MP model.
             node_idx: A list of nodes' indices to configure (instead of using the entire mp_model_configuration).
+            baseline_mp_configuration: A mixed-precision configuration to set the model back to after modifying it to
+                compute the metric for the given configuration.
         Returns:
             The sensitivity metric of the MP model for a given configuration.
         """
@@ -86,12 +89,12 @@ def get_sensitivity_evaluation(graph: Graph,
         # Compute the distance matrix
         distance_matrix = sem.build_distance_metrix()
 
-        # Configure MP model back to the same configuration as the baseline model
-        baseline_mp_configuration = [0] * len(mp_model_configuration)
-        _configure_bitwidths_pytorch_model(sem.model_mp,
-                                           sem.sorted_configurable_nodes_names,
-                                           baseline_mp_configuration,
-                                           node_idx)
+        # Configure MP model back to the same configuration as the baseline model if baseline provided
+        if baseline_mp_configuration is not None:
+            _configure_bitwidths_pytorch_model(sem.model_mp,
+                                               sem.sorted_configurable_nodes_names,
+                                               baseline_mp_configuration,
+                                               node_idx)
 
         return compute_mp_distance_measure(distance_matrix, metrics_weights_fn)
 
