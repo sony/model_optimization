@@ -142,8 +142,11 @@ def post_training_quantization(in_model: Any,
 
     tg = set_bit_widths(core_config.mixed_precision_enable,
                         tg,
-                        fw_info,
                         bit_widths_config)
+
+    # Edit the graph again after finalizing the configurations.
+    # This is since some actions regard the final configuration and should be edited.
+    edit_network_graph(tg, fw_info, core_config.debug_config.network_editor)
 
     # Retrive lists of tuples (node, node's final weights/activation bitwidth)
     weights_conf_nodes_bitwidth = tg.get_final_weights_config()
@@ -484,8 +487,7 @@ def _prepare_model_for_quantization(graph: Graph,
     Args:
         representative_data_gen (Callable): Dataset used for calibration.
         tpc (TargetPlatformCapabilities): TargetPlatformCapabilities object which holds target specific capabilities.
-        core_config (CoreConfig): CoreConfig containing parameters of how the model should be
-        quantized.
+        core_config (CoreConfig): CoreConfig containing parameters of how the model should be quantized.
         fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
         kernel channels indices, groups of layers by how they should be quantized, etc.)
         tb_w (TensorboardWriter): TensorboardWriter object to use for logging events such as graphs, histograms, etc.
@@ -527,8 +529,12 @@ def _prepare_model_for_quantization(graph: Graph,
         mi.infer(representative_data_gen())
 
     ######################################
-    # Edit network according to user specific settings
+    # Edit network according to user
+    # specific settings
     ######################################
+    # Notice that not all actions affect at this stage (for example, actions that edit the final configuration as
+    # there are no final configurations at this stage of the optimization). For this reason we edit the graph
+    # again at the end of the optimization process.
     edit_network_graph(transformed_graph, fw_info, core_config.debug_config.network_editor)
 
     ######################################

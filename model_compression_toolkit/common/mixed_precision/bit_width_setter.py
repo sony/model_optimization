@@ -18,13 +18,11 @@ import copy
 from typing import Any, List
 
 from model_compression_toolkit.common import Graph, BaseNode
-from model_compression_toolkit.common.framework_info import FrameworkInfo
 from model_compression_toolkit.common.logger import Logger
 
 
 def set_bit_widths(mixed_precision_enable: bool,
                    graph_to_set_bit_widths: Graph,
-                   fw_info: FrameworkInfo = None,
                    bit_widths_config: List[int] = None) -> Graph:
     """
     Set bit widths configuration to nodes in a graph. For each node, use the desired index
@@ -54,7 +52,6 @@ def set_bit_widths(mixed_precision_enable: bool,
             if node_name in sorted_nodes_names:  # only configurable nodes are in this list
                 node_index_in_graph = sorted_nodes_names.index(node_name)
                 _set_node_final_qc(bit_widths_config,
-                                   fw_info,
                                    node,
                                    node_index_in_graph)
             elif node.is_activation_quantization_enabled():
@@ -63,22 +60,22 @@ def set_bit_widths(mixed_precision_enable: bool,
                 # and that this node doesn't have weights to quantize
                 assert len(node.candidates_quantization_cfg) > 0, \
                     "Node need to have at least one quantization configuration in order to quantize its activation"
-                node.final_activation_quantization_cfg = node.candidates_quantization_cfg[0].activation_quantization_cfg
+                node.final_activation_quantization_cfg = copy.deepcopy(node.candidates_quantization_cfg[0].activation_quantization_cfg)
             elif node.is_weights_quantization_enabled():
                 # If we are here, this means that we are in activation-only mixed-precision
                 # (i.e., weights are quantized with fixed bitwidth or not quantized)
                 # and that this node doesn't have activations to quantize
                 assert len(node.candidates_quantization_cfg) > 0, \
                     "Node need to have at least one quantization configuration in order to quantize its activation"
-                node.final_weights_quantization_cfg = node.candidates_quantization_cfg[0].weights_quantization_cfg
+                node.final_weights_quantization_cfg = copy.deepcopy(node.candidates_quantization_cfg[0].weights_quantization_cfg)
 
     # When working in non-mixed-precision mode, there's only one bitwidth, and we simply set the
     # only candidate of the node as its final weight and activation quantization configuration.
     else:
         for n in graph.nodes:
             assert len(n.candidates_quantization_cfg) == 1
-            n.final_weights_quantization_cfg = n.candidates_quantization_cfg[0].weights_quantization_cfg
-            n.final_activation_quantization_cfg = n.candidates_quantization_cfg[0].activation_quantization_cfg
+            n.final_weights_quantization_cfg = copy.deepcopy(n.candidates_quantization_cfg[0].weights_quantization_cfg)
+            n.final_activation_quantization_cfg = copy.deepcopy(n.candidates_quantization_cfg[0].activation_quantization_cfg)
 
     return graph
 
@@ -108,7 +105,6 @@ def _get_node_qc_by_bit_widths(node: BaseNode,
 
 
 def _set_node_final_qc(bit_width_cfg: List[int],
-                       fw_info: FrameworkInfo,
                        node: BaseNode,
                        node_index_in_graph: int):
     """
@@ -119,16 +115,18 @@ def _set_node_final_qc(bit_width_cfg: List[int],
 
     Args:
         bit_width_cfg: Configuration which determines the node's desired bit width.
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-        groups of layers by how they should be quantized, etc.)
         node: Node to set its node quantization configuration.
         node_index_in_graph: Index of the node in the bit_width_cfg.
 
     """
-    node_qc = _get_node_qc_by_bit_widths(node, bit_width_cfg, node_index_in_graph)
+    node_qc = _get_node_qc_by_bit_widths(node,
+                                         bit_width_cfg,
+                                         node_index_in_graph)
+
     if node_qc is None:
         Logger.critical(f'Node {node.name} quantization configuration from configuration file'
                         f' was not found in candidates configurations.')
+
     else:
         node.final_weights_quantization_cfg = node_qc.weights_quantization_cfg
         node.final_activation_quantization_cfg = node_qc.activation_quantization_cfg
