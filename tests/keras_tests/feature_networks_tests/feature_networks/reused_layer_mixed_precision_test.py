@@ -15,7 +15,7 @@
 from model_compression_toolkit.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
-from model_compression_toolkit.tpc_models.default_tp_model import get_op_quantization_configs
+from tests.common_tests.helpers.generate_test_tp_model import get_op_quantization_configs
 from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct

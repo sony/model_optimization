@@ -12,5 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.tpc_models.default_tp_model.get_default_tp_model import get_default_tp_model
-
+from model_compression_toolkit.tpc_models.default_tp_model.v2_7_0.default_tp_model import get_op_quantization_configs, generate_tp_model

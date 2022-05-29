@@ -1,0 +1,1 @@
+from model_compression_toolkit.tpc_models.default_tp_model.v3_2_0.default_tp_model import get_op_quantization_configs, generate_tp_model

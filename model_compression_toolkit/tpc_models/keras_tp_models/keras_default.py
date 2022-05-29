@@ -20,10 +20,10 @@ from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, Dropout, \
-        MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D
+        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
-    Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D
+    Dropout, MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D
 
 
 from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
@@ -33,7 +33,7 @@ import model_compression_toolkit as mct
 tpc = mct.target_platform
 
 
-def get_default_keras_tpc(version: str):
+def get_default_keras_tpc(version: str = None):
     default_tp_model = get_default_tp_model(version=version)
     return generate_keras_default_tpc(name='default_keras_tpc',
                                       tp_model=default_tp_model)
@@ -82,8 +82,10 @@ def generate_keras_default_tpc(name: str, tp_model: TargetPlatformModel):
                                               tpc.LayerFilterParams(ReLU, negative_slope=0.0),
                                               tpc.LayerFilterParams(Activation, activation="relu")])
 
-        tpc.OperationsSetToLayers("Add", [tf.add,
-                                          Add])
+        tpc.OperationsSetToLayers("Add", [tf.add, Add])
+        tpc.OperationsSetToLayers("Sub", [tf.subtract, Subtract])
+        tpc.OperationsSetToLayers("Mul", [tf.math.multiply, Multiply])
+        tpc.OperationsSetToLayers("Div", [tf.math.divide])
 
         tpc.OperationsSetToLayers("PReLU", [PReLU])
 

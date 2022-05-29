@@ -15,11 +15,11 @@
 from abc import ABC
 import torch
 import torch.nn as nn
-from torch.nn import Conv2d, ReLU, Tanh, SiLU, Sigmoid, Linear, Hardtanh
+from torch.nn import Conv2d, ReLU, SiLU, Sigmoid, Linear, Hardtanh
 from torch.nn.functional import relu, relu6
 import model_compression_toolkit as mct
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
-from model_compression_toolkit.tpc_models.default_tp_model import get_op_quantization_configs
+from tests.common_tests.helpers.generate_test_tp_model import get_op_quantization_configs
 from model_compression_toolkit.common.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
 
 tp = mct.target_platform

@@ -32,30 +32,30 @@ if found_tf:
     from model_compression_toolkit.tpc_models.keras_tp_models.keras_qnnpack import get_qnnpack_tensorflow
     from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL
 
-    tf_models_dict = {DEFAULT_TP_MODEL: get_default_keras_tpc,  # Dict[str, Dict[version_str, TPModel]]
+    tf_models_dict = {DEFAULT_TP_MODEL: get_default_keras_tpc,
                       TFLITE_TP_MODEL: get_keras_tp_model_tflite,
                       QNNPACK_TP_MODEL: get_qnnpack_tensorflow}
 
-#
-# #############################
-# # Build Pytorch models:
-# #############################
-# found_torch = importlib.util.find_spec("torch") is not None
-# torch_models_dict = None
-#
-# if found_torch:
-#     from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_default import get_default_pytorch_tpc
-#     from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_qnnpack import get_qnnpack_pytorch
-#     from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_tflite import get_pytorch_tflite_model
-#     from model_compression_toolkit.pytorch.constants import DEFAULT_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL
-#
-#     torch_models_dict = {DEFAULT_TP_MODEL: get_default_pytorch_tpc(),
-#                          TFLITE_TP_MODEL: get_pytorch_tflite_model(),
-#                          QNNPACK_TP_MODEL: get_qnnpack_pytorch()}
+
+#############################
+# Build Pytorch models:
+#############################
+found_torch = importlib.util.find_spec("torch") is not None
+torch_models_dict = None
+
+if found_torch:
+    from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_default import get_default_pytorch_tpc
+    from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_qnnpack import get_qnnpack_pytorch
+    from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_tflite import get_pytorch_tflite_model
+    from model_compression_toolkit.pytorch.constants import DEFAULT_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL
+
+    torch_models_dict = {DEFAULT_TP_MODEL: get_default_pytorch_tpc,
+                         TFLITE_TP_MODEL: get_pytorch_tflite_model,
+                         QNNPACK_TP_MODEL: get_qnnpack_pytorch}
 
 
-tpc_dict = {TENSORFLOW: tf_models_dict}
-            # PYTORCH: torch_models_dict}
+tpc_dict = {TENSORFLOW: tf_models_dict,
+            PYTORCH: torch_models_dict}
 
 
 def get_target_platform_capabilities(fw_name: str,

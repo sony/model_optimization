@@ -16,7 +16,7 @@
 import operator
 
 import torch
-from torch import add, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, chunk
+from torch import add, sub, mul, div, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, chunk
 from torch.nn import Conv2d, ConvTranspose2d, Linear, BatchNorm2d
 from torch.nn import Dropout, Flatten, Hardtanh
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, Hardsigmoid
@@ -30,8 +30,8 @@ from model_compression_toolkit.common.target_platform.targetplatform2framework i
 from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
 
 
-def get_default_pytorch_tpc():
-    default_tp_model = get_default_tp_model()
+def get_default_pytorch_tpc(version: str):
+    default_tp_model = get_default_tp_model(version=version)
     return generate_pytorch_tpc(name='default_pytorch_tpc',
                                 tp_model=default_tp_model)
 
@@ -75,8 +75,10 @@ def generate_pytorch_tpc(name: str, tp_model: TargetPlatformModel):
                                           LayerFilterParams(Hardtanh, min_val=0),
                                           LayerFilterParams(hardtanh, min_val=0)])
 
-        OperationsSetToLayers("Add", [operator.add,
-                                      add])
+        OperationsSetToLayers("Add", [operator.add, add])
+        OperationsSetToLayers("Sub", [operator.sub, sub])
+        OperationsSetToLayers("Mul", [operator.mul, mul])
+        OperationsSetToLayers("Div", [operator.truediv, div])
 
         OperationsSetToLayers("PReLU", [PReLU,
                                         prelu])
