@@ -33,15 +33,15 @@ class TestLogger(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mct.common.Logger.set_log_file('/tmp/')
+        mct.core.common.Logger.set_log_file('/tmp/')
         model = MobileNet()
         mct.keras_post_training_quantization(model, random_datagen, n_iter=1)
 
     def test_tensorboard_log_dir(self):
-        self.assertTrue(os.path.exists(os.path.join(mct.common.Logger.LOG_PATH, 'tensorboard_logs')))
+        self.assertTrue(os.path.exists(os.path.join(mct.core.common.Logger.LOG_PATH, 'tensorboard_logs')))
 
     def test_tensorboard_initial_graph_num_of_nodes(self):
-        events_dir = os.path.join(mct.common.Logger.LOG_PATH, 'tensorboard_logs/')
+        events_dir = os.path.join(mct.core.common.Logger.LOG_PATH, 'tensorboard_logs/')
         events_files = glob.glob(events_dir + 'initial_graph/*events*')
         self.assertTrue(len(events_files) == 1)  # Make sure there is only event file in 'initial_graph' subdir
 
