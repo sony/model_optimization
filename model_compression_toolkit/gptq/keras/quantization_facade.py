@@ -21,12 +21,10 @@ from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.gptq.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.network_editors.actions import EditRule
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig, DEFAULT_MIXEDPRECISION_CONFIG, MixedPrecisionQuantizationConfigV2
+    MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.post_training_quantization import post_training_quantization
-from model_compression_toolkit import QuantizationConfig, CoreConfig, DebugConfig
-from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
+from model_compression_toolkit import CoreConfig
 
 import importlib
 

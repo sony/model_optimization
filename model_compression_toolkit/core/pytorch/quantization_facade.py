@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.network_editors.actions import EditRu
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig, DEFAULT_MIXEDPRECISION_CONFIG, MixedPrecisionQuantizationConfigV2
+    MixedPrecisionQuantizationConfig, DEFAULT_MIXEDPRECISION_CONFIG
 from model_compression_toolkit.core.common.post_training_quantization import post_training_quantization
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
