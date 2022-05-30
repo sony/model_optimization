@@ -85,13 +85,9 @@ def post_training_quantization(in_model: Any,
     Args:
         in_model: Model to quantize.
         representative_data_gen: Dataset used for calibration.
-        core_config: CoreConfig containing parameters of how the model should be quantized. `Default
-        configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10
-        /model_compression_toolkit/core/common/quantization/quantization_config.py#L163>`_
+        core_config: CoreConfig containing parameters of how the model should be quantized
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-        groups of layers by how they should be quantized, etc.). `Default Keras info
-        <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10
-        /model_compression_toolkit/core/keras/default_framework_info.py#L114>`_
+        groups of layers by how they should be quantized, etc.).
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tpc: TargetPlatformCapabilities object that models the inference target platform and
                                               the attached framework operator's information.

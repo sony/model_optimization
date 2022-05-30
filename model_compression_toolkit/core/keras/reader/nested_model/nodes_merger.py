@@ -15,8 +15,6 @@
 
 
 import copy
-
-# from model_compression_toolkit.core.keras.reader.model_graph_info import ModelGraphInfo
 from typing import List
 
 from model_compression_toolkit.core.common.graph.base_graph import Graph

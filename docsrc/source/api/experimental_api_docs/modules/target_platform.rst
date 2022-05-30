@@ -16,7 +16,7 @@ Conv2D <https://www.tensorflow.org/lite/performance/quantization_spec#per-axis_v
 
 This can be addressed in MCT by using the target_platform module, that can configure different
 parameters that are hardware-related, and the optimization process will use this to optimize the model accordingly.
-Models for TFLite and qnnpack can be observed `here <https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/tpc_models>`_, and can be used using :ref:`get_target_platform_capabilities function<ug-get_target_platform_capabilities>`.
+Models for TFLite and qnnpack can be observed `here <https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/core/tpc_models>`_, and can be used using :ref:`get_target_platform_capabilities function<ug-get_target_platform_capabilities>`.
 
 |
 
@@ -243,7 +243,7 @@ can be used as follows:
 TargetPlatformModel Code Example
 ===================================
 
-.. literalinclude:: ../../../../../model_compression_toolkit/tpc_models/default_tp_model.py
+.. literalinclude:: ../../../../../model_compression_toolkit/core/tpc_models/default_tp_model.py
     :language: python
     :lines: 15-151
 
@@ -340,7 +340,7 @@ to the TargetPlatformCapabilities like in the following example:
 TargetPlatformCapabilities Code Example
 ===========================================
 
-.. literalinclude:: ../../../../../model_compression_toolkit/tpc_models/keras_tp_models/keras_default.py
+.. literalinclude:: ../../../../../model_compression_toolkit/core/tpc_models/keras_tp_models/keras_default.py
     :language: python
     :lines: 15-94
 
