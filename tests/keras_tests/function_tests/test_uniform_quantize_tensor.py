@@ -15,7 +15,7 @@
 import numpy as np
 import unittest
 
-from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import calculate_delta, quantize_tensor
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import calculate_delta, quantize_tensor
 
 
 def ground_truth_quantize_tensor(tensor_data, threshold, n_bits, signed):

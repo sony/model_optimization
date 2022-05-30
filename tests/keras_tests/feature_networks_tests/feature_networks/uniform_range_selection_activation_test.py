@@ -17,7 +17,7 @@
 import tensorflow as tf
 import numpy as np
 
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from model_compression_toolkit.core.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as cmo
@@ -25,6 +25,7 @@ import model_compression_toolkit as cmo
 keras = tf.keras
 layers = keras.layers
 tp = cmo.target_platform
+
 
 class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, activation_threshold_method):

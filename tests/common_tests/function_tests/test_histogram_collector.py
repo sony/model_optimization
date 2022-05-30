@@ -16,7 +16,7 @@
 
 import unittest
 import numpy as np
-from model_compression_toolkit.common.collectors.histogram_collector import HistogramCollector, interpolate_histogram
+from model_compression_toolkit.core.common.collectors.histogram_collector import HistogramCollector, interpolate_histogram
 
 
 class TestHistogramCollector(unittest.TestCase):

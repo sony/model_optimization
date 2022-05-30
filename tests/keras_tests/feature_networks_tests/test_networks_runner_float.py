@@ -19,17 +19,17 @@ import tensorflow as tf
 import unittest
 
 from model_compression_toolkit import DEFAULTCONFIG
-from model_compression_toolkit.common.constants import TENSORFLOW
-from model_compression_toolkit.common.quantization.set_node_quantization_config import \
+from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit import get_target_platform_capabilities
-from model_compression_toolkit.keras.back2framework.model_builder import model_builder
-from model_compression_toolkit.common.model_builder_mode import ModelBuilderMode
-from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL
-from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.keras.keras_implementation import KerasImplementation
-from model_compression_toolkit.keras.reader.reader import model_reader
+from model_compression_toolkit.core.keras.back2framework.model_builder import model_builder
+from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
+from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
+from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.core.keras.reader.reader import model_reader
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras

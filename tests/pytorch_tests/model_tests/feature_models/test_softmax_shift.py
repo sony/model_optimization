@@ -17,8 +17,8 @@ import numpy as np
 import torch
 from torch.nn.functional import softmax
 
-from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
-from model_compression_toolkit.pytorch.utils import set_model
+from model_compression_toolkit.core.tpc_models.default_tp_model import get_default_tp_model
+from model_compression_toolkit.core.pytorch.utils import set_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 

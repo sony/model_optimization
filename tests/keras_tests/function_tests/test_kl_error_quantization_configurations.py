@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
-from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 import unittest
 import numpy as np
 import model_compression_toolkit as mct

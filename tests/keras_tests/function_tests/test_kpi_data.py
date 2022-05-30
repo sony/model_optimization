@@ -22,9 +22,9 @@ import keras
 import unittest
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, SeparableConv2D
 
-from model_compression_toolkit.tpc_models.default_tp_model import get_op_quantization_configs
-from model_compression_toolkit.keras.constants import DEPTHWISE_KERNEL, KERNEL
-from model_compression_toolkit.keras.graph_substitutions.substitutions.separableconv_decomposition import \
+from model_compression_toolkit.core.tpc_models.default_tp_model import get_op_quantization_configs
+from model_compression_toolkit.core.keras.constants import DEPTHWISE_KERNEL, KERNEL
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.separableconv_decomposition import \
     POINTWISE_KERNEL
 from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
 from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras

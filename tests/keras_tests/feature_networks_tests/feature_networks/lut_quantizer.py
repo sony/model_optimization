@@ -15,8 +15,8 @@
 
 import unittest
 
-from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter
-from model_compression_toolkit.common.network_editors.actions import EditRule, \
+from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
+from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod
 
 import model_compression_toolkit as cmo

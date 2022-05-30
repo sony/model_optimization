@@ -15,9 +15,9 @@
 import model_compression_toolkit as mct
 import tensorflow as tf
 
-from model_compression_toolkit.common.constants import SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
-from model_compression_toolkit.common.network_editors import EditRule, node_filters, actions
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import get_default_keras_tpc
+from model_compression_toolkit.core.common.constants import SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
+from model_compression_toolkit.core.common.network_editors import EditRule, node_filters, actions
+from model_compression_toolkit.core.tpc_models.keras_tp_models.keras_default import get_default_keras_tpc
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 
 if tf.__version__ < "2.6":

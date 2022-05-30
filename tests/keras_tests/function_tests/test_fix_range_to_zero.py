@@ -15,7 +15,7 @@
 import numpy as np
 import unittest
 
-from model_compression_toolkit.common.quantization.quantizers.quantizers_helpers import \
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import \
     uniform_quantize_tensor, get_output_shape
 
 

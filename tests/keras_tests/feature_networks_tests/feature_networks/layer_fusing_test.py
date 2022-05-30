@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import tensorflow as tf
-from model_compression_toolkit.tpc_models.default_tp_model import get_op_quantization_configs
+from model_compression_toolkit.core.tpc_models.default_tp_model import get_op_quantization_configs
 import model_compression_toolkit as mct
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 if tf.__version__ < "2.6":

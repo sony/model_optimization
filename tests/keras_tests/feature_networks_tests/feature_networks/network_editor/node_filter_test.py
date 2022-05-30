@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.common.matchers.node_matcher import NodeAndMatcher
-from model_compression_toolkit.common.quantization.quantization_params_fn_selection import \
+from model_compression_toolkit.core.common.matchers.node_matcher import NodeAndMatcher
+from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
     get_weights_quantization_params_fn
 
 import model_compression_toolkit as mct
@@ -22,9 +22,9 @@ import tensorflow as tf
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
-from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, \
+from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, \
     NodeTypeFilter
-from model_compression_toolkit.common.network_editors.actions import ChangeCandidatesActivationQuantConfigAttr, \
+from model_compression_toolkit.core.common.network_editors.actions import ChangeCandidatesActivationQuantConfigAttr, \
     ChangeQuantizationParamFunction, EditRule, ChangeCandidatesWeightsQuantConfigAttr
 
 keras = tf.keras

@@ -17,27 +17,27 @@ import unittest
 from functools import partial
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
-from model_compression_toolkit.common.mixed_precision.distance_weighting import get_average_weights
-from model_compression_toolkit.common.mixed_precision.kpi import KPI, KPITarget
-from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
+from model_compression_toolkit.core.common.mixed_precision.kpi import KPI, KPITarget
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.common.quantization.core_config import CoreConfig
-from model_compression_toolkit.common.mixed_precision.mixed_precision_search_facade import search_bit_width, \
+from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width, \
     BitWidthSearchMethod
-from model_compression_toolkit.common.mixed_precision.search_methods.linear_programming import \
+from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
     mp_integer_programming_search
-from model_compression_toolkit.common.quantization.quantization_analyzer import analyzer_graph
-from model_compression_toolkit.common.quantization.quantization_params_generation.qparams_computation import \
+from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
-from model_compression_toolkit.common.quantization.set_node_quantization_config import \
+from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
-from model_compression_toolkit.common.model_collector import ModelCollector
+from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit import DEFAULTCONFIG
-from model_compression_toolkit.common.similarity_analyzer import compute_mse
-from model_compression_toolkit.tpc_models.default_tp_model import get_op_quantization_configs
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
-from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
+from model_compression_toolkit.core.tpc_models.default_tp_model import get_op_quantization_configs
+from model_compression_toolkit.core.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \
     generate_mixed_precision_test_tp_model
 
