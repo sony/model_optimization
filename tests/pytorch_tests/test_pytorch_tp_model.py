@@ -237,11 +237,28 @@ class TestGetPytorchTPC(unittest.TestCase):
                                                                                     target_platform_capabilities=tpc,
                                                                                     quant_config=mp_qc)
 
-    def test_get_pytorch_not_supported_model(self):
+    def test_get_pytorch_supported_version(self):
+        mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
+        mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, "v1")
+        mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, "v2")
+        mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, "v3")
+        mct.get_target_platform_capabilities(PYTORCH, TFLITE_TP_MODEL, "v1")
+        mct.get_target_platform_capabilities(PYTORCH, QNNPACK_TP_MODEL, "v1")
+
+    def test_get_pytorch_not_supported_platform(self):
         with self.assertRaises(Exception) as e:
-            mct.get_target_platform_capabilities(PYTORCH, 'should_not_support')
-        self.assertEqual('Target platform model named should_not_support is not supported for framework pytorch',
-                         str(e.exception))
+            mct.get_target_platform_capabilities(PYTORCH, "platform1")
+        self.assertTrue(e.exception)
+
+    def test_get_pytorch_not_supported_fw(self):
+        with self.assertRaises(Exception) as e:
+            mct.get_target_platform_capabilities("ONNX", DEFAULT_TP_MODEL)
+        self.assertTrue(e.exception)
+
+    def test_get_pytorch_not_supported_version(self):
+        with self.assertRaises(Exception) as e:
+            mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, "v0")
+        self.assertTrue(e.exception)
 
 
 

@@ -15,8 +15,7 @@
 from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
-from model_compression_toolkit.core.tpc_models.default_tp_model import get_op_quantization_configs
-from model_compression_toolkit.core.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_keras_tpc
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
@@ -40,7 +39,7 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
                                                  activation_n_bits=16)
         mp_tp_model = generate_mixed_precision_test_tp_model(base_cfg=base_config,
                                                              mp_bitwidth_candidates_list=[(2, 16), (4, 16), (16, 16)])
-        return generate_keras_default_tpc(name="reused_layer_mp_test", tp_model=mp_tp_model)
+        return generate_keras_tpc(name="reused_layer_mp_test", tp_model=mp_tp_model)
 
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,

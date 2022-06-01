@@ -21,7 +21,7 @@ from model_compression_toolkit.core.common.network_editors.actions import EditRu
 import model_compression_toolkit as cmo
 import tensorflow as tf
 
-from model_compression_toolkit.core.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
@@ -64,7 +64,7 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
         tp = generate_test_tp_model({'weights_quantization_method': self.quantization_method,
                                       'weights_n_bits': self.weights_n_bits,
                                       'activation_n_bits': 4})
-        return generate_keras_default_tpc(name="kmean_quantizer_test", tp_model=tp)
+        return generate_keras_tpc(name="kmean_quantizer_test", tp_model=tp)
 
     def get_quantization_config(self):
         return cmo.QuantizationConfig(cmo.QuantizationErrorMethod.MSE,

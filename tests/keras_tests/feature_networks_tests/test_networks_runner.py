@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import model_compression_toolkit.core.common.gptq.gptq_config
-from model_compression_toolkit.core.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from model_compression_toolkit.core.tpc_models.default_tpc.latest.tpc_keras import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 import tensorflow as tf
 import numpy as np
@@ -35,11 +35,11 @@ QUANTIZATION_CONFIG = mct.QuantizationConfig(activation_error_method=mct.Quantiz
                                              relu_bound_to_power_of_2=False, weights_bias_correction=False,
                                              weights_per_channel_threshold=True)
 
-TWO_BIT_QUANTIZATION = generate_keras_default_tpc(name="two_bit_network_test",
+TWO_BIT_QUANTIZATION = generate_keras_tpc(name="two_bit_network_test",
                                                   tp_model=generate_test_tp_model({'weights_n_bits': 2,
                                                                                        'activation_n_bits': 2}))
 
-EIGHT_BIT_QUANTIZATION = generate_keras_default_tpc(name="eight_bit_network_test",
+EIGHT_BIT_QUANTIZATION = generate_keras_tpc(name="eight_bit_network_test",
                                                     tp_model=generate_test_tp_model({'weights_n_bits': 8,
                                                                                          'activation_n_bits': 8}))
 
