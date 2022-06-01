@@ -23,15 +23,15 @@ from torch.nn.functional import hardtanh
 from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.common.constants import PYTORCH
-from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.common.target_platform.targetplatform2framework import LayerFilterParams
-from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import Greater, \
+from model_compression_toolkit.core.common.constants import PYTORCH
+from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.core.common.target_platform.targetplatform2framework import LayerFilterParams
+from model_compression_toolkit.core.common.target_platform.targetplatform2framework.attribute_filter import Greater, \
     Smaller, Eq
-from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
-from model_compression_toolkit.pytorch.constants import DEFAULT_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL
-from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
+from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL
+from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from tests.common_tests.test_tp_model import TEST_QC, TEST_QCO
 from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import LayerTestModel
 

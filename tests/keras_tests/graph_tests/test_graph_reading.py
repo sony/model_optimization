@@ -21,7 +21,7 @@ from tensorflow.keras.applications.efficientnet import EfficientNetB0
 from tensorflow.keras.applications.nasnet import NASNetMobile
 from tensorflow.keras.applications.resnet import ResNet50
 from tensorflow.keras.applications.xception import Xception
-from model_compression_toolkit.keras.reader.reader import model_reader
+from model_compression_toolkit.core.keras.reader.reader import model_reader
 
 
 class TestGraphReading(unittest.TestCase):

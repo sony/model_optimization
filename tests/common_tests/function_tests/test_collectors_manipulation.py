@@ -16,10 +16,10 @@
 
 import unittest
 import numpy as np
-from model_compression_toolkit.common.collectors.statistics_collector import StatsCollector
-from model_compression_toolkit.common.collectors.statistics_collector import scale_statistics
-from model_compression_toolkit.common.collectors.statistics_collector import shift_statistics
-from model_compression_toolkit.common.framework_info import ChannelAxis
+from model_compression_toolkit.core.common.collectors.statistics_collector import StatsCollector
+from model_compression_toolkit.core.common.collectors.statistics_collector import scale_statistics
+from model_compression_toolkit.core.common.collectors.statistics_collector import shift_statistics
+from model_compression_toolkit.core.common.framework_info import ChannelAxis
 
 
 def init_stats_container(num_of_input_channels, init_min=None, init_max=None):

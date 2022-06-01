@@ -3,8 +3,7 @@ from enum import Enum
 from typing import List, Any
 import numpy as np
 
-from model_compression_toolkit import MixedPrecisionQuantizationConfig, DEFAULTCONFIG, QuantizationConfig, \
-    QuantizationErrorMethod
+from model_compression_toolkit import MixedPrecisionQuantizationConfig, QuantizationConfig, QuantizationErrorMethod
 from tests.common_tests.base_test import BaseTest
 
 

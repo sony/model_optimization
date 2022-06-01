@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.common.constants import TENSORFLOW
-from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL
-from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit import keras_post_training_quantization, \
     keras_post_training_quantization_mixed_precision, FrameworkInfo
 from model_compression_toolkit import get_target_platform_capabilities
-from model_compression_toolkit.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 
 

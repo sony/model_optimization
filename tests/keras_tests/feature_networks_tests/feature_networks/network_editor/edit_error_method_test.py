@@ -18,9 +18,9 @@ import tensorflow as tf
 from keras.engine.input_layer import InputLayer
 
 from model_compression_toolkit import QuantizationErrorMethod
-from model_compression_toolkit.common.network_editors.actions import EditRule, \
+from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesActivationQuantConfigAttr
-from model_compression_toolkit.common.network_editors.node_filters import NodeTypeFilter
+from model_compression_toolkit.core.common.network_editors.node_filters import NodeTypeFilter
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras

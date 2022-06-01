@@ -19,9 +19,9 @@ from tensorflow import initializers
 import numpy as np
 
 from model_compression_toolkit import DEFAULTCONFIG
-from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.keras.keras_implementation import KerasImplementation
-from model_compression_toolkit.common.substitutions.apply_substitutions import substitute
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 
 
 def create_model_1(input_shape):

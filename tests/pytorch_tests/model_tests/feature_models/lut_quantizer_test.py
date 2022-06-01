@@ -15,10 +15,10 @@
 import torch
 import numpy as np
 import model_compression_toolkit as mct
-from model_compression_toolkit.common.network_editors.node_filters import NodeNameFilter
-from model_compression_toolkit.common.network_editors.actions import EditRule, \
+from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
+from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod
-from model_compression_toolkit.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest

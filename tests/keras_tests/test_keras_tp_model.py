@@ -27,15 +27,15 @@ else:
     from keras import Input
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.common.constants import TENSORFLOW
-from model_compression_toolkit.common.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.common.target_platform.targetplatform2framework import LayerFilterParams
-from model_compression_toolkit.common.target_platform.targetplatform2framework.attribute_filter import Greater, \
+from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.core.common.target_platform.targetplatform2framework import LayerFilterParams
+from model_compression_toolkit.core.common.target_platform.targetplatform2framework.attribute_filter import Greater, \
     Smaller, GreaterEq, Eq, SmallerEq
-from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
-from model_compression_toolkit.keras.constants import DEFAULT_TP_MODEL, QNNPACK_TP_MODEL, TFLITE_TP_MODEL
-from model_compression_toolkit.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL, QNNPACK_TP_MODEL, TFLITE_TP_MODEL
+from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.test_tp_model import TEST_QCO, TEST_QC
 
 tp = mct.target_platform

@@ -18,7 +18,7 @@ import model_compression_toolkit as mct
 import tensorflow as tf
 from tensorflow.keras.layers import Conv2D
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from model_compression_toolkit.core.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity

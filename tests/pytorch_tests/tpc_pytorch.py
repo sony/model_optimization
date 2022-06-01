@@ -23,9 +23,9 @@ from torch.nn import Dropout, Flatten, Hardtanh
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh
 
-from model_compression_toolkit.common.target_platform.targetplatform2framework import LayerFilterParams
-from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_default import generate_pytorch_tpc
-from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder
+from model_compression_toolkit.core.common.target_platform.targetplatform2framework import LayerFilterParams
+from model_compression_toolkit.core.tpc_models.pytorch_tp_models.pytorch_default import generate_pytorch_tpc
+from model_compression_toolkit.core.pytorch.reader.graph_builders import DummyPlaceHolder
 
 tp = mct.target_platform
 

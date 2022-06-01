@@ -49,6 +49,7 @@ from tests.pytorch_tests.model_tests.feature_models.split_concat_net_test import
 from tests.pytorch_tests.model_tests.feature_models.torch_tensor_attr_net_test import TorchTensorAttrNetTest
 from tests.pytorch_tests.model_tests.feature_models.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, LayerFusingTest4
 
+
 class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_add_net(self):

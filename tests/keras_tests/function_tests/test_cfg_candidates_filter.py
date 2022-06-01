@@ -18,15 +18,15 @@ import unittest
 from tensorflow.keras.layers import Conv2D, ReLU, Input
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.common.constants import DEFAULT_CANDIDATE_BITWIDTH
-from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
+from model_compression_toolkit.core.common.constants import DEFAULT_CANDIDATE_BITWIDTH
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
-from model_compression_toolkit.common.quantization.filter_nodes_candidates import filter_nodes_candidates
-from model_compression_toolkit.common.quantization.set_node_quantization_config import \
+from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
+from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
-from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.keras.keras_implementation import KerasImplementation
-from model_compression_toolkit.common.fusion.layer_fusing import fusion
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
 from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
 

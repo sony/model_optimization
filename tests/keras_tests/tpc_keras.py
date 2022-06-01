@@ -16,7 +16,7 @@
 from keras.engine.input_layer import InputLayer
 import tensorflow as tf
 import model_compression_toolkit as mct
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from model_compression_toolkit.core.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 if tf.__version__ < "2.6":

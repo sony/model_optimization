@@ -30,15 +30,15 @@ from torch.fx import symbolic_trace
 from torch.nn import Module
 
 from model_compression_toolkit import FrameworkInfo, pytorch_post_training_quantization
-from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
-from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_default import generate_pytorch_tpc
-from model_compression_toolkit.pytorch.constants import CALL_FUNCTION, OUTPUT, CALL_METHOD, PLACEHOLDER
-from model_compression_toolkit.pytorch.reader.graph_builders import DummyPlaceHolder, ConstantHolder
-from model_compression_toolkit.pytorch.utils import torch_tensor_to_numpy, to_torch_tensor
+from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core.tpc_models.default_tp_model import get_default_tp_model
+from model_compression_toolkit.core.tpc_models.pytorch_tp_models.pytorch_default import generate_pytorch_tpc
+from model_compression_toolkit.core.pytorch.constants import CALL_FUNCTION, OUTPUT, CALL_METHOD, PLACEHOLDER
+from model_compression_toolkit.core.pytorch.reader.graph_builders import DummyPlaceHolder, ConstantHolder
+from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy, to_torch_tensor
 from tests.common_tests.base_layer_test import BaseLayerTest, LayerTestMode
-from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-from model_compression_toolkit.pytorch.pytorch_implementation import PytorchImplementation
+from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 

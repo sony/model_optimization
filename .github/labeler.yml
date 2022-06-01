@@ -3,13 +3,13 @@ test:
 - tests/*
 
 common:
-- model_compression_toolkit/common/*
+- model_compression_toolkit/core/common/*
 
 keras:
-- model_compression_toolkit/keras/*
+- model_compression_toolkit/core/keras/*
 
 pytorch:
-- model_compression_toolkit/pytorch/*
+- model_compression_toolkit/core/pytorch/*
 
 docs:
 - docs/*

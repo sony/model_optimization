@@ -16,9 +16,8 @@ from typing import List
 
 import numpy as np
 
-from model_compression_toolkit.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig
-from model_compression_toolkit.common.user_info import UserInformation
+from model_compression_toolkit import MixedPrecisionQuantizationConfig
+from model_compression_toolkit.core.common.user_info import UserInformation
 from tests.common_tests.base_test import BaseTest
 from tests.common_tests.base_layer_test import LayerTestMode
 

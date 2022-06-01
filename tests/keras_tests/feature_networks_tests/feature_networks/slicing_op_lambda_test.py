@@ -14,7 +14,7 @@
 # ==============================================================================
 import tensorflow as tf
 
-import model_compression_toolkit.target_platform.op_quantization_config
+import model_compression_toolkit.core.target_platform.op_quantization_config
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 if tf.__version__ < "2.6":
@@ -38,7 +38,7 @@ class SlicingOpLambdaTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      model_compression_toolkit.target_platform.op_quantization_config.QuantizationMethod.POWER_OF_TWO, model_compression_toolkit.target_platform.op_quantization_config.QuantizationMethod.POWER_OF_TWO, 16, 16,
+                                      model_compression_toolkit.core.target_platform.op_quantization_config.QuantizationMethod.POWER_OF_TWO, model_compression_toolkit.target_platform.op_quantization_config.QuantizationMethod.POWER_OF_TWO, 16, 16,
                                       False, False, True)
 
 

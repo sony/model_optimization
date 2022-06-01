@@ -16,11 +16,11 @@ import random
 from torch.fx import symbolic_trace
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, get_target_platform_capabilities
-from model_compression_toolkit.common.constants import PYTORCH
-from model_compression_toolkit.tpc_models.pytorch_tp_models.pytorch_default import generate_pytorch_tpc
-from model_compression_toolkit.pytorch.constants import DEFAULT_TP_MODEL
-from model_compression_toolkit.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-from model_compression_toolkit.pytorch.utils import get_working_device, set_model, to_torch_tensor, \
+from model_compression_toolkit.core.common.constants import PYTORCH
+from model_compression_toolkit.core.tpc_models.pytorch_tp_models.pytorch_default import generate_pytorch_tpc
+from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.pytorch.utils import get_working_device, set_model, to_torch_tensor, \
     torch_tensor_to_numpy
 import model_compression_toolkit as mct
 import torch
@@ -31,6 +31,8 @@ from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_m
 """
 The base test class for the feature networks
 """
+
+
 class BasePytorchTest(BaseFeatureNetworkTest):
     def __init__(self, unit_test, float_reconstruction_error=1e-7, convert_to_fx=True):
         super().__init__(unit_test)

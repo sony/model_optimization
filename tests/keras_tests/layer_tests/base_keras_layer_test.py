@@ -2,8 +2,8 @@ from typing import List, Any, Tuple
 
 import tensorflow as tf
 
-from model_compression_toolkit.tpc_models.default_tp_model import get_default_tp_model
-from model_compression_toolkit.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from model_compression_toolkit.core.tpc_models.default_tp_model import get_default_tp_model
+from model_compression_toolkit.core.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 
@@ -25,10 +25,10 @@ else:
 
 from model_compression_toolkit import FrameworkInfo, keras_post_training_quantization, \
     keras_post_training_quantization_mixed_precision
-from model_compression_toolkit.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.keras.back2framework.model_builder import is_layer_fake_quant
-from model_compression_toolkit.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core.keras.back2framework.model_builder import is_layer_fake_quant
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.base_layer_test import BaseLayerTest, LayerTestMode
 import numpy as np
 

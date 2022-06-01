@@ -16,10 +16,10 @@
 
 import unittest
 import numpy as np
-from model_compression_toolkit.common.constants import THRESHOLD
-from model_compression_toolkit.common.quantization.quantization_params_generation import no_clipping_selection_tensor
-from model_compression_toolkit.common.quantization.quantization_params_generation import mse_selection_histogram
-from model_compression_toolkit.common.collectors.histogram_collector import HistogramCollector
+from model_compression_toolkit.core.common.constants import THRESHOLD
+from model_compression_toolkit.core.common.quantization.quantization_params_generation import no_clipping_selection_tensor
+from model_compression_toolkit.core.common.quantization.quantization_params_generation import mse_selection_histogram
+from model_compression_toolkit.core.common.collectors.histogram_collector import HistogramCollector
 
 
 class TestThresholdSelection(unittest.TestCase):
