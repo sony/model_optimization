@@ -39,7 +39,7 @@ class BaseNode:
                  reuse_group: str = None,
                  quantization_attr: Dict[str, Any] = None,
                  has_activation: bool = True,
-                 distance_fn: Callable = lambda x, y: compute_mse(x, y, True, 1e-8),
+                 distance_fn: Callable = compute_mse,
                  ):
         """
         Init a Node object.

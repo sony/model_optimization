@@ -26,7 +26,7 @@ class FunctionalNode(BaseNode):
                  functional_op: Any = None,
                  inputs_as_list: bool = False,
                  has_activation: bool = True,
-                 distance_fn: Callable = lambda x, y: compute_mse(x, y, True, 1e-8)):
+                 distance_fn: Callable = compute_mse):
         """
         Init a FunctionalNode object.
 

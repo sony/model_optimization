@@ -55,8 +55,8 @@ class SensitivityEvaluationManager:
 
         # Get interest points for distance measurement and a list of sorted configurable nodes names
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names()
-        self.interest_points = self.interest_points = get_mp_interest_points(graph, interest_points_classifier,
-                                                                             quant_config.num_interest_points_factor)
+        self.interest_points = get_mp_interest_points(graph, interest_points_classifier,
+                                                      quant_config.num_interest_points_factor)
 
         # Build a mixed-precision model which can be configured to use different bitwidth in different layers.
         # And a baseline model.
@@ -91,7 +91,7 @@ class SensitivityEvaluationManager:
         """
         If a specific distance function was provided, then it is returned to be used for distance metric computation
         for all nodes. Otherwise, the specific distance function configured for each specific node is returned.
-        Returns: A distance function between to tensors, to be used for metric computation.
+        Returns: A distance function between two tensors used for metric computation.
         """
         if self.quant_config.compute_distance_fn is not None:
             return lambda x, y, idx: self.quant_config.compute_distance_fn(x, y)
