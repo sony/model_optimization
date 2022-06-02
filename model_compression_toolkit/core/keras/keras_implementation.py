@@ -4,6 +4,11 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
 
+if tf.__version__ < "2.6":
+    from tensorflow.keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add
+else:
+    from keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add
+
 from model_compression_toolkit import QuantizationConfig, FrameworkInfo, GradientPTQConfig, \
     MixedPrecisionQuantizationConfig, CoreConfig
 from model_compression_toolkit.core import common
@@ -299,7 +304,9 @@ class KerasImplementation(FrameworkImplementation):
                                           quant_config,
                                           metrics_weights,
                                           representative_data_gen,
-                                          fw_info)
+                                          fw_info,
+                                          interest_points_classifier=
+                                          self.count_node_for_mixed_precision_interest_points)
 
     def get_node_prior_info(self,
                             node: BaseNode,
@@ -319,3 +326,21 @@ class KerasImplementation(FrameworkImplementation):
 
         return create_node_prior_info(node=node,
                                       fw_info=fw_info, graph=graph)
+
+    def count_node_for_mixed_precision_interest_points(self, node: BaseNode) -> bool:
+        """
+        Returns whether a given node in considered as a potential interest point for mp metric computation purposes.
+        Args:
+            node: Node to indicate whether it needs to be part of the interest points set.
+        Returns: True if the node should be considered an interest point, False otherwise.
+        """
+
+        if node.type == Activation:
+            node_type_name = node.framework_attr[keras_constants.ACTIVATION]
+            if node_type_name in [keras_constants.SOFTMAX, keras_constants.SIGMOID]:
+                return True
+        elif node.type in [tf.nn.softmax, tf.nn.sigmoid, Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense, Concatenate,
+                           Add, tf.add]:
+            return True
+
+        return False

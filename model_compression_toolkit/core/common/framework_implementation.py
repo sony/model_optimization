@@ -295,3 +295,14 @@ class FrameworkImplementation(ABC):
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_node_prior_info method.')
+
+    def count_node_for_mixed_precision_interest_points(self, node: BaseNode) -> bool:
+        """
+        Returns whether a given node in considered as a potential interest point for mp metric computation purposes.
+        Args:
+            node: Node to indicate whether it needs to be part of the interest points set.
+        Returns: True if the node should be considered an interest point, False otherwise.
+        """
+
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s count_node_for_mixed_precision_interest_points method.')

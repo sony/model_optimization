@@ -32,6 +32,7 @@ class SensitivityEvaluationManager:
                  quant_config: MixedPrecisionQuantizationConfig,
                  representative_data_gen: Callable,
                  model_builder: Callable,
+                 interest_points_classifier: Callable,
                  move_tensors_func: Callable = None):
         """
         Initiates all relevant objects to manage a sensitivity evaluation for MP search.
@@ -42,6 +43,8 @@ class SensitivityEvaluationManager:
             quant_config: MP Quantization configuration for how the graph should be quantized.
             representative_data_gen: Dataset used for getting batches for inference.
             model_builder: A function that builds a model object for the currently used framework.
+            interest_points_classifier: A function that indicates whether a given node in considered as a potential
+            interest point for mp metric computation purposes.
             move_tensors_func: A function that moves tensors in list of tensors to cpu memory
                 (relevant only when using Pytorch framework).
         """
@@ -52,7 +55,8 @@ class SensitivityEvaluationManager:
 
         # Get interest points for distance measurement and a list of sorted configurable nodes names
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names()
-        self.interest_points = get_mp_interest_points(graph, fw_info, quant_config.num_interest_points_factor)
+        self.interest_points = self.interest_points = get_mp_interest_points(graph, interest_points_classifier,
+                                                                             quant_config.num_interest_points_factor)
 
         # Build a mixed-precision model which can be configured to use different bitwidth in different layers.
         # And a baseline model.
@@ -83,6 +87,17 @@ class SensitivityEvaluationManager:
         # If the model contains only one output we save it a list. If it's a list already, we keep it as a list.
         self.baseline_tensors_list = [_tensors_as_list(self.baseline_model(images)) for images in self.images_batches]
 
+    def get_compute_distance_fn(self) -> Callable:
+        """
+        If a specific distance function was provided, then it is returned to be used for distance metric computation
+        for all nodes. Otherwise, the specific distance function configured for each specific node is returned.
+        Returns: A distance function between to tensors, to be used for metric computation.
+        """
+        if self.quant_config.compute_distance_fn is not None:
+            return lambda x, y, idx: self.quant_config.compute_distance_fn(x, y)
+        else:
+            return lambda x, y, idx: self.interest_points[idx].distance_fn(x, y)
+
     def compute_distance_matrix(self,
                                 baseline_tensors: List[Any],
                                 mp_tensors: List[Any]):
@@ -97,13 +112,15 @@ class SensitivityEvaluationManager:
              and the baseline model's output for all images that were inferred.
         """
 
+        assert len(baseline_tensors) == len(self.interest_points)
         num_interest_points = len(baseline_tensors)
         num_samples = len(baseline_tensors[0])
         distance_matrix = np.ndarray((num_interest_points, num_samples))
+        compute_distance_fn = self.get_compute_distance_fn()
         for i in range(num_interest_points):
             for j in range(num_samples):
                 distance_matrix[i, j] = \
-                    self.quant_config.compute_distance_fn(baseline_tensors[i][j].numpy(), mp_tensors[i][j].numpy())
+                    compute_distance_fn(baseline_tensors[i][j].numpy(), mp_tensors[i][j].numpy(), i)
         return distance_matrix
 
     def build_distance_metrix(self):
@@ -137,34 +154,32 @@ class SensitivityEvaluationManager:
         return distance_matrix
 
 
-def get_mp_interest_points(graph: Graph, fw_info: FrameworkInfo, num_ip_factor: float) -> List[BaseNode]:
+def get_mp_interest_points(graph: Graph, interest_points_classifier: Callable, num_ip_factor: float) -> List[BaseNode]:
     """
     Gets a list of interest points for the mixed precision metric computation.
     The list is constructed from a filtered set of the convolutions nodes in the graph.
 
     Args:
         graph: Graph to search for its MP configuration.
-        fw_info: FrameworkInfo object about the specific framework
-                (e.g., attributes of different layers' weights to quantize).
+        interest_points_classifier: A function that indicates whether a given node in considered as a potential
+            interest point for mp metric computation purposes.
         num_ip_factor: Percentage out of the total set of interest points that we want to actually use.
 
     Returns: A list of interest points (nodes in the graph).
 
     """
     sorted_nodes = graph.get_topo_sorted_nodes()
-    kernel_nodes = list(filter(lambda n: fw_info.get_kernel_op_attributes(n.type)[0] is not None, sorted_nodes))
+    ip_nodes = list(filter(lambda n: interest_points_classifier(n), sorted_nodes))
 
-    interest_points_nodes = bound_num_interest_points(kernel_nodes, num_ip_factor)
+    interest_points_nodes = bound_num_interest_points(ip_nodes, num_ip_factor)
 
-    # We add the last configurable node to the list of interest points, since we need it to be able to include all
-    # configurable nodes in the sensitivity metric computation
+    # We add last layer in model to interest points,
+    # in order to consider the model's output in the distance metric computation (and also to make sure
+    # all configurable layers are included in the configured mp model for metric computation purposes)
+    last_layer_node = sorted_nodes[-1]
+    interest_points = interest_points_nodes if last_layer_node in interest_points_nodes \
+        else interest_points_nodes + [last_layer_node]
 
-    conf_nodes = graph.get_configurable_sorted_nodes()
-    if len(conf_nodes) == 0:
-        raise Exception("No configurable nodes in mixed precision search mode")
-    last_conf_node = graph.get_configurable_sorted_nodes()[-1]
-    interest_points = interest_points_nodes if last_conf_node in interest_points_nodes \
-        else interest_points_nodes + [last_conf_node]
     return interest_points
 
 

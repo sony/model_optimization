@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Any
+from typing import Any, Dict, Callable
 
 import tensorflow as tf
 
@@ -20,13 +20,17 @@ if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers.core import TFOpLambda, SlicingOpLambda
     from tensorflow.python.keras.engine.keras_tensor import KerasTensor
     from tensorflow.python.keras.engine.node import Node as KerasNode
+    from tensorflow.keras.layers import Dense, Activation
 else:
     from keras.layers.core import TFOpLambda, SlicingOpLambda
     from keras.engine.keras_tensor import KerasTensor
     from keras.engine.node import Node as KerasNode
+    from keras.layers import Dense, Activation
 
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
+from model_compression_toolkit.core.common.similarity_analyzer import compute_cs, compute_kl_divergence, compute_mse
+from model_compression_toolkit.core.keras.constants import ACTIVATION, SIGMOID, SOFTMAX
 
 keras = tf.keras
 layers = keras.layers
@@ -76,6 +80,9 @@ def build_node(node: KerasNode,
     input_shape = keras_layer.get_input_shape_at(io_index)
     output_shape = keras_layer.get_output_shape_at(io_index)
 
+    # Get the node's distance function to be used for mixed-precision distance metric computation
+    distance_fn = __get_node_distance_fn(layer_class, layer_config)
+
     if layer_class in [TFOpLambda, SlicingOpLambda]:
         # Some functional ops (such as tf.concat) should receive the input tensors as a list
         # and some are not (such as tf.multiply), so each FunctionalNode holds
@@ -96,7 +103,8 @@ def build_node(node: KerasNode,
                               is_reused,
                               reuse_group,
                               functional_op=keras_layer.function,
-                              inputs_as_list=inputs_as_list)
+                              inputs_as_list=inputs_as_list,
+                              distance_fn=distance_fn)
     else:
         node = BaseNode(node_name,
                         layer_config,
@@ -105,7 +113,8 @@ def build_node(node: KerasNode,
                         weights,
                         layer_class,
                         is_reused,
-                        reuse_group)
+                        reuse_group,
+                        distance_fn=distance_fn)
 
     node_name_to_node[node_name] = node
     return node
@@ -129,3 +138,25 @@ def __is_functional_inputs_a_list(op_call_args: Any) -> bool:
             inputs_as_list = inputs_as_list and isinstance(arg, KerasTensor)
         return inputs_as_list
     return False
+
+
+def __get_node_distance_fn(layer_class: type, layer_config: Dict[str, Any]) -> Callable:
+    """
+    A mapping between layers' types and a distance function for computing the distance between
+    two tensors (for loss computation purposes). Returns a specific function if node of specific types is
+    given, or a default (normalized MSE) function otherwise.
+    Args:
+        layer_class: Class path of the layer the node represents.
+        layer_config: Framework attributes the layer had which the node holds.
+    Returns: A distance function between two tensors.
+    """
+
+    if layer_class == Activation:
+        node_type_name = layer_config[ACTIVATION]
+        if node_type_name == SOFTMAX or node_type_name == SIGMOID:
+            return compute_kl_divergence
+    elif layer_class == tf.nn.softmax or layer_class == tf.nn.sigmoid:
+        return compute_kl_divergence
+    elif layer_class == Dense:
+        return compute_cs
+    return lambda x, y: compute_mse(x, y, norm=True, norm_eps=1e-8)

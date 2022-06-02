@@ -33,7 +33,8 @@ def get_sensitivity_evaluation(graph: Graph,
                                quant_config: MixedPrecisionQuantizationConfig,
                                metrics_weights_fn: Callable,
                                representative_data_gen: Callable,
-                               fw_info: FrameworkInfo) -> Callable:
+                               fw_info: FrameworkInfo,
+                               interest_points_classifier: Callable) -> Callable:
     """
     Create a function to compute the sensitivity metric of an MP model (the sensitivity
     is computed based on the similarity of the interest points' outputs between the MP model
@@ -48,6 +49,8 @@ def get_sensitivity_evaluation(graph: Graph,
         metrics_weights_fn: Function to compute weights for a weighted average over the distances (per layer).
         representative_data_gen: Dataset used for getting batches for inference.
         fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
+        interest_points_classifier: A function that indicates whether a given node in considered as a potential
+            interest point for mp metric computation purposes.
     Returns:
         Function to compute the sensitivity metric.
     """
@@ -57,7 +60,8 @@ def get_sensitivity_evaluation(graph: Graph,
     # It generates and stores a set of image batches for evaluation.
     # It also runs and stores the baseline model's inference on the generated batches.
     # the model_builder method passed to the manager is the Keras model builder.
-    sem = SensitivityEvaluationManager(graph, fw_info, quant_config, representative_data_gen, model_builder)
+    sem = SensitivityEvaluationManager(graph, fw_info, quant_config, representative_data_gen, model_builder,
+                                       interest_points_classifier)
 
     # Initiating baseline_tensors_list since it is not initiated in SensitivityEvaluationManager init.
     sem.init_baseline_tensors_list()

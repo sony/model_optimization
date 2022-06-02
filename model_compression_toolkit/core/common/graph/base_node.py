@@ -14,12 +14,13 @@
 # ==============================================================================
 
 import copy
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any, Tuple, List, Callable
 
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
     ACTIVATION_NBITS_ATTRIBUTE
+from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
 
 
 class BaseNode:
@@ -37,7 +38,8 @@ class BaseNode:
                  reuse: bool = False,
                  reuse_group: str = None,
                  quantization_attr: Dict[str, Any] = None,
-                 has_activation: bool = True
+                 has_activation: bool = True,
+                 distance_fn: Callable = lambda x, y: compute_mse(x, y, True, 1e-8),
                  ):
         """
         Init a Node object.
@@ -53,6 +55,7 @@ class BaseNode:
             reuse_group: Name of group of nodes from the same reused layer.
             quantization_attr: Attributes the node holds regarding how it should be quantized.
             has_activation: Whether the node has activations that we might want to quantize.
+            distance_fn: Distance function to compute the distance between two tensors.
         """
         self.name = name
         self.framework_attr = framework_attr
@@ -68,6 +71,7 @@ class BaseNode:
         self.candidates_quantization_cfg = None
         self.prior_info = None
         self.has_activation = has_activation
+        self.distance_fn = distance_fn
 
     @property
     def type(self):
