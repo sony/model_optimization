@@ -17,7 +17,7 @@
 import copy
 import os
 from functools import partial
-from typing import Callable, List, Tuple, Any
+from typing import Callable, Tuple, Any
 from tqdm import tqdm
 
 from model_compression_toolkit.core import common
@@ -26,7 +26,7 @@ from model_compression_toolkit.core.common.gptq.gptq_config import GradientPTQCo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.core.common import FrameworkInfo
-from model_compression_toolkit.core.common.constants import NUM_SAMPLES_CS_TENSORBOARD
+from model_compression_toolkit.core.common.constants import NUM_SAMPLES_DISTANCE_TENSORBOARD
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.common.gptq.gptq_training import gptq_training
@@ -49,10 +49,12 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
     set_quantization_configuration_to_graph
 
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
+from model_compression_toolkit.core.common.similarity_analyzer import compute_cs
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.common.substitutions.linear_collapsing_substitution import linear_collapsing_substitute
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.common.model_collector import ModelCollector
+from model_compression_toolkit.core.common.visualization.nn_visualizer import NNVisualizer
 
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 from model_compression_toolkit.core.common.bias_correction.apply_bias_correction_to_graph import \
@@ -318,7 +320,9 @@ def _quantize_model(fw_info: FrameworkInfo,
 def _analyze_similarity(representative_data_gen: Callable,
                         tb_w: TensorboardWriter,
                         tg: Graph,
-                        tg_float: Graph):
+                        tg_float: Graph,
+                        fw_impl: FrameworkImplementation,
+                        fw_info: FrameworkInfo):
     """
     Plot the cosine similarity of different points on the graph between the float and quantized
     graphs. Add them to the passed TensorboardWriter object and close all tensorboard writer open
@@ -329,13 +333,21 @@ def _analyze_similarity(representative_data_gen: Callable,
         tb_w: TensorBoardWriter object to log events.
         tg: Graph of quantized model.
         tg_float: Graph of float model.
+        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+        fw_info: Information needed for quantization about the specific framework.
 
     """
     if tb_w is not None:
-        visual = KerasNNVisualizer(tg_float, tg)
-        for i in range(NUM_SAMPLES_CS_TENSORBOARD):
-            figure = visual.plot_cs_graph(representative_data_gen())
-            tb_w.add_figure(figure, f'cosine_similarity_sample_{i}')
+        visual = NNVisualizer(tg_float,
+                              tg,
+                              fw_impl=fw_impl,
+                              fw_info=fw_info)
+
+        for i in range(NUM_SAMPLES_DISTANCE_TENSORBOARD):
+            figure = visual.plot_distance_graph(representative_data_gen(),
+                                                distance_fn=compute_cs,
+                                                convert_to_range=lambda a: 1 - 2 * a)
+            tb_w.add_figure(figure, f'similarity_distance_sample_{i}')
         tb_w.close()
 
 
@@ -434,7 +446,9 @@ def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
         _analyze_similarity(representative_data_gen,
                             tb_w,
                             tg_bias,
-                            tg_float)
+                            tg_float,
+                            fw_impl,
+                            fw_info)
 
     return quantized_model, user_info
 
