@@ -28,15 +28,22 @@ body:
       description: MCT installed from
       options:
         - source
-        - binary
+        - pip (model-compression-toolkit)
+        - pip (mct-nightly)
     validations:
       required: true
-  - type: input
+  - type: dropdown
     id: mctversion
     attributes:
       label: MCT Version
-      description:
-      placeholder: ex,. mct 1.3
+      description: Version of MCT you're using
+      options:
+        - 1.4.0
+        - 1.3.0
+        - 1.2.0
+        - 1.1.1
+        - 1.1.0
+        - 1.0.0
     validations:
       required: true
   - type: input
