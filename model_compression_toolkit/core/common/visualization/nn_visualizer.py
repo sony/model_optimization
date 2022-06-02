@@ -113,12 +113,12 @@ class NNVisualizer:
             new_inputs.append(np.expand_dims(img, axis=0))
 
         # Get outputs
-        tensors_float = self.float_model(new_inputs)
-        tensors_fxp = self.quantized_model(new_inputs)
+        tensors_float = self.fw_impl.run_model_inference(self.float_model, new_inputs)
+        tensors_fxp = self.fw_impl.run_model_inference(self.quantized_model, new_inputs)
 
         # Compute distance between couples of outputs.
         distance_array = np.asarray(
-            [distance_fn(t_float.numpy(), t_fxp.numpy()) for t_float, t_fxp in zip(tensors_float, tensors_fxp)])
+            [distance_fn(self.fw_impl.to_numpy(t_float), self.fw_impl.to_numpy(t_fxp)) for t_float, t_fxp in zip(tensors_float, tensors_fxp)])
 
         distance_array = convert_to_range(distance_array)
 
