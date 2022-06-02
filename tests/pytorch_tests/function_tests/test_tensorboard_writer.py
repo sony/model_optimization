@@ -32,7 +32,7 @@ class PytorchTestLogger(unittest.TestCase):
     def setUpClass(cls):
         mct.core.common.Logger.set_log_file('/tmp/')
         model = mobilenet_v2(pretrained=True)
-        mct.pytorch_post_training_quantization(model, random_datagen, n_iter=1)
+        mct.pytorch_post_training_quantization(model, random_datagen, n_iter=1, analyze_similarity=True)
 
     def test_tensorboard_log_dir(self):
         self.assertTrue(os.path.exists(os.path.join(mct.core.common.Logger.LOG_PATH, 'tensorboard_logs')))

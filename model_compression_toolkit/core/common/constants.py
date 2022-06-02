@@ -41,7 +41,7 @@ FLOAT_32 = 'float32'
 
 
 # Number of Tensorboard cosine-similarity plots to add:
-NUM_SAMPLES_CS_TENSORBOARD = 20
+NUM_SAMPLES_DISTANCE_TENSORBOARD = 20
 
 # num bits for shift negative non linear node
 SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS = 16
