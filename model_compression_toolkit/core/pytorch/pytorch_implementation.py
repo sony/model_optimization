@@ -16,6 +16,7 @@ from typing import List, Any, Tuple, Callable, Type
 import numpy as np
 import torch
 from torch.nn import Module
+from torch.nn import Conv2d, ConvTranspose2d, Linear
 
 from model_compression_toolkit import QuantizationConfig, FrameworkInfo, GradientPTQConfig, \
     MixedPrecisionQuantizationConfig, CoreConfig
@@ -279,7 +280,9 @@ class PytorchImplementation(FrameworkImplementation):
                                           quant_config,
                                           metrics_weights,
                                           representative_data_gen,
-                                          fw_info)
+                                          fw_info,
+                                          interest_points_classifier=
+                                          self.count_node_for_mixed_precision_interest_points)
 
     def get_node_prior_info(self,
                             node: BaseNode,
@@ -298,3 +301,15 @@ class PytorchImplementation(FrameworkImplementation):
         return create_node_prior_info(node=node,
                                       fw_info=fw_info,
                                       graph=graph)
+
+    def count_node_for_mixed_precision_interest_points(self, node: BaseNode) -> bool:
+        """
+        Returns whether a given node in considered as a potential interest point for mp metric computation purposes.
+        Args:
+            node: Node to indicate whether it needs to be part of the interest points set.
+        Returns: True if the node should be considered an interest point, False otherwise.
+        """
+
+        if node.type in [Conv2d, Linear, ConvTranspose2d]:
+            return True
+        return False

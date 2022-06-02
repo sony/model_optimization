@@ -58,7 +58,7 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
                                                     mixed_precision_enable=True)
 
     ips = get_mp_interest_points(graph=graph,
-                                 fw_info=fw_info,
+                                 interest_points_classifier=keras_impl.count_node_for_mixed_precision_interest_points,
                                  num_ip_factor=qc.num_interest_points_factor)
 
     return ips, graph, fw_info
@@ -70,20 +70,22 @@ class TestSensitivityMetricInterestPoints(unittest.TestCase):
         in_model = DenseNet121()
         ips, graph, fw_info = build_ip_list_for_test(in_model, num_interest_points_factor=0.5)
         sorted_nodes = graph.get_topo_sorted_nodes()
-        kernel_nodes = list(filter(lambda n: fw_info.get_kernel_op_attributes(n.type)[0] is not None, sorted_nodes))
+        ip_nodes = list(filter(lambda n: KerasImplementation().count_node_for_mixed_precision_interest_points(n),
+                               sorted_nodes))
 
-        self.assertTrue(len(ips) <= 0.5 * len(kernel_nodes),
-                        f"Filtered interest points list should include not more than {0.5 * len(kernel_nodes)}, but it"
-                        f"includes {len(ips)}")
+        self.assertTrue(len(ips) <= 0.5 * len(ip_nodes),
+                        f"Filtered interest points list should include not more than {0.5 * len(ip_nodes)}, but it"
+                        f" includes {len(ips)}")
 
     def test_nonfiltered_interest_points_set(self):
         in_model = MobileNetV2()
         ips, graph, fw_info = build_ip_list_for_test(in_model, num_interest_points_factor=1.0)
         sorted_nodes = graph.get_topo_sorted_nodes()
-        kernel_nodes = list(filter(lambda n: fw_info.get_kernel_op_attributes(n.type)[0] is not None, sorted_nodes))
+        ip_nodes = list(filter(lambda n: KerasImplementation().count_node_for_mixed_precision_interest_points(n),
+                               sorted_nodes))
 
-        self.assertTrue(len(ips) == len(kernel_nodes),
-                        f"Filtered interest points list should include exactly {len(kernel_nodes)}, but it"
+        self.assertTrue(len(ips) == len(ip_nodes),
+                        f"Filtered interest points list should include exactly {len(ip_nodes)}, but it"
                         f"includes {len(ips)}")
 
     def test_invalid_interest_points_factor(self):
