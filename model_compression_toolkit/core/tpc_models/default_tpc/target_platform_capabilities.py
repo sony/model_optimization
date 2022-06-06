@@ -13,17 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 
-import importlib
-
 from model_compression_toolkit.core.common.constants import FOUND_TF, FOUND_TORCH, TENSORFLOW, PYTORCH, LATEST
-
 
 ###############################
 # Build Tensorflow TPC models
 ###############################
 keras_tpc_models_dict = None
 if FOUND_TF:
-    from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_keras_tpc as get_keras_tpc_latest
+    from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_keras_tpc_latest
     from model_compression_toolkit.core.tpc_models.default_tpc.v1.tpc_keras import get_keras_tpc as get_keras_tpc_v1
     from model_compression_toolkit.core.tpc_models.default_tpc.v2.tpc_keras import get_keras_tpc as get_keras_tpc_v2
     from model_compression_toolkit.core.tpc_models.default_tpc.v3.tpc_keras import get_keras_tpc as get_keras_tpc_v3
@@ -39,8 +36,7 @@ if FOUND_TF:
 ###############################
 pytorch_tpc_models_dict = None
 if FOUND_TORCH:
-    from model_compression_toolkit.core.tpc_models.default_tpc.latest import \
-        get_pytorch_tpc as get_pytorch_tpc_latest
+    from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_pytorch_tpc_latest
     from model_compression_toolkit.core.tpc_models.default_tpc.v1.tpc_pytorch import \
         get_pytorch_tpc as get_pytorch_tpc_v1
     from model_compression_toolkit.core.tpc_models.default_tpc.v2.tpc_pytorch import \

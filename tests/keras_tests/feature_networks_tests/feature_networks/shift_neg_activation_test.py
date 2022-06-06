@@ -17,7 +17,7 @@ import tensorflow as tf
 
 from model_compression_toolkit.core.common.constants import SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.core.common.network_editors import EditRule, node_filters, actions
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_keras_tpc
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_keras_tpc_latest
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 
 if tf.__version__ < "2.6":
@@ -109,7 +109,7 @@ class ShiftNegActivationPostAddTest(ShiftNegActivationTest):
         self.post_add_nbits = post_add_nbits
 
     def get_tpc(self):
-        return get_keras_tpc()
+        return get_keras_tpc_latest()
 
     def get_network_editor(self):
         return [EditRule(filter=node_filters.NodeNameScopeFilter('activation'),
