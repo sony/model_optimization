@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.core.tpc_models.default_tp_model import get_op_quantization_configs, generate_tp_model
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_tp_model
 import model_compression_toolkit as mct
 
 tp = mct.target_platform

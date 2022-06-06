@@ -16,7 +16,7 @@
 
 from abc import ABC
 
-from model_compression_toolkit.core.tpc_models.keras_tp_models.keras_default import generate_keras_default_tpc
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
@@ -43,7 +43,7 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
                                       'activation_n_bits': 16,
                                       'enable_weights_quantization': False,
                                       'enable_activation_quantization': False})
-        return generate_keras_default_tpc(name="bn_folding_test", tp_model=tp)
+        return generate_keras_tpc(name="bn_folding_test", tp_model=tp)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,

@@ -18,7 +18,7 @@ from torch.nn import Conv2d
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, KPI
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.tpc_models.default_tp_model import get_default_tp_model, get_op_quantization_configs
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_tp_model, get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -34,7 +34,7 @@ class MixedPercisionBaseTest(BasePytorchTest):
         super().__init__(unit_test)
 
     def get_tpc(self):
-        return get_pytorch_test_tpc_dict(tp_model=get_default_tp_model(),
+        return get_pytorch_test_tpc_dict(tp_model=get_tp_model(),
                                          test_name='mixed_precision_model',
                                          ftp_name='mixed_precision_pytorch_test')
 
