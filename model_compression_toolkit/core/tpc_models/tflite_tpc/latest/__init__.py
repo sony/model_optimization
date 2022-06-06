@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.core.tpc_models.tflite_tpc.v1.tp_model import get_tp_model, generate_tp_model, get_op_quantization_configs
-from model_compression_toolkit.core.tpc_models.tflite_tpc.v1.tpc_keras import get_keras_tpc, generate_keras_tpc
-from model_compression_toolkit.core.tpc_models.tflite_tpc.v1.tpc_pytorch import get_pytorch_tpc, generate_pytorch_tpc
+from model_compression_toolkit.core.tpc_models.tflite_tpc.v1.tp_model import *
+from model_compression_toolkit.core.tpc_models.tflite_tpc.v1.tpc_keras import *
+from model_compression_toolkit.core.tpc_models.tflite_tpc.v1.tpc_pytorch import *
