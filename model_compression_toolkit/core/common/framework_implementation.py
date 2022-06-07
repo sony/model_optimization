@@ -18,11 +18,12 @@ from typing import Callable, Any, List, Tuple, Type, Dict
 import numpy as np
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit import GradientPTQConfig, MixedPrecisionQuantizationConfig
+from model_compression_toolkit import GradientPTQConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
@@ -255,12 +256,11 @@ class FrameworkImplementation(ABC):
                              f'framework\'s get_gptq_trainer method.')
 
     @abstractmethod
-    def get_sensitivity_evaluation_fn(self,
-                                      graph: Graph,
-                                      quant_config: MixedPrecisionQuantizationConfig,
-                                      metrics_weights: np.ndarray,
-                                      representative_data_gen: Callable,
-                                      fw_info: FrameworkInfo) -> Callable:
+    def get_sensitivity_evaluator(self,
+                                  graph: Graph,
+                                  quant_config: MixedPrecisionQuantizationConfigV2,
+                                  representative_data_gen: Callable,
+                                  fw_info: FrameworkInfo) -> SensitivityEvaluation:
         """
         Create and return a function to compute a sensitivity metric for a mixed-precision
         configuration (comparing to the float model).
@@ -268,7 +268,6 @@ class FrameworkImplementation(ABC):
         Args:
             graph: Graph to build it's float and mixed-precision models.
             quant_config: QuantizationConfig of how the model should be quantized.
-            metrics_weights: Array of weights to weight the sensitivity among different layers.
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's model.
 
@@ -276,7 +275,7 @@ class FrameworkImplementation(ABC):
             A function that computes the metric.
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s get_sensitivity_evaluation_fn method.')
+                             f'framework\'s get_sensitivity_evaluator method.')
 
     def get_node_prior_info(self, node: BaseNode,
                             fw_info: FrameworkInfo,
@@ -325,3 +324,17 @@ class FrameworkImplementation(ABC):
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_node_distance_fn method.')
+
+    @abstractmethod
+    def get_model_layers_names(self,
+                               model: Any) -> List:
+
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_model_layers_names method.')
+
+    @abstractmethod
+    def get_model_layer_by_name(self,
+                                model: Any,
+                                layer_name: str) -> List:
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_model_layer_by_name method.')

@@ -15,9 +15,8 @@
 import numpy as np
 from typing import Callable, Any, List
 
-from model_compression_toolkit import FrameworkInfo, MixedPrecisionQuantizationConfig
+from model_compression_toolkit import FrameworkInfo, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common import Logger
 
@@ -30,11 +29,9 @@ class SensitivityEvaluationManager:
     def __init__(self,
                  graph: Graph,
                  fw_info: FrameworkInfo,
-                 quant_config: MixedPrecisionQuantizationConfig,
+                 quant_config: MixedPrecisionQuantizationConfigV2,
                  representative_data_gen: Callable,
-                 model_builder: Callable,
-                 fw_impl: FrameworkImplementation,
-                 move_tensors_func: Callable = None):
+                 fw_impl: Any):
         """
         Initiates all relevant objects to manage a sensitivity evaluation for MP search.
         Args:
@@ -43,16 +40,10 @@ class SensitivityEvaluationManager:
                 (e.g., attributes of different layers' weights to quantize).
             quant_config: MP Quantization configuration for how the graph should be quantized.
             representative_data_gen: Dataset used for getting batches for inference.
-            model_builder: A function that builds a model object for the currently used framework.
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-            move_tensors_func: A function that moves tensors in list of tensors to cpu memory
-                (relevant only when using Pytorch framework).
         """
         self.quant_config = quant_config
         self.fw_impl = fw_impl
-
-        # If used with Pytorch, we might need to move tensors to cpu before applying numpy functions
-        self.move_tensors_func = move_tensors_func
 
         # Get interest points for distance measurement and a list of sorted configurable nodes names
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names()
@@ -62,7 +53,8 @@ class SensitivityEvaluationManager:
 
         # Build a mixed-precision model which can be configured to use different bitwidth in different layers.
         # And a baseline model.
-        self.baseline_model, self.model_mp = build_models(graph, fw_info, self.interest_points, model_builder)
+        self.baseline_model, self.model_mp = build_models(graph, fw_info, self.interest_points,
+                                                          self.fw_impl.model_builder)
 
         # Build images batches for inference comparison
         self.images_batches = get_images_batches(quant_config.num_of_images, representative_data_gen)
@@ -75,19 +67,8 @@ class SensitivityEvaluationManager:
         Evaluates the baseline model on all images and saves the obtained lists of tensors in a list for later use.
         Initiates a class variable self.baseline_tensors_list
         """
-        self._get_baseline_tensors()
-        if self.move_tensors_func:
-            # for Pytorch framework use only
-            self.baseline_tensors_list = [self.move_tensors_func(tensors) for tensors in self.baseline_tensors_list]
-
-    def _get_baseline_tensors(self):
-        """
-        Evaluate the baseline model on each of the images batches and constructs a list with the results for each batch.
-        Sets a class variable with the results.
-        """
-        # Infer all images with baseline model, and save them as a list.
-        # If the model contains only one output we save it a list. If it's a list already, we keep it as a list.
-        self.baseline_tensors_list = [_tensors_as_list(self.baseline_model(images)) for images in self.images_batches]
+        self.baseline_tensors_list = [_tensors_as_list(self.fw_impl.to_numpy(self.baseline_model(images)))
+                                      for images in self.images_batches]
 
     def compute_distance_matrix(self,
                                 baseline_tensors: List[Any],
@@ -115,7 +96,7 @@ class SensitivityEvaluationManager:
                                                   compute_distance_fn=self.quant_config.compute_distance_fn)
             for j in range(num_samples):
                 distance_matrix[i, j] = \
-                    point_distance_fn(baseline_tensors[i][j].numpy(), mp_tensors[i][j].numpy(), i)
+                    point_distance_fn(baseline_tensors[i][j], mp_tensors[i][j], i)
         return distance_matrix
 
     def build_distance_metrix(self):
@@ -130,12 +111,8 @@ class SensitivityEvaluationManager:
         # Compute the distance matrix for num_of_images images.
         for images, baseline_tensors in zip(self.images_batches, self.baseline_tensors_list):
             # when using model.predict(), it does not use the QuantizeWrapper functionality
-            mp_tensors = _tensors_as_list(self.model_mp(images))
-
-            if self.move_tensors_func:
-                # in case the tensors are on GPU, and we use Pytorch,
-                # need to move them to CPU in order to convert to numpy arrays
-                mp_tensors = self.move_tensors_func(mp_tensors)
+            mp_tensors = self.model_mp(images)
+            mp_tensors = _tensors_as_list(self.fw_impl.to_numpy(mp_tensors))
 
             # Build distance matrix: similarity between the baseline model to the float model
             # in every interest point for every image in the batch.

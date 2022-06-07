@@ -32,6 +32,9 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 
 # When adding a new search_methods MP configuration method, these enum and factory dictionary
 # should be updated with it's kind and a search_method implementation.
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+
+
 class BitWidthSearchMethod(Enum):
     INTEGER_PROGRAMMING = 0
 
@@ -50,7 +53,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
                      mp_config: MixedPrecisionQuantizationConfigV2,
                      fw_info: FrameworkInfo,
                      target_kpi: KPI,
-                     get_sensitivity_evaluation: Callable = None,
+                     sensitivity_evaluator: SensitivityEvaluation = None,
                      search_method: BitWidthSearchMethod = BitWidthSearchMethod.INTEGER_PROGRAMMING) -> List[int]:
     """
     Search for a MP configuration for a given graph. Given a search_method method (by default, it's linear
@@ -88,9 +91,8 @@ def search_bit_width(graph_to_search_cfg: Graph,
 
     # Instantiate a manager object
     search_manager = MixedPrecisionSearchManager(graph,
-                                                 mp_config,
                                                  fw_info,
-                                                 get_sensitivity_evaluation,
+                                                 sensitivity_evaluator,
                                                  kpi_functions)
 
     if search_method in search_methods:  # Get a specific search function

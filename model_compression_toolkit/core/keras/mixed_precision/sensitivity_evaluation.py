@@ -62,7 +62,7 @@ def get_sensitivity_evaluation(graph: Graph,
     # It generates and stores a set of image batches for evaluation.
     # It also runs and stores the baseline model's inference on the generated batches.
     # the model_builder method passed to the manager is the Keras model builder.
-    sem = SensitivityEvaluationManager(graph, fw_info, quant_config, representative_data_gen, model_builder, fw_impl)
+    sem = SensitivityEvaluationManager(graph, fw_info, quant_config, representative_data_gen, fw_impl)
 
     # Initiating baseline_tensors_list since it is not initiated in SensitivityEvaluationManager init.
     sem.init_baseline_tensors_list()

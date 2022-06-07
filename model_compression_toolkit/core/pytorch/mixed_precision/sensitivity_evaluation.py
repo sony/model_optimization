@@ -60,11 +60,10 @@ def get_sensitivity_evaluation(graph: Graph,
     # It generates and stores a set of image batches for evaluation.
     # It also runs and stores the baseline model's inference on the generated batches.
     # the model_builder method passed to the manager is the Pytorch model builder.
-    sem = SensitivityEvaluationManager(graph, fw_info, quant_config, representative_data_gen, model_builder, fw_impl,
-                                       move_tensors_func=lambda l: list(map(lambda t: t.detach().cpu(), l)))
+    sem = SensitivityEvaluationManager(graph, fw_info, quant_config, representative_data_gen, fw_impl)
 
     # Casting images tensors to torch.Tensor and putting them on same model as device
-    sem.images_batches = list(map(lambda in_arr: to_torch_tensor(in_arr), sem.images_batches))
+    sem.images_batches = list(map(lambda in_arr: fw_impl.to_tensor(in_arr), sem.images_batches))
 
     # Initiating baseline_tensors_list since it is not initiated in SensitivityEvaluationManager init.
     sem.init_baseline_tensors_list()

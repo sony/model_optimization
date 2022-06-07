@@ -127,9 +127,11 @@ def post_training_quantization(in_model: Any,
                                                  core_config.mixed_precision_config,
                                                  fw_info,
                                                  target_kpi,
-                                                 partial(fw_impl.get_sensitivity_evaluation_fn,
-                                                         representative_data_gen=representative_data_gen,
-                                                         fw_info=fw_info))
+                                                 fw_impl.get_sensitivity_evaluator(
+                                                     tg,
+                                                     core_config.mixed_precision_config,
+                                                     representative_data_gen=representative_data_gen,
+                                                     fw_info=fw_info))
         else:
             Logger.warning(
                 f'Mixed Precision has overwrite bit-width configuration{core_config.mixed_precision_config.configuration_overwrite}')
