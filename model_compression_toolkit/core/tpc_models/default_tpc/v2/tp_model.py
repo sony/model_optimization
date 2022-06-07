@@ -17,10 +17,10 @@ from typing import List, Tuple
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.target_platform import OpQuantizationConfig, TargetPlatformModel
 
-tpc = mct.target_platform
+tp = mct.target_platform
 
 
-def get_default_tp_model() -> TargetPlatformModel:
+def get_tp_model() -> TargetPlatformModel:
     """
     A method that generates a default target platform model, with base 8-bit quantization configuration and 8, 4, 2
     bits configuration list for mixed-precision quantization.
@@ -50,9 +50,9 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     # Create a quantization config.
     # A quantization configuration defines how an operator
     # should be quantized on the modeled hardware:
-    eight_bits = tpc.OpQuantizationConfig(
-        activation_quantization_method=tpc.QuantizationMethod.POWER_OF_TWO,
-        weights_quantization_method=tpc.QuantizationMethod.POWER_OF_TWO,
+    eight_bits = tp.OpQuantizationConfig(
+        activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
         activation_n_bits=8,
         weights_n_bits=8,
         weights_per_channel_threshold=True,
@@ -63,14 +63,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         fixed_zero_point=None,
         weights_multiplier_nbits=None)
 
-    # To quantize a model using mixed-precision, create
-    # a list with more than one OpQuantizationConfig.
-    # In this example, we quantize some operations' weights
-    # using 2, 4 or 8 bits, and when using 2 or 4 bits, it's possible
-    # to quantize the operations' activations using LUT.
-    four_bits = eight_bits.clone_and_edit(weights_n_bits=4)
-    two_bits = eight_bits.clone_and_edit(weights_n_bits=2)
-    mixed_precision_cfg_list = [eight_bits, four_bits, two_bits]
+    mixed_precision_cfg_list = [] # No mixed precision
 
     return eight_bits, mixed_precision_cfg_list
 
@@ -97,12 +90,12 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     # of possible configurations to consider when quantizing a set of operations (in mixed-precision, for example).
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
-    default_configuration_options = tpc.QuantizationConfigOptions([default_config])
+    default_configuration_options = tp.QuantizationConfigOptions([default_config])
 
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
-    generated_tpc = tpc.TargetPlatformModel(default_configuration_options, name=name)
+    generated_tpc = tp.TargetPlatformModel(default_configuration_options, name=name)
 
     # To start defining the model's components (such as operator sets, and fusing patterns),
     # use 'with' the TargetPlatformModel instance, and create them as below:
@@ -114,40 +107,30 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # Otherwise, it will be a configure-less set (used in fusing):
 
         # May suit for operations like: Dropout, Reshape, etc.
-        tpc.OperatorsSet("NoQuantization",
-                         tpc.get_default_quantization_config_options().clone_and_edit(
+        tp.OperatorsSet("NoQuantization",
+                         tp.get_default_quantization_config_options().clone_and_edit(
                              enable_weights_quantization=False,
                              enable_activation_quantization=False))
 
-        # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects
-        mixed_precision_configuration_options = tpc.QuantizationConfigOptions(mixed_precision_cfg_list,
-                                                                              base_config=base_config)
-
-        # Define operator sets that use mixed_precision_configuration_options:
-        tpc.OperatorsSet("ConvTranspose", mixed_precision_configuration_options)
-        conv = tpc.OperatorsSet("Conv", mixed_precision_configuration_options)
-        fc = tpc.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
-
-        # Define operations sets without quantization configuration
-        # options (useful for creating fusing patterns, for example):
-        any_relu = tpc.OperatorsSet("AnyReLU")
-        add = tpc.OperatorsSet("Add")
-        prelu = tpc.OperatorsSet("PReLU")
-        swish = tpc.OperatorsSet("Swish")
-        sigmoid = tpc.OperatorsSet("Sigmoid")
-        tanh = tpc.OperatorsSet("Tanh")
-        hardswish = tpc.OperatorsSet("HardSwish")
-        hardsigmoid = tpc.OperatorsSet("HardSigmoid")
+        conv = tp.OperatorsSet("Conv")
+        fc = tp.OperatorsSet("FullyConnected")
+        any_relu = tp.OperatorsSet("AnyReLU")
+        prelu = tp.OperatorsSet("PReLU")
+        swish = tp.OperatorsSet("Swish")
+        sigmoid = tp.OperatorsSet("Sigmoid")
+        tanh = tp.OperatorsSet("Tanh")
+        hardswish = tp.OperatorsSet("HardSwish")
 
         # Combine multiple operators into a single operator to avoid quantization between
         # them. To do this we define fusing patterns using the OperatorsSets that were created.
         # To group multiple sets with regard to fusing, an OperatorSetConcat can be created
-        activations_after_conv_to_fuse = tpc.OperatorSetConcat(any_relu, swish, prelu, sigmoid, tanh, hardswish)
-        activations_after_fc_to_fuse = tpc.OperatorSetConcat(any_relu, swish, sigmoid, hardsigmoid)
+        activations_after_conv_to_fuse = tp.OperatorSetConcat(any_relu, swish, prelu, sigmoid, tanh, hardswish)
+        activations_after_fc_to_fuse = tp.OperatorSetConcat(any_relu, tanh, sigmoid)
 
-        tpc.Fusing([conv, activations_after_conv_to_fuse])
-        tpc.Fusing([fc, activations_after_fc_to_fuse])
-        tpc.Fusing([conv, add, any_relu])
-        tpc.Fusing([conv, any_relu, add])
+        # ------------------- #
+        # Fusions
+        # ------------------- #
+        tp.Fusing([conv, activations_after_conv_to_fuse])
+        tp.Fusing([fc, activations_after_fc_to_fuse])
 
     return generated_tpc

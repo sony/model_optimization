@@ -132,16 +132,18 @@ class PytorchImplementation(FrameworkImplementation):
 
     def run_model_inference(self,
                             model: Any,
-                            input_list: List[Any]) -> Tuple[Any]:
+                            input_list: List[Any]) -> Tuple[torch.Tensor]:
         """
         Run the model logic on the given the inputs.
+
         Args:
             model: Pytorch model.
             input_list: List of inputs for the model.
+
         Returns:
-            The Pytorch model's output in numpy format.
+            The Pytorch model's output.
         """
-        return torch_tensor_to_numpy(model(*to_torch_tensor(input_list)))
+        return model(*to_torch_tensor(input_list))
 
     def shift_negative_correction(self,
                                   graph: Graph,
@@ -149,10 +151,12 @@ class PytorchImplementation(FrameworkImplementation):
                                   fw_info: FrameworkInfo) -> Graph:
         """
         Apply shift negative correction (SNC) on a graph.
+
         Args:
             graph: Graph to apply SNC on.
             core_config: Quantization configuration.
             fw_info: FrameworkInfo object with information about the specific framework's module.
+
         Returns:
             Graph after SNC.
         """

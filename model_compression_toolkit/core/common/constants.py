@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import importlib
 
 # Supported frameworks in MCT:
 TENSORFLOW = 'tensorflow'
 PYTORCH = 'pytorch'
+FOUND_TF = importlib.util.find_spec(TENSORFLOW) is not None and importlib.util.find_spec("tensorflow_model_optimization") is not None
+FOUND_TORCH = importlib.util.find_spec("torch") is not None
 
 # Minimal threshold to use for quantization ranges:
 MIN_THRESHOLD = (2 ** -28)
@@ -39,9 +42,11 @@ REUSE_GROUP = 'reuse_group'
 DATA_TYPE = 'dtype'
 FLOAT_32 = 'float32'
 
+# Version
+LATEST = 'latest'
 
 # Number of Tensorboard cosine-similarity plots to add:
-NUM_SAMPLES_CS_TENSORBOARD = 20
+NUM_SAMPLES_DISTANCE_TENSORBOARD = 20
 
 # num bits for shift negative non linear node
 SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS = 16

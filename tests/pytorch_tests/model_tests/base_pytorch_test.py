@@ -15,9 +15,9 @@
 import random
 from torch.fx import symbolic_trace
 
-from model_compression_toolkit import MixedPrecisionQuantizationConfig, get_target_platform_capabilities
+from model_compression_toolkit import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.constants import PYTORCH
-from model_compression_toolkit.core.tpc_models.pytorch_tp_models.pytorch_default import generate_pytorch_tpc
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.utils import get_working_device, set_model, to_torch_tensor, \

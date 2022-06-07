@@ -135,7 +135,7 @@ class KerasImplementation(FrameworkImplementation):
 
     def run_model_inference(self,
                             model: Any,
-                            input_list: List[Any]) -> Tuple[Any]:
+                            input_list: List[Any]) -> Tuple[tf.Tensor]:
         """
         Run the model logic on the given the inputs.
 

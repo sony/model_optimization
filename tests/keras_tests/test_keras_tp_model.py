@@ -234,7 +234,27 @@ class TestGetKerasTPC(unittest.TestCase):
                                                                                   quant_config=mp_qc,
                                                                                   target_platform_capabilities=tpc)
 
-    def test_get_keras_not_supported_model(self):
+    def test_get_keras_supported_version(self):
+        mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
+        mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, "v1")
+        mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, "v2")
+        mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, "v3")
+        mct.get_target_platform_capabilities(TENSORFLOW, TFLITE_TP_MODEL, "v1")
+        mct.get_target_platform_capabilities(TENSORFLOW, QNNPACK_TP_MODEL, "v1")
+
+
+    def test_get_keras_not_supported_platform(self):
         with self.assertRaises(Exception) as e:
-            mct.get_target_platform_capabilities(TENSORFLOW, 'should_not_support')
-        self.assertEqual('Target platform model named should_not_support is not supported for framework tensorflow', str(e.exception))
+            mct.get_target_platform_capabilities(TENSORFLOW, "platform1")
+        self.assertTrue(e.exception)
+
+    def test_get_keras_not_supported_fw(self):
+        with self.assertRaises(Exception) as e:
+            mct.get_target_platform_capabilities("ONNX", DEFAULT_TP_MODEL)
+        self.assertTrue(e.exception)
+
+    def test_get_keras_not_supported_version(self):
+        with self.assertRaises(Exception) as e:
+            mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, "v0")
+        self.assertTrue(e.exception)
+
