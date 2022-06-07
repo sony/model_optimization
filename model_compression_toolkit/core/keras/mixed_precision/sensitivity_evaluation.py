@@ -18,6 +18,7 @@ from tensorflow.keras.models import Model
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from typing import Callable, List
 
+from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
@@ -33,7 +34,8 @@ def get_sensitivity_evaluation(graph: Graph,
                                quant_config: MixedPrecisionQuantizationConfig,
                                metrics_weights_fn: Callable,
                                representative_data_gen: Callable,
-                               fw_info: FrameworkInfo) -> Callable:
+                               fw_info: FrameworkInfo,
+                               fw_impl: FrameworkImplementation) -> Callable:
     """
     Create a function to compute the sensitivity metric of an MP model (the sensitivity
     is computed based on the similarity of the interest points' outputs between the MP model
@@ -42,12 +44,15 @@ def get_sensitivity_evaluation(graph: Graph,
     a SelectiveQuantizeConfig) and a baseline model (a float model).
     Then, and based on the outputs of these two models (for some batches from the representative_data_gen),
     we build a function to measure the sensitivity of a change in a bitwidth of a model's layer.
+
     Args:
         graph: Graph to get its sensitivity evaluation for changes in bitwidths for different nodes.
         quant_config: MixedPrecisionQuantizationConfig containing parameters of how the model should be quantized.
         metrics_weights_fn: Function to compute weights for a weighted average over the distances (per layer).
         representative_data_gen: Dataset used for getting batches for inference.
         fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
+        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+
     Returns:
         Function to compute the sensitivity metric.
     """
@@ -57,7 +62,7 @@ def get_sensitivity_evaluation(graph: Graph,
     # It generates and stores a set of image batches for evaluation.
     # It also runs and stores the baseline model's inference on the generated batches.
     # the model_builder method passed to the manager is the Keras model builder.
-    sem = SensitivityEvaluationManager(graph, fw_info, quant_config, representative_data_gen, model_builder)
+    sem = SensitivityEvaluationManager(graph, fw_info, quant_config, representative_data_gen, model_builder, fw_impl)
 
     # Initiating baseline_tensors_list since it is not initiated in SensitivityEvaluationManager init.
     sem.init_baseline_tensors_list()

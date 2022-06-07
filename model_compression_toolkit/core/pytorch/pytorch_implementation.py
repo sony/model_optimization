@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Any, Tuple, Callable, Type
+import operator
+from typing import List, Any, Tuple, Callable, Type, Dict
 import numpy as np
 import torch
-from torch.nn import Module
+from torch import sigmoid, softmax, add, cat
+from torch.nn import Module, Sigmoid, Softmax
+from torch.nn import Conv2d, ConvTranspose2d, Linear
 
 from model_compression_toolkit import QuantizationConfig, FrameworkInfo, GradientPTQConfig, \
     MixedPrecisionQuantizationConfig, CoreConfig
@@ -27,6 +30,7 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.gptq.gptq_training import GPTQTrainer
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
+from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework.model_builder import model_builder
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
@@ -283,7 +287,8 @@ class PytorchImplementation(FrameworkImplementation):
                                           quant_config,
                                           metrics_weights,
                                           representative_data_gen,
-                                          fw_info)
+                                          fw_info,
+                                          fw_impl=self)
 
     def get_node_prior_info(self,
                             node: BaseNode,
@@ -302,3 +307,40 @@ class PytorchImplementation(FrameworkImplementation):
         return create_node_prior_info(node=node,
                                       fw_info=fw_info,
                                       graph=graph)
+
+    def count_node_for_mixed_precision_interest_points(self, node: BaseNode) -> bool:
+        """
+        Returns whether a given node in considered as a potential interest point for mp metric computation purposes.
+        Args:
+            node: Node to indicate whether it needs to be part of the interest points set.
+        Returns: True if the node should be considered an interest point, False otherwise.
+        """
+
+        if node.type in [Conv2d, Linear, ConvTranspose2d, Sigmoid, sigmoid, Softmax, softmax, operator.add, add, cat]:
+            return True
+        return False
+
+    def get_node_distance_fn(self, layer_class: type,
+                             framework_attrs: Dict[str, Any],
+                             compute_distance_fn: Callable = None) -> Callable:
+        """
+        A mapping between layers' types and a distance function for computing the distance between
+        two tensors (for loss computation purposes). Returns a specific function if node of specific types is
+        given, or a default (normalized MSE) function otherwise.
+
+        Args:
+            layer_class: Class path of a model's layer.
+            framework_attrs: Framework attributes the layer had which the graph node holds.
+            compute_distance_fn: An optional distance function to use globally for all nodes.
+
+        Returns: A distance function between two tensors.
+        """
+
+        if compute_distance_fn is not None:
+            return compute_distance_fn
+
+        elif layer_class in [Sigmoid, sigmoid, Softmax, softmax]:
+            return compute_kl_divergence
+        elif layer_class == Linear:
+            return compute_cs
+        return lambda x, y: compute_mse(x, y, norm=True, norm_eps=1e-8)

@@ -180,3 +180,19 @@ def compute_lp_norm(float_tensor: np.ndarray, fxp_tensor: np.ndarray, p: int, no
     if norm:
         error /= (np.power(np.abs(float_tensor), p).mean() + norm_eps)
     return error
+
+
+def compute_kl_divergence(float_tensor: np.ndarray, fxp_tensor: np.ndarray) -> float:
+    """
+    Compute the similarity between two tensor using KL-divergence.
+    The returned values is between 0 to 1: the smaller returned value,
+    the greater similarity there is between the two tensors.
+    Args:
+        float_tensor: First tensor to compare.
+        fxp_tensor: Second tensor to compare.
+    Returns:
+        The KL-divergence between two tensors.
+    """
+
+    validate_before_compute_similarity(float_tensor, fxp_tensor)
+    return np.sum(np.where(float_tensor != 0, float_tensor * np.log(float_tensor / fxp_tensor), 0))
