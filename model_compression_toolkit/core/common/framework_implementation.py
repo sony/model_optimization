@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from abc import ABC, abstractmethod
-from typing import Callable, Any, List, Tuple, Type
+from typing import Callable, Any, List, Tuple, Type, Dict
 
 import numpy as np
 
@@ -306,3 +306,22 @@ class FrameworkImplementation(ABC):
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s count_node_for_mixed_precision_interest_points method.')
+
+    def get_node_distance_fn(self, layer_class: type,
+                             framework_attrs: Dict[str, Any],
+                             compute_distance_fn: Callable = None) -> Callable:
+        """
+        A mapping between layers' types and a distance function for computing the distance between
+        two tensors (for loss computation purposes). Returns a specific function if node of specific types is
+        given, or a default (normalized MSE) function otherwise.
+
+        Args:
+            layer_class: Class path of a model's layer.
+            framework_attrs: Framework attributes the layer had which the graph node holds.
+            compute_distance_fn: An optional distance function to use globally for all nodes.
+
+        Returns: A distance function between two tensors.
+        """
+
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_node_distance_fn method.')

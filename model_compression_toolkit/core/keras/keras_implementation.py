@@ -1,8 +1,11 @@
-from typing import List, Any, Tuple, Callable, Type
+from typing import List, Any, Tuple, Callable, Type, Dict
 
 import numpy as np
 import tensorflow as tf
+from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID
 from tensorflow.keras.models import Model
+
+from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence, compute_cs, compute_mse
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add
@@ -305,8 +308,7 @@ class KerasImplementation(FrameworkImplementation):
                                           metrics_weights,
                                           representative_data_gen,
                                           fw_info,
-                                          interest_points_classifier=
-                                          self.count_node_for_mixed_precision_interest_points)
+                                          fw_impl=self)
 
     def get_node_prior_info(self,
                             node: BaseNode,
@@ -344,3 +346,32 @@ class KerasImplementation(FrameworkImplementation):
             return True
 
         return False
+
+    def get_node_distance_fn(self, layer_class: type,
+                             framework_attrs: Dict[str, Any],
+                             compute_distance_fn: Callable = None) -> Callable:
+        """
+        A mapping between layers' types and a distance function for computing the distance between
+        two tensors (for loss computation purposes). Returns a specific function if node of specific types is
+        given, or a default (normalized MSE) function otherwise.
+
+        Args:
+            layer_class: Class path of a model's layer.
+            framework_attrs: Framework attributes the layer had which the graph node holds.
+            compute_distance_fn: An optional distance function to use globally for all nodes.
+
+        Returns: A distance function between two tensors.
+        """
+
+        if compute_distance_fn is not None:
+            return compute_distance_fn
+
+        if layer_class == Activation:
+            node_type_name = framework_attrs[ACTIVATION]
+            if node_type_name == SOFTMAX or node_type_name == SIGMOID:
+                return compute_kl_divergence
+        elif layer_class == tf.nn.softmax or layer_class == tf.nn.sigmoid:
+            return compute_kl_divergence
+        elif layer_class == Dense:
+            return compute_cs
+        return lambda x, y: compute_mse(x, y, norm=True, norm_eps=1e-8)

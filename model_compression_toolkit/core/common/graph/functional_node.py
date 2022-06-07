@@ -1,9 +1,7 @@
-from typing import Dict, Any, Tuple, List, Callable
+from typing import Dict, Any, Tuple, List
 
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 import numpy as np
-
-from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
 
 
 class FunctionalNode(BaseNode):
@@ -25,8 +23,7 @@ class FunctionalNode(BaseNode):
                  quantization_attr: Dict[str, Any] = None,
                  functional_op: Any = None,
                  inputs_as_list: bool = False,
-                 has_activation: bool = True,
-                 distance_fn: Callable = compute_mse):
+                 has_activation: bool = True):
         """
         Init a FunctionalNode object.
 
@@ -45,7 +42,6 @@ class FunctionalNode(BaseNode):
             functional_op: The op the node implements.
             inputs_as_list: Whether to pass the node its input tensors as a list or not when calling the layer.
             has_activation: Whether the node has activations that we might want to quantize.
-            distance_fn: Distance function to compute the distance between two tensors.
 
         """
 
@@ -58,8 +54,7 @@ class FunctionalNode(BaseNode):
                          reuse,
                          reuse_group,
                          quantization_attr,
-                         has_activation=has_activation,
-                         distance_fn=distance_fn)
+                         has_activation=has_activation)
 
         self.op_call_kwargs = op_call_kwargs
         self.op_call_args = op_call_args

@@ -17,6 +17,7 @@ from typing import Callable, Any, List
 
 from model_compression_toolkit import FrameworkInfo, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common import Logger
 
@@ -32,7 +33,7 @@ class SensitivityEvaluationManager:
                  quant_config: MixedPrecisionQuantizationConfig,
                  representative_data_gen: Callable,
                  model_builder: Callable,
-                 interest_points_classifier: Callable,
+                 fw_impl: FrameworkImplementation,
                  move_tensors_func: Callable = None):
         """
         Initiates all relevant objects to manage a sensitivity evaluation for MP search.
@@ -43,19 +44,20 @@ class SensitivityEvaluationManager:
             quant_config: MP Quantization configuration for how the graph should be quantized.
             representative_data_gen: Dataset used for getting batches for inference.
             model_builder: A function that builds a model object for the currently used framework.
-            interest_points_classifier: A function that indicates whether a given node in considered as a potential
-            interest point for mp metric computation purposes.
+            fw_impl: FrameworkImplementation object with a specific framework methods implementation.
             move_tensors_func: A function that moves tensors in list of tensors to cpu memory
                 (relevant only when using Pytorch framework).
         """
         self.quant_config = quant_config
+        self.fw_impl = fw_impl
 
         # If used with Pytorch, we might need to move tensors to cpu before applying numpy functions
         self.move_tensors_func = move_tensors_func
 
         # Get interest points for distance measurement and a list of sorted configurable nodes names
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names()
-        self.interest_points = get_mp_interest_points(graph, interest_points_classifier,
+        self.interest_points = get_mp_interest_points(graph,
+                                                      self.fw_impl.count_node_for_mixed_precision_interest_points,
                                                       quant_config.num_interest_points_factor)
 
         # Build a mixed-precision model which can be configured to use different bitwidth in different layers.
@@ -87,17 +89,6 @@ class SensitivityEvaluationManager:
         # If the model contains only one output we save it a list. If it's a list already, we keep it as a list.
         self.baseline_tensors_list = [_tensors_as_list(self.baseline_model(images)) for images in self.images_batches]
 
-    def get_compute_distance_fn(self) -> Callable:
-        """
-        If a specific distance function was provided, then it is returned to be used for distance metric computation
-        for all nodes. Otherwise, the specific distance function configured for each specific node is returned.
-        Returns: A distance function between two tensors used for metric computation.
-        """
-        if self.quant_config.compute_distance_fn is not None:
-            return lambda x, y, idx: self.quant_config.compute_distance_fn(x, y)
-        else:
-            return lambda x, y, idx: self.interest_points[idx].distance_fn(x, y)
-
     def compute_distance_matrix(self,
                                 baseline_tensors: List[Any],
                                 mp_tensors: List[Any]):
@@ -116,11 +107,15 @@ class SensitivityEvaluationManager:
         num_interest_points = len(baseline_tensors)
         num_samples = len(baseline_tensors[0])
         distance_matrix = np.ndarray((num_interest_points, num_samples))
-        compute_distance_fn = self.get_compute_distance_fn()
+
         for i in range(num_interest_points):
+            point_distance_fn = \
+                self.fw_impl.get_node_distance_fn(layer_class=self.interest_points[i].layer_class,
+                                                  framework_attrs=self.interest_points[i].framework_attr,
+                                                  compute_distance_fn=self.quant_config.compute_distance_fn)
             for j in range(num_samples):
                 distance_matrix[i, j] = \
-                    compute_distance_fn(baseline_tensors[i][j].numpy(), mp_tensors[i][j].numpy(), i)
+                    point_distance_fn(baseline_tensors[i][j].numpy(), mp_tensors[i][j].numpy(), i)
         return distance_matrix
 
     def build_distance_metrix(self):
@@ -173,12 +168,11 @@ def get_mp_interest_points(graph: Graph, interest_points_classifier: Callable, n
 
     interest_points_nodes = bound_num_interest_points(ip_nodes, num_ip_factor)
 
-    # We add last layer in model to interest points,
+    # We add output layers of the model to interest points
     # in order to consider the model's output in the distance metric computation (and also to make sure
     # all configurable layers are included in the configured mp model for metric computation purposes)
-    last_layer_node = sorted_nodes[-1]
-    interest_points = interest_points_nodes if last_layer_node in interest_points_nodes \
-        else interest_points_nodes + [last_layer_node]
+    output_nodes = [n.node for n in graph.get_outputs() if n.node not in interest_points_nodes]
+    interest_points = interest_points_nodes + output_nodes
 
     return interest_points
 
