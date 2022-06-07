@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import operator
 from typing import List, Any, Tuple, Callable, Type, Dict
 import numpy as np
 import torch
-from torch.nn import Module
+from torch import sigmoid, softmax, add, cat
+from torch.nn import Module, Sigmoid, Softmax
 from torch.nn import Conv2d, ConvTranspose2d, Linear
 
 from model_compression_toolkit import QuantizationConfig, FrameworkInfo, GradientPTQConfig, \
@@ -28,7 +30,7 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.gptq.gptq_training import GPTQTrainer
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
-from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
+from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework.model_builder import model_builder
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
@@ -314,7 +316,7 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: True if the node should be considered an interest point, False otherwise.
         """
 
-        if node.type in [Conv2d, Linear, ConvTranspose2d]:
+        if node.type in [Conv2d, Linear, ConvTranspose2d, Sigmoid, sigmoid, Softmax, softmax, operator.add, add, cat]:
             return True
         return False
 
@@ -337,5 +339,8 @@ class PytorchImplementation(FrameworkImplementation):
         if compute_distance_fn is not None:
             return compute_distance_fn
 
-        # TODO: implement per-type in Pytorch
+        elif layer_class in [Sigmoid, sigmoid, Softmax, softmax]:
+            return compute_kl_divergence
+        elif layer_class == Linear:
+            return compute_cs
         return lambda x, y: compute_mse(x, y, norm=True, norm_eps=1e-8)
