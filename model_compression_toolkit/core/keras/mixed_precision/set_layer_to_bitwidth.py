@@ -23,14 +23,15 @@ def set_layer_to_bitwidth(wrapped_layer: Layer,
                           bitwidth_idx: int):
     """
     Configure a layer (which is wrapped in a QuantizeWrapper and holds a
-    SelectiveQuantizeConfig  in its quantize_config) to work with a different bitwidth.
-    The bitwidth_idx is the index of the quantized-weights the quantizer in the SelectiveQuantizeConfig  holds.
+    SelectiveQuantizeConfig  in its quantize_config) to work with a different bit-width.
+    The bit-width_idx is the index of the quantized-weights the quantizer in the SelectiveQuantizeConfig holds.
+
     Args:
-        wrapped_layer: Layer to change its bitwidth.
-        bitwidth_idx: Index of the bitwidth the layer should work with.
+        wrapped_layer: Layer to change its bit-width.
+        bitwidth_idx: Index of the bit-width the layer should work with.
     """
     assert isinstance(wrapped_layer, QuantizeWrapper) and isinstance(wrapped_layer.quantize_config,
                                                                      SelectiveQuantizeConfig)
-    # Configure the quantize_config to use a different bitwidth
+    # Configure the quantize_config to use a different bit-width
     # (in practice, to use a different already quantized kernel).
     wrapped_layer.quantize_config.set_bit_width_index(bitwidth_idx)

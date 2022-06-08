@@ -50,14 +50,13 @@ kpi_functions_factory = {KPITarget.WEIGHTS: (MpKpiMetric.WEIGHTS_SIZE, MpKpiAggr
 
 
 def search_bit_width(graph_to_search_cfg: Graph,
-                     mp_config: MixedPrecisionQuantizationConfigV2,
                      fw_info: FrameworkInfo,
                      target_kpi: KPI,
                      sensitivity_evaluator: SensitivityEvaluation = None,
                      search_method: BitWidthSearchMethod = BitWidthSearchMethod.INTEGER_PROGRAMMING) -> List[int]:
     """
-    Search for a MP configuration for a given graph. Given a search_method method (by default, it's linear
-    programming), we use the get_sensitivity_evaluation function to get a function to compute an
+    Search for an MP configuration for a given graph. Given a search_method method (by default, it's linear
+    programming), we use the sensitivity_evaluator object that provides a function to compute an
     evaluation for the expected sensitivity for a bit-width configuration.
     Then, and after computing the KPI for each node in the graph for each bit-width in the search space,
     we search for the optimal solution, given some target_kpi, the solution should fit.
@@ -65,11 +64,10 @@ def search_bit_width(graph_to_search_cfg: Graph,
 
     Args:
         graph_to_search_cfg: Graph to search a MP configuration for.
-        mp_config: MixedPrecisionQuantizationConfigV2 the graph was prepared according to.
         fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
         target_kpi: Target KPI to bound our feasible solution space s.t the configuration does not violate it.
-        get_sensitivity_evaluation: Function specific to the model's framework, which builds and returns
-        a function that evaluates the sensitivity of a bit-width configuration for the MP model.
+        sensitivity_evaluator: A SensitivityEvaluation which provides a function that evaluates the sensitivity of
+            a bit-width configuration for the MP model.
         search_method: BitWidthSearchMethod to define which searching method to use.
 
     Returns:

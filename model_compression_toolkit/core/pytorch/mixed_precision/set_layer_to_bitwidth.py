@@ -21,11 +21,12 @@ def set_layer_to_bitwidth(wrapped_layer: Module,
                           bitwidth_idx: int):
     """
     Configure a layer (which is wrapped in a PytorchMixedPrecisionWrapper and holds a model's layer (nn.Module))
-    to work with a different bitwidth.
+    to work with a different bit-width.
     The bitwidth_idx is the index of the quantized-weights the quantizer in the PytorchMixedPrecisionWrapper holds.
+
     Args:
-        wrapped_layer: Layer to change its bitwidth.
-        bitwidth_idx: Index of the bitwidth the layer should work with.
+        wrapped_layer: Layer to change its bit-width.
+        bitwidth_idx: Index of the bit-width the layer should work with.
     """
     assert isinstance(wrapped_layer, PytorchMixedPrecisionWrapper)
     # Configure the quantize_config to use a different bitwidth

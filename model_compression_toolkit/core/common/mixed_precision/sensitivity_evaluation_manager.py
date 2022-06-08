@@ -246,7 +246,7 @@ def _tensors_as_list(tensors: Any) -> List[Any]:
     return tensors
 
 
-def compute_mp_distance_measure(distance_matrix, metrics_weights_fn):
+def compute_mp_distance_measure(distance_matrix: np.ndarray, metrics_weights_fn: Callable) -> float:
     """
     Computes the final distance value out of a distance matrix.
     Args:

@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluatio
 
 
 class SensitivityEvaluation:
+    """
+    Class to provide a function that evaluates the sensitivity of a bit-width configuration for the MP model.
+    """
 
     def __init__(self,
                  graph: Graph,
@@ -33,6 +36,28 @@ class SensitivityEvaluation:
                  fw_impl: Any,
                  set_layer_to_bitwidth: Callable,
                  get_quant_node_name: Callable):
+        """
+            Create an object that allows to compute the sensitivity metric of an MP model (the sensitivity
+            is computed based on the similarity of the interest points' outputs between the MP model
+            and the float model).
+            First, we initiate a SensitivityEvaluationManager that handles the components which are necessary for
+            evaluating the sensitivity. It initializes an MP model (a model where layers that can be configured in
+            different bit-widths) and a baseline model (a float model).
+            Then, and based on the outputs of these two models (for some batches from the representative_data_gen),
+            we build a function to measure the sensitivity of a change in a bit-width of a model's layer.
+
+            Args:
+                graph: Graph to get its sensitivity evaluation for changes in bit-widths for different nodes.
+                quant_config: MixedPrecisionQuantizationConfig containing parameters of how the model should be quantized.
+                representative_data_gen: Dataset used for getting batches for inference.
+                fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
+                fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+                set_layer_to_bitwidth: A fw-dependent function that allows to configure a configurable MP model
+                    with a specific bit-width configuration.
+                get_quant_node_name: A fw-dependent function that takes a node's name and outputs the node's name in a
+                    quantized model (according to the fw conventions).
+
+            """
 
         self.graph = graph
         self.quant_config = quant_config
@@ -47,10 +72,10 @@ class SensitivityEvaluation:
         # comparison in the distance computation.
         # It generates and stores a set of image batches for evaluation.
         # It also runs and stores the baseline model's inference on the generated batches.
-        # the model_builder method passed to the manager is the Keras model builder.
         self.sem = SensitivityEvaluationManager(self.graph, self.fw_info, self.quant_config,
                                                 self.representative_data_gen, self.fw_impl)
 
+        # Casting images tensors to the framework tensor type.
         self.sem.images_batches = list(map(lambda in_arr: self.fw_impl.to_tensor(in_arr), self.sem.images_batches))
 
         # Initiating baseline_tensors_list since it is not initiated in SensitivityEvaluationManager init.
@@ -64,11 +89,13 @@ class SensitivityEvaluation:
         Compute the sensitivity metric of the MP model for a given configuration (the sensitivity
         is computed based on the similarity of the interest points' outputs between the MP model
         and the float model).
+
         Args:
             mp_model_configuration: Bitwidth configuration to use to configure the MP model.
             node_idx: A list of nodes' indices to configure (instead of using the entire mp_model_configuration).
             baseline_mp_configuration: A mixed-precision configuration to set the model back to after modifying it to
                 compute the metric for the given configuration.
+
         Returns:
             The sensitivity metric of the MP model for a given configuration.
         """
@@ -97,15 +124,16 @@ class SensitivityEvaluation:
                                    mp_model_configuration: List[int],
                                    node_idx: List[int]):
         """
-        Configure a dynamic Keras model (namely, model with layers that their weights
-        bitwidth can be configured using SelectiveQuantizeConfig) using a MP
-        model configuration mp_model_configuration.
+        Configure a dynamic model (namely, model with layers that their weights and activation
+        bit-width can be configured) using an MP model configuration mp_model_configuration.
+
         Args:
-            model_mp: Dynamic Keras model to configure.
+            model_mp: Dynamic model to configure.
             sorted_configurable_nodes_names: List of configurable nodes names sorted topology.
-            mp_model_configuration: Configuration of bitwidth indices to set to the model.
+            mp_model_configuration: Configuration of bit-width indices to set to the model.
             node_idx: List of nodes' indices to configure (the rest layers are configured as the baseline model).
         """
+
         # Configure model
         # Note: Not all nodes in the graph are included in the MP model that is returned by the model builder.
         # Thus, the last configurable layer must be included in the interest points for evaluating the metric,

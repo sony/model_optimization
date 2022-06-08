@@ -262,11 +262,11 @@ class FrameworkImplementation(ABC):
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo) -> SensitivityEvaluation:
         """
-        Create and return a function to compute a sensitivity metric for a mixed-precision
+        Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
         configuration (comparing to the float model).
 
         Args:
-            graph: Graph to build it's float and mixed-precision models.
+            graph: Graph to build its float and mixed-precision models.
             quant_config: QuantizationConfig of how the model should be quantized.
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's model.
@@ -274,6 +274,7 @@ class FrameworkImplementation(ABC):
         Returns:
             A function that computes the metric.
         """
+
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_sensitivity_evaluator method.')
 
@@ -327,7 +328,16 @@ class FrameworkImplementation(ABC):
 
     @abstractmethod
     def get_model_layers_names(self,
-                               model: Any) -> List:
+                               model: Any) -> List[str]:
+        """
+        Returns a list of the given model's layers names.
+
+        Args:
+            model: A model.
+
+        Returns: List of layers' names.
+
+        """
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_model_layers_names method.')
@@ -335,6 +345,17 @@ class FrameworkImplementation(ABC):
     @abstractmethod
     def get_model_layer_by_name(self,
                                 model: Any,
-                                layer_name: str) -> List:
+                                layer_name: str) -> Any:
+        """
+        Returns a model's layer by its name.
+
+        Args:
+            model: A model to retrieve a layer from.
+            layer_name: The requested layer's name.
+
+        Returns: A layer object.
+
+        """
+
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_model_layer_by_name method.')

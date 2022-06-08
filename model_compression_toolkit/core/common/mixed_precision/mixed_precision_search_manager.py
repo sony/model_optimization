@@ -41,9 +41,9 @@ class MixedPrecisionSearchManager:
 
         Args:
             graph: Graph to search for its MP configuration.
-            mp_config: Quantization configuration for how the graph should be quantized.
             fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
-            get_sensitivity_evaluation: Framework specific function to retrieve a metric computation function.
+            sensitivity_evaluator: A SensitivityEvaluation which provides a function that evaluates the sensitivity of
+                a bit-width configuration for the MP model.
             kpi_functions: A dictionary with pairs of (MpKpiMethod, MpKpiAggregationMethod) mapping a KPITarget to
                 a couple of kpi metric function and kpi aggregation function.
         """

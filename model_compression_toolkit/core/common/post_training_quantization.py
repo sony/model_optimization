@@ -124,7 +124,6 @@ def post_training_quantization(in_model: Any,
         assert core_config.mixed_precision_enable
         if core_config.mixed_precision_config.configuration_overwrite is None:
             bit_widths_config = search_bit_width(tg,
-                                                 core_config.mixed_precision_config,
                                                  fw_info,
                                                  target_kpi,
                                                  fw_impl.get_sensitivity_evaluator(

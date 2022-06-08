@@ -272,23 +272,19 @@ class PytorchImplementation(FrameworkImplementation):
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo) -> SensitivityEvaluation:
         """
-        Create and return a function to compute a sensitivity metric for a mixed-precision
-        configuration (comparing to the float Pytorch module).
+        Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
+        configuration (comparing to the float model).
+
         Args:
-            graph: Graph to build it's float and mixed-precision Pytorch models.
-            quant_config: QuantizationConfig of how the module should be quantized.
-            metrics_weights: Array of weights to weight the sensitivity among different layers.
+            graph: Graph to build its float and mixed-precision models.
+            quant_config: QuantizationConfig of how the model should be quantized.
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
-            fw_info: FrameworkInfo object with information about the specific framework's module.
+            fw_info: FrameworkInfo object with information about the specific framework's model.
+
         Returns:
-            A function that computes the metric.
+            A SensitivityEvaluation object.
         """
-        # return get_sensitivity_evaluation(graph,
-        #                                   quant_config,
-        #                                   metrics_weights,
-        #                                   representative_data_gen,
-        #                                   fw_info,
-        #                                   fw_impl=self)
+
         return SensitivityEvaluation(graph=graph,
                                      quant_config=quant_config,
                                      representative_data_gen=representative_data_gen,
@@ -353,12 +349,31 @@ class PytorchImplementation(FrameworkImplementation):
         return lambda x, y: compute_mse(x, y, norm=True, norm_eps=1e-8)
 
     def get_model_layers_names(self,
-                               model: Any) -> List:
+                               model: Module) -> List[str]:
+        """
+        Returns a list of the given model's layers names.
+
+        Args:
+            model: A Pytorch model.
+
+        Returns: List of layers' names.
+
+        """
 
         return [layer[0] for layer in list(model.named_children())]
 
     def get_model_layer_by_name(self,
-                                model: Any,
-                                layer_name: str) -> List:
+                                model: Module,
+                                layer_name: str) -> Module:
+        """
+        Returns a Pytorch model's layer by its name.
+
+        Args:
+            model: A Pytorch model to retrieve a layer from.
+            layer_name: The requested layer's name.
+
+        Returns: A Pytorch layer object.
+
+        """
 
         return model.get_submodule(target=layer_name)
