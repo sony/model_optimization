@@ -17,6 +17,7 @@ from typing import Any
 
 import numpy as np
 
+from model_compression_toolkit.core.common.constants import EPS
 
 #########################
 #  Helpful functions
@@ -195,4 +196,6 @@ def compute_kl_divergence(float_tensor: np.ndarray, fxp_tensor: np.ndarray) -> f
     """
 
     validate_before_compute_similarity(float_tensor, fxp_tensor)
-    return np.sum(np.where(float_tensor != 0, float_tensor * np.log(float_tensor / fxp_tensor), 0))
+    non_zero_fxp_tensor = fxp_tensor.copy()
+    non_zero_fxp_tensor[non_zero_fxp_tensor == 0] = EPS
+    return np.sum(np.where(float_tensor != 0, float_tensor * np.log(float_tensor / non_zero_fxp_tensor), 0))
