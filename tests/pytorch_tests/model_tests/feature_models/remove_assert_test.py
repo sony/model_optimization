@@ -14,16 +14,19 @@
 # ==============================================================================
 import torch
 from torch import _assert
+from torch.fx import symbolic_trace
+
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
+from model_compression_toolkit.core.pytorch.utils import set_model
 
 """
 This tests checks that the assert operation is being removed from the graph during quantization.
 """
 
 
-class AddAssertNet(torch.nn.Module):
+class AssertNet(torch.nn.Module):
     def __init__(self):
-        super(AddAssertNet, self).__init__()
+        super(AssertNet, self).__init__()
         self.conv1 = torch.nn.Conv2d(3, 4, kernel_size=1, stride=1)
         self.conv2 = torch.nn.Conv2d(3, 4, kernel_size=1, stride=1)
 
@@ -37,7 +40,7 @@ class AddAssertNet(torch.nn.Module):
         return x2 - y, y - x2, x2 + y
 
 
-class AddAssertNetTest(BasePytorchTest):
+class AssertNetTest(BasePytorchTest):
     """
     This tests checks that the assert operation is being removed from the graph during quantization.
     """
@@ -49,4 +52,21 @@ class AddAssertNetTest(BasePytorchTest):
         return [[self.val_batch_size, 3, 32, 32], [self.val_batch_size, 3, 32, 32]]
 
     def create_feature_network(self, input_shape):
-        return AddAssertNet()
+        return AssertNet()
+
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        set_model(float_model)
+
+        float_fx_model = symbolic_trace(float_model)
+        float_node_list = list(float_fx_model.graph.nodes)
+
+        # check for assert nodes in float model
+        self.unit_test.assertTrue(_assert in [node.target for node in float_node_list])
+
+        for model_name, quantized_model in quantized_models.items():
+            set_model(quantized_model)
+
+            quantized_node_list = list(quantized_model.graph.nodes)
+
+            # check for assert nodes in quantized model
+            self.unit_test.assertFalse(_assert in [node.layer_class for node in quantized_node_list])

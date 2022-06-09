@@ -99,7 +99,8 @@ def remove_broken_nodes_from_graph(graph):
         graph: Networkx MultiDiGraph representing the Pytorch model.
 
     Returns:
-        Networkx MultiDiGraph representing the Pytorch model after removing nodes without output (like assert).
+        Networkx MultiDiGraph representing the Pytorch model after removing nodes without an output
+        (for example: "assert").
 
     """
     output_nodes = [n.node for n in graph.output_nodes]
@@ -109,14 +110,14 @@ def remove_broken_nodes_from_graph(graph):
     for node in nodes_list:
         nodes_to_remove.append(node)
         # iterate over all the relevant nodes
-        while len(nodes_to_remove) >> 0:
+        while len(nodes_to_remove) != 0:
             for node_to_remove in nodes_to_remove:
                 parent_nodes = [edge.source_node for edge in graph.incoming_edges(node_to_remove)]
                 # check all the parent nodes
                 for parent_node in parent_nodes:
-                    # if the parent node connected only to the "broken" node, we'll add the parent node to
+                    # if the parent node is connected only to the "broken" node, we'll add the parent node to
                     # the relevant nodes list
-                    # if the parent node connected to other nodes, we'll only remove the edge
+                    # if the parent node is connected to other nodes, we'll only remove the edge
                     if graph.out_degree(parent_node) == 1:
                         nodes_to_remove.append(parent_node)
                     graph.remove_edge(parent_node, node_to_remove)
@@ -131,8 +132,8 @@ def model_reader(model: torch.nn.Module,
                  to_numpy: Callable,
                  to_tensor: Callable) -> Graph:
     """
-    Reads a Pytorch model, converts it to an FX Graph using the fx toolkit, then builds a base graph representing the
-    fx graph and filter "broken nodes" (like assert).
+    Reads a Pytorch model and converts it to an FX Graph using the fx toolkit. Then, builds a base graph representing
+    the fx graph. Finally, we filter "broken nodes" (nodes without outputs, for example: "assert").
     Args:
         model: Pytorch model to build its graph representation.
         representative_data_gen (Callable): Dataset used for calibration.
