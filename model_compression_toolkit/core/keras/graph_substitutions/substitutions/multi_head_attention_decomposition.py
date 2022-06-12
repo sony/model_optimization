@@ -16,9 +16,10 @@ import numpy as np
 import tensorflow as tf
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers.core import TFOpLambda
+    from tensorflow.keras.layers import MultiHeadAttention, Conv2D, Softmax, Concatenate, Reshape, Permute
 else:
     from keras.layers.core import TFOpLambda
-from tensorflow.keras.layers import MultiHeadAttention, Conv2D, Softmax, Concatenate, Dot, Reshape, Permute
+    from keras.layers import MultiHeadAttention, Conv2D, Softmax, Concatenate, Reshape, Permute
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import Graph, BaseNode, OutTensor
@@ -27,7 +28,7 @@ from model_compression_toolkit.core.common.graph.graph_matchers import NodeOpera
 from model_compression_toolkit.core.common.constants import REUSE, REUSE_GROUP
 from model_compression_toolkit.core.keras.reader.node_builder import REUSED_IDENTIFIER
 from model_compression_toolkit.core.keras.constants import KERNEL, BIAS, USE_BIAS, NUM_HEADS, KEY_DIM, VALUE_DIM, \
-    QUERY_SHAPE, KEY_SHAPE, VALUE_SHAPE, OUTPUT_SHAPE, ATTENTION_AXES, ACTIVATION, LINEAR, FILTERS, AXES, \
+    QUERY_SHAPE, KEY_SHAPE, VALUE_SHAPE, OUTPUT_SHAPE, ATTENTION_AXES, ACTIVATION, LINEAR, FILTERS, \
     FUNCTION, DIMS, TARGET_SHAPE, F_STRIDED_SLICE, F_STACK, Q_KERNEL, Q_BIAS, K_KERNEL, K_BIAS, V_KERNEL, V_BIAS, \
     OUTPUT_KERNEL, OUTPUT_BIAS, F_MATMUL, TRANSPOSE_B, KERNEL_SIZE, AXIS
 
@@ -89,7 +90,7 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
     """
     Removes a MultiHeadAttention node from the graph,
     and replaces it with a compatible graph that consists of Conv2D,
-     matmul, Softmax and Concatenate layers
+    tf.matmul, Softmax and Concatenate layers
     """
 
     def __init__(self):
@@ -105,7 +106,7 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
     @staticmethod
     def _standarize_input_shapes(graph, name, num_input_edges, params):
         """
-        Add Permute and tf.reshape nodes to stadarize the inputs. output shape will be [B, Iters, Sequence, Channels]
+        Add Permute and Reshape nodes to standarize the inputs. output shape will be [B, Iters, Sequence, Channels]
         Args:
             graph: input graph
             name: MHA node name
@@ -148,39 +149,6 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
                 q_reshape_node, k_reshape_node, v_reshape_node)
 
     @staticmethod
-    def gen_reuse_params(reuse_index, name, reuse_params):
-        """
-        Generate reuse parameters kwrags: REUSE & REUSE_GROUP according to reuse_index.
-        Args:
-            reuse_index: index representing how many times the node is reused. None for not reused
-            name: original node name to calculate the REUSE_GROUP that's renamed each call
-            reuse_params: MHA node default params. Defaults to no reuse
-
-        Returns:
-            dictionary of reuse params
-
-        """
-
-        if reuse_index is None:
-            return reuse_params
-        else:
-            return {REUSE: reuse_index != 0,
-                    REUSE_GROUP: name if reuse_index == 0 else f'{name}{REUSED_IDENTIFIER}{reuse_index}'
-                    }
-
-    @staticmethod
-    def get_reuse_suffix(reuse_index):
-        """
-
-        Args:
-            reuse_index: index representing how many times the node is reused. None for not reused
-
-        Returns:
-            string suffix to be concatenated to reused node name
-        """
-        return '' if reuse_index == 0 or reuse_index is None else f'{REUSED_IDENTIFIER}{reuse_index}'
-
-    @staticmethod
     def _slice_per_iteration(graph, name, head_index, i_iter, q_node, k_node, v_node, params):
         """
         Prepare MHA data for attention: Slice inputs on Iters axis.
@@ -189,11 +157,11 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
         Args:
             graph: input graph
             name: MHA node name
-            head_index: TODO: add doc
+            head_index: head index
             i_iter: iteration index, from 0..Iters-1
-            q_node: query input after standardization
-            k_node: key input after standardization
-            v_node: value input after standardization
+            q_node: query input after projection
+            k_node: key input after projection
+            v_node: value input after projection
             params: MHA params object
 
         Returns:
@@ -221,7 +189,22 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
         return q_slice_node, k_slice_node, v_slice_node
 
     def _project_inputs(self, graph, mha_node, head_index, q_reshape_node, k_reshape_node, v_reshape_node, params):
-        # TODO: add doc
+        """
+        Create projection nodes (as Conv2D 1x1)
+
+        Args:
+            graph: input graph
+            mha_node: MHA node name
+            head_index: head index
+            q_reshape_node: query input after standardization
+            k_reshape_node: key input after standardization
+            v_reshape_node: value input after standardization
+            params: MHA params object
+
+         Returns:
+            Projection nodes
+
+        """
         # add norm factor to query kernel and bias
         factor = (params.query_key_dim ** -0.5)
         qk = mha_node.weights[self._get_weight_by_name(mha_node, Q_KERNEL)][:, head_index, :].copy() * factor
@@ -257,14 +240,13 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
     def _calc_attention_head(graph, q_slice_node, k_slice_node, v_slice_node, mha_node,
                              iter_index, head_index, params):
         """
-        TODO: fix doc
-        Generate the attention head subgraph: Dot(softmax(Dot(proj(Q), proj(K))), proj(V))
+        Generate the attention head subgraph: matmul(softmax(matmul(projected_Q, projected_K)), projected_V)
 
         Args:
             graph: input graph
-            q_in_node: input query node
-            k_in_node: input key node
-            v_in_node: input value node
+            q_slice_node: input query node
+            k_slice_node: input key node
+            v_slice_node: input value node
             mha_node: MHA node
             iter_index: iteration index
             head_index: head index being generated. used to set correct node names
@@ -299,7 +281,21 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
 
     @staticmethod
     def _stack_iters(graph, name, input_nodes, head_index, params):
-        # TODO: acc doc
+        """
+        Stack iteration slices before output projection
+         [B, Sequence, Channels] x Iters --> [B, Iters, Sequence, Channels]
+
+        Args:
+            graph: input graph
+            name: MHA node name
+            input_nodes: input nodes list
+            head_index: current head index
+            params: MHA params object
+
+        Returns:
+            stacked outputs node
+
+        """
         output_stacked = FunctionalNode(f'{name}_stack{head_index}', {FUNCTION: F_STACK},
                                         tuple([n.output_shape for n in input_nodes]), params.stack_shape, {},
                                         TFOpLambda, op_call_args=[], op_call_kwargs={AXIS: 1},
@@ -315,7 +311,6 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
             graph: input graph
             name: MHA node name
             input_nodes: all the outputs of the attention heads
-            iter_index: iteration index
             params: MHA params object
 
         Returns: concat node
@@ -335,7 +330,6 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
             graph: input graph
             mha_node: MHA node
             input_node: concat node
-            iter_index: MHA params object
             params: MHA params object
 
         Returns:
@@ -345,8 +339,8 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
         b_out = mha_node.weights[self._get_weight_by_name(mha_node, OUTPUT_BIAS)].copy()
         proj_output_name = f'{mha_node.name}_output_conv1x1'
         output = BaseNode(proj_output_name, {FILTERS: params.d_model, KERNEL_SIZE: 1, USE_BIAS: params.use_bias, ACTIVATION: LINEAR},
-                                params.concat_shape, params.output_shape, {KERNEL: w_out, BIAS: b_out}, Conv2D,
-                                **params.reuse_params)
+                          params.concat_shape, params.output_shape, {KERNEL: w_out, BIAS: b_out}, Conv2D,
+                          **params.reuse_params)
         graph.add_node_with_in_edges(output, [input_node])
         return output
 
