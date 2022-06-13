@@ -19,7 +19,7 @@ from keras.applications.mobilenet_v2 import MobileNetV2
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation_manager import get_mp_interest_points
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import get_mp_interest_points
 from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph

@@ -24,6 +24,7 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_methods import Mp
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 
 
 class MixedPrecisionSearchManager:
@@ -33,26 +34,23 @@ class MixedPrecisionSearchManager:
 
     def __init__(self,
                  graph: Graph,
-                 mp_config: MixedPrecisionQuantizationConfigV2,
                  fw_info: FrameworkInfo,
-                 get_sensitivity_evaluation: Callable,
+                 sensitivity_evaluator: SensitivityEvaluation,
                  kpi_functions: Dict[KPITarget, Tuple[MpKpiMetric, MpKpiAggregation]]):
         """
 
         Args:
             graph: Graph to search for its MP configuration.
-            mp_config: Quantization configuration for how the graph should be quantized.
             fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
-            get_sensitivity_evaluation: Framework specific function to retrieve a metric computation function.
+            sensitivity_evaluator: A SensitivityEvaluation which provides a function that evaluates the sensitivity of
+                a bit-width configuration for the MP model.
             kpi_functions: A dictionary with pairs of (MpKpiMethod, MpKpiAggregationMethod) mapping a KPITarget to
                 a couple of kpi metric function and kpi aggregation function.
         """
 
         self.graph = graph
-        self.mp_config = mp_config
         self.fw_info = fw_info
-        self.get_sensitivity_evaluation = get_sensitivity_evaluation
-        self.metrics_weights = self.mp_config.distance_weighting_method
+        self.sensitivity_evaluator = sensitivity_evaluator
         self.layer_to_bitwidth_mapping = self.get_search_space()
         self.compute_metric_fn = self.get_sensitivity_metric()
 
@@ -90,10 +88,8 @@ class MixedPrecisionSearchManager:
         """
         # Get from the framework an evaluation function on how a MP configuration,
         # affects the expected loss.
-        compute_metric_fn = self.get_sensitivity_evaluation(self.graph,
-                                                            self.mp_config,
-                                                            self.metrics_weights)
-        return compute_metric_fn
+
+        return self.sensitivity_evaluator.compute_metric
 
     def compute_min_kpis(self) -> Dict[KPITarget, np.ndarray]:
         """

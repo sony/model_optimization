@@ -186,32 +186,31 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         calculate_quantization_params(graph,
                                       fw_info,
                                       fw_impl=keras_impl)
-        keras_sens_eval = partial(keras_impl.get_sensitivity_evaluation_fn,
-                                  representative_data_gen=lambda: [np.random.random((1, 224, 224, 3))],
-                                  fw_info=fw_info)
+        keras_sens_eval = keras_impl.get_sensitivity_evaluator(graph,
+                                                               core_config.mixed_precision_config,
+                                                               representative_data_gen=lambda:
+                                                               [np.random.random((1, 224, 224, 3))],
+                                                               fw_info=fw_info)
 
-        cfg = search_bit_width(graph,
-                               core_config.mixed_precision_config,
-                               DEFAULT_KERAS_INFO,
-                               KPI(np.inf),
-                               keras_sens_eval,
-                               BitWidthSearchMethod.INTEGER_PROGRAMMING)
-
-        with self.assertRaises(Exception):
-            cfg = search_bit_width(graph,
-                                   core_config.mixed_precision_config,
-                                   DEFAULT_KERAS_INFO,
-                                   KPI(np.inf),
-                                   keras_sens_eval,
-                                   None)
+        cfg = search_bit_width(graph_to_search_cfg=graph,
+                               fw_info=DEFAULT_KERAS_INFO,
+                               target_kpi=KPI(np.inf),
+                               sensitivity_evaluator=keras_sens_eval,
+                               search_method=BitWidthSearchMethod.INTEGER_PROGRAMMING)
 
         with self.assertRaises(Exception):
-            cfg = search_bit_width(graph,
-                                   core_config.mixed_precision_config,
-                                   DEFAULT_KERAS_INFO,
-                                   None,
-                                   keras_sens_eval,
-                                   BitWidthSearchMethod.INTEGER_PROGRAMMING)
+            cfg = search_bit_width(graph_to_search_cfg=graph,
+                                   fw_info=DEFAULT_KERAS_INFO,
+                                   target_kpi=KPI(np.inf),
+                                   sensitivity_evaluator=keras_sens_eval,
+                                   search_method=None)
+
+        with self.assertRaises(Exception):
+            cfg = search_bit_width(graph_to_search_cfg=graph,
+                                   fw_info=DEFAULT_KERAS_INFO,
+                                   target_kpi=None,
+                                   sensitivity_evaluator=keras_sens_eval,
+                                   search_method=BitWidthSearchMethod.INTEGER_PROGRAMMING)
 
 
 if __name__ == '__main__':

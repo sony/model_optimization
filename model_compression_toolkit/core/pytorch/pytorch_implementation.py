@@ -21,13 +21,14 @@ from torch.nn import Module, Sigmoid, Softmax
 from torch.nn import Conv2d, ConvTranspose2d, Linear
 
 from model_compression_toolkit import QuantizationConfig, FrameworkInfo, GradientPTQConfig, \
-    MixedPrecisionQuantizationConfig, CoreConfig
+    CoreConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.gptq.gptq_training import GPTQTrainer
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
@@ -48,7 +49,7 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.sc
     ScaleEqualizationWithPad
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
     pytorch_apply_shift_negative_correction
-from model_compression_toolkit.core.pytorch.mixed_precision.sensitivity_evaluation import get_sensitivity_evaluation
+from model_compression_toolkit.core.pytorch.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.pytorch.pytorch_node_prior_info import create_node_prior_info
 from model_compression_toolkit.core.pytorch.reader.reader import model_reader
 import model_compression_toolkit.core.pytorch.constants as pytorch_constants
@@ -265,30 +266,32 @@ class PytorchImplementation(FrameworkImplementation):
         """
         raise Exception('This feature is currently not yet available for Pytorch models. Work in progress.')
 
-    def get_sensitivity_evaluation_fn(self,
-                                      graph: Graph,
-                                      quant_config: MixedPrecisionQuantizationConfig,
-                                      metrics_weights: np.ndarray,
-                                      representative_data_gen: Callable,
-                                      fw_info: FrameworkInfo) -> Callable:
+    def get_sensitivity_evaluator(self,
+                                  graph: Graph,
+                                  quant_config: MixedPrecisionQuantizationConfigV2,
+                                  representative_data_gen: Callable,
+                                  fw_info: FrameworkInfo) -> SensitivityEvaluation:
         """
-        Create and return a function to compute a sensitivity metric for a mixed-precision
-        configuration (comparing to the float Pytorch module).
+        Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
+        configuration (comparing to the float model).
+
         Args:
-            graph: Graph to build it's float and mixed-precision Pytorch models.
-            quant_config: QuantizationConfig of how the module should be quantized.
-            metrics_weights: Array of weights to weight the sensitivity among different layers.
+            graph: Graph to build its float and mixed-precision models.
+            quant_config: QuantizationConfig of how the model should be quantized.
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
-            fw_info: FrameworkInfo object with information about the specific framework's module.
+            fw_info: FrameworkInfo object with information about the specific framework's model.
+
         Returns:
-            A function that computes the metric.
+            A SensitivityEvaluation object.
         """
-        return get_sensitivity_evaluation(graph,
-                                          quant_config,
-                                          metrics_weights,
-                                          representative_data_gen,
-                                          fw_info,
-                                          fw_impl=self)
+
+        return SensitivityEvaluation(graph=graph,
+                                     quant_config=quant_config,
+                                     representative_data_gen=representative_data_gen,
+                                     fw_info=fw_info,
+                                     fw_impl=self,
+                                     set_layer_to_bitwidth=set_layer_to_bitwidth,
+                                     get_quant_node_name=lambda node_name: f'{node_name}')
 
     def get_node_prior_info(self,
                             node: BaseNode,
@@ -344,3 +347,33 @@ class PytorchImplementation(FrameworkImplementation):
         elif layer_class == Linear:
             return compute_cs
         return lambda x, y: compute_mse(x, y, norm=False, norm_eps=1e-8)
+
+    def get_model_layers_names(self,
+                               model: Module) -> List[str]:
+        """
+        Returns a list of the given model's layers names.
+
+        Args:
+            model: A Pytorch model.
+
+        Returns: List of layers' names.
+
+        """
+
+        return [layer[0] for layer in list(model.named_children())]
+
+    def get_model_layer_by_name(self,
+                                model: Module,
+                                layer_name: str) -> Module:
+        """
+        Returns a Pytorch model's layer by its name.
+
+        Args:
+            model: A Pytorch model to retrieve a layer from.
+            layer_name: The requested layer's name.
+
+        Returns: A Pytorch layer object.
+
+        """
+
+        return model.get_submodule(target=layer_name)
