@@ -47,13 +47,17 @@ CHANNELS_FORMAT = 'data_format'
 CHANNELS_FORMAT_FIRST = 'channels_first'
 CHANNELS_FORMAT_LAST = 'channels_last'
 AXES = 'axes'
+AXIS = 'axis'
 DIMS = 'dims'
 TARGET_SHAPE = 'target_shape'
+TRANSPOSE_A = 'transpose_a'
+TRANSPOSE_B = 'transpose_b'
 
 # functional nodes attributes
 FUNCTION = 'function'
 F_RESHAPE = 'reshape'
 F_STRIDED_SLICE = 'strided_slice'
+F_MATMUL = 'matmul'
 F_STACK = 'stack'
 
 # Layers variables names:

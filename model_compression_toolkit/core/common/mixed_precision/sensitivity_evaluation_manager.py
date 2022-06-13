@@ -96,7 +96,7 @@ class SensitivityEvaluationManager:
                                                   compute_distance_fn=self.quant_config.compute_distance_fn)
             for j in range(num_samples):
                 distance_matrix[i, j] = \
-                    point_distance_fn(baseline_tensors[i][j], mp_tensors[i][j], i)
+                    point_distance_fn(baseline_tensors[i][j].numpy(), mp_tensors[i][j].numpy())
         return distance_matrix
 
     def build_distance_metrix(self):

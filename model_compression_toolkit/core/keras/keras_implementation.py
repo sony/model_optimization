@@ -376,7 +376,7 @@ class KerasImplementation(FrameworkImplementation):
             return compute_kl_divergence
         elif layer_class == Dense:
             return compute_cs
-        return lambda x, y: compute_mse(x, y, norm=True, norm_eps=1e-8)
+        return lambda x, y: compute_mse(x, y, norm=False, norm_eps=1e-8)
 
     def get_model_layers_names(self,
                                model: Model) -> List[str]:
