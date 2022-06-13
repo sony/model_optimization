@@ -15,6 +15,8 @@
 import unittest
 
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
+from tests.pytorch_tests.model_tests.feature_models.remove_assert_test import AssertNetTest
+from tests.pytorch_tests.model_tests.feature_models.remove_broken_node_test import BrokenNetTest
 from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSameNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest
 from tests.pytorch_tests.model_tests.feature_models.linear_collapsing_test import TwoConv2DCollapsingTest, \
@@ -59,6 +61,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         AddNetTest(self).run_test()
 
+    def test_assert_net(self):
+        """
+        This tests check that the assert operation is being
+        removed from the graph during quantization.
+        """
+        AssertNetTest(self).run_test()
+
     def test_add_same(self):
         """
         This test checks the special case of addition operation with the same input.
@@ -70,6 +79,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the BatchNorm folding feature, plus adding a residual connection.
         """
         BNFoldingNetTest(self).run_test()
+
+    def test_broken_net(self):
+        """
+        This tests checks that the "broken" node (node without output) is being
+        removed from the graph during quantization.
+        """
+        BrokenNetTest(self).run_test()
 
     def test_linear_collapsing(self):
         """
