@@ -20,12 +20,8 @@ import model_compression_toolkit.core.common.quantization.quantization_config as
 from model_compression_toolkit.core.common.constants import MIN_THRESHOLD, THRESHOLD
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.kl_selection import \
     _kl_error_histogram, _kl_error_function
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.lp_selection import \
-    _lp_error_histogram
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.mae_selection import \
-    _mae_error_histogram
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.mse_selection import \
-    _mse_error_histogram
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_histograms import \
+    _lp_error_histogram, _mae_error_histogram, _mse_error_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_search import \
     qparams_symmetric_selection_tensor_search, \
     qparams_symmetric_selection_histogram_search, kl_qparams_symmetric_selection_histogram_search

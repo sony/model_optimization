@@ -15,7 +15,6 @@
 
 from collections import Callable
 
-from model_compression_toolkit.core.common.quantization import quantization_params_generation
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationErrorMethod
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.kmeans_params import kmeans_tensor
@@ -24,7 +23,8 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     symmetric_selection_tensor, symmetric_selection_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.uniform_selection import \
     uniform_selection_histogram, uniform_selection_tensor
-
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.no_clipping import no_clipping_selection_tensor, no_clipping_selection_min_max
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import power_of_two_selection_tensor, power_of_two_selection_histogram
 
 def get_activation_quantization_params_fn(activation_quantization_method: QuantizationMethod,
                                           activation_error_method: QuantizationErrorMethod) -> Callable:
@@ -40,23 +40,10 @@ def get_activation_quantization_params_fn(activation_quantization_method: Quanti
 
     """
     if activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
-        # Use min/max as the threshold if we use NOCLIPPING
         if activation_error_method == QuantizationErrorMethod.NOCLIPPING:
-            params_fn = quantization_params_generation.no_clipping_selection_min_max
-        # Use MSE to search_methods for the optimal threshold.
-        elif activation_error_method == QuantizationErrorMethod.MSE:
-            params_fn = quantization_params_generation.mse_selection_histogram
-        # Use MAE to search_methods for the optimal threshold.
-        elif activation_error_method == QuantizationErrorMethod.MAE:
-            params_fn = quantization_params_generation.mae_selection_histogram
-        # Use Lp distance to search_methods for the optimal threshold.
-        elif activation_error_method == QuantizationErrorMethod.LP:
-            params_fn = quantization_params_generation.lp_selection_histogram
-        # Use KL-divergence to search_methods for the optimal threshold.
-        elif activation_error_method == QuantizationErrorMethod.KL:
-            params_fn = quantization_params_generation.kl_selection_histogram
+            params_fn = no_clipping_selection_min_max
         else:
-            params_fn = None
+            params_fn = power_of_two_selection_histogram
     elif activation_quantization_method == QuantizationMethod.SYMMETRIC:
         params_fn = symmetric_selection_histogram
     elif activation_quantization_method == QuantizationMethod.UNIFORM:
@@ -83,21 +70,9 @@ def get_weights_quantization_params_fn(weights_quantization_method: Quantization
     """
     if weights_quantization_method == QuantizationMethod.POWER_OF_TWO:
         if weights_error_method == QuantizationErrorMethod.NOCLIPPING:
-            params_fn = quantization_params_generation.no_clipping_selection_tensor
-        # Use MSE to search_methods for the optimal weights thresholds.
-        elif weights_error_method == QuantizationErrorMethod.MSE:
-            params_fn = quantization_params_generation.mse_selection_tensor
-        # Use MAE to search_methods for the optimal weights thresholds.
-        elif weights_error_method == QuantizationErrorMethod.MAE:
-            params_fn = quantization_params_generation.mae_selection_tensor
-        # Use KL-divergence to search_methods for the optimal weights thresholds.
-        elif weights_error_method == QuantizationErrorMethod.KL:
-            params_fn = quantization_params_generation.kl_selection_tensor
-        # Use Lp distance to search_methods for the optimal weights thresholds.
-        elif weights_error_method == QuantizationErrorMethod.LP:
-            params_fn = quantization_params_generation.lp_selection_tensor
+            params_fn = no_clipping_selection_tensor
         else:
-            params_fn = None
+            params_fn = power_of_two_selection_tensor
     elif weights_quantization_method == QuantizationMethod.SYMMETRIC:
         params_fn = symmetric_selection_tensor
     elif weights_quantization_method == QuantizationMethod.UNIFORM:
