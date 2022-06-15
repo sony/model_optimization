@@ -17,7 +17,7 @@ import numpy as np
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.core.common.constants import MIN_THRESHOLD, THRESHOLD
-from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import power_of_two_constraint, \
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import max_power_of_two, \
     get_tensor_max
 
 
@@ -50,7 +50,7 @@ def no_clipping_selection_tensor(tensor_data: np.ndarray,
     tensor_data = np.abs(tensor_data)
     tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis)
 
-    return {THRESHOLD: power_of_two_constraint(tensor_max, min_threshold)}
+    return {THRESHOLD: max_power_of_two(tensor_max, min_threshold)}
 
 
 def no_clipping_selection_histogram(bins: np.ndarray,
@@ -87,7 +87,7 @@ def no_clipping_selection_histogram(bins: np.ndarray,
     tensor_max = np.max(tensor_data)
     if not constrained:
         return tensor_max
-    return power_of_two_constraint(tensor_max, min_threshold=min_threshold)
+    return max_power_of_two(tensor_max, min_threshold=min_threshold)
 
 
 def no_clipping_selection_min_max(bins: np.ndarray,

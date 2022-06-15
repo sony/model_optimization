@@ -12,22 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable
 import numpy as np
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.core.common.constants import MIN_THRESHOLD, THRESHOLD
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_search import \
     qparams_selection_tensor_search, qparams_selection_histogram_search
-from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import power_of_two_constraint
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.kl_selection import \
-    _kl_error_histogram, _kl_error_function
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_histograms import \
-    _lp_error_histogram, _mae_error_histogram, _mse_error_histogram
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import max_power_of_two
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import \
+    get_threshold_selection_tensor_error_function, get_threshold_selection_histogram_error_function
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.no_clipping import \
     no_clipping_selection_tensor
-
-from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_mae, compute_lp_norm
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 
 def power_of_two_selection_tensor(tensor_data: np.ndarray,
@@ -39,7 +35,7 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
                                   min_threshold: float = MIN_THRESHOLD,
                                   quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
     """
-    Compute the optimal threshold based on the provided QuantizationErrorMethod to quantize the tensor.
+    Compute the power of two threshold based on the provided QuantizationErrorMethod to quantize the tensor.
     Different search is applied, depends on the value of the selected QuantizationErrorMethod.
 
     Args:
@@ -53,14 +49,14 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
         quant_error_method: an error function to optimize the parameters' selection accordingly.
 
     Returns:
-        Optimal threshold to quantize the tensor in a power of 2 manner.
+        Power of two threshold to quantize the tensor in a power of 2 manner.
     """
 
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         return no_clipping_selection_tensor(tensor_data, p=p, n_bits=n_bits, min_threshold=min_threshold)
     else:
         signed = np.any(tensor_data < 0)
-        error_function = get_threshold_selection_tensor_error_function(quant_error_method, p, norm=False, n_bits=n_bits, signed=signed)
+        error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.POWER_OF_TWO, quant_error_method, p, norm=False, n_bits=n_bits, signed=signed)
         threshold = qparams_selection_tensor_search(error_function,
                                                     tensor_data,
                                                     n_bits,
@@ -82,7 +78,7 @@ def power_of_two_selection_histogram(bins: np.ndarray,
                                      min_threshold: float = MIN_THRESHOLD,
                                      quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
     """
-    Compute the optimal threshold based on the provided QuantizationErrorMethod to quantize a histogram.
+    Compute the power of two threshold based on the provided QuantizationErrorMethod to quantize a histogram.
     Different search is applied, depends on the value of the selected QuantizationErrorMethod.
 
     Args:
@@ -98,13 +94,13 @@ def power_of_two_selection_histogram(bins: np.ndarray,
         quant_error_method: an error function to optimize the parameters' selection accordingly.
 
     Returns:
-        Optimal threshold to quantize the histogram a power of 2 manner.
+        Power of two threshold to quantize the histogram a power of 2 manner.
     """
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         tensor_max = np.max(np.abs(bins))
-        threshold = power_of_two_constraint(tensor_max, min_threshold)
+        threshold = max_power_of_two(tensor_max, min_threshold)
     else:
-        error_function = get_threshold_selection_histogram_error_function(quant_error_method, p)
+        error_function = get_threshold_selection_histogram_error_function(QuantizationMethod.POWER_OF_TWO, quant_error_method, p)
         threshold = qparams_selection_histogram_search(error_function,
                                                        bins,
                                                        counts,
@@ -113,55 +109,3 @@ def power_of_two_selection_histogram(bins: np.ndarray,
                                                        n_iter=n_iter,
                                                        min_threshold=min_threshold)
     return {THRESHOLD: threshold}
-
-
-def get_threshold_selection_tensor_error_function(quant_error_method: qc.QuantizationErrorMethod,
-                                                  p: int,
-                                                  norm: bool = False,
-                                                  n_bits: int = 8,
-                                                  signed: bool = True) -> Callable:
-    """
-    Returns the error function compatible to the provided threshold method,
-    to be used in the threshold optimization search for tensor quantization.
-    Args:
-        quant_error_method: the requested error function type.
-        p: p-norm to use for the Lp-norm distance.
-        norm: whether to normalize the error function result.
-        n_bits: Number of bits to quantize the tensor.
-        signed: signed input
-
-    Returns: a Callable method that calculates the error between a tensor and a quantized tensor.
-    """
-    quant_method_error_function_mapping = {
-        qc.QuantizationErrorMethod.MSE: lambda x, y, threshold: compute_mse(x, y),
-        qc.QuantizationErrorMethod.MAE: lambda x, y, threshold: compute_mae(x, y),
-        qc.QuantizationErrorMethod.LP: lambda x, y, threshold: compute_lp_norm(x, y, p=p, norm=norm),
-        qc.QuantizationErrorMethod.KL: lambda x, y, threshold: _kl_error_function(x, range_min=0 if not signed else -threshold, range_max=threshold, n_bits=n_bits)
-    }
-
-    return quant_method_error_function_mapping[quant_error_method]
-
-
-def get_threshold_selection_histogram_error_function(quant_error_method: qc.QuantizationErrorMethod,
-                                                     p: int) -> Callable:
-    """
-    Returns the error function compatible to the provided threshold method,
-    to be used in the threshold optimization search for histogram quantization.
-    Args:
-        quant_error_method: the requested error function type.
-        p: p-norm to use for the Lp-norm distance.
-
-    Returns: a Callable method that calculates the error between a tensor and a quantized tensor.
-    """
-    quant_method_error_function_mapping = {
-        qc.QuantizationErrorMethod.MSE: lambda q_bins, q_count, bins, counts, threshold, _range:
-        _mse_error_histogram(q_bins, q_count, bins, counts),
-        qc.QuantizationErrorMethod.MAE: lambda q_bins, q_count, bins, counts, threshold, _range:
-        _mae_error_histogram(q_bins, q_count, bins, counts),
-        qc.QuantizationErrorMethod.LP: lambda q_bins, q_count, bins, counts, threshold, _range:
-        _lp_error_histogram(q_bins, q_count, bins, counts, p=p),
-        qc.QuantizationErrorMethod.KL: lambda q_bins, q_count, bins, counts, threshold, _range:
-        _kl_error_histogram(q_bins, q_count, bins, counts, -threshold, threshold)
-    }
-
-    return quant_method_error_function_mapping[quant_error_method]

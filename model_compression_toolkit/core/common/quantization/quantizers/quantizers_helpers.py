@@ -20,10 +20,10 @@ import numpy as np
 from model_compression_toolkit.core.common.constants import MIN_THRESHOLD, EPS
 
 
-def power_of_two_constraint(x: np.ndarray,
-                            min_threshold: float = MIN_THRESHOLD) -> np.ndarray:
+def max_power_of_two(x: np.ndarray,
+                     min_threshold: float = MIN_THRESHOLD) -> np.ndarray:
     """
-    Compute the power-of-two threshold for quantizing a tensor x. The threshold
+    Compute the max power-of-two threshold for quantizing a tensor x. The threshold
     is determined by the maximal value of the tensor (or min_threshold, the greater one, if a
     minimal value needed to be enforced for the threshold calculation).
 
@@ -54,7 +54,6 @@ def calculate_delta(threshold: np.ndarray,
     Returns:
         Step size of quantized values according to a threshold, signedness and number of bits.
     """
-
 
     return threshold / (2 ** (n_bits - int(signed)))
 

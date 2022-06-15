@@ -12,23 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable
-
 import numpy as np
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.core.common.constants import MIN_THRESHOLD, RANGE_MIN, RANGE_MAX
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.kl_selection import \
-    _kl_error_histogram, _kl_error_function
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_histograms import \
-    _lp_error_histogram, _mae_error_histogram, _mse_error_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_search import \
     qparams_uniform_selection_tensor_search, qparams_uniform_selection_histogram_search
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import \
+    get_threshold_selection_tensor_error_function, get_threshold_selection_histogram_error_function
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import get_tensor_max, \
     get_tensor_min
-
-from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_mae, compute_lp_norm
-
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 def uniform_selection_tensor(tensor_data: np.ndarray,
                              p: int,
@@ -62,7 +56,7 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         mm = tensor_min, tensor_max
     else:
-        error_function = get_range_selection_tensor_error_function(quant_error_method, p, norm=False)
+        error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.UNIFORM, quant_error_method, p, norm=False)
         mm = qparams_uniform_selection_tensor_search(error_function,
                                                      tensor_data,
                                                      tensor_min,
@@ -111,7 +105,7 @@ def uniform_selection_histogram(bins: np.ndarray,
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         mm = tensor_min_max
     else:
-        error_function = get_range_selection_histogram_error_function(quant_error_method, p)
+        error_function = get_threshold_selection_histogram_error_function(QuantizationMethod.UNIFORM, quant_error_method, p)
         mm = qparams_uniform_selection_histogram_search(error_function,
                                                         tensor_min_max,
                                                         bins,
@@ -150,56 +144,3 @@ def uniform_no_clipping_selection_min_max(bins: np.ndarray,
                                        min_threshold=min_threshold,
                                        quant_error_method=qc.QuantizationErrorMethod.NOCLIPPING)
 
-
-def get_range_selection_tensor_error_function(quant_error_method: qc.QuantizationErrorMethod,
-                                              p: int,
-                                              norm: bool = False,
-                                              n_bits: int = 8) -> Callable:
-    """
-    Returns the error function compatible to the provided threshold method,
-    to be used in the threshold optimization search for tensor quantization.
-    Args:
-        quant_error_method: the requested error function type.
-        p: p-norm to use for the Lp-norm distance.
-        norm: whether to normalize the error function result.
-        n_bits: Number of bits to quantize the tensor.
-
-
-    Returns: a Callable method that calculates the error between a tensor and a quantized tensor.
-
-    """
-    quant_method_error_function_mapping = {
-        qc.QuantizationErrorMethod.MSE: lambda x, y, mm: compute_mse(x, y, norm=norm),
-        qc.QuantizationErrorMethod.MAE: lambda x, y, mm: compute_mae(x, y, norm=norm),
-        qc.QuantizationErrorMethod.LP: lambda x, y, mm: compute_lp_norm(x, y, p=p, norm=norm),
-        qc.QuantizationErrorMethod.KL: lambda x, y, mm: _kl_error_function(x, range_min=mm[0], range_max=mm[1],
-                                                                           n_bits=n_bits)
-    }
-
-    return quant_method_error_function_mapping[quant_error_method]
-
-
-def get_range_selection_histogram_error_function(quant_error_method: qc.QuantizationErrorMethod,
-                                                 p: int) -> Callable:
-    """
-    Returns the error function compatible to the provided threshold method,
-    to be used in the threshold optimization search for histogram quantization.
-    Args:
-        quant_error_method: the requested error function type.
-        p: p-norm to use for the Lp-norm distance.
-
-    Returns: a Callable method that calculates the error between a tensor and a quantized tensor.
-
-    """
-    quant_method_error_function_mapping = {
-        qc.QuantizationErrorMethod.MSE: lambda q_bins, q_count, bins, counts, threshold, min_max_range:
-        _mse_error_histogram(q_bins, q_count, bins, counts),
-        qc.QuantizationErrorMethod.MAE: lambda q_bins, q_count, bins, counts, threshold, min_max_range:
-        _mae_error_histogram(q_bins, q_count, bins, counts),
-        qc.QuantizationErrorMethod.LP: lambda q_bins, q_count, bins, counts, threshold, min_max_range:
-        _lp_error_histogram(q_bins, q_count, bins, counts, p=p),
-        qc.QuantizationErrorMethod.KL: lambda q_bins, q_count, bins, counts, threshold, min_max_range:
-        _kl_error_histogram(q_bins, q_count, bins, counts, min_max_range[0], min_max_range[1]),
-    }
-
-    return quant_method_error_function_mapping[quant_error_method]
