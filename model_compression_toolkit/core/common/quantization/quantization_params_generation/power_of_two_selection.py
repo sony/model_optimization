@@ -18,13 +18,10 @@ import model_compression_toolkit.core.common.quantization.quantization_config as
 from model_compression_toolkit.core.common.constants import MIN_THRESHOLD, THRESHOLD
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_search import \
     qparams_selection_tensor_search, qparams_selection_histogram_search
-from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import max_power_of_two
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import max_power_of_two, get_tensor_max
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import \
     get_threshold_selection_tensor_error_function, get_threshold_selection_histogram_error_function
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.no_clipping import \
-    no_clipping_selection_tensor
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-
 
 def power_of_two_selection_tensor(tensor_data: np.ndarray,
                                   p: int,
@@ -53,10 +50,14 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
     """
 
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
-        return no_clipping_selection_tensor(tensor_data, p=p, n_bits=n_bits, min_threshold=min_threshold)
+        tensor_data = np.abs(tensor_data)
+        tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis)
+        threshold = max_power_of_two(tensor_max, min_threshold)
     else:
         signed = np.any(tensor_data < 0)
-        error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.POWER_OF_TWO, quant_error_method, p, norm=False, n_bits=n_bits, signed=signed)
+        error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.POWER_OF_TWO,
+                                                                       quant_error_method, p, norm=False, n_bits=n_bits,
+                                                                       signed=signed)
         threshold = qparams_selection_tensor_search(error_function,
                                                     tensor_data,
                                                     n_bits,
@@ -64,7 +65,7 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
                                                     channel_axis=channel_axis,
                                                     n_iter=n_iter,
                                                     min_threshold=min_threshold)
-        return {THRESHOLD: threshold}
+    return {THRESHOLD: threshold}
 
 
 def power_of_two_selection_histogram(bins: np.ndarray,
@@ -100,7 +101,8 @@ def power_of_two_selection_histogram(bins: np.ndarray,
         tensor_max = np.max(np.abs(bins))
         threshold = max_power_of_two(tensor_max, min_threshold)
     else:
-        error_function = get_threshold_selection_histogram_error_function(QuantizationMethod.POWER_OF_TWO, quant_error_method, p)
+        error_function = get_threshold_selection_histogram_error_function(QuantizationMethod.POWER_OF_TWO,
+                                                                          quant_error_method, p)
         threshold = qparams_selection_histogram_search(error_function,
                                                        bins,
                                                        counts,
@@ -109,3 +111,33 @@ def power_of_two_selection_histogram(bins: np.ndarray,
                                                        n_iter=n_iter,
                                                        min_threshold=min_threshold)
     return {THRESHOLD: threshold}
+
+
+def power_of_two_no_clipping_selection_min_max(bins: np.ndarray,
+                                               counts: np.ndarray,
+                                               p: int,
+                                               n_bits: int,
+                                               min_value: float,
+                                               max_value: float,
+                                               constrained: bool = False,
+                                               n_iter: int = 20,
+                                               min_threshold: float = MIN_THRESHOLD,
+                                               quant_error_method: qc.QuantizationErrorMethod =
+                                               qc.QuantizationErrorMethod.NOCLIPPING) -> dict:
+    """
+    Gets a threshold between min and max numbers.
+    If computed threshold is less than min_threshold, min_threshold is returned.
+
+    Returns:
+        A power of 2 threshold of the min/max values.
+    """
+    return power_of_two_selection_histogram(np.asarray([min_value, max_value]),  # histogram with min-max values only
+                                            np.asarray([1]),  # passing dummy counts just to make the dimensions work
+                                            p,
+                                            n_bits,
+                                            min_value,
+                                            max_value,
+                                            constrained,
+                                            n_iter,
+                                            min_threshold=min_threshold,
+                                            quant_error_method=qc.QuantizationErrorMethod.NOCLIPPING)

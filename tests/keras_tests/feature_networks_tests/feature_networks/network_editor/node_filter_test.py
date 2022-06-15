@@ -187,9 +187,7 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def params_fn(self):
-        return get_weights_quantization_params_fn(
-            tp.QuantizationMethod.POWER_OF_TWO,
-            mct.QuantizationErrorMethod.NOCLIPPING)
+        return get_weights_quantization_params_fn(tp.QuantizationMethod.POWER_OF_TWO)
 
     def get_tpc(self):
         return get_16bit_tpc("type_filter_test")
@@ -225,10 +223,9 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        # check that the two conv in the network have different weights. In order for this to happen, their weight's num
-        # bits needed to change, and one of the conv's threshold function needed to change to 'no_clipping'
+        # check that the two conv in the network same weights.
         self.unit_test.assertTrue(
-            quantized_model.layers[2].weights[0].numpy().max() != quantized_model.layers[4].weights[0].numpy().max())
+            quantized_model.layers[2].weights[0].numpy().max() == quantized_model.layers[4].weights[0].numpy().max())
         self.unit_test.assertTrue(
             quantized_model.layers[3].inbound_nodes[0].call_kwargs['num_bits'] == self.activation_n_bits)
         self.unit_test.assertTrue(

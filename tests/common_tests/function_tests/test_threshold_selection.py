@@ -16,17 +16,17 @@
 
 import unittest
 import numpy as np
+import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.core.common.constants import THRESHOLD
-from model_compression_toolkit.core.common.quantization.quantization_params_generation import no_clipping_selection_tensor
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import _mse_error_histogram
 from model_compression_toolkit.core.common.collectors.histogram_collector import HistogramCollector
-
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import power_of_two_selection_tensor
 
 class TestThresholdSelection(unittest.TestCase):
     def test_no_clipping_function(self):
         x = np.random.randn(10, 10, 10)
         dummy = 0
-        ml = no_clipping_selection_tensor(x, dummy, dummy)[THRESHOLD]
+        ml = power_of_two_selection_tensor(x, dummy, dummy, quant_error_method=qc.QuantizationErrorMethod.NOCLIPPING)[THRESHOLD]
         self.assertTrue(ml > np.max(np.abs(x)))
 
     def test_mse_from_histogram(self):

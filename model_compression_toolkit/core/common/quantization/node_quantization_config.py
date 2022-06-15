@@ -131,8 +131,7 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
 
         """
         self._activation_error_method = value
-        self.activation_quantization_params_fn = get_activation_quantization_params_fn(activation_quantization_method=self.activation_quantization_method,
-                                                                                       activation_error_method=value)
+        self.activation_quantization_params_fn = get_activation_quantization_params_fn(activation_quantization_method=self.activation_quantization_method)
 
     def set_activation_quantization_fn(self, activation_quantization_fn: Callable):
         """
@@ -277,8 +276,7 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
 
         """
         self._weights_error_method = value
-        self.weights_quantization_params_fn = get_weights_quantization_params_fn(weights_quantization_method=self.weights_quantization_method,
-                                                                                 weights_error_method=value)
+        self.weights_quantization_params_fn = get_weights_quantization_params_fn(weights_quantization_method=self.weights_quantization_method)
 
 
     def set_weights_quantization_fn(self, weights_quantization_fn: Callable):
