@@ -98,7 +98,7 @@ def power_of_two_selection_histogram(bins: np.ndarray,
         Power of two threshold to quantize the histogram a power of 2 manner.
     """
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
-        tensor_max = np.max(np.abs(bins)[counts > 0])
+        tensor_max = np.max(np.abs(bins)[1:][counts > 0])
         threshold = max_power_of_two(tensor_max, min_threshold)
     else:
         error_function = get_threshold_selection_histogram_error_function(QuantizationMethod.POWER_OF_TWO,
