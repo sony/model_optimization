@@ -27,7 +27,7 @@ from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.gptq.gptq_training import GPTQTrainer
+from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo

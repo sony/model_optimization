@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import inspect
 from typing import Tuple, Any, Dict, List
 
-import numpy as np
 import torch
 from networkx import topological_sort
 
@@ -29,7 +27,7 @@ from model_compression_toolkit.core.pytorch.back2framework.instance_builder impo
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.reader.graph_builders import DummyPlaceHolder
 from model_compression_toolkit.core.pytorch.mixed_precision.mixed_precision_wrapper import PytorchMixedPrecisionWrapper
-from model_compression_toolkit.core.common.gptq.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 
 
 def build_input_tensors_list(node: BaseNode,

@@ -37,12 +37,12 @@ from tensorflow.python.util.object_identity import Reference as TFReference
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common.gptq.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.quantizer.mixed_precision.quantization_config_factory import \
     quantization_config_builder_mixed_precision
-from model_compression_toolkit.core.keras.quantizer.gradient_ptq.config_factory import quantization_config_builder_gptq
+from model_compression_toolkit.gptq.keras.quantizer.config_factory import quantization_config_builder_gptq
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.keras.back2framework.instance_builder import OperationHandler

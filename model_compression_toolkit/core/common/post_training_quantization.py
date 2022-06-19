@@ -16,20 +16,19 @@
 
 import copy
 import os
-from functools import partial
 from typing import Callable, Tuple, Any
 from tqdm import tqdm
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.core.common.gptq.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.constants import NUM_SAMPLES_DISTANCE_TENSORBOARD
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
-from model_compression_toolkit.core.common.gptq.gptq_training import gptq_training
+from model_compression_toolkit.gptq.common.gptq_training import gptq_training
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph

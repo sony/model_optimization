@@ -20,7 +20,7 @@ import tensorflow as tf
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.core.keras.quantizer.base_quantizer import BaseTrainableQuantizer
-from model_compression_toolkit.core.keras.quantizer.gradient_ptq.utils import symmetric_constrained_quantizer
+from model_compression_toolkit.gptq.keras.quantizer.utils import symmetric_constrained_quantizer
 from model_compression_toolkit.core.common.constants import THRESHOLD
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core.keras.constants import KERNEL
