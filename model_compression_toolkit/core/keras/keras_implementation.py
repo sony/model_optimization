@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.keras.back2framework.model_gradients import model_grad
 from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID
 from tensorflow.keras.models import Model
 from tensorflow.python.layers.base import Layer
@@ -407,3 +408,6 @@ class KerasImplementation(FrameworkImplementation):
         """
 
         return model.get_layer(name=layer_name)
+
+    def model_grad(self, graph_float, input_tensors, intresent_points, output_list):
+        return model_grad(graph_float, input_tensors, intresent_points, output_list)

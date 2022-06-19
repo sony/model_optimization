@@ -88,6 +88,14 @@ class SensitivityEvaluation:
         # Initiating baseline_tensors_list since it is not initiated in SensitivityEvaluationManager init.
         self._init_baseline_tensors_list()
 
+        # TODO: extand for all batches
+        self.interest_points_gradients = self.fw_impl.model_grad(graph,
+                                                                 # TODO: verify that this gives a single tensor containing a single batch
+                                                                 {inode: self.images_batches[0][0] for inode in graph.get_inputs()},
+                                                                 self.interest_points,
+                                                                 [o.node for o in graph.output_nodes])
+        self.quant_config.distance_weighting_method = lambda d: self.interest_points_gradients
+
     def compute_metric(self,
                        mp_model_configuration: List[int],
                        node_idx: List[int] = None,
