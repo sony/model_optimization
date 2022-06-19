@@ -323,8 +323,7 @@ class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
         if self.weights_quantization_method is not None:
             for qc in node.candidates_quantization_cfg:
 
-                weights_quantization_params_fn = get_weights_quantization_params_fn(self.weights_quantization_method,
-                                                                                    qc.weights_quantization_cfg.weights_error_method)
+                weights_quantization_params_fn = get_weights_quantization_params_fn(self.weights_quantization_method)
 
                 qc.weights_quantization_cfg.set_weights_quantization_params_fn(weights_quantization_params_fn)
 

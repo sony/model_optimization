@@ -18,7 +18,7 @@ from typing import Any, Tuple, Dict
 
 import numpy as np
 
-from model_compression_toolkit.core.common.constants import MIN_THRESHOLD, THRESHOLD, DEFAULT_TOL, DEFAULT_DEC_FACTOR, \
+from model_compression_toolkit.core.common.constants import MIN_THRESHOLD, DEFAULT_TOL, DEFAULT_DEC_FACTOR, \
     SYMMETRIC_TENSOR_PER_CHANNEL_N_INTERVALS, SYMMETRIC_TENSOR_PER_CHANNEL_N_ITER, SYMMETRIC_TENSOR_DEC_FREQ, \
     SYMMETRIC_TENSOR_PER_CHANNEL_DEC_FREQ, SYMMETRIC_TENSOR_N_INTERVALS, SYMMETRIC_TENSOR_N_ITER, \
     UNIFORM_TENSOR_PER_CHANNEL_N_ITER, UNIFORM_TENSOR_N_ITER, SYMMETRIC_HISTOGRAM_DEC_FREQ, SYMMETRIC_HISTOGRAM_N_ITER, \
@@ -26,9 +26,8 @@ from model_compression_toolkit.core.common.constants import MIN_THRESHOLD, THRES
     UNIFORM_HISTOGRAM_N_SAMPLES, DEC_RANGE_UPPER, DEC_RANGE_BOTTOM
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import quantize_tensor, \
     reshape_tensor_for_per_channel_search, uniform_quantize_tensor, get_output_shape
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.no_clipping import \
-    no_clipping_selection_tensor, no_clipping_selection_histogram
-
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import max_power_of_two, \
+    get_tensor_max
 
 def qparams_selection_tensor_search(error_function: Callable,
                                     tensor_data: np.ndarray,
@@ -62,12 +61,8 @@ def qparams_selection_tensor_search(error_function: Callable,
     output_shape = get_output_shape(tensor_data.shape, channel_axis)
 
     # First threshold to check is the constrained threshold based on the tensor's maximal value.
-    threshold = 2 * no_clipping_selection_tensor(tensor_data,
-                                                 0,
-                                                 n_bits,
-                                                 per_channel,
-                                                 channel_axis,
-                                                 min_threshold=min_threshold)[THRESHOLD]
+    tensor_max = get_tensor_max(np.abs(tensor_data), per_channel, channel_axis)
+    threshold = 2 * max_power_of_two(tensor_max, min_threshold)
 
     # If the threshold is computed per-channel, we rearrange the tensor such that each sub-tensor
     # is flattened, and we iterate over each one of them when searching for the threshold.
@@ -125,15 +120,12 @@ def qparams_selection_histogram_search(error_function: Callable,
     """
 
     signed = np.any(bins < 0)  # Whether histogram contains negative values or not.
-    threshold = (1 + int(constrained)) * no_clipping_selection_histogram(bins,
-                                                                         counts,
-                                                                         p=0,#dummy
-                                                                         n_bits=n_bits,#dummy
-                                                                         min_value=0,#dummy
-                                                                         max_value=0,#dummy
-                                                                         constrained=constrained,
-                                                                         n_iter=n_iter, #dummy
-                                                                         min_threshold=min_threshold)
+    tensor_data = np.abs(bins)
+    tensor_max = np.max(tensor_data)
+    if not constrained:
+        return tensor_max
+    threshold = (1 + int(constrained)) * max_power_of_two(tensor_max, min_threshold=min_threshold)
+
     # Init a list of thresholds.
     error_list = []
     threshold_list = threshold / np.power(2, np.linspace(0, n_iter - 1, n_iter))
