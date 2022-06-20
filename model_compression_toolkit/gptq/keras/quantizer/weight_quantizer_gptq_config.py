@@ -27,8 +27,8 @@ else:
 from tensorflow.python.training.tracking.data_structures import ListWrapper
 from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
 
-from model_compression_toolkit.core.keras.quantizer.gradient_ptq.weight_quantizer import TrainableWeightQuantizer
-from model_compression_toolkit.core.keras.quantizer.gradient_ptq.base_quantizer_gptq_config import BaseQuantizeConfig
+from model_compression_toolkit.gptq.keras.quantizer.weight_quantizer import TrainableWeightQuantizer
+from model_compression_toolkit.gptq.keras.quantizer.base_quantizer_gptq_config import BaseQuantizeConfig
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 import numpy as np

@@ -19,7 +19,7 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapp
 from typing import Tuple, List
 
 from model_compression_toolkit.core.keras.constants import USE_BIAS
-from model_compression_toolkit.core.keras.quantizer.gradient_ptq import WeightQuantizeConfig
+from model_compression_toolkit.gptq.keras.quantizer import WeightQuantizeConfig
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from tensorflow.keras.models import Model
 

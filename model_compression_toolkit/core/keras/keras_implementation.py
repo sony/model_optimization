@@ -27,8 +27,8 @@ from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.core.common.gptq.gptq_training import GPTQTrainer
-from model_compression_toolkit.core.keras.gradient_ptq.gptq_training import KerasGPTQTrainer
+from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
+from model_compression_toolkit.gptq.keras.gptq_training import KerasGPTQTrainer
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.activation_decomposition import \
     ActivationDecomposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.softmax_shift import \

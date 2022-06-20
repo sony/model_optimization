@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import model_compression_toolkit.core.common.gptq.gptq_config
+import model_compression_toolkit.gptq.common.gptq_config
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 import tensorflow as tf
 import numpy as np
 import unittest
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
+from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
@@ -98,9 +98,9 @@ class NetworkTest(object):
             return inputs_list
 
         if self.gptq:
-            arc = model_compression_toolkit.core.common.gptq.gptq_config.GradientPTQConfig(n_iter=2,
-                                                                                           optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
-                                                                                           loss=multiple_tensors_mse_loss)
+            arc = model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(n_iter=2,
+                                                                                      optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+                                                                                      loss=multiple_tensors_mse_loss)
 
             ptq_model, quantization_info = mct.keras_post_training_quantization(self.model_float,
                                                                                 representative_data_gen,
