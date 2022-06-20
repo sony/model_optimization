@@ -16,10 +16,10 @@
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
-
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 
 def create_stats_collector_for_node(node: common.BaseNode,
-                                    output_channel_index: int) -> BaseStatsCollector:
+                                    fw_info: FrameworkInfo) -> BaseStatsCollector:
     """
     Gets a node and a groups list and create and return a statistics collector for a node
     according to whether its statistics should be collected and the prior information we
@@ -27,16 +27,16 @@ def create_stats_collector_for_node(node: common.BaseNode,
 
     Args:
         node: Node to create its statistics collector.
-        output_channel_index: Index of output channels (for statistics per-channel).
+        fw_info: Information relevant to a specific framework about what is out channel axis (for statistics per-channel).
 
     Returns:
         Statistics collector for statistics collection for the node.
     """
 
     if node.is_activation_quantization_enabled():
-        stats_collector = common.StatsCollector(init_min_value=node.prior_info.min_output,
-                                                init_max_value=node.prior_info.max_output,
-                                                output_channel_index=output_channel_index)
+        stats_collector = common.StatsCollector(out_channel_axis=fw_info.out_channel_axis_mapping.get(node.type),
+                                                init_min_value=node.prior_info.min_output,
+                                                init_max_value=node.prior_info.max_output)
     else:
         stats_collector = common.NoStatsCollector()
 

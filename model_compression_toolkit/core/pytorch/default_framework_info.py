@@ -48,10 +48,20 @@ DEFAULT_CHANNEL_AXIS_DICT = DefaultDict({Conv2d: (0, 1),
                                         lambda: (None, None))
 
 """
+Map a layer to its output channel axis.
+Where axis=-1 is the last axis
+"""
+DEFAULT_OUT_CHANNEL_AXIS_DICT = DefaultDict({Conv2d: 1,
+                                             Linear: -1,
+                                             ConvTranspose2d: 1},
+                                            lambda: 1)
+
+
+"""
 Map from an activation function to its min/max output values (if known).
 The values are used for tensor min/max values initialization.
 """
-ACTIVATION2MINMAX = {} # should be an empty dict in Pytorch
+ACTIVATION2MINMAX = {}  # should be an empty dict in Pytorch
 
 """
 Map from an Pytorch module to its min/max output values (if known).
@@ -95,4 +105,4 @@ DEFAULT_PYTORCH_INFO = FrameworkInfo(ACTIVATION_QUANTIZER_MAPPING,
                                      ACTIVATION2MINMAX,
                                      LAYER2MINMAX,
                                      KERNEL_ATTRIBUTES,
-                                     OUTPUT_CHANNEL_INDEX)
+                                     DEFAULT_OUT_CHANNEL_AXIS_DICT)

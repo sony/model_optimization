@@ -25,7 +25,7 @@ class MinMaxPerChannelCollector(BaseCollector):
     """
 
     def __init__(self,
-                 axis: ChannelAxis,
+                 axis: int,
                  init_min_value: float = None,
                  init_max_value: float = None):
         """
@@ -130,7 +130,7 @@ class MinMaxPerChannelCollector(BaseCollector):
             x: Tensor that goes through the collector and needs to be considered in the min/max computation.
         """
 
-        axis = (len(x.shape) - 1) if self.axis == ChannelAxis.NHWC else self.axis.NCHW.value  # convert
+        axis = (len(x.shape) - 1) if self.axis == -1 else self.axis
         n = x.shape[axis]
         transpose_index = [axis, *[i for i in range(len(x.shape)) if i != axis]]
         x_reshape = np.reshape(np.transpose(x, transpose_index), [n, -1])

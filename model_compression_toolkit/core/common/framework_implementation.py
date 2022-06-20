@@ -150,14 +150,14 @@ class FrameworkImplementation(ABC):
                              f'framework\'s apply_shift_negative_correction method.')
 
     @abstractmethod
-    def attach_sc_to_node(self, node: BaseNode, output_channel_index: int) -> BaseStatsCollector:
+    def attach_sc_to_node(self, node: BaseNode, fw_info: FrameworkInfo) -> BaseStatsCollector:
         """
         Return a statistics collector that should be attached to a node's output
         during statistics collection.
 
         Args:
             node: Node to return its collector.
-            output_channel_index: Index of output channels (for statistics per-channel).
+            fw_info: Information relevant to a specific framework about what is out channel axis (for statistics per-channel).
 
         Returns:
             Statistics collector for the node.
