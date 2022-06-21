@@ -89,11 +89,13 @@ class SensitivityEvaluation:
         self._init_baseline_tensors_list()
 
         # TODO: extand for all batches
+        output_nodes = [o.node for o in graph.output_nodes] # [graph.get_topo_sorted_nodes()[-2]]
         self.interest_points_gradients = self.fw_impl.model_grad(graph,
                                                                  # TODO: verify that this gives a single tensor containing a single batch
                                                                  {inode: self.images_batches[0][0] for inode in graph.get_inputs()},
+                                                                 # self.interest_points[:-1],
                                                                  self.interest_points,
-                                                                 [o.node for o in graph.output_nodes])
+                                                                 output_nodes)
         self.quant_config.distance_weighting_method = lambda d: self.interest_points_gradients
 
     def compute_metric(self,
@@ -275,6 +277,10 @@ class SensitivityEvaluation:
         # The distance is the mean of distances over all images in the batch that was inferred.
         mean_distance_per_layer = distance_matrix.mean(axis=1)
         # Use weights such that every layer's distance is weighted differently (possibly).
+        # avg_weights = metrics_weights_fn(distance_matrix)[:-1]
+        # avg_weights = avg_weights + [np.max(avg_weights), np.max(avg_weights)]
+        # avg_weights = avg_weights + [np.max(avg_weights)]
+        # return np.average(mean_distance_per_layer, weights=metrics_weights_fn(distance_matrix))
         return np.average(mean_distance_per_layer, weights=metrics_weights_fn(distance_matrix))
 
     def _get_images_batches(self, num_of_images: int) -> List[Any]:

@@ -16,13 +16,15 @@ import numpy as np
 import tensorflow as tf
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+from keras.layers import Softmax
+
 if tf.__version__ < "2.6":
-    from tensorflow.keras.layers import Input
+    from tensorflow.keras.layers import Softmax
     from tensorflow.python.keras.layers.core import TFOpLambda
     from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
     from tensorflow.python.keras.layers import Layer
 else:
-    from keras import Input
+    from keras.layers import Softmax
     from keras.layers.core import TFOpLambda
     from keras.engine.base_layer import TensorFlowOpLayer, Layer
 
@@ -198,6 +200,14 @@ def model_grad(graph_float: common.Graph,
         # Build a dictionary from node to its output tensors, by applying the layers sequentially.
         for n in oh.node_sort:
             op_func = oh.get_node_op_function(n)  # Get node operation function
+            if 'argmax' in n.name:
+                def softargmax(x, axis):
+                    beta = 1
+                    x_range = tf.range(x.shape.as_list()[axis], dtype=x.dtype)
+                    return tf.reduce_sum(Softmax(axis=axis)(x * beta) * x_range, axis=axis)
+
+                op_func = softargmax
+
             input_tensors = build_input_tensors_list(n,
                                                      graph_float,
                                                      node_to_output_tensors_dict)  # Fetch Node inputs
@@ -205,6 +215,7 @@ def model_grad(graph_float: common.Graph,
                                              input_tensors,
                                              op_func,
                                              input_nodes_to_input_tensors)
+
             if n in intresent_points:
                 g.watch(out_tensors_of_n)
                 intresent_points_tensors.append(out_tensors_of_n)
@@ -215,20 +226,50 @@ def model_grad(graph_float: common.Graph,
                 node_to_output_tensors_dict.update({n: out_tensors_of_n})
             else:
                 node_to_output_tensors_dict.update({n: [out_tensors_of_n]})
+        output_sum = 0
+        for output in output_tensors:
+            output_sum += tf.reduce_sum(output)
     ###########################################
     # Compute Gradients
     ##########################################
     ipt_grad_score = []
     for ipt in intresent_points_tensors:
-        output_sum = 0
-        hessian_trace_aprrox = []
-        for output in output_tensors:
-            output_sum += tf.reduce_sum(output)
+        # output_sum = 0
+        # hessian_trace_aprrox = []
+        # for output in output_tensors:
+        #     # output_sum += tf.reduce_sum(output)
+        #
+        #     grad_ipt = g.gradient(output, ipt)
+        #     # grad_ipt = g.gradient(output_sum, ipt)
+        #     if grad_ipt is None:
+        #         continue
+        #     # hessian_trace_aprrox.append(tf.reduce_sum(tf.pow(grad_ipt, 2.0)))
+        #     hessian_trace_aprrox.append(tf.reduce_sum(grad_ipt))
+        # ipt_grad_score.append(tf.reduce_mean(hessian_trace_aprrox))
 
-            grad_ipt = g.gradient(output, ipt)
-            hessian_trace_aprrox.append(tf.reduce_sum(tf.pow(grad_ipt, 2.0)))
-        ipt_grad_score.append(tf.reduce_mean(hessian_trace_aprrox))
+        grad_ipt = g.gradient(output_sum, ipt)
+        # hessian_trace_aprrox = tf.reduce_sum(tf.abs(grad_ipt))
+        hessian_trace_aprrox = tf.reduce_sum(tf.pow(grad_ipt, 2.0))
+        ipt_grad_score.append(hessian_trace_aprrox)
 
-        # grad_ipt = g.gradient(output_tensors, ipt)
-        # hessian_trace_aprrox = tf.reduce_sum(tf.pow(grad_ipt, 2.0))
-    return ipt_grad_score
+    # return ipt_grad_score
+    # max_grad_score = max(ipt_grad_score[:-1]).numpy()
+
+    ###########################
+    # Print gradient score order
+    sorted_inds = np.flip(np.array(ipt_grad_score).argsort())
+    sorted_layers = {intresent_points[i].name: ipt_grad_score[i].numpy() for i in sorted_inds}
+    print(sorted_layers)
+    ##########################
+
+    max_idx = np.argmax(ipt_grad_score)
+    second_max_idx = np.argmax(ipt_grad_score[:max_idx] + ipt_grad_score[max_idx + 1:])
+
+    if (ipt_grad_score[max_idx] / ipt_grad_score[second_max_idx]).numpy() >= 1e3:
+        max_grad_score = ipt_grad_score[second_max_idx].numpy()
+        ipt_grad_score[max_idx] = ipt_grad_score[second_max_idx]
+    else:
+        max_grad_score = ipt_grad_score[max_idx].numpy()
+
+    return [s.numpy() / max_grad_score for s in ipt_grad_score]
+    # return [s.numpy() for s in ipt_grad_score]
