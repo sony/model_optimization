@@ -64,7 +64,7 @@ class StatsCollector(BaseStatsCollector):
         Set initial min/max values if are known.
 
         Args:
-            axis: Index of output channels.
+            out_channel_axis: Index of output channels.
             init_min_value: Initial min value for min/max stored values.
             init_max_value: Initial max value for min/max stored values.
         """

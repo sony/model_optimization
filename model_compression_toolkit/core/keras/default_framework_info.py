@@ -112,10 +112,6 @@ WEIGHTS_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quant
                              QuantizationMethod.KMEANS: kmeans_quantizer,
                              QuantizationMethod.LUT_QUANTIZER: lut_kmeans_quantizer}
 
-"""
-Output channel index of the model's layers
-"""
-OUTPUT_CHANNEL_INDEX = ChannelAxis.NHWC
 
 DEFAULT_KERAS_INFO = FrameworkInfo(ACTIVATION_QUANTIZER_MAPPING,
                                    WEIGHTS_QUANTIZER_MAPPING,
