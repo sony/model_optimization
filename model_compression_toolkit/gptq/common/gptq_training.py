@@ -20,6 +20,7 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.gptq.common.gptq_graph import get_compare_points
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
+from model_compression_toolkit.gptq.keras.model_builder import model_builder as gptq_model_builder
 
 
 class GPTQTrainer(ABC):
@@ -61,11 +62,11 @@ class GPTQTrainer(ABC):
                                                                        append2output=self.compare_points,
                                                                        fw_info=fw_info)
 
-        self.fxp_model, self.gptq_user_info = fw_impl.model_builder(self.graph_quant,
-                                                                    mode=ModelBuilderMode.GPTQ,
-                                                                    append2output=self.compare_points,
-                                                                    fw_info=fw_info,
-                                                                    gptq_config=gptq_config)
+        self.fxp_model, self.gptq_user_info = gptq_model_builder(self.graph_quant,
+                                                                 gptq_config,
+                                                                 mode=ModelBuilderMode.QUANTIZED,
+                                                                 append2output=self.compare_points,
+                                                                 fw_info=fw_info)
 
     @abstractmethod
     def train(self, representative_data_gen: Callable):
@@ -104,6 +105,10 @@ def gptq_training(graph_float: Graph,
         representative_data_gen: Dataset to use for inputs of the models.
         fw_impl: Framework implementation
         fw_info: Framework information
+
+    Returns:
+        Quantized graph for export
+
     """
     # Get GPTQ object and initialize it
     gptq_trainer_obj = fw_impl.get_gptq_trainer_obj()

@@ -114,7 +114,7 @@ class PytorchImplementation(FrameworkImplementation):
                       mode: ModelBuilderMode,
                       append2output: List[Any] = None,
                       fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
-                      gptq_config: GradientPTQConfig = None) -> Tuple[Module, UserInformation]:
+                      return_float_outputs: bool = False) -> Tuple[Module, UserInformation]:
         """
         Build a Pytorch module from a graph.
         The mode determines how the module should be build. append2output is a list of Nodes
@@ -124,7 +124,7 @@ class PytorchImplementation(FrameworkImplementation):
             mode: Mode for how to build the module.
             append2output: List of Nodes to set as the module's outputs.
             fw_info: FrameworkInfo object with information about the specific framework's module
-            gptq_config: GPTQ configuration class
+            return_float_outputs (bool): whether to return outputs before or after quantization nodes (default)
         Returns:
             A tuple of the Pytorch module that was built and an UserInformation object.
         """
@@ -132,7 +132,7 @@ class PytorchImplementation(FrameworkImplementation):
                              mode,
                              append2output,
                              fw_info,
-                             gptq_config)
+                             return_float_outputs)
 
     def run_model_inference(self,
                             model: Any,
