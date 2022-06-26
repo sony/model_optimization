@@ -170,18 +170,17 @@ class PytorchImplementation(FrameworkImplementation):
 
     def attach_sc_to_node(self,
                           node: BaseNode,
-                          output_channel_index: int) -> BaseStatsCollector:
+                          fw_info: FrameworkInfo) -> BaseStatsCollector:
         """
         Return a statistics collector that should be attached to a node's output
         during statistics collection.
         Args:
             node: Node to return its collector.
-            output_channel_index: Index of output channels of layers in the model's framework.
+            fw_info: Information relevant to a specific framework about what is out channel axis (for statistics per-channel)
         Returns:
             Statistics collector for the node.
         """
-        return create_stats_collector_for_node(node,
-                                               output_channel_index=output_channel_index)
+        return create_stats_collector_for_node(node, fw_info)
 
     def get_substitutions_channel_equalization(self,
                                                quant_config: QuantizationConfig,

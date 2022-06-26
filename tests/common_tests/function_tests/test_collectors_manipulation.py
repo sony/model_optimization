@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.framework_info import ChannelAxis
 
 
 def init_stats_container(num_of_input_channels, init_min=None, init_max=None):
-    sc = StatsCollector(init_min_value=init_min, init_max_value=init_max, output_channel_index=ChannelAxis.NHWC)
+    sc = StatsCollector(init_min_value=init_min, init_max_value=init_max, out_channel_axis=ChannelAxis.NHWC.value)
     x = np.random.rand(1, 2, 3, num_of_input_channels)
     for i in range(100):
         sc.update_statistics(x)

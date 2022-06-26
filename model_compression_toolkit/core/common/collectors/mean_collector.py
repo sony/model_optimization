@@ -17,7 +17,7 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.collectors.base_collector import BaseCollector
-from model_compression_toolkit.core.common.framework_info import ChannelAxis
+from model_compression_toolkit.core.common.constants import LAST_AXIS
 
 
 class MeanCollector(BaseCollector):
@@ -27,7 +27,7 @@ class MeanCollector(BaseCollector):
     """
 
     def __init__(self,
-                 axis: ChannelAxis,
+                 axis: int,
                  beta: float = 0.99):
         """
         Instantiate a per channel mean collector using a exponential moving average with bias correction.
@@ -91,7 +91,7 @@ class MeanCollector(BaseCollector):
         """
 
         self.i += 1  # Update the iteration index
-        axis = (len(x.shape) - 1) if self.axis == ChannelAxis.NHWC else self.axis.value  # convert
+        axis = (len(x.shape) - 1) if self.axis == LAST_AXIS else self.axis
         n = x.shape[axis]
         transpose_index = [axis, *[i for i in range(len(x.shape)) if i != axis]]
         mu = np.mean(np.reshape(np.transpose(x, transpose_index), [n, -1]), axis=-1)  # compute mean per channel
