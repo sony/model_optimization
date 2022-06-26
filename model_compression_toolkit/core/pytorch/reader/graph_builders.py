@@ -86,6 +86,11 @@ def nodes_builder(model: GraphModule,
                 framework_attr[BIAS] = False if node_module.bias is None else True
         elif node.op == CALL_FUNCTION:
             node_type = node.target
+            if node_type == getattr:
+                node_has_activation = False
+                common.Logger.warning(
+                    'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
+                    'converting the model.')
         elif node.op == PLACEHOLDER:
             node_type = DummyPlaceHolder
         elif node.op == OUTPUT:
