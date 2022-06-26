@@ -30,6 +30,7 @@ from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUB
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
     SoftmaxFunctionNetTest
+from tests.pytorch_tests.model_tests.feature_models.permute_substitution_test import PermuteSubstitutionTest
 from tests.pytorch_tests.model_tests.feature_models.multi_head_attention_test import MHALayerNetTest
 from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test import \
     ScaleEqualizationWithZeroPadNetTest, ScaleEqualizationNetTest, \
@@ -102,6 +103,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         ResidualCollapsingTest1(self).run_test()
         ResidualCollapsingTest2(self).run_test()
+
+    def test_permute_substitution(self):
+        """
+        This test checks the permute substitution feature
+        """
+        PermuteSubstitutionTest(self).run_test()
+
 
     def test_relu_bound_to_power_of_2(self):
         """

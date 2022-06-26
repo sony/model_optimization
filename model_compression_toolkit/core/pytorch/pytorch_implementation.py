@@ -58,7 +58,7 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.so
     pytorch_softmax_shift
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
     import MultiHeadAttentionDecomposition
-
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.permute_call_method import PermuteCallMethod
 
 class PytorchImplementation(FrameworkImplementation):
     """
@@ -208,7 +208,8 @@ class PytorchImplementation(FrameworkImplementation):
 
         """
         return [ReshapeWithStaticShapes(),
-                MultiHeadAttentionDecomposition()]
+                MultiHeadAttentionDecomposition(),
+                PermuteCallMethod()]
 
     def get_substitutions_pre_statistics_collection(self,
                                                     quant_config: QuantizationConfig
