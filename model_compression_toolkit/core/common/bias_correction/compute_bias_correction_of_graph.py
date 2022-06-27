@@ -89,6 +89,15 @@ def _compute_bias_correction_per_candidate_qc(node: BaseNode,
                 # Store the correction term to use it later,
                 candidate_qc.weights_quantization_cfg.bias_corrected = bias_correction_term
 
+def is_non_positive_integer(x: float) -> bool:
+    """
+    Check if a variable is positive integer or not
+    Args:
+        x: input float to check
+    Returns:
+        True if x is non-positive integer
+    """
+    return x < 1 or int(x) != x
 
 def _compute_bias_correction(kernel: np.ndarray,
                              quantized_kernel: np.ndarray,
@@ -127,11 +136,15 @@ def _compute_bias_correction(kernel: np.ndarray,
     if output_channels_axis > input_channels_axis:
         eps = np.transpose(eps)
 
-    # number_of_input_channels <= mu.shape[0]
-    # depth_of_each_kernel <= eps.shape[1]
+    num_groups = mu.shape[0] / eps.shape[1]
+    num_out_channels = eps.shape[0] # 0 is always the output channel axis in eps
+    correction_term = np.zeros(num_out_channels)
 
-    num_groups = int(mu.shape[0] / eps.shape[1])# 1 is always the input channel axis in eps
-    num_out_channels = eps.shape[0]# 0 is always the output channel axis in eps
+    # Sanity validation
+    if is_non_positive_integer(num_groups) or is_non_positive_integer(num_out_channels / num_groups):
+        Logger.warning("Skipping bias correction due to valiation problem.")
+        return correction_term
+
     num_out_channels_per_group = int(num_out_channels / num_groups)
 
     # In Pytorch the output of group conv is separated into respective groups is
@@ -140,7 +153,6 @@ def _compute_bias_correction(kernel: np.ndarray,
     # For an example, check out: https://discuss.pytorch.org/t/group-convolution-output-order/88258
     mu_split = np.split(mu, num_groups)
     eps_split = np.split(eps, num_groups, 0)
-    correction_term = np.zeros(num_out_channels)
     for i, (mu_s, eps_s) in enumerate(zip(mu_split, eps_split)):
         correction_term[i * num_out_channels_per_group:(i + 1) * num_out_channels_per_group] = np.matmul(eps_s, mu_s)
 
