@@ -20,7 +20,6 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.gptq.common.gptq_graph import get_compare_points
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
-from model_compression_toolkit.gptq.keras.model_builder import model_builder as gptq_model_builder
 
 
 class GPTQTrainer(ABC):
@@ -60,13 +59,19 @@ class GPTQTrainer(ABC):
         self.float_model, self.float_user_info = fw_impl.model_builder(self.graph_float,
                                                                        mode=ModelBuilderMode.FLOAT,
                                                                        append2output=self.compare_points,
-                                                                       fw_info=fw_info)
+                                                                       fw_info=self.fw_info)
 
-        self.fxp_model, self.gptq_user_info = gptq_model_builder(self.graph_quant,
-                                                                 gptq_config,
-                                                                 mode=ModelBuilderMode.QUANTIZED,
-                                                                 append2output=self.compare_points,
-                                                                 fw_info=fw_info)
+        self.fxp_model, self.gptq_user_info = self.build_gptq_model()
+
+    @abstractmethod
+    def build_gptq_model(self):
+        """
+        Build the GPTQ model with QuantizationWrappers
+        Returns:
+            Quantized graph for GPTQ fine-tuning, GPTQ graph user info
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s GPTQ model builder method.')
 
     @abstractmethod
     def train(self, representative_data_gen: Callable):
