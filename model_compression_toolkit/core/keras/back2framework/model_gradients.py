@@ -18,13 +18,15 @@ import tensorflow as tf
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from keras.layers import Softmax
 
+from model_compression_toolkit.core.common.constants import EPS
+
 if tf.__version__ < "2.6":
-    from tensorflow.keras.layers import Softmax
+    from tensorflow.keras.layers import Softmax, Activation
     from tensorflow.python.keras.layers.core import TFOpLambda
     from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
     from tensorflow.python.keras.layers import Layer
 else:
-    from keras.layers import Softmax
+    from keras.layers import Softmax, Activation
     from keras.layers.core import TFOpLambda
     from keras.engine.base_layer import TensorFlowOpLayer, Layer
 
@@ -165,7 +167,8 @@ def convert_node2name(in_node_to_output_tensors_dict):
 def model_grad(graph_float: common.Graph,
                model_input_tensors: Dict[BaseNode, np.ndarray],
                intresent_points,
-               output_list):
+               output_list,
+               all_outputs_indices):
     """
     Build a Keras model from a graph representing the model.
     The model is built by converting the graph nodes to Keras layers and applying them sequentially to get the model
@@ -200,13 +203,14 @@ def model_grad(graph_float: common.Graph,
         # Build a dictionary from node to its output tensors, by applying the layers sequentially.
         for n in oh.node_sort:
             op_func = oh.get_node_op_function(n)  # Get node operation function
-            if 'argmax' in n.name:
-                def softargmax(x, axis):
-                    beta = 1
-                    x_range = tf.range(x.shape.as_list()[axis], dtype=x.dtype)
-                    return tf.reduce_sum(Softmax(axis=axis)(x * beta) * x_range, axis=axis)
-
-                op_func = softargmax
+            # if 'argmax' in n.name:
+            #     def softargmax(x, axis):
+            #         beta = 1e10
+            #         x_range = tf.range(x.shape.as_list()[axis], dtype=x.dtype)
+            #         # return tf.reduce_sum(Softmax(axis=axis)(x * beta) * x_range, axis=axis)
+            #         return tf.reduce_max(x, axis=axis)
+            #
+            #     op_func = softargmax
 
             input_tensors = build_input_tensors_list(n,
                                                      graph_float,
@@ -216,23 +220,35 @@ def model_grad(graph_float: common.Graph,
                                              op_func,
                                              input_nodes_to_input_tensors)
 
+            out_tensors_of_n = tf.dtypes.cast(out_tensors_of_n, tf.float32)
             if n in intresent_points:
                 g.watch(out_tensors_of_n)
                 intresent_points_tensors.append(out_tensors_of_n)
             if n in output_list:
+                # if n.type == Activation and n.framework_attr['activation'] == 'softmax':
+                #     output_tensors.append(input_tensors[0][0])
+                # else:
+                #     output_tensors.append(out_tensors_of_n)
                 output_tensors.append(out_tensors_of_n)
 
             if isinstance(out_tensors_of_n, list):
                 node_to_output_tensors_dict.update({n: out_tensors_of_n})
             else:
                 node_to_output_tensors_dict.update({n: [out_tensors_of_n]})
-        output_sum = 0
+
+        output_loss = 0
         for output in output_tensors:
-            output_sum += tf.reduce_sum(output)
+            output = tf.reshape(output, shape=(output.shape[0], -1))
+            # output_sum += tf.reduce_sum(tf.reduce_max(output, axis=-1))
+            # reduce_mean(reduce_sum(axis=-1))
+            # output_sum += tf.reduce_mean(tf.reduce_max(output, axis=-1))
+            output_loss += tf.reduce_mean(tf.reduce_sum(output, axis=-1))
+            # output_sum += tf.reduce_sum(output)
     ###########################################
     # Compute Gradients
     ##########################################
     ipt_grad_score = []
+
     for ipt in intresent_points_tensors:
         # output_sum = 0
         # hessian_trace_aprrox = []
@@ -247,29 +263,49 @@ def model_grad(graph_float: common.Graph,
         #     hessian_trace_aprrox.append(tf.reduce_sum(grad_ipt))
         # ipt_grad_score.append(tf.reduce_mean(hessian_trace_aprrox))
 
-        grad_ipt = g.gradient(output_sum, ipt)
+        grad_ipt = g.gradient(output_loss, ipt, unconnected_gradients=tf.UnconnectedGradients.ZERO)
         # hessian_trace_aprrox = tf.reduce_sum(tf.abs(grad_ipt))
-        hessian_trace_aprrox = tf.reduce_sum(tf.pow(grad_ipt, 2.0))
+        # hessian_trace_aprrox = tf.reduce_sum(tf.pow(grad_ipt, 2.0))
+        hessian_trace_aprrox = tf.reduce_mean(tf.reduce_sum(tf.pow(tf.reshape(grad_ipt, shape=[grad_ipt.shape[0], -1]), 2.0), axis=-1))
         ipt_grad_score.append(hessian_trace_aprrox)
 
     # return ipt_grad_score
     # max_grad_score = max(ipt_grad_score[:-1]).numpy()
 
-    ###########################
+    ###############################
     # Print gradient score order
+    ###############################
     sorted_inds = np.flip(np.array(ipt_grad_score).argsort())
     sorted_layers = {intresent_points[i].name: ipt_grad_score[i].numpy() for i in sorted_inds}
     print(sorted_layers)
-    ##########################
 
-    max_idx = np.argmax(ipt_grad_score)
-    second_max_idx = np.argmax(ipt_grad_score[:max_idx] + ipt_grad_score[max_idx + 1:])
 
-    if (ipt_grad_score[max_idx] / ipt_grad_score[second_max_idx]).numpy() >= 1e3:
-        max_grad_score = ipt_grad_score[second_max_idx].numpy()
-        ipt_grad_score[max_idx] = ipt_grad_score[second_max_idx]
+
+    # max_idx = np.argmax(ipt_grad_score)
+    # second_max_idx = np.argmax(ipt_grad_score[:max_idx] + ipt_grad_score[max_idx + 1:])
+    #
+    # if (ipt_grad_score[max_idx] / ipt_grad_score[second_max_idx]).numpy() >= 1e3:
+    #     max_grad_score = ipt_grad_score[second_max_idx].numpy()
+    #     # ipt_grad_score[max_idx] = ipt_grad_score[second_max_idx]
+    # else:
+    #     max_grad_score = ipt_grad_score[max_idx].numpy()
+
+    # return [s.numpy() / max_grad_score for s in ipt_grad_score]
+
+    # output_index = intresent_points.index(output_list[0])
+    alpha = 0.05
+    # num_skipped = len(intresent_points) - output_index
+    # sum_to_output = sum(ipt_grad_score[:-num_skipped])
+    # output_weight = ([alpha / num_skipped] * num_skipped)  # setting const weight to output and all nodes after it
+
+    sum_without_outputs = sum([ipt_grad_score[i] for i in range(len(ipt_grad_score)) if i not in all_outputs_indices])
+    return [get_normalized_weight(grad, i, sum_without_outputs, all_outputs_indices, alpha) for i, grad in enumerate(ipt_grad_score)]
+
+    # return [((1 - alpha) * s / sum_to_output).numpy() for s in ipt_grad_score[:-num_skipped]] + output_weight
+
+
+def get_normalized_weight(grad, i, sum_without_outputs, all_outputs_indices, alpha):
+    if i in all_outputs_indices:
+        return alpha / len(all_outputs_indices)
     else:
-        max_grad_score = ipt_grad_score[max_idx].numpy()
-
-    return [s.numpy() / max_grad_score for s in ipt_grad_score]
-    # return [s.numpy() for s in ipt_grad_score]
+        return (1 - alpha) * grad / (sum_without_outputs + EPS)

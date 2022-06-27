@@ -13,10 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
-from typing import Callable, Any, List
+from typing import Callable, Any, List, Tuple
 
 from model_compression_toolkit import FrameworkInfo, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common.constants import EPS
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common import Logger
 
@@ -69,8 +70,10 @@ class SensitivityEvaluation:
         # Get interest points for distance measurement and a list of sorted configurable nodes names
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names()
         self.interest_points = get_mp_interest_points(graph,
-                                                      self.fw_impl.count_node_for_mixed_precision_interest_points,
+                                                      fw_impl.count_node_for_mixed_precision_interest_points,
                                                       quant_config.num_interest_points_factor)
+        self.outputs_replacement_nodes = get_output_replacement_nodes(graph, fw_impl)
+        self.output_nodes_indices = self._update_ips_with_outputs_replacements()
 
         # Build a mixed-precision model which can be configured to use different bitwidth in different layers.
         # And a baseline model.
@@ -88,15 +91,21 @@ class SensitivityEvaluation:
         # Initiating baseline_tensors_list since it is not initiated in SensitivityEvaluationManager init.
         self._init_baseline_tensors_list()
 
-        # TODO: extand for all batches
-        output_nodes = [o.node for o in graph.output_nodes] # [graph.get_topo_sorted_nodes()[-2]]
-        self.interest_points_gradients = self.fw_impl.model_grad(graph,
-                                                                 # TODO: verify that this gives a single tensor containing a single batch
-                                                                 {inode: self.images_batches[0][0] for inode in graph.get_inputs()},
-                                                                 # self.interest_points[:-1],
-                                                                 self.interest_points,
-                                                                 output_nodes)
+        # output_nodes = [o.node for o in graph.output_nodes] # [graph.get_topo_sorted_nodes()[-2]]
+
+        grad_per_batch = []
+        for images in self.images_batches:
+            batch_ip_gradients = self.fw_impl.model_grad(graph,
+                                                         {inode: images[0] for inode in graph.get_inputs()},
+                                                         self.interest_points,
+                                                         self.outputs_replacement_nodes,
+                                                         self.output_nodes_indices)
+
+            grad_per_batch.append(batch_ip_gradients)
+        self.interest_points_gradients = np.mean(grad_per_batch, axis=0)
         self.quant_config.distance_weighting_method = lambda d: self.interest_points_gradients
+        # from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
+        # self.quant_config.distance_weighting_method = lambda d: get_average_weights(d)
 
     def compute_metric(self,
                        mp_model_configuration: List[int],
@@ -225,14 +234,22 @@ class SensitivityEvaluation:
         num_samples = len(baseline_tensors[0])
         distance_matrix = np.ndarray((num_interest_points, num_samples))
 
+        def _center_tensor_features(t: np.ndarray) -> np.ndarray:
+            centered = t - np.mean(t)
+            pos_centered = centered + np.abs(np.min(centered)) + EPS
+            return pos_centered
+
         for i in range(num_interest_points):
             point_distance_fn = \
                 self.fw_impl.get_node_distance_fn(layer_class=self.interest_points[i].layer_class,
                                                   framework_attrs=self.interest_points[i].framework_attr,
                                                   compute_distance_fn=self.quant_config.compute_distance_fn)
             for j in range(num_samples):
-                distance_matrix[i, j] = \
-                    point_distance_fn(baseline_tensors[i][j], mp_tensors[i][j])
+                # distance_matrix[i, j] = \
+                #     point_distance_fn(_center_tensor_features(baseline_tensors[i][j].flatten()),
+                #                       _center_tensor_features(mp_tensors[i][j].flatten()))
+                distance_matrix[i, j] = point_distance_fn(baseline_tensors[i][j], mp_tensors[i][j])
+
         return distance_matrix
 
     def _build_distance_metrix(self):
@@ -276,11 +293,8 @@ class SensitivityEvaluation:
         # Compute the distance between the baseline model's outputs and the MP model's outputs.
         # The distance is the mean of distances over all images in the batch that was inferred.
         mean_distance_per_layer = distance_matrix.mean(axis=1)
+
         # Use weights such that every layer's distance is weighted differently (possibly).
-        # avg_weights = metrics_weights_fn(distance_matrix)[:-1]
-        # avg_weights = avg_weights + [np.max(avg_weights), np.max(avg_weights)]
-        # avg_weights = avg_weights + [np.max(avg_weights)]
-        # return np.average(mean_distance_per_layer, weights=metrics_weights_fn(distance_matrix))
         return np.average(mean_distance_per_layer, weights=metrics_weights_fn(distance_matrix))
 
     def _get_images_batches(self, num_of_images: int) -> List[Any]:
@@ -311,6 +325,18 @@ class SensitivityEvaluation:
             samples_count += batch_size
         return images_batches
 
+    def _update_ips_with_outputs_replacements(self):
+        replacement_outputs_to_ip = [r_node for r_node in self.outputs_replacement_nodes if
+                                     r_node not in self.interest_points]
+        updated_interest_points = self.interest_points + replacement_outputs_to_ip
+
+        # Re-sort interest points in a topological order according to the graph's sort
+        self.interest_points = [n for n in self.graph.get_topo_sorted_nodes() if n in updated_interest_points]
+
+        output_indices = [self.interest_points.index(n.node) for n in self.graph.get_outputs()]
+        replacement_indices = [self.interest_points.index(n) for n in self.outputs_replacement_nodes]
+        return list(set(output_indices + replacement_indices))
+
     @staticmethod
     def _tensors_as_list(tensors: Any) -> List[Any]:
         """
@@ -327,10 +353,13 @@ class SensitivityEvaluation:
         return tensors
 
 
-def get_mp_interest_points(graph: Graph, interest_points_classifier: Callable, num_ip_factor: float) -> List[BaseNode]:
+def get_mp_interest_points(graph: Graph, interest_points_classifier: Callable,
+                           num_ip_factor: float) -> List[BaseNode]:
     """
     Gets a list of interest points for the mixed precision metric computation.
     The list is constructed from a filtered set of the convolutions nodes in the graph.
+    In addition, returns a list of nodes with output nodes replacements if the actual output node of the model is not
+    compatible for calculating weights for the mp metric (based on a built-in per-framework list of layer types)
 
     Args:
         graph: Graph to search for its MP configuration.
@@ -338,7 +367,7 @@ def get_mp_interest_points(graph: Graph, interest_points_classifier: Callable, n
             interest point for mp metric computation purposes.
         num_ip_factor: Percentage out of the total set of interest points that we want to actually use.
 
-    Returns: A list of interest points (nodes in the graph).
+    Returns: A list of interest points (nodes in the graph), and a list of replacements output nodes.
 
     """
     sorted_nodes = graph.get_topo_sorted_nodes()
@@ -350,9 +379,24 @@ def get_mp_interest_points(graph: Graph, interest_points_classifier: Callable, n
     # in order to consider the model's output in the distance metric computation (and also to make sure
     # all configurable layers are included in the configured mp model for metric computation purposes)
     output_nodes = [n.node for n in graph.get_outputs() if n.node not in interest_points_nodes]
+
     interest_points = interest_points_nodes + output_nodes
 
     return interest_points
+
+
+def get_output_replacement_nodes(graph: Graph,
+                                 fw_impl: Any):
+    replacement_outputs = []
+    for n in graph.get_outputs():
+        prev_node = n.node
+        while not fw_impl.is_node_compatible_for_mp_metric_outputs(prev_node):
+            prev_node = graph.get_prev_nodes(n.node)
+            assert len(prev_node) == 1, "A none MP compatible output node has multiple inputs, " \
+                                        "which is incompatible for metric computation."
+            prev_node = prev_node[0]
+        replacement_outputs.append(prev_node)
+    return replacement_outputs
 
 
 def bound_num_interest_points(sorted_ip_list: List[BaseNode], num_ip_factor: float) -> List[BaseNode]:

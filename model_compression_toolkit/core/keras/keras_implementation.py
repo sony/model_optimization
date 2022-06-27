@@ -3,9 +3,10 @@ from typing import List, Any, Tuple, Callable, Type, Dict
 import numpy as np
 import tensorflow as tf
 
+from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.keras.back2framework.model_gradients import model_grad
-from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID
+from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID, ARGMAX
 from tensorflow.keras.models import Model
 from tensorflow.python.layers.base import Layer
 
@@ -14,8 +15,10 @@ from model_compression_toolkit.core.keras.mixed_precision.set_layer_to_bitwidth 
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add
+    from tensorflow.python.keras.layers.core import TFOpLambda
 else:
     from keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add
+    from keras.layers.core import TFOpLambda
 
 from model_compression_toolkit import QuantizationConfig, FrameworkInfo, GradientPTQConfig, \
     CoreConfig, MixedPrecisionQuantizationConfigV2
@@ -409,5 +412,31 @@ class KerasImplementation(FrameworkImplementation):
 
         return model.get_layer(name=layer_name)
 
-    def model_grad(self, graph_float, input_tensors, intresent_points, output_list):
-        return model_grad(graph_float, input_tensors, intresent_points, output_list)
+    def model_grad(self, graph_float, input_tensors, intresent_points, output_list, output_indices):
+        return model_grad(graph_float, input_tensors, intresent_points, output_list, output_indices)
+
+    def is_node_compatible_for_mp_metric_outputs(self,
+                                                 node: BaseNode) -> Any:
+        """
+        Returns a list of nodes which are compatible fot output for mixed-precision metric computation purposes.
+
+        Args:
+            node: A BaseNode object.
+
+        Returns: Whether the node is compatible as output for MP metric computation or not.
+
+        """
+
+        if node.layer_class == Activation:
+            node_attr = getattr(node, 'framework_attr', None)
+            if node_attr is not None and node_attr[ACTIVATION] == SOFTMAX:
+                return False
+        elif node.layer_class == TFOpLambda:
+            node_attr = getattr(node, 'framework_attr', None)
+            if node_attr is not None and ARGMAX in node_attr['name']:
+                return False
+        elif node.layer_class == tf.nn.softmax or node.layer_class == tf.math.argmax:
+            return False
+
+        return True
+

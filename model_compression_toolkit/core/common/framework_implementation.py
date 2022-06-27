@@ -359,3 +359,19 @@ class FrameworkImplementation(ABC):
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_model_layer_by_name method.')
+
+    @abstractmethod
+    def is_node_compatible_for_mp_metric_outputs(self,
+                                                 node: BaseNode) -> Any:
+        """
+        Returns a list of nodes which are compatible fot output for mixed-precision metric computation purposes.
+
+        Args:
+            node: A BaseNode object.
+
+        Returns: Whether the node is compatible as output for MP metric computation or not.
+
+        """
+
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s is_node_compatible_for_mp_metric_outputs method.')

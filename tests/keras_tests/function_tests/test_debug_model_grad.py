@@ -3,6 +3,7 @@ import unittest
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, SeparableConv2D, Reshape
 from tensorflow import initializers
 import numpy as np
+import tensorflow as tf
 
 from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
@@ -32,8 +33,14 @@ def create_model_1(input_shape):
     return keras.Model(inputs=inputs, outputs=outputs)
 
 
+def create_model_2(input_shape):
+    inputs = Input(shape=input_shape)
+    outputs = 2 * inputs + 1
+    return keras.Model(inputs=inputs, outputs=outputs)
+
+
 def representative_dataset():
-    return [np.random.randn(1, 8, 8, 3)]
+    return [np.random.randn(1, 8, 8, 3).astype(np.float32)]
 
 
 def prepare_graph(in_model, keras_impl):
@@ -64,12 +71,13 @@ class TestModelGradients(unittest.TestCase):
 
     def test_debug_model_grad(self):
         input_shape = (8, 8, 3)
-        in_model = create_model_1(input_shape)
+        # in_model = create_model_1(input_shape)
+        in_model = create_model_2(input_shape)
         keras_impl = KerasImplementation()
         graph = prepare_graph(in_model, keras_impl)
 
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
-        interest_points = [sorted_graph_nodes[1], sorted_graph_nodes[-1]]
+        interest_points = [sorted_graph_nodes[0], sorted_graph_nodes[1], sorted_graph_nodes[-1]]
 
         # model = keras_impl.model_builder(graph, ModelBuilderMode.FLOAT, sorted_graph_nodes)[0]
         # model = keras_impl.model_builder(graph, ModelBuilderMode.FLOAT, interest_points)[0]
@@ -77,5 +85,6 @@ class TestModelGradients(unittest.TestCase):
         # tensor_data = keras_impl.run_model_inference(model, inputs_list)
 
         # input_tensors = {inode: tensor_data[i].numpy() for i, inode in enumerate(interest_points)}
-        input_tensors = {inode: representative_dataset() for inode in graph.get_inputs()}
+        input_tensors = {inode: representative_dataset()[0] for inode in graph.get_inputs()}
         x = model_grad(graph, input_tensors, interest_points, [o.node for o in graph.output_nodes])
+        self.assertTrue(x == [4.0, 1.0, 1.0])
