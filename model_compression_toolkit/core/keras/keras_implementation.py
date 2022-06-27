@@ -16,8 +16,7 @@ if tf.__version__ < "2.6":
 else:
     from keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add
 
-from model_compression_toolkit import QuantizationConfig, FrameworkInfo, GradientPTQConfig, \
-    CoreConfig, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
@@ -118,7 +117,7 @@ class KerasImplementation(FrameworkImplementation):
                       mode: ModelBuilderMode,
                       append2output: List[Any] = None,
                       fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                      gptq_config: GradientPTQConfig = None) -> Tuple[Model, UserInformation]:
+                      return_float_outputs: bool = False) -> Tuple[Model, UserInformation]:
         """
         Build a Keras model from a graph.
         The mode determines how the model should be build. append2output is a list of Nodes
@@ -129,7 +128,7 @@ class KerasImplementation(FrameworkImplementation):
             mode: Mode for how to build the model.
             append2output: List of Nodes to set as the model's outputs.
             fw_info: FrameworkInfo object with information about the specific framework's model
-            gptq_config: GPTQ configuration class
+            return_float_outputs (bool): whether to return outputs before or after quantization nodes (default)
         Returns:
             A tuple of the Keras model that was built and an UserInformation object.
         """
@@ -137,7 +136,7 @@ class KerasImplementation(FrameworkImplementation):
                              mode,
                              append2output,
                              fw_info,
-                             gptq_config)
+                             return_float_outputs=return_float_outputs)
 
     def run_model_inference(self,
                             model: Any,

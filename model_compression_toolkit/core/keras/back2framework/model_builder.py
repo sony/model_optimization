@@ -137,7 +137,7 @@ def run_operation(n: BaseNode,
         out_tensors_of_n_float = input_nodes_to_input_tensors[n]
         out_tensors_of_n = out_tensors_of_n_float
         if n.is_activation_quantization_enabled():
-            if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ] and n.final_activation_quantization_cfg:
+            if mode in [ModelBuilderMode.QUANTIZED] and n.final_activation_quantization_cfg:
                 # Adding a fake quant node to Input when in GPTQ mode because quantize_model doesn't quantize the
                 # input layer
                 out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
@@ -169,7 +169,7 @@ def run_operation(n: BaseNode,
                 Logger.critical(
                     f"Trying to quantize node {n.name} activation of type {out_tensors_of_n_float.dtype} "
                     f"which is not supported, expected type float32")
-            if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ] and n.final_activation_quantization_cfg:
+            if mode in [ModelBuilderMode.QUANTIZED] and n.final_activation_quantization_cfg:
                 out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
             elif mode in [ModelBuilderMode.MIXEDPRECISION]:
                 if n.is_all_activation_candidates_equal():
@@ -190,8 +190,8 @@ def convert_node2name(in_node_to_output_tensors_dict):
 def model_builder(graph: common.Graph,
                   mode: ModelBuilderMode = ModelBuilderMode.QUANTIZED,
                   append2output=None,
-                  fw_info: FrameworkInfo = DEFAULT_KERAS_INFO, gptq_config: GradientPTQConfig = None) -> Tuple[
-    tf.keras.models.Model, Any]:
+                  fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
+                  return_float_outputs: bool = False) -> Tuple[tf.keras.models.Model, Any]:
     """
     Build a Keras model from a graph representing the model.
     The model is built by converting the graph nodes to Keras layers and applying them sequentially to get the model
@@ -206,13 +206,11 @@ def model_builder(graph: common.Graph,
         fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
         This is needed when using MIXEDPRECISION or GPTQ mode for passing the kernel attributes to
         the QuanteWrapper we use in both of these cases.
-        gptq_config: GPTQ Configuration class..
+        return_float_outputs (bool): whether to return outputs before or after quantization nodes (default)
 
     Returns:
         A tuple of the model, and an UserInformation object.
     """
-    if gptq_config is None and mode == ModelBuilderMode.GPTQ:
-        Logger.exception("Building a model in GPTQ require GPTQ configuration as input")
     node_to_output_tensors_dict = dict()
     node_to_output_tensors_dict_float = dict()
     model_output_tensors = []
@@ -266,12 +264,12 @@ def model_builder(graph: common.Graph,
 
     for ot in output_list:
         if len(node_name_to_outtensors[ot.node.name]) == 1 or append2output is None:
-            if mode == ModelBuilderMode.GPTQ:
+            if return_float_outputs:
                 model_output_tensors.append(node_name_to_outtensors_float[ot.node.name][ot.node_out_index])
             else:
                 model_output_tensors.append(node_name_to_outtensors[ot.node.name][ot.node_out_index])
         else:  # When building float model - we collect all outputs from all nodes regardless the actual model's outputs
-            if mode == ModelBuilderMode.GPTQ:
+            if return_float_outputs:
                 # In case of GPTQ output the float data for the loss and not quantized.
                 model_output_tensors.append(node_name_to_outtensors_float[ot.node.name])
             else:
@@ -280,27 +278,10 @@ def model_builder(graph: common.Graph,
     # Build the model.
     model = tf.keras.Model(inputs=inputs_list, outputs=model_output_tensors)
 
-    # In GPTQ mode, wrap each layer in a QuantizeWrapper containing QuantizeConfig
-    # that's built using the node quantization attributes.
-    if mode == ModelBuilderMode.GPTQ:
-        def _quantize(layer):
-            nodes = graph.find_node_by_name(get_node_name_from_layer(layer))
-            if len(nodes) == 1:
-                node = nodes[0]
-                return QuantizeWrapper(layer, quantization_config_builder_gptq(node, fw_info, gptq_config))
-            elif is_layer_fake_quant(layer):
-                return layer
-            else:
-                raise Exception(
-                    f"Mismatch between keras model and graph can't find node named: {get_node_name_from_layer(layer)}")
-
-        # clone each layer in the model and apply _quantize to the layer.
-        model = tf.keras.models.clone_model(model, input_tensors=None, clone_function=_quantize)
-
     # In MIXEDPRECISION mode, wrap each layer that can be configured with bitwidth
     # in a QuantizeWrapper containing QuantizeConfig that holds a quantizer that
     # stores the quantized weights using all possible bitwidths.
-    elif mode == ModelBuilderMode.MIXEDPRECISION:
+    if mode == ModelBuilderMode.MIXEDPRECISION:
         conf_nodes_names = graph.get_configurable_sorted_nodes_names()
 
         def _quantize_multiple_nbits(layer):
