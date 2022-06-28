@@ -177,6 +177,13 @@ class SensitivityEvaluation:
         return baseline_model, model_mp
 
     def _compute_gradient_based_weights(self) -> np.ndarray:
+        """
+        Computes the gradient-based weights using the framework's model_grad method per batch of images.
+
+        Returns: A vector of weights, one for each interest point,
+        to be used for the distance metric weighted average computation.
+        """
+
         grad_per_batch = []
         for images in self.images_batches:
             batch_ip_gradients = self.fw_impl.model_grad(self.graph,
