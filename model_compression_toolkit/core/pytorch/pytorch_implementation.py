@@ -377,3 +377,48 @@ class PytorchImplementation(FrameworkImplementation):
         """
 
         return model.get_submodule(target=layer_name)
+
+    def model_grad(self,
+                   graph_float: common.Graph,
+                   model_input_tensors: Dict[BaseNode, np.ndarray],
+                   interest_points: List[BaseNode],
+                   output_list: List[BaseNode],
+                   all_outputs_indices: List[int],
+                   alpha: float = 0.1) -> List[float]:
+        """
+        Calls a PyTorch specific model gradient calculation function, which computes the gradients of the model's
+        outputs with respect to the feature maps of the set of given interest points.
+
+        Args:
+            graph_float: Graph to build its corresponding Keras model.
+            model_input_tensors: A mapping between model input nodes to an input batch.
+            interest_points: List of nodes which we want to get their feature map as output, to calculate distance metric.
+            output_list: List of nodes that considered as model's output for the purpose of gradients computation.
+            all_outputs_indices: Indices of the model outputs and outputs replacements (if exists),
+                in a topological sorted interest points list.
+            alpha: A tuning parameter to allow calibration between the contribution of the output feature maps returned
+                weights and the other feature maps weights (since the gradient of the output layers does not provide a
+                compatible weight for the distance metric computation).
+
+        Returns: A list of normalized gradients to be considered as the relevancy that each interest
+        point's output has on the model's output.
+        """
+
+        raise NotImplemented(f'Gradient-based weights for mixed-precision distance metric computation is currently '
+                             f'not supported in PyTorch.')
+
+    def is_node_compatible_for_mp_metric_outputs(self,
+                                                 node: BaseNode) -> bool:
+        """
+        Checks and returns whether the given node is compatible as output for mixed-precision metric computation
+        purposes.
+
+        Args:
+            node: A BaseNode object.
+
+        Returns: Whether the node is compatible as output for MP metric computation or not.
+
+        """
+
+        raise NotImplemented(f'Gradient-based weights for mixed-precision distance metric computation is currently '
+                             f'not supported in PyTorch.')

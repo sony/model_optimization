@@ -24,6 +24,7 @@ SWISH = 'swish'
 RELU = 'relu'
 SELU = 'selu'
 GELU = 'gelu'
+ARGMAX = 'argmax'
 
 # Layers attributes constants:
 KERNEL_SIZE = 'kernel_size'

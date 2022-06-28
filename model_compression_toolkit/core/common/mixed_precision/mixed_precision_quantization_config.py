@@ -16,6 +16,7 @@
 from enum import Enum
 from typing import List, Callable, Tuple
 
+from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, DEFAULTCONFIG
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
@@ -28,7 +29,9 @@ class MixedPrecisionQuantizationConfigV2:
                  distance_weighting_method: Callable = get_average_weights,
                  num_of_images: int = 32,
                  configuration_overwrite: List[int] = None,
-                 num_interest_points_factor: float = 1.0):
+                 num_interest_points_factor: float = 1.0,
+                 use_grad_based_weights: bool = False,
+                 output_grad_factor: float = 0.1):
         """
         Class with mixed precision parameters to quantize the input model.
         Unlike QuantizationConfig, number of bits for quantization is a list of possible bit widths to
@@ -40,6 +43,8 @@ class MixedPrecisionQuantizationConfigV2:
             num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
             configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
             num_interest_points_factor: A multiplication factor between zero and one (represents percentage) to reduce the number of interest points used to calculate the distance metric.
+            use_grad_based_weights: Whether to use gradient-based weights for weighted average distance metric computation.
+            output_grad_factor: A tuning parameter to be used for gradient-based weights.
 
         """
 
@@ -53,6 +58,13 @@ class MixedPrecisionQuantizationConfigV2:
                                                         "used for mixed-precision metric evaluation, " \
                                                         "thus, it should be between 0 to 1"
         self.num_interest_points_factor = num_interest_points_factor
+
+        self.use_grad_based_weights = use_grad_based_weights
+        self.output_grad_factor = output_grad_factor
+
+        if use_grad_based_weights is True:
+            Logger.info(f"Using gradient-based weights for mixed-precision distance metric with tuning factor "
+                        f"{output_grad_factor}")
 
 
 class MixedPrecisionQuantizationConfig(QuantizationConfig):

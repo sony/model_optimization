@@ -4,7 +4,8 @@ import numpy as np
 import tensorflow as tf
 
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
-from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID
+from model_compression_toolkit.core.keras.back2framework.model_gradients import keras_model_grad
+from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID, ARGMAX, LAYER_NAME
 from tensorflow.keras.models import Model
 from tensorflow.python.layers.base import Layer
 
@@ -13,8 +14,10 @@ from model_compression_toolkit.core.keras.mixed_precision.set_layer_to_bitwidth 
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add
+    from tensorflow.python.keras.layers.core import TFOpLambda
 else:
     from keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add
+    from keras.layers.core import TFOpLambda
 
 from model_compression_toolkit import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core import common
@@ -405,3 +408,59 @@ class KerasImplementation(FrameworkImplementation):
         """
 
         return model.get_layer(name=layer_name)
+
+    def model_grad(self,
+                   graph_float: common.Graph,
+                   model_input_tensors: Dict[BaseNode, np.ndarray],
+                   interest_points: List[BaseNode],
+                   output_list: List[BaseNode],
+                   all_outputs_indices: List[int],
+                   alpha: float = 0.1) -> List[float]:
+        """
+        Calls a Keras model gradient calculation function, which computes the gradients of the model's
+        outputs with respect to the feature maps of the set of given interest points.
+
+        Args:
+            graph_float: Graph to build its corresponding Keras model.
+            model_input_tensors: A mapping between model input nodes to an input batch.
+            interest_points: List of nodes which we want to get their feature map as output, to calculate distance metric.
+            output_list: List of nodes that considered as model's output for the purpose of gradients computation.
+            all_outputs_indices: Indices of the model outputs and outputs replacements (if exists),
+                in a topological sorted interest points list
+            alpha:A tuning parameter to allow calibration between the contribution of the output feature maps returned
+                weights and the other feature maps weights (since the gradient of the output layers does not provide a
+                compatible weight for the distance metric computation).
+
+        Returns: A list of normalized gradients to be considered as the relevancy that each interest
+        point's output has on the model's output.
+
+        """
+
+        return keras_model_grad(graph_float, model_input_tensors, interest_points, output_list, all_outputs_indices, alpha)
+
+    def is_node_compatible_for_mp_metric_outputs(self,
+                                                 node: BaseNode) -> Any:
+        """
+        Checks and returns whether the given node is compatible as output for mixed-precision metric computation
+        purposes.
+
+        Args:
+            node: A BaseNode object.
+
+        Returns: Whether the node is compatible as output for MP metric computation or not.
+
+        """
+
+        if node.layer_class == Activation:
+            node_attr = getattr(node, 'framework_attr', None)
+            if node_attr is not None and node_attr[ACTIVATION] == SOFTMAX:
+                return False
+        elif node.layer_class == TFOpLambda:
+            node_attr = getattr(node, 'framework_attr', None)
+            if node_attr is not None and ARGMAX in node_attr[LAYER_NAME]:
+                return False
+        elif node.layer_class == tf.nn.softmax or node.layer_class == tf.math.argmax:
+            return False
+
+        return True
+
