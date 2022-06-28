@@ -334,10 +334,17 @@ class SensitivityEvaluation:
 
     def _update_ips_with_outputs_replacements(self):
         """
+        Updates the list of interest points with the set of pre-calculated replacement outputs.
+        Also, returns the indices of all output nodes (original, replacements and nodes in between them) in a
+        topological sorted interest points list (for later use in gradients computation and normalization).
 
-        Returns:
+        Returns: A list of indices of the output nodes in the sorted interest points list.
 
         """
+
+        assert self.outputs_replacement_nodes is not None, \
+            "Trying to update interest points list with new output nodes but outputs_replacement_nodes list is None."
+
         replacement_outputs_to_ip = [r_node for r_node in self.outputs_replacement_nodes if
                                      r_node not in self.interest_points]
         updated_interest_points = self.interest_points + replacement_outputs_to_ip
