@@ -171,8 +171,8 @@ def keras_model_grad(graph_float: common.Graph,
     for ipt in interest_points_tensors:
         grad_ipt = g.gradient(output_loss, ipt, unconnected_gradients=tf.UnconnectedGradients.ZERO)
 
-        r_grad = tf.reshape(grad_ipt, shape=[grad_ipt.shape[0], -1])
-        hessian_trace_aprrox = tf.reduce_mean(tf.reduce_sum(tf.pow(r_grad, 2.0), axis=-1))
+        r_grad_ipt = tf.reshape(grad_ipt, shape=[grad_ipt.shape[0], -1])
+        hessian_trace_aprrox = tf.reduce_mean(tf.reduce_sum(tf.pow(r_grad_ipt, 2.0), axis=-1))
         ipt_grad_score.append(hessian_trace_aprrox)
 
     # Output layers or layers that come after the model's considered output layers,
@@ -209,4 +209,4 @@ def get_normalized_weight(grad: float,
     if i in all_outputs_indices:
         return alpha / len(all_outputs_indices)
     else:
-        return (1 - alpha) * grad / (sum_without_outputs + EPS)
+        return ((1 - alpha) * grad / (sum_without_outputs + EPS)).numpy()
