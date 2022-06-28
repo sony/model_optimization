@@ -56,7 +56,7 @@ class StatsCollector(BaseStatsCollector):
     """
 
     def __init__(self,
-                 output_channel_index: ChannelAxis,
+                 out_channel_axis: int,
                  init_min_value: float = None,
                  init_max_value: float = None):
         """
@@ -64,17 +64,17 @@ class StatsCollector(BaseStatsCollector):
         Set initial min/max values if are known.
 
         Args:
-            output_channel_index: Index of output channels.
+            out_channel_axis: Index of output channels.
             init_min_value: Initial min value for min/max stored values.
             init_max_value: Initial max value for min/max stored values.
         """
 
         super().__init__()
         self.hc = HistogramCollector()
-        self.mc = MeanCollector(axis=output_channel_index)
+        self.mc = MeanCollector(axis=out_channel_axis)
         self.mpcc = MinMaxPerChannelCollector(init_min_value=init_min_value,
                                               init_max_value=init_max_value,
-                                              axis=output_channel_index)
+                                              axis=out_channel_axis)
 
     def update_statistics(self, x: Any):
         """

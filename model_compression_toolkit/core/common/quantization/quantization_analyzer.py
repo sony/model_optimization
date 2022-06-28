@@ -34,7 +34,8 @@ def create_tensor2node(graph: common.Graph,
     current_tensor = graph.get_out_stats_collector(node)
     is_list_nostat_collectors = isinstance(current_tensor, list) and len([sc for sc in current_tensor if not isinstance(sc, common.NoStatsCollector)]) == 0
     if isinstance(current_tensor, common.NoStatsCollector) or current_tensor is None or is_list_nostat_collectors:
-        graph.set_out_stats_collector_to_node(node, common.StatsCollector(output_channel_index=fw_info.output_channel_index))
+        out_channel_axis = fw_info.out_channel_axis_mapping.get(node.type)
+        graph.set_out_stats_collector_to_node(node, common.StatsCollector(out_channel_axis))
 
 
 def analyzer_graph(node_analyze_func: Callable,
@@ -56,7 +57,7 @@ def analyzer_graph(node_analyze_func: Callable,
     """
     nodes_sorted = topological_sort(graph)
     for n in nodes_sorted:
-        sc = node_analyze_func(n, output_channel_index=fw_info.output_channel_index)  # Get tensor for the node
+        sc = node_analyze_func(n, fw_info=fw_info)  # Get tensor for the node
         # If we use bias correction, and the node has coefficients to quantize, we need to make sure
         # its previous nodes' tensors are consistent with this node.
         # TODO: factor tensor marking in case of bias correction.

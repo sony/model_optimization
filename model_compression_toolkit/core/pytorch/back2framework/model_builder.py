@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import inspect
 from typing import Tuple, Any, Dict, List
 
-import numpy as np
 import torch
 from networkx import topological_sort
 
@@ -29,7 +27,7 @@ from model_compression_toolkit.core.pytorch.back2framework.instance_builder impo
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.reader.graph_builders import DummyPlaceHolder
 from model_compression_toolkit.core.pytorch.mixed_precision.mixed_precision_wrapper import PytorchMixedPrecisionWrapper
-from model_compression_toolkit.core.common.gptq.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 
 
 def build_input_tensors_list(node: BaseNode,
@@ -211,7 +209,7 @@ def model_builder(graph: common.Graph,
                   mode: ModelBuilderMode = ModelBuilderMode.QUANTIZED,
                   append2output: List[Any] = None,
                   fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
-                  gptq_config: GradientPTQConfig = None) -> Tuple[torch.nn.Module, Any]:
+                  return_float_outputs: bool = False) -> Tuple[torch.nn.Module, Any]:
     """
     Build a Pytorch model from a graph representing the model.
     The model is built by converting the graph nodes to torch modules and initializing a PytorchModelBuilder class.
@@ -222,10 +220,13 @@ def model_builder(graph: common.Graph,
         append2output: List of nodes or OutTensor objects. In float building mode,
         when the list contains nodes, all output tensors of all nodes are set as the model outputs.
         fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
-        gptq_config: GPTQ Configuration class.
+        return_float_outputs (bool): whether to return outputs before or after quantization nodes (default)
     Returns:
         A tuple of the model, and an UserInformation object.
     """
+
+    if return_float_outputs:
+        raise Exception("Running PyTorch model builder with return_float_outputs=True isn't supported yet")
 
     model = PytorchModelBuilder(graph, mode, append2output, fw_info)
 

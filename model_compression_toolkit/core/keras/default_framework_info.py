@@ -52,6 +52,18 @@ DEFAULT_CHANNEL_AXIS_DICT = DefaultDict({Conv2D: (3, 2),
                                          Dense: (1, 0),
                                          Conv2DTranspose: (2, 3)}, lambda: (None, None))
 
+
+"""
+Map a layer to its output channel axis. 
+Where axis=-1 is the last axis
+"""
+DEFAULT_OUT_CHANNEL_AXIS_DICT = DefaultDict({Conv2D: -1,
+                                             DepthwiseConv2D: -1,
+                                             Dense: -1,
+                                             Conv2DTranspose: -1},
+                                            lambda: -1)
+
+
 """
 Map from an activation function to its min/max output values (if known).
 The values are used for tensor min/max values initialization.
@@ -100,10 +112,6 @@ WEIGHTS_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quant
                              QuantizationMethod.KMEANS: kmeans_quantizer,
                              QuantizationMethod.LUT_QUANTIZER: lut_kmeans_quantizer}
 
-"""
-Output channel index of the model's layers
-"""
-OUTPUT_CHANNEL_INDEX = ChannelAxis.NHWC
 
 DEFAULT_KERAS_INFO = FrameworkInfo(ACTIVATION_QUANTIZER_MAPPING,
                                    WEIGHTS_QUANTIZER_MAPPING,
@@ -111,4 +119,4 @@ DEFAULT_KERAS_INFO = FrameworkInfo(ACTIVATION_QUANTIZER_MAPPING,
                                    ACTIVATION2MINMAX,
                                    LAYER2MINMAX,
                                    KERNEL_ATTRIBUTES,
-                                   OUTPUT_CHANNEL_INDEX)
+                                   DEFAULT_OUT_CHANNEL_AXIS_DICT)

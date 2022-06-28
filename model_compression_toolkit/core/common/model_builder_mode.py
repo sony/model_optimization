@@ -23,12 +23,9 @@ class ModelBuilderMode(Enum):
     in the graph.
     QUANTIZED - Build a quantized model using the nodes' quantization attributes for adding
     quantization nodes to the model.
-    GPTQ - Build a quantized model using the nodes' quantization attributes for wrapping
-    layers with QuantizeWrapper and output comparing points.
     MIXEDPRECISION - Build a quantized model where the layers that their weights should be quantized
     can use different quantized weights according to the possible bitwidths of each layer.
     """
     FLOAT = 0
     QUANTIZED = 1
-    GPTQ = 2
-    MIXEDPRECISION = 3
+    MIXEDPRECISION = 2

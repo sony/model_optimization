@@ -27,7 +27,7 @@ from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.gptq.gptq_training import GPTQTrainer
+from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
@@ -58,7 +58,7 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.so
     pytorch_softmax_shift
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
     import MultiHeadAttentionDecomposition
-
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.permute_call_method import PermuteCallMethod
 
 class PytorchImplementation(FrameworkImplementation):
     """
@@ -114,7 +114,7 @@ class PytorchImplementation(FrameworkImplementation):
                       mode: ModelBuilderMode,
                       append2output: List[Any] = None,
                       fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
-                      gptq_config: GradientPTQConfig = None) -> Tuple[Module, UserInformation]:
+                      return_float_outputs: bool = False) -> Tuple[Module, UserInformation]:
         """
         Build a Pytorch module from a graph.
         The mode determines how the module should be build. append2output is a list of Nodes
@@ -124,7 +124,7 @@ class PytorchImplementation(FrameworkImplementation):
             mode: Mode for how to build the module.
             append2output: List of Nodes to set as the module's outputs.
             fw_info: FrameworkInfo object with information about the specific framework's module
-            gptq_config: GPTQ configuration class
+            return_float_outputs (bool): whether to return outputs before or after quantization nodes (default)
         Returns:
             A tuple of the Pytorch module that was built and an UserInformation object.
         """
@@ -132,7 +132,7 @@ class PytorchImplementation(FrameworkImplementation):
                              mode,
                              append2output,
                              fw_info,
-                             gptq_config)
+                             return_float_outputs)
 
     def run_model_inference(self,
                             model: Any,
@@ -170,18 +170,17 @@ class PytorchImplementation(FrameworkImplementation):
 
     def attach_sc_to_node(self,
                           node: BaseNode,
-                          output_channel_index: int) -> BaseStatsCollector:
+                          fw_info: FrameworkInfo) -> BaseStatsCollector:
         """
         Return a statistics collector that should be attached to a node's output
         during statistics collection.
         Args:
             node: Node to return its collector.
-            output_channel_index: Index of output channels of layers in the model's framework.
+            fw_info: Information relevant to a specific framework about what is out channel axis (for statistics per-channel)
         Returns:
             Statistics collector for the node.
         """
-        return create_stats_collector_for_node(node,
-                                               output_channel_index=output_channel_index)
+        return create_stats_collector_for_node(node, fw_info)
 
     def get_substitutions_channel_equalization(self,
                                                quant_config: QuantizationConfig,
@@ -209,7 +208,8 @@ class PytorchImplementation(FrameworkImplementation):
 
         """
         return [ReshapeWithStaticShapes(),
-                MultiHeadAttentionDecomposition()]
+                MultiHeadAttentionDecomposition(),
+                PermuteCallMethod()]
 
     def get_substitutions_pre_statistics_collection(self,
                                                     quant_config: QuantizationConfig

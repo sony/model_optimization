@@ -37,6 +37,7 @@ RANGE_MAX = 'range_max'
 # BaseNode attributes
 REUSE = 'reuse'
 REUSE_GROUP = 'reuse_group'
+LAST_AXIS = -1
 
 # Data types:
 DATA_TYPE = 'dtype'

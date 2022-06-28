@@ -18,7 +18,7 @@ from typing import Callable, Any, List, Tuple, Type, Dict
 import numpy as np
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit import GradientPTQConfig, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -94,7 +94,7 @@ class FrameworkImplementation(ABC):
                       mode: ModelBuilderMode,
                       append2output: List[Any],
                       fw_info: FrameworkInfo,
-                      gptq_config: GradientPTQConfig) -> Tuple[Any, UserInformation]:
+                      return_float_outputs: bool = False) -> Tuple[Any, UserInformation]:
         """
         Build a framework model from a graph.
         The mode determines how the model should be build. append2output is a list of Nodes
@@ -105,7 +105,7 @@ class FrameworkImplementation(ABC):
             mode: Mode for how to build the model.
             append2output: List of Nodes to set as the model's outputs.
             fw_info: FrameworkInfo object with information about the specific framework's model
-            gptq_config: GPTQ configuration class
+            return_float_outputs (bool): whether to return outputs before or after quantization nodes (default)
 
         Returns:
             A tuple of the model that was built and an UserInformation object.
@@ -150,14 +150,14 @@ class FrameworkImplementation(ABC):
                              f'framework\'s apply_shift_negative_correction method.')
 
     @abstractmethod
-    def attach_sc_to_node(self, node: BaseNode, output_channel_index: int) -> BaseStatsCollector:
+    def attach_sc_to_node(self, node: BaseNode, fw_info: FrameworkInfo) -> BaseStatsCollector:
         """
         Return a statistics collector that should be attached to a node's output
         during statistics collection.
 
         Args:
             node: Node to return its collector.
-            output_channel_index: Index of output channels (for statistics per-channel).
+            fw_info: Information relevant to a specific framework about what is out channel axis (for statistics per-channel).
 
         Returns:
             Statistics collector for the node.

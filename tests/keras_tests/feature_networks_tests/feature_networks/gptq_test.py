@@ -16,10 +16,10 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.core.common.gptq.gptq_config
+import model_compression_toolkit.gptq.common.gptq_config
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.core.keras.gradient_ptq.gptq_loss import multiple_tensors_mse_loss
+from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -42,8 +42,8 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                                       True, False, True)
 
     def get_gptq_config(self):
-        return model_compression_toolkit.core.common.gptq.gptq_config.GradientPTQConfig(5,
-                                                                                        optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+        return model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(5,
+                                                                                   optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
                                                                                    loss=multiple_tensors_mse_loss)
 
     def create_networks(self):
@@ -100,9 +100,9 @@ class GradientPTQTest(GradientPTQBaseTest):
 class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
 
     def get_gptq_config(self):
-        return model_compression_toolkit.core.common.gptq.gptq_config.GradientPTQConfig(50,
-                                                                                        optimizer=tf.keras.optimizers.SGD(learning_rate=0.5),
-                                                                                        loss=multiple_tensors_mse_loss)
+        return model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(50,
+                                                                                   optimizer=tf.keras.optimizers.SGD(learning_rate=0.5),
+                                                                                   loss=multiple_tensors_mse_loss)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.weights) == len(quantized_gptq_model.weights),
@@ -120,9 +120,9 @@ class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
 class GradientPTQLearnRateZeroTest(GradientPTQBaseTest):
 
     def get_gptq_config(self):
-        return model_compression_toolkit.core.common.gptq.gptq_config.GradientPTQConfig(1,
-                                                                                        optimizer=tf.keras.optimizers.SGD(learning_rate=0.0),
-                                                                                        loss=multiple_tensors_mse_loss)
+        return model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(1,
+                                                                                   optimizer=tf.keras.optimizers.SGD(learning_rate=0.0),
+                                                                                   loss=multiple_tensors_mse_loss)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.weights) == len(quantized_gptq_model.weights),

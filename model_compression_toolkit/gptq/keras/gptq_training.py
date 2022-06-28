@@ -24,16 +24,18 @@ else:
     from keras.engine.base_layer import TensorFlowOpLayer
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common.gptq.gptq_training import GPTQTrainer
-from model_compression_toolkit.core.common.gptq.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.keras.gradient_ptq.graph_info import get_trainable_parameters, get_weights_for_loss
+from model_compression_toolkit.gptq.keras.graph_info import get_trainable_parameters, get_weights_for_loss
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 import numpy as np
 import copy
 from model_compression_toolkit.core.keras.constants import BIAS, USE_BIAS
-from model_compression_toolkit.core.keras.quantizer.gradient_ptq import WeightQuantizeConfig
+from model_compression_toolkit.gptq.keras.quantizer import WeightQuantizeConfig
+from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
+from model_compression_toolkit.gptq.keras.model_builder import model_builder as gptq_model_builder
 
 
 class KerasGPTQTrainer(GPTQTrainer):
@@ -77,6 +79,18 @@ class KerasGPTQTrainer(GPTQTrainer):
             common.Logger.error("Input scale mismatch between float and GPTQ networks")  # pragma: no cover
         else:
             self.input_scale = self.gptq_user_info.input_scale
+
+    def build_gptq_model(self):
+        """
+        Build the GPTQ model with QuantizationWrappers
+        Returns:
+            Quantized graph for GPTQ fine-tuning, GPTQ graph user info
+        """
+        return gptq_model_builder(self.graph_quant,
+                                  self.gptq_config,
+                                  mode=ModelBuilderMode.QUANTIZED,
+                                  append2output=self.compare_points,
+                                  fw_info=self.fw_info)
 
     def train(self, representative_data_gen: Callable):
         """
