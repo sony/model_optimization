@@ -16,64 +16,19 @@ import numpy as np
 import tensorflow as tf
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
-from keras.layers import Softmax
-
-from model_compression_toolkit.core.common.constants import EPS
-
 if tf.__version__ < "2.6":
-    from tensorflow.keras.layers import Softmax, Activation
-    from tensorflow.python.keras.layers.core import TFOpLambda
-    from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
     from tensorflow.python.keras.layers import Layer
 else:
-    from keras.layers import Softmax, Activation
-    from keras.layers.core import TFOpLambda
-    from keras.engine.base_layer import TensorFlowOpLayer, Layer
+    from keras.engine.base_layer import Layer
 
 from typing import Any, Dict, List
 from tensorflow.python.util.object_identity import Reference as TFReference
+from model_compression_toolkit.core.common.constants import EPS
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.keras.back2framework.instance_builder import OperationHandler
-
-# In tf2.3 fake quant node is implemented as TensorFlowOpLayer, while in tf2.4 as TFOpLambda.
-FQ_NODE_OP_V2_3 = 'FakeQuantWithMinMaxVars'
-FQ_NODE_OP_V2_4 = 'quantization.fake_quant_with_min_max_vars'
-BATCH_INPUT_SHAPE = 'batch_input_shape'
-
-
-def get_node_name_from_layer(layer: Layer) -> str:
-    """
-    Get a node's name from the layer it was built from. For TensorFlowOpLayer
-    we remove the prefix "tf_op_layer".
-
-    Args:
-        layer: Keras Layer to get its corresponding node's name.
-
-    Returns:
-        Name of the node that was built from the passed layer.
-    """
-
-    name = layer.name
-    if isinstance(layer, TensorFlowOpLayer):  # remove TF op layer prefix
-        name = '_'.join(name.split('_')[3:])
-    return name
-
-
-def is_layer_fake_quant(layer: Layer) -> bool:
-    """
-    Check whether a Keras layer is a fake quantization layer or not.
-    Args:
-        layer: Layer to check if it's a fake quantization layer or not.
-
-    Returns:
-        Whether a Keras layer is a fake quantization layer or not.
-    """
-    # in tf2.3 fake quant node is implemented as TensorFlowOpLayer, while in tf2.4 as TFOpLambda
-    return (isinstance(layer, TensorFlowOpLayer) and layer.node_def.op == FQ_NODE_OP_V2_3) or (
-            isinstance(layer, TFOpLambda) and layer.symbol == FQ_NODE_OP_V2_4)
 
 
 def build_input_tensors_list(node: BaseNode,
@@ -107,15 +62,12 @@ def run_operation(n: BaseNode,
                   input_nodes_to_input_tensors: Dict[BaseNode, Any]) -> List[TFReference]:
     """
     Applying the layer (op_func) to the input tensors (input_tensors).
-    If quantized is set to True, and the layer's corresponding node (n) has quantization
-    attributes, an additional fake-quantization node is built and appended to the layer.
 
     Args:
         n: The corresponding node of the layer it runs.
         input_tensors: List of references to Keras tensors that are the layer's inputs.
         op_func: Layer to apply to the input tensors.
         input_nodes_to_input_tensors: A dictionary from a node to its input tensors.
-        mode: model quantization mode from ModelBuilderMode
 
     Returns:
         A list of references to Keras tensors. The layer's output tensors after applying the
@@ -123,22 +75,7 @@ def run_operation(n: BaseNode,
     """
 
     if len(input_tensors) == 0:  # Placeholder handling
-        # raise Exception("Need to build from datas")
-        out_tensors_of_n = input_nodes_to_input_tensors[n]  # Check if cast is need
-        # out_tensors_of_n
-        # out_tensors_of_n_float = input_nodes_to_input_tensors[n]
-        # out_tensors_of_n = out_tensors_of_n_float
-        # if n.is_activation_quantization_enabled():
-        #     if mode in [ModelBuilderMode.QUANTIZED, ModelBuilderMode.GPTQ] and n.final_activation_quantization_cfg:
-        #         # Adding a fake quant node to Input when in GPTQ mode because quantize_model doesn't quantize the
-        #         # input layer
-        #         out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
-        #     elif mode in [ModelBuilderMode.MIXEDPRECISION]:
-        #         if n.is_all_activation_candidates_equal():
-        #             # otherwise, we want to use the float tensor when building the model for MP search
-        #             out_tensors_of_n = n.candidates_quantization_cfg[
-        #                 0].activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
-
+        out_tensors_of_n = input_nodes_to_input_tensors[n]
     else:
         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
         # Build a functional node using its args
@@ -148,8 +85,7 @@ def run_operation(n: BaseNode,
             else:  # If the input tensors should not be a list but iterated:
                 out_tensors_of_n = op_func(*input_tensors, *n.op_call_args, **n.op_call_kwargs)
         else:
-            # If operator expects a single input tensor, it cannot be a list as it should
-            # have a dtype field.
+            # If operator expects a single input tensor, it cannot be a list as it should have a dtype field.
             if len(input_tensors) == 1:
                 input_tensors = input_tensors[0]
             out_tensors_of_n = op_func(input_tensors)
@@ -157,37 +93,32 @@ def run_operation(n: BaseNode,
     return out_tensors_of_n
 
 
-def convert_node2name(in_node_to_output_tensors_dict):
-    node_name_to_outtensors = dict()
-    for node, tensors in in_node_to_output_tensors_dict.items():
-        node_name_to_outtensors[node.name] = tensors
-    return node_name_to_outtensors
-
-
-def model_grad(graph_float: common.Graph,
-               model_input_tensors: Dict[BaseNode, np.ndarray],
-               intresent_points,
-               output_list,
-               all_outputs_indices):
+def keras_model_grad(graph_float: common.Graph,
+                     model_input_tensors: Dict[BaseNode, np.ndarray],
+                     interest_points: List[BaseNode],
+                     output_list: List[BaseNode],
+                     all_outputs_indices: List[int],
+                     alpha: float = 0.1) -> List[float]:
     """
-    Build a Keras model from a graph representing the model.
-    The model is built by converting the graph nodes to Keras layers and applying them sequentially to get the model
-    output tensors. The output tensors list and an input tensors list, then use to build the model.
-    When the model is not built in float mode, the graph is being transformed by additional substitutions.
+    Computes the gradients of a Keras model's outputs with respect to the feature maps of the set of given
+    interest points. It then uses the gradients to compute the hessian trace for each interest point and normalized the
+    values, to be used as weights for weighted average in mixed-precision distance metric computation.
 
     Args:
-        graph: Graph to build its corresponding Keras model.
-        mode: Building mode. Read ModelBuilderMode description for more info.
-        append2output: List of nodes or OutTensor objects. In float building mode,
-        when the list contains nodes, all output tensors of all nodes are set as the model outputs.
-        fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
-        This is needed when using MIXEDPRECISION or GPTQ mode for passing the kernel attributes to
-        the QuanteWrapper we use in both of these cases.
-        gptq_config: GPTQ Configuration class..
+        graph_float: Graph to build its corresponding Keras model.
+        model_input_tensors: A mapping between model input nodes to an input batch.
+        interest_points: List of nodes which we want to get their feature map as output, to calculate distance metric.
+        output_list: List of nodes that considered as model's output for the purpose of gradients computation.
+        all_outputs_indices: Indices of the model outputs and outputs replacements (if exists),
+            in a topological sorted interest points list.
+        alpha: A tuning parameter to allow calibration between the contribution of the output feature maps returned
+            weights and the other feature maps weights (since the gradient of the output layers does not provide a
+            compatible weight for the distance metric computation).
 
-    Returns:
-        A tuple of the model, and an UserInformation object.
+    Returns: A list of normalized gradients to be considered as the relevancy that each interest
+    point's output has on the model's output.
     """
+
     node_to_output_tensors_dict = dict()
 
     # Build an OperationHandler to handle conversions from graph nodes to Keras operators.
@@ -196,21 +127,13 @@ def model_grad(graph_float: common.Graph,
     input_nodes_to_input_tensors = {inode: tf.convert_to_tensor(model_input_tensors[inode]) for
                                     inode in graph_float.get_inputs()}  # Cast numpy array to tf.Tensor
 
-    # for ip in intresent_points:
-    intresent_points_tensors = []
+    # for interest point p in interest_points:
+    interest_points_tensors = []
     output_tensors = []
     with tf.GradientTape(persistent=True) as g:
         # Build a dictionary from node to its output tensors, by applying the layers sequentially.
         for n in oh.node_sort:
             op_func = oh.get_node_op_function(n)  # Get node operation function
-            # if 'argmax' in n.name:
-            #     def softargmax(x, axis):
-            #         beta = 1e10
-            #         x_range = tf.range(x.shape.as_list()[axis], dtype=x.dtype)
-            #         # return tf.reduce_sum(Softmax(axis=axis)(x * beta) * x_range, axis=axis)
-            #         return tf.reduce_max(x, axis=axis)
-            #
-            #     op_func = softargmax
 
             input_tensors = build_input_tensors_list(n,
                                                      graph_float,
@@ -220,15 +143,13 @@ def model_grad(graph_float: common.Graph,
                                              op_func,
                                              input_nodes_to_input_tensors)
 
+            # Gradients can be computed only on float32 tensors
             out_tensors_of_n = tf.dtypes.cast(out_tensors_of_n, tf.float32)
-            if n in intresent_points:
+            if n in interest_points:
+                # Recording the relevant feature maps onto the gradient tape
                 g.watch(out_tensors_of_n)
-                intresent_points_tensors.append(out_tensors_of_n)
+                interest_points_tensors.append(out_tensors_of_n)
             if n in output_list:
-                # if n.type == Activation and n.framework_attr['activation'] == 'softmax':
-                #     output_tensors.append(input_tensors[0][0])
-                # else:
-                #     output_tensors.append(out_tensors_of_n)
                 output_tensors.append(out_tensors_of_n)
 
             if isinstance(out_tensors_of_n, list):
@@ -236,75 +157,55 @@ def model_grad(graph_float: common.Graph,
             else:
                 node_to_output_tensors_dict.update({n: [out_tensors_of_n]})
 
+        # Get a reduced loss value for derivatives computation
         output_loss = 0
         for output in output_tensors:
             output = tf.reshape(output, shape=(output.shape[0], -1))
-            # output_sum += tf.reduce_sum(tf.reduce_max(output, axis=-1))
-            # reduce_mean(reduce_sum(axis=-1))
-            # output_sum += tf.reduce_mean(tf.reduce_max(output, axis=-1))
             output_loss += tf.reduce_mean(tf.reduce_sum(output, axis=-1))
-            # output_sum += tf.reduce_sum(output)
+
     ###########################################
     # Compute Gradients
     ##########################################
     ipt_grad_score = []
 
-    for ipt in intresent_points_tensors:
-        # output_sum = 0
-        # hessian_trace_aprrox = []
-        # for output in output_tensors:
-        #     # output_sum += tf.reduce_sum(output)
-        #
-        #     grad_ipt = g.gradient(output, ipt)
-        #     # grad_ipt = g.gradient(output_sum, ipt)
-        #     if grad_ipt is None:
-        #         continue
-        #     # hessian_trace_aprrox.append(tf.reduce_sum(tf.pow(grad_ipt, 2.0)))
-        #     hessian_trace_aprrox.append(tf.reduce_sum(grad_ipt))
-        # ipt_grad_score.append(tf.reduce_mean(hessian_trace_aprrox))
-
+    for ipt in interest_points_tensors:
         grad_ipt = g.gradient(output_loss, ipt, unconnected_gradients=tf.UnconnectedGradients.ZERO)
-        # hessian_trace_aprrox = tf.reduce_sum(tf.abs(grad_ipt))
-        # hessian_trace_aprrox = tf.reduce_sum(tf.pow(grad_ipt, 2.0))
-        hessian_trace_aprrox = tf.reduce_mean(tf.reduce_sum(tf.pow(tf.reshape(grad_ipt, shape=[grad_ipt.shape[0], -1]), 2.0), axis=-1))
+
+        r_grad = tf.reshape(grad_ipt, shape=[grad_ipt.shape[0], -1])
+        hessian_trace_aprrox = tf.reduce_mean(tf.reduce_sum(tf.pow(r_grad, 2.0), axis=-1))
         ipt_grad_score.append(hessian_trace_aprrox)
 
-    # return ipt_grad_score
-    # max_grad_score = max(ipt_grad_score[:-1]).numpy()
-
-    ###############################
-    # Print gradient score order
-    ###############################
-    sorted_inds = np.flip(np.array(ipt_grad_score).argsort())
-    sorted_layers = {intresent_points[i].name: ipt_grad_score[i].numpy() for i in sorted_inds}
-    print(sorted_layers)
-
-
-
-    # max_idx = np.argmax(ipt_grad_score)
-    # second_max_idx = np.argmax(ipt_grad_score[:max_idx] + ipt_grad_score[max_idx + 1:])
-    #
-    # if (ipt_grad_score[max_idx] / ipt_grad_score[second_max_idx]).numpy() >= 1e3:
-    #     max_grad_score = ipt_grad_score[second_max_idx].numpy()
-    #     # ipt_grad_score[max_idx] = ipt_grad_score[second_max_idx]
-    # else:
-    #     max_grad_score = ipt_grad_score[max_idx].numpy()
-
-    # return [s.numpy() / max_grad_score for s in ipt_grad_score]
-
-    # output_index = intresent_points.index(output_list[0])
-    alpha = 0.05
-    # num_skipped = len(intresent_points) - output_index
-    # sum_to_output = sum(ipt_grad_score[:-num_skipped])
-    # output_weight = ([alpha / num_skipped] * num_skipped)  # setting const weight to output and all nodes after it
-
+    # Output layers or layers that come after the model's considered output layers,
+    # are assigned with a constant normalized value,
+    # according to the given alpha variable and the number of such layers.
+    # Other layers returned weights are normalized by dividing the hessian value by the sum of all other values.
     sum_without_outputs = sum([ipt_grad_score[i] for i in range(len(ipt_grad_score)) if i not in all_outputs_indices])
-    return [get_normalized_weight(grad, i, sum_without_outputs, all_outputs_indices, alpha) for i, grad in enumerate(ipt_grad_score)]
+    normalized_grads_weights = [get_normalized_weight(grad, i, sum_without_outputs, all_outputs_indices, alpha)
+                                for i, grad in enumerate(ipt_grad_score)]
 
-    # return [((1 - alpha) * s / sum_to_output).numpy() for s in ipt_grad_score[:-num_skipped]] + output_weight
+    return normalized_grads_weights
 
 
-def get_normalized_weight(grad, i, sum_without_outputs, all_outputs_indices, alpha):
+def get_normalized_weight(grad: float,
+                          i: int,
+                          sum_without_outputs: float,
+                          all_outputs_indices: List[int],
+                          alpha: float) -> float:
+    """
+    Normalizes the node's gradient value. If it is an output or output replacement node than the normalized value is
+    a constant, otherwise, it is normalized by dividing with the sum of all gradient values.
+
+    Args:
+        grad: The gradient value.
+        i: The index of the node in the sorted interest points list.
+        sum_without_outputs: The sum of all gradients of nodes that are not considered outputs.
+        all_outputs_indices: A list of indices of all nodes that consider outputs.
+        alpha: A multiplication factor.
+
+    Returns: A normalized gradient value.
+
+    """
+
     if i in all_outputs_indices:
         return alpha / len(all_outputs_indices)
     else:

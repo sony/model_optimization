@@ -13,11 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
-from typing import Callable, Any, List, Tuple
+from typing import Callable, Any, List
 
 from model_compression_toolkit import FrameworkInfo, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.constants import EPS
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common import Logger
 
@@ -56,8 +55,8 @@ class SensitivityEvaluation:
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
             set_layer_to_bitwidth: A fw-dependent function that allows to configure a configurable MP model
                     with a specific bit-width configuration.
-                get_quant_node_name: A fw-dependent function that takes a node's name and outputs the node's name in a
-                    quantized model (according to the fw conventions).
+            get_quant_node_name: A fw-dependent function that takes a node's name and outputs the node's name in a
+                quantized model (according to the fw conventions).
         """
         self.graph = graph
         self.quant_config = quant_config
@@ -72,8 +71,17 @@ class SensitivityEvaluation:
         self.interest_points = get_mp_interest_points(graph,
                                                       fw_impl.count_node_for_mixed_precision_interest_points,
                                                       quant_config.num_interest_points_factor)
-        self.outputs_replacement_nodes = get_output_replacement_nodes(graph, fw_impl)
-        self.output_nodes_indices = self._update_ips_with_outputs_replacements()
+
+        self.outputs_replacement_nodes = None
+        self.output_nodes_indices = None
+        if self.quant_config.use_grad_based_weights is True:
+            # Getting output replacement (if needed) - if a model's output layer is not compatible for the task of
+            # gradients computation then we find a predecessor layer which is compatible,
+            # add it to the set of interest points and use it for the gradients' computation.
+            # Note that we need to modify the set of interest points before building the models,
+            # therefore, it is separated from the part where we compute the actual gradient weights.
+            self.outputs_replacement_nodes = get_output_replacement_nodes(graph, fw_impl)
+            self.output_nodes_indices = self._update_ips_with_outputs_replacements()
 
         # Build a mixed-precision model which can be configured to use different bitwidth in different layers.
         # And a baseline model.
@@ -91,21 +99,16 @@ class SensitivityEvaluation:
         # Initiating baseline_tensors_list since it is not initiated in SensitivityEvaluationManager init.
         self._init_baseline_tensors_list()
 
-        # output_nodes = [o.node for o in graph.output_nodes] # [graph.get_topo_sorted_nodes()[-2]]
+        # Computing gradient-based weights for weighted average distance metric computation (only if requested),
+        # and assigning distance_weighting method accordingly.
+        self.interest_points_gradients = None
+        if self.quant_config.use_grad_based_weights is True:
+            assert self.outputs_replacement_nodes is not None and self.output_nodes_indices is not None, \
+                f"{self.outputs_replacement_nodes} and {self.output_nodes_indices} " \
+                f"should've been assigned before computing the gradient-based weights."
 
-        grad_per_batch = []
-        for images in self.images_batches:
-            batch_ip_gradients = self.fw_impl.model_grad(graph,
-                                                         {inode: images[0] for inode in graph.get_inputs()},
-                                                         self.interest_points,
-                                                         self.outputs_replacement_nodes,
-                                                         self.output_nodes_indices)
-
-            grad_per_batch.append(batch_ip_gradients)
-        self.interest_points_gradients = np.mean(grad_per_batch, axis=0)
-        self.quant_config.distance_weighting_method = lambda d: self.interest_points_gradients
-        # from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
-        # self.quant_config.distance_weighting_method = lambda d: get_average_weights(d)
+            self.interest_points_gradients = self._compute_gradient_based_weights()
+            self.quant_config.distance_weighting_method = lambda d: self.interest_points_gradients
 
     def compute_metric(self,
                        mp_model_configuration: List[int],
@@ -173,6 +176,19 @@ class SensitivityEvaluation:
 
         return baseline_model, model_mp
 
+    def _compute_gradient_based_weights(self) -> np.ndarray:
+        grad_per_batch = []
+        for images in self.images_batches:
+            batch_ip_gradients = self.fw_impl.model_grad(self.graph,
+                                                         {inode: images[0] for inode in self.graph.get_inputs()},
+                                                         self.interest_points,
+                                                         self.outputs_replacement_nodes,
+                                                         self.output_nodes_indices,
+                                                         self.quant_config.output_grad_factor)
+
+            grad_per_batch.append(batch_ip_gradients)
+        return np.mean(grad_per_batch, axis=0)
+
     def _configure_bitwidths_model(self,
                                    model_mp: Any,
                                    sorted_configurable_nodes_names: List[str],
@@ -234,20 +250,12 @@ class SensitivityEvaluation:
         num_samples = len(baseline_tensors[0])
         distance_matrix = np.ndarray((num_interest_points, num_samples))
 
-        def _center_tensor_features(t: np.ndarray) -> np.ndarray:
-            centered = t - np.mean(t)
-            pos_centered = centered + np.abs(np.min(centered)) + EPS
-            return pos_centered
-
         for i in range(num_interest_points):
             point_distance_fn = \
                 self.fw_impl.get_node_distance_fn(layer_class=self.interest_points[i].layer_class,
                                                   framework_attrs=self.interest_points[i].framework_attr,
                                                   compute_distance_fn=self.quant_config.compute_distance_fn)
             for j in range(num_samples):
-                # distance_matrix[i, j] = \
-                #     point_distance_fn(_center_tensor_features(baseline_tensors[i][j].flatten()),
-                #                       _center_tensor_features(mp_tensors[i][j].flatten()))
                 distance_matrix[i, j] = point_distance_fn(baseline_tensors[i][j], mp_tensors[i][j])
 
         return distance_matrix
@@ -293,7 +301,6 @@ class SensitivityEvaluation:
         # Compute the distance between the baseline model's outputs and the MP model's outputs.
         # The distance is the mean of distances over all images in the batch that was inferred.
         mean_distance_per_layer = distance_matrix.mean(axis=1)
-
         # Use weights such that every layer's distance is weighted differently (possibly).
         return np.average(mean_distance_per_layer, weights=metrics_weights_fn(distance_matrix))
 
@@ -326,6 +333,11 @@ class SensitivityEvaluation:
         return images_batches
 
     def _update_ips_with_outputs_replacements(self):
+        """
+
+        Returns:
+
+        """
         replacement_outputs_to_ip = [r_node for r_node in self.outputs_replacement_nodes if
                                      r_node not in self.interest_points]
         updated_interest_points = self.interest_points + replacement_outputs_to_ip
@@ -353,13 +365,12 @@ class SensitivityEvaluation:
         return tensors
 
 
-def get_mp_interest_points(graph: Graph, interest_points_classifier: Callable,
+def get_mp_interest_points(graph: Graph,
+                           interest_points_classifier: Callable,
                            num_ip_factor: float) -> List[BaseNode]:
     """
     Gets a list of interest points for the mixed precision metric computation.
     The list is constructed from a filtered set of the convolutions nodes in the graph.
-    In addition, returns a list of nodes with output nodes replacements if the actual output node of the model is not
-    compatible for calculating weights for the mp metric (based on a built-in per-framework list of layer types)
 
     Args:
         graph: Graph to search for its MP configuration.
@@ -367,7 +378,7 @@ def get_mp_interest_points(graph: Graph, interest_points_classifier: Callable,
             interest point for mp metric computation purposes.
         num_ip_factor: Percentage out of the total set of interest points that we want to actually use.
 
-    Returns: A list of interest points (nodes in the graph), and a list of replacements output nodes.
+    Returns: A list of interest points (nodes in the graph).
 
     """
     sorted_nodes = graph.get_topo_sorted_nodes()
@@ -379,14 +390,25 @@ def get_mp_interest_points(graph: Graph, interest_points_classifier: Callable,
     # in order to consider the model's output in the distance metric computation (and also to make sure
     # all configurable layers are included in the configured mp model for metric computation purposes)
     output_nodes = [n.node for n in graph.get_outputs() if n.node not in interest_points_nodes]
-
     interest_points = interest_points_nodes + output_nodes
 
     return interest_points
 
 
 def get_output_replacement_nodes(graph: Graph,
-                                 fw_impl: Any):
+                                 fw_impl: Any) -> List[BaseNode]:
+    """
+    If a model's output node is not compatible for the task of gradients computation we need to find a predecessor
+    node in the model's graph representation which is compatible and add it to the set of interest points and use it
+    for the gradients' computation. This method searches for this predecessor node for each output of the model.
+
+    Args:
+        graph: Graph to search for replacement output nodes.
+        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+
+    Returns: A list of output replacement nodes.
+
+    """
     replacement_outputs = []
     for n in graph.get_outputs():
         prev_node = n.node
