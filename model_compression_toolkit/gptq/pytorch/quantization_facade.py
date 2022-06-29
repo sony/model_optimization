@@ -24,7 +24,6 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.core.common.post_training_quantization import post_training_quantization
 
 import importlib
 
@@ -90,24 +89,7 @@ if importlib.util.find_spec("torch") is not None:
 
         """
 
-        if core_config.mixed_precision_enable:
-            if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
-                common.Logger.error("Given quantization config to mixed-precision facade is not of type "
-                                    "MixedPrecisionQuantizationConfigV2. Please use pytorch_post_training_quantization API,"
-                                    "or pass a valid mixed precision configuration.")
-
-            common.Logger.info("Using experimental mixed-precision quantization. "
-                               "If you encounter an issue please file a bug.")
-
-        return post_training_quantization(in_module,
-                                          representative_data_gen,
-                                          core_config,
-                                          fw_info,
-                                          PytorchImplementation(),
-                                          target_platform_capabilities,
-                                          gptq_config,
-                                          target_kpi=target_kpi)
-
+        raise Exception('This feature is currently not yet available for Pytorch models. Work in progress.')
 
 else:
     # If torch is not installed,

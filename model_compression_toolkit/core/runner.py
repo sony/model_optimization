@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,19 +21,14 @@ from tqdm import tqdm
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.core.common import FrameworkInfo
-from model_compression_toolkit.core.common.constants import NUM_SAMPLES_DISTANCE_TENSORBOARD
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
-from model_compression_toolkit.gptq.common.gptq_training import gptq_training
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
-from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
-from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.core.common.bias_correction.compute_bias_correction_of_graph import \
     compute_bias_correction_of_graph
 
@@ -48,12 +43,10 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
     set_quantization_configuration_to_graph
 
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
-from model_compression_toolkit.core.common.similarity_analyzer import compute_cs
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.common.substitutions.linear_collapsing_substitution import linear_collapsing_substitute
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.common.model_collector import ModelCollector
-from model_compression_toolkit.core.common.visualization.nn_visualizer import NNVisualizer
 
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 from model_compression_toolkit.core.common.bias_correction.apply_bias_correction_to_graph import \
@@ -63,25 +56,22 @@ from model_compression_toolkit.core.common.visualization.final_config_visualizer
     ActivationFinalBitwidthConfigVisualizer
 
 
-def post_training_quantization(in_model: Any,
-                               representative_data_gen: Callable,
-                               core_config: CoreConfig,
-                               fw_info: FrameworkInfo,
-                               fw_impl: FrameworkImplementation,
-                               tpc: TargetPlatformCapabilities,
-                               gptq_config: GradientPTQConfig = None,
-                               target_kpi: KPI = None):
+def core_runner(in_model: Any,
+                representative_data_gen: Callable,
+                core_config: CoreConfig,
+                fw_info: FrameworkInfo,
+                fw_impl: FrameworkImplementation,
+                tpc: TargetPlatformCapabilities,
+                target_kpi: KPI = None,
+                tb_w: TensorboardWriter = None):
     """
     Quantize a trained model using post-training quantization.
     First, the model graph is optimized using several transformations (e.g. folding BatchNormalization to preceding
     layers).
     Second, statistics (e.g. min/max, histogram, etc.) are collected for each layer's output
     (and input, depends on the quantization configuration) using a given representative dataset.
-    Next, quantization parameters are calculated using the collected statistics and the model is quantized
+    Next, quantization parameters are calculated using the collected statistics
     (both coefficients and activations by default).
-    If a gptq configuration is passed, the quantized weights are optimized using knowledge
-    distillation. This is done by comparing points between the float and quantized models, and minimizing the
-    observed loss.
 
     Args:
         in_model: Model to quantize.
@@ -92,15 +82,13 @@ def post_training_quantization(in_model: Any,
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tpc: TargetPlatformCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
-        gptq_config: Configuration for using gradient-based PTQ (e.g. optimizer).
         target_kpi: KPI to constraint the search of the mixed-precision configuration for the model.
+        tb_w: TensorboardWriter object for logging
 
     Returns:
-        A quantized model and information the user may need to handle the quantized model.
+        An internal graph representation of the input model.
 
     """
-
-    tb_w = _init_tensorboard_writer(fw_info)
 
     graph = read_model_to_graph(in_model,
                                 representative_data_gen,
@@ -167,16 +155,7 @@ def post_training_quantization(in_model: Any,
             figure = visual.plot_config_bitwidth()
             tb_w.add_figure(figure, f'Activation final bit-width config')
 
-    quantized_model, user_info = _quantize_fixed_bit_widths_graph(core_config.debug_config.analyze_similarity,
-                                                                  fw_info,
-                                                                  gptq_config,
-                                                                  representative_data_gen,
-                                                                  tb_w,
-                                                                  tg,
-                                                                  fw_impl)
-    user_info.mixed_precision_cfg = bit_widths_config
-
-    return quantized_model, user_info
+    return tg, bit_widths_config
 
 
 def get_finalized_graph(initial_graph: Graph,
@@ -284,116 +263,8 @@ def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
     return tb_w
 
 
-def _quantize_model(fw_info: FrameworkInfo,
-                    tb_w: TensorboardWriter,
-                    tg: Graph,
-                    fw_impl: FrameworkImplementation) -> Tuple[Any, UserInformation]:
-    """
-    Quantize graph's weights, and build a quantized framework model from it.
-
-    Args:
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).
-        tb_w: TensorBoardWriter object to log events.
-        tg: A prepared for quantization graph.
-
-    Returns:
-        Quantized model in the input framework, and information the user may need in order to use the quantized model.
-    """
-
-    quantized_tg = quantize_graph_weights(tg,
-                                          fw_info=fw_info,
-                                          fw_impl=fw_impl)
-    if tb_w is not None:
-        tb_w.add_graph(quantized_tg, 'after_quantization')
-    ######################################
-    # Back2Framework
-    ######################################
-    # Before building a quantized model, first apply some substitutions.
-    quantized_tg = substitute(quantized_tg,
-                              fw_impl.get_substitutions_pre_build())
-    quantized_model, user_info = fw_impl.model_builder(quantized_tg,
-                                                       mode=ModelBuilderMode.QUANTIZED,
-                                                       fw_info=fw_info)
-    return quantized_model, user_info
-
-
-def _analyze_similarity(representative_data_gen: Callable,
-                        tb_w: TensorboardWriter,
-                        tg: Graph,
-                        tg_float: Graph,
-                        fw_impl: FrameworkImplementation,
-                        fw_info: FrameworkInfo):
-    """
-    Plot the cosine similarity of different points on the graph between the float and quantized
-    graphs. Add them to the passed TensorboardWriter object and close all tensorboard writer open
-    files.
-
-    Args:
-        representative_data_gen: Dataset used for calibration.
-        tb_w: TensorBoardWriter object to log events.
-        tg: Graph of quantized model.
-        tg_float: Graph of float model.
-        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-        fw_info: Information needed for quantization about the specific framework.
-
-    """
-    if tb_w is not None:
-        visual = NNVisualizer(tg_float,
-                              tg,
-                              fw_impl=fw_impl,
-                              fw_info=fw_info)
-
-        for i in range(NUM_SAMPLES_DISTANCE_TENSORBOARD):
-            figure = visual.plot_distance_graph(representative_data_gen(),
-                                                distance_fn=compute_cs,
-                                                convert_to_range=lambda a: 1 - 2 * a)
-            tb_w.add_figure(figure, f'similarity_distance_sample_{i}')
-        tb_w.close()
-
-
-def _apply_gptq(gptq_config: GradientPTQConfig,
-                representative_data_gen: Callable,
-                tb_w: TensorboardWriter,
-                tg: Graph,
-                tg_bias: Graph,
-                fw_info: FrameworkInfo,
-                fw_impl: FrameworkImplementation) -> Graph:
-    """
-    Apply GPTQ to improve accuracy of quantized model.
-    Build two models from a graph: A teacher network (float model) and a student network (quantized model).
-    and use the dataset generator to pass images through the teacher and student networks to get intermediate
-    layers outputs and maximize their similarity.
-
-    Args:
-        gptq_config: Configuration for using GPTQ (e.g. optimizer).
-        representative_data_gen: Dataset used for calibration.
-        tb_w: TensorBoardWriter object to log events.
-        tg: Float Reference Graph.
-        tg_bias: Graph of quantized model.
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).
-        fw_impl: Framework implementation per framework
-    Returns:
-
-    """
-    if gptq_config is not None:
-        common.Logger.info("Using experimental Gradient Based PTQ: If you encounter an issue "
-                           "please file a bug. To disable it, do not pass a gptq configuration.")
-
-        tg_bias = gptq_training(tg,
-                                tg_bias,
-                                gptq_config,
-                                representative_data_gen,
-                                fw_impl,
-                                fw_info)
-
-        if tb_w is not None:
-            tb_w.add_graph(tg_bias, 'after_gptq')
-    return tg_bias
-
-
 def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
                                      fw_info: FrameworkInfo,
-                                     gptq_config: GradientPTQConfig,
                                      representative_data_gen: Callable,
                                      tb_w: TensorboardWriter,
                                      tg: Graph,
@@ -405,8 +276,6 @@ def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
     Args:
         analyze_similarity: Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.)
-        gptq_config: Configuration for using GPTQ (e.g. optimizer).
-        representative_data_gen: Dataset used for GPTQ fine tuning.
         tb_w: A TensorBoardWriter object initialized with the logger dir path if it was set, or None otherwise.
         tg: Graph to apply GPTQ and to quantize.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
@@ -419,7 +288,6 @@ def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
     # Apply Bias Correction
     #############################################
     tg_bias = apply_bias_correction_to_graph(tg,
-                                             fw_info=fw_info,
                                              fw_impl=fw_impl)
     if tb_w is not None:
         tb_w.add_graph(tg_bias, 'after_bias_correction')

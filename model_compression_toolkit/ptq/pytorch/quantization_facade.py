@@ -23,7 +23,6 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.core.common.post_training_quantization import post_training_quantization
 
 import importlib
 
@@ -96,14 +95,32 @@ if importlib.util.find_spec("torch") is not None:
             common.Logger.info("Using experimental mixed-precision quantization. "
                                "If you encounter an issue please file a bug.")
 
-        return post_training_quantization(in_module,
-                                          representative_data_gen,
-                                          core_config,
-                                          fw_info,
-                                          PytorchImplementation(),
-                                          target_platform_capabilities,
-                                          target_kpi=target_kpi)
+        from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
+        from model_compression_toolkit.ptq.runner import ptq_runner
+        from model_compression_toolkit.core.exporter import export_model
+        from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 
+        tb_w = _init_tensorboard_writer(fw_info)
+
+        fw_impl = PytorchImplementation()
+
+        tg, bit_widths_config = core_runner(in_model=in_module,
+                                            representative_data_gen=representative_data_gen,
+                                            core_config=core_config,
+                                            fw_info=fw_info,
+                                            fw_impl=fw_impl,
+                                            tpc=target_platform_capabilities,
+                                            target_kpi=target_kpi,
+                                            tb_w=tb_w)
+
+        tg = ptq_runner(tg, fw_info, fw_impl, tb_w)
+
+        if core_config.debug_config.analyze_similarity:
+            analyzer_model_quantization(representative_data_gen, tb_w, tg, fw_impl, fw_info)
+
+        quantized_model, user_info = export_model(tg, fw_info, fw_impl, tb_w, bit_widths_config)
+
+        return quantized_model, user_info
 
 else:
     # If torch is not installed,

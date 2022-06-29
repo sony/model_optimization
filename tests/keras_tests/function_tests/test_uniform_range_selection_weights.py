@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.bias_correction.compute_bias_correcti
     compute_bias_correction_of_graph
 from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
-from model_compression_toolkit.core.common.post_training_quantization import _quantize_fixed_bit_widths_graph
+from model_compression_toolkit.core.runner import _quantize_fixed_bit_widths_graph
 from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params

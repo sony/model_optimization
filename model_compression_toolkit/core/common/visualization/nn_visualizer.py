@@ -18,6 +18,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 
+from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -34,7 +35,7 @@ def _get_compare_points(input_graph: Graph) -> Tuple[List[BaseNode], List[str]]:
         input_graph: Graph to get its points to compare.
 
     Returns:
-        A list of nodes in a graph, and a list of the their names.
+        A list of nodes in a graph, and a list of their names.
     """
     compare_points = []
     compare_points_name = []
@@ -56,19 +57,17 @@ class NNVisualizer:
 
     def __init__(self,
                  graph_float: Graph,
-                 graph_quantized: Graph,
                  fw_impl: FrameworkImplementation,
                  fw_info: FrameworkInfo):
         """
         Initialize a NNVisualizer object.
         Args:
             graph_float: Float version of the graph.
-            graph_quantized: Quantized version of the graph.
 
         """
 
         self.graph_float = graph_float
-        self.graph_quantized = graph_quantized
+        self.graph_quantized = quantize_graph_weights(graph_float, fw_info=fw_info, fw_impl=fw_impl)
         self.fw_impl = fw_impl
         self.fw_info = fw_info
 
