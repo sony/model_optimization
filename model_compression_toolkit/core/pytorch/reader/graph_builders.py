@@ -157,6 +157,19 @@ def nodes_builder(model: GraphModule,
         else:
             output_shape = []
 
+        # filter Nodes from framework attr
+        framework_attr_filtered = {}
+        for k, v in framework_attr.items():
+            if not isinstance(v, torch.fx.node.Node):
+                framework_attr_filtered[k] = v
+        framework_attr = framework_attr_filtered
+
+        # filter Nodes from node kwargs
+        node_kwargs = {}
+        for k, v in node.kwargs.items():
+            if not isinstance(v, torch.fx.node.Node):
+                node_kwargs[k] = v
+
         # initiate graph nodes
         if node.op in [CALL_METHOD, CALL_FUNCTION]:
             graph_node_type = FunctionalNode
@@ -182,7 +195,7 @@ def nodes_builder(model: GraphModule,
 
             kwargs = {FUNCTIONAL_OP: node_type,
                       OP_CALL_ARGS: op_call_args,
-                      OP_CALL_KWARGS: node.kwargs,
+                      OP_CALL_KWARGS: node_kwargs,
                       INPUTS_AS_LIST: inputs_as_list}
         else:
             graph_node_type = BaseNode

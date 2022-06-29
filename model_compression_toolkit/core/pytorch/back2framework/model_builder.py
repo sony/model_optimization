@@ -229,5 +229,7 @@ def model_builder(graph: common.Graph,
         raise Exception("Running PyTorch model builder with return_float_outputs=True isn't supported yet")
 
     model = PytorchModelBuilder(graph, mode, append2output, fw_info)
-
+    # Remove requires_grad flag from all the params
+    for param in model.parameters():
+        param.requires_grad = False
     return model, graph.user_info
