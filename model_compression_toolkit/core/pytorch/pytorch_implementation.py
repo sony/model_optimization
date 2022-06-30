@@ -394,7 +394,7 @@ class PytorchImplementation(FrameworkImplementation):
             graph_float: Graph to build its corresponding Keras model.
             model_input_tensors: A mapping between model input nodes to an input batch.
             interest_points: List of nodes which we want to get their feature map as output, to calculate distance metric.
-            output_list: List of nodes that considered as model's output for the purpose of gradients computation.
+            output_list: List of nodes that considered as model's output for the purpose of gradients computation. (Not used in this function)
             all_outputs_indices: Indices of the model outputs and outputs replacements (if exists),
                 in a topological sorted interest points list.
             alpha: A tuning parameter to allow calibration between the contribution of the output feature maps returned

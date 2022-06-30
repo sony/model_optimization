@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 from typing import Any, Dict, List
-import numpy as np
 
 import torch
 from networkx import topological_sort
@@ -25,7 +24,6 @@ from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder
 from model_compression_toolkit.core.pytorch.reader.graph_builders import DummyPlaceHolder
-from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
 
 
 def build_input_tensors_list(node: BaseNode,
@@ -104,19 +102,19 @@ def generate_outputs(
 
 class PytorchModelGradients(torch.nn.Module):
     """
-    Class for reconstructing a Pytorch model from a graph
+    A Pytorch Module class for producing differentiable outputs from a given model's graph representation.
     """
     def __init__(self,
                  graph_float: common.Graph,
                  interest_points: List[BaseNode]):
         """
-        Construct a Pytorch model.
+        Construct a PytorchModelGradients model.
+
         Args:
-            graph: Graph to build its corresponding Pytorch model.
-            mode: Building mode. Read ModelBuilderMode description for more info.
-            append2output: List of nodes or OutTensor objects.
-            fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
+            graph_float: Model's Graph representation to evaluate the outputs according to.
+            interest_points: List of nodes in the graph which we want to produce outputs for.
         """
+
         super(PytorchModelGradients, self).__init__()
         self.graph_float = graph_float
         self.node_sort = list(topological_sort(graph_float))
@@ -130,9 +128,10 @@ class PytorchModelGradients(torch.nn.Module):
                 *args: Any) -> Any:
         """
         Args:
-            args: argument input tensors to model.
+            args: argument input tensors to model, which is a mappings between an input node and its input tensor.
+
         Returns:
-            torch Tensor/s which is/are the output of the model logic.
+            A list of output tensors for each of the model's pre-defined interest points.
         """
 
         input_node_to_input_tensor = args[0]
@@ -170,6 +169,24 @@ def pytorch_model_grad(graph_float: common.Graph,
                        interest_points: List[BaseNode],
                        all_outputs_indices: List[int],
                        alpha: float = 0.1) -> List[float]:
+    """
+    Computes the gradients of a Pytorch model's outputs with respect to the feature maps of the set of given
+    interest points. It then uses the gradients to compute the hessian trace for each interest point and normalized the
+    values, to be used as weights for weighted average in mixed-precision distance metric computation.
+
+    Args:
+        graph_float: Graph to build its corresponding Pytorch model.
+        model_input_tensors: A mapping between model input nodes to an input batch torch Tensor.
+        interest_points: List of nodes which we want to get their feature map as output, to calculate distance metric.
+        all_outputs_indices: Indices of the model outputs and outputs replacements (if exists),
+            in a topological sorted interest points list.
+        alpha: A tuning parameter to allow calibration between the contribution of the output feature maps returned
+            weights and the other feature maps weights (since the gradient of the output layers does not provide a
+            compatible weight for the distance metric computation).
+
+    Returns: A list of normalized gradients to be considered as the relevancy that each interest
+    point's output has on the model's output.
+    """
 
     for n, input_tensor in model_input_tensors.items():
         input_tensor.requires_grad_()
@@ -212,7 +229,7 @@ def pytorch_model_grad(graph_float: common.Graph,
     return normalized_grads_weights
 
 
-def get_normalized_weight(grad: float,
+def get_normalized_weight(grad: torch.Tensor,
                           i: int,
                           sum_without_outputs: float,
                           all_outputs_indices: List[int],
@@ -222,7 +239,7 @@ def get_normalized_weight(grad: float,
     a constant, otherwise, it is normalized by dividing with the sum of all gradient values.
 
     Args:
-        grad: The gradient value.
+        grad: The gradient value tensor.
         i: The index of the node in the sorted interest points list.
         sum_without_outputs: The sum of all gradients of nodes that are not considered outputs.
         all_outputs_indices: A list of indices of all nodes that consider outputs.
