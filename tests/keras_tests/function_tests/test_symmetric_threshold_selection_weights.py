@@ -20,12 +20,8 @@ from keras.layers import Conv2D, Conv2DTranspose
 
 import model_compression_toolkit as mct
 from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod, CoreConfig
-from model_compression_toolkit.core.common.bias_correction.compute_bias_correction_of_graph import \
-    compute_bias_correction_of_graph
 from model_compression_toolkit.core.common.constants import THRESHOLD
-from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.common.model_collector import ModelCollector
-from model_compression_toolkit.core.runner import _quantize_fixed_bit_widths_graph
 from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
@@ -123,21 +119,6 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
         calculate_quantization_params(graph,
                                       fw_info,
                                       fw_impl=keras_impl)
-
-        tg = compute_bias_correction_of_graph(graph,
-                                              fw_info,
-                                              keras_impl)
-        tg = set_bit_widths(core_config.mixed_precision_enable,
-                            tg,
-                            None)
-
-        quantized_model, user_info = _quantize_fixed_bit_widths_graph(False,
-                                                                      fw_info,
-                                                                      None,
-                                                                      lambda: [np.random.randn(1, 16, 16, 4)],
-                                                                      None,
-                                                                      tg,
-                                                                      keras_impl)
 
         nodes_list = list(graph.nodes)
         conv1_threshold = nodes_list[0].candidates_quantization_cfg[0].weights_quantization_cfg.weights_quantization_params[THRESHOLD]

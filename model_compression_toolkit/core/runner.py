@@ -263,64 +263,6 @@ def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
     return tb_w
 
 
-def _quantize_fixed_bit_widths_graph(analyze_similarity: bool,
-                                     fw_info: FrameworkInfo,
-                                     representative_data_gen: Callable,
-                                     tb_w: TensorboardWriter,
-                                     tg: Graph,
-                                     fw_impl: FrameworkImplementation) -> Tuple[Any, UserInformation]:
-    """
-    Quantize a graph that has final weights candidates quantization configurations.
-    Before we quantize the graph weights, we apply GPTQ to get an improved graph.
-
-    Args:
-        analyze_similarity: Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.)
-        tb_w: A TensorBoardWriter object initialized with the logger dir path if it was set, or None otherwise.
-        tg: Graph to apply GPTQ and to quantize.
-        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-
-    Returns:
-        A tuple of the quantized model and an object of UserInformation.
-
-    """
-    #############################################
-    # Apply Bias Correction
-    #############################################
-    tg_bias = apply_bias_correction_to_graph(tg,
-                                             fw_impl=fw_impl)
-    if tb_w is not None:
-        tb_w.add_graph(tg_bias, 'after_bias_correction')
-    #############################################
-    # Gradient Based Post Training Quantization
-    #############################################
-    tg_bias = _apply_gptq(gptq_config,
-                          representative_data_gen,
-                          tb_w,
-                          tg,
-                          tg_bias,
-                          fw_info,
-                          fw_impl)
-
-    tg_float = copy.deepcopy(tg)  # Copy graph before quantization (for similarity analyzer)
-    ######################################
-    # Final Model Quantization
-    ######################################
-    quantized_model, user_info = _quantize_model(fw_info,
-                                                 tb_w,
-                                                 tg_bias,
-                                                 fw_impl)
-    if analyze_similarity:
-        _analyze_similarity(representative_data_gen,
-                            tb_w,
-                            tg_bias,
-                            tg_float,
-                            fw_impl,
-                            fw_info)
-
-    return quantized_model, user_info
-
-
 def read_model_to_graph(in_model: Any,
                         representative_data_gen: Callable,
                         tpc: TargetPlatformCapabilities,
