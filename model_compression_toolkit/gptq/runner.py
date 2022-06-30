@@ -79,8 +79,8 @@ def gptq_runner(tg: Graph,
 
     Args:
         tg: Graph to apply GPTQ and to quantize.
-        gptq_config: TODO: add doc
-        representative_data_gen: TODO: add doc
+        gptq_config: GradientPTQConfig with parameters about the tuning process.
+        representative_data_gen: Dataset used for calibration.
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.)
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tb_w: A TensorBoardWriter object initialized with the logger dir path if it was set, or None otherwise.

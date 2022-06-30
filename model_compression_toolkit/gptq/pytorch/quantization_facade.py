@@ -89,7 +89,7 @@ if importlib.util.find_spec("torch") is not None:
 
         """
 
-        raise Exception('This feature is currently not yet available for Pytorch models. Work in progress.')
+        Logger.error('This feature is currently not yet available for Pytorch models. Work in progress.')
 
 else:
     # If torch is not installed,
