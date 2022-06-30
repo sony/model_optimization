@@ -23,10 +23,13 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
+from model_compression_toolkit.ptq.runner import ptq_runner
+from model_compression_toolkit.core.exporter import export_model
+from model_compression_toolkit.core.analyzer import analyzer_model_quantization
+from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
 import importlib
-
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
 
 if importlib.util.find_spec("tensorflow") is not None\
@@ -124,11 +127,6 @@ if importlib.util.find_spec("tensorflow") is not None\
 
             common.Logger.info("Using experimental mixed-precision quantization. "
                                "If you encounter an issue please file a bug.")
-
-        from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
-        from model_compression_toolkit.ptq.runner import ptq_runner
-        from model_compression_toolkit.core.exporter import export_model
-        from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 
         tb_w = _init_tensorboard_writer(fw_info)
 
