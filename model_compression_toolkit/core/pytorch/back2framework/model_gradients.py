@@ -12,28 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Tuple, Any, Dict, List
+from typing import Any, Dict, List
 import numpy as np
 
 import torch
 from networkx import topological_sort
 
-from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
+from model_compression_toolkit.core.common.constants import EPS
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
-from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.reader.graph_builders import DummyPlaceHolder
-from model_compression_toolkit.core.pytorch.mixed_precision.mixed_precision_wrapper import PytorchMixedPrecisionWrapper
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
+from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
 
 
 def build_input_tensors_list(node: BaseNode,
                              graph: Graph,
-                             inputs: Tuple[Any],
+                             inputs: Dict[BaseNode, List],
                              node_to_output_tensors_dict: Dict[BaseNode, List]) -> List[List]:
     """
     Given a node, build a list of input tensors the node gets. The list is built
@@ -47,7 +44,7 @@ def build_input_tensors_list(node: BaseNode,
         A list of the node's input tensors.
     """
     if node.type == DummyPlaceHolder:
-        input_tensors = [inputs[graph.get_inputs().index(node)]]
+        input_tensors = [inputs[node]]
     else:
         input_tensors = []
         # Go over a sorted list of the node's incoming edges, and for each source node get its output tensors.
@@ -111,11 +108,7 @@ class PytorchModelGradients(torch.nn.Module):
     """
     def __init__(self,
                  graph_float: common.Graph,
-                 model_input_tensors: Dict[BaseNode, np.ndarray],
-                 interest_points: List[BaseNode],
-                 output_list: List[BaseNode],
-                 all_outputs_indices: List[int],
-                 alpha: float = 0.1):
+                 interest_points: List[BaseNode]):
         """
         Construct a Pytorch model.
         Args:
@@ -127,12 +120,7 @@ class PytorchModelGradients(torch.nn.Module):
         super(PytorchModelGradients, self).__init__()
         self.graph_float = graph_float
         self.node_sort = list(topological_sort(graph_float))
-        self.nodes_dict = {}
         self.interest_points = interest_points
-        self.alpha = alpha
-
-        self.out_tensors = []
-        self.grads = []
 
         for n in self.node_sort:
             if not isinstance(n, FunctionalNode):
@@ -146,34 +134,29 @@ class PytorchModelGradients(torch.nn.Module):
         Returns:
             torch Tensor/s which is/are the output of the model logic.
         """
+
+        input_node_to_input_tensor = args[0]
         node_to_output_tensors_dict = dict()
         for n in self.node_sort:
             input_tensors = build_input_tensors_list(n,
                                                      self.graph_float,
-                                                     args,
+                                                     input_node_to_input_tensor,
                                                      node_to_output_tensors_dict)
 
-            op_func = self.get_op_func(n)
+            op_func = n.type if isinstance(n, FunctionalNode) else getattr(self, n.name)
             out_tensors_of_n = run_operation(n,  # Run node operation and fetch outputs
                                              input_tensors,
                                              op_func=op_func)
-            # for t in out_tensors_of_n:
-            #     t.retain_grad()
 
-            if n in self.interest_points:
-                # out_tensors_of_n[0].requires_grad = True
-                out_tensors_of_n[0].retain_grad()
-                # out_tensors_of_n[0].register_hook(lambda g: self.get_layer_output_grad(g, n))
-
-                # self.out_tensors.append(out_tensors_of_n[0])
-
-            # output_t = out_tensors_of_n[0]
-            # output_t.retain_grad()
-            # output_t.register_hook(lambda g: self.get_layer_output_grad(g, n))
-            # node_to_output_tensors_dict.update({n: [output_t]})
             if isinstance(out_tensors_of_n, list):
-                node_to_output_tensors_dict.update({n: out_tensors_of_n})
+                output_t = []
+                for t in out_tensors_of_n:
+                    t.retain_grad()
+                    output_t.append(t)
+                node_to_output_tensors_dict.update({n: output_t})
             else:
+                assert isinstance(out_tensors_of_n, torch.Tensor)
+                out_tensors_of_n.retain_grad()
                 node_to_output_tensors_dict.update({n: [out_tensors_of_n]})
 
         outputs = generate_outputs(self.interest_points,
@@ -181,20 +164,75 @@ class PytorchModelGradients(torch.nn.Module):
 
         return outputs
 
-    def get_layer_output_grad(self, grad, n):
-        print(n)
-        self.grads.append(grad)
 
-    def get_op_func(self, n: BaseNode) -> Any:
-        """
-        Gets the operation function that runs the actual inference of the nodes compatible layer.
+def pytorch_model_grad(graph_float: common.Graph,
+                       model_input_tensors: Dict[BaseNode, torch.Tensor],
+                       interest_points: List[BaseNode],
+                       all_outputs_indices: List[int],
+                       alpha: float = 0.1) -> List[float]:
 
-        Args:
-            n: The corresponding node of the layer it runs.
-            configurable_nodes_names: A list of names of configurable nodes in the quantized model.
+    for n, input_tensor in model_input_tensors.items():
+        input_tensor.requires_grad_()
 
-        Returns: Module/functional to apply to the input tensors.
+    model_grads_net = PytorchModelGradients(graph_float=graph_float,
+                                            interest_points=interest_points)
 
-        """
+    output_tensors = model_grads_net(model_input_tensors)
 
-        return n.type if isinstance(n, FunctionalNode) else getattr(self, n.name)
+    ############################################
+    # Compute Gradients
+    ############################################
+    device = output_tensors[0].device
+    output_tensors_for_loss = [output_tensors[i] for i in all_outputs_indices]
+    output_loss = torch.tensor([0.0], requires_grad=True, device=device)
+    for output in output_tensors_for_loss:
+        output = torch.reshape(output, shape=(output.shape[0], -1))
+        output_loss = torch.add(output_loss, torch.mean(torch.sum(output, dim=-1)))
+
+    output_loss.backward()
+
+    ipt_gradients = [t.grad for t in output_tensors]
+    r_ipt_gradients = [torch.reshape(t, shape=(t.shape[0], -1)) for t in ipt_gradients]
+    hessian_trace_aprrox = [torch.mean(torch.sum(torch.pow(ipt_grad, 2.0), dim=-1)) for ipt_grad in r_ipt_gradients]
+
+    # Output layers or layers that come after the model's considered output layers,
+    # are assigned with a constant normalized value,
+    # according to the given alpha variable and the number of such layers.
+    # Other layers returned weights are normalized by dividing the hessian value by the sum of all other values.
+    hessians_without_outputs = [hessian_trace_aprrox[i] for i in range(len(hessian_trace_aprrox))
+                                if i not in all_outputs_indices]
+    sum_without_outputs = sum(hessians_without_outputs)
+    normalized_grads_weights = [get_normalized_weight(grad,
+                                                      i,
+                                                      sum_without_outputs,
+                                                      all_outputs_indices,
+                                                      alpha)
+                                for i, grad in enumerate(hessian_trace_aprrox)]
+
+    return normalized_grads_weights
+
+
+def get_normalized_weight(grad: float,
+                          i: int,
+                          sum_without_outputs: float,
+                          all_outputs_indices: List[int],
+                          alpha: float) -> float:
+    """
+    Normalizes the node's gradient value. If it is an output or output replacement node than the normalized value is
+    a constant, otherwise, it is normalized by dividing with the sum of all gradient values.
+
+    Args:
+        grad: The gradient value.
+        i: The index of the node in the sorted interest points list.
+        sum_without_outputs: The sum of all gradients of nodes that are not considered outputs.
+        all_outputs_indices: A list of indices of all nodes that consider outputs.
+        alpha: A multiplication factor.
+
+    Returns: A normalized gradient value.
+
+    """
+
+    if i in all_outputs_indices:
+        return alpha / len(all_outputs_indices)
+    else:
+        return ((1 - alpha) * grad / (sum_without_outputs + EPS)).item()

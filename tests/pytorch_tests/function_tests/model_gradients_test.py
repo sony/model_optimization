@@ -17,7 +17,8 @@ from torch.nn import Conv2d, BatchNorm2d, ReLU
 
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
-from model_compression_toolkit.core.pytorch.back2framework.model_gradients import PytorchModelGradients
+from model_compression_toolkit.core.pytorch.back2framework.model_gradients import PytorchModelGradients, \
+    pytorch_model_grad
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 import numpy as np
 
@@ -53,92 +54,13 @@ class create_model_1(torch.nn.Module):
         super(create_model_1, self).__init__()
         self.conv1 = Conv2d(3, 3, kernel_size=1, stride=1)
         self.bn = BatchNorm2d(3)
-        self.bn = bn_weight_change(self.bn)
+        self.relu = ReLU()
 
     def forward(self, inp):
         x = self.conv1(inp)
         x = self.bn(x)
-        return x + inp
-
-
-class create_model_2(torch.nn.Module):
-    def __init__(self):
-        super(create_model_2, self).__init__()
-        self.conv1 = Conv2d(3, 3, kernel_size=1, stride=1)
-        self.bn = BatchNorm2d(3)
-        self.bn = bn_weight_change(self.bn)
-        self.bn2 = BatchNorm2d(3)
-        self.bn2 = bn_weight_change(self.bn2)
-
-    def forward(self, inp):
-        x = self.conv1(inp)
-        x2 = self.bn(x)
-        y = self.bn2(x)
-        return x2 + y + inp
-
-
-class create_model_3(torch.nn.Module):
-    def __init__(self):
-        super(create_model_3, self).__init__()
-        self.conv1 = Conv2d(3, 3, kernel_size=1, stride=1)
-        self.bn = BatchNorm2d(3)
-        self.bn = bn_weight_change(self.bn)
-        self.bn2 = BatchNorm2d(3)
-        self.bn2 = bn_weight_change(self.bn2)
-
-    def forward(self, inp):
-        x = self.conv1(inp)
-        x = self.bn(x)
-        x = self.bn2(x)
-        return x + inp
-
-
-class create_model_4(torch.nn.Module):
-    def __init__(self):
-        super(create_model_4, self).__init__()
-        self.bn = BatchNorm2d(3)
-        self.bn = bn_weight_change(self.bn)
-        self.bn2 = BatchNorm2d(3)
-        self.bn2 = bn_weight_change(self.bn2)
-
-    def forward(self, inp):
-        x = self.bn(inp)
-        x = self.bn2(x)
-        return x + inp
-
-
-class create_model_5(torch.nn.Module):
-    def __init__(self):
-        super(create_model_5, self).__init__()
-        self.bn = BatchNorm2d(3)
-        self.bn = bn_weight_change(self.bn)
-        self.relu1 = ReLU()
-        self.bn2 = BatchNorm2d(3)
-        self.bn2 = bn_weight_change(self.bn2)
-        self.bn3 = BatchNorm2d(3)
-        self.bn3 = bn_weight_change(self.bn3)
-
-    def forward(self, inp):
-        x = self.bn(inp)
-        x = self.relu1(x)
-        x = self.bn2(x)
-        x = x + inp
-        x = self.bn3(x)
-        return x + inp
-
-
-class create_model_6(torch.nn.Module):
-    def __init__(self):
-        super(create_model_6, self).__init__()
-        self.bn = BatchNorm2d(3)
-        self.bn = bn_weight_change(self.bn)
-        self.bn2 = BatchNorm2d(3)
-        self.bn2 = bn_weight_change(self.bn2)
-
-    def forward(self, inp):
-        x = self.bn(inp)
-        x2 = self.bn2(inp)
-        return x2 + x + inp
+        x = self.relu(x)
+        return x
 
 
 class ModelGradientsTest(BasePytorchTest):
@@ -191,21 +113,14 @@ class ModelGradientsTest(BasePytorchTest):
     def run_test(self, seed=0):
         model_float = create_model_1()
         graph = self.prepare_graph(model_float)
-
-        model_grads = PytorchModelGradients(graph_float=graph,
-                                            model_input_tensors=None,
-                                            interest_points=[n for n in graph.get_topo_sorted_nodes()],
-                                            output_list=None,
-                                            all_outputs_indices=None)
         input_tensors = self.representative_data_gen()
-        # for t in input_tensors:
-        #     t.required_grad = True
-        output = model_grads.forward(input_tensors)
-        loss = torch.sum(output[0])
-        loss.backward()
-        # print(model_grads.grads)
-        for t in output:
-            print(t.grad)
+
+        model_grads = pytorch_model_grad(graph_float=graph,
+                                         model_input_tensors=input_tensors,
+                                         interest_points=[n for n in graph.get_topo_sorted_nodes()][1:],
+                                         all_outputs_indices=[1])
+
+        print(model_grads)
         # self.unit_test.assertTrue(len(transformed_graph.find_node_by_name('conv1_bn')) == 1)
         # conv_bn_node = transformed_graph.find_node_by_name('conv1_bn')[0]
         #
