@@ -155,7 +155,8 @@ class PytorchModelGradients(torch.nn.Module):
                 node_to_output_tensors_dict.update({n: output_t})
             else:
                 assert isinstance(out_tensors_of_n, torch.Tensor)
-                out_tensors_of_n.retain_grad()
+                if out_tensors_of_n.requires_grad:
+                    out_tensors_of_n.retain_grad()
                 node_to_output_tensors_dict.update({n: [out_tensors_of_n]})
 
         outputs = generate_outputs(self.interest_points,
@@ -208,7 +209,7 @@ def pytorch_model_grad(graph_float: common.Graph,
 
     output_loss.backward()
 
-    ipt_gradients = [t.grad for t in output_tensors]
+    ipt_gradients = [torch.Tensor([0.0]) if t.grad is None else t.grad for t in output_tensors]
     r_ipt_gradients = [torch.reshape(t, shape=(t.shape[0], -1)) for t in ipt_gradients]
     hessian_trace_aprrox = [torch.mean(torch.sum(torch.pow(ipt_grad, 2.0), dim=-1)) for ipt_grad in r_ipt_gradients]
 
