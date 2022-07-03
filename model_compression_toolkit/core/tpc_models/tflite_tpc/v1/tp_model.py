@@ -130,8 +130,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                                   fixed_zero_point=-128, fixed_scale=1 / 256))
 
         conv2d = tp.OperatorsSet("Conv2d")
-        depthwise_conv2d = tp.OperatorsSet("DepthwiseConv2D")
-        kernel = tp.OperatorSetConcat(conv2d, fc, depthwise_conv2d)
+        kernel = tp.OperatorSetConcat(conv2d, fc)
 
         relu = tp.OperatorsSet("Relu")
         elu = tp.OperatorsSet("Elu")

@@ -72,9 +72,8 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                              tp.LayerFilterParams(Hardtanh, min_val=0),
                                              tp.LayerFilterParams(hardtanh, min_val=0)])
         tp.OperationsSetToLayers("PReLU", [PReLU, prelu])
-        tp.OperationsSetToLayers("Swish", [SiLU, silu])
+        tp.OperationsSetToLayers("Swish", [SiLU, silu, Hardswish, hardswish])
         tp.OperationsSetToLayers("Sigmoid", [Sigmoid, sigmoid])
         tp.OperationsSetToLayers("Tanh", [Tanh, tanh])
-        tp.OperationsSetToLayers("HardSwish", [Hardswish, hardswish])
 
     return pytorch_tpc
