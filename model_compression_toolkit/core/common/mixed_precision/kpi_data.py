@@ -19,7 +19,7 @@ from model_compression_toolkit import FrameworkInfo, KPI, MixedPrecisionQuantiza
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
-import model_compression_toolkit.core.common.post_training_quantization as ptq
+from model_compression_toolkit.core.runner import read_model_to_graph, get_finalized_graph
 
 
 def compute_kpi_data(in_model: Any,
@@ -45,19 +45,19 @@ def compute_kpi_data(in_model: Any,
 
     """
 
-    graph = ptq.read_model_to_graph(in_model,
-                                    representative_data_gen,
-                                    tpc,
-                                    fw_info,
-                                    fw_impl)
+    graph = read_model_to_graph(in_model,
+                                representative_data_gen,
+                                tpc,
+                                fw_info,
+                                fw_impl)
 
-    transformed_graph = ptq.get_finalized_graph(graph,
-                                                tpc,
-                                                core_config.quantization_config,
-                                                fw_info,
-                                                tb_w=None,
-                                                fw_impl=fw_impl,
-                                                mixed_precision_enable=core_config.mixed_precision_enable)
+    transformed_graph = get_finalized_graph(graph,
+                                            tpc,
+                                            core_config.quantization_config,
+                                            fw_info,
+                                            tb_w=None,
+                                            fw_impl=fw_impl,
+                                            mixed_precision_enable=core_config.mixed_precision_enable)
 
     # Compute parameters sum
     weights_params = compute_configurable_weights_params(graph=transformed_graph, fw_info=fw_info)
