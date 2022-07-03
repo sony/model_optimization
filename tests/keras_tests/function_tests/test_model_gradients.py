@@ -13,9 +13,9 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.core.tpc_models.default_tpc.v3.tp_model import generate_tp_model, \
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_tp_model, \
     get_op_quantization_configs
-from model_compression_toolkit.core.tpc_models.default_tpc.v3.tpc_keras import generate_keras_tpc
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 
 import model_compression_toolkit as mct
 tp = mct.target_platform

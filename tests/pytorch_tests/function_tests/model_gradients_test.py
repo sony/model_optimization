@@ -26,9 +26,9 @@ from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.core.tpc_models.default_tpc.v3.tp_model import get_op_quantization_configs, \
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs, \
     generate_tp_model
-from model_compression_toolkit.core.tpc_models.default_tpc.v3.tpc_pytorch import generate_pytorch_tpc
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
