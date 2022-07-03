@@ -88,8 +88,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                              tp.LayerFilterParams(Activation, activation="softmax")])
         tp.OperationsSetToLayers("Logistic", [tf.sigmoid, tp.LayerFilterParams(Activation, activation="sigmoid")])
 
-        tp.OperationsSetToLayers("Conv2d", [Conv2D])
-        tp.OperationsSetToLayers("DepthwiseConv2D", [DepthwiseConv2D])
+        tp.OperationsSetToLayers("Conv2d", [Conv2D, DepthwiseConv2D])
         tp.OperationsSetToLayers("Relu", [tf.nn.relu,
                                           tf.nn.relu6,
                                           tp.LayerFilterParams(ReLU, Eq("max_value", None) | Eq("max_value", 6)),
