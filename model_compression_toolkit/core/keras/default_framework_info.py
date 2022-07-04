@@ -101,7 +101,8 @@ Mapping from a QuantizationMethod to an activation quantizer function.
 """
 ACTIVATION_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quantization,
                                 QuantizationMethod.SYMMETRIC: symmetric_quantization,
-                                QuantizationMethod.UNIFORM: uniform_quantization}
+                                QuantizationMethod.UNIFORM: uniform_quantization,
+                                QuantizationMethod.LUT_QUANTIZER: lut_kmeans_quantizer}
 
 """
 Mapping from a QuantizationMethod to an weights quantizer function.

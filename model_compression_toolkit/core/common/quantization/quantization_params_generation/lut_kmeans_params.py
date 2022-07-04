@@ -22,7 +22,7 @@ import model_compression_toolkit.core.common.quantization.quantization_config as
 from model_compression_toolkit.core.common.constants import CLUSTER_CENTERS, MIN_THRESHOLD, SCALE_PER_CHANNEL, \
     MULTIPLIER_N_BITS
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import kmeans_assign_clusters, \
-    int_quantization_with_scale
+    int_quantization_with_scale, max_power_of_two
 
 
 def lut_kmeans_tensor(tensor_data: np.ndarray,
@@ -74,3 +74,60 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
     return {CLUSTER_CENTERS: np.round(kmeans.cluster_centers_),
             SCALE_PER_CHANNEL: scales_per_channel,
             }
+
+
+def lut_kmeans_histogram(bins: np.ndarray,
+                         counts: np.ndarray,
+                         p: int,
+                         n_bits: int,
+                         min_value: float,
+                         max_value: float,
+                         constrained: bool = True,
+                         n_iter: int = 20,
+                         min_threshold: float = MIN_THRESHOLD,
+                         quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
+    """
+    TODO: edit
+    The quantizer first finds the closest power-of-two number to the max value per channel of tensor_data.
+    Now, we divide tensor_data with the scale vector per channel. In addition, we scale the result to the range
+    [-2^(MULTIPLIER_N_BITS-1), 2^(MULTIPLIER_N_BITS-1)-1].
+    Next, we take the scaled tensor_data and perform k-means clustering with 2^nbit clusters.
+    We return the rounded cluster centers, and scale per channel. We use these to quantize the data.
+
+    Args:
+        bins: Bins values of the histogram.
+        counts: Bins counts of the histogram.
+        p: p-norm to use for the Lp-norm distance (used only for lp threshold selection).
+        n_bits: Number of bits to quantize the tensor.
+        min_value: Min value (not used for this method).
+        max_value: Max value (not used for this method).
+        constrained: Whether the threshold should be constrained or not (not used for this method).
+        n_iter: Number of iteration ot search for the threshold (not used for this method).
+        min_threshold: Minimal threshold to use if threshold is too small (used only for kl threshold selection).
+        quant_error_method: an error function to optimize the parameters' selection accordingly.
+
+    Returns:
+        TODO: edit
+        A dictionary containing the cluster assignments according to the k-means algorithm,
+        the scales per channel and the multiplier num bits.
+    """
+
+    if n_bits > MULTIPLIER_N_BITS:
+        raise Exception(f'Look-Up-Table bit configuration has {n_bits} bits. It must be less or equal to {MULTIPLIER_N_BITS}')
+
+    bins_with_values = np.abs(bins)[1:][counts > 0]
+    # TODO: need to set this externally
+    if len(np.unique(bins_with_values.flatten())) < 2 ** n_bits:
+        n_clusters = len(np.unique(bins_with_values.flatten()))
+    else:
+        n_clusters = 2 ** n_bits
+
+    kmeans = KMeans(n_clusters=n_clusters)
+    tensor_max = np.max(bins_with_values)
+    threshold = max_power_of_two(tensor_max, min_threshold)
+
+    tensor_for_kmeans = int_quantization_with_scale(bins, threshold, MULTIPLIER_N_BITS)
+    kmeans.fit(tensor_for_kmeans.reshape(-1, 1), sample_weight=np.insert(counts, 0, 0))
+
+    return {CLUSTER_CENTERS: np.round(kmeans.cluster_centers_),
+            SCALE_PER_CHANNEL: threshold}
