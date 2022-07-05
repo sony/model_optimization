@@ -98,7 +98,7 @@ def keras_model_grad(graph_float: common.Graph,
                      interest_points: List[BaseNode],
                      output_list: List[BaseNode],
                      all_outputs_indices: List[int],
-                     alpha: float = 0.1) -> List[float]:
+                     alpha: float = 0.3) -> List[float]:
     """
     Computes the gradients of a Keras model's outputs with respect to the feature maps of the set of given
     interest points. It then uses the gradients to compute the hessian trace for each interest point and normalized the

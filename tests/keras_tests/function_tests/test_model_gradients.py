@@ -1,7 +1,6 @@
 import keras
 import unittest
 
-from keras.layers import Softmax
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, SeparableConv2D, Reshape
 from tensorflow import initializers
 import numpy as np
@@ -114,7 +113,7 @@ class TestModelGradients(unittest.TestCase):
                                   interest_points=interest_points,
                                   output_list=output_nodes,
                                   all_outputs_indices=[len(interest_points) - 1],
-                                  alpha=0.1)
+                                  alpha=0.3)
 
         # Checking that the wiehgts where computed and normalized correctly
         self.assertTrue(np.isclose(np.sum(x), 1))
@@ -183,7 +182,7 @@ class TestModelGradients(unittest.TestCase):
                                   interest_points=interest_points,
                                   output_list=output_nodes,
                                   all_outputs_indices=output_indices,
-                                  alpha=0.1)
+                                  alpha=0.3)
 
         # Checking that the wiehgts where computed and normalized correctly
         self.assertTrue(np.isclose(np.sum(x), 1))

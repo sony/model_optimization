@@ -385,7 +385,7 @@ class PytorchImplementation(FrameworkImplementation):
                    interest_points: List[BaseNode],
                    output_list: List[BaseNode],  # dummy - not used in pytorch
                    all_outputs_indices: List[int],
-                   alpha: float = 0.1) -> List[float]:
+                   alpha: float = 0.3) -> List[float]:
         """
         Calls a PyTorch specific model gradient calculation function, which computes the gradients of the model's
         outputs with respect to the feature maps of the set of given interest points.

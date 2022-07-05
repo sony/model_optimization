@@ -211,7 +211,7 @@ class ModelGradientsBasicModelTest(BasePytorchTest):
                                          model_input_tensors=input_tensors,
                                          interest_points=ipts,
                                          all_outputs_indices=[len(ipts) - 1],
-                                         alpha=0.1)
+                                         alpha=0.3)
 
         # Checking that the weights where computed and normalized correctly
         self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
@@ -243,7 +243,7 @@ class ModelGradientsAdvancedModelTest(BasePytorchTest):
                                          model_input_tensors=input_tensors,
                                          interest_points=ipts,
                                          all_outputs_indices=[len(ipts) - 1],
-                                         alpha=0.1)
+                                         alpha=0.3)
 
         # Checking that the weights where computed and normalized correctly
         self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
@@ -277,7 +277,7 @@ class ModelGradientsOutputReplacementTest(BasePytorchTest):
                                          model_input_tensors=input_tensors,
                                          interest_points=ipts,
                                          all_outputs_indices=output_indices,
-                                         alpha=0.1)
+                                         alpha=0.3)
 
         # Checking that the weights where computed and normalized correctly
         self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))

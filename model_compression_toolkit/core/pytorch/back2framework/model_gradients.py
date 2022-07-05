@@ -169,7 +169,7 @@ def pytorch_model_grad(graph_float: common.Graph,
                        model_input_tensors: Dict[BaseNode, torch.Tensor],
                        interest_points: List[BaseNode],
                        all_outputs_indices: List[int],
-                       alpha: float = 0.1) -> List[float]:
+                       alpha: float = 0.3) -> List[float]:
     """
     Computes the gradients of a Pytorch model's outputs with respect to the feature maps of the set of given
     interest points. It then uses the gradients to compute the hessian trace for each interest point and normalized the
