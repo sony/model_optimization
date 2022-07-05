@@ -7,7 +7,7 @@
 API Docs
 =========
 
-.. note:: This API is deprecated. Please switch to the :ref:`new API<ug-experimental_api_docs>`
+.. note:: This API will be removed in future releases. Please switch to the :ref:`new API<ug-experimental_api_docs>`
 
 **Init module for MCT API.**
 
