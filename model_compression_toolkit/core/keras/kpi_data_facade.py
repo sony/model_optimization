@@ -15,7 +15,8 @@
 
 from typing import Callable
 
-from model_compression_toolkit import KPI, MixedPrecisionQuantizationConfig, CoreConfig, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit import MixedPrecisionQuantizationConfig, CoreConfig, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
@@ -73,6 +74,7 @@ if importlib.util.find_spec("tensorflow") is not None\
 
             >>> import model_compression_toolkit as mct
             >>> kpi_data = keras_kpi_data(model, repr_datagen)
+
 
         """
 

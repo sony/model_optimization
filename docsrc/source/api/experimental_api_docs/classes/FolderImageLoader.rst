@@ -16,5 +16,5 @@ Folder Image Loader API
 Default file types to scan
 =================================
 
-.. autodata:: model_compression_toolkit.common.data_loader.FILETYPES
+.. autodata:: model_compression_toolkit.core.common.data_loader.FILETYPES
 

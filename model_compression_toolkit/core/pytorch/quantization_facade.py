@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable, List
+from typing import Callable, List, Tuple
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import PYTORCH
+from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
@@ -53,7 +54,7 @@ if importlib.util.find_spec("torch") is not None:
                                            network_editor: List[EditRule] = [],
                                            gptq_config: GradientPTQConfig = None,
                                            analyze_similarity: bool = False,
-                                           target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
+                                           target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC) -> Tuple[Module, UserInformation]:
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds
@@ -140,7 +141,7 @@ if importlib.util.find_spec("torch") is not None:
                                                            network_editor: List[EditRule] = [],
                                                            gptq_config: GradientPTQConfig = None,
                                                            analyze_similarity: bool = False,
-                                                           target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
+                                                           target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC) -> Tuple[Module, UserInformation]:
         """
          Quantize a pretrained Pytorch model using post-training quantization. By default, the model is
          quantized using a symmetric constraint quantization thresholds (power of two) as defined in the
