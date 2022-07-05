@@ -27,7 +27,8 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.gptq.keras.graph_info import get_trainable_parameters, get_weights_for_loss
+from model_compression_toolkit.gptq.keras.graph_info import get_trainable_parameters, get_weights_for_loss, \
+    get_gumbel_probability
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 import numpy as np
@@ -36,12 +37,14 @@ from model_compression_toolkit.core.keras.constants import BIAS, USE_BIAS
 from model_compression_toolkit.gptq.keras.quantizer import WeightQuantizeConfig
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.gptq.keras.model_builder import model_builder as gptq_model_builder
+from model_compression_toolkit.gptq.keras.optimizers.sam_optimizer import SAM
 
 
 class KerasGPTQTrainer(GPTQTrainer):
     """
     Keras GPTQ training class for fine-tuning a quantized model
     """
+
     def __init__(self,
                  graph_float: Graph,
                  graph_quant: Graph,
@@ -58,27 +61,36 @@ class KerasGPTQTrainer(GPTQTrainer):
             graph_float: Graph to build a float networks from.
             graph_quant: Graph to build a quantized networks from.
             gptq_config: GradientPTQConfig with parameters about the tuning process.
+            fw_impl: FrameworkImplementation object with a specific framework methods implementation.
             fw_info: Framework information
         """
         super().__init__(graph_float, graph_quant, gptq_config, fw_impl, fw_info)
+        self.loss_list = []
         self.input_scale = 1
-        trainable_weights = get_trainable_parameters(self.fxp_model,
-                                                     fw_info,
-                                                     add_bias=gptq_config.train_bias)
+        trainable_weights, bias_weights, trainable_threshold, temperature_weights = get_trainable_parameters(
+            self.fxp_model,
+            fw_info,
+            add_bias=True, is_gumbel=gptq_config.is_gumbel())
 
         self.flp_weights_list, self.fxp_weights_list = get_weights_for_loss(self.fxp_model)
 
-        if not (len(self.compare_points) == len(trainable_weights) == len(self.flp_weights_list) == len(self.fxp_weights_list)):
+        if not (len(self.compare_points) == len(trainable_weights) == len(self.flp_weights_list) == len(
+                self.fxp_weights_list)):
             raise Exception(
                 "GPTQ: Mismatch between number of compare points, number of layers with trainable weights " +
                 "and number of float and quantized weights for loss")
 
         self.flattened_trainable_weights = [w for layer_weights in trainable_weights for w in layer_weights]
+        self.flattened_bias_weights = [w for layer_weights in bias_weights for w in layer_weights]
+        self.trainable_threshold = trainable_threshold
+        self.temperature_weights = temperature_weights
 
         if self.float_user_info.input_scale != self.gptq_user_info.input_scale:
             common.Logger.error("Input scale mismatch between float and GPTQ networks")  # pragma: no cover
         else:
             self.input_scale = self.gptq_user_info.input_scale
+        self.gamma_entropy = 0.01
+        self.eps = 1e-6
 
     def build_gptq_model(self):
         """
@@ -92,6 +104,40 @@ class KerasGPTQTrainer(GPTQTrainer):
                                   append2output=self.compare_points,
                                   fw_info=self.fw_info)
 
+    def compute_gradients(self, in_y_float: List[tf.Tensor], input_data: List[np.ndarray], parameter2update: List,
+                          training=True) -> Tuple[tf.Tensor, List[tf.Tensor]]:
+        """
+        Get outputs from both teacher and student networks. Compute the observed error,
+        and use it to compute the gradients and applying them to the student weights.
+        Args:
+            in_y_float:
+            input_data: A list of Input tensors to pass through the networks.
+            parameter2update:
+            training:
+
+        Returns:
+            Loss and gradients.
+        """
+
+        with tf.GradientTape(persistent=True) as tape:
+            y_fxp = self.fxp_model(input_data, training=training)  # running fxp model
+            loss_value = self.gptq_config.loss(y_fxp, in_y_float, self.fxp_weights_list, self.flp_weights_list,
+                                               self.compare_points_mean, self.compare_points_std)
+            if self.gptq_config.is_gumbel() and self.gptq_config.temperature_learning:
+                gumbel_prob = get_gumbel_probability(self.fxp_model)
+                gumbel_reg = 0
+                for p in gumbel_prob:
+                    entropy = -tf.reduce_mean(tf.reduce_sum(p * tf.math.log(tf.maximum(p, self.eps)), axis=0))
+                    gumbel_reg += entropy
+                gumbel_reg /= len(gumbel_prob)
+                loss_value += self.gamma_entropy * gumbel_reg
+
+        # Use the gradient tape to automatically retrieve
+        # the gradients of the trainable variables with respect to the loss.
+        grads = tape.gradient(loss_value, parameter2update)
+
+        return loss_value, grads
+
     def train(self, representative_data_gen: Callable):
         """
         Train the quantized model using GPTQ training process in Keras framework
@@ -99,40 +145,63 @@ class KerasGPTQTrainer(GPTQTrainer):
             representative_data_gen: Dataset to use for inputs of the models.
         """
 
-        def update_step(input_data: List[np.ndarray]) -> Tuple[tf.Tensor, List[tf.Tensor]]:
-            """
-            Get outputs from both teacher and student networks. Compute the observed error,
-            and use it to compute the gradients and applying them to the student weights.
-            Args:
-                input_data: A list of Input tensors to pass through the networks.
-            Returns:
-                Loss and gradients.
-            """
-            y_float = self.float_model(input_data)  # running float model
-            with tf.GradientTape(persistent=True) as tape:
-                y_fxp = self.fxp_model(input_data)  # running fxp model
-                loss_value = self.gptq_config.loss(y_fxp, y_float, self.fxp_weights_list, self.flp_weights_list,
-                                              self.compare_points_mean, self.compare_points_std)
-
-            # Use the gradient tape to automatically retrieve
-            # the gradients of the trainable variables with respect to the loss.
-            grads = tape.gradient(loss_value, self.flattened_trainable_weights)
-
-            # Run one step of gradient descent by updating
-            # the value of the variables to minimize the loss.
-            self.gptq_config.optimizer.apply_gradients(zip(grads, self.flattened_trainable_weights))
-
-            return loss_value, grads
-
+        if self.gptq_config.temperature_learning:
+            w2train = [*self.flattened_trainable_weights, *self.temperature_weights]
+        else:
+            w2train = self.flattened_trainable_weights
+        compute_gradients = self.compute_gradients
+        if self.gptq_config.sam_optimization:
+            sam = SAM(self.fxp_model, self.compute_gradients, w2train, self.gptq_config.rho)
+            compute_gradients = sam.compute_gradients
         # ----------------------------------------------
         # Training loop
         # ----------------------------------------------
-        self.loss_list = []
         for _ in tqdm(range(self.gptq_config.n_iter)):
             data = representative_data_gen()
-            loss_value_step, grads = update_step([d * self.input_scale for d in data])
+            input_data = [d * self.input_scale for d in data]
+            y_float = self.float_model(input_data)  # running float model
+            loss_value_step, grads = compute_gradients(y_float, input_data, w2train)
+            # Run one step of gradient descent by updating
+            # the value of the variables to minimize the loss.
+            self.gptq_config.optimizer.apply_gradients(zip(grads, w2train))
             if self.gptq_config.log_function is not None:
-                self.gptq_config.log_function(loss_value_step, grads, self.flattened_trainable_weights, self.compare_points)
+                self.gptq_config.log_function(loss_value_step, grads, w2train,
+                                              self.compare_points)
+            self.loss_list.append(loss_value_step.numpy())
+            common.Logger.debug(f'last loss value: {self.loss_list[-1]}')
+        # ----------------------------------------------
+        # Training loop Bias
+        # ----------------------------------------------
+        if self.gptq_config.train_bias:
+            if self.gptq_config.optimizer_rest is None:
+                common.Logger.error("To enable bias micro training ")
+            common.Logger.info("Starting Bias Training")
+            self.micro_training_loop(representative_data_gen, int(0.2 * self.gptq_config.n_iter),
+                                     self.flattened_bias_weights)
+
+    def micro_training_loop(self, data_function, n_iteration, variable2update):
+        """
+        This function run a micro training loop on given set of parameters.
+        Args:
+            data_function: A callable function that give a batch of samples.
+            n_iteration: Number of update iteration.
+            variable2update: A list of trainable variable to update.
+
+        Returns: None
+
+        """
+        for _ in tqdm(range(int(n_iteration))):
+            data = data_function()
+            input_data = [d * self.input_scale for d in data]
+            y_float = self.float_model(input_data)  # running float model
+            loss_value_step, grads = self.compute_gradients(y_float, [d * self.input_scale for d in data],
+                                                            variable2update, training=False)
+            # Run one step of gradient descent by updating
+            # the value of the variables to minimize the loss.
+            self.gptq_config.optimizer_rest.apply_gradients(zip(grads, variable2update))
+            if self.gptq_config.log_function is not None:
+                self.gptq_config.log_function(loss_value_step, grads, variable2update,
+                                              self.compare_points)
             self.loss_list.append(loss_value_step.numpy())
             common.Logger.debug(f'last loss value: {self.loss_list[-1]}')
 

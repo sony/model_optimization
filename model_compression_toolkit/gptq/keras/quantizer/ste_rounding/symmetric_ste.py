@@ -13,35 +13,54 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 import numpy as np
 import tensorflow as tf
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.core.keras.quantizer.base_quantizer import BaseTrainableQuantizer
-from model_compression_toolkit.gptq.keras.quantizer.utils import symmetric_constrained_quantizer
+from model_compression_toolkit.gptq.keras.quantizer import qutils
 from model_compression_toolkit.core.common.constants import THRESHOLD
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
-from model_compression_toolkit.core.keras.constants import KERNEL
+from model_compression_toolkit.gptq.keras.quantizer.kernel_functions import get_kernel
+from model_compression_toolkit.gptq.keras import gptq_constants
 
 
-def get_kernel(weights_list: list) -> tf.Tensor:
+def symmetric_constrained_quantizer(input_tensor: tf.Tensor,
+                                    auxvar_tensor: tf.Variable,
+                                    max_tensor: tf.Tensor,
+                                    num_bits: int,
+                                    signed: bool,
+                                    power_of_two: bool,
+                                    max_lsbs_change: int = 1) -> tf.Tensor:
     """
-    This function a list of weights and return the kernel
+    Quantize a tensor symmetrically with maximum LSBs shift.
     Args:
-        weights_list:  A list of Tensors
+        input_tensor: Tensor to quantize. values of this tensor are not changed during gptq.
+        auxvar_tensor: Tensor that manifests the bit shift the weight due to gptq
+        max_tensor: Tensor with max values to compute the threshold.
+        num_bits: Num of bits to use.
+        signed: Signedness of the quantization range.
+        power_of_two: Whether the threshold should be constrained or not.
+        max_lsbs_change: maximum number of LSBs that the auxvar is allowed to change
 
-    Returns: The kernel tensor.
-
+    Returns:
+        A quantized tensor.
     """
-    for w in weights_list:
-        if KERNEL in w.name:
-            return w
-    raise Exception("Can't find kernel variable")
+
+    if power_of_two:
+        max_tensor = qutils.power_of_two_max(max_tensor)
+    delta = qutils.calculate_delta(max_tensor, num_bits, signed)
+    input_tensor_int = tf.stop_gradient(tf.round(input_tensor / delta))
+    tensor_q = qutils.ste_round(
+        input_tensor_int + qutils.ste_clip(auxvar_tensor, max_val=max_lsbs_change * delta) / delta)
+    min_int = -int(signed) * (2 ** (num_bits - int(signed)))
+    max_int = (2 ** (num_bits - int(signed))) - 1
+    return delta * qutils.ste_clip(tensor_q, max_val=max_int, min_val=min_int)
 
 
-class TrainableWeightQuantizer(BaseTrainableQuantizer):
+class STEWeightQuantizer(BaseTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer inputs.
     """
@@ -95,27 +114,28 @@ class TrainableWeightQuantizer(BaseTrainableQuantizer):
         """
         w_shape = get_kernel(layer.weights).shape
         ar_iter = layer.add_weight(
-            name + '_gptq_iter',
+            name + gptq_constants.GPTQ_ITER,
             shape=(),
             initializer=tf.keras.initializers.Constant(0.0),
             trainable=False)
 
         ptq_threshold_tensor = layer.add_weight(
-            name + '_ptq_threshold',
+            name + gptq_constants.THRESHOLD_TENSOR,
             shape=len(self.threshold_values) if self.per_axis else (),
             initializer=tf.keras.initializers.Constant(1.0),
             trainable=False)
         ptq_threshold_tensor.assign(self.threshold_values)
 
         auxvar_tensor = layer.add_weight(
-            name + '_auxvar',
+            name + gptq_constants.AUXVAR,
             shape=w_shape,
             initializer=tf.keras.initializers.Constant(0.0),
             trainable=True)
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {'ptq_threshold_tensor': ptq_threshold_tensor, 'auxvar_tensor': auxvar_tensor,
-                                     'ar_iter': ar_iter}
+        self.quantizer_parameters = {gptq_constants.THRESHOLD_TENSOR: ptq_threshold_tensor,
+                                     gptq_constants.AUXVAR: auxvar_tensor,
+                                     gptq_constants.GPTQ_ITER: ar_iter}
         return self.quantizer_parameters
 
     def __call__(self, inputs: tf.Tensor,
@@ -134,8 +154,8 @@ class TrainableWeightQuantizer(BaseTrainableQuantizer):
             The quantized tensor.
         """
 
-        auxvar = weights['auxvar_tensor']
-        ptq_threshold_tensor = weights['ptq_threshold_tensor']
+        auxvar = weights[gptq_constants.AUXVAR]
+        ptq_threshold_tensor = weights[gptq_constants.THRESHOLD_TENSOR]
 
         if self.per_axis:
             input_shape = inputs.shape
@@ -157,6 +177,9 @@ class TrainableWeightQuantizer(BaseTrainableQuantizer):
                                                    self.num_bits,
                                                    self.signed,
                                                    self.power_of_two)
+
+    def get_aux_variable(self):
+        return self.quantizer_parameters[gptq_constants.AUXVAR]
 
     def get_config(self) -> Dict[str, Any]:
         """
@@ -182,7 +205,7 @@ class TrainableWeightQuantizer(BaseTrainableQuantizer):
             Keys must match NodeQuantizationConfig attributes
 
         """
-        old_threshold = self.quantizer_parameters['ptq_threshold_tensor']
+        old_threshold = self.quantizer_parameters[gptq_constants.THRESHOLD_TENSOR]
         return {THRESHOLD: old_threshold.numpy().reshape(self.threshold_shape)}
 
     def get_trainable_parameters(self):
@@ -195,6 +218,14 @@ class TrainableWeightQuantizer(BaseTrainableQuantizer):
         """
         return [t for t in self.quantizer_parameters.values() if t.trainable]
 
+    def get_quantization_variable(self) -> List[tf.Tensor]:
+        """
+         This function return a list of quantizer parameters.
+         Returns: A list of the quantizer parameters
+
+         """
+        return [self.quantizer_parameters[gptq_constants.THRESHOLD_TENSOR]]
+
     def __eq__(self, other: Any) -> bool:
         """
         Check if equals to another object.
@@ -204,7 +235,7 @@ class TrainableWeightQuantizer(BaseTrainableQuantizer):
         Returns:
             Whether they are equal or not.
         """
-        if not isinstance(other, TrainableWeightQuantizer):
+        if not isinstance(other, STEWeightQuantizer):
             return False
 
         return (self.num_bits == other.num_bits and

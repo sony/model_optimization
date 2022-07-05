@@ -12,13 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+from enum import Enum
 from typing import Callable, Any
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 
 MAX_LSBS_CHANGE_MAP = {8: 4,
                        4: 2,
                        2: 1}
+
+
+class RoundingType(Enum):
+    STE = 0
+    GumbelRounding = 1
 
 
 class GradientPTQConfig:
@@ -29,9 +34,15 @@ class GradientPTQConfig:
     def __init__(self,
                  n_iter: int,
                  optimizer: Any,
+                 optimizer_rest: Any = None,
                  loss: Callable = None,
                  log_function: Callable = None,
-                 train_bias: bool = True,
+                 train_bias: bool = False,
+                 quantization_parameters_learning: bool = False,
+                 temperature_learning: bool = False,
+                 sam_optimization: bool = False,
+                 rounding_type: RoundingType = RoundingType.STE,
+                 rho: float = 0.01,
                  lsb_change_per_bit_width: dict = DefaultDict(MAX_LSBS_CHANGE_MAP, lambda: 1)):
         """
         Initialize a GradientPTQConfig.
@@ -44,12 +55,26 @@ class GradientPTQConfig:
              accordingly. see example in multiple_tensors_mse_loss
             log_function (Callable): Function to log information about the GPTQ process.
             train_bias (bool): Whether to update the bias during the training or not.
+            quantization_parameters_learning (bool): Whether to update the quantization param during the training or not.
+            temperature_learning (bool): Whether to update the temperature during the training or not.
+            sam_optimization (bool): Whether to update use sam optimization.
+            rounding_type (RoundingType): A enum that define the rounding type (STE or GumbelRoudning).
+            rho (rho): A floating point number that define the sam optimization lookahead.
             lsb_change_per_bit_width (dict): Whether to update the bias during the training or not.
 
         """
         self.n_iter = n_iter
         self.optimizer = optimizer
+        self.optimizer_rest = optimizer_rest
         self.loss = loss
         self.log_function = log_function
         self.train_bias = train_bias
+        self.quantization_parameters_learning = quantization_parameters_learning
+        self.temperature_learning = temperature_learning
+        self.rounding_type = rounding_type
+        self.sam_optimization = sam_optimization
+        self.rho = rho
         self.lsb_change_per_bit_width = lsb_change_per_bit_width
+
+    def is_gumbel(self) -> bool:
+        return self.rounding_type == RoundingType.GumbelRounding

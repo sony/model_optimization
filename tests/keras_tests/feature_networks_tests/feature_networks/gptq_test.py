@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import List
+
 import numpy as np
 import tensorflow as tf
 
@@ -20,19 +22,39 @@ import model_compression_toolkit.gptq.common.gptq_config
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
-from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
+from tests.keras_tests.tpc_keras import get_16bit_tpc
 
 keras = tf.keras
 layers = keras.layers
 tp = mct.target_platform
 
 
+def build_model(in_input_shape: List[int]) -> keras.Model:
+    """
+    This function generate a simple network to test GPTQ
+    Args:
+        in_input_shape: Input shape list
+
+    Returns:
+
+    """
+    inputs = layers.Input(shape=in_input_shape)
+    x = layers.Conv2D(3, 4)(inputs)
+    x = layers.BatchNormalization()(x)
+    x = layers.PReLU()(x)
+    x = layers.Conv2D(7, 8)(x)
+    x = layers.BatchNormalization()(x)
+    outputs = layers.ReLU()(x)
+    model = keras.Model(inputs=inputs, outputs=outputs)
+    return model
+
+
 class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test,
-                         input_shape=(1,16,16,3))
+                         input_shape=(1, 16, 16, 3))
 
     def get_tpc(self):
         return get_16bit_tpc("gptq_test")
@@ -43,25 +65,18 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
 
     def get_gptq_config(self):
         return model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(5,
-                                                                                   optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+                                                                                   optimizer=tf.keras.optimizers.Adam(
+                                                                                       learning_rate=0.0001),
                                                                                    loss=multiple_tensors_mse_loss)
 
     def create_networks(self):
-        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(3, 4)(inputs)
-        x = layers.BatchNormalization()(x)
-        x = layers.PReLU()(x)
-        x = layers.Conv2D(7, 8)(x)
-        x = layers.BatchNormalization()(x)
-        outputs = layers.ReLU()(x)
-        model = keras.Model(inputs=inputs, outputs=outputs)
-        return model
+        in_shape = self.get_input_shapes()[0][1:]
+        return build_model(in_shape)
 
     def compare(self, ptq_model, model_float, input_x=None, quantization_info: UserInformation = None):
         raise NotImplementedError(f'{self.__class__} did not implement compare')
 
     def run_test(self):
-
         x = self.generate_inputs()
 
         def representative_data_gen():
@@ -101,7 +116,11 @@ class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
 
     def get_gptq_config(self):
         return model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(50,
-                                                                                   optimizer=tf.keras.optimizers.SGD(learning_rate=0.5),
+                                                                                   optimizer=tf.keras.optimizers.Adam(
+                                                                                       learning_rate=1e-2),
+                                                                                   optimizer_rest=tf.keras.optimizers.Adam(
+                                                                                       learning_rate=1e-2),
+                                                                                   train_bias=True,
                                                                                    loss=multiple_tensors_mse_loss)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
@@ -122,6 +141,7 @@ class GradientPTQLearnRateZeroTest(GradientPTQBaseTest):
     def get_gptq_config(self):
         return model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(1,
                                                                                    optimizer=tf.keras.optimizers.SGD(learning_rate=0.0),
+                                                                                   optimizer_rest=tf.keras.optimizers.SGD(learning_rate=0.0),
                                                                                    loss=multiple_tensors_mse_loss)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
