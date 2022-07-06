@@ -95,14 +95,14 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
             self.activation_quantizers = self._get_activation_quantizers()
             self.activation_bitwidth_idx = max_candidate_idx
 
-    def forward(self, x: Any, *args: Any) -> Any:
+    def forward(self, x: Any, *args: Any, **kwargs: Any) -> Any:
         """
         Args:
             x: input tensors to layer.
         Returns:
             torch Tensor which is the output of the wrapped layer on the given input.
         """
-        outputs = self.layer(x, *args)
+        outputs = self.layer(x, *args, **kwargs)
 
         if self.enable_activation_quantization:
             # add fake quant to quantize activations with the active number of bits

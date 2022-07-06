@@ -243,9 +243,9 @@ can be used as follows:
 TargetPlatformModel Code Example
 ===================================
 
-.. literalinclude:: ../../../../../model_compression_toolkit/core/tpc_models/default_tp_model.py
+.. literalinclude:: ../../../../../model_compression_toolkit/core/tpc_models/default_tpc/v3/tp_model.py
     :language: python
-    :lines: 15-151
+    :lines: 15-158
 
 |
 
@@ -340,9 +340,9 @@ to the TargetPlatformCapabilities like in the following example:
 TargetPlatformCapabilities Code Example
 ===========================================
 
-.. literalinclude:: ../../../../../model_compression_toolkit/core/tpc_models/keras_tp_models/keras_default.py
+.. literalinclude:: ../../../../../model_compression_toolkit/core/tpc_models/default_tpc/v3/tpc_keras.py
     :language: python
-    :lines: 15-94
+    :lines: 15-86
 
 
 
