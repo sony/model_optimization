@@ -23,18 +23,42 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.keras.quantizer import kernel_functions
 from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.gumbel_softmax import sample_gumbel
 from model_compression_toolkit.gptq.common import gptq_constants
+from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
+from tensorflow.python.framework.tensor_shape import TensorShape
+
+P_INIT = 0.01
+N_CYCLES = 4
+MIM_TEMP = 0.5
+MAX_TEMP = 1.0
 
 
-def _init_aux_var(w_shape, m):
+def _init_aux_var(w_shape: List[int], m: int, p: float = P_INIT) -> np.ndarray:
+    """
+    This function generate a random pi matrix for Gumbel Rounding
+    Args:
+        w_shape(List[int]): A list of integers that represent the shape of the weights tensor to be quantization
+        p(float): A floating point number that represent the probability of non round options of pi matrix.
+        m(int):  An integer that define the number of shift
+
+    Returns: A numpy array of pi tensor
+
+    """
     m_hat = m // 2
-    p = 0.01
     shift = -np.log(-np.log(1 - p))
     n = np.random.randn(*[m, *w_shape]) * np.sqrt(np.power(np.pi, 2) / 6)
     n[m_hat, :] += shift
     return n
 
 
-def _init_shift_var(m):
+def _init_shift_var(m: int) -> List[int]:
+    """
+    This function generate an list of 2*m+1 from -m to m
+    Args:
+        m: An integer value the represent m
+
+    Returns: A list of size m
+
+    """
     m_hat = m // 2
     aux_index_shift = [-m_hat + i for i in range(m)]
     return aux_index_shift
@@ -82,9 +106,9 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
         self.max_lsbs_change = max_lsbs_change_map.get(num_bits)
         self.m = 2 * self.max_lsbs_change + 1
 
-        self.n_cycles = 4
-        self.minimal_temp = 0.5
-        self.maximal_temp = 1.0
+        self.n_cycles = N_CYCLES
+        self.minimal_temp = MIM_TEMP
+        self.maximal_temp = MAX_TEMP
         self.cycle_iterations = int(self.max_iteration / self.n_cycles)
         self.tau = None
         self.g_t = None
@@ -93,6 +117,14 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
         common.Logger.info(f"Setting Gumbel Rounding with cycle size of {self.cycle_iterations}")
 
         def tau_function(i):
+            """
+            A function the generate the gumbel temperature.
+            Args:
+                i: An int the represent the current iteration number
+
+            Returns: A temperature value.
+
+            """
             if i < (self.cycle_iterations - 1):
                 index = ((i + 1) % self.cycle_iterations) / scale
             else:
@@ -111,7 +143,9 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
     def disable_update(self):
         self.update_gumbel_param = False
 
-    def build(self, tensor_shape, name, layer):
+    def build(self, tensor_shape: TensorShape,
+              name: str,
+              layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
         """
         Add min and max variables to layer.
         Args:

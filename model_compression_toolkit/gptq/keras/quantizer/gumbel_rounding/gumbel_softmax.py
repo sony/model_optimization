@@ -44,7 +44,7 @@ def gumbel_softmax(in_pi: tf.Tensor, in_tau: tf.Tensor, in_gumbel: tf.Tensor, ep
     return tf.nn.softmax((in_pi + in_tau * in_gumbel) / (in_tau + eps), axis=0)
 
 
-def ste_gumbel(in_prob: tf.Tensor):
+def ste_gumbel(in_prob: tf.Tensor) -> tf.Tensor:
     """
     This function apply ste on the output of the gumbel softmax.
     Args:

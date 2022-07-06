@@ -20,7 +20,7 @@ import tensorflow as tf
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.core.keras.quantizer.base_quantizer import BaseTrainableQuantizer
-from model_compression_toolkit.gptq.keras.quantizer import qutils
+from model_compression_toolkit.gptq.keras.quantizer import quant_utils as  qutils
 from model_compression_toolkit.core.common.constants import THRESHOLD
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.gptq.keras.quantizer.kernel_functions import get_kernel
@@ -178,7 +178,7 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
                                                    self.signed,
                                                    self.power_of_two)
 
-    def get_aux_variable(self):
+    def get_aux_variable(self) -> tf.Tensor:
         return self.quantizer_parameters[gptq_constants.AUXVAR]
 
     def get_config(self) -> Dict[str, Any]:
@@ -193,7 +193,7 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
             'power_of_two': self.power_of_two
         }
 
-    def get_quant_config(self, layer)-> Dict[str, np.ndarray]:
+    def get_quant_config(self, layer) -> Dict[str, np.ndarray]:
         """
         Returns the config used to edit NodeQuantizationConfig after GPTQ retraining
 

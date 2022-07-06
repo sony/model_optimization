@@ -14,7 +14,7 @@
 # ==============================================================================
 import tensorflow as tf
 import numpy as np
-from model_compression_toolkit.gptq.keras.quantizer import qutils
+from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.base_gumbel_rounding import GumbelRoundingBase
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape

@@ -14,7 +14,7 @@
 # ==============================================================================
 import tensorflow as tf
 import numpy as np
-from model_compression_toolkit.gptq.keras.quantizer import qutils
+from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.base_gumbel_rounding import GumbelRoundingBase
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape
@@ -184,7 +184,7 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
                                                        self.signed,
                                                        self.power_of_two)
 
-    def get_quant_config(self, layer)-> Dict[str, np.ndarray]:
+    def get_quant_config(self, layer) -> Dict[str, np.ndarray]:
         """
         Returns the config used to edit NodeQuantizationConfig after GPTQ retraining
 
