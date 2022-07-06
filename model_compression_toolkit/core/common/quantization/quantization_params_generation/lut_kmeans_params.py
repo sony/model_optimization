@@ -125,7 +125,8 @@ def lut_kmeans_histogram(bins: np.ndarray,
     tensor_max = np.max(bins_with_values)
     threshold = max_power_of_two(tensor_max, min_threshold)
 
-    tensor_for_kmeans = int_quantization_with_scale(bins, threshold, MULTIPLIER_N_BITS)
+    signed = np.any(bins[:-1][counts != 0] < 0)  # Whether histogram contains negative values or not.
+    tensor_for_kmeans = int_quantization_with_scale(data=bins, scale=threshold, n_bits=MULTIPLIER_N_BITS, signed=signed)
     kmeans.fit(tensor_for_kmeans.reshape(-1, 1), sample_weight=np.insert(counts, 0, 0))
 
     return {CLUSTER_CENTERS: np.round(kmeans.cluster_centers_),
