@@ -174,17 +174,20 @@ def int_quantization_with_threshold(data: np.ndarray,
                                     signed: bool = True,
                                     eps: float = EPS) -> np.ndarray:
     """
-    Divides data by scale and quantizes it to integers in the range [2 ** (n_bits - 1) - 1, -2 ** (n_bits - 1)]
+    Divides data by threshold and quantize it to integers in the quantization range (depends on signed value).
+
     Args:
         data: tensor data.
         threshold: threshold to divide the data.
         n_bits: number of bits that determines the quantization range.
+        signed: Whether quantization range is signed or not (relevant only for histogram quantization).
         eps: Small value for numerical stability in division.
 
     Returns:
-        Quantized tensor.
+        Uniform Quantized tensor.
 
     """
+
     if signed:
         a_max = 2 ** (n_bits - 1) - 1
         a_min = -2 ** (n_bits - 1)

@@ -1,30 +1,66 @@
+from typing import Tuple, Dict, Any
+
 import numpy as np
 import tensorflow as tf
 from keras.layers import Layer
+from tensorflow.python.util.object_identity import Reference as TFReference
 
 from model_compression_toolkit.core.common.constants import SIGNED, CLUSTER_CENTERS, EPS, \
     MULTIPLIER_N_BITS, THRESHOLD
 
 
 class LUTFakeQuant(Layer):
-    def __init__(self, quantization_params, **kwargs):
+    """
+    A custom Keras layer for quantizing activation tensor with non-uniform quantization (using lookup table clustering).
+    """
+
+    def __init__(self, quantization_params: Dict[str, np.ndarray], **kwargs):
         super(LUTFakeQuant, self).__init__(**kwargs)
         self.quantization_params = quantization_params
         self.activation_is_signed = self.quantization_params.get(SIGNED)
         self.cluster_centers = self.quantization_params.get(CLUSTER_CENTERS)
-        self.threshold = self.quantization_params.get(THRESHOLD) 
+        self.threshold = self.quantization_params.get(THRESHOLD)
 
-    def build(self, input_shape):
+    def build(self, input_shape: Tuple[int]):
+        """
+        Builds the layer.
+
+        Args:
+            input_shape: The layer's input shape.
+
+        """
         super(LUTFakeQuant, self).build(input_shape)
 
-    def call(self, input_data, **kwargs):
+    def call(self, input_data: Any, **kwargs) -> TFReference:
+        """
+
+        Args:
+            input_data: A Keras input tensor.
+            **kwargs: Optional arguments' dictionary.
+
+        Returns: KerasTensor after applying a non-uniform fake quantization.
+
+        """
         if self.activation_is_signed is None or self.cluster_centers is None or self.threshold is None:
             return None
 
         _quant_output = self.lut_kmeans_quantizer(input_data)
         return _quant_output
 
-    def lut_kmeans_quantizer(self, tensor_data) -> np.ndarray:
+    def lut_kmeans_quantizer(self, tensor_data: Any) -> TFReference:
+        """
+        Quantize a tensor using a non-uniform quantization based on the pre-defined kmeans clusters.
+        1. Scales tensor_data with the threshold into 8-bit quantization range.
+        2. Assigns cluster centers to each value.
+        3. Scales back by multiplying the result by threshold and dividing with the quantization range max value.
+        The result is the quantized tensor.
+
+        Args:
+            tensor_data: Input activation tensor.
+
+        Returns: Quantized tensor.
+        """
+
         tensor = self.int_quantization_with_threshold(tensor_data, self.threshold, MULTIPLIER_N_BITS)
         tensor = tf.expand_dims(tensor, -1)
 
@@ -37,10 +73,23 @@ class LUTFakeQuant(Layer):
         return quant_tensor
 
     def int_quantization_with_threshold(self,
-                                        data: np.ndarray,
+                                        data: Any,
                                         threshold: np.ndarray,
                                         n_bits: int,
-                                        eps: float = EPS):
+                                        eps: float = EPS) -> Any:
+        """
+        Divides data by threshold and quantize it to integers in the quantization range (depends on signed value).
+
+        Args:
+            data: tensor data.
+            threshold: threshold to divide the data.
+            n_bits: number of bits that determines the quantization range.
+            eps: Small value for numerical stability in division.
+
+        Returns:
+            Uniform Quantized tensor.
+
+        """
 
         if self.activation_is_signed:
             clip_max = 2 ** (n_bits - 1) - 1

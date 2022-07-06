@@ -47,11 +47,11 @@ def lut_kmeans_quantizer(tensor_data: np.ndarray,
         Quantized data.
     """
     cluster_centers = quantization_params[CLUSTER_CENTERS]
-    threhsolds_per_channel = quantization_params[SCALE_PER_CHANNEL]
-    tensor = int_quantization_with_threshold(tensor_data, threhsolds_per_channel, MULTIPLIER_N_BITS)
+    thresholds_per_channel = quantization_params[SCALE_PER_CHANNEL]
+    tensor = int_quantization_with_threshold(tensor_data, thresholds_per_channel, MULTIPLIER_N_BITS)
     shape_before_kmeans = tensor.shape
     cluster_assignments = kmeans_assign_clusters(cluster_centers, tensor.reshape(-1, 1))
     quant_tensor = get_quantized_tensor(cluster_centers[cluster_assignments].reshape(shape_before_kmeans),
-                                        threhsolds_per_channel,
+                                        thresholds_per_channel,
                                         MULTIPLIER_N_BITS)
     return quant_tensor

@@ -85,29 +85,27 @@ def lut_kmeans_histogram(bins: np.ndarray,
                          min_threshold: float = MIN_THRESHOLD,
                          quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
     """
-    TODO: edit
-    The quantizer first finds the closest power-of-two number to the max value per channel of tensor_data.
-    Now, we divide tensor_data with the scale vector per channel. In addition, we scale the result to the range
-    [-2^(MULTIPLIER_N_BITS-1), 2^(MULTIPLIER_N_BITS-1)-1].
-    Next, we take the scaled tensor_data and perform k-means clustering with 2^nbit clusters.
-    We return the rounded cluster centers, and scale per channel. We use these to quantize the data.
+    Finds quantization cluster points for non-uniform activation quantization.
+    The quantizer first finds the closest power-of-two number to the max value of the given histogram,
+    and scales the bins within 8-bit quantization range.
+    Next, it performs a weighted k-means clustering with 2^nbit clusters (using the histogram counts as weights).
+    Returns the rounded cluster centers, and 8-bit quantization threshold.
 
     Args:
         bins: Bins values of the histogram.
         counts: Bins counts of the histogram.
-        p: p-norm to use for the Lp-norm distance (used only for lp threshold selection).
+        p: p-norm to use for the Lp-norm distance (not used for this method).
         n_bits: Number of bits to quantize the tensor.
         min_value: Min value (not used for this method).
         max_value: Max value (not used for this method).
         constrained: Whether the threshold should be constrained or not (not used for this method).
         n_iter: Number of iteration ot search for the threshold (not used for this method).
-        min_threshold: Minimal threshold to use if threshold is too small (used only for kl threshold selection).
-        quant_error_method: an error function to optimize the parameters' selection accordingly.
+        min_threshold: Minimal threshold to use if threshold is too small.
+        quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
 
     Returns:
-        TODO: edit
-        A dictionary containing the cluster assignments according to the k-means algorithm,
-        the scales per channel and the multiplier num bits.
+        A dictionary containing the cluster assignments according to the k-means algorithm and
+        the threshold for pre-clustering quantization.
     """
 
     if n_bits >= MULTIPLIER_N_BITS:
