@@ -80,7 +80,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.gptq_test import 
 from tests.keras_tests.feature_networks_tests.feature_networks.add_same_test import AddSameTest
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.node_filter_test import NameFilterTest, \
     ScopeFilterTest, TypeFilterTest
-from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTQuantizerTest
+from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTWeightsQuantizerTest, \
+    LUTActivationQuantizerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multi_head_attention_test import MultiHeadAttentionTest
 import tensorflow as tf
 from tensorflow.keras.layers import ReLU, PReLU, ELU
@@ -106,7 +107,8 @@ class FeatureNetworkTest(unittest.TestCase):
         BiasCorrectionDepthwiseTest(self).run_test()
 
     def test_lut_quantizer(self):
-        LUTQuantizerTest(self).run_test()
+        LUTWeightsQuantizerTest(self).run_test()
+        LUTActivationQuantizerTest(self).run_test()
 
     def test_remove_upper_bound(self):
         RemoveUpperBoundTest(self).run_test()
