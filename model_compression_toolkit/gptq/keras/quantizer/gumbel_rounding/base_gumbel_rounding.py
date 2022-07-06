@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 import numpy as np
 import tensorflow as tf
@@ -22,7 +22,7 @@ from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.keras.quantizer import kernel_functions
 from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.gumbel_softmax import sample_gumbel
-from model_compression_toolkit.gptq.keras import gptq_constants
+from model_compression_toolkit.gptq.common import gptq_constants
 
 
 def _init_aux_var(w_shape, m):
@@ -157,10 +157,10 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
                                      gptq_constants.TEMP: temp_tensor}
         return self.quantizer_parameters
 
-    def get_aux_variable(self):
+    def get_aux_variable(self) -> tf.Tensor:
         return self.quantizer_parameters[gptq_constants.AUXVAR]
 
-    def get_trainable_parameters(self):
+    def get_trainable_parameters(self) -> List[tf.Tensor]:
         """
         A function to get a list trainable of trainable parameters of the quantizer for GPTQ retraining
 

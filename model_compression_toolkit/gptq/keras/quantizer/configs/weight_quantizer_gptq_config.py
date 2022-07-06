@@ -19,6 +19,8 @@ from tensorflow import Tensor
 import tensorflow as tf
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+
+
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers import Layer
 else:
@@ -37,6 +39,8 @@ from model_compression_toolkit.gptq.keras.quantizer.ste_rounding.symmetric_ste i
 from model_compression_toolkit.core.common.target_platform.op_quantization_config import QuantizationMethod
 from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MAX, RANGE_MIN
 from model_compression_toolkit.core import common
+from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
+from model_compression_toolkit.gptq.common import gptq_constants
 
 
 class WeightQuantizeConfig(BaseQuantizeConfig):
@@ -45,7 +49,7 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
     """
 
     def __init__(self, weight_attrs: List[str],
-                 final_weights_quantization_cfg,
+                 final_weights_quantization_cfg: NodeWeightsQuantizationConfig,
                  gptq_config: GradientPTQConfig):
         """
         Initialize a TrainableQuantizer and set as the weights quantizer.
@@ -59,6 +63,7 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
         weight_channel_axis = final_weights_quantization_cfg.weights_channels_axis
         max_lsbs_change_map = gptq_config.lsb_change_per_bit_width
         self.weight_attrs = weight_attrs
+        self.final_weights_quantization_cfg = final_weights_quantization_cfg
         self.gptq_config = gptq_config
 
         if final_weights_quantization_cfg.weights_quantization_method in [QuantizationMethod.SYMMETRIC,
@@ -87,10 +92,12 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
                                                                 max_lsbs_change_map=max_lsbs_change_map,
                                                                 max_iteration=gptq_config.n_iter)
             else:
-                common.Logger.error("Unknown GPTQ Rounding type is select")
+                common.Logger.error(
+                    f"For quantization method {final_weights_quantization_cfg.weights_quantization_method}, GPTQ Rounding type {gptq_config.rounding_type} is not supported")
         elif final_weights_quantization_cfg.weights_quantization_method == QuantizationMethod.UNIFORM:
             if not gptq_config.rounding_type == RoundingType.GumbelRounding:
-                common.Logger.error("Unknown GPTQ Rounding type is select")
+                common.Logger.error(
+                    f"For quantization method {final_weights_quantization_cfg.weights_quantization_method}, GPTQ Rounding type {gptq_config.rounding_type} is not supported")
             range_max = final_weights_quantization_cfg.weights_quantization_params.get(RANGE_MAX)
             range_min = final_weights_quantization_cfg.weights_quantization_params.get(RANGE_MIN)
             self.weight_quantizer = UniformGumbelRounding(num_bits=num_bits,
@@ -111,7 +118,7 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
         Returns: None
 
         """
-        if self.gptq_config.is_gumbel():
+        if self.gptq_config.is_gumbel:
             return self.weight_quantizer.enable_update()
 
     def disable_update(self):
@@ -121,7 +128,7 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
         Returns: None
 
         """
-        if self.gptq_config.is_gumbel():
+        if self.gptq_config.is_gumbel:
             return self.weight_quantizer.disable_update()
 
     def get_weights_and_quantizers(self, layer: Layer) -> List[Tuple[Tensor, Quantizer]]:
@@ -189,9 +196,11 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
         """
         return {
             'weight_attrs': self.weight_attrs,
+            'final_weights_quantization_cfg': self.final_weights_quantization_cfg,
+            'gptq_config': self.gptq_config,
         }
 
-    def update_layer_quantization_params(self, layer):
+    def update_layer_quantization_params(self, layer: Layer) -> (Dict[str, tf.Tensor], Dict[str, Dict], Dict):
         """
         A Function to calculate the needed change in attributes in NodeQuantizationConfig after retraining.
         Usually a function of the config quantizers.
@@ -209,11 +218,11 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
         for weight, quantizer, quantizer_vars in layer._weight_vars:
             weights.update({KERNEL: quantizer(weight, training=False, weights=quantizer_vars)})
 
-        quant_config = {'weights_quantization_params': self.weight_quantizer.calc_quant_config(layer)}
+        quant_config = {gptq_constants.WEIGHTS_QUANTIZATION_PARAMS: self.weight_quantizer.get_quant_config(layer)}
 
         return weights, quant_config, {}
 
-    def get_trainable_quantizer_parameters(self):
+    def get_trainable_quantizer_parameters(self) -> List[tf.Tensor]:
         """
         A function to get a list trainable of trainable parameters for GPTQ retraining from config quantizers
 
@@ -223,20 +232,20 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
         """
         return self.weight_quantizer.get_trainable_parameters()
 
-    def get_aux_variable(self):
+    def get_aux_variable(self) -> List[tf.Tensor]:
         return [self.weight_quantizer.get_aux_variable()]
 
-    def get_quantization_variable(self):
+    def get_quantization_variable(self) -> List[tf.Tensor]:
         return self.weight_quantizer.get_quantization_variable()
 
-    def get_temperature_variable(self):
-        if self.gptq_config.is_gumbel():
+    def get_temperature_variable(self) -> tf.Tensor:
+        if self.gptq_config.is_gumbel:
             return self.weight_quantizer.get_temperature_variable()
         else:
             common.logger.Logger.error("Temperature variable only exist when using Gumbel Rounding Quantizer")
 
-    def get_gumbel_probability(self):
-        if self.gptq_config.is_gumbel():
+    def get_gumbel_probability(self) -> tf.Tensor:
+        if self.gptq_config.is_gumbel:
             return self.weight_quantizer.get_gumbel_probability()
         else:
             common.logger.Logger.error("Probability variable only exist when using Gumbel Rounding Quantizer")
@@ -249,7 +258,8 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
             return False
 
         return (self.weight_attrs == other.weight_attrs and
-                self.weight_quantizer == other.weight_quantizer)
+                self.weight_quantizer == other.weight_quantizer and
+                self.gptq_config == other.gptq_config)
 
     def __ne__(self, other: Any) -> bool:
         """

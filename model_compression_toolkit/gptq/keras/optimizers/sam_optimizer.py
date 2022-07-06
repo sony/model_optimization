@@ -20,11 +20,17 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapp
 
 
 class SAM:
-    def __init__(self, model2quantized, gradient_step: Callable, trainable_variables: List[tf.Tensor],
-                 rho: float = 0.05,
+    """
+    This class implements Sharpness-Aware Minimization for Efficiently Improving Generalization (https://arxiv.org/abs/2010.01412)
+    """
+
+    def __init__(self, model2quantized,
+                 gradient_step: Callable,
+                 trainable_variables: List[tf.Tensor],
+                 rho: float = 0.01,
                  eps: float = 1e-12):
         """
-        This class implements Sharpness-Aware Minimization for Efficiently Improving Generalization (https://arxiv.org/abs/2010.01412)
+        The init function of Sharpness-Aware Minimization  gradient computation class.
         Args:
             model2quantized: Input quantized module
             gradient_step: A function that returns a list of gradients tensors
@@ -44,7 +50,7 @@ class SAM:
 
     def _enable_update_step_param(self):
         """
-        This function enable the parameter update (update iteration index and gumbel random variable)
+        This function enables the parameter update (update iteration index and gumbel random variable)
         Returns: None
 
         """
@@ -55,7 +61,7 @@ class SAM:
 
     def _disable_update_step_param(self):
         """
-        This function disable the parameter update (update iteration index and gumbel random variable)
+        This function disables the parameter update (update iteration index and gumbel random variable)
         Returns: None
 
         """
@@ -66,7 +72,7 @@ class SAM:
 
     def _update_w_location(self, gradients: List[tf.Tensor]):
         """
-        This function update the weights position to the highest point
+        This function updates the weights position to the highest point
         Args:
             gradients: A list of gradients tensors
 

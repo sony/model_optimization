@@ -26,7 +26,7 @@ class BaseTrainableQuantizer(Quantizer):
     """
 
     @abc.abstractmethod
-    def calc_quant_config(self, layer) -> Dict[str, Any]:
+    def get_quant_config(self, layer) -> Dict[str, Any]:
         """
         Returns the config used to edit NodeQuantizationConfig after GPTQ retraining
 

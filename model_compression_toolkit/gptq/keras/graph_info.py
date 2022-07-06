@@ -36,7 +36,7 @@ def get_trainable_parameters(fxp_model: Model,
         fxp_model: Model to get its trainable parameters.
         fw_info: Framework information needed for keras kernel ops list.
         add_bias: Whether to include biases of the model (if there are) or not.
-        is_gumbel: A
+        is_gumbel: Whether the fxp model is quantized using Gumbel Rounding
 
     Returns:
         A list of trainable variables in a model. Each item is a list of a layers weights.
@@ -67,7 +67,7 @@ def get_trainable_parameters(fxp_model: Model,
     return trainable_weights, bias_weights, trainable_threshold, temperature_weights
 
 
-def get_gumbel_probability(fxp_model: Model):
+def get_gumbel_probability(fxp_model: Model) -> List[tf.Tensor]:
     """
     This function return the gumbel softmax probability of GumRounding
     Args:

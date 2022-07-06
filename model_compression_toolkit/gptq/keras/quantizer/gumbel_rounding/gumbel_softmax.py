@@ -22,7 +22,7 @@ def sample_gumbel(shape, eps=1e-6) -> tf.Tensor:
         shape: The tensor output shape
         eps: A small number for numeric stability.
 
-    Returns: A tensors of i.i.d gumbel random variable.
+    Returns: A tensor of i.i.d gumbel random variable.
 
     """
     u = tf.random.uniform(shape)

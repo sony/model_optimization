@@ -22,7 +22,7 @@ from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from typing import Dict, Any, List
 from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.gumbel_softmax import gumbel_softmax, ste_gumbel
 from model_compression_toolkit.core.common.constants import THRESHOLD
-from model_compression_toolkit.gptq.keras import gptq_constants
+from model_compression_toolkit.gptq.common import gptq_constants
 
 
 def gumbel_rounding_symmetric_quantizer(input_tensor: tf.Tensor,
@@ -35,7 +35,7 @@ def gumbel_rounding_symmetric_quantizer(input_tensor: tf.Tensor,
     Quantize a tensor symmetrically with maximum LSBs shift.
     Args:
         input_tensor: Tensor to quantize. values of this tensor are not changed during gptq.
-        auxvar_tensor: Tensor that manifests the bit shift the weight due to gptq
+        auxvar_tensor: Tensor that manifests the bit shift the weight due to gptq.
         max_tensor: Tensor with max values to compute the threshold.
         num_bits: Num of bits to use.
         signed: Signedness of the quantization range.
@@ -159,10 +159,10 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
             #####################################################
             if training:
                 p_t = gumbel_softmax(auxvar, self.tau, self.g_t)
-                self.p_t = p_t
             else:
                 p_t = gumbel_softmax(auxvar, self.minimal_temp, 0)
                 p_t = ste_gumbel(p_t)
+            self.p_t = p_t
             #####################################################
             # Calculate v hat and threshold hat
             #####################################################
@@ -184,7 +184,7 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
                                                        self.signed,
                                                        self.power_of_two)
 
-    def calc_quant_config(self, layer):
+    def get_quant_config(self, layer)-> Dict[str, np.ndarray]:
         """
         Returns the config used to edit NodeQuantizationConfig after GPTQ retraining
 

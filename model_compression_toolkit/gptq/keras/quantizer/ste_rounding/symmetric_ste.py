@@ -24,7 +24,7 @@ from model_compression_toolkit.gptq.keras.quantizer import qutils
 from model_compression_toolkit.core.common.constants import THRESHOLD
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.gptq.keras.quantizer.kernel_functions import get_kernel
-from model_compression_toolkit.gptq.keras import gptq_constants
+from model_compression_toolkit.gptq.common import gptq_constants
 
 
 def symmetric_constrained_quantizer(input_tensor: tf.Tensor,
@@ -193,7 +193,7 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
             'power_of_two': self.power_of_two
         }
 
-    def calc_quant_config(self, layer):
+    def get_quant_config(self, layer)-> Dict[str, np.ndarray]:
         """
         Returns the config used to edit NodeQuantizationConfig after GPTQ retraining
 

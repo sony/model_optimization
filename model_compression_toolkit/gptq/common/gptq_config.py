@@ -22,6 +22,11 @@ MAX_LSBS_CHANGE_MAP = {8: 4,
 
 
 class RoundingType(Enum):
+    """
+    An enum for choosing the GPTQ rounding methods
+    0. STRAIGHT-THROUGH ESTIMATOR
+    1. Gumbel Rounding
+    """
     STE = 0
     GumbelRounding = 1
 
@@ -43,13 +48,16 @@ class GradientPTQConfig:
                  sam_optimization: bool = False,
                  rounding_type: RoundingType = RoundingType.STE,
                  rho: float = 0.01,
-                 lsb_change_per_bit_width: dict = DefaultDict(MAX_LSBS_CHANGE_MAP, lambda: 1)):
+                 gumbel_entropy_regularization: float = 0.01,
+                 lsb_change_per_bit_width: dict = DefaultDict(MAX_LSBS_CHANGE_MAP, lambda: 1),
+                 eps: float = 1e-6):
         """
         Initialize a GradientPTQConfig.
 
         Args:
             n_iter (int): Number of iterations to train.
             optimizer (Any): Optimizer to use.
+            optimizer_rest (Any): Optimizer to use for bias and quantizer parameters.
             loss (Callable): The loss to use. should accept 6 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors,
              the 3rd is a list of quantized weights, the 4th is a list of float weights, the 5th and 6th lists are the mean and std of the tensors
              accordingly. see example in multiple_tensors_mse_loss
@@ -57,10 +65,12 @@ class GradientPTQConfig:
             train_bias (bool): Whether to update the bias during the training or not.
             quantization_parameters_learning (bool): Whether to update the quantization param during the training or not.
             temperature_learning (bool): Whether to update the temperature during the training or not.
-            sam_optimization (bool): Whether to update use sam optimization.
-            rounding_type (RoundingType): A enum that define the rounding type (STE or GumbelRoudning).
-            rho (rho): A floating point number that define the sam optimization lookahead.
+            sam_optimization (bool): Whether to use sam optimization.
+            rounding_type (RoundingType): An enum that defines the rounding type (STE or GumbelRoudning).
+            rho (rho): A floating point number that defines the sam optimization lookahead.
+            gumbel_entropy_regularization (float): A floating point number that defines the gumbel entropy regularization factor.
             lsb_change_per_bit_width (dict): Whether to update the bias during the training or not.
+            eps (float): A floating point value for numeric stability.
 
         """
         self.n_iter = n_iter
@@ -74,7 +84,15 @@ class GradientPTQConfig:
         self.rounding_type = rounding_type
         self.sam_optimization = sam_optimization
         self.rho = rho
+        self.gumbel_entropy_regularization = gumbel_entropy_regularization
         self.lsb_change_per_bit_width = lsb_change_per_bit_width
+        self.eps = eps
 
+    @property
     def is_gumbel(self) -> bool:
+        """
+        This function state if Gumbel Rounding is in use.
+        Returns: boolean
+
+        """
         return self.rounding_type == RoundingType.GumbelRounding

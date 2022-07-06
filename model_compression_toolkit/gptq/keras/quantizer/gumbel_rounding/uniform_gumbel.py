@@ -22,7 +22,7 @@ from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from typing import Dict, Any, List
 from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.gumbel_softmax import gumbel_softmax, ste_gumbel
 from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX
-from model_compression_toolkit.gptq.keras import gptq_constants
+from model_compression_toolkit.gptq.common import gptq_constants
 
 
 def gumbel_rounding_uniform_quantizer(tensor_data: tf.Tensor,
@@ -35,7 +35,7 @@ def gumbel_rounding_uniform_quantizer(tensor_data: tf.Tensor,
 
     Args:
         tensor_data: Tensor values to quantize.
-        auxvar_tensor:
+        auxvar_tensor: Tensor that manifests the bit shift the weight due to gptq.
         range_min: minimum bound of the range for quantization (or array of min values per channel).
         range_max: maximum bound of the range for quantization (or array of max values per channel).
         n_bits: Number of bits to quantize the tensor.
@@ -169,11 +169,10 @@ class UniformGumbelRounding(GumbelRoundingBase):
             #####################################################
             if training:
                 p_t = gumbel_softmax(auxvar, self.tau, self.g_t)
-                self.p_t = p_t
             else:
                 p_t = gumbel_softmax(auxvar, self.minimal_temp, 0)
                 p_t = ste_gumbel(p_t)
-
+            self.p_t = p_t
             #####################################################
             # Calculate v hat and threshold hat
             #####################################################
@@ -196,7 +195,7 @@ class UniformGumbelRounding(GumbelRoundingBase):
                                                      ptq_min_range,
                                                      self.num_bits)
 
-    def calc_quant_config(self, layer):
+    def get_quant_config(self, layer) -> Dict[str, np.ndarray]:
         """
         Returns the config used to edit NodeQuantizationConfig after GPTQ retraining
 

@@ -33,7 +33,7 @@ def get_kernel(weights_list: list) -> tf.Tensor:
 
 def threshold_reshape(threshold_tensor: tf.Tensor, input_w: tf.Tensor, in_quantization_axis: int) -> tf.Tensor:
     """
-    This function take an threshold tensor and re-aline it to the weight tensor channel axis.
+    This function take a threshold tensor and re-aline it to the weight tensor channel axis.
     Args:
         threshold_tensor: A tensor of threshold
         input_w: A weight tensor
