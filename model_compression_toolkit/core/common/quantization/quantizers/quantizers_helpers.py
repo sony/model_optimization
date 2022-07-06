@@ -168,16 +168,16 @@ def kmeans_assign_clusters(cluster_centers: np.ndarray,
     return np.argmin(np.abs(query_ - cluster_centers_), axis=1)
 
 
-def int_quantization_with_scale(data: np.ndarray,
-                                scale: np.ndarray,
-                                n_bits: int,
-                                signed: bool = True,
-                                eps: float = EPS) -> np.ndarray:
+def int_quantization_with_threshold(data: np.ndarray,
+                                    threshold: np.ndarray,
+                                    n_bits: int,
+                                    signed: bool = True,
+                                    eps: float = EPS) -> np.ndarray:
     """
     Divides data by scale and quantizes it to integers in the range [2 ** (n_bits - 1) - 1, -2 ** (n_bits - 1)]
     Args:
         data: tensor data.
-        scale: scale to divide the data.
+        threshold: threshold to divide the data.
         n_bits: number of bits that determines the quantization range.
         eps: Small value for numerical stability in division.
 
@@ -192,7 +192,7 @@ def int_quantization_with_scale(data: np.ndarray,
         a_max = 2 ** n_bits - 1
         a_min = 0
 
-    return np.clip(data / (scale + eps) * 2 ** (n_bits - 1), a_max=a_max, a_min=a_min)
+    return np.clip((data / (threshold + eps)) * (2 ** (n_bits - int(signed))), a_max=a_max, a_min=a_min)
 
 
 def get_quantized_tensor(centers: np.ndarray,
