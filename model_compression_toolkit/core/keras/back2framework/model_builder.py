@@ -146,7 +146,6 @@ def run_operation(n: BaseNode,
                     # Input quantization with LUT quantizer - quantize with custom fake quant layer
                     lut_fake_quant = LUTFakeQuant(quantization_params=
                                                   n.final_activation_quantization_cfg.activation_quantization_params)
-                    # lut_fake_quant.build(out_tensors_of_n_float.shape)
                     out_tensors_of_n = lut_fake_quant(out_tensors_of_n_float)
                 else:
                     out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
@@ -184,8 +183,7 @@ def run_operation(n: BaseNode,
                     # Activation quantization with LUT quantizer - quantize with custom fake quant layer
                     lut_fake_quant = LUTFakeQuant(quantization_params=
                                                   n.final_activation_quantization_cfg.activation_quantization_params)
-                    # lut_fake_quant.build(out_tensors_of_n_float.shape)
-                    out_tensors_of_n = lut_fake_quant(out_tensors_of_n_float)
+                    out_tensors_of_n = lut_fake_quant.call(out_tensors_of_n_float)
                 else:
                     out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
             elif mode in [ModelBuilderMode.MIXEDPRECISION]:

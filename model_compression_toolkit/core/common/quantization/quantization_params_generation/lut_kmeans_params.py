@@ -21,7 +21,7 @@ from model_compression_toolkit.core.common.constants import CLUSTER_CENTERS, MIN
     MULTIPLIER_N_BITS, THRESHOLD
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import \
     max_power_of_two, int_quantization_with_threshold
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.core.common.logger import Logger
 
 
 def lut_kmeans_tensor(tensor_data: np.ndarray,
@@ -127,5 +127,5 @@ def lut_kmeans_histogram(bins: np.ndarray,
     tensor_for_kmeans = int_quantization_with_threshold(data=bins, threshold=threshold, n_bits=MULTIPLIER_N_BITS, signed=signed)
     kmeans.fit(tensor_for_kmeans.reshape(-1, 1), sample_weight=np.insert(counts, 0, 0))
 
-    return {CLUSTER_CENTERS: np.round(kmeans.cluster_centers_),
+    return {CLUSTER_CENTERS: np.float32(np.round(kmeans.cluster_centers_)),
             THRESHOLD: threshold}
