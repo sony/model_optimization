@@ -116,7 +116,6 @@ def lut_kmeans_histogram(bins: np.ndarray,
         raise Exception(f'Look-Up-Table bit configuration has {n_bits} bits. It must be less or equal to {MULTIPLIER_N_BITS}')
 
     bins_with_values = np.abs(bins)[1:][counts > 0]
-    # TODO: need to set this externally
     if len(np.unique(bins_with_values.flatten())) < 2 ** n_bits:
         n_clusters = len(np.unique(bins_with_values.flatten()))
     else:

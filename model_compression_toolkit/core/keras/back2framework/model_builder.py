@@ -16,6 +16,9 @@
 
 import tensorflow as tf
 import tensorflow_model_optimization.quantization.keras.graph_transformations.model_transformer as mt
+
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import LUTFakeQuant
 from model_compression_toolkit.core.keras.quantizer.mixed_precision.input_layer_quantize_transform import \
     InputLayerMixedPrecisionTransform
 
@@ -138,9 +141,15 @@ def run_operation(n: BaseNode,
         out_tensors_of_n = out_tensors_of_n_float
         if n.is_activation_quantization_enabled():
             if mode in [ModelBuilderMode.QUANTIZED] and n.final_activation_quantization_cfg:
-                # Adding a fake quant node to Input when in GPTQ mode because quantize_model doesn't quantize the
-                # input layer
-                out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
+                if n.final_activation_quantization_cfg.activation_quantization_method == \
+                        QuantizationMethod.LUT_QUANTIZER:
+                    # Input quantization with LUT quantizer - quantize with custom fake quant layer
+                    lut_fake_quant = LUTFakeQuant(n_bits=n.final_activation_quantization_cfg.activation_n_bits,
+                                                  quantization_params=n.final_activation_quantization_cfg.activation_quantization_params)
+                    # lut_fake_quant.build(out_tensors_of_n_float.shape)
+                    out_tensors_of_n = lut_fake_quant(out_tensors_of_n_float)
+                else:
+                    out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
             elif mode in [ModelBuilderMode.MIXEDPRECISION]:
                 if n.is_all_activation_candidates_equal():
                     # otherwise, we want to use the float tensor when building the model for MP search
@@ -170,7 +179,15 @@ def run_operation(n: BaseNode,
                     f"Trying to quantize node {n.name} activation of type {out_tensors_of_n_float.dtype} "
                     f"which is not supported, expected type float32")
             if mode in [ModelBuilderMode.QUANTIZED] and n.final_activation_quantization_cfg:
-                out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
+                if n.final_activation_quantization_cfg.activation_quantization_method == \
+                        QuantizationMethod.LUT_QUANTIZER:
+                    # Activation quantization with LUT quantizer - quantize with custom fake quant layer
+                    lut_fake_quant = LUTFakeQuant(n_bits=n.final_activation_quantization_cfg.activation_n_bits,
+                                                  quantization_params=n.final_activation_quantization_cfg.activation_quantization_params)
+                    # lut_fake_quant.build(out_tensors_of_n_float.shape)
+                    out_tensors_of_n = lut_fake_quant(out_tensors_of_n_float)
+                else:
+                    out_tensors_of_n = n.final_activation_quantization_cfg.quantize_node_output(out_tensors_of_n_float)
             elif mode in [ModelBuilderMode.MIXEDPRECISION]:
                 if n.is_all_activation_candidates_equal():
                     # otherwise, we want to use the float tensor when building the model for MP search
