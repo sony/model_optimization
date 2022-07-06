@@ -98,7 +98,12 @@ Please visit the MCT API documentation here
     :titlesonly:
     :maxdepth: 1
 
-    API Documentation<../api/api_docs/index>
+    API Documentation<../api/experimental_api_docs/index>
+
+Technical Constraints
+=========================
+
+* MCT doesn't keep the structure of the model's output. For example, if the output of a model is a list of lists of Tensors [[out1, out2], out3], the optimized model output will be [out1, out2, out3]
 
 References
 ====================================

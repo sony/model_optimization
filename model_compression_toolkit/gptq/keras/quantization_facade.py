@@ -13,11 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Callable
+from typing import Callable, Tuple
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -54,7 +55,7 @@ if importlib.util.find_spec("tensorflow") is not None \
                               optimizer_rest: OptimizerV2 = tf.keras.optimizers.Adam(),
                               loss: Callable = multiple_tensors_mse_loss,
                               log_function: Callable = None,
-                              train_bias: bool = True):
+                              train_bias: bool = True) -> GradientPTQConfig:
         """
         Create a GradientPTQConfig instance for Keras models.
 
@@ -101,7 +102,7 @@ if importlib.util.find_spec("tensorflow") is not None \
                                                                target_kpi: KPI = None,
                                                                core_config: CoreConfig = CoreConfig(),
                                                                fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                                                               target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
+                                                               target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
         symmetric constraint quantization thresholds (power of two).

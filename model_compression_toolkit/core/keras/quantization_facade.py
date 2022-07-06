@@ -13,11 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Callable, List
+from typing import Callable, List, Tuple
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -59,7 +60,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                          network_editor: List[EditRule] = [],
                                          gptq_config: GradientPTQConfig = None,
                                          analyze_similarity: bool = False,
-                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
+                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
         """
         Quantize a pretrained Keras model using post-training quantization. By default, the model is quantized
         using a symmetric constraint quantization thresholds (power of two) as defined in the default TargetPlatformCapabilities.
@@ -148,7 +149,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                                          network_editor: List[EditRule] = [],
                                                          gptq_config: GradientPTQConfig = None,
                                                          analyze_similarity: bool = False,
-                                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
+                                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
         """
          Quantize a pretrained Keras model using post-training quantization. By default, the model is quantized
          using a symmetric constraint quantization thresholds (power of two) as defined in the default

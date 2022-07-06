@@ -46,4 +46,4 @@ from model_compression_toolkit.gptq.pytorch.quantization_facade import \
 from model_compression_toolkit.core.keras.kpi_data_facade import keras_kpi_data, keras_kpi_data_experimental
 from model_compression_toolkit.core.pytorch.kpi_data_facade import pytorch_kpi_data, pytorch_kpi_data_experimental
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
