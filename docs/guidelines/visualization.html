@@ -2,12 +2,12 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Visualization within TensorBoard &#8212; MCT Documentation: ver 1.4.0</title>
+    <title>Visualization within TensorBoard &#8212; MCT Documentation: ver 1.5.0</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
@@ -15,6 +15,7 @@
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../_static/doctools.js"></script>
     <script src="../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -38,7 +39,7 @@
         <li class="right" >
           <a href="../index.html" title="Model Compression Toolkit User Guide"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.4.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.5.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Visualization within TensorBoard</a></li> 
       </ul>
     </div>  
@@ -49,9 +50,9 @@
           <div class="body" role="main">
             
   <section id="visualization-within-tensorboard">
-<span id="ug-visualization"></span><h1>Visualization within TensorBoard<a class="headerlink" href="#visualization-within-tensorboard" title="Permalink to this headline">¶</a></h1>
+<span id="ug-visualization"></span><h1>Visualization within TensorBoard<a class="headerlink" href="#visualization-within-tensorboard" title="Permalink to this heading">¶</a></h1>
 <p>One may log various graphs and data collected in different phases of the model quantization and display them within the Tensorboard UI.
-To use it, all you have to do is to set a logger path. Setting a path is done by calling <a class="reference internal" href="../api/api_docs/methods/set_logger_path.html#ug-set-logger-path"><span class="std std-ref">set_log_folder</span></a>.</p>
+To use it, all you have to do is to set a logger path. Setting a path is done by calling <a class="reference internal" href="../api/experimental_api_docs/methods/set_logger_path.html#ug-set-logger-path"><span class="std std-ref">set_log_folder</span></a>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
 <span class="n">mct</span><span class="o">.</span><span class="n">set_log_folder</span><span class="p">(</span><span class="s1">&#39;/logger/dir/path&#39;</span><span class="p">)</span>
 </pre></div>
@@ -97,7 +98,7 @@ These statistics can be viewed under ‘Histograms’ (histograms) or ‘Scalars
 </div>
 </section>
 <section id="cosine-similarity-comparison">
-<h1>Cosine Similarity Comparison<a class="headerlink" href="#cosine-similarity-comparison" title="Permalink to this headline">¶</a></h1>
+<h1>Cosine Similarity Comparison<a class="headerlink" href="#cosine-similarity-comparison" title="Permalink to this heading">¶</a></h1>
 <p>Computing a cosine-similarity is a way to quantify the similarity between two vectors.
 Mathematically, the cosine similarity is the division between the dot product of the vectors and the product of the euclidean norms of each vector.
 Thus, we can use it to measure the two models similarity, by measuring the cosine similarity
@@ -117,7 +118,20 @@ TensorBoard UI.</p>
 final quantized model at different points can be viewed under ‘Images’.
 More specifically, 20 samples from the provided representative dataset generator, are inserted to both of
 the models, and the cosine similarity at the output of different layers are computed and displayed.</p>
-<a class="reference internal image-reference" href="../_images/tbwriter_cosinesimilarity.png"><img alt="../_images/tbwriter_cosinesimilarity.png" src="../_images/tbwriter_cosinesimilarity.png" style="width: 562.0px; height: 475.0px;" /></a>
+<a class="reference internal image-reference" href="../_images/tbwriter_cosinesimilarity.png"><img alt="../_images/tbwriter_cosinesimilarity.png" src="../_images/tbwriter_cosinesimilarity.png" style="width: 507.5px; height: 330.0px;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="mixed-precision-configuration-bit-width">
+<h1>Mixed-precision Configuration Bit-width<a class="headerlink" href="#mixed-precision-configuration-bit-width" title="Permalink to this heading">¶</a></h1>
+<p>When running mixed-precision quantization, it is possible to present the chosen bit-width configuration for
+each configurable layer of the model using tensorboard.
+The figures can be viewed under ‘Images’.
+For instance, when running mixed-precision quantization on MobileNetV2 for both weights and activation quantization
+we would expect to get the following figures (the first one displaying the activation configuration
+and the second one the weights configuration):</p>
+<img alt="../_images/mp_bitwidth_config.png" src="../_images/mp_bitwidth_config.png" />
 </section>
 
 
@@ -132,6 +146,7 @@ the models, and the cosine similarity at the output of different layers are comp
     <ul>
 <li><a class="reference internal" href="#">Visualization within TensorBoard</a></li>
 <li><a class="reference internal" href="#cosine-similarity-comparison">Cosine Similarity Comparison</a></li>
+<li><a class="reference internal" href="#mixed-precision-configuration-bit-width">Mixed-precision Configuration Bit-width</a></li>
 </ul>
 
   </div>
@@ -154,7 +169,7 @@ the models, and the cosine similarity at the output of different layers are comp
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -171,13 +186,13 @@ the models, and the cosine similarity at the output of different layers are comp
         <li class="right" >
           <a href="../index.html" title="Model Compression Toolkit User Guide"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.4.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.5.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Visualization within TensorBoard</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>
 </html>

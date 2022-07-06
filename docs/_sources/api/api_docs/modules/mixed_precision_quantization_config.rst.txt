@@ -13,6 +13,7 @@ KPI
 **Object to configure resources to use when searching for a mixed-precision configuration for a model:**
 
 .. autoclass:: model_compression_toolkit.KPI
+    :noindex:
 
 
 |
