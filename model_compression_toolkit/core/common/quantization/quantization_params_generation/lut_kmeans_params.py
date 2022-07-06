@@ -63,15 +63,15 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
     axis_not_channel = [i for i in range(len(tensor_data.shape))]
     axis_not_channel.remove(channel_axis)
     if per_channel:
-        threshold_per_channel = np.max(np.abs(tensor_data), axis=tuple(axis_not_channel), keepdims=True)
+        thresholds_per_channel = np.max(np.abs(tensor_data), axis=tuple(axis_not_channel), keepdims=True)
     else:
-        threshold_per_channel = np.max(np.abs(tensor_data), keepdims=True)
-    threshold_per_channel = np.power(2.0, np.ceil(np.log2(threshold_per_channel)))
-    tensor_for_kmeans = int_quantization_with_threshold(tensor_data, threshold_per_channel, MULTIPLIER_N_BITS)
+        thresholds_per_channel = np.max(np.abs(tensor_data), keepdims=True)
+    thresholds_per_channel = np.power(2.0, np.ceil(np.log2(thresholds_per_channel)))
+    tensor_for_kmeans = int_quantization_with_threshold(tensor_data, thresholds_per_channel, MULTIPLIER_N_BITS)
     kmeans.fit(tensor_for_kmeans.reshape(-1, 1))
 
     return {CLUSTER_CENTERS: np.round(kmeans.cluster_centers_),
-            SCALE_PER_CHANNEL: threshold_per_channel}
+            SCALE_PER_CHANNEL: thresholds_per_channel}
 
 
 def lut_kmeans_histogram(bins: np.ndarray,
