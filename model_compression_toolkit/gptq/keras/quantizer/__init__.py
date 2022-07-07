@@ -13,4 +13,4 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.gptq.keras.quantizer.weight_quantizer_gptq_config import WeightQuantizeConfig
+from model_compression_toolkit.gptq.keras.quantizer.configs.weight_quantizer_gptq_config import WeightQuantizeConfig

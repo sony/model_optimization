@@ -19,6 +19,8 @@ from tests.pytorch_tests.function_tests.bn_info_collection_test import BNInfoCol
     BNLayerInfoCollectionTest, INP2BNInfoCollectionTest
 from tests.pytorch_tests.function_tests.kpi_data_test import TestKPIDataBasicAllBitwidth, \
     TestKPIDataBasicPartialBitwidth, TestKPIDataComplexPartialBitwidth, TestKPIDataComplesAllBitwidth
+from tests.pytorch_tests.function_tests.model_gradients_test import ModelGradientsBasicModelTest, \
+    ModelGradientsCalculationTest, ModelGradientsAdvancedModelTest, ModelGradientsOutputReplacementTest
 
 
 class FunctionTestRunner(unittest.TestCase):
@@ -85,6 +87,15 @@ class FunctionTestRunner(unittest.TestCase):
         This test checks the KPI data Pytorch API.
         """
         TestKPIDataComplexPartialBitwidth(self).run_test()
+
+    def test_model_gradients(self):
+        """
+        This test checks the Model Gradients Pytorch computation.
+        """
+        ModelGradientsBasicModelTest(self).run_test()
+        ModelGradientsCalculationTest(self).run_test()
+        ModelGradientsAdvancedModelTest(self).run_test()
+        ModelGradientsOutputReplacementTest(self).run_test()
 
 
 if __name__ == '__main__':

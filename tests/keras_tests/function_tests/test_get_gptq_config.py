@@ -14,14 +14,40 @@
 # ==============================================================================
 import copy
 import unittest
+from typing import List
+
 import numpy as np
-from tensorflow.keras.applications.mobilenet import MobileNet
 from model_compression_toolkit import get_keras_gptq_config, keras_post_training_quantization, DEFAULTCONFIG, \
-    QuantizationConfig, QuantizationErrorMethod
+    QuantizationConfig, QuantizationErrorMethod, GradientPTQConfig, RoundingType
 import tensorflow as tf
+from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
+
+layers = tf.keras.layers
+SHAPE = [1, 16, 16, 3]
+
+
+def build_model(in_input_shape: List[int]) -> tf.keras.Model:
+    """
+    This function generate a simple network to test GPTQ
+    Args:
+        in_input_shape: Input shape list
+
+    Returns:
+
+    """
+    inputs = layers.Input(shape=in_input_shape)
+    x = layers.Conv2D(3, 4)(inputs)
+    x = layers.BatchNormalization()(x)
+    x = layers.PReLU()(x)
+    x = layers.Conv2D(7, 8)(x)
+    x = layers.BatchNormalization()(x)
+    outputs = layers.ReLU()(x)
+    model = tf.keras.Model(inputs=inputs, outputs=outputs)
+    return model
+
 
 def random_datagen():
-    return [np.random.random((1, 224, 224, 3))]
+    return [np.random.random(SHAPE)]
 
 
 class TestGetGPTQConfig(unittest.TestCase):
@@ -29,19 +55,31 @@ class TestGetGPTQConfig(unittest.TestCase):
     def test_get_keras_gptq_config(self):
         qc = QuantizationConfig(QuantizationErrorMethod.MSE,
                                 QuantizationErrorMethod.MSE,
-                                weights_bias_correction=False) # disable bias correction when working with GPTQ
+                                weights_bias_correction=False)  # disable bias correction when working with GPTQ
 
         gptq_configurations = [get_keras_gptq_config(n_iter=1),
                                get_keras_gptq_config(n_iter=1, train_bias=False),
+                               GradientPTQConfig(1, optimizer=tf.keras.optimizers.RMSprop(),
+                                                 optimizer_rest=tf.keras.optimizers.RMSprop(), train_bias=True,
+                                                 sam_optimization=True, loss=multiple_tensors_mse_loss),
+                               GradientPTQConfig(1, optimizer=tf.keras.optimizers.RMSprop(),
+                                                 optimizer_rest=tf.keras.optimizers.RMSprop(), train_bias=True,
+                                                 quantization_parameters_learning=True, loss=multiple_tensors_mse_loss),
+                               GradientPTQConfig(1, optimizer=tf.keras.optimizers.RMSprop(),
+                                                 optimizer_rest=tf.keras.optimizers.RMSprop(), train_bias=True,
+                                                 temperature_learning=True, loss=multiple_tensors_mse_loss),
+                               GradientPTQConfig(1, optimizer=tf.keras.optimizers.RMSprop(),
+                                                 optimizer_rest=tf.keras.optimizers.RMSprop(), train_bias=True,
+                                                 temperature_learning=True, loss=multiple_tensors_mse_loss,
+                                                 rounding_type=RoundingType.GumbelRounding),
                                get_keras_gptq_config(n_iter=1, optimizer=tf.keras.optimizers.RMSprop())]
 
         for gptq_config in gptq_configurations:
-            keras_post_training_quantization(in_model=MobileNet(),
+            keras_post_training_quantization(in_model=build_model(SHAPE[1:]),
                                              representative_data_gen=random_datagen,
                                              n_iter=1,
                                              quant_config=qc,
                                              gptq_config=gptq_config)
-
 
 
 if __name__ == '__main__':
