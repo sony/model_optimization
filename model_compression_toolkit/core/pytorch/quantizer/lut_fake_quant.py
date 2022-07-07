@@ -81,9 +81,7 @@ class PytorchLUTFakeQuant(torch.nn.Module):
 
         expanded_cluster_centers = self.cluster_centers.reshape([*[1 for _ in range(len(tensor.shape) - 1)], -1])
         cluster_assignments = torch.argmin(torch.abs(tensor - expanded_cluster_centers), dim=-1)
-        centers = torch.gather(input=self.cluster_centers.flatten(),
-                               dim=[0],
-                               index=cluster_assignments)
+        centers = self.cluster_centers.flatten()[cluster_assignments]
 
         quant_tensor = (centers / (2 ** (MULTIPLIER_N_BITS - int(self.activation_is_signed)))) * self.threshold
 

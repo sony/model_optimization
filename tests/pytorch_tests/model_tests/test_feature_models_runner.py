@@ -38,7 +38,8 @@ from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test impo
     ScaleEqualizationConvTransposeWithZeroPadNetTest, ScaleEqualizationReluFuncConvTransposeWithZeroPadNetTest, \
     ScaleEqualizationConvTransposeReluFuncNetTest
 from tests.pytorch_tests.model_tests.feature_models.layer_name_test import ReuseNameNetTest
-from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTQuantizerTest
+from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTWeightsQuantizerTest, \
+    LUTActivationQuantizerTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_weights_test import MixedPercisionSearch8Bit, \
     MixedPercisionSearch2Bit, MixedPercisionSearch4Bit, MixedPercisionActivationDisabledTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_output_nodes_multiple_tensors_test import \
@@ -189,7 +190,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         ReuseNameNetTest(self).run_test()
 
-    def test_lut_quantizer(self):
+    def test_lut_weights_quantizer(self):
         """
         This test checks multiple features:
         1. That the LUT quantizer quantizes the weights differently than than the Power-of-two quantizer
@@ -200,7 +201,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
         We check that the weights have different values for conv1 and conv2, and that conv2 and conv3 have the same
         values.
         """
-        LUTQuantizerTest(self).run_test()
+        LUTWeightsQuantizerTest(self).run_test()
+
+    def test_lut_activation_quantizer(self):
+        """
+        This test checks that activation are quantized correctly using LUT quantizer
+        """
+        LUTActivationQuantizerTest(self).run_test()
 
     def test_multiple_output_nodes_multiple_tensors(self):
         """
