@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+import math
 import unittest
 
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
@@ -23,11 +23,13 @@ import model_compression_toolkit as cmo
 import tensorflow as tf
 import numpy as np
 
+from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import LUTFakeQuant
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
 layers = keras.layers
 tp = cmo.target_platform
+
 
 def get_uniform_weights(kernel, in_channels, out_channels):
     return np.array([i - np.round((in_channels * kernel * kernel * out_channels) / 2) for i in
@@ -35,7 +37,7 @@ def get_uniform_weights(kernel, in_channels, out_channels):
         [out_channels, kernel, kernel, in_channels]).transpose(1, 2, 3, 0)
 
 
-class LUTQuantizerTest(BaseKerasFeatureNetworkTest):
+class LUTWeightsQuantizerTest(BaseKerasFeatureNetworkTest):
     '''
     - Check name filter- that only the node with the name changed
     - Check that different quantization methods on the same weights give different results
@@ -49,13 +51,12 @@ class LUTQuantizerTest(BaseKerasFeatureNetworkTest):
         self.conv_w = get_uniform_weights(self.kernel, self.num_conv_channels, self.num_conv_channels)
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
-
     def get_tpc(self):
         qco = tp.QuantizationConfigOptions(
             [tp.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
                                      weights_quantization_method=tp.QuantizationMethod.LUT_QUANTIZER,
                                      activation_n_bits=8,
-                                     weights_n_bits=8,
+                                     weights_n_bits=self.weights_n_bits,
                                      weights_per_channel_threshold=True,
                                      enable_weights_quantization=True,
                                      enable_activation_quantization=True,
@@ -67,13 +68,7 @@ class LUTQuantizerTest(BaseKerasFeatureNetworkTest):
         return tp.TargetPlatformCapabilities(tp.TargetPlatformModel(qco))
 
     def get_quantization_config(self):
-        return cmo.QuantizationConfig(cmo.QuantizationErrorMethod.MSE,
-                                      cmo.QuantizationErrorMethod.MSE,
-                                      4,
-                                      2,
-                                      False,
-                                      False,
-                                      True)
+        return cmo.QuantizationConfig()
 
     def get_network_editor(self):
         return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
@@ -100,9 +95,67 @@ class LUTQuantizerTest(BaseKerasFeatureNetworkTest):
             np.abs(quantized_model.layers[2].weights[0].numpy()) - quantized_model.layers[4].weights[0].numpy()) > 0)
 
 
+class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
+    '''
+    - Check that activation are quantized correctly using LUT quantizer
+    '''
+
+    def __init__(self, unit_test, activation_n_bits: int = 3):
+        self.activation_n_bits = activation_n_bits
+        self.num_conv_channels = 4
+        self.kernel = 3
+        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
+
+    def get_tpc(self):
+        qco = tp.QuantizationConfigOptions(
+            [tp.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.LUT_QUANTIZER,
+                                     weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+                                     activation_n_bits=self.activation_n_bits,
+                                     weights_n_bits=8,
+                                     weights_per_channel_threshold=True,
+                                     enable_weights_quantization=True,
+                                     enable_activation_quantization=True,
+                                     quantization_preserving=False,
+                                     fixed_scale=None,
+                                     fixed_zero_point=None,
+                                     weights_multiplier_nbits=None
+                                     )])
+        return tp.TargetPlatformCapabilities(tp.TargetPlatformModel(qco))
+
+    def get_quantization_config(self):
+        return cmo.QuantizationConfig()
+
+    def get_input_shapes(self):
+        return [[self.val_batch_size, 16, 16, self.num_conv_channels]]
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False)(inputs)
+        x = layers.ReLU()(x)
+        x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False)(x)
+        x = layers.BatchNormalization()(x)
+        outputs = layers.ReLU()(x)
+        model = keras.Model(inputs=inputs, outputs=outputs)
+
+        return model
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        all_expected_lut_layers = np.array(quantized_model.layers)[
+            [i for i in range(1, len(quantized_model.layers), 2)]]
+
+        for ll in all_expected_lut_layers:
+            # Check that lut quantizer layer is added where expected (after each layer, for quantizing activation)
+            self.unit_test.assertTrue(isinstance(ll, LUTFakeQuant))
+            # Check layer's thresholds are power of two
+            self.unit_test.assertTrue(math.log2(ll.threshold).is_integer())
+            # Check layers number of clusters and clusters values
+            self.unit_test.assertTrue(ll.cluster_centers.shape[0] <= 2 ** self.activation_n_bits)
+            self.unit_test.assertTrue(np.all(np.mod(ll.cluster_centers, 1) == 0))
+
+
 class RunKmeansTest(unittest.TestCase):
     def test_lut_quantizer(self):
-        LUTQuantizerTest(self).run_test()
+        LUTWeightsQuantizerTest(self).run_test()
 
 
 if __name__ == '__main__':

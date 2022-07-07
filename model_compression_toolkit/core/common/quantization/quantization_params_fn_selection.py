@@ -17,7 +17,8 @@ from collections import Callable
 
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.kmeans_params import kmeans_tensor
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import lut_kmeans_tensor
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import \
+    lut_kmeans_tensor, lut_kmeans_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import \
     symmetric_selection_tensor, symmetric_selection_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.uniform_selection import \
@@ -41,6 +42,8 @@ def get_activation_quantization_params_fn(activation_quantization_method: Quanti
         params_fn = symmetric_selection_histogram
     elif activation_quantization_method == QuantizationMethod.UNIFORM:
         params_fn = uniform_selection_histogram
+    elif activation_quantization_method == QuantizationMethod.LUT_QUANTIZER:
+        params_fn = lut_kmeans_histogram
     else:
         raise Exception(
             f'No params function for the configuration of quantization method {activation_quantization_method}')

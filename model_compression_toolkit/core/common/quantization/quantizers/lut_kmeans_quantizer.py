@@ -13,13 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
-from sklearn.cluster import KMeans
 import numpy as np
 
-from model_compression_toolkit.core.common.constants import CLUSTER_CENTERS, MIN_THRESHOLD, SCALE_PER_CHANNEL, \
+from model_compression_toolkit.core.common.constants import CLUSTER_CENTERS, SCALE_PER_CHANNEL, \
     MULTIPLIER_N_BITS
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import kmeans_assign_clusters, \
-    int_quantization_with_scale, get_quantized_tensor
+    get_quantized_tensor, int_quantization_with_threshold
 
 
 def lut_kmeans_quantizer(tensor_data: np.ndarray,
@@ -29,10 +28,10 @@ def lut_kmeans_quantizer(tensor_data: np.ndarray,
                         per_channel: bool,
                         output_channels_axis: int) -> np.ndarray:
     """
-    Quantize a tensor with given cluster centers and scale-per-channel vector.
+    Quantize a tensor with given cluster centers and thresholds-per-channel vector.
     1. We divide tensor_data with the scale vector per channel.
     2. We scale the result to the range [-2^(MULTIPLIER_N_BITS-1), 2^(MULTIPLIER_N_BITS-1)-1].
-    3. We assign cluster centers to every value, multiply by scale_per_channel and divide by 2^(MULTIPLIER_N_BITS-1).
+    3. We assign cluster centers to every value, multiply by thresholds_per_channel and divide by 2^(MULTIPLIER_N_BITS-1).
     The result is the quantized tensor.
 
 
@@ -48,11 +47,11 @@ def lut_kmeans_quantizer(tensor_data: np.ndarray,
         Quantized data.
     """
     cluster_centers = quantization_params[CLUSTER_CENTERS]
-    scales_per_channel = quantization_params[SCALE_PER_CHANNEL]
-    tensor = int_quantization_with_scale(tensor_data, scales_per_channel, MULTIPLIER_N_BITS)
+    thresholds_per_channel = quantization_params[SCALE_PER_CHANNEL]
+    tensor = int_quantization_with_threshold(tensor_data, thresholds_per_channel, MULTIPLIER_N_BITS)
     shape_before_kmeans = tensor.shape
     cluster_assignments = kmeans_assign_clusters(cluster_centers, tensor.reshape(-1, 1))
     quant_tensor = get_quantized_tensor(cluster_centers[cluster_assignments].reshape(shape_before_kmeans),
-                                        scales_per_channel,
+                                        thresholds_per_channel,
                                         MULTIPLIER_N_BITS)
     return quant_tensor
