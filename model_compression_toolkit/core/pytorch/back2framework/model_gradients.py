@@ -65,7 +65,6 @@ def run_operation(n: BaseNode,
         n: The corresponding node of the layer it runs.
         input_tensors: List of Pytorch tensors that are the layer's inputs.
         op_func: Module/functional to apply to the input tensors.
-        mode: model quantiztion mode from ModelBuilderMode
     Returns:
         A list of Pytorch tensors. The Module/functional output tensors after applying the
         Module/functional to the input tensors.
@@ -150,12 +149,13 @@ class PytorchModelGradients(torch.nn.Module):
             if isinstance(out_tensors_of_n, list):
                 output_t = []
                 for t in out_tensors_of_n:
-                    t.retain_grad()
+                    if n in self.interest_points and t.requires_grad:
+                        t.retain_grad()
                     output_t.append(t)
                 node_to_output_tensors_dict.update({n: output_t})
             else:
                 assert isinstance(out_tensors_of_n, torch.Tensor)
-                if out_tensors_of_n.requires_grad:
+                if n in self.interest_points and out_tensors_of_n.requires_grad:
                     out_tensors_of_n.retain_grad()
                 node_to_output_tensors_dict.update({n: [out_tensors_of_n]})
 
