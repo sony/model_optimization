@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Callable
 
 import torch
 import numpy as np
@@ -7,23 +7,38 @@ from model_compression_toolkit.core.common.constants import SIGNED, CLUSTER_CENT
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 
 
+def activation_lut_kmean_quantizer(activation_n_bits: int,
+                                   quantization_params: Dict[str, np.ndarray]) -> Callable:
+    """
+    Builds a LUT quantizer for layer's activation using the provided params (threshold and clusters).
+    It initiates a fake custom LUT layer that provides the quantizer function.
+
+    Args:
+        activation_n_bits: Number of bits to use for quantization (not used in this function).
+        quantization_params: Dictionary of specific parameters for this quantization function.
+
+    Returns:
+        A fake LUT quantization node.
+    """
+
+    lut_fake_quant = PytorchLUTFakeQuant(quantization_params=quantization_params)
+    return lambda x: lut_fake_quant(x)
+
+
 class PytorchLUTFakeQuant(torch.nn.Module):
     """
-    Class that wraps a Pytorch layer (nn.Module) to be used for mixed precision quantization.
-    Allows to maintain quantized weights tensors for each of the layer's attributes that we want to quantize,
-    and a list of activation quantizers for each quantization candidate,
-    for each of the candidate bitwidth options specified for the mixed precision model.
-    During MP search, it allows to activate the relevant quantized weights tensor and activation quantizer
-    according to a given configuration, and use it for inference.
+    A custom PyTorch layer for quantizing activation tensor with non-uniform quantization (using lookup table clustering).
     """
+
     def __init__(self,
                  quantization_params: Dict[str, np.ndarray]):
         """
-        Construct a Pytorch model that constitutes as a wrapper for a Pytorch layer, built from a given graph node.
+        Construct a Pytorch module that quantizes an activation tensor.
+
         Args:
-            n: Node to build its Pytorch layer.
-            fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
+            quantization_params: Dictionary of specific parameters for this quantization function.
         """
+
         super(PytorchLUTFakeQuant, self).__init__()
 
         self.quantization_params = quantization_params
@@ -31,7 +46,7 @@ class PytorchLUTFakeQuant(torch.nn.Module):
         self.cluster_centers = to_torch_tensor(self.quantization_params.get(CLUSTER_CENTERS))
         self.threshold = self.quantization_params.get(THRESHOLD)
 
-    def forward(self, x: Any) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Quantize the output of an activation,
 
@@ -47,7 +62,7 @@ class PytorchLUTFakeQuant(torch.nn.Module):
         _quant_output = self.lut_kmeans_quantizer(x)
         return _quant_output
 
-    def lut_kmeans_quantizer(self, tensor_data: Any) -> torch.Tensor:
+    def lut_kmeans_quantizer(self, tensor_data: torch.Tensor) -> torch.Tensor:
         """
         Quantize a tensor using a non-uniform quantization based on the pre-defined kmeans clusters.
         1. Scales tensor_data with the threshold into 8-bit quantization range.
@@ -75,9 +90,9 @@ class PytorchLUTFakeQuant(torch.nn.Module):
         return quant_tensor
 
     def int_quantization_with_threshold(self,
-                                        data: Any,
+                                        data: torch.Tensor,
                                         n_bits: int,
-                                        eps: float = EPS) -> Any:
+                                        eps: float = EPS) -> torch.Tensor:
         """
         Divides data by threshold and quantize it to integers in the quantization range (depends on signed value).
 
