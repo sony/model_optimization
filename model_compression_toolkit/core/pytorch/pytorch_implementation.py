@@ -16,7 +16,7 @@ import operator
 from typing import List, Any, Tuple, Callable, Type, Dict
 import numpy as np
 import torch
-from torch import sigmoid, softmax, add, cat
+from torch import sigmoid, softmax, add, cat, argmax
 from torch.nn import Module, Sigmoid, Softmax
 from torch.nn import Conv2d, ConvTranspose2d, Linear
 
@@ -27,6 +27,7 @@ from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core.pytorch.back2framework.model_gradients import pytorch_model_grad
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
@@ -380,11 +381,11 @@ class PytorchImplementation(FrameworkImplementation):
 
     def model_grad(self,
                    graph_float: common.Graph,
-                   model_input_tensors: Dict[BaseNode, np.ndarray],
+                   model_input_tensors: Dict[BaseNode, torch.Tensor],
                    interest_points: List[BaseNode],
-                   output_list: List[BaseNode],
+                   output_list: List[BaseNode],  # dummy - not used in pytorch
                    all_outputs_indices: List[int],
-                   alpha: float = 0.1) -> List[float]:
+                   alpha: float = 0.3) -> List[float]:
         """
         Calls a PyTorch specific model gradient calculation function, which computes the gradients of the model's
         outputs with respect to the feature maps of the set of given interest points.
@@ -393,7 +394,7 @@ class PytorchImplementation(FrameworkImplementation):
             graph_float: Graph to build its corresponding Keras model.
             model_input_tensors: A mapping between model input nodes to an input batch.
             interest_points: List of nodes which we want to get their feature map as output, to calculate distance metric.
-            output_list: List of nodes that considered as model's output for the purpose of gradients computation.
+            output_list: List of nodes that considered as model's output for the purpose of gradients computation. (Not used in this function)
             all_outputs_indices: Indices of the model outputs and outputs replacements (if exists),
                 in a topological sorted interest points list.
             alpha: A tuning parameter to allow calibration between the contribution of the output feature maps returned
@@ -404,8 +405,7 @@ class PytorchImplementation(FrameworkImplementation):
         point's output has on the model's output.
         """
 
-        raise NotImplemented(f'Gradient-based weights for mixed-precision distance metric computation is currently '
-                             f'not supported in PyTorch.')
+        return pytorch_model_grad(graph_float, model_input_tensors, interest_points, all_outputs_indices, alpha)
 
     def is_node_compatible_for_mp_metric_outputs(self,
                                                  node: BaseNode) -> bool:
@@ -420,5 +420,4 @@ class PytorchImplementation(FrameworkImplementation):
 
         """
 
-        raise NotImplemented(f'Gradient-based weights for mixed-precision distance metric computation is currently '
-                             f'not supported in PyTorch.')
+        return node.layer_class not in [Softmax, softmax, argmax]

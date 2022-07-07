@@ -1,7 +1,6 @@
 import keras
 import unittest
 
-from keras.layers import Softmax
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, SeparableConv2D, Reshape
 from tensorflow import initializers
 import numpy as np
@@ -13,9 +12,9 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.core.tpc_models.default_tpc.v3.tp_model import generate_tp_model, \
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_tp_model, \
     get_op_quantization_configs
-from model_compression_toolkit.core.tpc_models.default_tpc.v3.tpc_keras import generate_keras_tpc
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 
 import model_compression_toolkit as mct
 tp = mct.target_platform
@@ -114,7 +113,7 @@ class TestModelGradients(unittest.TestCase):
                                   interest_points=interest_points,
                                   output_list=output_nodes,
                                   all_outputs_indices=[len(interest_points) - 1],
-                                  alpha=0.1)
+                                  alpha=0.3)
 
         # Checking that the wiehgts where computed and normalized correctly
         self.assertTrue(np.isclose(np.sum(x), 1))
@@ -183,7 +182,7 @@ class TestModelGradients(unittest.TestCase):
                                   interest_points=interest_points,
                                   output_list=output_nodes,
                                   all_outputs_indices=output_indices,
-                                  alpha=0.1)
+                                  alpha=0.3)
 
         # Checking that the wiehgts where computed and normalized correctly
         self.assertTrue(np.isclose(np.sum(x), 1))
