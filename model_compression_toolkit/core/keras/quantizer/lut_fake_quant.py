@@ -9,6 +9,24 @@ from model_compression_toolkit.core.common.constants import SIGNED, CLUSTER_CENT
     MULTIPLIER_N_BITS, THRESHOLD
 
 
+def activation_lut_kmean_quantizer(activation_n_bits: int,
+                                   quantization_params: dict):
+    """
+    Builds a LUT quantizer for layer's activation using the provided params (threshold and clusters).
+    It initiates a fake custom LUT layer that provides the quantizer function.
+
+    Args:
+        activation_n_bits: Number of bits to use for quantization.
+        quantization_params: Dictionary of specific parameters for this quantization function.
+
+    Returns:
+        A fake LUT quantization node.
+    """
+
+    lut_fake_quant = LUTFakeQuant(quantization_params=quantization_params)
+    return lambda x: lut_fake_quant(x)
+
+
 class LUTFakeQuant(Layer):
     """
     A custom Keras layer for quantizing activation tensor with non-uniform quantization (using lookup table clustering).

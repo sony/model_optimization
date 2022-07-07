@@ -16,6 +16,8 @@
 
 import tensorflow as tf
 
+from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import activation_lut_kmean_quantizer
+
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU
 else:
@@ -102,7 +104,7 @@ Mapping from a QuantizationMethod to an activation quantizer function.
 ACTIVATION_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quantization,
                                 QuantizationMethod.SYMMETRIC: symmetric_quantization,
                                 QuantizationMethod.UNIFORM: uniform_quantization,
-                                QuantizationMethod.LUT_QUANTIZER: lut_kmeans_quantizer}
+                                QuantizationMethod.LUT_QUANTIZER: activation_lut_kmean_quantizer}
 
 """
 Mapping from a QuantizationMethod to an weights quantizer function.
