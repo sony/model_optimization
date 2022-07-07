@@ -26,6 +26,15 @@ class BaseQuantizeConfig(QuantizeConfig):
     """
 
     @abc.abstractmethod
+    def get_quantization_variable(self):
+        """
+        A Functions that get the quantization parameters such as threshold, min, max ,etc.
+
+        Returns: A list of trainable variable
+
+        """
+
+    @abc.abstractmethod
     def update_layer_quantization_params(self, layer) -> Tuple[Dict[str, Any],
                                                                Dict[str, Any],
                                                                Dict[str, Any]]:

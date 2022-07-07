@@ -20,8 +20,6 @@ from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.d
     QuantizeConfig
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core import keras
-from model_compression_toolkit.core.common.constants import THRESHOLD
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.gptq.keras.quantizer import WeightQuantizeConfig
@@ -46,21 +44,14 @@ def quantization_config_builder_gptq(n: common.BaseNode,
 
     if n.is_weights_quantization_enabled() and n.is_activation_quantization_enabled():
         qc = WeightQuantizeConfig(fw_info.get_kernel_op_attributes(n.type),
-                                  n.final_weights_quantization_cfg.weights_quantization_params.get(
-                                      THRESHOLD),
-                                  n.final_weights_quantization_cfg.weights_channels_axis,
-                                  n.final_weights_quantization_cfg.weights_n_bits,
-                                  max_lsbs_change_map=gptq_config.lsb_change_per_bit_width)
-        # Quantization is Preformed using fake quantization node
+                                  n.final_weights_quantization_cfg,
+                                  gptq_config)
     elif n.is_activation_quantization_enabled() and not n.is_weights_quantization_enabled():
         qc = NoOpQuantizeConfig()  # Quantization is Preformed using fake quantization node
     elif n.is_weights_quantization_enabled() and not n.is_activation_quantization_enabled():
         qc = WeightQuantizeConfig(fw_info.get_kernel_op_attributes(n.type),
-                                  n.final_weights_quantization_cfg.weights_quantization_params.get(
-                                      THRESHOLD),
-                                  n.final_weights_quantization_cfg.weights_channels_axis,
-                                  n.final_weights_quantization_cfg.weights_n_bits,
-                                  max_lsbs_change_map=gptq_config.lsb_change_per_bit_width)
+                                  n.final_weights_quantization_cfg,
+                                  gptq_config)
 
     elif not n.is_weights_quantization_enabled() and not n.is_activation_quantization_enabled():
         qc = NoOpQuantizeConfig()
