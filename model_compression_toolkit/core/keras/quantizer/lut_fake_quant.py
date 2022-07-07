@@ -1,4 +1,4 @@
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, Any, Callable
 
 import numpy as np
 import tensorflow as tf
@@ -10,13 +10,13 @@ from model_compression_toolkit.core.common.constants import SIGNED, CLUSTER_CENT
 
 
 def activation_lut_kmean_quantizer(activation_n_bits: int,
-                                   quantization_params: dict):
+                                   quantization_params: dict) -> Callable:
     """
     Builds a LUT quantizer for layer's activation using the provided params (threshold and clusters).
     It initiates a fake custom LUT layer that provides the quantizer function.
 
     Args:
-        activation_n_bits: Number of bits to use for quantization.
+        activation_n_bits: Number of bits to use for quantization (not used in this function).
         quantization_params: Dictionary of specific parameters for this quantization function.
 
     Returns:
