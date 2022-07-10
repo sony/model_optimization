@@ -27,6 +27,7 @@ from model_compression_toolkit.core.common.quantization.quantizers.uniform_quant
 from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.core.pytorch.quantizer.fake_quant_builder import power_of_two_quantization, \
     symmetric_quantization, uniform_quantization
+from model_compression_toolkit.core.pytorch.quantizer.lut_fake_quant import activation_lut_kmean_quantizer
 
 """
 Map each layer to a list of its' weights attributes that should get quantized.
@@ -83,7 +84,8 @@ Mapping from a QuantizationMethod to an activation quantizer function.
 """
 ACTIVATION_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quantization,
                                 QuantizationMethod.SYMMETRIC: symmetric_quantization,
-                                QuantizationMethod.UNIFORM: uniform_quantization}
+                                QuantizationMethod.UNIFORM: uniform_quantization,
+                                QuantizationMethod.LUT_QUANTIZER: activation_lut_kmean_quantizer}
 
 """
 Mapping from a QuantizationMethod to an weights quantizer function.
