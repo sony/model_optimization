@@ -12,15 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import math
-
 import torch
 import numpy as np
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod
-from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import LUTFakeQuant
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
