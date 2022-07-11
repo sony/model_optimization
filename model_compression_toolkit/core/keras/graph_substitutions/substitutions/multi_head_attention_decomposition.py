@@ -168,19 +168,19 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
             inputs to MHA node, per iteration
         """
         q_slice_node = FunctionalNode(f'{name}_q{head_index}_slice{i_iter}', {FUNCTION: F_STRIDED_SLICE},
-                                      params.q_reshape_shape, params.q_slice_shape, {}, TFOpLambda,
+                                      params.query_proj_shape, params.q_slice_shape, {}, TFOpLambda,
                                       op_call_args=[[0, i_iter, 0, 0], [0, i_iter + 1, 0, 0]],
                                       op_call_kwargs={'begin_mask': 13, 'end_mask': 13, 'shrink_axis_mask': 2},
                                       functional_op=tf.strided_slice, **params.reuse_params)
         graph.add_node_with_in_edges(q_slice_node, [q_node])
         k_slice_node = FunctionalNode(f'{name}_k{head_index}_slice{i_iter}', {FUNCTION: F_STRIDED_SLICE},
-                                      params.k_reshape_shape, params.k_slice_shape, {}, TFOpLambda,
+                                      params.key_proj_shape, params.k_slice_shape, {}, TFOpLambda,
                                       op_call_args=[[0, i_iter, 0, 0], [0, i_iter + 1, 0, 0]],
                                       op_call_kwargs={'begin_mask': 13, 'end_mask': 13, 'shrink_axis_mask': 2},
                                       functional_op=tf.strided_slice, **params.reuse_params)
         graph.add_node_with_in_edges(k_slice_node, [k_node])
         v_slice_node = FunctionalNode(f'{name}_v{head_index}_slice{i_iter}', {FUNCTION: F_STRIDED_SLICE},
-                                      params.v_reshape_shape, params.v_slice_shape, {}, TFOpLambda,
+                                      params.value_proj_shape, params.v_slice_shape, {}, TFOpLambda,
                                       op_call_args=[[0, i_iter, 0, 0], [0, i_iter + 1, 0, 0]],
                                       op_call_kwargs={'begin_mask': 13, 'end_mask': 13, 'shrink_axis_mask': 2},
                                       functional_op=tf.strided_slice, **params.reuse_params)
