@@ -39,7 +39,7 @@ from tensorflow.keras.applications.mobilenet import MobileNet
 import model_compression_toolkit as mct
 import numpy as np
 
-# Get a TargetPlatformModel object that models the hardware for the quantized model inference.
+# Get a TPC object that models the hardware for the quantized model inference.
 # The model determines the quantization methods to use during the MCT optimization process.
 # Here, for example, we use the default target platform model that is attached to a Tensorflow
 # layers representation.
