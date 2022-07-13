@@ -60,6 +60,8 @@ F_RESHAPE = 'reshape'
 F_STRIDED_SLICE = 'strided_slice'
 F_MATMUL = 'matmul'
 F_STACK = 'stack'
+F_STRIDED_SLICE_BEGIN = 'begin_mask'
+F_STRIDED_SLICE_END = 'end_mask'
 
 # Layers variables names:
 KERNEL = 'kernel'
