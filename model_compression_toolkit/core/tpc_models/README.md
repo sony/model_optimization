@@ -11,10 +11,6 @@ The TPC includes different parameters that are relevant to the
  hardware during inference (e.g., number of bits that are used
 in some operator for its weights/activations, fusing patterns, etc.)
 
-TPC main components:
-
-![TPC main components](../../../docsrc/images/tpc_readme.jpg "TPC main components")
-
 ## Supported Target Platform Models 
 
 Currently, there are three models in MCT that can be used
