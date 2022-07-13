@@ -28,7 +28,7 @@ The object MCT should get called TargetPlatformCapabilities (or shortly TPC).
 This diagram demonstrates the main components:
 
 .. image:: ../../../../images/tpc.jpg
-  :scale: 60%
+  :scale: 80%
 
 Now, we will explain about each component with examples.
 
