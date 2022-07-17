@@ -41,8 +41,14 @@ class LayerNormDecomposition(common.BaseSubstitution):
         super().__init__(matcher_instance=NodeOperationMatcher(LayerNormalization))
 
     @staticmethod
-    def _get_weight_by_name(mha_node, w_str):
-        return [k for k in mha_node.weights.keys() if w_str in k][0]
+    def _get_weight_by_name(_node, w_str):
+        """
+        get weight by part of weight name
+        :param _node: node to search weights in
+        :param w_str: part of name to search
+        :return: matching weight
+        """
+        return [k for k in _node.weights.keys() if w_str in k][0]
 
     def substitute(self,
                    graph: Graph,
