@@ -49,6 +49,7 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remo
     RemoveReLUUpperBound
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.multi_head_attention_decomposition import \
     MultiHeadAttentionDecomposition
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.layer_norm_decomposition import LayerNormDecomposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.scale_equalization import \
     ScaleEqualization, ScaleEqualizationWithPad, ScaleEqualizationMidActivation, ScaleEqualizationMidActivationWithPad
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.separableconv_decomposition import \
@@ -219,6 +220,7 @@ class KerasImplementation(FrameworkImplementation):
 
         """
         return [SeparableConvDecomposition(),
+                LayerNormDecomposition(),
                 MultiHeadAttentionDecomposition(),
                 ActivationDecomposition()]
 

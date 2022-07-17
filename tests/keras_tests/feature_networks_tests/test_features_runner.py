@@ -83,6 +83,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.no
 from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTWeightsQuantizerTest, \
     LUTActivationQuantizerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multi_head_attention_test import MultiHeadAttentionTest
+from tests.keras_tests.feature_networks_tests.feature_networks.layer_norm_substitution_test import LayerNormSub
 import tensorflow as tf
 from tensorflow.keras.layers import ReLU, PReLU, ELU
 
@@ -473,6 +474,12 @@ class FeatureNetworkTest(unittest.TestCase):
             MultiHeadAttentionTest(self, input_shapes,
                                    num_heads, qk_proj_dim, v_proj_dim, None,
                                    separate_key_value=separate_key_value, output_dim=14).run_test()
+
+    def test_layer_norm_substitution(self):
+        LayerNormSub(self, scale=True, center=True).run_test()
+        LayerNormSub(self, scale=True, center=False).run_test()
+        LayerNormSub(self, scale=False, center=True).run_test()
+        LayerNormSub(self, scale=False, center=False).run_test()
 
 
 if __name__ == '__main__':
