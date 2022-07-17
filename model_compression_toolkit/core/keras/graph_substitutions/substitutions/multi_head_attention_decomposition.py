@@ -30,7 +30,7 @@ from model_compression_toolkit.core.keras.reader.node_builder import REUSED_IDEN
 from model_compression_toolkit.core.keras.constants import KERNEL, BIAS, USE_BIAS, NUM_HEADS, KEY_DIM, VALUE_DIM, \
     QUERY_SHAPE, KEY_SHAPE, VALUE_SHAPE, OUTPUT_SHAPE, ATTENTION_AXES, ACTIVATION, LINEAR, FILTERS, \
     FUNCTION, DIMS, TARGET_SHAPE, F_STRIDED_SLICE, F_STACK, Q_KERNEL, Q_BIAS, K_KERNEL, K_BIAS, V_KERNEL, V_BIAS, \
-    OUTPUT_KERNEL, OUTPUT_BIAS, F_MATMUL, TRANSPOSE_B, KERNEL_SIZE, AXIS
+    OUTPUT_KERNEL, OUTPUT_BIAS, F_MATMUL, TRANSPOSE_B, KERNEL_SIZE, AXIS, F_STRIDED_SLICE_BEGIN, F_STRIDED_SLICE_END
 
 
 class MHAParams:
@@ -167,24 +167,40 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
         Returns:
             inputs to MHA node, per iteration
         """
-        q_slice_node = FunctionalNode(f'{name}_q{head_index}_slice{i_iter}', {FUNCTION: F_STRIDED_SLICE},
-                                      params.query_proj_shape, params.q_slice_shape, {}, TFOpLambda,
-                                      op_call_args=[[0, i_iter, 0, 0], [0, i_iter + 1, 0, 0]],
-                                      op_call_kwargs={'begin_mask': 13, 'end_mask': 13, 'shrink_axis_mask': 2},
-                                      functional_op=tf.strided_slice, **params.reuse_params)
-        graph.add_node_with_in_edges(q_slice_node, [q_node])
-        k_slice_node = FunctionalNode(f'{name}_k{head_index}_slice{i_iter}', {FUNCTION: F_STRIDED_SLICE},
-                                      params.key_proj_shape, params.k_slice_shape, {}, TFOpLambda,
-                                      op_call_args=[[0, i_iter, 0, 0], [0, i_iter + 1, 0, 0]],
-                                      op_call_kwargs={'begin_mask': 13, 'end_mask': 13, 'shrink_axis_mask': 2},
-                                      functional_op=tf.strided_slice, **params.reuse_params)
-        graph.add_node_with_in_edges(k_slice_node, [k_node])
-        v_slice_node = FunctionalNode(f'{name}_v{head_index}_slice{i_iter}', {FUNCTION: F_STRIDED_SLICE},
-                                      params.value_proj_shape, params.v_slice_shape, {}, TFOpLambda,
-                                      op_call_args=[[0, i_iter, 0, 0], [0, i_iter + 1, 0, 0]],
-                                      op_call_kwargs={'begin_mask': 13, 'end_mask': 13, 'shrink_axis_mask': 2},
-                                      functional_op=tf.strided_slice, **params.reuse_params)
-        graph.add_node_with_in_edges(v_slice_node, [v_node])
+        _shape = params.query_proj_shape
+        q_slice_node_no_shrink = FunctionalNode(f'{name}_q{head_index}_slice{i_iter}', {FUNCTION: F_STRIDED_SLICE},
+                                                _shape, (_shape[0], 1) + _shape[2:], {}, TFOpLambda,
+                                                op_call_args=[[0, i_iter, 0, 0], [0, i_iter + 1, 0, 0]],
+                                                op_call_kwargs={F_STRIDED_SLICE_BEGIN: 13, F_STRIDED_SLICE_END: 13},
+                                                functional_op=tf.strided_slice, **params.reuse_params)
+        graph.add_node_with_in_edges(q_slice_node_no_shrink, [q_node])
+        _shape = params.key_proj_shape
+        k_slice_node_no_shrink = FunctionalNode(f'{name}_k{head_index}_slice{i_iter}', {FUNCTION: F_STRIDED_SLICE},
+                                                _shape, (_shape[0], 1) + _shape[2:], {}, TFOpLambda,
+                                                op_call_args=[[0, i_iter, 0, 0], [0, i_iter + 1, 0, 0]],
+                                                op_call_kwargs={F_STRIDED_SLICE_BEGIN: 13, F_STRIDED_SLICE_END: 13},
+                                                functional_op=tf.strided_slice, **params.reuse_params)
+        graph.add_node_with_in_edges(k_slice_node_no_shrink, [k_node])
+        _shape = params.value_proj_shape
+        v_slice_node_no_shrink = FunctionalNode(f'{name}_v{head_index}_slice{i_iter}', {FUNCTION: F_STRIDED_SLICE},
+                                                _shape, (_shape[0], 1) + _shape[2:], {}, TFOpLambda,
+                                                op_call_args=[[0, i_iter, 0, 0], [0, i_iter + 1, 0, 0]],
+                                                op_call_kwargs={F_STRIDED_SLICE_BEGIN: 13, F_STRIDED_SLICE_END: 13},
+                                                functional_op=tf.strided_slice, **params.reuse_params)
+        graph.add_node_with_in_edges(v_slice_node_no_shrink, [v_node])
+
+        q_slice_node = BaseNode(f'{name}_q{head_index}_slice_reshape{i_iter}', {TARGET_SHAPE: params.q_slice_shape[1:]},
+                                q_slice_node_no_shrink.output_shape, params.q_slice_shape, {},
+                                Reshape, **params.reuse_params)
+        graph.add_node_with_in_edges(q_slice_node, [q_slice_node_no_shrink])
+        k_slice_node = BaseNode(f'{name}_k{head_index}_slice_reshape{i_iter}', {TARGET_SHAPE: params.k_slice_shape[1:]},
+                                k_slice_node_no_shrink.output_shape, params.k_slice_shape, {},
+                                Reshape, **params.reuse_params)
+        graph.add_node_with_in_edges(k_slice_node, [k_slice_node_no_shrink])
+        v_slice_node = BaseNode(f'{name}_v{head_index}_slice_reshape{i_iter}', {TARGET_SHAPE: params.v_slice_shape[1:]},
+                                v_slice_node_no_shrink.output_shape, params.v_slice_shape, {},
+                                Reshape, **params.reuse_params)
+        graph.add_node_with_in_edges(v_slice_node, [v_slice_node_no_shrink])
 
         return q_slice_node, k_slice_node, v_slice_node
 
@@ -258,11 +274,16 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
         """
 
         # calculate attention matrix:
+        _k_transposed_shape = (params.k_slice_shape[0], params.k_slice_shape[2], params.k_slice_shape[1])
+        matmul_pre_transpose_node = BaseNode(f'{mha_node.name}_qk{head_index}_matmul{iter_index}_pre_transpose', {DIMS: [2, 1]},
+                                             params.k_slice_shape, _k_transposed_shape, {}, Permute, **params.reuse_params)
+        graph.add_node_with_in_edges(matmul_pre_transpose_node, [k_slice_node])
+
         matmul_node = FunctionalNode(f'{mha_node.name}_qk{head_index}_matmul{iter_index}', {FUNCTION: F_MATMUL},
-                                     (params.q_slice_shape, params.k_slice_shape), params.att_matrix_shape, {},
-                                     TFOpLambda, op_call_args=[], op_call_kwargs={TRANSPOSE_B: True},
+                                     (params.q_slice_shape, _k_transposed_shape), params.att_matrix_shape, {},
+                                     TFOpLambda, op_call_args=[], op_call_kwargs={},
                                      functional_op=tf.matmul, **params.reuse_params)
-        graph.add_node_with_in_edges(matmul_node, [q_slice_node, k_slice_node])
+        graph.add_node_with_in_edges(matmul_node, [q_slice_node, matmul_pre_transpose_node])
 
         # apply softmax on attention matrix
         softmax_name = f'{mha_node.name}_softmax{head_index}_{iter_index}'
