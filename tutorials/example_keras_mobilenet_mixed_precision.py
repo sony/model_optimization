@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import model_compression_toolkit as mct
-from tensorflow.keras.applications.mobilenet import MobileNet
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
 """
 Mixed precision is a method for quantizing a model using different bit widths
@@ -79,15 +79,15 @@ if __name__ == '__main__':
         return [image_data_loader.sample()]
 
     # Create a model to quantize.
-    model = MobileNet()
+    model = MobileNetV2()
 
     # Set the number of calibration iterations to 10.
     num_iter = 10
 
-    # Create a mixed-precision configuration with possible bit widths. MCT
-    # will search a mixed-precision configuration (namely, bit width for each layer)
+    # Create a mixed-precision quantization configuration with possible mixed-precision search options.
+    # MCT will search a mixed-precision configuration (namely, bit-width for each layer)
     # and quantize the model according to this configuration.
-    # The candidates bitwidth for quantization should be defined in the hardware model:
+    # The candidates bit-width for quantization should be defined in the target platform model:
     configuration = MixedPrecisionQuantizationConfig()
 
     # Get a TargetPlatformCapabilities object that models the hardware for the quantized model inference.
