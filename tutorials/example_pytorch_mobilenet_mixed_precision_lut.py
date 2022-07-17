@@ -22,8 +22,10 @@ from torchvision import transforms
 Mixed precision is a method for quantizing a model using different bit widths
 for different layers of the model. 
 This tutorial demonstrates how to use mixed-precision in MCT to
-quantize MobileNetV2.
-For now, MCT supports mixed-precision for both weights and activation. 
+quantize MobileNetV2 weights, using non-uniform,
+lookup table-based quantizer for low precision quantization (2 and 4 bits)
+MCT supports non-uniform mixed-precision for weights quantization only.
+In this example, activations are quantized with fixed 8-bit precision. 
 """
 
 ####################################
@@ -77,14 +79,16 @@ if __name__ == '__main__':
     num_iter = 10
 
     # Create a mixed-precision quantization configuration with possible mixed-precision search options.
-    # MCT will search a mixed-precision configuration (namely, bit-width for each layer)
+    # MCTwill search a mixed-precision configuration (namely, bit-width for each layer)
     # and quantize the model according to this configuration.
     # The candidates bit-width for quantization should be defined in the target platform model:
     configuration = MixedPrecisionQuantizationConfig()
 
     # Get a TargetPlatformCapabilities object that models the hardware for the quantized model inference.
-    # Here, for example, we use the default platform that is attached to a Pytorch layers representation.
-    target_platform_cap = mct.get_target_platform_capabilities('pytorch', 'default')
+    # In this example, we use a pre-defined platform that allows us to set a non-uniform (LUT) quantizer
+    # for low precision weights candidates.
+    # The used platform is attached to a Pytorch layers representation.
+    target_platform_cap = mct.get_target_platform_capabilities('pytorch', 'default', 'v3_lut')
 
     # Get KPI information to constraint your model's memory size.
     # Retrieve a KPI object with helpful information of each KPI metric,
@@ -98,11 +102,8 @@ if __name__ == '__main__':
     # Create a KPI object to limit our returned model's size. Note that this values affects only layers and attributes
     # that should be quantized (for example, the kernel of Conv2D in Pytorch will be affected by this value,
     # while the bias will not):
-    kpi = mct.KPI(kpi_data.weights_memory * 0.75,  # About 0.75 of the model's weights memory size when quantized with 8 bits.
-                  kpi_data.activation_memory * 0.5)  # About 0.5 of the model's activation size when quantized with 8 bits.
-
-    # It is also possible to constraint only part of the KPI metric, e.g., by providing only weights_memory target
-    # in the past KPI object, e.g., kpi = mct.KPI(kpi_data.weights_memory * 0.75)
+    kpi = mct.KPI(kpi_data.weights_memory * 0.4)  # About 0.4 of the model's weights memory size when quantized with 8 bits.
+    # Note that in this example, activations are quantized with fixed bit-width (non mixed-precision) of 8-bit.
 
     quantized_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(model,
                                                                                                 representative_data_gen,

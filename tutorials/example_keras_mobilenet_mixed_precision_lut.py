@@ -14,25 +14,43 @@
 # ==============================================================================
 
 import model_compression_toolkit as mct
-from torchvision.models import mobilenet_v2
-from PIL import Image
-from torchvision import transforms
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
 """
 Mixed precision is a method for quantizing a model using different bit widths
 for different layers of the model. 
 This tutorial demonstrates how to use mixed-precision in MCT to
-quantize MobileNetV2.
-For now, MCT supports mixed-precision for both weights and activation. 
+quantize MobileNetV2 weights, using non-uniform,
+lookup table-based quantizer for low precision quantization (2 and 4 bits)
+MCT supports non-uniform mixed-precision for weights quantization only.
+In this example, activations are quantized with fixed 8-bit precision. 
 """
 
 ####################################
 # Preprocessing images
 ####################################
+import cv2
+import numpy as np
+
+MEAN = 127.5
+STD = 127.5
+RESIZE_SCALE = 256 / 224
+SIZE = 224
 
 
-def np_to_pil(img):
-    return Image.fromarray(img)
+def resize(x):
+    resize_side = max(RESIZE_SCALE * SIZE / x.shape[0], RESIZE_SCALE * SIZE / x.shape[1])
+    height_tag = int(np.round(resize_side * x.shape[0]))
+    width_tag = int(np.round(resize_side * x.shape[1]))
+    resized_img = cv2.resize(x, (width_tag, height_tag))
+    offset_height = int((height_tag - SIZE) / 2)
+    offset_width = int((width_tag - SIZE) / 2)
+    cropped_img = resized_img[offset_height:offset_height + SIZE, offset_width:offset_width + SIZE]
+    return cropped_img
+
+
+def normalization(x):
+    return (x - MEAN) / STD
 
 
 if __name__ == '__main__':
@@ -42,22 +60,14 @@ if __name__ == '__main__':
 
     # Set the path to the folder of images to load and use for the representative dataset.
     # Notice that the folder have to contain at least one image.
-    folder = 'path/to/images/folder'
+    folder = '/path/to/images/folder'
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
     from model_compression_toolkit import FolderImageLoader, MixedPrecisionQuantizationConfig
 
     image_data_loader = FolderImageLoader(folder,
-                                          preprocessing=[np_to_pil,
-                                                         transforms.Compose([
-                                                             transforms.Resize(256),
-                                                             transforms.CenterCrop(224),
-                                                             transforms.ToTensor(),
-                                                             transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                                                                  std=[0.229, 0.224, 0.225]),
-                                                         ])
-                                                         ],
+                                          preprocessing=[resize, normalization],
                                           batch_size=batch_size)
 
     # Create a Callable representative dataset for calibration purposes.
@@ -71,7 +81,7 @@ if __name__ == '__main__':
         return [image_data_loader.sample()]
 
     # Create a model to quantize.
-    model = mobilenet_v2()
+    model = MobileNetV2()
 
     # Set the number of calibration iterations to 10.
     num_iter = 10
@@ -83,30 +93,29 @@ if __name__ == '__main__':
     configuration = MixedPrecisionQuantizationConfig()
 
     # Get a TargetPlatformCapabilities object that models the hardware for the quantized model inference.
-    # Here, for example, we use the default platform that is attached to a Pytorch layers representation.
-    target_platform_cap = mct.get_target_platform_capabilities('pytorch', 'default')
+    # In this example, we use a pre-defined platform that allows us to set a non-uniform (LUT) quantizer
+    # for low precision weights candidates.
+    # The used platform is attached to a Tensorflow layers representation.
+    target_platform_cap = mct.get_target_platform_capabilities('tensorflow', 'default', 'v3_lut')
 
     # Get KPI information to constraint your model's memory size.
     # Retrieve a KPI object with helpful information of each KPI metric,
     # to constraint the quantized model to the desired memory size.
-    kpi_data = mct.pytorch_kpi_data(model,
-                                    representative_data_gen,
-                                    configuration,
-                                    target_platform_capabilities=target_platform_cap)
+    kpi_data = mct.keras_kpi_data(model,
+                                  representative_data_gen,
+                                  configuration,
+                                  target_platform_capabilities=target_platform_cap)
 
     # Set a constraint for each of the KPI metrics.
     # Create a KPI object to limit our returned model's size. Note that this values affects only layers and attributes
-    # that should be quantized (for example, the kernel of Conv2D in Pytorch will be affected by this value,
+    # that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
     # while the bias will not):
-    kpi = mct.KPI(kpi_data.weights_memory * 0.75,  # About 0.75 of the model's weights memory size when quantized with 8 bits.
-                  kpi_data.activation_memory * 0.5)  # About 0.5 of the model's activation size when quantized with 8 bits.
+    kpi = mct.KPI(kpi_data.weights_memory * 0.4) # About 0.4 of the model's weights memory size when quantized with 8 bits.
+    # Note that in this example, activations are quantized with fixed bit-width (non mixed-precision) of 8-bit.
 
-    # It is also possible to constraint only part of the KPI metric, e.g., by providing only weights_memory target
-    # in the past KPI object, e.g., kpi = mct.KPI(kpi_data.weights_memory * 0.75)
-
-    quantized_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(model,
-                                                                                                representative_data_gen,
-                                                                                                target_kpi=kpi,
-                                                                                                n_iter=num_iter,
-                                                                                                quant_config=configuration,
-                                                                                                target_platform_capabilities=target_platform_cap)
+    quantized_model, quantization_info = mct.keras_post_training_quantization_mixed_precision(model,
+                                                                                              representative_data_gen,
+                                                                                              target_kpi=kpi,
+                                                                                              n_iter=num_iter,
+                                                                                              quant_config=configuration,
+                                                                                              target_platform_capabilities=target_platform_cap)
