@@ -317,10 +317,15 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
             stacked outputs node
 
         """
-        output_stacked = FunctionalNode(f'{name}_stack{head_index}', {FUNCTION: F_STACK},
-                                        tuple([n.output_shape for n in input_nodes]), params.stack_shape, {},
-                                        TFOpLambda, op_call_args=[], op_call_kwargs={AXIS: 1},
-                                        functional_op=tf.stack, inputs_as_list=True, **params.reuse_params)
+        if params.iter_axes_prod == 1:
+            output_stacked = BaseNode(f'{name}_stack{head_index}_as_reshape', {TARGET_SHAPE: params.stack_shape[1:]},
+                                      input_nodes[0].output_shape, params.stack_shape, {},
+                                      Reshape, **params.reuse_params)
+        else:
+            output_stacked = FunctionalNode(f'{name}_stack{head_index}', {FUNCTION: F_STACK},
+                                            tuple([n.output_shape for n in input_nodes]), params.stack_shape, {},
+                                            TFOpLambda, op_call_args=[], op_call_kwargs={AXIS: 1},
+                                            functional_op=tf.stack, inputs_as_list=True, **params.reuse_params)
         graph.add_node_with_in_edges(output_stacked, input_nodes)
         return output_stacked
 
