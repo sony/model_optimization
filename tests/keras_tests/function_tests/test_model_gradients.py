@@ -118,7 +118,7 @@ class TestModelGradients(unittest.TestCase):
         # Checking that the wiehgts where computed and normalized correctly
         self.assertTrue(np.isclose(np.sum(x), 1))
 
-    def test_grad_calculation(self):
+    def test_jacobian_trace_calculation(self):
         input_shape = (8, 8, 3)
         in_model = basic_derivative_model(input_shape)
         keras_impl = KerasImplementation()
@@ -136,9 +136,11 @@ class TestModelGradients(unittest.TestCase):
                                   all_outputs_indices=[len(interest_points) - 1],
                                   alpha=0)
 
-        # This are the expected values of the normalized gradients (gradients should be 2 and 1
+        # These are the expected values of the normalized gradients (gradients should be 2 and 1
         # with respect to input and mult layer, respectively)
-        self.assertTrue(x == [np.float32(0.8), np.float32(0.2), np.float32(0.0)])
+        self.assertTrue(np.isclose(x[0], np.float32(0.8), 1e-1))
+        self.assertTrue(np.isclose(x[1], np.float32(0.2), 1e-1))
+        self.assertTrue(np.isclose(x[2], np.float32(0.0)))
 
         y = keras_impl.model_grad(graph_float=graph,
                                   model_input_tensors=input_tensors,
@@ -146,7 +148,9 @@ class TestModelGradients(unittest.TestCase):
                                   output_list=output_nodes,
                                   all_outputs_indices=[len(interest_points) - 1],
                                   alpha=1)
-        self.assertTrue(y == [np.float32(0.0), np.float32(0.0), np.float32(1.0)])
+        self.assertTrue(np.isclose(y[0], np.float32(0.0)))
+        self.assertTrue(np.isclose(y[1], np.float32(0.0)))
+        self.assertTrue(np.isclose(y[2], np.float32(1.0)))
 
     def test_basic_model_grad(self):
         input_shape = (8, 8, 3)
@@ -174,8 +178,8 @@ class TestModelGradients(unittest.TestCase):
         interest_points = [n for n in sorted_graph_nodes]
 
         input_tensors = {inode: representative_dataset()[0] for inode in graph.get_inputs()}
-        output_nodes = [graph.get_topo_sorted_nodes()[-3]]
-        output_indices = [len(interest_points) - 3]
+        output_nodes = [graph.get_topo_sorted_nodes()[-2]]
+        output_indices = [len(interest_points) - 2, len(interest_points) - 1]
 
         x = keras_impl.model_grad(graph_float=graph,
                                   model_input_tensors=input_tensors,
@@ -184,7 +188,7 @@ class TestModelGradients(unittest.TestCase):
                                   all_outputs_indices=output_indices,
                                   alpha=0.3)
 
-        # Checking that the wiehgts where computed and normalized correctly
+        # Checking that the weights where computed and normalized correctly
         self.assertTrue(np.isclose(np.sum(x), 1))
 
         # Checking replacement output correction
@@ -195,6 +199,6 @@ class TestModelGradients(unittest.TestCase):
                                   all_outputs_indices=output_indices,
                                   alpha=0)
 
-        # Checking that the wiehgts where computed and normalized correctly
+        # Checking that the weights where computed and normalized correctly
         zero_count = len(list(filter(lambda v: v == np.float32(0), y)))
-        self.assertTrue(zero_count == 3)
+        self.assertTrue(zero_count == 2)

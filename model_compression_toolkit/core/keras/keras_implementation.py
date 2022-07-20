@@ -4,7 +4,8 @@ import numpy as np
 import tensorflow as tf
 
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
-from model_compression_toolkit.core.keras.back2framework.model_gradients import keras_model_grad
+from model_compression_toolkit.core.keras.back2framework.model_gradients import \
+    keras_iterative_approx_jacobian_trace
 from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID, ARGMAX, LAYER_NAME
 from tensorflow.keras.models import Model
 from tensorflow.python.layers.base import Layer
@@ -417,9 +418,10 @@ class KerasImplementation(FrameworkImplementation):
                    interest_points: List[BaseNode],
                    output_list: List[BaseNode],
                    all_outputs_indices: List[int],
-                   alpha: float = 0.3) -> List[float]:
+                   alpha: float = 0.3,
+                   n_iter: int = 50) -> List[float]:
         """
-        Calls a Keras model gradient calculation function, which computes the gradients of the model's
+        Calls a Keras model gradient calculation function, which computes the jacobian-based weights of the model's
         outputs with respect to the feature maps of the set of given interest points.
 
         Args:
@@ -432,13 +434,15 @@ class KerasImplementation(FrameworkImplementation):
             alpha:A tuning parameter to allow calibration between the contribution of the output feature maps returned
                 weights and the other feature maps weights (since the gradient of the output layers does not provide a
                 compatible weight for the distance metric computation).
+            n_iter: The number of random iterations to calculate the approximated  jacobian-based weights for each interest point.
 
-        Returns: A list of normalized gradients to be considered as the relevancy that each interest
+        Returns: A list of normalized  jacobian-based weights to be considered as the relevancy that each interest
         point's output has on the model's output.
 
         """
 
-        return keras_model_grad(graph_float, model_input_tensors, interest_points, output_list, all_outputs_indices, alpha)
+        return keras_iterative_approx_jacobian_trace(graph_float, model_input_tensors, interest_points, output_list,
+                                                     all_outputs_indices, alpha, n_iter)
 
     def is_node_compatible_for_mp_metric_outputs(self,
                                                  node: BaseNode) -> Any:
@@ -453,11 +457,7 @@ class KerasImplementation(FrameworkImplementation):
 
         """
 
-        if node.layer_class == Activation:
-            node_attr = getattr(node, 'framework_attr', None)
-            if node_attr is not None and node_attr[ACTIVATION] == SOFTMAX:
-                return False
-        elif node.layer_class == TFOpLambda:
+        if node.layer_class == TFOpLambda:
             node_attr = getattr(node, 'framework_attr', None)
             if node_attr is not None and ARGMAX in node_attr[LAYER_NAME]:
                 return False

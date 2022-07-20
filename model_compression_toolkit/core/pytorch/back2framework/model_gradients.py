@@ -15,6 +15,7 @@
 from typing import Any, Dict, List
 
 import torch
+import torch.autograd as autograd
 from networkx import topological_sort
 
 from model_compression_toolkit.core import common
@@ -105,19 +106,23 @@ class PytorchModelGradients(torch.nn.Module):
     """
     def __init__(self,
                  graph_float: common.Graph,
-                 interest_points: List[BaseNode]):
+                 interest_points: List[BaseNode],
+                 output_list: List[BaseNode]):
         """
         Construct a PytorchModelGradients model.
 
         Args:
             graph_float: Model's Graph representation to evaluate the outputs according to.
             interest_points: List of nodes in the graph which we want to produce outputs for.
+            output_list: List of nodes that considered as model's output for the purpose of gradients computation.
         """
 
         super(PytorchModelGradients, self).__init__()
         self.graph_float = graph_float
         self.node_sort = list(topological_sort(graph_float))
         self.interest_points = interest_points
+        self.output_list = output_list
+        self.interest_points_tensors = []
 
         for n in self.node_sort:
             if not isinstance(n, FunctionalNode):
@@ -149,92 +154,147 @@ class PytorchModelGradients(torch.nn.Module):
             if isinstance(out_tensors_of_n, list):
                 output_t = []
                 for t in out_tensors_of_n:
-                    if n in self.interest_points and t.requires_grad:
-                        t.retain_grad()
+                    if n in self.interest_points:
+                        if t.requires_grad:
+                            t.retain_grad()
+                            self.interest_points_tensors.append(t)
+                        else:
+                            # We get here in case we have an output node, which is an interest point,
+                            # but it is not differentiable. We need to add this dummy tensor to in order to include this
+                            # node in the coming weights computation.
+                            self.interest_points_tensors.append(torch.tensor([0.0],
+                                                                             requires_grad=True,
+                                                                             device=t.device))
+                            break
                     output_t.append(t)
                 node_to_output_tensors_dict.update({n: output_t})
             else:
                 assert isinstance(out_tensors_of_n, torch.Tensor)
-                if n in self.interest_points and out_tensors_of_n.requires_grad:
-                    out_tensors_of_n.retain_grad()
+                if n in self.interest_points:
+                    if out_tensors_of_n.requires_grad:
+                        out_tensors_of_n.retain_grad()
+                        self.interest_points_tensors.append(out_tensors_of_n)
+                    else:
+                        # We get here in case we have an output node, which is an interest point,
+                        # but it is not differentiable. We need to add this dummy tensor to in order to include this
+                        # node in the coming weights computation.
+                        self.interest_points_tensors.append(torch.tensor([0.0],
+                                                                         requires_grad=True,
+                                                                         device=out_tensors_of_n.device))
                 node_to_output_tensors_dict.update({n: [out_tensors_of_n]})
 
-        outputs = generate_outputs(self.interest_points,
+        outputs = generate_outputs(self.output_list,
                                    node_to_output_tensors_dict)
 
         return outputs
 
 
-def pytorch_model_grad(graph_float: common.Graph,
-                       model_input_tensors: Dict[BaseNode, torch.Tensor],
-                       interest_points: List[BaseNode],
-                       all_outputs_indices: List[int],
-                       alpha: float = 0.3) -> List[float]:
+def pytorch_iterative_approx_jacobian_trace(graph_float: common.Graph,
+                                            model_input_tensors: Dict[BaseNode, torch.Tensor],
+                                            interest_points: List[BaseNode],
+                                            output_list: List[BaseNode],
+                                            all_outputs_indices: List[int],
+                                            alpha: float = 0.3,
+                                            n_iter: int = 50) -> List[float]:
     """
-    Computes the gradients of a Pytorch model's outputs with respect to the feature maps of the set of given
-    interest points. It then uses the gradients to compute the hessian trace for each interest point and normalized the
-    values, to be used as weights for weighted average in mixed-precision distance metric computation.
+    Computes an approximation of the power of the Jacobian trace of a Pytorch model's outputs with respect to the feature maps of
+    the set of given interest points. It then uses the power of the Jacobian trace for each interest point and normalized the
+    values, to be used as weights for weighted average in distance metric computation.
 
     Args:
         graph_float: Graph to build its corresponding Pytorch model.
         model_input_tensors: A mapping between model input nodes to an input batch torch Tensor.
         interest_points: List of nodes which we want to get their feature map as output, to calculate distance metric.
+        output_list: List of nodes that considered as model's output for the purpose of gradients computation.
         all_outputs_indices: Indices of the model outputs and outputs replacements (if exists),
             in a topological sorted interest points list.
         alpha: A tuning parameter to allow calibration between the contribution of the output feature maps returned
             weights and the other feature maps weights (since the gradient of the output layers does not provide a
             compatible weight for the distance metric computation).
+        n_iter: The number of random iterations to calculate the approximated power of the Jacobian trace for each interest point.
 
-    Returns: A list of normalized gradients to be considered as the relevancy that each interest
+    Returns: A list of normalized jacobian-based weights to be considered as the relevancy that each interest
     point's output has on the model's output.
     """
 
+    # Set inputs to require_grad
     for n, input_tensor in model_input_tensors.items():
         input_tensor.requires_grad_()
 
     model_grads_net = PytorchModelGradients(graph_float=graph_float,
-                                            interest_points=interest_points)
+                                            interest_points=interest_points,
+                                            output_list=output_list)
 
+    # Run model inference
     output_tensors = model_grads_net(model_input_tensors)
-
-    ############################################
-    # Compute Gradients
-    ############################################
     device = output_tensors[0].device
-    output_tensors_for_loss = [output_tensors[i] for i in all_outputs_indices]
-    output_loss = torch.tensor([0.0], requires_grad=True, device=device)
-    for output in output_tensors_for_loss:
-        output = torch.reshape(output, shape=(output.shape[0], -1))
-        output_loss = torch.add(output_loss, torch.mean(torch.sum(output, dim=-1)))
 
-    output_loss.backward()
+    outputs_jacobians_approx = []
+    for output in output_tensors:  # Per model's output tensor
+        output = torch.reshape(output, shape=[output.shape[0], -1])
 
-    ipt_gradients = [torch.Tensor([0.0]) if t.grad is None else t.grad for t in output_tensors]
-    r_ipt_gradients = [torch.reshape(t, shape=(t.shape[0], -1)) for t in ipt_gradients]
-    hessian_trace_aprrox = [torch.mean(torch.sum(torch.pow(ipt_grad, 2.0), dim=-1)) for ipt_grad in r_ipt_gradients]
+        ipts_jac_trace_approx = []
+        for ipt in model_grads_net.interest_points_tensors:  # Per Interest point activation tensor
+            trace_jv = []
+            for j in range(n_iter):  # Approximation iterations
+                # Getting a random vector with normal distribution
+                v = torch.randn(output.shape, device=device)
+                f_v = torch.sum(v * output)
 
-    # Output layers or layers that come after the model's considered output layers,
-    # are assigned with a constant normalized value,
-    # according to the given alpha variable and the number of such layers.
-    # Other layers returned weights are normalized by dividing the hessian value by the sum of all other values.
-    hessians_without_outputs = [hessian_trace_aprrox[i] for i in range(len(hessian_trace_aprrox))
-                                if i not in all_outputs_indices]
-    sum_without_outputs = sum(hessians_without_outputs)
-    normalized_grads_weights = [get_normalized_weight(grad,
-                                                      i,
-                                                      sum_without_outputs,
-                                                      all_outputs_indices,
-                                                      alpha)
-                                for i, grad in enumerate(hessian_trace_aprrox)]
+                # Computing the jacobian approximation by getting the gradient of (output * v)
+                jac_v = autograd.grad(outputs=f_v,
+                                      inputs=ipt,
+                                      retain_graph=True,
+                                      allow_unused=True)[0]
+                if jac_v is None:
+                    # In case we have an output node, which is an interest point, but it is not differentiable,
+                    # we still want to set some weight for it. For this, we need to add this dummy tensor to the ipt
+                    # jacobian traces list.
+                    trace_jv.append(torch.tensor([0.0],
+                                                 requires_grad=True,
+                                                 device=device))
+                    break
+                jac_v = torch.reshape(jac_v, [jac_v.shape[0], -1])
+                jac_trace_approx = torch.mean(torch.sum(torch.pow(jac_v, 2.0)))
+                trace_jv.append(jac_trace_approx)
+            ipts_jac_trace_approx.append(torch.mean(torch.stack(trace_jv)))  # Get averaged jacobian trace approximation
+        outputs_jacobians_approx.append(ipts_jac_trace_approx)  # Get mean of jacobians of all model's outputs
+
+    return _normalize_weights(torch.mean(torch.Tensor(outputs_jacobians_approx), dim=0), all_outputs_indices, alpha)
+
+
+def _normalize_weights(jacobians_traces: torch.Tensor,
+                       all_outputs_indices: List[int],
+                       alpha: float) -> List[float]:
+    """
+    Output layers or layers that come after the model's considered output layers,
+    are assigned with a constant normalized value, according to the given alpha variable and the number of such layers.
+    Other layers returned weights are normalized by dividing the jacobian-based weights value by the sum of all other values.
+
+    Args:
+        jacobians_traces: The approximated average jacobian-based weights of each interest point.
+        all_outputs_indices: A list of indices of all nodes that consider outputs.
+        alpha: A multiplication factor.
+
+    Returns: Normalized list of jacobian-based weights (for each interest point).
+
+    """
+
+    jacobians_without_outputs = [jacobians_traces[i] for i in range(len(jacobians_traces))
+                                 if i not in all_outputs_indices]
+    sum_without_outputs = sum(jacobians_without_outputs)
+
+    normalized_grads_weights = [_get_normalized_weight(grad, i, sum_without_outputs, all_outputs_indices, alpha)
+                                for i, grad in enumerate(jacobians_traces)]
 
     return normalized_grads_weights
 
 
-def get_normalized_weight(grad: torch.Tensor,
-                          i: int,
-                          sum_without_outputs: float,
-                          all_outputs_indices: List[int],
-                          alpha: float) -> float:
+def _get_normalized_weight(grad: torch.Tensor,
+                           i: int,
+                           sum_without_outputs: float,
+                           all_outputs_indices: List[int],
+                           alpha: float) -> float:
     """
     Normalizes the node's gradient value. If it is an output or output replacement node than the normalized value is
     a constant, otherwise, it is normalized by dividing with the sum of all gradient values.
@@ -246,7 +306,7 @@ def get_normalized_weight(grad: torch.Tensor,
         all_outputs_indices: A list of indices of all nodes that consider outputs.
         alpha: A multiplication factor.
 
-    Returns: A normalized gradient value.
+    Returns: A normalized jacobian-based weights.
 
     """
 
