@@ -29,17 +29,21 @@ def get_working_device() -> str:
     return torch.device(CUDA if torch.cuda.is_available() else CPU)
 
 
-def set_model(model: torch.nn.Module):
+def set_model(model: torch.nn.Module, train_mode: bool = False):
     """
-    Set model to work in eval mode and GPU mode if GPU is available
+    Set model to work in train/eval mode and GPU mode if GPU is available
 
     Args:
         model: Pytorch model
-
+        train_mode: Whether train mode or eval mode
     Returns:
 
     """
-    model.eval()
+    if train_mode:
+        model.train()
+    else:
+        model.eval()
+
     if torch.cuda.is_available():
         model.cuda()
     else:
@@ -68,7 +72,7 @@ def to_torch_tensor(tensor):
         raise Exception(f'Conversion of type {type(tensor)} to {type(torch.Tensor)} is not supported')
 
 
-def torch_tensor_to_numpy(tensor: torch.Tensor) -> np.ndarray:
+def torch_tensor_to_numpy(tensor: [torch.Tensor, list, tuple]) -> [np.ndarray, list, tuple]:
     """
     Convert a Pytorch tensor to a Numpy array.
     Args:

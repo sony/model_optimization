@@ -25,6 +25,7 @@ from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
+from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
 
 
 def build_input_tensors_list(node: BaseNode,
@@ -262,7 +263,7 @@ def pytorch_iterative_approx_jacobian_trace(graph_float: common.Graph,
             ipts_jac_trace_approx.append(torch.sqrt(torch.mean(torch.stack(trace_jv))))  # Get averaged jacobian trace approximation
         outputs_jacobians_approx.append(ipts_jac_trace_approx)
 
-    mean_per_point = torch.mean(torch.Tensor(outputs_jacobians_approx), dim=0)  # Get mean of jacobians of all model's outputs
+    mean_per_point = torch_tensor_to_numpy(torch.mean(torch.Tensor(outputs_jacobians_approx), dim=0))  # Get mean of jacobians of all model's outputs
     if norm_weights:
         return _normalize_weights(mean_per_point, all_outputs_indices, alpha)
     else:

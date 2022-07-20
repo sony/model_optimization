@@ -42,10 +42,6 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.ba
     pytorch_batchnorm_folding
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.linear_collapsing import \
     pytorch_linear_collapsing
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
-    import MultiHeadAttentionDecomposition
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.permute_call_method import \
-    PermuteCallMethod
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.reshape_with_static_shapes import \
@@ -57,13 +53,17 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.sc
     ScaleEqualizationWithPad
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
     pytorch_apply_shift_negative_correction
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.softmax_shift import \
-    pytorch_softmax_shift
 from model_compression_toolkit.core.pytorch.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.pytorch.pytorch_node_prior_info import create_node_prior_info
 from model_compression_toolkit.core.pytorch.reader.reader import model_reader
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.softmax_shift import \
+    pytorch_softmax_shift
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
+    import MultiHeadAttentionDecomposition
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.permute_call_method import PermuteCallMethod
+from model_compression_toolkit.gptq.pytorch.gptq_training import PytorchGPTQTrainer
 
 
 class PytorchImplementation(FrameworkImplementation):
@@ -272,7 +272,7 @@ class PytorchImplementation(FrameworkImplementation):
         """
         Returns: GPTQTrainer object
         """
-        raise Exception('This feature is currently not yet available for Pytorch models. Work in progress.')
+        return PytorchGPTQTrainer
 
     def get_sensitivity_evaluator(self,
                                   graph: Graph,

@@ -58,3 +58,7 @@ def tensor_compare(a, b):
     cs_value = cosine_similarity(a, b)
     norm_rate = tensor_norm(a) / tensor_norm(b)
     return cs_value, norm_rate
+
+
+def calc_db(x, eps=1e-10):
+    return 10*np.log10(x+eps)

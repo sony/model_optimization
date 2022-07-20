@@ -131,7 +131,7 @@ class GPTQTrainer(ABC):
                 # therefore, output_list is just the graph outputs, and we don't need the tuning factor for
                 # defining the output weights (since the output layer is not a compare point).
                 image_ip_gradients = self.fw_impl.model_grad(self.graph_float,
-                                                             {inode: images[i - 1:i] for inode in
+                                                             {inode: self.fw_impl.to_tensor(images[i - 1:i]) for inode in
                                                               self.graph_float.get_inputs()},
                                                              self.compare_points,
                                                              output_list=[n.node for n in
@@ -174,6 +174,7 @@ class GPTQTrainer(ABC):
             images.append(inference_batch_input[0])
             samples_count += num_images
         return np.concatenate(images, axis=0)
+
 
     @abstractmethod
     def build_gptq_model(self):
