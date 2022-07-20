@@ -114,6 +114,7 @@ class PytorchModelGradients(torch.nn.Module):
         Args:
             graph_float: Model's Graph representation to evaluate the outputs according to.
             interest_points: List of nodes in the graph which we want to produce outputs for.
+            output_list: List of nodes that considered as model's output for the purpose of gradients computation.
         """
 
         super(PytorchModelGradients, self).__init__()
@@ -196,8 +197,8 @@ def pytorch_iterative_approx_jacobian_trace(graph_float: common.Graph,
                                             alpha: float = 0.3,
                                             n_iter: int = 50) -> List[float]:
     """
-    Computes an approximation of the Jacobians trace of a Pytorch model's outputs with respect to the feature maps of
-    the set of given interest points. It then uses the jacobian trace for each interest point and normalized the
+    Computes an approximation of the power of the Jacobian trace of a Pytorch model's outputs with respect to the feature maps of
+    the set of given interest points. It then uses the power of the Jacobian trace for each interest point and normalized the
     values, to be used as weights for weighted average in distance metric computation.
 
     Args:
@@ -210,9 +211,9 @@ def pytorch_iterative_approx_jacobian_trace(graph_float: common.Graph,
         alpha: A tuning parameter to allow calibration between the contribution of the output feature maps returned
             weights and the other feature maps weights (since the gradient of the output layers does not provide a
             compatible weight for the distance metric computation).
-        n_iter: The number of random iterations to calculate the approximated jacobian trace for each interest point.
+        n_iter: The number of random iterations to calculate the approximated power of the Jacobian trace for each interest point.
 
-    Returns: A list of normalized tacobian traces to be considered as the relevancy that each interest
+    Returns: A list of normalized jacobian-based weights to be considered as the relevancy that each interest
     point's output has on the model's output.
     """
 
@@ -268,14 +269,14 @@ def _normalize_weights(jacobians_traces: torch.Tensor,
     """
     Output layers or layers that come after the model's considered output layers,
     are assigned with a constant normalized value, according to the given alpha variable and the number of such layers.
-    Other layers returned weights are normalized by dividing the jacobian trace value by the sum of all other values.
+    Other layers returned weights are normalized by dividing the jacobian-based weights value by the sum of all other values.
 
     Args:
-        jacobians_traces: The approximated average jacobian trace of each interest point.
+        jacobians_traces: The approximated average jacobian-based weights of each interest point.
         all_outputs_indices: A list of indices of all nodes that consider outputs.
         alpha: A multiplication factor.
 
-    Returns: Normalized list of jacobian traces (for each interest point).
+    Returns: Normalized list of jacobian-based weights (for each interest point).
 
     """
 
@@ -305,7 +306,7 @@ def _get_normalized_weight(grad: torch.Tensor,
         all_outputs_indices: A list of indices of all nodes that consider outputs.
         alpha: A multiplication factor.
 
-    Returns: A normalized gradient value.
+    Returns: A normalized jacobian-based weights.
 
     """
 

@@ -370,7 +370,7 @@ class FrameworkImplementation(ABC):
                    alpha: float = 0.3,
                    n_iter: int = 50) -> List[float]:
         """
-        Calls a framework specific model gradient calculation function, which computes the jacobian of the model's
+        Calls a framework specific model gradient calculation function, which computes the jacobian-based weights of the model's
         outputs with respect to the feature maps of the set of given interest points.
 
         Args:
@@ -383,9 +383,9 @@ class FrameworkImplementation(ABC):
             alpha: A tuning parameter to allow calibration between the contribution of the output feature maps returned
                 weights and the other feature maps weights (since the gradient of the output layers does not provide a
                 compatible weight for the distance metric computation).
-            n_iter: The number of random iterations to calculate the approximated jacobian trace for each interest point.
+            n_iter: The number of random iterations to calculate the approximated jacobian-based weights for each interest point.
 
-        Returns: A list of normalized jacobians traces to be considered as the relevancy that each interest
+        Returns: A list of normalized jacobian-based weights to be considered as the relevancy that each interest
         point's output has on the model's output.
         """
 
