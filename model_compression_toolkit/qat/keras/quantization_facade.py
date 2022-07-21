@@ -49,7 +49,6 @@ if importlib.util.find_spec("tensorflow") is not None\
 
     def keras_quantization_aware_training_init(in_model: Model,
                                                representative_data_gen: Callable,
-                                               gptq_config: GradientPTQConfig = None,
                                                target_kpi: KPI = None,
                                                core_config: CoreConfig = CoreConfig(),
                                                fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
@@ -72,7 +71,6 @@ if importlib.util.find_spec("tensorflow") is not None\
          Args:
              in_model (Model): Keras model to quantize.
              representative_data_gen (Callable): Dataset used for initial calibration.
-             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
              fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).  `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
@@ -153,11 +151,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                             target_kpi=target_kpi,
                                             tb_w=tb_w)
 
-        if gptq_config is None:
-            tg = ptq_runner(tg, fw_info, fw_impl, tb_w)
-        else:
-            tg = gptq_runner(tg, gptq_config, representative_data_gen,
-                             fw_info, fw_impl, tb_w)
+        tg = ptq_runner(tg, fw_info, fw_impl, tb_w)
 
         qat_model, user_info = model_builder(tg, fw_info=fw_info)
 
