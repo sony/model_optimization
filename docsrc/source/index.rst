@@ -60,6 +60,7 @@ Keras:
 * :ref:`Hardware-friendly Post Training Quantization<ug-keras_post_training_quantization>` [1]
 * :ref:`Gradient base post training using knowledge distillation<ug-GradientPTQConfig>` (Experimental)
 * :ref:`Mixed-precision post training quantization<ug-keras_post_training_quantization_mixed_precision>` (Experimental)
+* :ref:`Init model for Quantization Aware Training<ug-keras_quantization_aware_training_experimental>` (Experimental)
 
 Pytorch (Experimental):
 

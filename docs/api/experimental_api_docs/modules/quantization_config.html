@@ -5,7 +5,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>quantization_config Module &#8212; MCT Documentation: ver 1.5.0</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
@@ -15,7 +15,6 @@
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
-    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../_static/doctools.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -42,9 +41,9 @@
           <div class="body" role="main">
             
   <section id="quantization-config-module">
-<span id="ug-quantization-config"></span><h1>quantization_config Module<a class="headerlink" href="#quantization-config-module" title="Permalink to this heading">¶</a></h1>
+<span id="ug-quantization-config"></span><h1>quantization_config Module<a class="headerlink" href="#quantization-config-module" title="Permalink to this headline">¶</a></h1>
 <section id="quantizationerrormethod">
-<h2>QuantizationErrorMethod<a class="headerlink" href="#quantizationerrormethod" title="Permalink to this heading">¶</a></h2>
+<h2>QuantizationErrorMethod<a class="headerlink" href="#quantizationerrormethod" title="Permalink to this headline">¶</a></h2>
 <p><strong>Enum to select a method for quantization parameters’ selection:</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.QuantizationErrorMethod">
@@ -62,14 +61,14 @@
 </div>
 </section>
 <section id="quantizationconfig">
-<h2>QuantizationConfig<a class="headerlink" href="#quantizationconfig" title="Permalink to this heading">¶</a></h2>
+<h2>QuantizationConfig<a class="headerlink" href="#quantizationconfig" title="Permalink to this headline">¶</a></h2>
 <p><strong>Class to configure the quantization process of the model:</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.QuantizationConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">QuantizationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">activation_error_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">QuantizationErrorMethod.MSE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_error_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">QuantizationErrorMethod.MSE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relu_bound_to_power_of_2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_bias_correction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_per_channel_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_scaling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">softmax_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift_negative_activation_correction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_channel_equalization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">math.inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">MIN_THRESHOLD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_p_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linear_collapsing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residual_collapsing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift_negative_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift_negative_threshold_recalculation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.QuantizationConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class to wrap all different parameters the library quantize the input model according to.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>activation_error_method</strong> (<a class="reference internal" href="#model_compression_toolkit.QuantizationErrorMethod" title="model_compression_toolkit.QuantizationErrorMethod"><em>QuantizationErrorMethod</em></a>) – Which method to use from QuantizationErrorMethod for activation quantization threshold selection.</p></li>
 <li><p><strong>weights_error_method</strong> (<a class="reference internal" href="#model_compression_toolkit.QuantizationErrorMethod" title="model_compression_toolkit.QuantizationErrorMethod"><em>QuantizationErrorMethod</em></a>) – Which method to use from QuantizationErrorMethod for activation quantization threshold selection.</p></li>
@@ -132,7 +131,7 @@ one can instantiate a quantization configuration:</p>
     </form>
     </div>
 </div>
-<script>document.getElementById('searchbox').style.display = "block"</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -149,7 +148,7 @@ one can instantiate a quantization configuration:</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
     </div>
   </body>
 </html>

@@ -23,13 +23,14 @@ API Docs
 
 Functions
 =========
-- :ref:`pytorch_post_training_quantization_experimental<ug-pytorch_post_training_quantization_experimental>`: Function to use for post training quantization of PyTorch models (experimental).
-- :ref:`keras_post_training_quantization_experimental<ug-keras_post_training_quantization_experimental>`: Function to use for post training quantization of Keras models (experimental).
-- :ref:`keras_gradient_post_training_quantization_experimental<ug-keras_gradient_post_training_quantization_experimental>`: Function to use for gradient-based post training quantization of Keras models (experimental).
-- :ref:`get_keras_gptq_config<ug-get_keras_gptq_config>`: Function to create a GradientPTQConfig instance to use for Keras models when using GPTQ (experimental).
-- :ref:`get_target_platform_capabilities<ug-get_target_platform_capabilities>`: Function to get a target platform model for Tensorflow and Pytorch.
-- :ref:`keras_kpi_data_experimental<ug-keras_kpi_data_experimental>`: Function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of Keras models (experimental).
-- :ref:`pytorch_kpi_data_experimental<ug-pytorch_kpi_data_experimental>`: Function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of PyTorch models (experimental).
+- :ref:`pytorch_post_training_quantization_experimental<ug-pytorch_post_training_quantization_experimental>`: A function to use for post training quantization of PyTorch models (experimental).
+- :ref:`keras_post_training_quantization_experimental<ug-keras_post_training_quantization_experimental>`: A function to use for post training quantization of Keras models (experimental).
+- :ref:`keras_gradient_post_training_quantization_experimental<ug-keras_gradient_post_training_quantization_experimental>`: A function to use for gradient-based post training quantization of Keras models (experimental).
+- :ref:`keras_quantization_aware_training_experimental<ug-keras_quantization_aware_training_experimental>`: A function to use for preparing a model for Quantization Aware Training (Experimental)
+- :ref:`get_keras_gptq_config<ug-get_keras_gptq_config>`: A function to create a GradientPTQConfig instance to use for Keras models when using GPTQ (experimental).
+- :ref:`get_target_platform_capabilities<ug-get_target_platform_capabilities>`: A function to get a target platform model for Tensorflow and Pytorch.
+- :ref:`keras_kpi_data_experimental<ug-keras_kpi_data_experimental>`: A function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of Keras models (experimental).
+- :ref:`pytorch_kpi_data_experimental<ug-pytorch_kpi_data_experimental>`: A function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of PyTorch models (experimental).
 
 
 Modules
