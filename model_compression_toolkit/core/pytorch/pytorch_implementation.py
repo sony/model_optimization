@@ -27,7 +27,8 @@ from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.pytorch.back2framework.model_gradients import pytorch_model_grad
+from model_compression_toolkit.core.pytorch.back2framework.model_gradients import \
+    pytorch_iterative_approx_jacobian_trace
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
@@ -385,27 +386,30 @@ class PytorchImplementation(FrameworkImplementation):
                    interest_points: List[BaseNode],
                    output_list: List[BaseNode],  # dummy - not used in pytorch
                    all_outputs_indices: List[int],
-                   alpha: float = 0.3) -> List[float]:
+                   alpha: float = 0.3,
+                   n_iter: int = 50) -> List[float]:
         """
-        Calls a PyTorch specific model gradient calculation function, which computes the gradients of the model's
+        Calls a PyTorch specific model gradient calculation function, which computes the  jacobian-based weights of the model's
         outputs with respect to the feature maps of the set of given interest points.
 
         Args:
             graph_float: Graph to build its corresponding Keras model.
             model_input_tensors: A mapping between model input nodes to an input batch.
             interest_points: List of nodes which we want to get their feature map as output, to calculate distance metric.
-            output_list: List of nodes that considered as model's output for the purpose of gradients computation. (Not used in this function)
+            output_list: List of nodes that considered as model's output for the purpose of gradients computation.
             all_outputs_indices: Indices of the model outputs and outputs replacements (if exists),
                 in a topological sorted interest points list.
             alpha: A tuning parameter to allow calibration between the contribution of the output feature maps returned
                 weights and the other feature maps weights (since the gradient of the output layers does not provide a
                 compatible weight for the distance metric computation).
+            n_iter: The number of random iterations to calculate the approximated  jacobian-based weights for each interest point.
 
-        Returns: A list of normalized gradients to be considered as the relevancy that each interest
+        Returns: A list of normalized  jacobian-based weights to be considered as the relevancy that each interest
         point's output has on the model's output.
         """
 
-        return pytorch_model_grad(graph_float, model_input_tensors, interest_points, all_outputs_indices, alpha)
+        return pytorch_iterative_approx_jacobian_trace(graph_float, model_input_tensors, interest_points, output_list,
+                                                       all_outputs_indices, alpha, n_iter)
 
     def is_node_compatible_for_mp_metric_outputs(self,
                                                  node: BaseNode) -> bool:
@@ -420,4 +424,4 @@ class PytorchImplementation(FrameworkImplementation):
 
         """
 
-        return node.layer_class not in [Softmax, softmax, argmax]
+        return node.layer_class not in [argmax]

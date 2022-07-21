@@ -186,14 +186,17 @@ class SensitivityEvaluation:
 
         grad_per_batch = []
         for images in self.images_batches:
-            batch_ip_gradients = self.fw_impl.model_grad(self.graph,
-                                                         {inode: images[0] for inode in self.graph.get_inputs()},
-                                                         self.interest_points,
-                                                         self.outputs_replacement_nodes,
-                                                         self.output_nodes_indices,
-                                                         self.quant_config.output_grad_factor)
-
-            grad_per_batch.append(batch_ip_gradients)
+            batch_ip_gradients = []
+            for i in range(1, images[0].shape[0] + 1):
+                image_ip_gradients = self.fw_impl.model_grad(self.graph,
+                                                             {inode: images[0][i - 1:i] for inode in
+                                                              self.graph.get_inputs()},
+                                                             self.interest_points,
+                                                             self.outputs_replacement_nodes,
+                                                             self.output_nodes_indices,
+                                                             self.quant_config.output_grad_factor)
+                batch_ip_gradients.append(image_ip_gradients)
+            grad_per_batch.append(np.mean(batch_ip_gradients, axis=0))
         return np.mean(grad_per_batch, axis=0)
 
     def _configure_bitwidths_model(self,
