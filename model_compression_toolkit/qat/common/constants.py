@@ -13,5 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+FQ_MIN = "min"
+FQ_MAX = "max"
 THRESHOLD_TENSOR = "ptq_threshold_tensor"
 WEIGHTS_QUANTIZATION_PARAMS = 'weights_quantization_params'

@@ -20,36 +20,9 @@ import tensorflow as tf
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.core.keras.quantizer.base_quantizer import BaseTrainableQuantizer
-from model_compression_toolkit.qat.keras.quantizer import quant_utils as qutils
-from model_compression_toolkit.core.common.constants import THRESHOLD
+from model_compression_toolkit.core.common.constants import THRESHOLD, MIN_THRESHOLD
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
-
-
-def symmetric_quantizer(input_tensor: tf.Tensor,
-                        max_tensor: tf.Tensor,
-                        num_bits: int,
-                        signed: bool,
-                        power_of_two: bool) -> tf.Tensor:
-    """
-    Quantize a tensor symmetrically with maximum LSBs shift.
-    Args:
-        input_tensor: Tensor to quantize. values of this tensor trained during qat.
-        max_tensor: Tensor with max values to compute the threshold.
-        num_bits: Num of bits to use.
-        signed: Signedness of the quantization range.
-        power_of_two: Whether the threshold should be constrained or not.
-
-    Returns:
-        A quantized tensor.
-    """
-
-    if power_of_two:
-        max_tensor = qutils.power_of_two_max(max_tensor)
-    delta = qutils.calculate_delta(max_tensor, num_bits, signed)
-    input_tensor_int = qutils.ste_round(input_tensor / delta)
-    min_int = -int(signed) * (2 ** (num_bits - int(signed)))
-    max_int = (2 ** (num_bits - int(signed))) - 1
-    return delta * qutils.ste_clip(input_tensor_int, max_val=max_int, min_val=min_int)
+from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 
 
 class STEWeightQuantizer(BaseTrainableQuantizer):
@@ -84,6 +57,14 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
             threshold_values)
         self.quantization_axis = quantization_axis
         self.power_of_two = power_of_two
+
+        if self.power_of_two:
+            self.threshold_values = np.power(2.0, np.ceil(np.log2(np.maximum(self.threshold_values, MIN_THRESHOLD))))
+        delta = self.threshold_values / np.power(2.0, num_bits - int(signed))
+        min_int = -int(signed) * (2 ** (num_bits - int(signed)))
+        max_int = (2 ** (num_bits - int(signed))) - 1
+        self.min = delta * min_int
+        self.max = delta * max_int
         self.quantizer_parameters = {}
 
     def build(self,
@@ -108,8 +89,23 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
             trainable=False)
         ptq_threshold_tensor.assign(self.threshold_values)
 
+        fq_min = layer.add_weight(
+            name + FQ_MIN,
+            shape=len(self.min) if self.per_axis else (),
+            initializer=tf.keras.initializers.Constant(-1.0),
+            trainable=False)
+        fq_min.assign(self.min)
+
+        fq_max = layer.add_weight(
+            name + FQ_MAX,
+            shape=len(self.max) if self.per_axis else (),
+            initializer=tf.keras.initializers.Constant(1.0),
+            trainable=False)
+        fq_max.assign(self.max)
+
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {THRESHOLD_TENSOR: ptq_threshold_tensor}
+        self.quantizer_parameters = {THRESHOLD_TENSOR: ptq_threshold_tensor,
+                                     FQ_MIN: fq_min, FQ_MAX: fq_max}
         return self.quantizer_parameters
 
     def __call__(self, inputs: tf.Tensor,
@@ -128,27 +124,16 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
             The quantized tensor.
         """
 
-        ptq_threshold_tensor = weights[THRESHOLD_TENSOR]
-
+        _min = weights[FQ_MIN]
+        _max = weights[FQ_MAX]
         if self.per_axis:
-            input_shape = inputs.shape
-            n_axis = len(input_shape)
-            quantization_axis = n_axis + self.quantization_axis if self.quantization_axis < 0 else \
-                self.quantization_axis
-            reshape_shape = [-1 if i == quantization_axis else 1 for i in range(n_axis)]
-            ptq_threshold_tensor = tf.reshape(ptq_threshold_tensor, reshape_shape)
-            q_tensor = symmetric_quantizer(inputs,
-                                           ptq_threshold_tensor,
-                                           self.num_bits,
-                                           self.signed,
-                                           self.power_of_two)
-            return q_tensor
+            q_tensor = tf.quantization.fake_quant_with_min_max_vars_per_channel(inputs, _min, _max,
+                                                                                num_bits=self.num_bits)
         else:
-            return symmetric_quantizer(inputs,
-                                       ptq_threshold_tensor,
-                                       self.num_bits,
-                                       self.signed,
-                                       self.power_of_two)
+            q_tensor = tf.quantization.fake_quant_with_min_max_vars(inputs, _min, _max,
+                                                                    num_bits=self.num_bits)
+
+        return q_tensor
 
     def get_config(self) -> Dict[str, Any]:
         """
