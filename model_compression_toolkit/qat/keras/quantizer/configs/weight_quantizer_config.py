@@ -27,6 +27,7 @@ if tf.__version__ < "2.6":
 else:
     from keras.engine.base_layer import Layer
 
+from model_compression_toolkit.core.common.logger import Logger
 from tensorflow.python.training.tracking.data_structures import ListWrapper
 from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
 
@@ -35,9 +36,7 @@ from model_compression_toolkit.core.keras.constants import KERNEL
 
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste import STEWeightQuantizer
 from model_compression_toolkit.core.common.target_platform.op_quantization_config import QuantizationMethod
-from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MAX, RANGE_MIN
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
 from model_compression_toolkit.qat.common import WEIGHTS_QUANTIZATION_PARAMS
 
 
@@ -101,17 +100,12 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
 
         """
         if len(self.weight_attrs) != len(quantize_weights):
-            raise ValueError(
-                '`set_quantize_weights` called on layer {} with {} '
-                'weight parameters, but layer expects {} values.'.format(
-                    layer.name, len(quantize_weights), len(self.weight_attrs)))  # pragma: no cover
+            Logger.error(f"`set_quantize_weights` called on layer {layer.name} with {len(quantize_weights)} weight parameters, but layer expects {len(self.weight_attrs)} values.")  # pragma: no cover
 
         for weight_attr, weight in zip(self.weight_attrs, quantize_weights):
             current_weight = getattr(layer, weight_attr)
             if current_weight.shape != weight.shape:
-                raise ValueError('Existing layer weight shape {} is incompatible with'
-                                 'provided weight shape {}'.format(
-                    current_weight.shape, weight.shape))  # pragma: no cover
+                Logger.error(f"Existing layer weight shape {current_weight.shape} is incompatible with provided weight shape {weight.shape}")  # pragma: no cover
 
             setattr(layer, weight_attr, weight)
 

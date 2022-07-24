@@ -143,7 +143,9 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
         return {
             'num_bits': self.num_bits,
             'per_axis': self.per_axis,
-            'symmetric': self.symmetric,
+            'signed': self.signed,
+            'threshold_values': self.threshold_values,
+            'quantization_axis': self.quantization_axis,
             'power_of_two': self.power_of_two
         }
 
