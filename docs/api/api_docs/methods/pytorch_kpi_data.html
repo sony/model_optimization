@@ -5,7 +5,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
     <title>Get KPI information for PyTorch Models &#8212; MCT Documentation: ver 1.5.0</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
@@ -15,6 +15,7 @@
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../_static/doctools.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -41,14 +42,14 @@
           <div class="body" role="main">
             
   <section id="get-kpi-information-for-pytorch-models">
-<span id="ug-pytorch-kpi-data"></span><h1>Get KPI information for PyTorch Models<a class="headerlink" href="#get-kpi-information-for-pytorch-models" title="Permalink to this headline">¶</a></h1>
+<span id="ug-pytorch-kpi-data"></span><h1>Get KPI information for PyTorch Models<a class="headerlink" href="#get-kpi-information-for-pytorch-models" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="model_compression_toolkit.pytorch_kpi_data">
 <span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">pytorch_kpi_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">representative_data_gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_MIXEDPRECISION_CONFIG</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fw_info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_PYTORCH_INFO</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_capabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PYTORCH_DEFAULT_TPC</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.pytorch_kpi_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
 Builds the computation graph from the given model and target platform capabilities, and uses it to compute the KPI data.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>in_model</strong> (<em>Model</em>) – PyTorch model to quantize.</p></li>
 <li><p><strong>representative_data_gen</strong> (<em>Callable</em>) – Dataset used for calibration.</p></li>
@@ -57,7 +58,7 @@ Builds the computation graph from the given model and target platform capabiliti
 <li><p><strong>target_platform_capabilities</strong> (<a class="reference internal" href="../../experimental_api_docs/modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a>) – TargetPlatformCapabilities to optimize the Keras model according to. <a class="reference external" href="https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/tpc_models/pytorch_tp_models/pytorch_default.py">Default PyTorch TPC</a></p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A KPI object with total weights parameters sum, max activation tensor and total kpi.</p>
 </dd>
 </dl>
@@ -78,7 +79,7 @@ Builds the computation graph from the given model and target platform capabiliti
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="../../experimental_api_docs/modules/mixed_precision_quantization_config.html#model_compression_toolkit.KPI" title="model_compression_toolkit.core.common.mixed_precision.kpi.KPI"><code class="xref py py-class docutils literal notranslate"><span class="pre">KPI</span></code></a></p>
 </dd>
 </dl>
@@ -102,7 +103,7 @@ Builds the computation graph from the given model and target platform capabiliti
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -119,7 +120,7 @@ Builds the computation graph from the given model and target platform capabiliti
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>
 </html>

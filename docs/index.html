@@ -5,7 +5,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
     <title>Model Compression Toolkit User Guide &#8212; MCT Documentation: ver 1.5.0</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
@@ -15,6 +15,7 @@
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -45,16 +46,16 @@
           <div class="body" role="main">
             
   <section id="model-compression-toolkit-user-guide">
-<span id="ug-index"></span><h1>Model Compression Toolkit User Guide<a class="headerlink" href="#model-compression-toolkit-user-guide" title="Permalink to this headline">¶</a></h1>
+<span id="ug-index"></span><h1>Model Compression Toolkit User Guide<a class="headerlink" href="#model-compression-toolkit-user-guide" title="Permalink to this heading">¶</a></h1>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h2>
 <p>Model Compression Toolkit (MCT) is an open source project for neural networks optimization that enables users to compress and quantize models.
 This project enables researchers, developers and engineers an easily way to optimized and quantized state-of-the-art neural network.</p>
 <p>Currently, MCT supports hardware-friendly post training quantization (HPTQ) with Tensorflow 2 [1].</p>
 <p>MCT project is developed by researchers and engineers working in Sony Semiconductors Israel.</p>
 </section>
 <section id="install">
-<h2>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h2>
+<h2>Install<a class="headerlink" href="#install" title="Permalink to this heading">¶</a></h2>
 <p>See the MCT install guide for the pip package, and build from source.</p>
 <p>From Source:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sony</span><span class="o">/</span><span class="n">model_optimization</span><span class="o">.</span><span class="n">git</span>
@@ -79,14 +80,13 @@ This project enables researchers, developers and engineers an easily way to opti
 * Pytorch version 1.10.0.</p>
 </section>
 <section id="supported-features">
-<h2>Supported Features<a class="headerlink" href="#supported-features" title="Permalink to this headline">¶</a></h2>
+<h2>Supported Features<a class="headerlink" href="#supported-features" title="Permalink to this heading">¶</a></h2>
 <p>Quantization:</p>
 <p>Keras:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="api/api_docs/methods/keras_post_training_quantization.html#ug-keras-post-training-quantization"><span class="std std-ref">Hardware-friendly Post Training Quantization</span></a> [1]</p></li>
 <li><p><a class="reference internal" href="api/experimental_api_docs/classes/GradientPTQConfig.html#ug-gradientptqconfig"><span class="std std-ref">Gradient base post training using knowledge distillation</span></a> (Experimental)</p></li>
 <li><p><a class="reference internal" href="api/api_docs/methods/keras_post_training_quantization_mixed_precision.html#ug-keras-post-training-quantization-mixed-precision"><span class="std std-ref">Mixed-precision post training quantization</span></a> (Experimental)</p></li>
-<li><p><a class="reference internal" href="api/experimental_api_docs/methods/keras_quantization_aware_training_experimental.html#ug-keras-quantization-aware-training-experimental"><span class="std std-ref">Init model for Quantization Aware Training</span></a> (Experimental)</p></li>
 </ul>
 <p>Pytorch (Experimental):</p>
 <ul class="simple">
@@ -103,7 +103,7 @@ This project enables researchers, developers and engineers an easily way to opti
 </div>
 </section>
 <section id="quickstart">
-<h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
+<h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this heading">¶</a></h2>
 <p>Take a look of how you can start using MCT in just a few minutes</p>
 <div class="toctree-wrapper compound">
 <ul>
@@ -113,7 +113,7 @@ This project enables researchers, developers and engineers an easily way to opti
 </div>
 </section>
 <section id="api-documentation">
-<h2>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h2>
+<h2>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this heading">¶</a></h2>
 <p>Please visit the MCT API documentation here</p>
 <div class="toctree-wrapper compound">
 <ul>
@@ -122,13 +122,13 @@ This project enables researchers, developers and engineers an easily way to opti
 </div>
 </section>
 <section id="technical-constraints">
-<h2>Technical Constraints<a class="headerlink" href="#technical-constraints" title="Permalink to this headline">¶</a></h2>
+<h2>Technical Constraints<a class="headerlink" href="#technical-constraints" title="Permalink to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>MCT doesn’t keep the structure of the model’s output. For example, if the output of a model is a list of lists of Tensors [[out1, out2], out3], the optimized model output will be [out1, out2, out3]</p></li>
 </ul>
 </section>
 <section id="references">
-<h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<h2>References<a class="headerlink" href="#references" title="Permalink to this heading">¶</a></h2>
 <p>[1] Habi, H.V., Peretz, R., Cohen, E., Dikstein, L., Dror, O., Diamant, I., Jennings, R.H. and Netzer, A., 2021. <a class="reference external" href="https://arxiv.org/abs/2109.09113">HPTQ: Hardware-Friendly Post Training Quantization. arXiv preprint.</a></p>
 </section>
 </section>
@@ -170,7 +170,7 @@ This project enables researchers, developers and engineers an easily way to opti
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -190,7 +190,7 @@ This project enables researchers, developers and engineers an easily way to opti
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>
 </html>

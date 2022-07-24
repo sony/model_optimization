@@ -5,7 +5,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
     <title>FrameworkInfo Class &#8212; MCT Documentation: ver 1.5.0</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
@@ -15,6 +15,7 @@
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../_static/doctools.js"></script>
     <script src="../../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -41,7 +42,7 @@
           <div class="body" role="main">
             
   <section id="frameworkinfo-class">
-<span id="ug-frameworkinfo"></span><h1>FrameworkInfo Class<a class="headerlink" href="#frameworkinfo-class" title="Permalink to this headline">¶</a></h1>
+<span id="ug-frameworkinfo"></span><h1>FrameworkInfo Class<a class="headerlink" href="#frameworkinfo-class" title="Permalink to this heading">¶</a></h1>
 <p><strong>The following API can be used to pass MCT framework-related information to use when optimizing the network</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.FrameworkInfo">
@@ -54,7 +55,7 @@ kernel_ops: Layers that have coefficients and need to get quantized (e.g., Conv2
 activation_ops: Layers that their outputs should get quantized (e.g., Add, ReLU, etc.)
 no_quantization_ops:Layers that should not get quantized (e.g., Reshape, Transpose, etc.)</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>activation_quantizer_mapping</strong> (<em>Dict</em><em>[</em><a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.QuantizationMethod" title="model_compression_toolkit.target_platform.QuantizationMethod"><em>QuantizationMethod</em></a><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
 <li><p><strong>weights_quantizer_mapping</strong> (<em>Dict</em><em>[</em><a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.QuantizationMethod" title="model_compression_toolkit.target_platform.QuantizationMethod"><em>QuantizationMethod</em></a><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
@@ -94,7 +95,7 @@ set, and we know it’s kernel out/in channel indices are (3, 2) respectivly:</p
 <div class="line"><br /></div>
 </div>
 <section id="channelaxis">
-<h2>ChannelAxis<a class="headerlink" href="#channelaxis" title="Permalink to this headline">¶</a></h2>
+<h2>ChannelAxis<a class="headerlink" href="#channelaxis" title="Permalink to this heading">¶</a></h2>
 <p><strong>Enum to select the output channels format in the model:</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.ChannelAxis">
@@ -133,7 +134,7 @@ set, and we know it’s kernel out/in channel indices are (3, 2) respectivly:</p
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -150,7 +151,7 @@ set, and we know it’s kernel out/in channel indices are (3, 2) respectivly:</p
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>
 </html>
