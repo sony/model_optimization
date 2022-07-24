@@ -45,7 +45,8 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
     QuantizeConfig to quantize the weights of a layer using a TrainableQuantizer.
     """
 
-    def __init__(self, weight_attrs: List[str],
+    def __init__(self,
+                 weight_attrs: List[str],
                  num_bits,
                  channels_axis,
                  quantization_method: QuantizationMethod,
@@ -54,7 +55,10 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
         Initialize a TrainableQuantizer and set as the weights quantizer.
         Args:
             weight_attrs: Attributes of the layer's weights to quantize.
-            final_weights_quantization_cfg: quantization config of the current layer.
+            num_bits: number of bits to quantize
+            channels_axis: axis of the channels in the tensor
+            quantization_method (QuantizationMethod): quantization method, either SYMMETRIC or POWER_OF_TWO
+            threshold_values: thresholds calculated by the MCT core for the tensor.
         """
 
         self.weight_attrs = weight_attrs
@@ -175,10 +179,11 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
         """
         return self.weight_quantizer.get_trainable_parameters()
 
-    def get_aux_variable(self) -> List[tf.Tensor]:
-        return [self.weight_quantizer.get_aux_variable()]
-
     def get_quantization_variable(self) -> List[tf.Tensor]:
+        """
+        This function return a list of quantizer parameters.
+        Returns: A list of the quantizer parameters
+        """
         return self.weight_quantizer.get_quantization_variable()
 
     def __eq__(self, other: Any) -> bool:

@@ -71,9 +71,10 @@ def node_builder(n: common.BaseNode) -> Layer:
     """
 
     framework_attr = copy.copy(n.framework_attr)
-    framework_attr[LAYER_NAME] = n.name  # Overwrite framework name to identical to graph node name
+    framework_attr[LAYER_NAME] = n.name  # Overwrite framework name to identical graph node name
     node_instance = n.layer_class.from_config(framework_attr)  # Build layer from node's configuration.
     with tf.name_scope(n.name):
+        # Add layer name to default weight name to avoid name duplications
         node_instance.build(n.input_shape)
     node_instance.set_weights(n.get_weights_list())
     node_instance.trainable = False  # Set all node as not trainable

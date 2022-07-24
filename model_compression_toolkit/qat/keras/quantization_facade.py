@@ -36,7 +36,7 @@ if FOUND_TF:
     from tensorflow.keras.models import Model
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.qat.keras.model_builder import model_builder
-    from model_compression_toolkit.qat.keras.quantizer import WeightQuantizeConfig
+    from model_compression_toolkit.qat.keras.quantizer.config_factory import QUANTIZATION_CONFIGS_DICT
 
     from model_compression_toolkit import get_target_platform_capabilities
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
@@ -152,8 +152,7 @@ if FOUND_TF:
 
         user_info.mixed_precision_cfg = bit_widths_config
 
-        custom_objects = {"WeightQuantizeConfig": WeightQuantizeConfig}
-        return qat_model, user_info, custom_objects
+        return qat_model, user_info, QUANTIZATION_CONFIGS_DICT
 
 else:
     # If tensorflow or tensorflow_model_optimization are not installed,

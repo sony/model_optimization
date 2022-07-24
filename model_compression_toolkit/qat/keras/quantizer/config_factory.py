@@ -22,7 +22,10 @@ from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.d
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.qat.keras.quantizer.configs.weight_quantizer_config import WeightQuantizeConfig
-from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MAX, RANGE_MIN
+from model_compression_toolkit.core.common.constants import THRESHOLD
+
+
+QUANTIZATION_CONFIGS_DICT = {"WeightQuantizeConfig": WeightQuantizeConfig}
 
 
 def quantization_config_builder(n: common.BaseNode,
@@ -40,25 +43,13 @@ def quantization_config_builder(n: common.BaseNode,
         quantization configuration).
     """
 
-    if n.is_weights_quantization_enabled() and n.is_activation_quantization_enabled():
+    if n.is_weights_quantization_enabled():
         qc = WeightQuantizeConfig(fw_info.get_kernel_op_attributes(n.type),
                                   n.final_weights_quantization_cfg.weights_n_bits,
                                   n.final_weights_quantization_cfg.weights_channels_axis,
                                   n.final_weights_quantization_cfg.weights_quantization_method,
                                   n.final_weights_quantization_cfg.weights_quantization_params.get(THRESHOLD))
-        # Quantization is Preformed using fake quantization node
-    elif n.is_activation_quantization_enabled() and not n.is_weights_quantization_enabled():
-        qc = NoOpQuantizeConfig()  # Quantization is Preformed using fake quantization node
-    elif n.is_weights_quantization_enabled() and not n.is_activation_quantization_enabled():
-        qc = WeightQuantizeConfig(fw_info.get_kernel_op_attributes(n.type),
-                                  n.final_weights_quantization_cfg.weights_n_bits,
-                                  n.final_weights_quantization_cfg.weights_channels_axis,
-                                  n.final_weights_quantization_cfg.weights_quantization_method,
-                                  n.final_weights_quantization_cfg.weights_quantization_params.get(THRESHOLD))
-    elif not n.is_weights_quantization_enabled() and not n.is_activation_quantization_enabled():
-        qc = NoOpQuantizeConfig()
-
     else:
-        common.Logger.error('Undefined quantization method')
+        qc = NoOpQuantizeConfig()
 
     return qc
