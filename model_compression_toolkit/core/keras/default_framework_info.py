@@ -30,6 +30,7 @@ from model_compression_toolkit.core.common.quantization.quantizers.kmeans_quanti
 from model_compression_toolkit.core.common.quantization.quantizers.lut_kmeans_quantizer import lut_kmeans_quantizer
 from model_compression_toolkit.core.common.quantization.quantizers.uniform_quantizers import power_of_two_quantizer, \
     symmetric_quantizer, uniform_quantizer
+from model_compression_toolkit.core.common.constants import SOFTMAX_THRESHOLD
 from model_compression_toolkit.core.keras.constants import SOFTMAX, LINEAR, RELU, SWISH, SIGMOID, IDENTITY, TANH, SELU, \
     KERNEL, DEPTHWISE_KERNEL
 from model_compression_toolkit.core.keras.quantizer.fake_quant_builder import power_of_two_quantization, symmetric_quantization, uniform_quantization
@@ -70,7 +71,7 @@ DEFAULT_OUT_CHANNEL_AXIS_DICT = DefaultDict({Conv2D: -1,
 Map from an activation function to its min/max output values (if known).
 The values are used for tensor min/max values initialization.
 """
-ACTIVATION2MINMAX = {SOFTMAX: (0, 1),
+ACTIVATION2MINMAX = {SOFTMAX: (0, SOFTMAX_THRESHOLD),
                      SIGMOID: (0, 1),
                      LINEAR: (None, None),
                      IDENTITY: (None, None),
@@ -84,7 +85,7 @@ ACTIVATION2MINMAX = {SOFTMAX: (0, 1),
 Map from an Keras layer to its min/max output values (if known).
 The values are used for tensor min/max values initialization.
 """
-LAYER2MINMAX = {Softmax: (0, 1),
+LAYER2MINMAX = {Softmax: (0, SOFTMAX_THRESHOLD),
                 ELU: (-1, None),
                 tf.nn.silu: (-0.279, None),
                 tf.nn.swish: (-0.279, None),
@@ -96,7 +97,7 @@ LAYER2MINMAX = {Softmax: (0, 1),
                 tf.nn.elu: (-1, None),
                 tf.nn.selu: (-1.76, None),
                 tf.nn.softplus: (0, None),
-                tf.nn.softmax: (0, 1),
+                tf.nn.softmax: (0, SOFTMAX_THRESHOLD),
                 }
 """
 Mapping from a QuantizationMethod to an activation quantizer function.

@@ -24,6 +24,7 @@ from model_compression_toolkit.core.common.quantization.quantizers.kmeans_quanti
 from model_compression_toolkit.core.common.quantization.quantizers.lut_kmeans_quantizer import lut_kmeans_quantizer
 from model_compression_toolkit.core.common.quantization.quantizers.uniform_quantizers import power_of_two_quantizer, \
     symmetric_quantizer, uniform_quantizer
+from model_compression_toolkit.core.common.constants import SOFTMAX_THRESHOLD
 from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.core.pytorch.quantizer.fake_quant_builder import power_of_two_quantization, \
     symmetric_quantization, uniform_quantization
@@ -68,8 +69,8 @@ ACTIVATION2MINMAX = {}  # should be an empty dict in Pytorch
 Map from an Pytorch module to its min/max output values (if known).
 The values are used for tensor min/max values initialization.
 """
-LAYER2MINMAX = {Softmax: (0, 1),
-                softmax: (0, 1),
+LAYER2MINMAX = {Softmax: (0, SOFTMAX_THRESHOLD),
+                softmax: (0, SOFTMAX_THRESHOLD),
                 Sigmoid: (0, 1),
                 sigmoid: (0, 1),
                 Hardsigmoid: (0, 1),
