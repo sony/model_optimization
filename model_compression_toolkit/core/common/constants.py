@@ -92,3 +92,6 @@ DEC_RANGE_UPPER = 1.03
 
 # KPI computation parameters
 BITS_TO_BYTES = 8.0
+
+# Default threshold for Softmax layer
+SOFTMAX_THRESHOLD = 1

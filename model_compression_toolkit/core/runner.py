@@ -134,26 +134,28 @@ def core_runner(in_model: Any,
     # This is since some actions regard the final configuration and should be edited.
     edit_network_graph(tg, fw_info, core_config.debug_config.network_editor)
 
-    # Retrive lists of tuples (node, node's final weights/activation bitwidth)
-    weights_conf_nodes_bitwidth = tg.get_final_weights_config()
-    activation_conf_nodes_bitwidth = tg.get_final_activation_config()
-
     common.Logger.info(f'Approximated model size (in bytes): {tg.get_memory()}')
     common.Logger.info(f'Approximated compression ratio: {round(graph.get_float_memory() / (tg.get_memory() + 1e-8), 3)}')
-    common.Logger.info(
-        f'Final weights bit-width configuration: {[node_b[1] for node_b in weights_conf_nodes_bitwidth]}')
-    common.Logger.info(
-        f'Final activation bit-width configuration: {[node_b[1] for node_b in activation_conf_nodes_bitwidth]}')
 
-    if tb_w is not None:
-        if len(weights_conf_nodes_bitwidth) > 0:
-            visual = WeightsFinalBitwidthConfigVisualizer(weights_conf_nodes_bitwidth)
-            figure = visual.plot_config_bitwidth()
-            tb_w.add_figure(figure, f'Weights final bit-width config')
-        if len(activation_conf_nodes_bitwidth) > 0:
-            visual = ActivationFinalBitwidthConfigVisualizer(activation_conf_nodes_bitwidth)
-            figure = visual.plot_config_bitwidth()
-            tb_w.add_figure(figure, f'Activation final bit-width config')
+    if target_kpi is not None:
+        # Retrive lists of tuples (node, node's final weights/activation bitwidth)
+        weights_conf_nodes_bitwidth = tg.get_final_weights_config()
+        activation_conf_nodes_bitwidth = tg.get_final_activation_config()
+
+        common.Logger.info(
+            f'Final weights bit-width configuration: {[node_b[1] for node_b in weights_conf_nodes_bitwidth]}')
+        common.Logger.info(
+            f'Final activation bit-width configuration: {[node_b[1] for node_b in activation_conf_nodes_bitwidth]}')
+
+        if tb_w is not None:
+            if len(weights_conf_nodes_bitwidth) > 0:
+                visual = WeightsFinalBitwidthConfigVisualizer(weights_conf_nodes_bitwidth)
+                figure = visual.plot_config_bitwidth()
+                tb_w.add_figure(figure, f'Weights final bit-width config')
+            if len(activation_conf_nodes_bitwidth) > 0:
+                visual = ActivationFinalBitwidthConfigVisualizer(activation_conf_nodes_bitwidth)
+                figure = visual.plot_config_bitwidth()
+                tb_w.add_figure(figure, f'Activation final bit-width config')
 
     return tg, bit_widths_config
 
