@@ -41,7 +41,7 @@ def gumbel_softmax(in_pi: tf.Tensor, in_tau: tf.Tensor, in_gumbel: tf.Tensor, ep
     Returns: A gumbel softmax probability tensor.
 
     """
-    return tf.nn.softmax((in_pi + in_tau * in_gumbel) / (in_tau + eps), axis=0)
+    return tf.nn.softmax((in_pi + in_gumbel) / (in_tau + eps), axis=0)
 
 
 def ste_gumbel(in_prob: tf.Tensor) -> tf.Tensor:

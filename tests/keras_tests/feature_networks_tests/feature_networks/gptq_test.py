@@ -41,10 +41,10 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
 
     """
     inputs = layers.Input(shape=in_input_shape)
-    x = layers.Conv2D(3, 4)(inputs)
+    x = layers.Conv2D(3, 4,bias_initializer='glorot_uniform')(inputs)
     x = layers.BatchNormalization()(x)
     x = layers.PReLU()(x)
-    x = layers.Conv2D(7, 8)(x)
+    x = layers.Conv2D(7, 8,bias_initializer='glorot_uniform')(x)
     x = layers.BatchNormalization()(x)
     outputs = layers.ReLU()(x)
     model = keras.Model(inputs=inputs, outputs=outputs)
@@ -67,7 +67,10 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         return model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(5,
                                                                                    optimizer=tf.keras.optimizers.Adam(
                                                                                        learning_rate=0.0001),
-                                                                                   loss=multiple_tensors_mse_loss)
+                                                                                   optimizer_rest=tf.keras.optimizers.Adam(
+                                                                                       learning_rate=0.0001),
+                                                                                   loss=multiple_tensors_mse_loss,
+                                                                                   train_bias=True)
 
     def create_networks(self):
         in_shape = self.get_input_shapes()[0][1:]
