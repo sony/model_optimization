@@ -138,7 +138,6 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         # Use the gradient tape to automatically retrieve
         # the gradients of the trainable variables with respect to the loss.
-        # grads = [tape.gradient(loss_value, p) for _, p in in_optimizer_with_param]
         grads = tape.gradient(loss_value, param2grad)
         res = []
         i = 0
@@ -166,7 +165,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                 w2train_res.extend(self.trainable_quantization_parameters)
             if self.gptq_config.optimizer_rest is None:
                 common.Logger.error(
-                    "To enable bias micro training a additional optimizer is required, please define the optimizer_rest")
+                    "To enable bias micro training an additional optimizer is required, please define the optimizer_rest")
             optimizer_with_param.append((self.gptq_config.optimizer_rest, w2train_res))
 
         compute_gradients = self.compute_gradients
