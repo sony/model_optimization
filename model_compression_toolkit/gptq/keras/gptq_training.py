@@ -39,8 +39,6 @@ from model_compression_toolkit.core.common.model_builder_mode import ModelBuilde
 from model_compression_toolkit.gptq.keras.model_builder import model_builder as gptq_model_builder
 from model_compression_toolkit.gptq.keras.optimizers.sam_optimizer import SAM
 
-MICRO_BIAS_UPDATE_FACTOR = 0.2  # A factor that reduce the number of iteration for correction the bias vectors.
-
 
 class KerasGPTQTrainer(GPTQTrainer):
     """
@@ -105,7 +103,8 @@ class KerasGPTQTrainer(GPTQTrainer):
                                   append2output=self.compare_points,
                                   fw_info=self.fw_info)
 
-    def compute_gradients(self, in_y_float: List[tf.Tensor], input_data: List[np.ndarray], parameter2update: List,
+    def compute_gradients(self, in_y_float: List[tf.Tensor], input_data: List[np.ndarray],
+                          in_optimizer_with_param: List,
                           training=True) -> Tuple[tf.Tensor, List[tf.Tensor]]:
         """
         Get outputs from both teacher and student networks. Compute the observed error,
@@ -113,12 +112,15 @@ class KerasGPTQTrainer(GPTQTrainer):
         Args:
             in_y_float: A list of reference tensor from the floating point network.
             input_data: A list of Input tensors to pass through the networks.
-            parameter2update: A list of parameter to update
+            in_optimizer_with_param: A list of optimizer classes to update with the corresponding parameters.
             training: A boolean flag stating if the network is running in training mode.
 
         Returns:
             Loss and gradients.
         """
+        param2grad = []
+        for _, p in in_optimizer_with_param:
+            param2grad.extend(p)
 
         with tf.GradientTape(persistent=True) as tape:
             y_fxp = self.fxp_model(input_data, training=training)  # running fxp model
@@ -136,9 +138,13 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         # Use the gradient tape to automatically retrieve
         # the gradients of the trainable variables with respect to the loss.
-        grads = tape.gradient(loss_value, parameter2update)
-
-        return loss_value, grads
+        grads = tape.gradient(loss_value, param2grad)
+        res = []
+        i = 0
+        for _, p in in_optimizer_with_param:
+            res.append(grads[i:(i + len(p))])
+            i += len(p)
+        return loss_value, res
 
     def train(self, representative_data_gen: Callable):
         """
@@ -150,48 +156,41 @@ class KerasGPTQTrainer(GPTQTrainer):
         if self.gptq_config.temperature_learning:
             w2train.extend(self.temperature_weights)
 
-        if self.gptq_config.quantization_parameters_learning:
-            w2train.extend(self.trainable_quantization_parameters)
+        optimizer_with_param = [(self.gptq_config.optimizer, w2train)]
+        if self.gptq_config.train_bias or self.gptq_config.quantization_parameters_learning:
+            w2train_res = []
+            if self.gptq_config.train_bias:
+                w2train_res.extend(self.flattened_bias_weights)
+            if self.gptq_config.quantization_parameters_learning:
+                w2train_res.extend(self.trainable_quantization_parameters)
+            if self.gptq_config.optimizer_rest is None:
+                common.Logger.error(
+                    "To enable bias micro training an additional optimizer is required, please define the optimizer_rest")
+            optimizer_with_param.append((self.gptq_config.optimizer_rest, w2train_res))
 
         compute_gradients = self.compute_gradients
         if self.gptq_config.sam_optimization:
-            sam = SAM(self.fxp_model, self.compute_gradients, w2train, self.gptq_config.rho)
+            sam = SAM(self.fxp_model, self.compute_gradients, optimizer_with_param, self.gptq_config.rho)
             compute_gradients = sam.compute_gradients
         # ----------------------------------------------
         # Training loop
         # ----------------------------------------------
-        self.micro_training_loop(representative_data_gen, compute_gradients, self.gptq_config.optimizer,
-                                 self.gptq_config.n_iter, w2train, True)
-        # ----------------------------------------------
-        # Training loop Bias
-        # ----------------------------------------------
-        if self.gptq_config.train_bias:
-            if self.gptq_config.optimizer_rest is None:
-                common.Logger.error(
-                    "To enable bias micro training a additional optimizer is required, please define the optimizer_rest")
-            common.Logger.info("Starting Bias Training")
-            self.micro_training_loop(representative_data_gen,
-                                     self.compute_gradients,
-                                     self.gptq_config.optimizer_rest,
-                                     int(MICRO_BIAS_UPDATE_FACTOR * self.gptq_config.n_iter),
-                                     self.flattened_bias_weights,
-                                     is_training=False)
+        self.micro_training_loop(representative_data_gen, compute_gradients, optimizer_with_param,
+                                 self.gptq_config.n_iter, True)
 
     def micro_training_loop(self,
                             data_function: Callable,
                             in_compute_gradients: Callable,
-                            in_optimizer: tf.keras.optimizers.Optimizer,
+                            in_optimizer_with_param: List[Tuple[tf.keras.optimizers.Optimizer, List[tf.Tensor]]],
                             n_iteration: int,
-                            variable2update: List[tf.Tensor],
                             is_training: bool):
         """
         This function run a micro training loop on given set of parameters.
         Args:
             data_function: A callable function that give a batch of samples.
             in_compute_gradients: A callable function that compute the gradients.
-            in_optimizer: A optimizer class to update the parameters.
+            in_optimizer_with_param: A list of optimizer classes to update with the corresponding parameters.
             n_iteration: Number of update iteration.
-            variable2update: A list of trainable variable to update.
             is_training: A boolean flag stating if the network is running in training mode.
 
         Returns: None
@@ -201,12 +200,14 @@ class KerasGPTQTrainer(GPTQTrainer):
             data = data_function()
             input_data = [d * self.input_scale for d in data]
             y_float = self.float_model(input_data)  # running float model
-            loss_value_step, grads = in_compute_gradients(y_float, input_data, variable2update, training=is_training)
+            loss_value_step, grads = in_compute_gradients(y_float, input_data, in_optimizer_with_param,
+                                                          training=is_training)
             # Run one step of gradient descent by updating
             # the value of the variables to minimize the loss.
-            in_optimizer.apply_gradients(zip(grads, variable2update))
+            for i, (o, p) in enumerate(in_optimizer_with_param):
+                o.apply_gradients(zip(grads[i], p))
             if self.gptq_config.log_function is not None:
-                self.gptq_config.log_function(loss_value_step, grads, variable2update,
+                self.gptq_config.log_function(loss_value_step, grads[0], in_optimizer_with_param[0][-1],
                                               self.compare_points)
             self.loss_list.append(loss_value_step.numpy())
             common.Logger.debug(f'last loss value: {self.loss_list[-1]}')
