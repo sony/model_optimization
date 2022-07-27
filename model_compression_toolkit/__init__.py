@@ -37,7 +37,8 @@ from model_compression_toolkit.ptq.keras.quantization_facade import keras_post_t
 from model_compression_toolkit.gptq.keras.quantization_facade import \
     keras_gradient_post_training_quantization_experimental
 from model_compression_toolkit.gptq.keras.quantization_facade import get_keras_gptq_config
-from model_compression_toolkit.qat.keras.quantization_facade import keras_quantization_aware_training_init
+from model_compression_toolkit.qat.keras.quantization_facade import keras_quantization_aware_training_init, \
+    keras_quantization_aware_training_export
 from model_compression_toolkit.core.pytorch.quantization_facade import pytorch_post_training_quantization, \
     pytorch_post_training_quantization_mixed_precision
 from model_compression_toolkit.ptq.pytorch.quantization_facade import pytorch_post_training_quantization_experimental
