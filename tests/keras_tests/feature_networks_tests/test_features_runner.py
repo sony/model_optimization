@@ -484,6 +484,7 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_qat(self):
         QuantizationAwareTrainingTest(self).run_test()
+        QuantizationAwareTrainingTest(self, export=True).run_test()
 
 
 if __name__ == '__main__':

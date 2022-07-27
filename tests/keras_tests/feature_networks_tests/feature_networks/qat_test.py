@@ -26,9 +26,10 @@ layers = keras.layers
 
 
 class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
-    def __init__(self, unit_test, weight_bits=2, activation_bits=4):
+    def __init__(self, unit_test, weight_bits=2, activation_bits=4, export=False):
         self.weight_bits = weight_bits
         self.activation_bits = activation_bits
+        self.export = export
         super().__init__(unit_test)
 
     def get_tpc(self):
@@ -42,10 +43,13 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
     def run_test(self):
         model_float = self.create_networks()
         qc = self.get_quantization_config()
-        ptq_model, quantization_info, custom_opjects = mct.keras_quantization_aware_training_init(model_float,
+        ptq_model, quantization_info, custom_objects = mct.keras_quantization_aware_training_init(model_float,
                                                                                                   self.representative_data_gen,
                                                                                                   fw_info=self.get_fw_info(),
                                                                                                   target_platform_capabilities=self.get_tpc())
+
+        if self.export:
+            ptq_model = mct.keras_quantization_aware_training_export(ptq_model)
 
         self.compare(ptq_model,
                      model_float,
@@ -53,8 +57,10 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
                      quantization_info=quantization_info)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.Activation))
-        _, qconfig = quantized_model.layers[2].quantize_config.get_weights_and_quantizers(quantized_model.layers[2].layer)[0]
-        self.unit_test.assertTrue(qconfig.num_bits == self.weight_bits)
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].quantize_config, NoOpQuantizeConfig))
+        if self.export:
+            self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.Conv2D))
+        else:
+            self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
+            _, qconfig = quantized_model.layers[2].quantize_config.get_weights_and_quantizers(quantized_model.layers[2].layer)[0]
+            self.unit_test.assertTrue(qconfig.num_bits == self.weight_bits)
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3], layers.Activation))
