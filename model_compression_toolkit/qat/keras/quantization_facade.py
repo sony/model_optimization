@@ -25,45 +25,47 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quant
 from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
 from model_compression_toolkit.ptq.runner import ptq_runner
-from model_compression_toolkit.core.exporter import export_model
-from model_compression_toolkit.core.analyzer import analyzer_model_quantization
+
 from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
 
 if FOUND_TF:
-    import tensorflow as tf
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.qat.keras.model_builder import model_builder
+    from model_compression_toolkit.qat.keras.quantizer.config_factory import QUANTIZATION_CONFIGS_DICT
 
     from model_compression_toolkit import get_target_platform_capabilities
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
-    def keras_post_training_quantization_experimental(in_model: Model,
-                                                      representative_data_gen: Callable,
-                                                      target_kpi: KPI = None,
-                                                      core_config: CoreConfig = CoreConfig(),
-                                                      fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                                                      target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
+    def keras_quantization_aware_training_init(in_model: Model,
+                                               representative_data_gen: Callable,
+                                               target_kpi: KPI = None,
+                                               core_config: CoreConfig = CoreConfig(),
+                                               fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
+                                               target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
-         Quantize a trained Keras model using post-training quantization. The model is quantized using a
-         symmetric constraint quantization thresholds (power of two).
+         Prepare a trained Keras model for quantization aware training. First the model quantization is optimized
+         with post-training quantization, then the model layers are wrapped with QuantizeWrappers. The model is
+         quantized using a symmetric quantization thresholds (power of two).
          The model is first optimized using several transformations (e.g. BatchNormalization folding to
          preceding layers). Then, using a given dataset, statistics (e.g. min/max, histogram, etc.) are
          being collected for each layer's output (and input, depends on the quantization configuration).
          For each possible bit width (per layer) a threshold is then being calculated using the collected
          statistics. Then, if given a mixed precision config in the core_config, using an ILP solver we find
-         a mixed-precision configuration, and set a bit-width for each layer. The model is then quantized
-         (both coefficients and activations by default).
+         a mixed-precision configuration, and set a bit-width for each layer. The model is built with fake_quant
+         nodes for quantizing activation. Weights are kept as float and are quantized online while training by the
+         quantization wrapper's weight quantizer.
          In order to limit the maximal model's size, a target KPI need to be passed after weights_memory
          is set (in bytes).
 
          Args:
              in_model (Model): Keras model to quantize.
-             representative_data_gen (Callable): Dataset used for calibration.
+             representative_data_gen (Callable): Dataset used for initial calibration.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
              fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).  `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
@@ -71,7 +73,9 @@ if FOUND_TF:
 
          Returns:
 
-             A quantized model and information the user may need to handle the quantized model.
+             A quantized model.
+             User information that may be needed to handle the quantized model.
+             Custom-Objects dictionary for loading the saved kers model.
 
          Examples:
 
@@ -108,7 +112,11 @@ if FOUND_TF:
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:
 
-             >>> quantized_model, quantization_info = mct.keras_post_training_quantization_experimental(model, repr_datagen, kpi, core_config=config)
+             >>> quantized_model, quantization_info, custom_objects = mct.keras_quantization_aware_training_init(model, repr_datagen, kpi, core_config=config)
+
+             Use the quantized model for fine-tuning. For loading the model from file, use the custom_objects dictionary:
+
+             >>> quantized_model = tf.keras.models.load_model(model_file, custom_objects=custom_objects)
 
              For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 
@@ -140,17 +148,16 @@ if FOUND_TF:
 
         tg = ptq_runner(tg, fw_info, fw_impl, tb_w)
 
-        if core_config.debug_config.analyze_similarity:
-            analyzer_model_quantization(representative_data_gen, tb_w, tg, fw_impl, fw_info)
+        qat_model, user_info = model_builder(tg, fw_info=fw_info)
 
-        quantized_model, user_info = export_model(tg, fw_info, fw_impl, tb_w, bit_widths_config)
+        user_info.mixed_precision_cfg = bit_widths_config
 
-        return quantized_model, user_info
+        return qat_model, user_info, QUANTIZATION_CONFIGS_DICT
 
 else:
     # If tensorflow or tensorflow_model_optimization are not installed,
     # we raise an exception when trying to use these functions.
-    def keras_post_training_quantization_experimental(*args, **kwargs):
+    def keras_quantization_aware_training_init(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
-                        'when using keras_post_training_quantization_experimental. '
+                        'when using keras_quantization_aware_training_init. '
                         'Could not find Tensorflow package.')
