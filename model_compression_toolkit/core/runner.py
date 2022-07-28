@@ -22,10 +22,13 @@ from tqdm import tqdm
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_aggregation_methods import MpKpiAggregation
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_functions_mapping import kpi_functions_mapping
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_methods import MpKpiMetric
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
@@ -421,6 +424,9 @@ def _set_final_kpi(graph: Graph,
     final_kpis_dict = {}
     for kpi_target, kpi_funcs in kpi_functions_dict.items():
         kpi_method, kpi_aggr = kpi_funcs
-        final_kpis_dict[kpi_target] = kpi_aggr(kpi_method(final_bit_widths_config, graph, fw_info))
+        final_kpis_dict[kpi_target] = kpi_aggr(kpi_method(final_bit_widths_config, graph, fw_info), False)[0]
 
-    graph.user_info.final_kpi = KPI().init_kpi_by_target(final_kpis_dict)
+    final_kpi = KPI()
+    final_kpi.set_kpi_by_target(final_kpis_dict)
+    graph.user_info.final_kpi = final_kpi
+    graph.user_info.mixed_precision_cfg = final_bit_widths_config

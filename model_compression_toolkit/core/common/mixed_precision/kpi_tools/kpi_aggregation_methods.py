@@ -21,7 +21,7 @@ import numpy as np
 from pulp import lpSum
 
 
-def sum_kpi(kpi_vector: np.ndarray) -> List[Any]:
+def sum_kpi(kpi_vector: np.ndarray, set_constraints: bool = True) -> List[Any]:
     """
     Aggregates KPIs vector to a single KPI measure by summing all values.
 
@@ -31,10 +31,12 @@ def sum_kpi(kpi_vector: np.ndarray) -> List[Any]:
     Returns: A list with an lpSum object for lp problem definition with the vector's sum.
 
     """
+    if not set_constraints:
+        return [0] if len(kpi_vector) == 0 else [sum(kpi_vector)]
     return [lpSum(kpi_vector)]
 
 
-def max_kpi(kpi_vector: np.ndarray) -> List[float]:
+def max_kpi(kpi_vector: np.ndarray, set_constraints: bool = True) -> List[float]:
     """
     Aggregates KPIs vector to allow max constraint in the linear programming problem formalization.
     In order to do so, we need to define a separate constraint on each value in the KPI vector,
@@ -47,10 +49,12 @@ def max_kpi(kpi_vector: np.ndarray) -> List[float]:
     in the linear programming problem formalization.
 
     """
+    if not set_constraints:
+        return [0] if len(kpi_vector) == 0 else [max(kpi_vector)]
     return [kpi for kpi in kpi_vector]
 
 
-def total_kpi(kpi_tensor: np.ndarray) -> List[float]:
+def total_kpi(kpi_tensor: np.ndarray, set_constraints: bool = True) -> List[float]:
     """
     Aggregates KPIs vector to allow weights and activation total kpi constraint in the linear programming
     problem formalization. In order to do so, we need to define a separate constraint on each activation value in
@@ -64,6 +68,11 @@ def total_kpi(kpi_tensor: np.ndarray) -> List[float]:
     in the linear programming problem formalization.
 
     """
+    if not set_constraints:
+        weights_kpi = sum([kpi[0] for kpi in kpi_tensor])
+        activation_kpi = max([kpi[1] for kpi in kpi_tensor])
+        return [weights_kpi + activation_kpi]
+
     weights_kpi = lpSum([kpi[0] for kpi in kpi_tensor])
     total_kpis = [weights_kpi + activation_kpi for _, activation_kpi in kpi_tensor]
 

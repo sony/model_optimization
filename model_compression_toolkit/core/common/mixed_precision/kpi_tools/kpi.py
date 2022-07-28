@@ -64,7 +64,7 @@ class KPI:
                f"Activation_memory: {self.activation_memory}, " \
                f"Total_memory: {self.total_memory}"
 
-    def init_kpi_by_target(self, kpis_mapping: Dict[KPITarget, float]):
+    def set_kpi_by_target(self, kpis_mapping: Dict[KPITarget, float]):
         self.weights_memory = kpis_mapping.get(KPITarget.WEIGHTS, np.inf)
         self.activation_memory = kpis_mapping.get(KPITarget.ACTIVATION, np.inf)
         self.total_memory = kpis_mapping.get(KPITarget.TOTAL, np.inf)
