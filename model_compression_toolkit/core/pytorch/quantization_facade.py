@@ -20,7 +20,7 @@ from model_compression_toolkit.core.common.constants import PYTORCH
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.network_editors.actions import EditRule
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
