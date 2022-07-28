@@ -27,6 +27,8 @@ def sum_kpi(kpi_vector: np.ndarray, set_constraints: bool = True) -> List[Any]:
 
     Args:
         kpi_vector: A vector with nodes' KPI values.
+        set_constraints: A flag for utilizing the method for KPI computation of a
+            given config not for LP formalization purposes.
 
     Returns: A list with an lpSum object for lp problem definition with the vector's sum.
 
@@ -44,6 +46,8 @@ def max_kpi(kpi_vector: np.ndarray, set_constraints: bool = True) -> List[float]
 
     Args:
         kpi_vector: A vector with nodes' KPI values.
+        set_constraints: A flag for utilizing the method for KPI computation of a
+            given config not for LP formalization purposes.
 
     Returns: A list with the vector's values, to be used to define max constraint
     in the linear programming problem formalization.
@@ -63,6 +67,8 @@ def total_kpi(kpi_tensor: np.ndarray, set_constraints: bool = True) -> List[floa
 
     Args:
         kpi_tensor: A tensor with nodes' KPI values for weights and activation.
+        set_constraints: A flag for utilizing the method for KPI computation of a
+            given config not for LP formalization purposes.
 
     Returns: A list with lpSum objects, to be used to define total constraint
     in the linear programming problem formalization.

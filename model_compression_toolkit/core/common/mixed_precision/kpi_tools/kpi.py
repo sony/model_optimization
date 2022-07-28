@@ -22,9 +22,9 @@ class KPITarget(Enum):
     """
     Targets for which we define KPIs metrics for mixed-precision search.
     For each target that we care to consider in a mixed-precision search, there should be defined a set of
-    kpi_tools computation function, kpi_tools aggregation function, and kpi_tools target (within a KPI object).
+    kpi computation function, kpi aggregation function, and kpi target (within a KPI object).
 
-    Whenever adding a kpi_tools metric to KPI class we should add a matching target to this enum.
+    Whenever adding a kpi metric to KPI class we should add a matching target to this enum.
 
     WEIGHTS - KPI metric for weights quantization
 
@@ -52,8 +52,8 @@ class KPI:
 
         Args:
             weights_memory: Memory of a model's weights in bytes. Note that this includes only coefficients that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value, while the bias will not).
-            activation_memory: Memory of a model's activation in bytes, according to the given activation kpi_tools metric.
-            total_memory: The sum of model's activation and weights memory in bytes, according to the given total kpi_tools metric.
+            activation_memory: Memory of a model's activation in bytes, according to the given activation kpi metric.
+            total_memory: The sum of model's activation and weights memory in bytes, according to the given total kpi metric.
         """
         self.weights_memory = weights_memory
         self.activation_memory = activation_memory
@@ -65,6 +65,13 @@ class KPI:
                f"Total_memory: {self.total_memory}"
 
     def set_kpi_by_target(self, kpis_mapping: Dict[KPITarget, float]):
+        """
+        Setting a KPI object values for each KPI target in the given dictionary.
+
+        Args:
+            kpis_mapping: A mapping from a KPITarget to a matching KPI value.
+
+        """
         self.weights_memory = kpis_mapping.get(KPITarget.WEIGHTS, np.inf)
         self.activation_memory = kpis_mapping.get(KPITarget.ACTIVATION, np.inf)
         self.total_memory = kpis_mapping.get(KPITarget.TOTAL, np.inf)
