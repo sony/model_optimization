@@ -52,7 +52,8 @@ class KerasGPTQTrainer(GPTQTrainer):
                  graph_quant: Graph,
                  gptq_config: GradientPTQConfig,
                  fw_impl: FrameworkImplementation,
-                 fw_info: FrameworkInfo):
+                 fw_info: FrameworkInfo,
+                 representative_data_gen: Callable):
         """
         Build two models from a graph: A teacher network (float model) and a student network (quantized model).
         Use the dataset generator to pass images through the teacher and student networks to get intermediate
@@ -64,7 +65,8 @@ class KerasGPTQTrainer(GPTQTrainer):
             graph_quant: Graph to build a quantized networks from.
             gptq_config: GradientPTQConfig with parameters about the tuning process.
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-            fw_info: Framework information
+            fw_info: Framework information.
+            representative_data_gen: Dataset to use for inputs of the models.
         """
         super().__init__(graph_float, graph_quant, gptq_config, fw_impl, fw_info)
         self.loss_list = []
@@ -92,6 +94,8 @@ class KerasGPTQTrainer(GPTQTrainer):
             common.Logger.error("Input scale mismatch between float and GPTQ networks")  # pragma: no cover
         else:
             self.input_scale = self.gptq_user_info.input_scale
+
+        self.weights_for_average_loss = self._compute_jacobian_based_weights(gptq_config, representative_data_gen)
 
     def build_gptq_model(self):
         """
@@ -123,7 +127,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         with tf.GradientTape(persistent=True) as tape:
             y_fxp = self.fxp_model(input_data, training=training)  # running fxp model
             loss_value = self.gptq_config.loss(y_fxp, in_y_float, self.fxp_weights_list, self.flp_weights_list,
-                                               self.compare_points_mean, self.compare_points_std)
+                                               self.compare_points_mean, self.compare_points_std, self.weights_for_average_loss)
             if self.gptq_config.is_gumbel and self.gptq_config.temperature_learning:
                 gumbel_prob = get_gumbel_probability(self.fxp_model)
                 gumbel_reg = 0
@@ -244,3 +248,47 @@ class KerasGPTQTrainer(GPTQTrainer):
                         node.set_weights_by_keys(BIAS, new_bias)
 
         return graph
+
+    def _compute_jacobian_based_weights(self, gptq_config, representative_data_gen):
+        if gptq_config.use_jac_based_weights:
+            images = self._generate_images_batch(representative_data_gen, gptq_config.num_samples_for_loss)
+            points_apprx_jacobians_weights = []
+            for i in range(1, images.shape[0] + 1):
+                # Note that in GPTQ loss weights we assume that there aren't replacement output nodes,
+                # therefore, output_list is just the graph outputs, and we don't need the tuning factor for
+                # defining the output weights (since the output layer is not a compare point).
+                image_ip_gradients = self.fw_impl.model_grad(self.graph_float,
+                                                             {inode: images[i - 1:i] for inode in
+                                                              self.graph_float.get_inputs()},
+                                                             self.compare_points,
+                                                             # output_list=[self.compare_points[-1]],
+                                                             # all_outputs_indices=[len(self.compare_points) - 1],
+                                                             output_list=[n.node for n in self.graph_float.get_outputs()],
+                                                             all_outputs_indices=[],
+                                                             alpha=0)
+                points_apprx_jacobians_weights.append(image_ip_gradients)
+            return np.mean(points_apprx_jacobians_weights, axis=0)
+        else:
+            num_nodes = len(self.compare_points)
+            return np.asarray([1 / num_nodes for _ in range(num_nodes)])
+
+    @staticmethod
+    def _generate_images_batch(representative_data_gen, num_samples_for_loss):
+        # First, select images to use for all measurements.
+        samples_count = 0  # Number of images we used so far to compute the distance matrix.
+        images = []
+        while samples_count < num_samples_for_loss:
+            # Get a batch of images to infer in both models.
+            inference_batch_input = representative_data_gen()
+            num_images = inference_batch_input[0].shape[0]
+
+            # If we sampled more images than we should,
+            # we take only a subset of these images and use only them.
+            if num_images > num_samples_for_loss - samples_count:
+                inference_batch_input = [x[:num_samples_for_loss - samples_count] for x in inference_batch_input]
+                assert num_samples_for_loss - samples_count == inference_batch_input[0].shape[0]
+                num_images = num_samples_for_loss - samples_count
+
+            images.append(inference_batch_input[0])
+            samples_count += num_images
+        return np.concatenate(images, axis=0)

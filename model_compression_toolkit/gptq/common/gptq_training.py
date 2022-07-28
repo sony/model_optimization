@@ -117,7 +117,7 @@ def gptq_training(graph_float: Graph,
     """
     # Get GPTQ object and initialize it
     gptq_trainer_obj = fw_impl.get_gptq_trainer_obj()
-    gptq_trainer = gptq_trainer_obj(graph_float, graph_quant, gptq_config, fw_impl, fw_info)
+    gptq_trainer = gptq_trainer_obj(graph_float, graph_quant, gptq_config, fw_impl, fw_info, representative_data_gen)
 
     # Training process
     gptq_trainer.train(representative_data_gen)
