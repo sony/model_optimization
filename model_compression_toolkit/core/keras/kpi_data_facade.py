@@ -16,11 +16,11 @@
 from typing import Callable
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, CoreConfig, MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.core.common.mixed_precision.kpi_data import compute_kpi_data
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_data import compute_kpi_data
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG

@@ -14,15 +14,14 @@
 # ==============================================================================
 
 
-import copy
 import os
-from typing import Callable, Tuple, Any
+from typing import Callable, Any
 from tqdm import tqdm
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
@@ -45,12 +44,9 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.common.substitutions.linear_collapsing_substitution import linear_collapsing_substitute
-from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
-from model_compression_toolkit.core.common.bias_correction.apply_bias_correction_to_graph import \
-    apply_bias_correction_to_graph
 from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.visualization.final_config_visualizer import WeightsFinalBitwidthConfigVisualizer, \
     ActivationFinalBitwidthConfigVisualizer

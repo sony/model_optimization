@@ -14,11 +14,10 @@
 # ==============================================================================
 import numpy as np
 import unittest
-from functools import partial
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
-from model_compression_toolkit.core.common.mixed_precision.kpi import KPI, KPITarget
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
@@ -37,8 +36,7 @@ from model_compression_toolkit.core.common.similarity_analyzer import compute_ms
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \
-    generate_mixed_precision_test_tp_model
+from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 
 
 class MockMixedPrecisionSearchManager:

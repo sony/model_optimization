@@ -22,11 +22,10 @@ from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_pre
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.user_info import UserInformation
-from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras

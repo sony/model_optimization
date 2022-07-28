@@ -12,18 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_keras_tpc
-from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
 
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
-from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers
