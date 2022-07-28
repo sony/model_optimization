@@ -21,7 +21,7 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 from keras import backend as K
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.user_info import UserInformation

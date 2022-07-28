@@ -19,7 +19,7 @@ from tqdm import tqdm
 from typing import Dict, List, Tuple, Callable
 
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.core.common.mixed_precision.kpi import KPI, KPITarget
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
 
 
