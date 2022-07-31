@@ -38,23 +38,21 @@ from model_compression_toolkit import get_target_platform_capabilities
 DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
-def is_qat_applicaple(node: common.BaseNode):
+def is_qat_applicable(node: common.BaseNode):
     """
     A function for deciding if a layer should be fine-tuned
     Args:
-        node (Model): Keras model to quantize.
+        node (BaseNode): Node for quantization decision
 
     Returns:
         A boolean whether the layer is to be wrapped with a QuantizeWrapper
     """
-    is_class_quantized = node.layer_class in [tf.keras.layers.Conv2D,
-                                              tf.keras.layers.DepthwiseConv2D,
-                                              tf.keras.layers.Conv2DTranspose,
-                                              tf.keras.layers.Dense]
+    is_class_quantized = node.type in [tf.keras.layers.Conv2D,
+                                       tf.keras.layers.DepthwiseConv2D,
+                                       tf.keras.layers.Conv2DTranspose,
+                                       tf.keras.layers.Dense]
 
-    is_weight_quantization = node.final_weights_quantization_cfg.enable_weights_quantization
-
-    return is_class_quantized and is_weight_quantization
+    return is_class_quantized and node.is_weights_quantization_enabled()
 
 
 def model_builder(graph: common.Graph,
@@ -79,7 +77,7 @@ def model_builder(graph: common.Graph,
     # Quantize graph weights that are not to be fine-tuned during QAT
     graph_to_quantize = copy.deepcopy(graph)
     for n in graph_to_quantize.nodes:
-        if is_qat_applicaple(n):
+        if is_qat_applicable(n):
             n.final_weights_quantization_cfg.enable_weights_quantization = False
     quantized_tg = quantize_graph_weights(graph_to_quantize,
                                           fw_info=fw_info,
@@ -95,7 +93,7 @@ def model_builder(graph: common.Graph,
         nodes = graph.find_node_by_name(get_node_name_from_layer(layer))
         if len(nodes) == 1:
             node = nodes[0]
-            if is_qat_applicaple(node):
+            if is_qat_applicable(node):
                 return QuantizeWrapper(layer, quantization_config_builder(node, fw_info))
             else:
                 return layer

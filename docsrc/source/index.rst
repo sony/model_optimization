@@ -61,7 +61,7 @@ Keras:
 * :ref:`Gradient base post training using knowledge distillation<ug-GradientPTQConfig>` (Experimental)
 * :ref:`Mixed-precision post training quantization<ug-keras_post_training_quantization_mixed_precision>` (Experimental)
 * :ref:`Init model for Quantization Aware Training<ug-keras_quantization_aware_training_init>` (Experimental)
-* :ref:`Export model after Quantization Aware Training<ug-keras_quantization_aware_training_export>` (Experimental)
+* :ref:`Finalize model after Quantization Aware Training<ug-keras_quantization_aware_training_finalize>` (Experimental)
 
 Pytorch (Experimental):
 

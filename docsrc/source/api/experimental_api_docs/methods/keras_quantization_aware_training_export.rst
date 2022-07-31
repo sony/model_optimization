@@ -1,10 +1,10 @@
 :orphan:
 
-.. _ug-keras_quantization_aware_training_export:
+.. _ug-keras_quantization_aware_training_finalize:
 
 
 ================================================
-Keras Quantization Aware Training Model Export
+Keras Quantization Aware Training Model Finalize
 ================================================
 
-.. autofunction:: model_compression_toolkit.keras_quantization_aware_training_export
+.. autofunction:: model_compression_toolkit.keras_quantization_aware_training_finalize

@@ -159,7 +159,7 @@ if FOUND_TF:
         return qat_model, user_info, QUANTIZATION_CONFIGS_DICT
 
 
-    def keras_quantization_aware_training_export(in_model: Model):
+    def keras_quantization_aware_training_finalize(in_model: Model):
         """
          Convert a model fine-tuned by the user to a network without QuantizeWrappers. The exported
          model contains float (fake-quantized) parameters and fake-quantiztion layers for quantizing
@@ -211,7 +211,7 @@ if FOUND_TF:
              Use the quantized model for fine-tuning. For loading the model from file, use the custom_objects dictionary:
 
              >>> quantized_model = tf.keras.models.load_model(model_file, custom_objects=custom_objects)
-             >>> quantized_model = mct.keras_quantization_aware_training_export(quantized_model)
+             >>> quantized_model = mct.keras_quantization_aware_training_finalize(quantized_model)
 
          """
 
@@ -259,7 +259,7 @@ else:
                         'when using keras_quantization_aware_training_init. '
                         'Could not find Tensorflow package.')
 
-    def keras_quantization_aware_training_export(*args, **kwargs):
+    def keras_quantization_aware_training_finalize(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
-                        'when using keras_quantization_aware_training_export. '
+                        'when using keras_quantization_aware_training_finalize. '
                         'Could not find Tensorflow package.')

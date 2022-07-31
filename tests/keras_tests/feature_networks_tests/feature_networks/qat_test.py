@@ -26,10 +26,10 @@ layers = keras.layers
 
 
 class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
-    def __init__(self, unit_test, weight_bits=2, activation_bits=4, export=False):
+    def __init__(self, unit_test, weight_bits=2, activation_bits=4, finalize=False):
         self.weight_bits = weight_bits
         self.activation_bits = activation_bits
-        self.export = export
+        self.finalize = finalize
         super().__init__(unit_test)
 
     def get_tpc(self):
@@ -48,8 +48,8 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
                                                                                                   fw_info=self.get_fw_info(),
                                                                                                   target_platform_capabilities=self.get_tpc())
 
-        if self.export:
-            ptq_model = mct.keras_quantization_aware_training_export(ptq_model)
+        if self.finalize:
+            ptq_model = mct.keras_quantization_aware_training_finalize(ptq_model)
 
         self.compare(ptq_model,
                      model_float,
@@ -57,7 +57,7 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
                      quantization_info=quantization_info)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        if self.export:
+        if self.finalize:
             self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.Conv2D))
         else:
             self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
