@@ -56,7 +56,6 @@ def get_base_mp_nbits_candidates():
 
 
 class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
-    # TODO: after implementing CustomKPI, refactor mixed precision tests to reliably cover more test cases
     def __init__(self, unit_test, activation_layers_idx):
         super().__init__(unit_test)
 
@@ -164,6 +163,13 @@ class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBase
         # test with its current setup (therefore, we don't check the input layer's bitwidth)
         self.unit_test.assertTrue((activation_bits == [4, 4]))
 
+        # Verify final KPI
+        self.unit_test.assertTrue(
+            quantization_info.final_kpi.total_memory ==
+            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory,
+            "Running weights and activation mixed-precision, "
+            "final total memory should be equal to sum of weights and activation memory.")
+
 
 class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
@@ -187,6 +193,13 @@ class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBase
                                  weights_layers_channels_size=[30, 50],
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=4)
+
+        # Verify final KPI
+        self.unit_test.assertTrue(
+            quantization_info.final_kpi.total_memory ==
+            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory,
+            "Running weights and activation mixed-precision, "
+            "final total memory should be equal to sum of weights and activation memory.")
 
 
 class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
@@ -315,6 +328,14 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=256)
 
+        # Verify final KPI
+        self.unit_test.assertTrue(
+            quantization_info.final_kpi.activation_memory == quantization_info.final_kpi.total_memory,
+            "Running activation mixed-precision with unconstrained weights and total KPI, "
+            "final activation memory and total memory should be equal.")
+        self.unit_test.assertTrue(quantization_info.final_kpi.weights_memory == 0,
+                                  "Running activation only mixed-precision, final weights memory should be 0.")
+
 
 class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
@@ -435,6 +456,13 @@ class MixedPrecisionTotalKPISearchTest(MixedPrecisionActivationBaseTest):
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=16)
 
+        # Verify final KPI
+        self.unit_test.assertTrue(
+            quantization_info.final_kpi.total_memory ==
+            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory,
+            "Running weights and activation mixed-precision, "
+            "final total memory should be equal to sum of weights and activation memory.")
+
 
 class MixedPrecisionMultipleKPIsTightSearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
@@ -457,6 +485,13 @@ class MixedPrecisionMultipleKPIsTightSearchTest(MixedPrecisionActivationBaseTest
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=16)
 
+        # Verify final KPI
+        self.unit_test.assertTrue(
+            quantization_info.final_kpi.total_memory ==
+            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory,
+            "Running weights and activation mixed-precision, "
+            "final total memory should be equal to sum of weights and activation memory.")
+
 
 class MixedPrecisionReducedTotalKPISearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
@@ -478,3 +513,10 @@ class MixedPrecisionReducedTotalKPISearchTest(MixedPrecisionActivationBaseTest):
                                  weights_layers_channels_size=[30, 50],
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=16)
+
+        # Verify final KPI
+        self.unit_test.assertTrue(
+            quantization_info.final_kpi.total_memory ==
+            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory,
+            "Running weights and activation mixed-precision, "
+            "final total memory should be equal to sum of weights and activation memory.")

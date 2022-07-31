@@ -15,16 +15,19 @@
 
 
 import os
-from typing import Callable, Any
+from typing import Callable, Tuple, Any, List, Dict
 from tqdm import tqdm
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_aggregation_methods import MpKpiAggregation
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_functions_mapping import kpi_functions_mapping
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_methods import MpKpiMetric
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
@@ -134,6 +137,15 @@ def core_runner(in_model: Any,
     common.Logger.info(f'Approximated compression ratio: {round(graph.get_float_memory() / (tg.get_memory() + 1e-8), 3)}')
 
     if target_kpi is not None:
+        # TODO: Currently, only tracking configurable nodes final KPI,
+        #  therefore, relevant only if ran in mixed-precision.
+        #  After modifying the MP KPIs to consider all nodes (not just configurable),
+        #  adjust the final KPI computation as well (and move it outside the if statement).
+        _set_final_kpi(graph=tg,
+                       final_bit_widths_config=bit_widths_config,
+                       kpi_functions_dict=kpi_functions_mapping,
+                       fw_info=fw_info)
+
         # Retrive lists of tuples (node, node's final weights/activation bitwidth)
         weights_conf_nodes_bitwidth = tg.get_final_weights_config()
         activation_conf_nodes_bitwidth = tg.get_final_activation_config()
@@ -401,3 +413,30 @@ def _prepare_model_for_quantization(graph: Graph,
         assert n.final_weights_quantization_cfg is None
 
     return tg_with_bias
+
+
+def _set_final_kpi(graph: Graph,
+                   final_bit_widths_config: List[int],
+                   kpi_functions_dict: Dict[KPITarget, Tuple[MpKpiMetric, MpKpiAggregation]],
+                   fw_info: FrameworkInfo):
+    """
+    Computing the KPIs of the model according to the final bit-width configuration,
+    and setting it (inplace) in the graph's UserInfo field.
+
+    Args:
+        graph: Graph to compute the KPI for.
+        final_bit_widths_config: The final bit-width configuration to quantize the model accordingly.
+        kpi_functions_dict: A mapping between a KPITarget and a pair of kpi method and kpi aggregation functions.
+        fw_info: A FrameworkInfo object.
+
+    """
+
+    final_kpis_dict = {}
+    for kpi_target, kpi_funcs in kpi_functions_dict.items():
+        kpi_method, kpi_aggr = kpi_funcs
+        final_kpis_dict[kpi_target] = kpi_aggr(kpi_method(final_bit_widths_config, graph, fw_info), False)[0]
+
+    final_kpi = KPI()
+    final_kpi.set_kpi_by_target(final_kpis_dict)
+    graph.user_info.final_kpi = final_kpi
+    graph.user_info.mixed_precision_cfg = final_bit_widths_config
