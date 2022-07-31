@@ -56,3 +56,10 @@ class DefaultDict(object):
             if self.default_factory is not None:
                 return self.default_factory()
             return None
+
+    def keys(self):
+        """
+        Get keys od known_dict
+        Returns: keys of known_dict
+        """
+        return self.known_dict.keys()
