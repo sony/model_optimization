@@ -1,6 +1,6 @@
 :orphan:
 
-.. _ug-keras_quantization_aware_training_experimental:
+.. _ug-keras_quantization_aware_training_init:
 
 
 ================================================

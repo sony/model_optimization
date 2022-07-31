@@ -99,19 +99,30 @@ class FrameworkInfo(object):
         self.kernel_ops_attributes_mapping = kernel_ops_attributes_mapping
         self.out_channel_axis_mapping = out_channel_axis_mapping
 
-
     def get_kernel_op_attributes(self, node_type: Any) -> List[str]:
         """
         Get a list of attributes of a layer's weights to quantize.
 
         Args:
-            node_type: Layer to get its' attributes.
+            node_type: Layer to get its attributes.
 
         Returns:
             A list of attributes the layer has and should be quantized.
         """
         attr_list = self.kernel_ops_attributes_mapping.get(node_type)
         return attr_list
+
+    def is_kernel_op(self, node_type: Any) -> bool:
+        """
+        Check is the node is a kernel operation.
+
+        Args:
+            node_type: Layer to get its attributes.
+
+        Returns:
+            True if node type is a kernel operation, else False.
+        """
+        return node_type in self.kernel_ops_attributes_mapping.keys()
 
     def layers_has_min_max(self, layer: Any) -> bool:
         """
