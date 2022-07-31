@@ -4,8 +4,13 @@ import numpy as np
 import tensorflow as tf
 
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
+
+from model_compression_toolkit.core.keras.back2framework.mixed_precision_model_builder import \
+    MixedPrecisionKerasModelBuilder
 from model_compression_toolkit.core.keras.back2framework.model_gradients import \
     keras_iterative_approx_jacobian_trace
+from model_compression_toolkit.core.keras.back2framework.quantized_model_builder import QuantizedKerasModelBuilder
 from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID, ARGMAX, LAYER_NAME
 from tensorflow.keras.models import Model
 from tensorflow.python.layers.base import Layer
@@ -28,7 +33,6 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.gptq.keras.gptq_training import KerasGPTQTrainer
@@ -137,11 +141,16 @@ class KerasImplementation(FrameworkImplementation):
         Returns:
             A tuple of the Keras model that was built and an UserInformation object.
         """
-        return model_builder(graph,
-                             mode,
-                             append2output,
-                             fw_info,
-                             return_float_outputs=return_float_outputs)
+
+        keras_builders = {ModelBuilderMode.QUANTIZED: QuantizedKerasModelBuilder,
+                          ModelBuilderMode.FLOAT: FloatKerasModelBuilder,
+                          ModelBuilderMode.MIXEDPRECISION: MixedPrecisionKerasModelBuilder}
+        builder = keras_builders.get(mode)
+        return builder(graph=graph,
+                       append2output=append2output,
+                       fw_info=fw_info,
+                       return_float_outputs=return_float_outputs).build_model()
+
 
     def run_model_inference(self,
                             model: Any,

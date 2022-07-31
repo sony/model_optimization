@@ -26,7 +26,7 @@ else:
 from model_compression_toolkit import FrameworkInfo, keras_post_training_quantization, \
     keras_post_training_quantization_mixed_precision
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.keras.back2framework.model_builder import is_layer_fake_quant
+from model_compression_toolkit.core.keras.back2framework.keras_model_builder import is_layer_fake_quant
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.base_layer_test import BaseLayerTest, LayerTestMode

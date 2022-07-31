@@ -13,11 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 from typing import Callable, List, Tuple
+
 import tensorflow as tf
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tqdm import tqdm
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+from model_compression_toolkit.gptq.keras.gptq_model_builder import GPTQKerasModelBuilder
+
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
 else:
@@ -35,8 +38,6 @@ import numpy as np
 import copy
 from model_compression_toolkit.core.keras.constants import BIAS, USE_BIAS
 from model_compression_toolkit.gptq.keras.quantizer import WeightQuantizeConfig
-from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
-from model_compression_toolkit.gptq.keras.model_builder import model_builder as gptq_model_builder
 from model_compression_toolkit.gptq.keras.optimizers.sam_optimizer import SAM
 
 
@@ -97,11 +98,12 @@ class KerasGPTQTrainer(GPTQTrainer):
         Returns:
             Quantized graph for GPTQ fine-tuning, GPTQ graph user info
         """
-        return gptq_model_builder(self.graph_quant,
-                                  self.gptq_config,
-                                  mode=ModelBuilderMode.QUANTIZED,
-                                  append2output=self.compare_points,
-                                  fw_info=self.fw_info)
+
+        return GPTQKerasModelBuilder(graph=self.graph_quant,
+                                     gptq_config=self.gptq_config,
+                                     append2output=self.compare_points,
+                                     fw_info=self.fw_info,
+                                     return_float_outputs=True).build_model()
 
     def compute_gradients(self, in_y_float: List[tf.Tensor], input_data: List[np.ndarray],
                           in_optimizer_with_param: List,
