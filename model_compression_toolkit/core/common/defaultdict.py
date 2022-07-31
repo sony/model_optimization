@@ -59,7 +59,7 @@ class DefaultDict(object):
 
     def keys(self):
         """
-        Get keys od known_dict
+        Get keys of known_dict
         Returns: keys of known_dict
         """
         return self.known_dict.keys()
