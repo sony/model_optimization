@@ -221,9 +221,9 @@ class PyTorchModelBuilder(BaseModelBuilder):
 
         super().__init__(graph,
                          append2output,
+                         fw_info,
                          return_float_outputs)
 
-        self.fw_info = fw_info
         if return_float_outputs:
             raise Exception("Running PyTorch model builder with return_float_outputs=True isn't supported yet")
 

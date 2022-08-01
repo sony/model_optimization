@@ -102,9 +102,9 @@ class KerasModelBuilder(BaseModelBuilder):
 
         super().__init__(graph,
                          append2output,
+                         fw_info,
                          return_float_outputs)
 
-        self.fw_info = fw_info
         # Build an OperationHandler to handle conversions from graph nodes to Keras operators.
         self.oh = OperationHandler(self.graph)
 

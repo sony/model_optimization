@@ -63,8 +63,7 @@ class QATKerasModelBuilder(KerasModelBuilder):
                  graph: common.Graph,
                  append2output=None,
                  fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                 return_float_outputs: bool = False,
-                 fw_impl: FrameworkImplementation = KerasImplementation()):
+                 return_float_outputs: bool = False):
         """
 
         Args:
@@ -73,20 +72,10 @@ class QATKerasModelBuilder(KerasModelBuilder):
             fw_info: Information about the specific framework of the model that is built.
             return_float_outputs: Whether the model returns float tensors or not.
         """
-        graph_to_quantize = copy.deepcopy(graph)
-        for n in graph_to_quantize.nodes:
-            if _is_qat_applicable(n, fw_info):
-                n.final_weights_quantization_cfg.enable_weights_quantization = False
-        quantized_tg = quantize_graph_weights(graph_to_quantize,
-                                              fw_info=fw_info,
-                                              fw_impl=fw_impl)
-
-        super().__init__(quantized_tg,
+        super().__init__(graph,
                          append2output,
                          fw_info,
                          return_float_outputs)
-        self.fw_impl = fw_impl
-        self.original_graph = graph
 
     def _quantize_node_activations(self,
                                    node: BaseNode,
@@ -119,11 +108,13 @@ class QATKerasModelBuilder(KerasModelBuilder):
 
         # Wrap layers to be fine-tuned during QAT with QuantizeWrapper
         def _quantize(layer):
-            nodes = self.original_graph.find_node_by_name(get_node_name_from_layer(layer))
+            nodes = self.graph.find_node_by_name(get_node_name_from_layer(layer))
             if len(nodes) == 1:
                 node = nodes[0]
                 if _is_qat_applicable(node, self.fw_info):
-                    return QuantizeWrapper(layer, quantization_config_builder(node, self.fw_info))
+                    return QuantizeWrapper(layer,
+                                           quantization_config_builder(node,
+                                                                       self.fw_info))
                 else:
                     return layer
             elif is_layer_fake_quant(layer):

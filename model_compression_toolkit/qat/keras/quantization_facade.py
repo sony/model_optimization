@@ -150,8 +150,7 @@ if FOUND_TF:
 
         tg = ptq_runner(tg, fw_info, fw_impl, tb_w)
 
-        qat_model, user_info = QATKerasModelBuilder(graph=tg, fw_info=fw_info, fw_impl=fw_impl).build_model()
-        # qat_model, user_info = model_builder(tg, fw_info=fw_info, fw_impl=fw_impl)
+        qat_model, user_info = QATKerasModelBuilder(graph=tg, fw_info=fw_info).build_model()
 
         user_info.mixed_precision_cfg = bit_widths_config
 
