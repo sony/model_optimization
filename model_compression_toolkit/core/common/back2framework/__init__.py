@@ -12,6 +12,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-from model_compression_toolkit.core.pytorch.back2framework.factory_model_builder import get_pytorch_model_builder
-

@@ -1,16 +1,30 @@
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 from typing import List, Any, Tuple, Callable, Type, Dict
 
 import numpy as np
 import tensorflow as tf
-
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
-from model_compression_toolkit.core.keras.back2framework.model_gradients import \
-    keras_iterative_approx_jacobian_trace
-from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID, ARGMAX, LAYER_NAME
 from tensorflow.keras.models import Model
 from tensorflow.python.layers.base import Layer
 
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence, compute_cs, compute_mse
+from model_compression_toolkit.core.keras.back2framework.model_gradients import \
+    keras_iterative_approx_jacobian_trace
+from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID, ARGMAX, LAYER_NAME
 from model_compression_toolkit.core.keras.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 
 if tf.__version__ < "2.6":
@@ -28,7 +42,6 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.keras.back2framework.model_builder import model_builder
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.gptq.keras.gptq_training import KerasGPTQTrainer
@@ -62,6 +75,7 @@ from model_compression_toolkit.core.keras.reader.reader import model_reader
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import create_stats_collector_for_node
 import model_compression_toolkit.core.keras.constants as keras_constants
 from model_compression_toolkit.core.keras.tf_tensor_numpy import tf_tensor_to_numpy, to_tf_tensor
+from model_compression_toolkit.core.keras.back2framework import get_keras_model_builder
 
 
 class KerasImplementation(FrameworkImplementation):
@@ -137,11 +151,13 @@ class KerasImplementation(FrameworkImplementation):
         Returns:
             A tuple of the Keras model that was built and an UserInformation object.
         """
-        return model_builder(graph,
-                             mode,
-                             append2output,
-                             fw_info,
-                             return_float_outputs=return_float_outputs)
+
+        keras_model_builder = get_keras_model_builder(mode)
+        return keras_model_builder(graph=graph,
+                                   append2output=append2output,
+                                   fw_info=fw_info,
+                                   return_float_outputs=return_float_outputs).build_model()
+
 
     def run_model_inference(self,
                             model: Any,

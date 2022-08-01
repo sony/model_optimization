@@ -18,7 +18,7 @@ import tensorflow as tf
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
-from model_compression_toolkit.core.keras.back2framework.model_builder import is_layer_fake_quant
+from model_compression_toolkit.core.keras.back2framework.keras_model_builder import is_layer_fake_quant
 
 keras = tf.keras
 layers = keras.layers
