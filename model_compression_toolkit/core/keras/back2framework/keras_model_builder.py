@@ -20,9 +20,9 @@ from keras.models import Model
 
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
 
-# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from model_compression_toolkit.core.common.user_info import UserInformation
 
+# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Input
     from tensorflow.python.keras.layers.core import TFOpLambda

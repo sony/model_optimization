@@ -49,10 +49,10 @@ class FloatKerasModelBuilder(KerasModelBuilder):
                                    node: BaseNode,
                                    input_tensors: List[TFReference]) -> List[TFReference]:
         """
-        Quantize node's activation given input tensors.
+        Return node's activations given input tensors (for float model, it's the input).
 
         Args:
-            node: Node to quantize its outputs.
+            node: Node to return its outputs.
             input_tensors: Input tensors of the node.
 
         Returns:

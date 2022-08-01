@@ -34,12 +34,9 @@ from model_compression_toolkit.core.common.model_builder_mode import ModelBuilde
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.pytorch.back2framework.float_model_builder import FloatPyTorchModelBuilder
-from model_compression_toolkit.core.pytorch.back2framework.mixed_precision_model_builder import \
-    MixedPrecisionPyTorchModelBuilder
+from model_compression_toolkit.core.pytorch.back2framework import get_pytorch_model_builder
 from model_compression_toolkit.core.pytorch.back2framework.model_gradients import \
     pytorch_iterative_approx_jacobian_trace
-from model_compression_toolkit.core.pytorch.back2framework.quantized_model_builder import QuantizedPyTorchModelBuilder
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
     pytorch_batchnorm_folding
@@ -139,15 +136,11 @@ class PytorchImplementation(FrameworkImplementation):
         Returns:
             A tuple of the Pytorch module that was built and an UserInformation object.
         """
-        pytorch_builders = {ModelBuilderMode.QUANTIZED: QuantizedPyTorchModelBuilder,
-                            ModelBuilderMode.FLOAT: FloatPyTorchModelBuilder,
-                            ModelBuilderMode.MIXEDPRECISION: MixedPrecisionPyTorchModelBuilder}
-
-        builder = pytorch_builders.get(mode)
-        return builder(graph=graph,
-                       append2output=append2output,
-                       fw_info=fw_info,
-                       return_float_outputs=return_float_outputs).build_model()
+        pytorch_model_builder = get_pytorch_model_builder(mode)
+        return pytorch_model_builder(graph=graph,
+                                     append2output=append2output,
+                                     fw_info=fw_info,
+                                     return_float_outputs=return_float_outputs).build_model()
 
     def run_model_inference(self,
                             model: Any,
