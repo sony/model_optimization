@@ -13,12 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Callable, List
+from typing import Callable
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW, FOUND_TF
-from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
@@ -30,6 +30,10 @@ from model_compression_toolkit.core.common.target_platform.targetplatform2framew
 
 
 if FOUND_TF:
+    import tensorflow as tf
+    import tensorflow_model_optimization as tfmot
+    from model_compression_toolkit.qat.keras.quantizer.config_factory import WeightQuantizeConfig
+
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
@@ -148,11 +152,104 @@ if FOUND_TF:
 
         tg = ptq_runner(tg, fw_info, fw_impl, tb_w)
 
-        qat_model, user_info = model_builder(tg, fw_info=fw_info)
+        qat_model, user_info = model_builder(tg, fw_info=fw_info, fw_impl=fw_impl)
 
         user_info.mixed_precision_cfg = bit_widths_config
 
         return qat_model, user_info, QUANTIZATION_CONFIGS_DICT
+
+
+    def keras_quantization_aware_training_finalize(in_model: Model):
+        """
+         Convert a model fine-tuned by the user to a network without QuantizeWrappers. The exported
+         model contains float (fake-quantized) parameters and fake-quantiztion layers for quantizing
+         the activations
+
+         Args:
+             in_model (Model): Keras model to remove QuantizeWrappers.
+
+         Returns:
+             A quantized model without QuantizeWrappers.
+
+         Examples:
+
+             Import MCT:
+
+             >>> import model_compression_toolkit as mct
+
+             Import a Keras model:
+
+             >>> from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+             >>> model = MobileNetV2()
+
+             Create a random dataset generator:
+
+             >>> import numpy as np
+             >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
+
+             Create a MCT core config, containing the quantization configuration:
+
+             >>> config = mct.CoreConfig()
+
+             If mixed precision is desired, create a MCT core config with a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
+             The candidates bitwidth for quantization should be defined in the target platform model:
+
+             >>> config = mct.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
+
+             For mixed-precision set a target KPI object:
+             Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
+             that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
+             while the bias will not):
+
+             >>> kpi = mct.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
+
+             Pass the model, the representative dataset generator, the configuration and the target KPI to get a
+             quantized model:
+
+             >>> quantized_model, quantization_info, custom_objects = mct.keras_quantization_aware_training_init(model, repr_datagen, kpi, core_config=config)
+
+             Use the quantized model for fine-tuning. For loading the model from file, use the custom_objects dictionary:
+
+             >>> quantized_model = tf.keras.models.load_model(model_file, custom_objects=custom_objects)
+             >>> quantized_model = mct.keras_quantization_aware_training_finalize(quantized_model)
+
+         """
+
+        def _export(layer):
+            if isinstance(layer, tfmot.quantization.keras.QuantizeWrapper):
+                if not isinstance(layer.quantize_config, tuple(QUANTIZATION_CONFIGS_DICT.values())):
+                    Logger.error(f'Only supported quantization configs are {tuple(QUANTIZATION_CONFIGS_DICT.keys())}')
+                if isinstance(layer.quantize_config, WeightQuantizeConfig):
+                    new_layer = layer.layer.__class__.from_config(layer.layer.get_config())
+                    with tf.name_scope(new_layer.name):
+                        new_layer.build(layer.input_shape)
+                    weights_list = []
+                    for w in new_layer.weights:
+                        val = None
+                        for qw in layer.weights:
+                            if w.name in qw.name:
+                                if w.name.split('/')[-1].split(':')[0] in layer.quantize_config.weight_attrs:
+                                    val = layer.quantize_config.get_weights_and_quantizers(layer.layer)[0][1](qw,
+                                                                                                              False,
+                                                                                                              layer.quantize_config.weight_quantizer.quantizer_parameters)
+                                else:
+                                    val = qw
+                                val = val.numpy()
+                        if val is None:
+                            Logger.error(f'Could not match weight name: {w.name}')
+                        weights_list.append(val)
+                    new_layer.set_weights(weights_list)
+                    new_layer.trainable = False
+                    return new_layer
+                else:
+                    Logger.error(f'Undefined quantize_config')
+            else:
+                return layer
+
+        # clone each layer in the model and apply _export to layers wrapped with a QuantizeWrapper.
+        exported_model = tf.keras.models.clone_model(in_model, input_tensors=None, clone_function=_export)
+
+        return exported_model
 
 else:
     # If tensorflow or tensorflow_model_optimization are not installed,
@@ -160,4 +257,9 @@ else:
     def keras_quantization_aware_training_init(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                         'when using keras_quantization_aware_training_init. '
+                        'Could not find Tensorflow package.')
+
+    def keras_quantization_aware_training_finalize(*args, **kwargs):
+        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+                        'when using keras_quantization_aware_training_finalize. '
                         'Could not find Tensorflow package.')

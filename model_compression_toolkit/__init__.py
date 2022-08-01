@@ -22,7 +22,7 @@ from model_compression_toolkit.core.common.quantization.quantization_config impo
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common import target_platform
 from model_compression_toolkit.core.tpc_models.get_target_platform_capabilities import get_target_platform_capabilities
-from model_compression_toolkit.core.common.mixed_precision.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.logger import set_log_folder
@@ -37,7 +37,8 @@ from model_compression_toolkit.ptq.keras.quantization_facade import keras_post_t
 from model_compression_toolkit.gptq.keras.quantization_facade import \
     keras_gradient_post_training_quantization_experimental
 from model_compression_toolkit.gptq.keras.quantization_facade import get_keras_gptq_config
-from model_compression_toolkit.qat.keras.quantization_facade import keras_quantization_aware_training_init
+from model_compression_toolkit.qat.keras.quantization_facade import keras_quantization_aware_training_init, \
+    keras_quantization_aware_training_finalize
 from model_compression_toolkit.core.pytorch.quantization_facade import pytorch_post_training_quantization, \
     pytorch_post_training_quantization_mixed_precision
 from model_compression_toolkit.ptq.pytorch.quantization_facade import pytorch_post_training_quantization_experimental

@@ -114,15 +114,17 @@ def total_weights_activation_kpi(mp_cfg: List[int], graph: Graph, fw_info: Frame
         node_activation_nbits = node_qc.activation_quantization_cfg.activation_n_bits
 
         # Compute node's weights memory (if no weights to quantize then set to 0)
-        node_num_weights_params = 0
-        for attr in fw_info.get_kernel_op_attributes(n.type):
-            if attr is not None:
-                node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
-        node_weights_memory_in_bytes = node_num_weights_params * node_weights_nbits / BITS_TO_BYTES
+        node_weights_memory_in_bytes = 0
+        if n.is_weights_quantization_enabled() and not n.is_all_weights_candidates_equal():
+            node_num_weights_params = 0
+            for attr in fw_info.get_kernel_op_attributes(n.type):
+                if attr is not None:
+                    node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
+            node_weights_memory_in_bytes = node_num_weights_params * node_weights_nbits / BITS_TO_BYTES
 
         # Compute node's activation memory (if node's activation are not being quantized then set to 0)
         node_activation_memory_in_bytes = 0
-        if n.is_activation_quantization_enabled():
+        if n.is_activation_quantization_enabled() and not n.is_all_activation_candidates_equal():
             node_output_size = n.get_total_output_params()
             node_activation_memory_in_bytes = node_output_size * node_activation_nbits / BITS_TO_BYTES
 
