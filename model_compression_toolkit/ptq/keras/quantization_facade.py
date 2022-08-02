@@ -15,20 +15,19 @@
 
 from typing import Callable
 
+from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core import common
+from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW, FOUND_TF
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
 from model_compression_toolkit.ptq.runner import ptq_runner
-from model_compression_toolkit.core.exporter import export_model
-from model_compression_toolkit.core.analyzer import analyzer_model_quantization
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
-
 
 if FOUND_TF:
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -140,9 +139,16 @@ if FOUND_TF:
         tg = ptq_runner(tg, fw_info, fw_impl, tb_w)
 
         if core_config.debug_config.analyze_similarity:
-            analyzer_model_quantization(representative_data_gen, tb_w, tg, fw_impl, fw_info)
+            analyzer_model_quantization(representative_data_gen,
+                                        tb_w, tg,
+                                        fw_impl,
+                                        fw_info)
 
-        quantized_model, user_info = export_model(tg, fw_info, fw_impl, tb_w, bit_widths_config)
+        quantized_model, user_info = export_model(tg,
+                                                  fw_info,
+                                                  fw_impl,
+                                                  tb_w,
+                                                  bit_widths_config)
 
         return quantized_model, user_info
 
