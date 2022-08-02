@@ -17,7 +17,7 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit import keras_post_training_quantization, \
-    keras_post_training_quantization_mixed_precision, FrameworkInfo
+    keras_post_training_quantization_mixed_precision, FrameworkInfo, keras_post_training_quantization_experimental
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
@@ -42,6 +42,9 @@ class BaseKerasFeatureNetworkTest(BaseFeatureNetworkTest):
 
     def get_ptq_facade(self):
         return keras_post_training_quantization
+
+    def get_experimental_ptq_facade(self):
+        return keras_post_training_quantization_experimental
 
     def get_mixed_precision_ptq_facade(self):
         return keras_post_training_quantization_mixed_precision

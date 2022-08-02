@@ -14,7 +14,7 @@
 # ==============================================================================
 
 
-from typing import Callable, Tuple, Any
+from typing import Tuple, Any
 
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common import FrameworkInfo
@@ -56,6 +56,7 @@ def _quantize_model(tg: Graph,
     # Before building a quantized model, first apply some substitutions.
     quantized_tg = substitute(quantized_tg,
                               fw_impl.get_substitutions_pre_build())
+
     quantized_model, user_info = fw_impl.model_builder(quantized_tg,
                                                        mode=ModelBuilderMode.QUANTIZED,
                                                        fw_info=fw_info)
@@ -88,3 +89,4 @@ def export_model(tg,
     user_info.mixed_precision_cfg = bit_widths_config
 
     return quantized_model, user_info
+

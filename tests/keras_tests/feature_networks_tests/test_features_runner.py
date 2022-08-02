@@ -100,15 +100,20 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_edit_error_method(self):
         EditActivationErrorMethod(self).run_test()
+        EditActivationErrorMethod(self).run_test(experimental_facade=True)
 
     def test_change_qc_attr(self):
         ChangeFinalWeightQCAttrTest(self).run_test()
         ChangeFinalActivationQCAttrTest(self).run_test()
+        ChangeFinalWeightQCAttrTest(self).run_test(experimental_facade=True)
+        ChangeFinalActivationQCAttrTest(self).run_test(experimental_facade=True)
 
     def test_bias_correction_dw(self):
         BiasCorrectionDepthwiseTest(self).run_test()
 
     def test_lut_quantizer(self):
+        LUTWeightsQuantizerTest(self).run_test(experimental_facade=True)
+        LUTActivationQuantizerTest(self).run_test(experimental_facade=True)
         LUTWeightsQuantizerTest(self).run_test()
         LUTActivationQuantizerTest(self).run_test()
 
@@ -116,6 +121,7 @@ class FeatureNetworkTest(unittest.TestCase):
         RemoveUpperBoundTest(self).run_test()
 
     def test_reused_separable_mixed_precision(self):
+        ReusedSeparableMixedPrecisionTest(self).run_test(experimental_facade=True)
         ReusedSeparableMixedPrecisionTest(self).run_test()
 
     def test_reused_layer_mixed_precision(self):
@@ -125,6 +131,7 @@ class FeatureNetworkTest(unittest.TestCase):
         ReusedSeparableTest(self).run_test()
 
     def test_mixed_precision_search_kpi_2bits_avg(self):
+        MixedPercisionSearchKPI2BitsAvgTest(self).run_test(experimental_facade=True)
         MixedPercisionSearchKPI2BitsAvgTest(self).run_test()
 
     def test_mixed_precision_search_kpi_4bits_avg(self):

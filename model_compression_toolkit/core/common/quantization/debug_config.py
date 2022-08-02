@@ -23,7 +23,8 @@ class DebugConfig:
     """
     A class for MCT core debug information.
     """
-    def __init__(self, analyze_similarity: bool = False,
+    def __init__(self,
+                 analyze_similarity: bool = False,
                  network_editor: List[EditRule] = []):
         """
 
