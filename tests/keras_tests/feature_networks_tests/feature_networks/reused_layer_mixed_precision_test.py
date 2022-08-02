@@ -39,10 +39,15 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
                                                              mp_bitwidth_candidates_list=[(2, 16), (4, 16), (16, 16)])
         return generate_keras_tpc(name="reused_layer_mp_test", tp_model=mp_tp_model)
 
+
+
     def get_quantization_config(self):
-        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                    relu_bound_to_power_of_2=True, weights_bias_correction=True,
-                                    weights_per_channel_threshold=True, input_scaling=True,
+        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                    mct.QuantizationErrorMethod.MSE,
+                                    relu_bound_to_power_of_2=True,
+                                    weights_bias_correction=True,
+                                    weights_per_channel_threshold=True,
+                                    input_scaling=True,
                                     activation_channel_equalization=True)
 
         return MixedPrecisionQuantizationConfig(qc)

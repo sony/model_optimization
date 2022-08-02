@@ -20,8 +20,10 @@ from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_b
     ReLUBoundToPOTNetTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_dw_test import \
     BiasCorrectionDepthwiseTest
+
 from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
     DwConv2dReplacementTest
+
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.edit_error_method_test import \
     EditActivationErrorMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.change_qc_attr_test import \
@@ -121,8 +123,9 @@ class FeatureNetworkTest(unittest.TestCase):
         DwConv2dReplacementTest(self).run_test()
 
     def test_edit_error_method(self):
+        EditActivationErrorMethod(self).run_test(experimental_facade=True, experimental_exporter=True)
         EditActivationErrorMethod(self).run_test()
-        EditActivationErrorMethod(self).run_test(experimental_facade=True)
+
 
     def test_change_qc_attr(self):
         ChangeFinalWeightQCAttrTest(self).run_test()

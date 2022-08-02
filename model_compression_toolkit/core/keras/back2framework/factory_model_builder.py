@@ -16,14 +16,16 @@
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
-from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
+from model_compression_toolkit.core.keras.back2framework.fully_quantized_model_builder import \
+    FullyQuantizedKerasModelBuilder
 from model_compression_toolkit.core.keras.back2framework.mixed_precision_model_builder import \
     MixedPrecisionKerasModelBuilder
 from model_compression_toolkit.core.keras.back2framework.quantized_model_builder import QuantizedKerasModelBuilder
 
 keras_model_builders = {ModelBuilderMode.QUANTIZED: QuantizedKerasModelBuilder,
                         ModelBuilderMode.FLOAT: FloatKerasModelBuilder,
-                        ModelBuilderMode.MIXEDPRECISION: MixedPrecisionKerasModelBuilder}
+                        ModelBuilderMode.MIXEDPRECISION: MixedPrecisionKerasModelBuilder,
+                        ModelBuilderMode.FULLY_QUANTIZED: FullyQuantizedKerasModelBuilder}
 
 
 def get_keras_model_builder(mode: ModelBuilderMode) -> type:

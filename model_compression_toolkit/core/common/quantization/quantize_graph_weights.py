@@ -20,11 +20,12 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.quantize_node import get_quantized_kernel_by_weights_qc
-
+import numpy as np
 
 def quantize_graph_weights(graph_to_quantize: Graph,
                            fw_info: FrameworkInfo,
-                           fw_impl: FrameworkImplementation) -> Graph:
+                           fw_impl: FrameworkImplementation,
+                           fake_quant: bool = True) -> Graph:
     """
     Get a graph representing a model, and quantize its nodes' weights.
     Each node is quantized according to the passed framework info and quantization configuration.
@@ -46,11 +47,14 @@ def quantize_graph_weights(graph_to_quantize: Graph,
             quantized_kernel, io_channels_axes = get_quantized_kernel_by_weights_qc(fw_info,
                                                                                     n,
                                                                                     n.final_weights_quantization_cfg,
-                                                                                    fw_impl=fw_impl)
+                                                                                    fw_impl=fw_impl,
+                                                                                    fake_quant=fake_quant)
 
             common.Logger.debug(
                 f'Node name: {n.name} has the following quantization params: '
                 f'{str(n.final_weights_quantization_cfg.weights_quantization_params)}')
+
+            # quantized_kernel = quantized_kernel.astype(np.int)
 
             # Set the kernel node to be the quantized kernel.
             n.set_weights_by_keys(fw_impl.constants.KERNEL, quantized_kernel)

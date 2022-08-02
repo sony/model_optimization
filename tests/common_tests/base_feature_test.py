@@ -58,7 +58,7 @@ class BaseFeatureNetworkTest(BaseTest):
                           mixed_precision_config=self.get_mixed_precision_v2_config(),
                           debug_config=self.get_debug_config())
 
-    def run_test(self, experimental_facade=False):
+    def run_test(self, experimental_facade=False, experimental_exporter=False):
         feature_networks = self.create_networks()
         feature_networks = feature_networks if isinstance(feature_networks, list) else [feature_networks]
         for model_float in feature_networks:
@@ -67,8 +67,8 @@ class BaseFeatureNetworkTest(BaseTest):
                                                                                   self.representative_data_gen,
                                                                                   target_kpi=self.get_kpi(),
                                                                                   core_config=self.get_core_config(),
-                                                                                  fw_info=self.get_fw_info(),
-                                                                                  target_platform_capabilities=self.get_tpc()
+                                                                                  target_platform_capabilities=self.get_tpc(),
+                                                                                  new_experimental_exporter=experimental_exporter
                                                                                   )
             else:
                 qc = self.get_quantization_config()

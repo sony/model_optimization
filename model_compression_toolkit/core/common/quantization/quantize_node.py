@@ -14,24 +14,24 @@
 # ==============================================================================
 
 
-import copy
-
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_weights_computation import \
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_weights_computation \
+    import \
     get_channels_axis
 
 
-def get_quantized_kernel_by_weights_qc(fw_info:FrameworkInfo,
-                                       n:BaseNode,
+def get_quantized_kernel_by_weights_qc(fw_info: FrameworkInfo,
+                                       n: BaseNode,
                                        weights_qc: NodeWeightsQuantizationConfig,
-                                       fw_impl: FrameworkImplementation):
+                                       fw_impl: FrameworkImplementation,
+                                       fake_quant: bool = True):
     """
-    For a node and a weights quantization configuration, compute
+    For a node and weights quantization configuration, compute
     the quantized kernel of the node and return it and the input/output channels indices.
 
     Args:
@@ -60,6 +60,7 @@ def get_quantized_kernel_by_weights_qc(fw_info:FrameworkInfo,
                                                           signed=True,
                                                           quantization_params=weights_qc.weights_quantization_params,
                                                           per_channel=weights_qc.weights_per_channel_threshold,
-                                                          output_channels_axis=output_channels_axis)
+                                                          output_channels_axis=output_channels_axis,
+                                                          fake_quant=fake_quant)
 
     return quantized_kernel, (input_channels_axis, output_channels_axis)
