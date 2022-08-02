@@ -37,7 +37,7 @@ def gumbel_softmax(in_pi: tf.Tensor, in_tau: tf.Tensor, in_gumbel: tf.Tensor, ep
         in_tau: A temperature tensor.
         in_gumbel: A tensor of gumbel random variable.
         eps: A small number for numeric stability.
-        axis:
+        axis: A integer representing the axis of which the gumbel softmax applyed on.
 
     Returns: A gumbel softmax probability tensor.
 
