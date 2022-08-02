@@ -14,53 +14,57 @@
 # ==============================================================================
 import operator
 from typing import List, Any, Tuple, Callable, Type, Dict
+
 import numpy as np
 import torch
 from torch import sigmoid, softmax, add, cat, argmax
-from torch.nn import Module, Sigmoid, Softmax
 from torch.nn import Conv2d, ConvTranspose2d, Linear
+from torch.nn import Module, Sigmoid, Softmax
 
-from model_compression_toolkit import QuantizationConfig, FrameworkInfo, GradientPTQConfig, \
-    CoreConfig, MixedPrecisionQuantizationConfigV2
+import model_compression_toolkit.core.pytorch.constants as pytorch_constants
+from model_compression_toolkit import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
-from model_compression_toolkit.core.common.collectors.statistics_collector_generator import create_stats_collector_for_node
+from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \
+    create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.pytorch.back2framework.model_gradients import \
-    pytorch_iterative_approx_jacobian_trace
-from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.pytorch.back2framework.model_builder import model_builder
+from model_compression_toolkit.core.pytorch.back2framework import get_pytorch_model_builder
+from model_compression_toolkit.core.pytorch.back2framework.model_gradients import \
+    pytorch_iterative_approx_jacobian_trace
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
     pytorch_batchnorm_folding
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.linear_collapsing import \
     pytorch_linear_collapsing
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.residual_collapsing import \
-    pytorch_residual_collapsing
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
+    import MultiHeadAttentionDecomposition
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.permute_call_method import \
+    PermuteCallMethod
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.reshape_with_static_shapes import \
     ReshapeWithStaticShapes
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.scale_equalization import ScaleEqualization, \
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.residual_collapsing import \
+    pytorch_residual_collapsing
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.scale_equalization import \
+    ScaleEqualization, \
     ScaleEqualizationWithPad
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
     pytorch_apply_shift_negative_correction
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.softmax_shift import \
+    pytorch_softmax_shift
 from model_compression_toolkit.core.pytorch.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.pytorch.pytorch_node_prior_info import create_node_prior_info
 from model_compression_toolkit.core.pytorch.reader.reader import model_reader
-import model_compression_toolkit.core.pytorch.constants as pytorch_constants
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.softmax_shift import \
-    pytorch_softmax_shift
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
-    import MultiHeadAttentionDecomposition
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.permute_call_method import PermuteCallMethod
+from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
+
 
 class PytorchImplementation(FrameworkImplementation):
     """
@@ -121,20 +125,22 @@ class PytorchImplementation(FrameworkImplementation):
         Build a Pytorch module from a graph.
         The mode determines how the module should be build. append2output is a list of Nodes
         to set as the module outputs.
+
         Args:
             graph: Graph to build the module from it.
             mode: Mode for how to build the module.
             append2output: List of Nodes to set as the module's outputs.
             fw_info: FrameworkInfo object with information about the specific framework's module
             return_float_outputs (bool): whether to return outputs before or after quantization nodes (default)
+
         Returns:
             A tuple of the Pytorch module that was built and an UserInformation object.
         """
-        return model_builder(graph,
-                             mode,
-                             append2output,
-                             fw_info,
-                             return_float_outputs)
+        pytorch_model_builder = get_pytorch_model_builder(mode)
+        return pytorch_model_builder(graph=graph,
+                                     append2output=append2output,
+                                     fw_info=fw_info,
+                                     return_float_outputs=return_float_outputs).build_model()
 
     def run_model_inference(self,
                             model: Any,
