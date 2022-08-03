@@ -52,6 +52,24 @@ class ConstantHolder(torch.nn.Module):
         return getattr(self, CONSTANT)
 
 
+class BufferHolder(torch.nn.Module):
+    """
+    Class for saving buffers in graph inference.
+    """
+    def __init__(self, const_size):
+        super(BufferHolder, self).__init__()
+        if torch.cuda.is_available():
+            setattr(self, CONSTANT, torch.FloatTensor(size=const_size).to(torch.device('cuda')))
+        else:
+            setattr(self, CONSTANT, torch.FloatTensor(size=const_size))
+
+    def __name__(self):
+        return CONSTANT
+
+    def forward(self):
+        return getattr(self, CONSTANT)
+
+
 def nodes_builder(model: GraphModule,
                   module_dict: Dict,
                   to_numpy: Callable) -> Tuple[List, List, List, Dict]:
@@ -104,11 +122,15 @@ def nodes_builder(model: GraphModule,
             else:
                 raise Exception(f'Call method of type \'{node.target}\' is currently not supported.')
         elif node.op == GET_ATTR:
-            node_type = ConstantHolder
-            node_has_activation = False
-            common.Logger.warning(
-                'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
-                'converting the model.')
+            if node.meta[TYPE] == torch.Tensor:
+                node_type = BufferHolder
+                node_has_activation = False
+            else:
+                node_type = ConstantHolder
+                node_has_activation = False
+                common.Logger.warning(
+                    'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
+                    'converting the model.')
         else:
             raise Exception(f'Unknown node type: {node.name}')
 
@@ -123,10 +145,16 @@ def nodes_builder(model: GraphModule,
             weights.update(named_buffer_weights)
 
         if node.op == GET_ATTR:
-            named_parameters_weights = {CONSTANT: to_numpy(parameter) for name, parameter in
-                                        model.named_parameters() if node.target == name}
-            named_buffer_weights = {CONSTANT: to_numpy(parameter) for name, parameter in
-                                    model.named_buffers() if node.target == name}
+            if node_type == BufferHolder:
+                named_parameters_weights = {CONSTANT: parameter for name, parameter in
+                                            model.named_parameters() if node.target == name}
+                named_buffer_weights = {CONSTANT: parameter for name, parameter in
+                                        model.named_buffers() if node.target == name}
+            else:
+                named_parameters_weights = {CONSTANT: to_numpy(parameter) for name, parameter in
+                                            model.named_parameters() if node.target == name}
+                named_buffer_weights = {CONSTANT: to_numpy(parameter) for name, parameter in
+                                        model.named_buffers() if node.target == name}
             if len(named_parameters_weights) + len(named_buffer_weights) > 1:
                 raise Exception(
                     f'Constant parameter can only have one tensor. Here we have {len(named_parameters_weights) + len(named_buffer_weights)}')
@@ -157,6 +185,19 @@ def nodes_builder(model: GraphModule,
         else:
             output_shape = []
 
+        # filter Nodes from framework attr
+        framework_attr_filtered = {}
+        for k, v in framework_attr.items():
+            if not isinstance(v, torch.fx.node.Node):
+                framework_attr_filtered[k] = v
+        framework_attr = framework_attr_filtered
+
+        # filter Nodes from node kwargs
+        node_kwargs = {}
+        for k, v in node.kwargs.items():
+            if not isinstance(v, torch.fx.node.Node):
+                node_kwargs[k] = v
+
         # initiate graph nodes
         if node.op in [CALL_METHOD, CALL_FUNCTION]:
             graph_node_type = FunctionalNode
@@ -182,7 +223,7 @@ def nodes_builder(model: GraphModule,
 
             kwargs = {FUNCTIONAL_OP: node_type,
                       OP_CALL_ARGS: op_call_args,
-                      OP_CALL_KWARGS: node.kwargs,
+                      OP_CALL_KWARGS: node_kwargs,
                       INPUTS_AS_LIST: inputs_as_list}
         else:
             graph_node_type = BaseNode
