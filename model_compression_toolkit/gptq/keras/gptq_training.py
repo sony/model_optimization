@@ -250,20 +250,30 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         return graph
 
-    def _compute_jacobian_based_weights(self, gptq_config, representative_data_gen):
+    def _compute_jacobian_based_weights(self,
+                                        gptq_config: GradientPTQConfig,
+                                        representative_data_gen: Callable) -> np.ndarray:
+        """
+        Computes the jacobian-based weights using the framework's model_grad method per batch of images.
+
+        Args:
+            gptq_config: A GradientPTQConfig object with relevant arguments for the weights' computation.
+            representative_data_gen: Dataset used for inference to compute the jacobian-based weights.
+
+        Returns: A vector of weights, one for each compare point,
+        to be used for the loss metric weighted average computation when running GPTQ training.
+        """
         if gptq_config.use_jac_based_weights:
             images = self._generate_images_batch(representative_data_gen, gptq_config.num_samples_for_loss)
             points_apprx_jacobians_weights = []
             for i in range(1, images.shape[0] + 1):
-                # Note that in GPTQ loss weights we assume that there aren't replacement output nodes,
+                # Note that in GPTQ loss weights computation we assume that there aren't replacement output nodes,
                 # therefore, output_list is just the graph outputs, and we don't need the tuning factor for
                 # defining the output weights (since the output layer is not a compare point).
                 image_ip_gradients = self.fw_impl.model_grad(self.graph_float,
                                                              {inode: images[i - 1:i] for inode in
                                                               self.graph_float.get_inputs()},
                                                              self.compare_points,
-                                                             # output_list=[self.compare_points[-1]],
-                                                             # all_outputs_indices=[len(self.compare_points) - 1],
                                                              output_list=[n.node for n in self.graph_float.get_outputs()],
                                                              all_outputs_indices=[],
                                                              alpha=0,
@@ -275,7 +285,17 @@ class KerasGPTQTrainer(GPTQTrainer):
             return np.asarray([1 / num_nodes for _ in range(num_nodes)])
 
     @staticmethod
-    def _generate_images_batch(representative_data_gen, num_samples_for_loss):
+    def _generate_images_batch(representative_data_gen: Callable, num_samples_for_loss: int) -> np.ndarray:
+        """
+        Construct batches of image samples for inference.
+
+        Args:
+            representative_data_gen: A callable method to retrieve images from Dataset.
+            num_samples_for_loss: Num of total images for evaluation.
+
+        Returns: A tensor of images batches
+        """
+
         # First, select images to use for all measurements.
         samples_count = 0  # Number of images we used so far to compute the distance matrix.
         images = []

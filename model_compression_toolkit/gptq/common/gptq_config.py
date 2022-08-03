@@ -77,6 +77,7 @@ class GradientPTQConfig:
             eps (float): A floating point value for numeric stability.
             use_jac_based_weights (bool): Whether to use jacobian-based weights for weighted average loss.
             num_samples_for_loss (int): Number of samples to use for computing the jacobian-based weights.
+            norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
 
         """
         self.n_iter = n_iter
