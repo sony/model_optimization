@@ -93,7 +93,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
-        self.weights_for_average_loss = self._compute_jacobian_based_weights(gptq_config, representative_data_gen)
+        self.weights_for_average_loss = self._compute_jacobian_based_weights(representative_data_gen)
 
     def build_gptq_model(self):
         """
@@ -251,20 +251,18 @@ class KerasGPTQTrainer(GPTQTrainer):
         return graph
 
     def _compute_jacobian_based_weights(self,
-                                        gptq_config: GradientPTQConfig,
                                         representative_data_gen: Callable) -> np.ndarray:
         """
         Computes the jacobian-based weights using the framework's model_grad method per batch of images.
 
         Args:
-            gptq_config: A GradientPTQConfig object with relevant arguments for the weights' computation.
             representative_data_gen: Dataset used for inference to compute the jacobian-based weights.
 
         Returns: A vector of weights, one for each compare point,
         to be used for the loss metric weighted average computation when running GPTQ training.
         """
-        if gptq_config.use_jac_based_weights:
-            images = self._generate_images_batch(representative_data_gen, gptq_config.num_samples_for_loss)
+        if self.gptq_config.use_jac_based_weights:
+            images = self._generate_images_batch(representative_data_gen, self.gptq_config.num_samples_for_loss)
             points_apprx_jacobians_weights = []
             for i in range(1, images.shape[0] + 1):
                 # Note that in GPTQ loss weights computation we assume that there aren't replacement output nodes,
@@ -277,7 +275,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                                                              output_list=[n.node for n in self.graph_float.get_outputs()],
                                                              all_outputs_indices=[],
                                                              alpha=0,
-                                                             norm_weights=gptq_config.norm_weights)
+                                                             norm_weights=self.gptq_config.norm_weights)
                 points_apprx_jacobians_weights.append(image_ip_gradients)
             return np.mean(points_apprx_jacobians_weights, axis=0)
         else:
