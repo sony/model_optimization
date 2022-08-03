@@ -23,7 +23,8 @@ class CoreConfig:
     """
     A class to hold the configurations classes of the MCT-core.
     """
-    def __init__(self, n_iter: int = 500,
+    def __init__(self,
+                 n_iter: int = 500,
                  quantization_config: QuantizationConfig = QuantizationConfig(),
                  mixed_precision_config: MixedPrecisionQuantizationConfigV2 = None,
                  debug_config: DebugConfig = DebugConfig()

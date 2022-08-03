@@ -13,18 +13,17 @@
 # limitations under the License.
 # ==============================================================================
 import copy
+import unittest
 
 import numpy as np
 import tensorflow as tf
-import unittest
 
 from model_compression_toolkit import DEFAULTCONFIG
+from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
-from model_compression_toolkit import get_target_platform_capabilities
-from model_compression_toolkit.core.keras.back2framework.model_builder import model_builder
-from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -63,8 +62,8 @@ class NetworkTest(object):
         graph.set_tpc(keras_default_tpc)
         graph = set_quantization_configuration_to_graph(graph,
                                                         copy.deepcopy(DEFAULTCONFIG))
-        ptq_model, _ = model_builder(graph,
-                                     mode=ModelBuilderMode.FLOAT)
+        ptq_model, _ = fw_impl.model_builder(graph,
+                                             mode=ModelBuilderMode.FLOAT)
         self.compare(inputs_list, ptq_model)
 
         graph = substitute(graph, fw_impl.get_substitutions_prepare_graph())
@@ -77,8 +76,8 @@ class NetworkTest(object):
         graph = set_quantization_configuration_to_graph(graph,
                                                         copy.deepcopy(DEFAULTCONFIG))
 
-        ptq_model, _ = model_builder(graph,
-                                     mode=ModelBuilderMode.FLOAT)
+        ptq_model, _ = fw_impl.model_builder(graph,
+                                             mode=ModelBuilderMode.FLOAT)
         self.compare(inputs_list, ptq_model)
 
     @staticmethod

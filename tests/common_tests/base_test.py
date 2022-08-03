@@ -23,6 +23,8 @@ class BaseTest:
         self.num_of_inputs = num_of_inputs
         self.input_shape = (val_batch_size,) + input_shape
 
+    def get_mixed_precision_v2_config(self):
+        return None
 
     def generate_inputs(self):
         return [np.random.randn(*in_shape) for in_shape in self.get_input_shapes()]

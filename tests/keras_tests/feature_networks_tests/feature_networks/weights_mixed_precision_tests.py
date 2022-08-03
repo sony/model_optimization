@@ -24,7 +24,7 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig
+    MixedPrecisionQuantizationConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.user_info import UserInformation
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
@@ -36,6 +36,9 @@ tp = mct.target_platform
 class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
+
+    def get_mixed_precision_v2_config(self):
+        return MixedPrecisionQuantizationConfigV2(num_of_images=1)
 
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
