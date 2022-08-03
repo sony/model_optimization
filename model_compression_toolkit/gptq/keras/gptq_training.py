@@ -131,8 +131,9 @@ class KerasGPTQTrainer(GPTQTrainer):
         with tf.GradientTape(persistent=True) as tape:
             y_fxp = self.fxp_model(input_data, training=training)  # running fxp model
             loss_value = self.gptq_config.loss(y_fxp, in_y_float, self.fxp_weights_list, self.flp_weights_list,
-                                               self.compare_points_mean, self.compare_points_std, self.weights_for_average_loss)
-            if self.gptq_config.is_gumbel and self.gptq_config.temperature_learning:
+                                               self.compare_points_mean, self.compare_points_std,
+                                               self.weights_for_average_loss)
+            if self.gptq_config.is_gumbel and self.gptq_config.quantizer_config.temperature_learning:
                 gumbel_prob = get_gumbel_probability(self.fxp_model)
                 gumbel_reg = 0
                 for p in gumbel_prob:
@@ -140,7 +141,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                         tf.reduce_sum(p * tf.math.log(tf.maximum(p, self.gptq_config.eps)), axis=0))
                     gumbel_reg += entropy
                 gumbel_reg /= len(gumbel_prob)
-                loss_value += self.gptq_config.gumbel_entropy_regularization * gumbel_reg
+                loss_value += self.gptq_config.quantizer_config.gumbel_entropy_regularization * gumbel_reg
 
         # Use the gradient tape to automatically retrieve
         # the gradients of the trainable variables with respect to the loss.
@@ -159,19 +160,30 @@ class KerasGPTQTrainer(GPTQTrainer):
             representative_data_gen: Dataset to use for inputs of the models.
         """
         w2train = [*self.flattened_trainable_weights]
-        if self.gptq_config.temperature_learning:
-            w2train.extend(self.temperature_weights)
+        if self.gptq_config.is_gumbel:
+            if self.gptq_config.quantizer_config.temperature_learning:
+                w2train.extend(self.temperature_weights)
 
         optimizer_with_param = [(self.gptq_config.optimizer, w2train)]
         if self.gptq_config.train_bias or self.gptq_config.quantization_parameters_learning:
             w2train_res = []
             if self.gptq_config.train_bias:
-                w2train_res.extend(self.flattened_bias_weights)
+                if self.gptq_config.optimizer_bias is not None:
+                    optimizer_with_param.append((self.gptq_config.optimizer_bias, self.flattened_bias_weights))
+                else:
+                    w2train_res.extend(self.flattened_bias_weights)
+                    if self.gptq_config.optimizer_rest is None:
+                        common.Logger.error(
+                            "To enable bias micro training an additional optimizer is required, please define the optimizer_rest")
             if self.gptq_config.quantization_parameters_learning:
-                w2train_res.extend(self.trainable_quantization_parameters)
-            if self.gptq_config.optimizer_rest is None:
-                common.Logger.error(
-                    "To enable bias micro training an additional optimizer is required, please define the optimizer_rest")
+                if self.gptq_config.optimizer_quantization_parameter is not None:  # Ability ot override optimizer
+                    optimizer_with_param.append((self.gptq_config.optimizer_quantization_parameter,
+                                                 self.trainable_quantization_parameters))
+                else:
+                    w2train_res.extend(self.trainable_quantization_parameters)
+                if self.gptq_config.optimizer_rest is None:
+                    common.Logger.error(
+                        "To enable bias micro training an additional optimizer is required, please define the optimizer_rest")
             optimizer_with_param.append((self.gptq_config.optimizer_rest, w2train_res))
 
         compute_gradients = self.compute_gradients
@@ -274,7 +286,8 @@ class KerasGPTQTrainer(GPTQTrainer):
                                                              {inode: images[i - 1:i] for inode in
                                                               self.graph_float.get_inputs()},
                                                              self.compare_points,
-                                                             output_list=[n.node for n in self.graph_float.get_outputs()],
+                                                             output_list=[n.node for n in
+                                                                          self.graph_float.get_outputs()],
                                                              all_outputs_indices=[],
                                                              alpha=0,
                                                              norm_weights=self.gptq_config.norm_weights)
