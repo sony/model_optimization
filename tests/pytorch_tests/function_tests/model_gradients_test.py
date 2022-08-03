@@ -180,8 +180,8 @@ class ModelGradientsCalculationTest(BasePytorchTest):
                                               all_outputs_indices=[len(ipts) - 1],
                                               alpha=0)
 
-        self.unit_test.assertTrue(np.isclose(model_grads[0], 0.8, 1e-1))
-        self.unit_test.assertTrue(np.isclose(model_grads[1], 0.2, 1e-1))
+        self.unit_test.assertTrue(np.isclose(model_grads[0], 0.66, 1e-1))
+        self.unit_test.assertTrue(np.isclose(model_grads[1], 0.33, 1e-1))
         self.unit_test.assertTrue(model_grads[2] == 0.0)
 
 
