@@ -14,6 +14,8 @@
 # ==============================================================================
 import tensorflow as tf
 import numpy as np
+
+from model_compression_toolkit import GumbelConfig
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.base_gumbel_rounding import GumbelRoundingBase
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
@@ -62,9 +64,9 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
     PTQ_THRESHOLD = "_ptq_threshold"
 
     def __init__(self, num_bits: int, per_axis: bool, signed: bool, power_of_two, quantization_parameter_learning: bool,
-                 temperature_learning: bool,
-                 threshold_values: np.ndarray,
-                 quantization_axis: int = -1, max_lsbs_change_map: dict = DefaultDict({}, lambda: 1),
+                 threshold_values: np.ndarray, gumbel_config: GumbelConfig,
+                 quantization_axis: int = -1,
+                 max_lsbs_change_map: dict = DefaultDict({}, lambda: 1),
                  max_iteration: int = 10000):
         """
         Initialize a TrainableWeightQuantizer object with parameters to use
@@ -75,14 +77,14 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
             per_axis: Whether to quantize per-channel or per-tensor.
             signed: Signedness to use for the quantization range.
             threshold_values: Threshold to use for the quantization.
+            gumbel_config: A class with the gumbel rounding configurations.
             quantization_axis: Axis of tensor to use for the quantization.
             power_of_two: Whether the threshold should be constrained or not.
             max_lsbs_change_map: a mapping between number of bits to max lsb change.
             max_iteration: The number of iteration of gptq.
         """
         super().__init__(num_bits, per_axis, signed, True, power_of_two, quantization_parameter_learning,
-                         temperature_learning,
-                         quantization_axis,
+                         quantization_axis, gumbel_config,
                          max_lsbs_change_map,
                          max_iteration)
         self.threshold_shape = np.asarray(threshold_values).shape

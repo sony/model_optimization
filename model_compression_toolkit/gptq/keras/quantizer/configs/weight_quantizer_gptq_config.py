@@ -87,10 +87,10 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
                                                                 signed=True,
                                                                 power_of_two=is_power_of_two,
                                                                 quantization_parameter_learning=gptq_config.quantization_parameters_learning,
-                                                                temperature_learning=gptq_config.temperature_learning,
                                                                 quantization_axis=weight_channel_axis,
                                                                 max_lsbs_change_map=max_lsbs_change_map,
-                                                                max_iteration=gptq_config.n_iter)
+                                                                max_iteration=gptq_config.n_iter,
+                                                                gumbel_config=gptq_config.quantizer_config)
             else:
                 common.Logger.error(
                     f"For quantization method {final_weights_quantization_cfg.weights_quantization_method}, GPTQ Rounding type {gptq_config.rounding_type} is not supported")
@@ -107,10 +107,10 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
                                                           max_range=range_max,
                                                           signed=True,
                                                           quantization_parameter_learning=gptq_config.quantization_parameters_learning,
-                                                          temperature_learning=gptq_config.temperature_learning,
                                                           quantization_axis=weight_channel_axis,
                                                           max_lsbs_change_map=max_lsbs_change_map,
-                                                          max_iteration=gptq_config.n_iter)
+                                                          max_iteration=gptq_config.n_iter,
+                                                          gumbel_config=gptq_config.quantizer_config)
 
     def enable_update(self):
         """

@@ -17,6 +17,7 @@ from typing import Dict, Any, List
 import numpy as np
 import tensorflow as tf
 
+from model_compression_toolkit import GumbelConfig
 from model_compression_toolkit.core.keras.quantizer.base_quantizer import BaseTrainableQuantizer
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core import common
@@ -27,9 +28,6 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapp
 from tensorflow.python.framework.tensor_shape import TensorShape
 
 P_INIT = 0.01
-N_CYCLES = 4
-MIM_TEMP = 0.5
-MAX_TEMP = 1.0
 
 
 def _init_aux_var(w_shape: List[int], m: int, p: float = P_INIT) -> np.ndarray:
@@ -72,8 +70,8 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
                  symmetric: bool,
                  power_of_two: bool,
                  quantization_parameter_learning: bool,
-                 temperature_learning: bool,
                  quantization_axis: int,
+                 gumbel_config: GumbelConfig,
                  max_lsbs_change_map: dict = DefaultDict({}, lambda: 1),
                  max_iteration: int = 10000):
         """
@@ -86,8 +84,8 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
             symmetric:  Whether to quantize is symmetric.
             power_of_two: Whether to quantize is power-of-two.
             quantization_parameter_learning: A bool flag state if the quantizer parameter are trainable
-            temperature_learning: A bool flag state if the GumRound temperature are trainable
             quantization_axis: Axis of tensor to use for the quantization.
+            gumbel_config: A class with the gumbel rounding configurations.
             max_lsbs_change_map: a mapping between number of bits to max lsb change.
             max_iteration: The number of iteration of gptq.
         """
@@ -99,16 +97,17 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
         self.power_of_two = power_of_two
         self.symmetric = symmetric
         self.quantization_parameter_learning = quantization_parameter_learning
-        self.temperature_learning = temperature_learning
+        self.temperature_learning = gumbel_config.temperature_learning
         self.quantizer_parameters = {}
+        self.gumbel_config = gumbel_config
 
         self.max_lsbs_change_map = max_lsbs_change_map
         self.max_lsbs_change = max_lsbs_change_map.get(num_bits)
         self.m = 2 * self.max_lsbs_change + 1
 
-        self.n_cycles = N_CYCLES
-        self.minimal_temp = MIM_TEMP
-        self.maximal_temp = MAX_TEMP
+        self.n_cycles = gumbel_config.n_cycles
+        self.minimal_temp = gumbel_config.minimal_temp
+        self.maximal_temp = gumbel_config.maximal_temp
         self.cycle_iterations = int(self.max_iteration / self.n_cycles)
         self.tau = None
         self.g_t = None

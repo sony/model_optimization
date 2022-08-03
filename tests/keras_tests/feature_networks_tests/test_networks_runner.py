@@ -36,15 +36,14 @@ QUANTIZATION_CONFIG = mct.QuantizationConfig(activation_error_method=mct.Quantiz
                                              weights_per_channel_threshold=True)
 
 TWO_BIT_QUANTIZATION = generate_keras_tpc(name="two_bit_network_test",
-                                                  tp_model=generate_test_tp_model({'weights_n_bits': 2,
-                                                                                       'activation_n_bits': 2}))
+                                          tp_model=generate_test_tp_model({'weights_n_bits': 2,
+                                                                           'activation_n_bits': 2}))
 
 EIGHT_BIT_QUANTIZATION = generate_keras_tpc(name="eight_bit_network_test",
-                                                    tp_model=generate_test_tp_model({'weights_n_bits': 8,
-                                                                                         'activation_n_bits': 8}))
+                                            tp_model=generate_test_tp_model({'weights_n_bits': 8,
+                                                                             'activation_n_bits': 8}))
 
 FLOAT_QUANTIZATION = get_16bit_tpc("float_network_test")
-
 
 
 class RunMode(Enum):
@@ -99,7 +98,10 @@ class NetworkTest(object):
 
         if self.gptq:
             arc = model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(n_iter=2,
-                                                                                      optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+                                                                                      optimizer=tf.keras.optimizers.Adam(
+                                                                                          learning_rate=0.0001),
+                                                                                      optimizer_rest=tf.keras.optimizers.Adam(
+                                                                                          learning_rate=0.0001),
                                                                                       loss=multiple_tensors_mse_loss)
 
             ptq_model, quantization_info = mct.keras_post_training_quantization(self.model_float,

@@ -47,7 +47,7 @@ if common.constants.FOUND_TF:
 
 
     def get_keras_gptq_config(n_iter: int,
-                              optimizer: OptimizerV2 = tf.keras.optimizers.Adam(),
+                              optimizer: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=0.2),
                               optimizer_rest: OptimizerV2 = tf.keras.optimizers.Adam(),
                               loss: Callable = multiple_tensors_mse_loss,
                               log_function: Callable = None,

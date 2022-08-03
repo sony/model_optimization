@@ -14,7 +14,7 @@
 # ==============================================================================
 
 from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType, GumbelConfig
 from model_compression_toolkit.core.common.quantization import quantization_config
 from model_compression_toolkit.core.common.mixed_precision import mixed_precision_quantization_config
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, \
