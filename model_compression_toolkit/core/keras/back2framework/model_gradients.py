@@ -100,7 +100,8 @@ def keras_iterative_approx_jacobian_trace(graph_float: common.Graph,
                                           output_list: List[BaseNode],
                                           all_outputs_indices: List[int],
                                           alpha: float = 0.3,
-                                          n_iter: int = 50) -> List[float]:
+                                          n_iter: int = 50,
+                                          norm_weights: bool = True) -> List[float]:
     """
     Computes an approximation of the power of the Jacobian trace of a Keras model's outputs with respect to the feature maps of
     the set of given interest points. It then uses the power of the Jacobian trace for each interest point and normalized the
@@ -117,8 +118,9 @@ def keras_iterative_approx_jacobian_trace(graph_float: common.Graph,
             weights and the other feature maps weights (since the gradient of the output layers does not provide a
             compatible weight for the distance metric computation).
         n_iter: The number of random iterations to calculate the approximated power of the Jacobian trace for each interest point.
+        norm_weights: Whether to normalize the returned weights (to get values between 0 and 1).
 
-    Returns: A list of normalized jacobian-based weights to be considered as the relevancy that each interest
+    Returns: A list of (possibly normalized) jacobian-based weights to be considered as the relevancy that each interest
     point's output has on the model's output.
     """
 
@@ -149,10 +151,14 @@ def keras_iterative_approx_jacobian_trace(graph_float: common.Graph,
                         jac_v = tf.reshape(jac_v, [jac_v.shape[0], -1])
                         jac_trace_approx = tf.reduce_mean(tf.reduce_sum(tf.pow(jac_v, 2.0)))
                         trace_jv.append(jac_trace_approx)
-                ipts_jac_trace_approx.append(tf.reduce_mean(trace_jv))  # Get averaged jacobian trace approximation
-            outputs_jacobians_approx.append(ipts_jac_trace_approx)  # Get mean of jacobians of all model's outputs
+                ipts_jac_trace_approx.append(tf.sqrt(tf.reduce_mean(trace_jv)))  # Get averaged squared jacobian trace approximation
+            outputs_jacobians_approx.append(ipts_jac_trace_approx)
 
-        return _normalize_weights(tf.reduce_mean(outputs_jacobians_approx, axis=0), all_outputs_indices, alpha)
+        mean_per_point = tf.reduce_mean(outputs_jacobians_approx, axis=0)  # Get mean of jacobian approx of all model outputs
+        if norm_weights:
+            return _normalize_weights(mean_per_point, all_outputs_indices, alpha)
+        else:
+            return mean_per_point
 
 
 def _model_outputs_computation(graph_float: common.Graph,

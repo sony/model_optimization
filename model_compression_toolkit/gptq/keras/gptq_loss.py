@@ -39,7 +39,7 @@ def multiple_tensors_mse_loss(y_list: List[tf.Tensor],
                               flp_w_list: List[List[tf.Tensor]],
                               act_bn_mean: List,
                               act_bn_std: List,
-                              ) -> tf.Tensor:
+                              loss_weights: List[float] = None) -> tf.Tensor:
     """
     Compute MSE similarity between two lists of tensors
 
@@ -50,6 +50,7 @@ def multiple_tensors_mse_loss(y_list: List[tf.Tensor],
         flp_w_list: list of lists each containing a float model layer's weights - not quantized
         act_bn_mean: list of prior activations mean collected from batch normalization. None is there's no info
         act_bn_std: list of prior activations std collected from batch normalization. None is there's no info
+        loss_weights: A vector of weights to compute weighted average loss.
 
     Returns:
         A single loss value which is the average of all MSE loss of all tensor pairs
@@ -61,4 +62,7 @@ def multiple_tensors_mse_loss(y_list: List[tf.Tensor],
         point_loss = mse_loss(y, x)
         loss_values_list.append(point_loss)
 
-    return tf.reduce_mean(tf.stack(loss_values_list))
+    if loss_weights is not None:
+        return tf.reduce_sum(loss_weights * tf.stack(loss_values_list))
+    else:
+        return tf.reduce_mean(tf.stack(loss_values_list))

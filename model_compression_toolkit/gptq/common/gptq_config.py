@@ -50,7 +50,11 @@ class GradientPTQConfig:
                  rho: float = 0.01,
                  gumbel_entropy_regularization: float = 0.01,
                  lsb_change_per_bit_width: dict = DefaultDict(MAX_LSBS_CHANGE_MAP, lambda: 1),
-                 eps: float = 1e-6):
+                 eps: float = 1e-6,
+                 use_jac_based_weights: bool = False,
+                 num_samples_for_loss: int = 16,
+                 norm_weights: bool = True,
+                 ):
         """
         Initialize a GradientPTQConfig.
 
@@ -71,6 +75,9 @@ class GradientPTQConfig:
             gumbel_entropy_regularization (float): A floating point number that defines the gumbel entropy regularization factor.
             lsb_change_per_bit_width (dict): Whether to update the bias during the training or not.
             eps (float): A floating point value for numeric stability.
+            use_jac_based_weights (bool): Whether to use jacobian-based weights for weighted average loss.
+            num_samples_for_loss (int): Number of samples to use for computing the jacobian-based weights.
+            norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
 
         """
         self.n_iter = n_iter
@@ -87,6 +94,9 @@ class GradientPTQConfig:
         self.gumbel_entropy_regularization = gumbel_entropy_regularization
         self.lsb_change_per_bit_width = lsb_change_per_bit_width
         self.eps = eps
+        self.use_jac_based_weights = use_jac_based_weights
+        self.num_samples_for_loss = num_samples_for_loss
+        self.norm_weights = norm_weights
 
     @property
     def is_gumbel(self) -> bool:

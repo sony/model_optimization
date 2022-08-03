@@ -157,3 +157,24 @@ class GradientPTQLearnRateZeroTest(GradientPTQBaseTest):
                         zip(quantized_model.weights, quantized_gptq_model.weights)]
         for weights_close in weights_diff:
             self.unit_test.assertTrue(np.all(weights_close))
+
+
+class GradientPTQWeightedLossTest(GradientPTQBaseTest):
+
+    def get_gptq_config(self):
+        return model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(5,
+                                                                                   optimizer=tf.keras.optimizers.Adam(
+                                                                                       learning_rate=0.0001),
+                                                                                   optimizer_rest=tf.keras.optimizers.Adam(
+                                                                                       learning_rate=0.0001),
+                                                                                   loss=multiple_tensors_mse_loss,
+                                                                                   train_bias=True,
+                                                                                   use_jac_based_weights=True,
+                                                                                   num_samples_for_loss=16,
+                                                                                   norm_weights=False)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        y = float_model.predict(input_x)
+        y_hat = quantized_model.predict(input_x)
+        cs = cosine_similarity(y, y_hat)
+        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check: {cs}')
