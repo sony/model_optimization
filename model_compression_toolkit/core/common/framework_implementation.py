@@ -368,7 +368,8 @@ class FrameworkImplementation(ABC):
                    output_list: List[BaseNode],
                    all_outputs_indices: List[int],
                    alpha: float = 0.3,
-                   n_iter: int = 50) -> List[float]:
+                   n_iter: int = 50,
+                   norm_weights: bool = True) -> List[float]:
         """
         Calls a framework specific model gradient calculation function, which computes the jacobian-based weights of the model's
         outputs with respect to the feature maps of the set of given interest points.
@@ -384,8 +385,9 @@ class FrameworkImplementation(ABC):
                 weights and the other feature maps weights (since the gradient of the output layers does not provide a
                 compatible weight for the distance metric computation).
             n_iter: The number of random iterations to calculate the approximated jacobian-based weights for each interest point.
+            norm_weights: Whether to normalize the returned weights (to get values between 0 and 1).
 
-        Returns: A list of normalized jacobian-based weights to be considered as the relevancy that each interest
+        Returns: A list of (possibly normalized) jacobian-based weights to be considered as the relevancy that each interest
         point's output has on the model's output.
         """
 

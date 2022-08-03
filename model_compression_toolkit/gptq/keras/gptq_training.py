@@ -266,7 +266,8 @@ class KerasGPTQTrainer(GPTQTrainer):
                                                              # all_outputs_indices=[len(self.compare_points) - 1],
                                                              output_list=[n.node for n in self.graph_float.get_outputs()],
                                                              all_outputs_indices=[],
-                                                             alpha=0)
+                                                             alpha=0,
+                                                             norm_weights=gptq_config.norm_weights)
                 points_apprx_jacobians_weights.append(image_ip_gradients)
             return np.mean(points_apprx_jacobians_weights, axis=0)
         else:

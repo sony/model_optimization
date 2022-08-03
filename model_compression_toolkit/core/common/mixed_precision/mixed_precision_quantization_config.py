@@ -31,7 +31,8 @@ class MixedPrecisionQuantizationConfigV2:
                  configuration_overwrite: List[int] = None,
                  num_interest_points_factor: float = 1.0,
                  use_grad_based_weights: bool = False,
-                 output_grad_factor: float = 0.1):
+                 output_grad_factor: float = 0.1,
+                 norm_weights: bool = True):
         """
         Class with mixed precision parameters to quantize the input model.
         Unlike QuantizationConfig, number of bits for quantization is a list of possible bit widths to
@@ -61,6 +62,7 @@ class MixedPrecisionQuantizationConfigV2:
 
         self.use_grad_based_weights = use_grad_based_weights
         self.output_grad_factor = output_grad_factor
+        self.norm_weights = norm_weights
 
         if use_grad_based_weights is True:
             Logger.info(f"Using gradient-based weights for mixed-precision distance metric with tuning factor "

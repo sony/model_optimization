@@ -53,6 +53,7 @@ class GradientPTQConfig:
                  eps: float = 1e-6,
                  use_jac_based_weights: bool = False,
                  num_samples_for_loss: int = 16,
+                 norm_weights: bool = True,
                  ):
         """
         Initialize a GradientPTQConfig.
@@ -94,6 +95,7 @@ class GradientPTQConfig:
         self.eps = eps
         self.use_jac_based_weights = use_jac_based_weights
         self.num_samples_for_loss = num_samples_for_loss
+        self.norm_weights = norm_weights
 
     @property
     def is_gumbel(self) -> bool:
