@@ -76,7 +76,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.multiple_inputs_m
 from tests.keras_tests.feature_networks_tests.feature_networks.scale_equalization_test import ScaleEqualizationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multi_inputs_to_node_test import MultiInputsToNodeTest
 from tests.keras_tests.feature_networks_tests.feature_networks.gptq_test import GradientPTQTest, \
-    GradientPTQWeightsUpdateTest, GradientPTQLearnRateZeroTest
+    GradientPTQWeightsUpdateTest, GradientPTQLearnRateZeroTest, GradientPTQWeightedLossTest
 from tests.keras_tests.feature_networks_tests.feature_networks.add_same_test import AddSameTest
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.node_filter_test import NameFilterTest, \
     ScopeFilterTest, TypeFilterTest
@@ -433,6 +433,7 @@ class FeatureNetworkTest(unittest.TestCase):
         GradientPTQTest(self).run_test()
         GradientPTQWeightsUpdateTest(self).run_test()
         GradientPTQLearnRateZeroTest(self).run_test()
+        GradientPTQWeightedLossTest(self).run_test()
 
     def test_split_conv_bug(self):
         SplitConvBugTest(self).run_test()
