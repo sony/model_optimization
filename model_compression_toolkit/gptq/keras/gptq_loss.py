@@ -50,6 +50,7 @@ def multiple_tensors_mse_loss(y_list: List[tf.Tensor],
         flp_w_list: list of lists each containing a float model layer's weights - not quantized
         act_bn_mean: list of prior activations mean collected from batch normalization. None is there's no info
         act_bn_std: list of prior activations std collected from batch normalization. None is there's no info
+        loss_weights: A vector of weights to compute weighted average loss.
 
     Returns:
         A single loss value which is the average of all MSE loss of all tensor pairs
