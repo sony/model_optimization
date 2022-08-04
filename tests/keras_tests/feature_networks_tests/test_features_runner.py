@@ -89,7 +89,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer imp
     LUTActivationQuantizerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multi_head_attention_test import MultiHeadAttentionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.layer_norm_substitution_test import LayerNormSub
-from tests.keras_tests.feature_networks_tests.feature_networks.qat_test import QuantizationAwareTrainingTest
+from tests.keras_tests.feature_networks_tests.feature_networks.qat_test import QuantizationAwareTrainingTest, \
+    QuantizationAwareTrainingQuantizersTest
 import tensorflow as tf
 from tensorflow.keras.layers import ReLU, PReLU, ELU
 
@@ -513,6 +514,8 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_qat(self):
         QuantizationAwareTrainingTest(self).run_test()
         QuantizationAwareTrainingTest(self, finalize=True).run_test()
+        QuantizationAwareTrainingQuantizersTest(self).run_test()
+        QuantizationAwareTrainingQuantizersTest(self, finalize=True).run_test()
 
 
 if __name__ == '__main__':
