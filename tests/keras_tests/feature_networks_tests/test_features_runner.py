@@ -20,10 +20,14 @@ from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_b
     ReLUBoundToPOTNetTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_dw_test import \
     BiasCorrectionDepthwiseTest
+from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
+    DwConv2dReplacementTest
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.edit_error_method_test import \
     EditActivationErrorMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.change_qc_attr_test import \
     ChangeFinalWeightQCAttrTest, ChangeFinalActivationQCAttrTest
+from tests.keras_tests.feature_networks_tests.feature_networks.relu_replacement_test import ReluReplacementTest, \
+    SingleReluReplacementTest, ReluReplacementWithAddBiasTest
 from tests.keras_tests.feature_networks_tests.feature_networks.softmax_shift_test import SoftmaxShiftTest
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import MixedPercisionBaseTest, \
     MixedPercisionSearchTest, MixedPercisionManuallyConfiguredTest, MixedPercisionDepthwiseTest, \
@@ -97,6 +101,18 @@ layers = tf.keras.layers
 
 
 class FeatureNetworkTest(unittest.TestCase):
+
+    def test_single_relu_replacement(self):
+        SingleReluReplacementTest(self).run_test()
+
+    def test_relu_replacement(self):
+        ReluReplacementTest(self).run_test()
+
+    def test_relu_add_bias_replacement(self):
+        ReluReplacementWithAddBiasTest(self).run_test()
+
+    def test_depthwise_conv2d_replacement(self):
+        DwConv2dReplacementTest(self).run_test()
 
     def test_edit_error_method(self):
         EditActivationErrorMethod(self).run_test()

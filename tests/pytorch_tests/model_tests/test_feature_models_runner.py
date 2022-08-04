@@ -15,6 +15,9 @@
 import unittest
 
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
+from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
+from tests.pytorch_tests.model_tests.feature_models.relu_replacement_test import SingleLayerReplacementTest, \
+    ReluReplacementTest, ReluReplacementWithAddBiasTest
 from tests.pytorch_tests.model_tests.feature_models.remove_assert_test import AssertNetTest
 from tests.pytorch_tests.model_tests.feature_models.remove_broken_node_test import BrokenNetTest
 from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSameNetTest
@@ -55,6 +58,34 @@ from tests.pytorch_tests.model_tests.feature_models.layer_fusing_test import Lay
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
+
+    def test_single_layer_replacement(self):
+        """
+        This test checks "EditRule" operation with "ReplaceLayer" action
+        Specifically, replacing layer according to its unique name with a custom layer
+        """
+        SingleLayerReplacementTest(self).run_test()
+
+    def test_relu_replacement(self):
+        """
+        This test checks "EditRule" operation with "ReplaceLayer" action
+        Specifically, replacing layer according to its type with a custom layer
+        """
+        ReluReplacementTest(self).run_test()
+
+    def test_relu_replacement_with_add_bias(self):
+        """
+        This test checks "EditRule" operation with "ReplaceLayer" action
+        Specifically, replacing layer with a custom layer which is based on the original layer attributes
+        """
+        ReluReplacementWithAddBiasTest(self).run_test()
+
+    def test_conv2d_replacement(self):
+        """
+        This test checks "EditRule" operation with "ReplaceLayer" action
+        Specifically, updating the weights of Conv2D layer
+        """
+        DwConv2dReplacementTest(self).run_test()
 
     def test_add_net(self):
         """
