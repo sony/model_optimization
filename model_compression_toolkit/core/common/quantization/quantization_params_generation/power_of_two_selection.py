@@ -23,6 +23,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     get_threshold_selection_tensor_error_function, get_threshold_selection_histogram_error_function
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
+
 def power_of_two_selection_tensor(tensor_data: np.ndarray,
                                   p: int,
                                   n_bits: int,
@@ -54,7 +55,7 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
         tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis)
         threshold = max_power_of_two(tensor_max, min_threshold)
     else:
-        signed = np.any(tensor_data < 0)
+        signed = True  # weights are always signed
         error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.POWER_OF_TWO,
                                                                        quant_error_method, p, norm=False, n_bits=n_bits,
                                                                        signed=signed)
@@ -64,7 +65,8 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
                                                     per_channel=per_channel,
                                                     channel_axis=channel_axis,
                                                     n_iter=n_iter,
-                                                    min_threshold=min_threshold)
+                                                    min_threshold=min_threshold,
+                                                    signed=signed)
     return {THRESHOLD: threshold}
 
 

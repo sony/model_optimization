@@ -35,7 +35,8 @@ def qparams_selection_tensor_search(error_function: Callable,
                                     per_channel: bool = False,
                                     channel_axis: int = 1,
                                     n_iter: int = 10,
-                                    min_threshold=MIN_THRESHOLD) -> Any:
+                                    min_threshold=MIN_THRESHOLD,
+                                    signed: bool = True) -> Any:
     """
     Search for an optimal threshold to quantize a tensor.
     The search_methods starts with the constrained no-clipping threshold the tensor has, and continues with
@@ -57,7 +58,6 @@ def qparams_selection_tensor_search(error_function: Callable,
 
     """
 
-    signed = np.any(tensor_data < 0)  # check if tensor is singed
     output_shape = get_output_shape(tensor_data.shape, channel_axis)
 
     # First threshold to check is the constrained threshold based on the tensor's maximal value.
