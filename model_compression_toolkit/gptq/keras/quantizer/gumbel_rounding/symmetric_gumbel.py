@@ -204,4 +204,7 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
 
         """
         old_threshold = self.quantizer_parameters[self.PTQ_THRESHOLD]
-        return {THRESHOLD: old_threshold.numpy().reshape(self.threshold_shape)}
+        if self.power_of_two:
+            old_threshold = qutils.power_of_two_max(old_threshold)
+        old_threshold = old_threshold.numpy().reshape(self.threshold_shape)
+        return {THRESHOLD: old_threshold}
