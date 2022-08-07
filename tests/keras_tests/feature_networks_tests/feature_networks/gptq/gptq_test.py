@@ -41,10 +41,10 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
 
     """
     inputs = layers.Input(shape=in_input_shape)
-    x = layers.Conv2D(3, 4,bias_initializer='glorot_uniform')(inputs)
+    x = layers.Conv2D(3, 4, bias_initializer='glorot_uniform')(inputs)
     x = layers.BatchNormalization()(x)
     x = layers.PReLU()(x)
-    x = layers.Conv2D(7, 8,bias_initializer='glorot_uniform')(x)
+    x = layers.Conv2D(7, 8, bias_initializer='glorot_uniform')(x)
     x = layers.BatchNormalization()(x)
     outputs = layers.ReLU()(x)
     model = keras.Model(inputs=inputs, outputs=outputs)
@@ -52,9 +52,11 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
 
 
 class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
-    def __init__(self, unit_test):
+    def __init__(self, unit_test, is_gumbel=False, sam_optimization=False):
         super().__init__(unit_test,
                          input_shape=(1, 16, 16, 3))
+        self.is_gumbel = is_gumbel
+        self.sam_optimization = sam_optimization
 
     def get_tpc(self):
         return get_16bit_tpc("gptq_test")
@@ -69,7 +71,9 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                                                                                        learning_rate=0.0001),
                                                                                    optimizer_rest=tf.keras.optimizers.Adam(
                                                                                        learning_rate=0.0001),
+                                                                                   sam_optimization=self.sam_optimization,
                                                                                    loss=multiple_tensors_mse_loss,
+                                                                                   rounding_type=model_compression_toolkit.gptq.common.gptq_config.RoundingType.GumbelRounding if self.is_gumbel else model_compression_toolkit.gptq.common.gptq_config.RoundingType.STE,
                                                                                    train_bias=True)
 
     def create_networks(self):
@@ -122,8 +126,9 @@ class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
                                                                                    optimizer=tf.keras.optimizers.Adam(
                                                                                        learning_rate=1e-2),
                                                                                    optimizer_rest=tf.keras.optimizers.Adam(
-                                                                                       learning_rate=1e-2),
+                                                                                       learning_rate=1e-1),
                                                                                    train_bias=True,
+                                                                                   sam_optimization=self.sam_optimization,
                                                                                    loss=multiple_tensors_mse_loss)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
@@ -143,8 +148,12 @@ class GradientPTQLearnRateZeroTest(GradientPTQBaseTest):
 
     def get_gptq_config(self):
         return model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(1,
-                                                                                   optimizer=tf.keras.optimizers.SGD(learning_rate=0.0),
-                                                                                   optimizer_rest=tf.keras.optimizers.SGD(learning_rate=0.0),
+                                                                                   optimizer=tf.keras.optimizers.SGD(
+                                                                                       learning_rate=0.0),
+                                                                                   optimizer_rest=tf.keras.optimizers.SGD(
+                                                                                       learning_rate=0.0),
+                                                                                   train_bias=True,
+                                                                                   sam_optimization=self.sam_optimization,
                                                                                    loss=multiple_tensors_mse_loss)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):

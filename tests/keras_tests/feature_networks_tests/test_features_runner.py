@@ -25,7 +25,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.ed
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.change_qc_attr_test import \
     ChangeFinalWeightQCAttrTest, ChangeFinalActivationQCAttrTest
 from tests.keras_tests.feature_networks_tests.feature_networks.softmax_shift_test import SoftmaxShiftTest
-from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import MixedPercisionBaseTest, \
+from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import \
+    MixedPercisionBaseTest, \
     MixedPercisionSearchTest, MixedPercisionManuallyConfiguredTest, MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest, MixedPrecisionActivationDisabled
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_tests import \
@@ -57,7 +58,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.shift_neg_activat
     ShiftNegActivationPostAddTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
     ActivationDecompositionTest
-from tests.keras_tests.feature_networks_tests.feature_networks.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, LayerFusingTest4
+from tests.keras_tests.feature_networks_tests.feature_networks.layer_fusing_test import LayerFusingTest1, \
+    LayerFusingTest2, LayerFusingTest3, LayerFusingTest4
 from tests.keras_tests.feature_networks_tests.feature_networks.reused_layer_test import ReusedLayerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.nested_networks.nested_test import NestedTest
 from tests.keras_tests.feature_networks_tests.feature_networks.nested_networks.nested_model_multiple_inputs_test import \
@@ -75,8 +77,11 @@ from tests.keras_tests.feature_networks_tests.feature_networks.output_in_middle_
 from tests.keras_tests.feature_networks_tests.feature_networks.multiple_inputs_model_test import MultipleInputsModelTest
 from tests.keras_tests.feature_networks_tests.feature_networks.scale_equalization_test import ScaleEqualizationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multi_inputs_to_node_test import MultiInputsToNodeTest
-from tests.keras_tests.feature_networks_tests.feature_networks.gptq_test import GradientPTQTest, \
+from tests.keras_tests.feature_networks_tests.feature_networks.gptq.gptq_test import GradientPTQTest, \
     GradientPTQWeightsUpdateTest, GradientPTQLearnRateZeroTest, GradientPTQWeightedLossTest
+from tests.keras_tests.feature_networks_tests.feature_networks.gptq.gptq_conv import \
+    GradientPTQLearnRateZeroConvGroupTest, GradientPTQWeightsUpdateConvGroupTest, \
+    GradientPTQLearnRateZeroConvGroupDilationTest, GradientPTQWeightsUpdateConvGroupDilationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.add_same_test import AddSameTest
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.node_filter_test import NameFilterTest, \
     ScopeFilterTest, TypeFilterTest
@@ -441,6 +446,21 @@ class FeatureNetworkTest(unittest.TestCase):
         GradientPTQWeightsUpdateTest(self).run_test()
         GradientPTQLearnRateZeroTest(self).run_test()
         GradientPTQWeightedLossTest(self).run_test()
+        GradientPTQWeightsUpdateTest(self, is_gumbel=True, sam_optimization=True).run_test()
+        GradientPTQLearnRateZeroTest(self, is_gumbel=True).run_test()
+
+    # Comment out due to problem in Tensorflow 2.8
+    # def test_gptq_conv_group(self):
+    #     GradientPTQLearnRateZeroConvGroupTest(self).run_test()
+    #     GradientPTQWeightsUpdateConvGroupTest(self).run_test()
+    #     GradientPTQLearnRateZeroConvGroupTest(self, is_gumbel=True).run_test()
+    #     GradientPTQWeightsUpdateConvGroupTest(self, is_gumbel=True, sam_optimization=True).run_test()
+
+    def test_gptq_conv_group_dilation(self):
+        GradientPTQLearnRateZeroConvGroupDilationTest(self).run_test()
+        GradientPTQWeightsUpdateConvGroupDilationTest(self).run_test()
+        GradientPTQLearnRateZeroConvGroupDilationTest(self, is_gumbel=True, sam_optimization=True).run_test()
+        GradientPTQWeightsUpdateConvGroupDilationTest(self, is_gumbel=True).run_test()
 
     def test_split_conv_bug(self):
         SplitConvBugTest(self).run_test()

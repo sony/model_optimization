@@ -44,7 +44,8 @@ Modules
 
 Classes
 =========
-- :ref:`GradientPTQConfig<ug-GradientPTQConfig>`: Class to configure GradientPTQC options for gradient based post training quantization.
+- :ref:`GradientPTQConfig<ug-GradientPTQConfig>`: Class to configure GradientPTQ options for gradient based post training quantization.
+- :ref:`GumbelConfig<ug-GumbelConfig>`: Class to configure GumbelConfig options for gumbel rounding in GPTQ.
 - :ref:`FolderImageLoader<ug-FolderImageLoader>`: Class to use an images directory as a representative dataset.
 - :ref:`FrameworkInfo<ug-FrameworkInfo>`: Class to wrap framework information to be used by MCT when optimizing models.
 

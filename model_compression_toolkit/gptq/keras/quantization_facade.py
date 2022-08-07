@@ -31,6 +31,7 @@ from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
+LR_DEFAULT = 0.2
 if common.constants.FOUND_TF:
     import tensorflow as tf
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -47,7 +48,7 @@ if common.constants.FOUND_TF:
 
 
     def get_keras_gptq_config(n_iter: int,
-                              optimizer: OptimizerV2 = tf.keras.optimizers.Adam(),
+                              optimizer: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT),
                               optimizer_rest: OptimizerV2 = tf.keras.optimizers.Adam(),
                               loss: Callable = multiple_tensors_mse_loss,
                               log_function: Callable = None,
@@ -57,7 +58,7 @@ if common.constants.FOUND_TF:
 
         args:
             n_iter (int): Number of iterations to fine-tune.
-            optimizer (OptimizerV2): Keras optimizer to use for fine-tuning for auxiliry variable.
+            optimizer (OptimizerV2): Keras optimizer to use for fine-tuning for auxiliry variable with a default learning rate set to 0.2.
             optimizer_rest (OptimizerV2): Keras optimizer to use for fine-tuning of the bias variable.
             loss (Callable): loss to use during fine-tuning. should accept 4 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors, the 3rd is a list of quantized weights and the 4th is a list of float weights.
             log_function (Callable): Function to log information about the gptq process.
@@ -98,7 +99,8 @@ if common.constants.FOUND_TF:
                                                                target_kpi: KPI = None,
                                                                core_config: CoreConfig = CoreConfig(),
                                                                fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                                                               target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
+                                                               target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> \
+    Tuple[Model, UserInformation]:
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
         symmetric constraint quantization thresholds (power of two).

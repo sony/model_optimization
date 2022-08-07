@@ -43,6 +43,13 @@ def get_16bit_tpc(name):
     return generate_keras_tpc(name=name, tp_model=tp_model)
 
 
+def get_16bit_tpc_per_tensor(name):
+    tp_model = generate_test_tp_model({'weights_n_bits': 16,
+                                       'activation_n_bits': 16,
+                                       "weights_per_channel_threshold": False})
+    return generate_keras_tpc(name=name, tp_model=tp_model)
+
+
 def get_quantization_disabled_keras_tpc(name):
     tp = generate_test_tp_model({'enable_weights_quantization': False,
                                  'enable_activation_quantization': False})
