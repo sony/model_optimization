@@ -138,8 +138,8 @@ class TestModelGradients(unittest.TestCase):
 
         # These are the expected values of the normalized gradients (gradients should be 2 and 1
         # with respect to input and mult layer, respectively)
-        self.assertTrue(np.isclose(x[0], np.float32(0.8), 1e-1))
-        self.assertTrue(np.isclose(x[1], np.float32(0.2), 1e-1))
+        self.assertTrue(np.isclose(x[0], np.float32(0.66), 1e-1))
+        self.assertTrue(np.isclose(x[1], np.float32(0.33), 1e-1))
         self.assertTrue(np.isclose(x[2], np.float32(0.0)))
 
         y = keras_impl.model_grad(graph_float=graph,
