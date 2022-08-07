@@ -63,8 +63,13 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
     """
     PTQ_THRESHOLD = "_ptq_threshold"
 
-    def __init__(self, num_bits: int, per_axis: bool, signed: bool, power_of_two, quantization_parameter_learning: bool,
-                 threshold_values: np.ndarray, gumbel_config: GumbelConfig,
+    def __init__(self, num_bits: int,
+                 per_axis: bool,
+                 signed: bool,
+                 power_of_two: bool,
+                 quantization_parameter_learning: bool,
+                 threshold_values: np.ndarray,
+                 gumbel_config: GumbelConfig,
                  quantization_axis: int = -1,
                  max_lsbs_change_map: dict = DefaultDict({}, lambda: 1),
                  max_iteration: int = 10000):

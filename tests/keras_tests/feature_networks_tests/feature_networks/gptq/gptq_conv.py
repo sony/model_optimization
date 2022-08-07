@@ -60,10 +60,10 @@ class GradientPTQLearnRateZeroConvGroupTest(GradientPTQLearnRateZeroTest):
 class GradientPTQWeightsUpdateConvGroupDilationTest(GradientPTQWeightsUpdateTest):
     def create_networks(self):
         in_shape = self.get_input_shapes()[0][1:]
-        return build_model(in_shape, group=2, dilation_rate=(2, 2))
+        return build_model(in_shape, group=1, dilation_rate=(2, 2))
 
 
 class GradientPTQLearnRateZeroConvGroupDilationTest(GradientPTQLearnRateZeroTest):
     def create_networks(self):
         in_shape = self.get_input_shapes()[0][1:]
-        return build_model(in_shape, group=2, dilation_rate=(2, 2))
+        return build_model(in_shape, group=1, dilation_rate=(2, 2))

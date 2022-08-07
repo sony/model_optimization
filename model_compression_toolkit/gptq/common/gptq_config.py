@@ -112,7 +112,7 @@ class GradientPTQConfig:
             norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
             quantizer_config (Any): A class the contins the quantizer specific config.
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
-            optimizer_bias (Any): Optimizer o override the rest optimizerfor bias.
+            optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
 
         """
         self.n_iter = n_iter
