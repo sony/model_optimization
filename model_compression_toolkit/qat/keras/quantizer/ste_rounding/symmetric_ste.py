@@ -56,6 +56,16 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
         self.threshold_values = np.reshape(np.asarray(threshold_values), [-1]) if self.per_axis else float(
             threshold_values)
         self.quantization_axis = quantization_axis
+
+        if self.per_axis and self.quantization_axis not in [-1, len(self.threshold_shape)-1]:
+            # Tensorflow's fake_quant_with_min_max_vars_per_channel only works on last axis, so
+            # need to move the quantization axis to the last axis
+            self.perm_vec = list(np.arange(len(self.threshold_shape)))
+            self.perm_vec[self.quantization_axis] = len(self.threshold_shape)-1
+            self.perm_vec[len(self.threshold_shape)-1] = self.quantization_axis
+        else:
+            self.perm_vec = None
+
         self.power_of_two = power_of_two
 
         if self.power_of_two:
@@ -127,8 +137,12 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
         _min = weights[FQ_MIN]
         _max = weights[FQ_MAX]
         if self.per_axis:
+            if self.perm_vec:
+                inputs = tf.transpose(inputs, perm=self.perm_vec)
             q_tensor = tf.quantization.fake_quant_with_min_max_vars_per_channel(inputs, _min, _max,
                                                                                 num_bits=self.num_bits)
+            if self.perm_vec:
+                q_tensor = tf.transpose(q_tensor, perm=self.perm_vec)
         else:
             q_tensor = tf.quantization.fake_quant_with_min_max_vars(inputs, _min, _max,
                                                                     num_bits=self.num_bits)
