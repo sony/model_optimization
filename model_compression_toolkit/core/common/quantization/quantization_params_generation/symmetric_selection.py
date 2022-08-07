@@ -25,6 +25,7 @@ from model_compression_toolkit.core.common.quantization.quantizers.quantizers_he
     get_tensor_max
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
+
 def symmetric_selection_tensor(tensor_data: np.ndarray,
                                p: int,
                                n_bits: int,
@@ -57,7 +58,7 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         threshold = get_init_threshold(min_threshold, tensor_max, per_channel)
     else:
-        signed = np.any(tensor_data < 0)
+        signed = True  # weights are always signed
         error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.SYMMETRIC, quant_error_method, p, norm=False, n_bits=n_bits, signed=signed)
         threshold = qparams_symmetric_selection_tensor_search(error_function,
                                                               tensor_data,
@@ -65,7 +66,8 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
                                                               n_bits,
                                                               per_channel,
                                                               channel_axis,
-                                                              min_threshold=min_threshold)
+                                                              min_threshold=min_threshold,
+                                                              signed=signed)
     return {THRESHOLD: threshold}
 
 

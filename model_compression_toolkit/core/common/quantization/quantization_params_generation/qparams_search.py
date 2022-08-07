@@ -29,13 +29,15 @@ from model_compression_toolkit.core.common.quantization.quantizers.quantizers_he
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import max_power_of_two, \
     get_tensor_max
 
+
 def qparams_selection_tensor_search(error_function: Callable,
                                     tensor_data: np.ndarray,
                                     n_bits: int,
                                     per_channel: bool = False,
                                     channel_axis: int = 1,
                                     n_iter: int = 10,
-                                    min_threshold=MIN_THRESHOLD) -> Any:
+                                    min_threshold=MIN_THRESHOLD,
+                                    signed: bool = True) -> Any:
     """
     Search for an optimal threshold to quantize a tensor.
     The search_methods starts with the constrained no-clipping threshold the tensor has, and continues with
@@ -51,13 +53,13 @@ def qparams_selection_tensor_search(error_function: Callable,
         channel_axis: Index of output channels dimension.
         n_iter: Number of searching iterations.
         min_threshold: Threshold to return if the computed threshold is smaller that min_threshold.
+        signed: a flag whether the tensor is signed.
 
     Returns:
         Optimal constrained threshold to quantize the tensor.
 
     """
 
-    signed = np.any(tensor_data < 0)  # check if tensor is singed
     output_shape = get_output_shape(tensor_data.shape, channel_axis)
 
     # First threshold to check is the constrained threshold based on the tensor's maximal value.
@@ -393,7 +395,8 @@ def qparams_symmetric_selection_tensor_search(error_function: Callable,
                                               per_channel: bool = False,
                                               channel_axis: int = 1,
                                               n_iter: int = SYMMETRIC_TENSOR_PER_CHANNEL_N_ITER,
-                                              min_threshold=MIN_THRESHOLD) -> Any:
+                                              min_threshold=MIN_THRESHOLD,
+                                              signed: bool = True) -> Any:
     """
     Search for optimal threshold (per-channel or per-tensor) for symmetric quantization of a tensor,
     using the iterative optimizer method.
@@ -407,13 +410,13 @@ def qparams_symmetric_selection_tensor_search(error_function: Callable,
         channel_axis: Index of output channels dimension.
         n_iter: Number of searching iterations.
         min_threshold: Threshold to return if the computed threshold is smaller that min_threshold.
+        signed: a flag whether the tensor is signed.
 
     Returns:
         Ndarray with an optimized threshold (or set of thresholds shaped according to the channels_axis if per-channel).
 
     """
 
-    signed = np.any(tensor_data < 0)  # check if tensor is singed
     output_shape = get_output_shape(tensor_data.shape, channel_axis)
 
     # If the threshold is computed per-channel, we rearrange the tensor such that each sub-tensor
