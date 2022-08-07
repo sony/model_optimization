@@ -1,22 +1,52 @@
 # Model Compression Toolkit (MCT)
-![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks.yml/badge.svg)
 
-Model Compression Toolkit (MCT) is an open-source project for neural network model optimization under efficient, constrained hardware. This project provides researchers, developers, and engineers tools for optimizing and deploying state-of-the-art neural networks on efficient hardware. Specifically, this project aims to apply quantization and pruning schemes to compress neural networks. 
-<img src="MCT_Block_Diagram.svg" width="800">
+Model Compression Toolkit (MCT) is an open-source project for neural network model optimization under efficient, constrained hardware. This project provides researchers, developers, and engineers tools for optimizing and deploying state-of-the-art neural networks on efficient hardware. Specifically, this project aims to apply quantization to compress neural networks. 
+<img src="docsrc/images/mct_block_diagram.svg" width="800">
 
-Currently, this project supports hardware-friendly post-training quantization (HPTQ) with Tensorflow 2 and Pytorch [1]. 
 
-The MCT project is developed by researchers and engineers working at Sony Semiconductors Israel.
-
-For more information, please visit our [project website](https://sony.github.io/model_optimization/).
 
 ## Table of Contents
 
-- [Getting Started](#getting-started)
 - [Supported features](#supported-features)
+- [Getting Started](#getting-started)
 - [Results](#results)
 - [Contributions](#contributions)
 - [License](#license)
+
+
+## Supported Features
+
+MCT supports different quantization methods:
+* Post training quantization (PTQ)
+* Gradient-based post training quantization (GPTQ)
+* Quantization aware training (QAT)
+
+| Quantization Method | Complexity                                    | Accuracy Degradation | Computational Cost          |
+|---------------------|-----------------------------------------------|----------------------|-----------------------------|
+| PTQ                 | Low                                           | Small loss           | Low (order of minutes)      |
+| GPTQ                | Mild (parameters fine-tuning using gradients) | Negligible loss      | Mild (order of 2-3 hours)   |
+| QAT                 | High                                          | Almost lossless      | High (order of 12-36 hours) |
+
+
+In addition, MCT supports different quantization schemes for quantizing weights and activations:
+* Power-Of-Two (hardware-friendly quantization [1])
+* Symmetric
+* Uniform
+* LUT
+
+Advanced features:
+* <ins>Graph optimization:</ins> Transforming the model to an equivalent (yet, more efficient) model (for example, batch-normalization layer folding to its preceding linear layer).
+* <ins>Outliers filtering:</ins> Computing z-score for activation statistics to detect and remove outliers.
+* <ins>Threshold search:</ins> Different methods can be used to minimize the expected added quantization-noise during thresholds search (by default, we use Mean-Square-Errorm but other metrics can be used such as No-Clipping, Mean-Average-Error, and more).
+* <ins>Shift negative correction:</ins> Symmetric activation quantization can hurt the model's performance when some layers output both negative and positive activations, but their range is asymmetric. For more details please visit [1].  
+* <ins>Bias correction:</ins> Weights quantization can bias the layer's ou-tput. Applying a correction to this layer's bias, can prevent this and improve the quantized model's performance.
+* <ins>Mixed-precision quantization:</ins> Assigning quantization bit-width per layer (for weights/activations), based on the layer's sensitivity to different bit-widths.
+* <ins>Visualization:</ins> You can use TensorBoard to observe useful information for troubleshooting the quantized model's performance (for example, the model in different phases of the quantization, collected statistics, similarity between layers of the float and quantized model and bit-width configuration for mixed-precision quantization). For more details, please read the [visualization documentation](https://sony.github.io/model_optimization/guidelines/visualization.html).   
+
+MCT is developed by researchers and engineers working at Sony Semiconductors Israel.
+
+For more information and detailed API, please visit our [project website](https://sony.github.io/model_optimization/).
+
 
 ## Getting Started
 
@@ -41,6 +71,8 @@ A nightly package is also available (unstable):
 pip install mct-nightly
 ```
 
+### Requierments
+
 To run MCT, one of the supported frameworks, Tenosflow/Pytorch, needs to be installed.
 
 For using with Tensorflow please install the packages: 
@@ -50,9 +82,24 @@ For using with Tensorflow please install the packages:
 For using with Pytorch (experimental) please install the packages: 
 [torch](https://pytorch.org/)
 
-MCT is tested with:
-* Tensorflow version 2.7 
-* Pytorch version 1.10.0 
+Also, a [requirements](requirements.txt) file can be used to set up your environment.
+
+
+### Supported NN-Frameworks Versions
+
+Currently, MCT supports compressing models of TensorFlow and PyTorch, and
+is tested on various versions:
+
+| TensorFlow Version                                                                                          | PyTorch Version                                                                                                  |
+|-------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf28.yml/badge.svg)         | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_12.yml/badge.svg)         |
+| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf27.yml/badge.svg) | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_11.yml/badge.svg) |
+| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf26.yml/badge.svg) | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_10.yml/badge.svg) |
+
+
+> **_NOTE:_**  Some features are not supported for all frameworks (for example, GPTQ is currently supported for TensorFlow models only).
+> 
+> For more details, we highly recommend visiting our project website where experimental features are mentioned as experimental.
 
 ### Usage Example 
 For an example of how to use the post-training quantization, using Keras,
@@ -61,21 +108,6 @@ please use this [link](tutorials/example_keras_mobilenet.py).
 For an example using Pytorch (experimental), please use this [link](tutorials/example_pytorch_mobilenet_v2.py).
 
 For more examples please see the [tutorials' directory](tutorials).
-
-
-## Supported Features
-
-Quantization:
-
-   * Post Training Quantization for Keras models.
-   * Post Training Quantization for Pytorch models (experimental).
-   * Gradient-based post-training (Experimental, Keras only).
-   * Mixed-precision post-training quantization (Experimental).
-    
-Tensorboard Visualization (Experimental):
-
-   * CS Analyzer: compare a model compressed with the original model to analyze large accuracy drops.
-   * Activation statistics and errors
 
 
 ## Results
