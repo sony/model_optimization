@@ -26,8 +26,10 @@ from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 tp = mct.target_platform
 
 
-# define custom layer as a relu replacement
 class Identity(torch.nn.Module):
+    """
+    define custom layer as a relu replacement
+    """
 
     def __init__(self, inplace: bool = False):
         super(Identity, self).__init__()
@@ -37,8 +39,16 @@ class Identity(torch.nn.Module):
         return input
 
 
-# modify the config and weights for the new layer (no change is required)
 def get_identity_params_from_relu(weights={}, **kwargs):
+    """
+
+    Args:
+        weights:
+        **kwargs:
+
+    Returns:  config and weights for the new layer (no change is required)
+
+    """
     return weights, kwargs
 
 
@@ -105,8 +115,16 @@ class AddBias(torch.nn.Module):
         return input + self.bias
 
 
-# modify the config and weights for the new layer (no change is required)
 def get_add_bias_params_from_relu(weights={}, **kwargs):
+    """
+
+    Args:
+        weights:
+        **kwargs:
+
+    Returns: config and weights for the new layer (no change is required)
+
+    """
     if kwargs.get('inplace') is True:
         bias = 0
     else:

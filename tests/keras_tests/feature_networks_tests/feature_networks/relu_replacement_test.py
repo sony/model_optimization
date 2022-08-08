@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,8 +29,10 @@ keras = tf.keras
 layers = keras.layers
 
 
-# define custom layer as a relu replacement
 class Identity(keras.layers.Layer):
+    """
+    define custom layer as a relu replacement
+    """
     def __init__(self, **kwargs):
         super_kwargs = {'name': kwargs.get('name'),
                         'dtype': kwargs.get('dtype')
@@ -41,13 +43,23 @@ class Identity(keras.layers.Layer):
         return inputs
 
 
-# modify the config and weights for the new layer (no change is required)
+#
 def get_identity_params_from_relu(weights={}, **kwargs):
+    """
+    Args:
+        weights:
+        **kwargs:
+
+    Returns:    weights for the new layer (no modification is required)
+
+    """
     return weights, kwargs
 
 
-# Test1: replacing a single Relu layer with identity layer
 class SingleReluReplacementTest(BaseKerasFeatureNetworkTest):
+    """
+    Test1: replacing a single Relu layer with identity layer
+    """
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -65,14 +77,15 @@ class SingleReluReplacementTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.ReLU))
 
     def get_network_editor(self):
-        #   replace all Relu_1 with identity custom layer
         return [EditRule(filter=NodeNameFilter('ReLU_1'),
                          action=ReplaceLayer(Identity, get_identity_params_from_relu))
                 ]
 
 
-# Test2: replacing all Relu layers with identity layers
 class ReluReplacementTest(SingleReluReplacementTest):
+    """
+    Test2: replacing all Relu layers with identity layers
+    """
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -88,8 +101,10 @@ class ReluReplacementTest(SingleReluReplacementTest):
                 ]
 
 
-# define custom layer as a relu replacement
 class AddBias(keras.layers.Layer):
+    """
+    define custom layer as a relu replacement
+    """
     def __init__(self, bias, **kwargs):
         super_kwargs = {'name': kwargs.get('name'),
                         'dtype': kwargs.get('dtype')
@@ -101,8 +116,16 @@ class AddBias(keras.layers.Layer):
         return inputs + self.bias
 
 
-# modify the config and weights for the new layer (no change is required)
 def get_add_bias_params_from_relu(weights={}, **kwargs):
+    """
+
+    Args:
+        weights:
+        **kwargs:
+
+    Returns:    modified config and weights for the new layer
+
+    """
     if kwargs.get('max_value') is None:
         bias = 0
     else:
@@ -112,8 +135,10 @@ def get_add_bias_params_from_relu(weights={}, **kwargs):
     return weights, kwargs
 
 
-# Test3: replacing all Relu layers with AddBias layers
 class ReluReplacementWithAddBiasTest(SingleReluReplacementTest):
+    """
+    Test3: replacing all Relu layers with AddBias layers
+    """
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -125,7 +150,6 @@ class ReluReplacementWithAddBiasTest(SingleReluReplacementTest):
         self.unit_test.assertTrue(quantized_model.layers[2].bias == 6)
 
     def get_network_editor(self):
-        #   replace all Relu's with identity custom layer
         return [EditRule(filter=NodeTypeFilter(layers.ReLU),
                          action=ReplaceLayer(AddBias, get_add_bias_params_from_relu))
                 ]

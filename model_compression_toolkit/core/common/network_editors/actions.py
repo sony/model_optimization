@@ -17,8 +17,8 @@ from abc import ABC, abstractmethod
 from collections import namedtuple
 from typing import Callable
 
-from model_compression_toolkit import FrameworkInfo
-from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common import Graph, Logger
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization import quantization_params_generation
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
@@ -370,3 +370,5 @@ class ReplaceLayer(BaseAction):
         node.framework_attr = config
         node.weights = weights
         node.layer_class = self.layer_type
+        Logger.warning('Layer was replaced but quantization parameters was set by original layer')
+

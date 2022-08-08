@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2022 Sony Semiconductors Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,8 +29,16 @@ keras = tf.keras
 layers = keras.layers
 
 
-# we want to set all the weights of depthwise conv2d layers to ones
 def get_new_weights_for_identity_dw_conv2d_layer(weights={}, **kwargs):
+    """
+
+    Args:
+        weights:
+        **kwargs:
+
+    Returns:  the weights of depthwise conv2d layers set to ones
+
+    """
 
     new_weights = weights
     old_kernel_shape = weights['depthwise_conv2d/depthwise_kernel:0'].shape
