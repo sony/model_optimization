@@ -370,5 +370,5 @@ class ReplaceLayer(BaseAction):
         node.framework_attr = config
         node.weights = weights
         node.layer_class = self.layer_type
-        Logger.warning('Layer was replaced but quantization parameters was set by original layer')
+        Logger.warning('Layer ' + node.name + ' was replaced but quantization parameters were set by original layer')
 

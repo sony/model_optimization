@@ -43,15 +43,9 @@ class Identity(keras.layers.Layer):
         return inputs
 
 
-#
 def get_identity_params_from_relu(weights={}, **kwargs):
     """
-    Args:
-        weights:
-        **kwargs:
-
-    Returns:    weights for the new layer (no modification is required)
-
+    return weights for the new layer (no modification is required)
     """
     return weights, kwargs
 
@@ -118,13 +112,7 @@ class AddBias(keras.layers.Layer):
 
 def get_add_bias_params_from_relu(weights={}, **kwargs):
     """
-
-    Args:
-        weights:
-        **kwargs:
-
-    Returns:    modified config and weights for the new layer
-
+    return modified config and weights for the new layer
     """
     if kwargs.get('max_value') is None:
         bias = 0

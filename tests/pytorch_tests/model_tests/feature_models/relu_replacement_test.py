@@ -41,13 +41,7 @@ class Identity(torch.nn.Module):
 
 def get_identity_params_from_relu(weights={}, **kwargs):
     """
-
-    Args:
-        weights:
-        **kwargs:
-
-    Returns:  config and weights for the new layer (no change is required)
-
+    return config and weights for the new layer (no change is required)
     """
     return weights, kwargs
 
@@ -117,13 +111,7 @@ class AddBias(torch.nn.Module):
 
 def get_add_bias_params_from_relu(weights={}, **kwargs):
     """
-
-    Args:
-        weights:
-        **kwargs:
-
-    Returns: config and weights for the new layer (no change is required)
-
+    return config and weights for the new layer (no change is required)
     """
     if kwargs.get('inplace') is True:
         bias = 0

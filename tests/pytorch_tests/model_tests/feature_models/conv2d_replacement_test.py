@@ -26,16 +26,9 @@ from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 tp = mct.target_platform
 
 
-
 def get_new_weights_for_identity_dw_conv2d_layer(weights={}, **kwargs):
     """
-
-    Args:
-        weights:
-        **kwargs:
-
-    Returns:    the weights of depthwise conv2d layers set to ones
-
+    return the weights of depthwise conv2d layers set to ones
     """
 
     new_weights = weights
