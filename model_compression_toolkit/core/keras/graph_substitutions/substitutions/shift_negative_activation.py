@@ -17,24 +17,20 @@ from typing import Tuple, Any
 
 import numpy as np
 import tensorflow as tf
-
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from keras.layers import TFOpLambda
 from tensorflow.keras.layers import Activation, Conv2D, Dense, DepthwiseConv2D, ZeroPadding2D, Reshape, \
     GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU
 
 from model_compression_toolkit import CoreConfig, FrameworkInfo
-from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
-from model_compression_toolkit.core.common.constants import FLOAT_32, DATA_TYPE
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher, \
     NodeFrameworkAttrMatcher
 from model_compression_toolkit.core.common.substitutions.shift_negative_activation import \
     apply_shift_negative_correction
-from model_compression_toolkit.core.keras.constants import KERNEL_SIZE, STRIDES, ACTIVATION, TRAINABLE, LAYER_NAME, \
-    SWISH, \
-    SELU, GELU
+from model_compression_toolkit.core.keras.constants import KERNEL_SIZE, STRIDES, ACTIVATION, SWISH, \
+    SELU, GELU, FUNCTION, ADD, PAD
 from model_compression_toolkit.core.keras.constants import NEGATIVE_SLOPE, PADDING, PAD_SAME, PAD_VALID, BIAS, USE_BIAS
 
 SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS = 16
@@ -101,7 +97,7 @@ def create_add_node(add_value: float,
     add_node_name = prev_node_name + '_post_add'
 
     add_node = FunctionalNode(add_node_name,
-                              {'function': 'add'},
+                              {FUNCTION: ADD},
                               input_shape,
                               input_shape,
                               weights={},
@@ -142,20 +138,20 @@ def create_pad_node(next_node_name: str,
     padded_shape[1] += pad_top + pad_btm
     padded_shape[2] += pad_left + pad_right
 
-    num_padding_pixles = np.array([[0, 0],
-                                        [pad_top, pad_btm],
-                                        [pad_left, pad_right],
-                                        [0, 0]], dtype=np.int32)
+    num_elements_to_pad = np.array([[0, 0],
+                                   [pad_top, pad_btm],
+                                   [pad_left, pad_right],
+                                   [0, 0]], dtype=np.int32)
 
     pad_node = FunctionalNode(pad_node_name,
-                              {'function': 'pad'},
+                              {FUNCTION: PAD},
                               input_shape,
                               tuple(padded_shape),
                               weights={},
                               quantization_attr={},
                               layer_class=TFOpLambda,
                               op_call_args=[],
-                              op_call_kwargs={'paddings': num_padding_pixles,
+                              op_call_kwargs={'paddings': num_elements_to_pad,
                                               'constant_values': value_to_pad})
 
     return pad_node
