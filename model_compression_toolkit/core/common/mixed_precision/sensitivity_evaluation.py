@@ -195,7 +195,7 @@ class SensitivityEvaluation:
                                                              self.outputs_replacement_nodes,
                                                              self.output_nodes_indices,
                                                              self.quant_config.output_grad_factor,
-                                                             self.quant_config.norm_weights)
+                                                             norm_weights=self.quant_config.norm_weights)
                 batch_ip_gradients.append(image_ip_gradients)
             grad_per_batch.append(np.mean(batch_ip_gradients, axis=0))
         return np.mean(grad_per_batch, axis=0)
