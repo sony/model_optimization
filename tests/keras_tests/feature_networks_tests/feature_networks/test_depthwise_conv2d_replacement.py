@@ -35,11 +35,9 @@ def get_new_weights_for_identity_dw_conv2d_layer(weights={}, **kwargs):
     """
 
     new_weights = weights
-    # old_kernel_shape = weights['depthwise_conv2d/depthwise_kernel:0'].shape
     key = list(weights.keys())[0]
     old_kernel_shape = weights[key].shape
     new_kernel = np.ones(old_kernel_shape)
-    # new_weights['depthwise_conv2d/depthwise_kernel:0'] = new_kernel
     new_weights[key] = new_kernel
     return new_weights, kwargs
 
