@@ -17,8 +17,8 @@ Model Compression Toolkit (MCT) is an open-source project for neural network mod
 ## Supported Features
 
 MCT supports different quantization methods:
-* [Post training quantization (PTQ)](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental)
-* [Gradient-based post training quantization (GPTQ)](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental)
+* Post training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental).
+* Gradient-based post training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental)
 * Quantization aware training (QAT)
 
 | Quantization Method | Complexity                                    | Accuracy Degradation | Computational Cost          |
@@ -35,13 +35,14 @@ In addition, MCT supports different quantization schemes for quantizing weights 
 * LUT
 
 Core features:
-* <ins>Graph optimization:</ins> Transforming the model to an equivalent (yet, more efficient) model (for example, batch-normalization layer folding to its preceding linear layer).
-* <ins>Outliers filtering:</ins> Computing z-score for activation statistics to detect and remove outliers.
-* <ins>Threshold search:</ins> Different methods can be used to minimize the expected added quantization-noise during thresholds search (by default, we use Mean-Square-Errorm but other metrics can be used such as No-Clipping, Mean-Average-Error, and more).
+* <ins>Graph optimizations:</ins> Transforming the model to an equivalent (yet, more efficient) model (for example, batch-normalization layer folding to its preceding linear layer).
+* <ins>Quantization parameter search:</ins> Different methods can be used to minimize the expected added quantization-noise during thresholds search (by default, we use Mean-Square-Errorm but other metrics can be used such as No-Clipping, Mean-Average-Error, and more).
+* <ins>Advanced quantization algorithms:</ins> To prevent a performance degradation some algorithms are applied such as: 
+  * <ins>Shift negative correction:</ins> Symmetric activation quantization can hurt the model's performance when some layers output both negative and positive activations, but their range is asymmetric. For more details please visit [1].  
+  * <ins>Bias correction:</ins> Weights quantization can bias the layer's ou-tput. Applying a correction to this layer's bias, can prevent this and improve the quantized model's performance.
+  * <ins>Outliers filtering:</ins> Computing z-score for activation statistics to detect and remove outliers.
 * <ins>Clustering:</ins> Using non-uniform quantization grid to quantize the weights and activations to match their distributions.
-* <ins>Shift negative correction:</ins> Symmetric activation quantization can hurt the model's performance when some layers output both negative and positive activations, but their range is asymmetric. For more details please visit [1].  
-* <ins>Bias correction:</ins> Weights quantization can bias the layer's ou-tput. Applying a correction to this layer's bias, can prevent this and improve the quantized model's performance.
-* <ins>Mixed-precision quantization:</ins> Assigning quantization bit-width per layer (for weights/activations), based on the layer's sensitivity to different bit-widths.
+* <ins>Mixed-precision search:</ins> Assigning quantization bit-width per layer (for weights/activations), based on the layer's sensitivity to different bit-widths.
 * <ins>Visualization:</ins> You can use TensorBoard to observe useful information for troubleshooting the quantized model's performance (for example, the model in different phases of the quantization, collected statistics, similarity between layers of the float and quantized model and bit-width configuration for mixed-precision quantization). For more details, please read the [visualization documentation](https://sony.github.io/model_optimization/guidelines/visualization.html).   
 
 MCT is developed by researchers and engineers working at Sony Semiconductors Israel.
