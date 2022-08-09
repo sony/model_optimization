@@ -7,7 +7,7 @@ import numpy as np
 
 
 def get_tpc():
-    # Generate a TargetPlatformModel with power of two quantization with 3 bits for
+    # Generate a TargetPlatformCapabilities with power of two quantization, 3 bits for
     # activations and 2 bits for weights
     tp = mct.target_platform
     default_config = tp.OpQuantizationConfig(
