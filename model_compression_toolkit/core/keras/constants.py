@@ -100,3 +100,8 @@ RELU_POT_BOUND = 8.0
 DEFAULT_TP_MODEL = 'default'
 TFLITE_TP_MODEL = 'tflite'
 QNNPACK_TP_MODEL = 'qnnpack'
+
+
+# TFOpLambda functions:
+ADD = 'add'
+PAD = 'pad'

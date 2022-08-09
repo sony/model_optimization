@@ -13,55 +13,25 @@
 # limitations under the License.
 # ==============================================================================
 
-import tensorflow as tf
-
-# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.core.common.substitutions.shift_negative_activation import apply_shift_negative_correction
-
-if tf.__version__ < "2.6":
-    from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
-else:
-    from keras.engine.base_layer import TensorFlowOpLayer
-
-import numpy as np
-from tensorflow.keras.layers import Activation, Conv2D, Dense, DepthwiseConv2D, ZeroPadding2D, Reshape, \
-    GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU
 from typing import Tuple, Any
 
+import numpy as np
+import tensorflow as tf
+# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+from keras.layers import TFOpLambda
+from tensorflow.keras.layers import Activation, Conv2D, Dense, DepthwiseConv2D, ZeroPadding2D, Reshape, \
+    GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU
+
 from model_compression_toolkit import CoreConfig, FrameworkInfo
-from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
-from model_compression_toolkit.core.common.constants import FLOAT_32, DATA_TYPE
-from model_compression_toolkit.core.keras.constants import NEGATIVE_SLOPE, PADDING, PAD_SAME, PAD_VALID, BIAS, USE_BIAS
-from model_compression_toolkit.core.common.graph.graph_matchers import EdgeMatcher
+from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher, \
     NodeFrameworkAttrMatcher
-
-from model_compression_toolkit.core.keras.constants import KERNEL_SIZE, STRIDES, ACTIVATION, TRAINABLE, LAYER_NAME, SWISH, \
-    SELU, GELU
-
-# Tensorflow Op layer attributes:
-NODE_DEF = 'node_def'
-CONSTANTS = 'constants'
-
-# NodeDef keys constants:
-NODE_NAME = 'name'
-NODE_DICT_TYPES = 'attr'
-NODE_INPUT = 'input'
-INPUT_VARIABLE_SUFFIX = '/y'
-
-# NodeDef operators:
-NODE_OP = 'op'
-NODE_ADD_OPERATOR = 'Add'
-NODE_PAD_OPERATOR = 'PadV2'
-
-# NodeDef padding input variables names:
-NODE_PAD_SIZE_NAME = 'padding'
-NODE_PAD_VALUE_NAME = 'constant_values'
-NODE_CONSTANTS_TYPE = 'type'
-NODE_CONSTANTS_DT_FLOAT = 'DT_FLOAT'
-NODE_CONSTANTS_DT_INT32 = 'DT_INT32'
+from model_compression_toolkit.core.common.substitutions.shift_negative_activation import \
+    apply_shift_negative_correction
+from model_compression_toolkit.core.keras.constants import KERNEL_SIZE, STRIDES, ACTIVATION, SWISH, \
+    SELU, GELU, FUNCTION, ADD, PAD
+from model_compression_toolkit.core.keras.constants import NEGATIVE_SLOPE, PADDING, PAD_SAME, PAD_VALID, BIAS, USE_BIAS
 
 SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS = 16
 
@@ -108,7 +78,6 @@ def shift_negative_activation_node_matchers():
     return snc_node, linear_node, bypass_node, pad_node
 
 
-
 def create_add_node(add_value: float,
                     prev_node_name: str,
                     input_shape: tuple) -> BaseNode:
@@ -127,26 +96,15 @@ def create_add_node(add_value: float,
 
     add_node_name = prev_node_name + '_post_add'
 
-    fw_attr = {
-        LAYER_NAME: add_node_name,
-        TRAINABLE: False,
-        DATA_TYPE: FLOAT_32,
-
-        NODE_DEF: {
-            NODE_NAME: add_node_name,
-            NODE_DICT_TYPES: {'T': {NODE_CONSTANTS_TYPE: NODE_CONSTANTS_DT_FLOAT}},
-            NODE_OP: NODE_ADD_OPERATOR,
-            NODE_INPUT: [prev_node_name, add_node_name + INPUT_VARIABLE_SUFFIX],
-        },
-        CONSTANTS: {1: np.array(add_value, dtype=np.float32).reshape([1]*len(input_shape))}}
-
-    add_node = common.graph.BaseNode(add_node_name,
-                                     fw_attr,
-                                     input_shape,
-                                     input_shape,
-                                     weights={},
-                                     quantization_attr={},
-                                     layer_class=TensorFlowOpLayer)
+    add_node = FunctionalNode(add_node_name,
+                              {FUNCTION: ADD},
+                              input_shape,
+                              input_shape,
+                              weights={},
+                              quantization_attr={},
+                              layer_class=TFOpLambda,
+                              op_call_args=[np.array(add_value, dtype=np.float32).reshape([1] * len(input_shape))],
+                              op_call_kwargs={})
     return add_node
 
 
@@ -174,38 +132,28 @@ def create_pad_node(next_node_name: str,
     Returns:
         A pad node which pads its input with a constant value.
     """
-
     pad_node_name = next_node_name + '_pre_pad'
-
-    fw_attr = {LAYER_NAME: pad_node_name,
-               TRAINABLE: False,
-               DATA_TYPE: FLOAT_32,
-
-               NODE_DEF: {
-                   NODE_NAME: pad_node_name,
-                   NODE_OP: NODE_PAD_OPERATOR,
-                   NODE_INPUT: [prev_node_name,
-                                pad_node_name + f'/{NODE_PAD_SIZE_NAME}',  # name of padding size variable
-                                pad_node_name + f'/{NODE_PAD_VALUE_NAME}'],
-                   NODE_DICT_TYPES: {'Tpaddings': {NODE_CONSTANTS_TYPE: NODE_CONSTANTS_DT_INT32},
-                                     'T': {NODE_CONSTANTS_TYPE: NODE_CONSTANTS_DT_FLOAT}}},
-
-               CONSTANTS: {1: np.array([[0, 0],
-                                        [pad_top, pad_btm],
-                                        [pad_left, pad_right],
-                                        [0, 0]], dtype=np.int32),  # padding size
-                           2: value_to_pad}}  # padded value
 
     padded_shape = list(input_shape)
     padded_shape[1] += pad_top + pad_btm
     padded_shape[2] += pad_left + pad_right
-    pad_node = common.graph.BaseNode(pad_node_name,
-                                     fw_attr,
-                                     input_shape,
-                                     tuple(padded_shape),
-                                     weights={},
-                                     quantization_attr={},
-                                     layer_class=TensorFlowOpLayer)
+
+    num_elements_to_pad = np.array([[0, 0],
+                                   [pad_top, pad_btm],
+                                   [pad_left, pad_right],
+                                   [0, 0]], dtype=np.int32)
+
+    pad_node = FunctionalNode(pad_node_name,
+                              {FUNCTION: PAD},
+                              input_shape,
+                              tuple(padded_shape),
+                              weights={},
+                              quantization_attr={},
+                              layer_class=TFOpLambda,
+                              op_call_args=[],
+                              op_call_kwargs={'paddings': num_elements_to_pad,
+                                              'constant_values': value_to_pad})
+
     return pad_node
 
 

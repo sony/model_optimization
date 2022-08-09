@@ -84,7 +84,7 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
                    quantized_model.layers[linear_op_index].weights[1].numpy()
         # Take the ACTUAL value the activations were shifted by, from the Add layer the substitution needs to insert
         add_layer_index = 4  # should be always the fourth layer (input, fq, swish, add)
-        shift_nl_out = quantized_model.layers[add_layer_index].constants[1].item()
+        shift_nl_out = quantized_model.layers[add_layer_index].inbound_nodes[0].call_args[1]
         if isinstance(self.linear_op_to_test, layers.DepthwiseConv2D):
             self.unit_test.assertTrue(np.allclose(b - q_b, shift_nl_out * np.sum(w, axis=(0, 1)).flatten()))
         elif isinstance(self.linear_op_to_test, layers.Conv2D):
