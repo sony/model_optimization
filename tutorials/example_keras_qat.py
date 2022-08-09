@@ -3,8 +3,41 @@ import tensorflow as tf
 from keras.datasets import mnist
 from keras import Model, layers, datasets
 import model_compression_toolkit as mct
-from model_compression_toolkit.qat.keras.quantization_facade import DEFAULT_KERAS_TPC as default_tpc
 import numpy as np
+
+
+def get_tpc():
+    # Generate a TargetPlatformModel with power of two quantization with 3 bits for
+    # activations and 2 bits for weights
+    tp = mct.target_platform
+    default_config = tp.OpQuantizationConfig(
+        activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        activation_n_bits=3,
+        weights_n_bits=2,
+        weights_per_channel_threshold=True,
+        enable_weights_quantization=True,
+        enable_activation_quantization=True,
+        quantization_preserving=False,
+        fixed_scale=1.0,
+        fixed_zero_point=0,
+        weights_multiplier_nbits=0)
+
+    default_configuration_options = tp.QuantizationConfigOptions([default_config])
+    tp_model = tp.TargetPlatformModel(default_configuration_options)
+    with tp_model:
+        tp.OperatorsSet("NoQuantization",
+                        tp.get_default_quantization_config_options().clone_and_edit(
+                            enable_weights_quantization=False,
+                            enable_activation_quantization=False))
+
+    tpc = tp.TargetPlatformCapabilities(tp_model)
+    with tpc:
+        # No need to quantize Flatten and Dropout layers
+        tp.OperationsSetToLayers("NoQuantization", [layers.Flatten,
+                                                    layers.Dropout])
+
+    return tpc
 
 
 def get_model(_num_classes, _input_shape):
@@ -68,13 +101,11 @@ if __name__ == "__main__":
 
     # prepare model for QAT with MCT and return to user for fine-tuning
     representative_dataset = gen_representative_dataset(x_train)
-    default_tpc.tp_model.default_qco.base_config.weights_n_bits = 2
-    default_tpc.tp_model.default_qco.base_config.activation_n_bits = 3
 
     qat_model, _, _ = mct.keras_quantization_aware_training_init(model,
                                                                  representative_dataset,
                                                                  core_config=mct.CoreConfig(n_iter=10),
-                                                                 target_platform_capabilities=default_tpc)
+                                                                 target_platform_capabilities=get_tpc())
 
     # Evaluate QAT-ready model accuracy from MCT. This model is fully quantized with QuantizeWrappers
     # for weights and tf.quantization.fake_quant_with_min_max_vars for activations
