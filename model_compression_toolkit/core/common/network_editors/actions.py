@@ -15,7 +15,10 @@
 
 from abc import ABC, abstractmethod
 from collections import namedtuple
+from typing import Callable
 
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common import Graph, Logger
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization import quantization_params_generation
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
@@ -306,7 +309,7 @@ class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
         """
         self.weights_quantization_method = weights_quantization_method
 
-    def apply(self, node: BaseNode, graph, fw_info):
+    def apply(self, node: BaseNode, graph: Graph, fw_info: FrameworkInfo):
         """
         Change the node's weights quantization function.
 
@@ -333,3 +336,39 @@ class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
                     raise Exception('Unknown quantization method for weights')
 
                 qc.weights_quantization_cfg.set_weights_quantization_fn(weights_quantization_fn)
+
+
+class ReplaceLayer(BaseAction):
+
+    def __init__(self, layer_type: type, get_params_and_weights_fn: Callable):
+        """
+
+        Args:
+            layer_type: node's layer type to replace with existing one
+            get_params_and_weights_fn: function that modifies the layer's params and weights.
+                                        The function receives two arguments, a dictionary of weights and layer's
+                                        framework attributes and returns new weights and framework attributes to use.
+
+        """
+        self.layer_type = layer_type
+        self.get_params_and_weights_fn = get_params_and_weights_fn
+
+    def apply(self, node: BaseNode, graph: Graph, fw_info: FrameworkInfo):
+        """
+        Replacing node's layer type and configurations
+
+        Args:
+            node: Node object to replace or modify
+            graph: Graph to apply the action on.
+            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
+                     groups of layers by how they should be quantized, etc.)
+
+        Returns:
+            The node after its layer functionality has been modified.
+        """
+        weights, config = self.get_params_and_weights_fn(node.weights, **node.framework_attr)
+        node.framework_attr = config
+        node.weights = weights
+        node.layer_class = self.layer_type
+        Logger.warning(f'Layer {node.name} was replaced but quantization parameters were set by original layer')
+
