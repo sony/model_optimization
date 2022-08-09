@@ -93,7 +93,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer imp
     LUTActivationQuantizerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multi_head_attention_test import MultiHeadAttentionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.layer_norm_substitution_test import LayerNormSub
-from tests.keras_tests.feature_networks_tests.feature_networks.qat_test import QuantizationAwareTrainingTest, \
+from tests.keras_tests.feature_networks_tests.feature_networks.qat.qat_test import QuantizationAwareTrainingTest, \
     QuantizationAwareTrainingQuantizersTest
 import tensorflow as tf
 from tensorflow.keras.layers import ReLU, PReLU, ELU
@@ -528,8 +528,14 @@ class FeatureNetworkTest(unittest.TestCase):
         LayerNormSub(self, scale=False, center=False).run_test()
 
     def test_qat(self):
-        QuantizationAwareTrainingTest(self).run_test()
-        QuantizationAwareTrainingTest(self, finalize=True).run_test()
+        QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu')).run_test()
+        QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu'), finalize=True).run_test()
+        QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu')).run_test()
+        QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu'), finalize=True).run_test()
+        QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu')).run_test()
+        QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), finalize=True).run_test()
+        # DW-Conv2D are tested under the tests below because an extra check is needed to verify the
+        # quantization per channel of its kernel
         QuantizationAwareTrainingQuantizersTest(self).run_test()
         QuantizationAwareTrainingQuantizersTest(self, finalize=True).run_test()
 
