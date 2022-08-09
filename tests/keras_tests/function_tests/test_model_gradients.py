@@ -152,6 +152,7 @@ class TestModelGradients(unittest.TestCase):
         self.assertTrue(np.isclose(y[1], np.float32(0.0)))
         self.assertTrue(np.isclose(y[2], np.float32(1.0)))
 
+
     def test_basic_model_grad(self):
         input_shape = (8, 8, 3)
         in_model = basic_model(input_shape)
