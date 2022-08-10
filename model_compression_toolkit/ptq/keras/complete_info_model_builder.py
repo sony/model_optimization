@@ -31,10 +31,38 @@ from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder, \
     is_layer_fake_quant, get_node_name_from_layer
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.exporter.keras.quantizers.uniform_quantizer import UniformQuantizer
+from model_compression_toolkit.exporter.keras.quantizers.uniform_quantizer import UniformQuantizer, \
+    WeightsUniformQuantizer
 from model_compression_toolkit.exporter.keras.quantize_configs.weights_quantize_config import WeightsQuantizeConfig
 from model_compression_toolkit.exporter.keras.quantize_configs.activation_quantize_config import ActivationQuantizeConfig
 from model_compression_toolkit.exporter.keras.quantize_configs.weights_activation_quantize_config import WeightsActivationQuantizeConfig
+
+from typing import List, Tuple
+
+import numpy as np
+import tensorflow as tf
+from keras.models import Model
+from tensorflow.python.util.object_identity import Reference as TFReference
+from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.default_8bit_quantize_configs import \
+    NoOpQuantizeConfig
+from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
+
+from model_compression_toolkit.core import common
+from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MIN, RANGE_MAX, SIGNED
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.core.common.user_info import UserInformation
+from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder, \
+    is_layer_fake_quant, get_node_name_from_layer
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.exporter.keras.quantize_configs.activation_quantize_config import \
+    ActivationQuantizeConfig
+from model_compression_toolkit.exporter.keras.quantize_configs.weights_activation_quantize_config import \
+    WeightsActivationQuantizeConfig
+from model_compression_toolkit.exporter.keras.quantize_configs.weights_quantize_config import WeightsQuantizeConfig
+from model_compression_toolkit.exporter.keras.quantizers.uniform_quantizer import UniformQuantizer, \
+    WeightsUniformQuantizer
 
 
 class CompleteInfoKerasModelBuilder(KerasModelBuilder):
@@ -111,8 +139,10 @@ class CompleteInfoKerasModelBuilder(KerasModelBuilder):
     def _get_quantization_config(self,
                                  node: BaseNode):
         if node.is_weights_quantization_enabled() and not node.is_activation_quantization_enabled():
-            return WeightsQuantizeConfig(weight_attrs=self.fw_info.get_kernel_op_attributes(node.type),
-                                         w_quantizer=self._get_weights_quantizer_for_node(node))
+            weight_attrs = self.fw_info.get_kernel_op_attributes(node.type)
+            return WeightsQuantizeConfig(weight_attrs=weight_attrs,
+                                         w_quantizer=self._get_weights_quantizer_for_node(node,
+                                                                                          weight_attrs))
 
         elif not node.is_weights_quantization_enabled() and node.is_activation_quantization_enabled():
             return ActivationQuantizeConfig(activation_quantizer=self._get_activations_quantizer_for_node(node))
@@ -120,8 +150,11 @@ class CompleteInfoKerasModelBuilder(KerasModelBuilder):
         elif not node.is_weights_quantization_enabled() and not node.is_activation_quantization_enabled():
             return NoOpQuantizeConfig()
 
+        weight_attrs = self.fw_info.get_kernel_op_attributes(node.type)
+
         return WeightsActivationQuantizeConfig(activation_quantizer=self._get_activations_quantizer_for_node(node),
-                                               w_quantizer=self._get_weights_quantizer_for_node(node),
+                                               w_quantizer=self._get_weights_quantizer_for_node(node,
+                                                                                                weight_attrs),
                                                weight_attrs=self.fw_info.get_kernel_op_attributes(node.type))
 
 
@@ -144,7 +177,7 @@ class CompleteInfoKerasModelBuilder(KerasModelBuilder):
 
         return threshold / (2 ** (n_bits - int(signed)))
 
-    def _get_weights_quantizer_for_node(self, node: BaseNode):
+    def _get_weights_quantizer_for_node(self, node: BaseNode, weights_attr:List[str]):
 
         assert node.final_weights_quantization_cfg is not None, f'Can not set quantizer for a node with no final ' \
                                                                 f'weights quantization configuration'
@@ -172,11 +205,11 @@ class CompleteInfoKerasModelBuilder(KerasModelBuilder):
         else:
             raise NotImplemented
 
-        return UniformQuantizer(node_w_qc.weights_n_bits,
-                                min_range,
-                                max_range,
-                                node_w_qc.weights_channels_axis,
-                                node_w_qc.weights_per_channel_threshold)
+        assert len(weights_attr)==1, f'Currently, we support only one quantized weight per layer'
+        return WeightsUniformQuantizer(node_w_qc.weights_n_bits,
+                                       min_range,
+                                       max_range,
+                                       node.get_weights_by_keys(weights_attr[0]))
 
 
     def _get_activations_quantizer_for_node(self, node: BaseNode):

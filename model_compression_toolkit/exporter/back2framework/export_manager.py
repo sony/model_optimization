@@ -43,34 +43,3 @@ class ExporterManager:
         pass
 
 
-#
-#
-# def experimental_export_model(tg: Graph,
-#                               fw_info: FrameworkInfo,
-#                               fw_impl: FrameworkImplementation,
-#                               tb_w: TensorboardWriter,
-#                               bit_widths_config: List[int]):
-#     """
-#     A function for quantizing the graph's weights and build a quantized framework model from it.
-#
-#     Args:
-#         tg: A prepared for quantization graph.
-#         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-#         groups of layers by how they should be quantized, etc.).
-#         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-#         tb_w: TensorBoardWriter object to log events.
-#         bit_widths_config: mixed-precision bit configuration to be added to model user_info
-#
-#     Returns:
-#         Quantized model in the input framework, and information the user may need in order to use the quantized model.
-#     """
-#
-#     # quantized_tg = substitute(tg, fw_impl.get_substitutions_pre_build())
-#
-#
-#     quantized_model, user_info = fw_impl.model_builder(quantized_tg,
-#                                                        mode=ModelBuilderMode.FULLY_QUANTIZED,
-#                                                        fw_info=fw_info)
-#     user_info.mixed_precision_cfg = bit_widths_config
-#
-#     return quantized_model, user_info
