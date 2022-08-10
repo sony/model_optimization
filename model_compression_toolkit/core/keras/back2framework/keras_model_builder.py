@@ -18,7 +18,7 @@ from abc import abstractmethod
 import tensorflow as tf
 from keras.models import Model
 
-from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
+from model_compression_toolkit.exporter.back2framework.base_model_builder import BaseModelBuilder
 
 from model_compression_toolkit.core.common.user_info import UserInformation
 

@@ -20,6 +20,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_b
     ReLUBoundToPOTNetTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_dw_test import \
     BiasCorrectionDepthwiseTest
+from tests.keras_tests.feature_networks_tests.feature_networks.custom_test import CustomLayerTest
 
 from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
     DwConv2dReplacementTest
@@ -110,6 +111,9 @@ layers = tf.keras.layers
 
 class FeatureNetworkTest(unittest.TestCase):
 
+    # def test_custom_layer(self):
+    #     CustomLayerTest(self).run_test()
+
     def test_single_relu_replacement(self):
         SingleReluReplacementTest(self).run_test()
 
@@ -123,7 +127,7 @@ class FeatureNetworkTest(unittest.TestCase):
         DwConv2dReplacementTest(self).run_test()
 
     def test_edit_error_method(self):
-        EditActivationErrorMethod(self).run_test(experimental_facade=True, experimental_exporter=True)
+        EditActivationErrorMethod(self).run_test(experimental_facade=True)
         EditActivationErrorMethod(self).run_test()
 
 

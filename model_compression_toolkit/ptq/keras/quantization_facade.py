@@ -20,12 +20,12 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW, FOUND_TF
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
-from model_compression_toolkit.core.exporter import export_model, experimental_export_model
+from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
 from model_compression_toolkit.ptq.runner import ptq_runner
 
@@ -35,6 +35,8 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.exporter.keras.keras_export_manager import KerasExporterManager
+    from model_compression_toolkit.ptq.keras.complete_info_model_builder import CompleteInfoKerasModelBuilder
 
     from model_compression_toolkit import get_target_platform_capabilities
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
@@ -146,19 +148,20 @@ if FOUND_TF:
                                         fw_impl,
                                         fw_info)
 
-        export_fn = export_model
         if new_experimental_exporter:
             Logger.warning('Using new experimental exported models. '
                            'Please do not use unless you are familiar with what you are doing')
-            export_fn = experimental_export_model
+            quantized_tg = substitute(tg, fw_impl.get_substitutions_pre_build())
+            return KerasExporterManager(CompleteInfoKerasModelBuilder(graph=quantized_tg,
+                                                                      fw_info=fw_info)).export()
 
-        quantized_model, user_info = export_fn(tg,
-                                               fw_info,
-                                               fw_impl,
-                                               tb_w,
-                                               bit_widths_config)
+        return export_model(tg,
+                            fw_info,
+                            fw_impl,
+                            tb_w,
+                            bit_widths_config)
 
-        return quantized_model, user_info
+
 
 else:
     # If tensorflow or tensorflow_model_optimization are not installed,

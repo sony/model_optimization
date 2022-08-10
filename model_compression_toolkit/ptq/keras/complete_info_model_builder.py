@@ -31,13 +31,13 @@ from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder, \
     is_layer_fake_quant, get_node_name_from_layer
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.core.quantizers.keras.tf_fq_quantizer import TFFakeQuantQuantizer
-from model_compression_toolkit.core.quantizers.keras.uniform_quantizer import UniformQuantizer
-from model_compression_toolkit.core.quantizers.keras.weights_quantize_config import WeightsQuantizeConfig, \
-    ActivationQuantizeConfig, WeightsActivationQuantizeConfig
+from model_compression_toolkit.exporter.keras.quantizers.uniform_quantizer import UniformQuantizer
+from model_compression_toolkit.exporter.keras.quantize_configs.weights_quantize_config import WeightsQuantizeConfig
+from model_compression_toolkit.exporter.keras.quantize_configs.activation_quantize_config import ActivationQuantizeConfig
+from model_compression_toolkit.exporter.keras.quantize_configs.weights_activation_quantize_config import WeightsActivationQuantizeConfig
 
 
-class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
+class CompleteInfoKerasModelBuilder(KerasModelBuilder):
     """
     Builder of fully-quantized Keras models.
     """
@@ -76,7 +76,6 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
 
         """
         return input_tensors
-        # return node.final_activation_quantization_cfg.quantize_node_output(input_tensors)
 
     def build_model(self) -> Tuple[Model, UserInformation]:
         """
@@ -206,14 +205,7 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
                 signed=node_act_qc.activation_quantization_params.get(SIGNED))
         else:
             raise NotImplemented
-        # return partial(tf.quantization.fake_quant_with_min_max_args,
-        #                min=min_range,
-        #                max=max_range,
-        #                num_bits=node_act_qc.activation_n_bits)
-        return TFFakeQuantQuantizer(node_act_qc.activation_n_bits,
-                                    min_range,
-                                    max_range)
 
-        # return UniformQuantizer(node_act_qc.activation_n_bits,
-        #                         min_range,
-        #                         max_range)
+        return UniformQuantizer(node_act_qc.activation_n_bits,
+                                min_range,
+                                max_range)
