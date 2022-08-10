@@ -65,7 +65,7 @@ from model_compression_toolkit.exporter.keras.quantizers.uniform_quantizer impor
     WeightsUniformQuantizer
 
 
-class CompleteInfoKerasModelBuilder(KerasModelBuilder):
+class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
     """
     Builder of fully-quantized Keras models.
     """

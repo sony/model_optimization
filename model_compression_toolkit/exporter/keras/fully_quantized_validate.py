@@ -16,7 +16,7 @@ supported_quantize_configs = [WeightsQuantizeConfig,
                               NoOpQuantizeConfig]
 
 
-def validate_complete_quantization_info(model: Model):
+def fully_quantized_validate(model: Model):
     for layer in model.layers:
         assert isinstance(layer, QuantizeWrapper) or isinstance(layer, InputLayer)
         if isinstance(layer, QuantizeWrapper):
