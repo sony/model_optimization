@@ -31,6 +31,7 @@ from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder, \
     is_layer_fake_quant, get_node_name_from_layer
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.keras.quantizer.input_layer_quantize_transform import InputLayerWrapperTransform
 from model_compression_toolkit.exporter.keras.quantizers.uniform_quantizer import UniformQuantizer, \
     WeightsUniformQuantizer
 from model_compression_toolkit.exporter.keras.quantize_configs.weights_quantize_config import WeightsQuantizeConfig
@@ -63,6 +64,7 @@ from model_compression_toolkit.exporter.keras.quantize_configs.weights_activatio
 from model_compression_toolkit.exporter.keras.quantize_configs.weights_quantize_config import WeightsQuantizeConfig
 from model_compression_toolkit.exporter.keras.quantizers.uniform_quantizer import UniformQuantizer, \
     WeightsUniformQuantizer
+import tensorflow_model_optimization.quantization.keras.graph_transformations.model_transformer as mt
 
 
 class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
@@ -134,7 +136,27 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
                                             input_tensors=None,
                                             clone_function=_wrap_layer_with_quantize_config)
 
+        # We use a model transformer to wrap the input layer with QuantizeWrapper.
+        # A model transformer allows to modify a layer in an existing model, by applying the given list of
+        # transformers on the model (in this case,
+        # we only apply single transformer - InputLayerQuantizeTransform)
+        model_inputs = self.graph.get_inputs()
+
+        input_transformer = mt.ModelTransformer(model, [InputLayerWrapperTransform(inp,
+                                                                                   self.fw_info,
+                                                                                   self._get_quantization_config(inp),
+                                                                                   {'QuantizeWrapper': QuantizeWrapper,
+                                                                                    'WeightsQuantizeConfig': WeightsQuantizeConfig,
+                                                                                    'ActivationQuantizeConfig':ActivationQuantizeConfig,
+                                                                                    'WeightsActivationQuantizeConfig': WeightsActivationQuantizeConfig,
+                                                                                    'WeightsUniformQuantizer':WeightsUniformQuantizer,
+                                                                                    'UniformQuantizer':UniformQuantizer}
+                                                                                   )
+                                                        for inp in model_inputs])
+        model = input_transformer.transform()[0]
+
         return model, user_info
+
 
     def _get_quantization_config(self,
                                  node: BaseNode):
@@ -215,7 +237,7 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
     def _get_activations_quantizer_for_node(self, node: BaseNode):
 
         assert node.final_activation_quantization_cfg is not None, f'Can not set quantizer for a node with no final ' \
-                                                                f'weights quantization configuration'
+                                                                f'activation quantization configuration'
 
         supported_quantizers = [QuantizationMethod.POWER_OF_TWO,
                                 QuantizationMethod.SYMMETRIC,

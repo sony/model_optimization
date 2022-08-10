@@ -22,10 +22,13 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder, \
     is_layer_fake_quant, get_node_name_from_layer
-from model_compression_toolkit.core.keras.quantizer.mixed_precision.input_layer_quantize_transform import \
-    InputLayerMixedPrecisionTransform
+from model_compression_toolkit.core.keras.quantizer.input_layer_quantize_transform import \
+    InputLayerWrapperTransform
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+from model_compression_toolkit.core.keras.quantizer.mixed_precision.selective_quantize_config import \
+    SelectiveQuantizeConfig
+
 if tf.__version__ < "2.6":
     from tensorflow.python.keras.layers.core import TFOpLambda, SlicingOpLambda
 else:
@@ -126,7 +129,15 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         # transformers on the model (in this case,
         # we only apply single transformer - InputLayerQuantizeTransform)
         model_inputs = self.graph.get_inputs()
-        input_transformer = mt.ModelTransformer(model, [InputLayerMixedPrecisionTransform(inp, self.fw_info)
+
+        input_transformer = mt.ModelTransformer(model, [InputLayerWrapperTransform(inp,
+                                                                                   self.fw_info,
+                                                                                   quantization_config_builder_mixed_precision(inp, self.fw_info),
+                                                                                   {'QuantizeWrapper': QuantizeWrapper,
+                                                                                    'SelectiveQuantizeConfig': SelectiveQuantizeConfig}
+                                                                                   )
                                                         for inp in model_inputs])
         model = input_transformer.transform()[0]
+
         return model, user_info
+

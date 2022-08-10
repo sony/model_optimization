@@ -19,6 +19,8 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.user_info import UserInformation
+from model_compression_toolkit.core.keras.back2framework.fully_quantized_model_builder import \
+    FullyQuantizedKerasModelBuilder
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -99,7 +101,8 @@ if common.constants.FOUND_TF:
                                                                target_kpi: KPI = None,
                                                                core_config: CoreConfig = CoreConfig(),
                                                                fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                                                               target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> \
+                                                               target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC,
+                                                               new_experimental_exporter: bool = False) -> \
     Tuple[Model, UserInformation]:
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
@@ -203,9 +206,16 @@ if common.constants.FOUND_TF:
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen, tb_w, tg_gptq, fw_impl, fw_info)
 
-        quantized_model, user_info = export_model(tg_gptq, fw_info, fw_impl, tb_w, bit_widths_config)
+        if new_experimental_exporter:
+            Logger.warning('Using new experimental exported models. '
+                           'Please do not use unless you are familiar with what you are doing')
+            return FullyQuantizedKerasModelBuilder(graph=tg_gptq, fw_info=fw_info).build_model()
 
-        return quantized_model, user_info
+        return export_model(tg,
+                            fw_info,
+                            fw_impl,
+                            tb_w,
+                            bit_widths_config)
 
 else:
     # If tensorflow or tensorflow_model_optimization are not installed,

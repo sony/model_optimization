@@ -23,7 +23,6 @@ from model_compression_toolkit.core.common.constants import TENSORFLOW, FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
@@ -35,7 +34,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
-    from model_compression_toolkit.ptq.keras.fully_quantized_model_builder import FullyQuantizedKerasModelBuilder
+    from model_compression_toolkit.core.keras.back2framework.fully_quantized_model_builder import FullyQuantizedKerasModelBuilder
 
     from model_compression_toolkit import get_target_platform_capabilities
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
