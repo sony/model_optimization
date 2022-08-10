@@ -25,11 +25,11 @@ class KerasExporterManager(ExporterManager):
     def __init__(self,
                  exporter: BaseExporter,
                  ):
-        super(KerasExporterManager, self).__init__(model_builder=exporter)
+        super(KerasExporterManager, self).__init__(exporter=exporter)
         self.validate_model_fn = validate_complete_quantization_info
 
     def export(self):
-        complete_info_model, user_info = self.model_builder.build_model()
+        complete_info_model, user_info = self.exporter.build_model()
         self.validate_model_fn(complete_info_model)
         return complete_info_model, user_info
 
