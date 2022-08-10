@@ -14,8 +14,6 @@
 # ==============================================================================
 
 
-from typing import Tuple, Any, List, Callable
-
 # from model_compression_toolkit.core.common import FrameworkInfo
 # from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 # from model_compression_toolkit.core.common.graph.base_graph import Graph
@@ -24,22 +22,23 @@ from typing import Tuple, Any, List, Callable
 # from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 # from model_compression_toolkit.core.common.user_info import UserInformation
 # from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
-from model_compression_toolkit.exporter.back2framework.base_model_builder import BaseModelBuilder
+from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
+from model_compression_toolkit.exporter.back2framework.base_exporter import BaseExporter
 
 
 class ExporterManager:
 
     def __init__(self,
-                 model_builder: BaseModelBuilder,
+                 exporter: BaseExporter,
                  ):
-        self.model_builder = model_builder
+        self.exporter = exporter
 
     def export(self):
-        complete_info_model = self.model_builder.build_model()
+        complete_info_model = self.exporter.build_model()
         self._validate_model(complete_info_model)
         return complete_info_model
 
     def _validate_model(self, complete_info_model):
-        pass
+        raise NotImplemented
 
 

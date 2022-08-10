@@ -18,9 +18,10 @@ from typing import Any, Tuple
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.user_info import UserInformation
+from model_compression_toolkit.exporter.back2framework.base_exporter import BaseExporter
 
 
-class BaseModelBuilder(ABC):
+class BaseModelBuilder(BaseExporter):
     """
     Base class for model builder.
     """
@@ -44,11 +45,3 @@ class BaseModelBuilder(ABC):
         self.fw_info = fw_info
         self.return_float_outputs = return_float_outputs
 
-    @abstractmethod
-    def build_model(self) -> Tuple[Any, UserInformation]:
-        """
-
-        Returns: A framework's model built from its graph.
-
-        """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement build_model method.')

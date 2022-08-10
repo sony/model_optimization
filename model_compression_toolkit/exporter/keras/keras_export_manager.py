@@ -14,9 +14,8 @@
 # ==============================================================================
 
 
-from typing import Tuple, Any, List, Callable
-
-from model_compression_toolkit.exporter.back2framework.base_model_builder import BaseModelBuilder
+from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
+from model_compression_toolkit.exporter.back2framework.base_exporter import BaseExporter
 from model_compression_toolkit.exporter.back2framework.export_manager import ExporterManager
 from model_compression_toolkit.exporter.keras.complete_info_validate import validate_complete_quantization_info
 
@@ -24,9 +23,9 @@ from model_compression_toolkit.exporter.keras.complete_info_validate import vali
 class KerasExporterManager(ExporterManager):
 
     def __init__(self,
-                 model_builder: BaseModelBuilder,
+                 exporter: BaseExporter,
                  ):
-        super(KerasExporterManager, self).__init__(model_builder=model_builder)
+        super(KerasExporterManager, self).__init__(model_builder=exporter)
         self.validate_model_fn = validate_complete_quantization_info
 
     def export(self):
