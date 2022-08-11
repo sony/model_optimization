@@ -419,7 +419,7 @@ def _set_final_kpi(graph: Graph,
                    final_bit_widths_config: List[int],
                    kpi_functions_dict: Dict[KPITarget, Tuple[MpKpiMetric, MpKpiAggregation]],
                    fw_info: FrameworkInfo,
-                   fw_impl):
+                   fw_impl: FrameworkImplementation):
     """
     Computing the KPIs of the model according to the final bit-width configuration,
     and setting it (inplace) in the graph's UserInfo field.
@@ -429,6 +429,7 @@ def _set_final_kpi(graph: Graph,
         final_bit_widths_config: The final bit-width configuration to quantize the model accordingly.
         kpi_functions_dict: A mapping between a KPITarget and a pair of kpi method and kpi aggregation functions.
         fw_info: A FrameworkInfo object.
+        fw_impl: FrameworkImplementation object with specific framework methods implementation.
 
     """
 
