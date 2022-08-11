@@ -468,12 +468,12 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_gptq(self):
         experimental_facade = True
         experimental_exporter = True
-        GradientPTQTest(self).run_test(experimental_exporter=experimental_exporter, experimental_facade=experimental_facade)
-        # GradientPTQWeightsUpdateTest(self).run_test()
-        GradientPTQLearnRateZeroTest(self).run_test(experimental_exporter=experimental_exporter, experimental_facade=experimental_facade)
-        # GradientPTQWeightedLossTest(self).run_test(experimental_exporter=experimental_exporter, experimental_facade=experimental_facade)
-        # GradientPTQWeightsUpdateTest(self, is_gumbel=True, sam_optimization=True).run_test(experimental_exporter=experimental_exporter, experimental_facade=experimental_facade)
-        # GradientPTQLearnRateZeroTest(self, is_gumbel=True).run_test(experimental_exporter=experimental_exporter, experimental_facade=experimental_facade)
+        GradientPTQTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQWeightsUpdateTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQLearnRateZeroTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQWeightedLossTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQWeightsUpdateTest(self, is_gumbel=True, sam_optimization=True).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQLearnRateZeroTest(self, is_gumbel=True).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
 
     # Comment out due to problem in Tensorflow 2.8
     # def test_gptq_conv_group(self):
