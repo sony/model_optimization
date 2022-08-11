@@ -268,6 +268,12 @@ class PytorchImplementation(FrameworkImplementation):
         """
         return []
 
+    def get_substitutions_virtual_weights_activation_coupling(self) -> List[common.BaseSubstitution]:
+        """
+        Returns: A list of Pytorch substitutions used to build a virtual graph with composed activation-weights pairs.
+        """
+        raise Exception('This feature is currently not yet available for Pytorch models. Work in progress.')
+
     def get_gptq_trainer_obj(self) -> Type[GPTQTrainer]:
         """
         Returns: GPTQTrainer object

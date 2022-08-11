@@ -109,14 +109,13 @@ def core_runner(in_model: Any,
     if target_kpi is not None:
         assert core_config.mixed_precision_enable
         if core_config.mixed_precision_config.configuration_overwrite is None:
+
             bit_widths_config = search_bit_width(tg,
                                                  fw_info,
+                                                 fw_impl,
                                                  target_kpi,
-                                                 fw_impl.get_sensitivity_evaluator(
-                                                     tg,
-                                                     core_config.mixed_precision_config,
-                                                     representative_data_gen=representative_data_gen,
-                                                     fw_info=fw_info))
+                                                 core_config.mixed_precision_config,
+                                                 representative_data_gen)
         else:
             Logger.warning(
                 f'Mixed Precision has overwrite bit-width configuration{core_config.mixed_precision_config.configuration_overwrite}')
@@ -144,9 +143,10 @@ def core_runner(in_model: Any,
         _set_final_kpi(graph=tg,
                        final_bit_widths_config=bit_widths_config,
                        kpi_functions_dict=kpi_functions_mapping,
-                       fw_info=fw_info)
+                       fw_info=fw_info,
+                       fw_impl=fw_impl)
 
-        # Retrive lists of tuples (node, node's final weights/activation bitwidth)
+        # Retrieve lists of tuples (node, node's final weights/activation bitwidth)
         weights_conf_nodes_bitwidth = tg.get_final_weights_config()
         activation_conf_nodes_bitwidth = tg.get_final_activation_config()
 
@@ -418,7 +418,8 @@ def _prepare_model_for_quantization(graph: Graph,
 def _set_final_kpi(graph: Graph,
                    final_bit_widths_config: List[int],
                    kpi_functions_dict: Dict[KPITarget, Tuple[MpKpiMetric, MpKpiAggregation]],
-                   fw_info: FrameworkInfo):
+                   fw_info: FrameworkInfo,
+                   fw_impl):
     """
     Computing the KPIs of the model according to the final bit-width configuration,
     and setting it (inplace) in the graph's UserInfo field.
@@ -434,7 +435,10 @@ def _set_final_kpi(graph: Graph,
     final_kpis_dict = {}
     for kpi_target, kpi_funcs in kpi_functions_dict.items():
         kpi_method, kpi_aggr = kpi_funcs
-        final_kpis_dict[kpi_target] = kpi_aggr(kpi_method(final_bit_widths_config, graph, fw_info), False)[0]
+        if kpi_target == KPITarget.BOPS:
+            final_kpis_dict[kpi_target] = kpi_aggr(kpi_method(final_bit_widths_config, graph, fw_info, fw_impl, False), False)[0]
+        else:
+            final_kpis_dict[kpi_target] = kpi_aggr(kpi_method(final_bit_widths_config, graph, fw_info, fw_impl), False)[0]
 
     final_kpi = KPI()
     final_kpi.set_kpi_by_target(final_kpis_dict)

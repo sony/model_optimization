@@ -22,4 +22,5 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_methods
 # aggregation function should be added to this dictionary
 kpi_functions_mapping = {KPITarget.WEIGHTS: (MpKpiMetric.WEIGHTS_SIZE, MpKpiAggregation.SUM),
                          KPITarget.ACTIVATION: (MpKpiMetric.ACTIVATION_OUTPUT_SIZE, MpKpiAggregation.MAX),
-                         KPITarget.TOTAL: (MpKpiMetric.TOTAL_WEIGHTS_ACTIVATION_SIZE, MpKpiAggregation.TOTAL)}
+                         KPITarget.TOTAL: (MpKpiMetric.TOTAL_WEIGHTS_ACTIVATION_SIZE, MpKpiAggregation.TOTAL),
+                         KPITarget.BOPS: (MpKpiMetric.BOPS_COUNT, MpKpiAggregation.SUM)}
