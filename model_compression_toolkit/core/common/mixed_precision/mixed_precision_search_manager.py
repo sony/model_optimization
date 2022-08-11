@@ -265,7 +265,10 @@ class ConfigReconstructionHelper:
 
         self.origin_node_idx_to_cfg = {}
 
-    def reconstruct_config_from_virtual_graph(self, virtual_mp_cfg: List[int]) -> List[int]:
+    def reconstruct_config_from_virtual_graph(self,
+                                              virtual_mp_cfg: List[int],
+                                              changed_virtual_nodes_idx: List[int] = None,
+                                              original_base_config: List[int] = None) -> List[int]:
         """
         Reconstructs the original config for a given virtual graph mixed-precision config.
         It iterates over all virtual configurable node (that has some chosen bit-width virtual candidate)
@@ -276,55 +279,80 @@ class ConfigReconstructionHelper:
 
         Args:
             virtual_mp_cfg: A mixed-precision configuration (list of candidates indices) of the virtual graph.
+            changed_virtual_nodes_idx: Provide an optional list of virtual nodes indices for which the
+                config reconstruction will be computed.
+            original_base_config: If changed_virtual_nodes_idx is provided, need to provide a base config from which the
+                bit-width for all un-changed original nodes will be taken.
 
         Returns: A mixed-precision configuration (list of candidates indices) of the original graph.
 
         """
 
-        for virtual_node_idx, n in enumerate(self.virtual_graph.get_configurable_sorted_nodes()):
-            virtual_cfg_idx = virtual_mp_cfg[virtual_node_idx]
+        if changed_virtual_nodes_idx is not None:
+            if original_base_config is None:
+                Logger.critical("Must provide a base original config in order to run config reconstruction for partial"
+                                "set of nodes.")
 
-            if isinstance(n, VirtualActivationWeightsNode):
-                weights_node = n.original_weights_node
-                if isinstance(weights_node, VirtualSplitWeightsNode):
-                    self.get_activation_for_split_weights(weights_node, n, virtual_cfg_idx, virtual_mp_cfg)
-                else:
-                    self.retrieve_weights_only_config(weights_node, n, virtual_cfg_idx)
-
-                activation_node = n.original_activation_node
-                if isinstance(activation_node, VirtualSplitActivationNode):
-                    self.get_weights_for_split_activation(activation_node, n, virtual_cfg_idx, virtual_mp_cfg)
-                else:
-                    if activation_node.name in self.origin_sorted_conf_nodes_names:
-                        # It is possible that the original activation node is not configurable,
-                        # in this case we don't need to retrieve its bit-width config
-                        self.retrieve_activation_only_config(activation_node, n, virtual_cfg_idx)
-            elif isinstance(n, VirtualSplitWeightsNode):
-                # If the node's predecessor e multiple outgoing edges than it is possible that this weights
-                # node is not composed with an activation, but otherwise this is something wrong and we need
-                # to raise an exception
-                predecessor = self.virtual_graph.get_prev_nodes(n)
-                assert len(predecessor) == 1  # Sanity check
-                predecessor = predecessor[0]
-                if len(self.virtual_graph.out_edges(predecessor)) > 1:
-                    # It's ok, need to find the node's configuration
-                    self.get_activation_for_split_weights(n, n, virtual_cfg_idx, virtual_mp_cfg)
-                else:
-                    Logger.error(f"Virtual graph error - a weights node is not composed with an activation node,"
-                                 f"but its predecessor doesn't have multiple outputs.")
-            elif isinstance(n, VirtualSplitActivationNode):
-                self.get_weights_for_split_activation(n, n, virtual_cfg_idx, virtual_mp_cfg)
-            else:
-                # Node didn't change in virtual graph - candidates list is similar to original
-                if n.name not in self.origin_sorted_conf_nodes_names:
-                    Logger.error(f"Node {n.name} appears in virtual graph as configurable, "
-                                 f"but is not configurable in the original graph.")
-                origin_idx = self.origin_sorted_conf_nodes_names.index(n.name)
-                self.origin_node_idx_to_cfg[origin_idx] = virtual_cfg_idx
+            updated_virtual_nodes = \
+                [(idx, self.virtual_graph.get_configurable_sorted_nodes()[idx]) for idx in changed_virtual_nodes_idx]
+            # Iterating only over the virtual nodes that have updated config
+            for virtual_node_idx, n in updated_virtual_nodes:
+                self.reconstruct_node_config(n, virtual_mp_cfg, virtual_node_idx)
+            # Updating reconstructed config for all other nodes based on provided base_config
+            original_sorted_conf_nodes = self.original_graph.get_configurable_sorted_nodes()
+            for i in range(len(original_base_config)):
+                if i not in list(self.origin_node_idx_to_cfg.keys()):
+                    self.update_config_at_original_idx(n=original_sorted_conf_nodes[i],
+                                                       origin_cfg_idx=original_base_config[i])
+        else:
+            # Reconstruct entire config
+            for virtual_node_idx, n in enumerate(self.virtual_graph.get_configurable_sorted_nodes()):
+                self.reconstruct_node_config(n, virtual_mp_cfg, virtual_node_idx)
 
         res_config = [self.origin_node_idx_to_cfg[key] for key in sorted(self.origin_node_idx_to_cfg.keys())]
         self._clear_reconstruction_dict()
         return res_config
+
+    def reconstruct_node_config(self, n, virtual_mp_cfg, virtual_node_idx):
+        virtual_cfg_idx = virtual_mp_cfg[virtual_node_idx]
+
+        if isinstance(n, VirtualActivationWeightsNode):
+            weights_node = n.original_weights_node
+            if isinstance(weights_node, VirtualSplitWeightsNode):
+                self.get_activation_for_split_weights(weights_node, n, virtual_cfg_idx, virtual_mp_cfg)
+            else:
+                self.retrieve_weights_only_config(weights_node, n, virtual_cfg_idx)
+
+            activation_node = n.original_activation_node
+            if isinstance(activation_node, VirtualSplitActivationNode):
+                self.get_weights_for_split_activation(activation_node, n, virtual_cfg_idx, virtual_mp_cfg)
+            else:
+                if activation_node.name in self.origin_sorted_conf_nodes_names:
+                    # It is possible that the original activation node is not configurable,
+                    # in this case we don't need to retrieve its bit-width config
+                    self.retrieve_activation_only_config(activation_node, n, virtual_cfg_idx)
+        elif isinstance(n, VirtualSplitWeightsNode):
+            # If the node's predecessor e multiple outgoing edges than it is possible that this weights
+            # node is not composed with an activation, but otherwise this is something wrong and we need
+            # to raise an exception
+            predecessor = self.virtual_graph.get_prev_nodes(n)
+            assert len(predecessor) == 1  # Sanity check
+            predecessor = predecessor[0]
+            if len(self.virtual_graph.out_edges(predecessor)) > 1:
+                # It's ok, need to find the node's configuration
+                self.get_activation_for_split_weights(n, n, virtual_cfg_idx, virtual_mp_cfg)
+            else:
+                Logger.error(f"Virtual graph error - a weights node is not composed with an activation node,"
+                             f"but its predecessor doesn't have multiple outputs.")
+        elif isinstance(n, VirtualSplitActivationNode):
+            self.get_weights_for_split_activation(n, n, virtual_cfg_idx, virtual_mp_cfg)
+        else:
+            # Node didn't change in virtual graph - candidates list is similar to original
+            if n.name not in self.origin_sorted_conf_nodes_names:
+                Logger.error(f"Node {n.name} appears in virtual graph as configurable, "
+                             f"but is not configurable in the original graph.")
+            origin_idx = self.origin_sorted_conf_nodes_names.index(n.name)
+            self.origin_node_idx_to_cfg[origin_idx] = virtual_cfg_idx
 
     def retrieve_weights_only_config(self, weights_node: BaseNode, virtual_node: BaseNode, virtual_cfg_idx: int):
         """

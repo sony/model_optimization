@@ -267,7 +267,10 @@ def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
             if is_bops_target_kpi:
                 # Reconstructing original graph's configuration from virtual graph's configuration
                 origin_mp_model_configuration = \
-                    search_manager.config_reconstruction_helper.reconstruct_config_from_virtual_graph(mp_model_configuration)
+                    search_manager.config_reconstruction_helper.reconstruct_config_from_virtual_graph(
+                        mp_model_configuration,
+                        changed_virtual_nodes_idx=[node_idx],
+                        original_base_config=origin_max_config)
                 origin_changed_nodes_indices = [i for i, c in enumerate(origin_max_config) if
                                                 c != origin_mp_model_configuration[i]]
                 layer_to_metrics_mapping[node_idx][bitwidth_idx] = search_manager.compute_metric_fn(
