@@ -30,7 +30,8 @@ def compute_kpi_data(in_model: Any,
                      core_config: CoreConfig,
                      tpc: TargetPlatformCapabilities,
                      fw_info: FrameworkInfo,
-                     fw_impl: FrameworkImplementation) -> KPI:
+                     fw_impl: FrameworkImplementation,
+                     bops_kpi: bool = True) -> KPI:
     """
     Compute KPI information that can be relevant for defining target KPI for mixed precision search.
     Calculates maximal activation tensor, sum of weights' parameters and total (sum of both).
@@ -74,8 +75,11 @@ def compute_kpi_data(in_model: Any,
     total_size = total_weights_params + max_activation_tensor_size
 
     # Compute BOPS kpi - total count of bit-operations for all configurable layers with kernel
-    bops_count = compute_total_bops(graph=transformed_graph, fw_info=fw_info, fw_impl=fw_impl)
-    bops_count = np.inf if len(bops_count) == 0 else sum(bops_count)
+    if bops_kpi:
+        bops_count = compute_total_bops(graph=transformed_graph, fw_info=fw_info, fw_impl=fw_impl)
+        bops_count = np.inf if len(bops_count) == 0 else sum(bops_count)
+    else:
+        bops_count = np.inf
 
     return KPI(weights_memory=total_weights_params,
                activation_memory=max_activation_tensor_size,
