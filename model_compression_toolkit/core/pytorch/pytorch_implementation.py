@@ -453,4 +453,7 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: The MAC count og the operation
         """
 
-        raise NotImplemented(f'BOPS KPI not supported in Pytorch yet')
+        # TODO: need to modify when implementing BOPS KPI for Pytorch. Currently, returning inf to prevent
+        #  crashing when running set_final_kpi at the end of Pytorch mixed-precision tests
+
+        return np.inf
