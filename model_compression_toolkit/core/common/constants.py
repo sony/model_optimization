@@ -54,6 +54,7 @@ SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS = 16
 
 # Default bitwidth for disabled quantization candidate
 DEFAULT_CANDIDATE_BITWIDTH = 16
+FLOAT_BITWIDTH = 32
 
 # In Mixed-Precision, a node can have multiple candidates for weights and activations quantization configuration.
 # In order to display a single view of a node (for example, for logging in TensorBoard) we need to track the attributes
@@ -95,3 +96,9 @@ BITS_TO_BYTES = 8.0
 
 # Default threshold for Softmax layer
 SOFTMAX_THRESHOLD = 1
+
+
+# Substitutions node names
+VIRTUAL_WEIGHTS_SUFFIX = '_v_weights'
+VIRTUAL_ACTIVATION_SUFFIX = '_v_activation'
+VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX = 'virtual'

@@ -53,7 +53,15 @@ def filter_node_candidates(node: BaseNode) -> List[CandidateNodeQuantizationConf
 
     filtered_candidates = copy.deepcopy(node.candidates_quantization_cfg)
 
-    if not node.is_activation_quantization_enabled():
+    if not node.is_weights_quantization_enabled() and not node.is_activation_quantization_enabled():
+        # If both weights and activation quantization are disabled, but for some reason the node has multiple candidates
+        # then replace it with a single dummy candidate with default bit-width values.
+        single_dummy_candidate = filtered_candidates[0]
+        single_dummy_candidate.activation_quantization_cfg.activation_n_bits = DEFAULT_CANDIDATE_BITWIDTH
+        single_dummy_candidate.weights_quantization_cfg.weights_n_bits = DEFAULT_CANDIDATE_BITWIDTH
+        filtered_candidates = [single_dummy_candidate]
+
+    elif not node.is_activation_quantization_enabled():
         # Remove candidates that have duplicated weights candidates for node with disabled activation quantization.
         # Replacing the activation n_bits in the remained configurations with default value to prevent confusion.
         seen_candidates = set()

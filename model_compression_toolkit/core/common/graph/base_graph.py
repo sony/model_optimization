@@ -377,6 +377,28 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                 new_graph_outputs[graph_ot_index] = OutTensor(new_node, ot.node_out_index)
         self.set_outputs(new_graph_outputs)
 
+    def replace_input_node(self,
+                           current_node: BaseNode,
+                           new_node: BaseNode):
+        """
+        If a node is being substituted with another node, and it is an input node, the graph's input
+        should be updated as well. This function takes care of it by going over the graph's inputs, and
+        replacing the current input node with a new input node.
+        If current node is not an input node, nothing gets changed.
+
+        Args:
+            current_node: Node that (possibly) is an input node.
+            new_node: New node to set as an input node if the current node is an input node.
+
+        """
+
+        graph_inputs = self.get_inputs()
+        new_graph_inputs = copy(graph_inputs)
+        if current_node in graph_inputs:
+            new_graph_inputs.remove(current_node)
+            new_graph_inputs.append(new_node)
+        self.set_inputs(new_graph_inputs)
+
     def remove_node(self,
                     node_to_remove: BaseNode,
                     new_graph_inputs: List[BaseNode] = None,
