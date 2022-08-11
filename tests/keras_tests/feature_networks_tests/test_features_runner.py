@@ -20,6 +20,11 @@ from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_b
     ReLUBoundToPOTNetTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_dw_test import \
     BiasCorrectionDepthwiseTest
+from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_bops_test import \
+    MixedPrecisionBopsBasicTest, MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, \
+    MixedPrecisionBopsAndWeightsKPITest, MixedPrecisionBopsAndActivationKPITest, MixedPrecisionBopsAndTotalKPITest, \
+    MixedPrecisionBopsWeightsActivationKPITest, MixedPrecisionBopsMultipleOutEdgesTest, \
+    MixedPrecisionActivationOnlyBopsTest
 from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
     DwConv2dReplacementTest
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.edit_error_method_test import \
@@ -206,6 +211,17 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_mixed_precision_reduced_total_kpi(self):
         MixedPrecisionReducedTotalKPISearchTest(self).run_test()
+
+    def test_mixed_precision_bops_kpi(self):
+        MixedPrecisionBopsBasicTest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsAllWeightsLayersTest(self).run_test(experimental_facade=True)
+        MixedPrecisionWeightsOnlyBopsTest(self).run_test(experimental_facade=True)
+        MixedPrecisionActivationOnlyBopsTest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsAndWeightsKPITest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsAndActivationKPITest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsAndTotalKPITest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsWeightsActivationKPITest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsMultipleOutEdgesTest(self).run_test(experimental_facade=True)
 
     def test_name_filter(self):
         NameFilterTest(self).run_test()
