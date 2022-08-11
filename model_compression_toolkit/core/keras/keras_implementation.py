@@ -67,7 +67,7 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.laye
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.scale_equalization import \
     ScaleEqualization, ScaleEqualizationWithPad, ScaleEqualizationMidActivation, ScaleEqualizationMidActivationWithPad
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.separableconv_decomposition import \
-    SeparableConvDecomposition
+    SeparableConvDecomposition, DEPTH_MULTIPLIER
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.shift_negative_activation import \
     keras_apply_shift_negative_correction
 from model_compression_toolkit.core.keras.keras_node_prior_info import create_node_prior_info
@@ -484,3 +484,37 @@ class KerasImplementation(FrameworkImplementation):
 
         return True
 
+    def get_node_mac_operations(self,
+                                node: BaseNode,
+                                fw_info: FrameworkInfo) -> float:
+        """
+        Gets the MAC operation count for a given operation.
+
+        Args:
+            node: A graph node that wraps the operation for which the MAC count is computed.
+            fw_info: FrameworkInfo object with information about the Keras model.
+
+        Returns: The MAC count og the operation
+        """
+
+        input_shape = node.input_shape
+        output_shape = node.output_shape
+        kernel_shape = node.get_weights_by_keys(fw_info.get_kernel_op_attributes(node.type)[0]).shape
+        output_channel_axis, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
+
+        if node.type is Conv2D or node.type is Conv2DTranspose:
+            # (C_out * W_out * H_out) * C_in * (W_kernel * H_kernel)
+            return np.prod([x for x in output_shape if x is not None]) * \
+                   input_shape[input_channel_axis] * \
+                   (kernel_shape[0] * kernel_shape[1])
+        elif node.type is DepthwiseConv2D:
+            # Depth * (W_out * H_out) * C_in * (W_kernel * H_kernel)
+            return node.framework_attr.get(DEPTH_MULTIPLIER) * \
+                   np.prod([x for x in output_shape if x is not None]) / output_shape[output_channel_axis] * \
+                   input_shape[input_channel_axis] * \
+                   (kernel_shape[0] * kernel_shape[1])
+        elif node.type is Dense:
+            # IN * OUT
+            return kernel_shape[0] * kernel_shape[1]
+        else:
+            return 0

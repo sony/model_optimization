@@ -433,3 +433,18 @@ class PytorchImplementation(FrameworkImplementation):
         """
 
         return node.layer_class not in [argmax]
+
+    def get_node_mac_operations(self,
+                                node: BaseNode,
+                                fw_info: FrameworkInfo) -> float:
+        """
+        Gets the MAC operation count for a given operation.
+
+        Args:
+            node: A graph node that wraps the operation for which the MAC count is computed.
+            fw_info: FrameworkInfo object with information about the Pytorch model.
+
+        Returns: The MAC count og the operation
+        """
+
+        raise NotImplemented(f'BOPS KPI not supported in Pytorch yet')
