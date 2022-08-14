@@ -135,7 +135,8 @@ class TestActivationWeightsComposition(unittest.TestCase):
     def test_two_conv_net_compose_without_split(self):
         """
         Note that this test checks a hypothetical case that should not be used - we should not run nodes
-        composition running weights nodes split before, otherwise we'll might get duplication in the composed node's candidates.
+        composition without running weights nodes split before, otherwise we'll might get duplication
+        in the composed node's candidates.
         """
 
         in_model = two_conv_model()
