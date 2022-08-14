@@ -1,7 +1,23 @@
+# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 from typing import List
 
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED
+from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import calculate_delta
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 import numpy as np
 
@@ -10,23 +26,6 @@ from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.weights
     WeightsUniformQuantizer
 
 
-def calculate_delta(threshold: np.ndarray,
-                     n_bits: int = 8,
-                     signed: bool = False) -> np.ndarray:
-    """
-    Compute the step size of quantized values given the threshold, number of bits
-    and whether its signed or unsigned.
-
-    Args:
-        threshold: Threshold to compute the step size according to.
-        n_bits: Number of bits to compute the step size according to.
-        signed: Whether quantization range is signed or not.
-
-    Returns:
-        Step size of quantized values according to a threshold, signedness and number of bits.
-    """
-
-    return threshold / (2 ** (n_bits - int(signed)))
 
 
 def get_weights_quantizer_for_node(node: BaseNode, weights_attr :List[str]):
@@ -94,7 +93,3 @@ def get_activations_quantizer_for_node(node: BaseNode):
     return FakeQuantQuantizer(node_act_qc.activation_n_bits,
                               min_range,
                               max_range)
-
-    # return UniformQuantizer(node_act_qc.activation_n_bits,
-    #                         min_range,
-    #                         max_range)

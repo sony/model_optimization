@@ -125,10 +125,6 @@ class KerasModelBuilder(BaseModelBuilder):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement a method for quantization activation nodes.')
 
-    # For Keras transforms
-    def get_custom_objects(self):
-        pass
-
     def build_model(self) -> Tuple[Model, UserInformation]:
         """
         Build a Keras model and return it.
