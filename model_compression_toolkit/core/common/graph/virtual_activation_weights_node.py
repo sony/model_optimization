@@ -95,7 +95,7 @@ class VirtualSplitActivationNode(VirtualSplitNode):
         super().__init__(origin_node)
 
         self.name = origin_node.name + VIRTUAL_ACTIVATION_SUFFIX
-        self.framework_attr = {ACTIVATION: LINEAR}
+        self.framework_attr = {ACTIVATION: LINEAR}  # TODO: verify that these values work for Pytorch substitution as well (when implementing in Pytorch)
         self.prior_info = origin_node.prior_info
         self.input_shape = origin_node.output_shape  # the kernel output is the activation input
         self.weights = {}
