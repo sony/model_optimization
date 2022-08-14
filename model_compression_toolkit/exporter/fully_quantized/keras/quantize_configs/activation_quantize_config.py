@@ -35,6 +35,7 @@ class ActivationQuantizeConfig(QuantizeConfig):
                  ):
         self.activation_quantizer = activation_quantizer
 
+
     def get_config(self):
         return {
             'activation_quantizer': self.activation_quantizer}

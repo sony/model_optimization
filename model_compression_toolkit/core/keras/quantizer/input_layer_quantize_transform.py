@@ -39,7 +39,7 @@ class InputLayerWrapperTransform(InputLayerQuantize):
         self.fw_info = fw_info
         self.name = self.input_layer.name
         self.quantize_config = quantize_config
-        self.custom_objects_dict = custom_objects
+        self.custom_objects = lambda: custom_objects
 
     def pattern(self):
         return transforms.LayerPattern('InputLayer', config={'name': self.name})
@@ -57,6 +57,4 @@ class InputLayerWrapperTransform(InputLayerQuantize):
 
         return layer_node
 
-    def custom_objects(self):
-        return self.custom_objects_dict
 

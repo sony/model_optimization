@@ -20,9 +20,9 @@ from tensorflow import Tensor
 from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
-from model_compression_toolkit.exporter.keras.quantize_configs.activation_quantize_config import \
+from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.activation_quantize_config import \
     ActivationQuantizeConfig
-from model_compression_toolkit.exporter.keras.quantize_configs.weights_quantize_config import \
+from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import \
     WeightsQuantizeConfig
 
 if tf.__version__ < "2.6":
@@ -43,6 +43,7 @@ class WeightsActivationQuantizeConfig(QuantizeConfig):
         self.act_config = ActivationQuantizeConfig(activation_quantizer=activation_quantizer)
         self.weights_config = WeightsQuantizeConfig(w_quantizer=w_quantizer,
                                                     weight_attrs=weight_attrs)
+
 
     def get_config(self):
         return {"activation_quantizer": self.act_config.activation_quantizer,

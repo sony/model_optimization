@@ -1,5 +1,8 @@
+import numpy as np
 import tensorflow as tf
 from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
+
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
 
 
 class UniformQuantizer(Quantizer):
@@ -9,7 +12,9 @@ class UniformQuantizer(Quantizer):
                  min_range,
                  max_range,
                  ):
-
+        min_range, max_range = fix_range_to_include_zero(np.array(min_range),
+                                                         np.array(max_range),
+                                                         nbits)
         self.nbits = nbits
         self.min_range = tf.Variable(min_range,
                                      trainable=False,
@@ -17,6 +22,7 @@ class UniformQuantizer(Quantizer):
         self.max_range = tf.Variable(max_range,
                                      trainable=False,
                                      dtype=tf.float32)
+
         self.delta = (self.max_range - self.min_range) / (2 ** self.nbits - 1)
 
     def get_config(self):
@@ -55,7 +61,8 @@ class WeightsUniformQuantizer(UniformQuantizer):
                                                                     {})
 
     def __call__(self, inputs, training, weights, **kwargs):
-        return self.weight
+        with tf.name_scope('WeightsUniformQuant'):
+            return self.weight
 
     def get_config(self):
         cfg = super().get_config()

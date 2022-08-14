@@ -34,7 +34,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
-    from model_compression_toolkit.core.keras.back2framework.fully_quantized_model_builder import FullyQuantizedKerasModelBuilder
+    from model_compression_toolkit.exporter.fully_quantized.keras.builder.fully_quantized_model_builder import FullyQuantizedKerasModelBuilder
 
     from model_compression_toolkit import get_target_platform_capabilities
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)

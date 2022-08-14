@@ -19,7 +19,7 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.keras.back2framework.fully_quantized_model_builder import \
+from model_compression_toolkit.exporter.fully_quantized.keras.builder.fully_quantized_model_builder import \
     FullyQuantizedKerasModelBuilder
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
