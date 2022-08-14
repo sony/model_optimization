@@ -32,15 +32,13 @@ class VirtualActivationWeightsComposition(common.BaseSubstitution):
                        NodeOperationMatcher(Dense) | \
                        NodeOperationMatcher(Conv2DTranspose)
 
-        act_node = weights_node.logic_not()
-
-        super().__init__(matcher_instance=EdgeMatcher(act_node, weights_node))
+        super().__init__(matcher_instance=weights_node)
 
     def substitute(self,
                    graph: Graph,
-                   edge_nodes: Tuple[BaseNode, BaseNode]) -> Graph:
+                   weights_node: BaseNode) -> Graph:
         """
-        Combines an activation --> weights edge's node into one virtual composed node that contains the activation
+        Combines an activation --> weights edge's nodes into one virtual composed node that contains the activation
         operation and the linear operation (in that order).
         The node's quantization configuration candidates include the product of both node's candidates.
         Note that if the activation node has multiple outputs (beside its matched weights node) than the substitution
@@ -48,14 +46,17 @@ class VirtualActivationWeightsComposition(common.BaseSubstitution):
 
         Args:
             graph: Graph we apply the substitution on.
-            edge_nodes: An edge to be composed.
+            weights_node: A node with linear operation to be combined with its preceding activation.
 
         Returns:
             Graph after applying the substitution.
         """
 
-        act_node = edge_nodes[0]
-        weights_node = edge_nodes[1]
+        predecessors = graph.get_prev_nodes(weights_node)
+        if len(predecessors) != 1:
+            return graph
+
+        act_node = predecessors[0]
 
         if len(graph.out_edges(act_node)) > 1:
             Logger.warning(f"Node {act_node.name} has multiple outgoing edges, which is not supported with "
