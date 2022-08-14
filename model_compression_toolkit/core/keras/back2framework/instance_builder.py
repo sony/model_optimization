@@ -17,7 +17,6 @@
 import copy
 from typing import List, Dict
 
-from keras.layers import Conv2D
 from networkx.algorithms.dag import topological_sort
 
 import tensorflow as tf

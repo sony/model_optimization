@@ -88,8 +88,7 @@ def calculate_min_max_values(threshold: np.ndarray,
 def quantize_tensor(tensor_data: np.ndarray,
                     threshold: np.ndarray,
                     n_bits: int,
-                    signed: bool,
-                    fake_quant: bool = True) -> np.ndarray:
+                    signed: bool) -> np.ndarray:
     """
     Quantize a tensor according to given: threshold, number of bits, and whether
     quantization range is sign or unsigned.
@@ -116,15 +115,13 @@ def quantize_tensor(tensor_data: np.ndarray,
     return uniform_quantize_tensor(tensor_data,
                                    range_min=range_min,
                                    range_max=range_max,
-                                   n_bits=n_bits,
-                                   fake_quant=fake_quant)
+                                   n_bits=n_bits)
 
 
 def uniform_quantize_tensor(tensor_data: np.ndarray,
                             range_min: np.ndarray,
                             range_max: np.ndarray,
-                            n_bits: int,
-                            fake_quant: bool = True) -> np.ndarray:
+                            n_bits: int) -> np.ndarray:
     """
     Quantize a tensor according to given range (min, max) and number of bits.
 
@@ -148,11 +145,8 @@ def uniform_quantize_tensor(tensor_data: np.ndarray,
     clipped_tensor = np.clip(tensor_data, a_min=a, a_max=b)
 
     # Quantize the data between min/max of quantization range.
-    if fake_quant:
-        q = delta * np.round((clipped_tensor - a) / delta) + a
-    else:
-        q = np.round((clipped_tensor - a) / delta)
-    return q
+    return delta * np.round((clipped_tensor - a) / delta) + a
+
 
 
 def kmeans_assign_clusters(cluster_centers: np.ndarray,

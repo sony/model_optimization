@@ -131,12 +131,7 @@ class CustomLayerTest(BaseKerasFeatureNetworkTest):
             quantized_model = load_model('./qmodel.h5', custom_objects)
         quantized_model(input_x)
         converter = tf.lite.TFLiteConverter.from_keras_model(quantized_model)
-        # converter.experimental_new_converter = not args.disable_experimental_new_converter
         tflite_quant_model = converter.convert()
-        # model_name = model.name.replace('.', '_')
-        # model_filename = f'{model_name}_{FILE_TIME_STAMP}_debug.tflite' if args.run_debugger else f'{model_name}_' \
-        #                                                                                           f'{
-        # FILE_TIME_STAMP}.tflite'
         model_file = './qmodel.tflite'
         Path(model_file).write_bytes(tflite_quant_model)
         print(f"TFLite Model: {model_file}")

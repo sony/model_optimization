@@ -29,4 +29,3 @@ class ModelBuilderMode(Enum):
     FLOAT = 0
     QUANTIZED = 1
     MIXEDPRECISION = 2
-    FULLY_QUANTIZED = 3

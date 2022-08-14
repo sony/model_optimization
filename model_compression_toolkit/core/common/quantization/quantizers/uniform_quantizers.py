@@ -33,8 +33,7 @@ def power_of_two_quantizer(tensor_data: np.ndarray,
                            signed: bool,
                            quantization_params: dict,
                            per_channel: bool,
-                           output_channels_axis: int,
-                           fake_quant: bool = True) -> np.ndarray:
+                           output_channels_axis: int) -> np.ndarray:
     """
     Quantize a tensor according to given: threshold, number of bits, and whether
     quantization range is sign or unsigned.
@@ -59,8 +58,7 @@ def power_of_two_quantizer(tensor_data: np.ndarray,
     return quantize_tensor(tensor_data,
                            threshold,
                            n_bits,
-                           signed,
-                           fake_quant=fake_quant)
+                           signed)
 
 
 def symmetric_quantizer(tensor_data: np.ndarray,
