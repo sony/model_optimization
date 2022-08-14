@@ -474,6 +474,14 @@ class FeatureNetworkTest(unittest.TestCase):
         self.test_gptq(experimental_facade=True,
                        experimental_exporter=True)
 
+    # TODO: remove custom objects
+    # TODO: remove uniform quantizer
+    # TODO: use constants in custom objects
+    # TODO: add function to exporter API
+    # TODO: add unit tests
+    # TODO: license, comments and type hints
+
+
     # Comment out due to problem in Tensorflow 2.8
     # def test_gptq_conv_group(self):
     #     GradientPTQLearnRateZeroConvGroupTest(self).run_test()
