@@ -102,3 +102,14 @@ SOFTMAX_THRESHOLD = 1
 VIRTUAL_WEIGHTS_SUFFIX = '_v_weights'
 VIRTUAL_ACTIVATION_SUFFIX = '_v_activation'
 VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX = 'virtual'
+
+# Quantization config candidate initialization
+ACTIVATION_QUANTIZATION_CFG = 'activation_quantization_cfg'
+WEIGHTS_QUANTIZATION_CFG = 'weights_quantization_cfg'
+QC = 'qc'
+OP_CFG = 'op_cfg'
+ACTIVATION_QUANTIZATION_FN = 'activation_quantization_fn'
+WEIGHTS_QUANTIZATION_FN = 'weights_quantization_fn'
+ACTIVATION_QUANT_PARAMS_FN = 'activation_quantization_params_fn'
+WEIGHTS_QUANT_PARAMS_FN = 'weights_quantization_params_fn'
+WEIGHTS_CHANNELS_AXIS = 'weights_channels_axis'
