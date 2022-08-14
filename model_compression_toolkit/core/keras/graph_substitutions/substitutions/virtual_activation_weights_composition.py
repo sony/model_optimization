@@ -32,7 +32,7 @@ class VirtualActivationWeightsComposition(common.BaseSubstitution):
                        NodeOperationMatcher(Dense) | \
                        NodeOperationMatcher(Conv2DTranspose)
 
-        super().__init__(matcher_instance=EdgeMatcher(act_node, weights_node))
+        super().__init__(matcher_instance=weights_node)
 
     def substitute(self,
                    graph: Graph,
