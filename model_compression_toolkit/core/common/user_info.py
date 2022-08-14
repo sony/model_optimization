@@ -31,7 +31,6 @@ class UserInformation:
         self.mixed_precision_cfg = None
         self.fusions = []
         self.final_kpi = None
-        self.custom_objects = {}
 
     def set_input_scale(self, scale_value: float):
         """

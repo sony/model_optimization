@@ -13,36 +13,46 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.core.keras.quantizer.input_layer_quantize_transform import InputLayerWrapperTransform
-
-from typing import List, Tuple
-
 import tensorflow as tf
+import tensorflow_model_optimization.quantization.keras.graph_transformations.model_transformer as mt
 from keras.models import Model
 from tensorflow.python.util.object_identity import Reference as TFReference
 from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.default_8bit_quantize_configs import \
     NoOpQuantizeConfig
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
+from typing import List, Tuple
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder, \
     is_layer_fake_quant, get_node_name_from_layer
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.keras.quantizer.input_layer_quantize_transform import InputLayerWrapperTransform
 from model_compression_toolkit.exporter.fully_quantized.keras.builder.quantize_config_to_node import \
     get_quantization_config
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.activation_quantize_config import \
     ActivationQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_activation_quantize_config import \
+from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_activation_quantize_config \
+    import \
     WeightsActivationQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import WeightsQuantizeConfig
-
+from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import \
+    WeightsQuantizeConfig
 from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.fq_quantizer import FakeQuantQuantizer
-from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.uniform_quantizer import UniformQuantizer, \
+from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.weights_uniform_quantizer import \
     WeightsUniformQuantizer
-import tensorflow_model_optimization.quantization.keras.graph_transformations.model_transformer as mt
+
+
+def get_fully_quantized_keras_model(graph: Graph) -> tf.keras.models.Model:
+    """
+    Convert graph to fully quantized Keras model.
+
+    Args:
+        graph: Graph to convert to a Keras model.
+
+    Returns:
+        Fully quantized Keras model.
+    """
+    return FullyQuantizedKerasModelBuilder(graph=graph).build_model()
 
 
 class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
@@ -51,23 +61,14 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
     """
 
     def __init__(self,
-                 graph: common.Graph,
-                 append2output=None,
-                 fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                 return_float_outputs: bool = False):
+                 graph: common.Graph):
         """
 
         Args:
             graph: Graph to build the model from.
-            append2output: Nodes to append to model's output.
-            fw_info: Information about the specific framework of the model that is built.
-            return_float_outputs: Whether the model returns float tensors or not.
         """
 
-        super().__init__(graph,
-                         append2output,
-                         fw_info,
-                         return_float_outputs)
+        super().__init__(graph)
 
     def _quantize_node_activations(self,
                                    node: BaseNode,
@@ -130,19 +131,16 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
                                                         for inp in model_inputs])
         model = input_transformer.transform()[0]
 
-        user_info.custom_objects = self.get_custom_objects()
-
         return model, user_info
 
     def get_custom_objects(self):
-        return {"QuantizeWrapper":QuantizeWrapper,
-                "WeightsActivationQuantizeConfig": WeightsActivationQuantizeConfig,
-                "ActivationQuantizeConfig": ActivationQuantizeConfig,
-                "WeightsQuantizeConfig": WeightsQuantizeConfig,
-                "WeightsUniformQuantizer": WeightsUniformQuantizer,
-                "UniformQuantizer": UniformQuantizer,
-                "NoOpQuantizeConfig": NoOpQuantizeConfig,
-                "FakeQuantQuantizer": FakeQuantQuantizer}
+        return {QuantizeWrapper.__name__: QuantizeWrapper,
+                WeightsActivationQuantizeConfig.__name__: WeightsActivationQuantizeConfig,
+                ActivationQuantizeConfig.__name__: ActivationQuantizeConfig,
+                WeightsQuantizeConfig.__name__: WeightsQuantizeConfig,
+                WeightsUniformQuantizer.__name__: WeightsUniformQuantizer,
+                NoOpQuantizeConfig.__name__: NoOpQuantizeConfig,
+                FakeQuantQuantizer.__name__: FakeQuantQuantizer}
 
 
 

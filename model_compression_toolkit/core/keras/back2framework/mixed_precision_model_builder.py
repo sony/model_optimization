@@ -141,6 +141,6 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
 
     def get_custom_objects(self):
-        return {"QuantizeWrapper":QuantizeWrapper,
-                "SelectiveQuantizeConfig": SelectiveQuantizeConfig}
+        return {QuantizeWrapper.__name__:QuantizeWrapper,
+                SelectiveQuantizeConfig.__name__: SelectiveQuantizeConfig}
 

@@ -34,7 +34,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
-    from model_compression_toolkit.exporter.fully_quantized.keras.builder.fully_quantized_model_builder import FullyQuantizedKerasModelBuilder
+    from model_compression_toolkit.exporter import get_fully_quantized_keras_model
 
     from model_compression_toolkit import get_target_platform_capabilities
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
@@ -149,7 +149,7 @@ if FOUND_TF:
         if new_experimental_exporter:
             Logger.warning('Using new experimental exported models. '
                            'Please do not use unless you are familiar with what you are doing')
-            return FullyQuantizedKerasModelBuilder(graph=tg, fw_info=fw_info).build_model()
+            return get_fully_quantized_keras_model(tg)
 
         return export_model(tg,
                             fw_info,

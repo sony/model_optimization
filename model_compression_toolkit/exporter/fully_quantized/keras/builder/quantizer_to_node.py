@@ -6,7 +6,7 @@ from model_compression_toolkit.core.common.target_platform import QuantizationMe
 import numpy as np
 
 from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.fq_quantizer import FakeQuantQuantizer
-from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.uniform_quantizer import \
+from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.weights_uniform_quantizer import \
     WeightsUniformQuantizer
 
 

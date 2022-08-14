@@ -474,10 +474,10 @@ class FeatureNetworkTest(unittest.TestCase):
         self.test_gptq(experimental_facade=True,
                        experimental_exporter=True)
 
-    # TODO: remove custom objects
-    # TODO: remove uniform quantizer
-    # TODO: use constants in custom objects
-    # TODO: add function to exporter API
+    # TODO: remove custom objects - DONE
+    # TODO: remove uniform quantizer - DONE
+    # TODO: use constants in custom objects - DONE
+    # TODO: add function to exporter API - DONE
     # TODO: add unit tests
     # TODO: license, comments and type hints
 
