@@ -391,6 +391,8 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             new_node: New node to set as an input node if the current node is an input node.
 
         """
+        if new_node is None:
+            Logger.error("Graph received a None value as a new input node.")
 
         graph_inputs = self.get_inputs()
         new_graph_inputs = copy(graph_inputs)

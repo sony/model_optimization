@@ -367,8 +367,8 @@ class BaseNode:
     def get_unique_weights_candidates(self) -> List[Any]:
         """
         Returns a list with node's candidates of unique weights bit-width value.
-        If the node have multiple candidates with the same weights bit-width, the candidate with the highest
-        activation bit-width is returned.
+        If the node have multiple candidates with the same weights bit-width,
+        the first candidate in the list is returned.
 
         Returns: A list with node's candidates of unique weights bit-width value.
         """
@@ -383,8 +383,8 @@ class BaseNode:
     def get_unique_activation_candidates(self) -> List[Any]:
         """
         Returns a list with node's candidates of unique activation bit-width value.
-        If the node have multiple candidates with the same activation bit-width, the candidate with the highest
-        weights bit-width is returned.
+        If the node have multiple candidates with the same activation bit-width,
+        the first candidate in the list is returned.
 
         Returns: A list with node's candidates of unique activation bit-width value.
         """

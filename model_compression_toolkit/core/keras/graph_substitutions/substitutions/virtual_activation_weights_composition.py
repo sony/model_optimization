@@ -42,7 +42,7 @@ class VirtualActivationWeightsComposition(common.BaseSubstitution):
         """
         Combines an activation --> weights edge's node into one virtual composed node that contains the activation
         operation and the linear operation (in that order).
-        The node's quantization configuration candidates include the product of both node's candidates.
+        The node's quantization configuration candidates include the cartesian product of both node's candidates.
         Note that if the activation node has multiple outputs (beside its matched weights node) than the substitution
         would not apply.
 

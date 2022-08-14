@@ -128,9 +128,9 @@ class TestActivationWeightsComposition(unittest.TestCase):
         composed_node_2 = v_graph.get_topo_sorted_nodes()[2]
 
         self.assertTrue(len(composed_node_1.candidates_quantization_cfg) == num_weights_candidates,
-                        "The composed node should have the product of the activation and weights nodes candidates.")
+                        "The composed node should have the cartesian product of the activation and weights nodes candidates.")
         self.assertTrue(len(composed_node_2.candidates_quantization_cfg) == num_activation_candidates,
-                        "The composed node should have the product of the activation and weights nodes candidates.")
+                        "The composed node should have the cartesian product of the activation and weights nodes candidates.")
 
     def test_two_conv_net_compose_without_split(self):
         """
