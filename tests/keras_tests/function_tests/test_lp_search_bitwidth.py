@@ -43,7 +43,10 @@ class MockReconstructionHelper:
     def __init__(self):
         pass
 
-    def reconstruct_config_from_virtual_graph(self, max_kpi_config):
+    def reconstruct_config_from_virtual_graph(self,
+                                              max_kpi_config,
+                                              changed_virtual_nodes_idx=None,
+                                              original_base_config=None):
         return max_kpi_config
 
 
