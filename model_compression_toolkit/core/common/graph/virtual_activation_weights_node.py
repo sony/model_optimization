@@ -112,6 +112,12 @@ class VirtualActivationWeightsNode(BaseNode):
     A node that represents a composition of pair of sequential activation node and weights (kernel) node.
     This structure is used for mixed-precision search with bit-operation KPI.
     The node's candidates are the cartesian product of both nodes' candidates.
+
+    Important: note that not like regular BaseNode or FunctionalNode, in VirtualActivationWeightsNode the activation
+    candidates config refer to the quantization config of the activation that precedes the linear operation! instead of
+    the output of the linear operation.
+    It is ok, since this node is not meant to be used in a graph for creating an actual model, but only a virtual
+    representation of the model's graph only for allowing to compute the bit-operations KPI in mixed-precision.
     """
 
     def __init__(self,
@@ -177,21 +183,3 @@ class VirtualActivationWeightsNode(BaseNode):
                                          c.activation_quantization_cfg.activation_n_bits), reverse=True)
 
         self.candidates_quantization_cfg = v_candidates
-
-    def get_bops_count(self, fw_impl: Any, fw_info: FrameworkInfo, candidate_idx: int) -> float:
-        """
-        Computes the composed node's (edge) bit-operation count.
-
-        Args:
-            fw_impl: A FrameworkImplementation object with framework specific methods.
-            fw_info: A FrameworkInfo object with framework specific information,
-            candidate_idx: The index of the node's quantization candidate configuration.
-
-        Returns: The BOPS count of the composed node.
-
-        """
-        node_mac = fw_impl.get_node_mac_operations(self.original_weights_node, fw_info)
-        node_bops = self.candidates_quantization_cfg[candidate_idx].weights_quantization_cfg.weights_n_bits * \
-                    self.candidates_quantization_cfg[candidate_idx].activation_quantization_cfg.activation_n_bits * \
-                    node_mac
-        return node_bops
