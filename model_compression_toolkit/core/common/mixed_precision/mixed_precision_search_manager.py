@@ -491,13 +491,15 @@ class ConfigReconstructionHelper:
                 # The original node is both weights and activation configurable
                 self.retrieve_activation_weights_config(activation_node, weights_node, virtual_node, virtual_cfg_idx, virtual_mp_cfg)
             else:
-                self.retrieve_weights_only_config(weights_node, virtual_node, virtual_cfg_idx)
+                # weights_node here is a split weights node therefore must have 'origin_node'
+                self.retrieve_weights_only_config(weights_node.origin_node, virtual_node, virtual_cfg_idx)
         else:
             assert isinstance(activation_node, VirtualSplitActivationNode)  # Sanity check
             if activation_node.name in self.virtual_sorted_nodes_names:
                 self.retrieve_activation_weights_config(activation_node, weights_node, virtual_node, virtual_cfg_idx, virtual_mp_cfg)
             else:
                 # The original node is only weights configurable
+                # weights_node here is a split weights node therefore must have 'origin_node'
                 self.retrieve_weights_only_config(weights_node.origin_node, virtual_node, virtual_cfg_idx)
 
     def get_weights_for_split_activation(self,
@@ -531,6 +533,7 @@ class ConfigReconstructionHelper:
                 self.retrieve_weights_activation_config(activation_node, weights_node, virtual_node, virtual_cfg_idx, virtual_mp_cfg)
             else:
                 # The original node is only activation configurable
+                # activation_node here is a split activation node therefore must have 'origin_node'
                 self.retrieve_activation_only_config(activation_node.origin_node, virtual_node, virtual_cfg_idx)
         else:
             # If the node's predecessor e multiple outgoing edges than it is possible that this weights
