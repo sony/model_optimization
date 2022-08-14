@@ -19,13 +19,19 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import calculate_delta
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-import numpy as np
-
 from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.fq_quantizer import FakeQuantQuantizer
 from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.weights_uniform_quantizer import \
     WeightsUniformQuantizer
 
 
+# Supporting other quantizer types in the future
+SUPPORTED_WEIGHT_QUANTIZER_TYPES = [QuantizationMethod.POWER_OF_TWO,
+                                    QuantizationMethod.SYMMETRIC,
+                                    QuantizationMethod.UNIFORM]
+
+SUPPORTED_ACTIVATION_QUANTIZER_TYPES = [QuantizationMethod.POWER_OF_TWO,
+                                        QuantizationMethod.SYMMETRIC,
+                                        QuantizationMethod.UNIFORM]
 
 
 def get_weights_quantizer_for_node(node: BaseNode, weights_attr :List[str]):
@@ -33,14 +39,10 @@ def get_weights_quantizer_for_node(node: BaseNode, weights_attr :List[str]):
     assert node.final_weights_quantization_cfg is not None, f'Can not set quantizer for a node with no final ' \
                                                             f'weights quantization configuration'
 
-    supported_quantizers = [QuantizationMethod.POWER_OF_TWO,
-                            QuantizationMethod.SYMMETRIC,
-                            QuantizationMethod.UNIFORM]
-
     node_w_qc = node.final_weights_quantization_cfg
     weights_quantization_method = node_w_qc.weights_quantization_method
-    assert weights_quantization_method in supported_quantizers, \
-        f'Fully quantized models are now supported for {supported_quantizers} quantization methods, but node ' \
+    assert weights_quantization_method in SUPPORTED_WEIGHT_QUANTIZER_TYPES, \
+        f'Fully quantized models are now supported for {SUPPORTED_WEIGHT_QUANTIZER_TYPES} quantization methods, but node ' \
         f'has {weights_quantization_method} quantization method'
 
     if weights_quantization_method in [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC]:
@@ -68,14 +70,10 @@ def get_activations_quantizer_for_node(node: BaseNode):
     assert node.final_activation_quantization_cfg is not None, f'Can not set quantizer for a node with no final ' \
                                                                f'activation quantization configuration'
 
-    supported_quantizers = [QuantizationMethod.POWER_OF_TWO,
-                            QuantizationMethod.SYMMETRIC,
-                            QuantizationMethod.UNIFORM]
-
     node_act_qc = node.final_activation_quantization_cfg
     activation_quantization_method = node_act_qc.activation_quantization_method
-    assert activation_quantization_method in supported_quantizers, \
-        f'Fully quantized models are now supported for {supported_quantizers} quantization methods, but node ' \
+    assert activation_quantization_method in SUPPORTED_ACTIVATION_QUANTIZER_TYPES, \
+        f'Fully quantized models are now supported for {SUPPORTED_ACTIVATION_QUANTIZER_TYPES} quantization methods, but node ' \
         f'has {activation_quantization_method} quantization method'
 
     if activation_quantization_method in [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC]:
