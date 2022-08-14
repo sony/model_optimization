@@ -1,0 +1,86 @@
+# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+import tensorflow as tf
+import itertools
+from tensorflow.keras.layers import Dense, DepthwiseConv2D, Conv2D, Conv2DTranspose
+from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.core.common import BaseNode, Graph, BaseSubstitution
+from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
+from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitWeightsNode, \
+    VirtualSplitActivationNode
+
+
+class WeightsActivationSplit(BaseSubstitution):
+    def __init__(self):
+        """
+        Matches: (DepthwiseConv2D, Conv2D, Dense, Conv2DTranspose)
+        """
+        op2d_node = NodeOperationMatcher(DepthwiseConv2D) | \
+                    NodeOperationMatcher(Conv2D) | \
+                    NodeOperationMatcher(Dense) | \
+                    NodeOperationMatcher(Conv2DTranspose)
+
+        super().__init__(matcher_instance=op2d_node)
+
+    def substitute(self,
+                   graph: Graph,
+                   node: BaseNode) -> Graph:
+        """
+        Decompose a linear node into two nodes - one with the linear operations (a weights node) and one with
+        the activation operation (with an identity function that just passes the node's output, but allows to
+        quantize it according to the node's activation quantization configuration candidates).
+        The two new virtual nodes are connected with an edge [weights node --> activation node].
+        Note that the node is split only if its candidates list is composite, that is, it contains all the combinations
+        of activation and weights bit-width that exists in any of its candidates.
+
+        Args:
+            graph: Graph we apply the substitution on.
+            node: Node to split.
+
+        Returns:
+            Graph after applying the substitution.
+        """
+
+        if not node.is_all_weights_candidates_equal() and not node.is_all_activation_candidates_equal():
+            # Node has both different weights and different activation configuration candidates
+            weights_bits = [c.weights_quantization_cfg.weights_n_bits for c in node.get_unique_weights_candidates()]
+            activation_bits = [c.activation_quantization_cfg.activation_n_bits for c in node.get_unique_activation_candidates()]
+            expected_candidates = list(itertools.product(weights_bits, activation_bits))
+            all_candidates_bits = [(c.weights_quantization_cfg.weights_n_bits,
+                                    c.activation_quantization_cfg.activation_n_bits) for c in node.candidates_quantization_cfg]
+            if not set(expected_candidates).issubset(all_candidates_bits):
+                # Node is not composite, therefore, can't be split
+                Logger.critical(f"The graph contains a node {node.name} with non composite candidates."
+                                f"In order to run mixed-precision search with BOPS target KPI, "
+                                f"all model layers should be composite.")
+
+        weights_node = VirtualSplitWeightsNode(node)
+        activation_node = VirtualSplitActivationNode(node, tf.keras.layers.Activation)
+
+        # Update graph
+        graph.add_node(weights_node)
+        graph.add_node(activation_node)
+        graph.reconnect_in_edges(current_node=node, new_node=weights_node)
+        graph.reconnect_out_edges(current_node=node, new_node=activation_node)
+        graph.replace_output_node(current_node=node, new_node=activation_node)
+        graph.add_edge(weights_node,
+                       activation_node,
+                       source_index=0,
+                       sink_index=0)
+        graph.remove_node(node)
+
+        return graph
+

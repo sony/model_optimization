@@ -15,13 +15,11 @@
 
 
 import copy
-from typing import List, Dict
+from typing import List
 
 from model_compression_toolkit.core.common import Logger, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
-from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeActivationQuantizationConfig
@@ -153,13 +151,13 @@ def create_node_qc_candidate(qc: QuantizationConfig,
 
     activation_quantization_params_fn = get_activation_quantization_params_fn(op_cfg.activation_quantization_method)
 
-    return CandidateNodeQuantizationConfig(qc,
-                                           op_cfg,
-                                           activation_quantization_fn,
-                                           activation_quantization_params_fn,
-                                           weights_quantization_fn,
-                                           weights_quantization_params_fn,
-                                           weight_channel_axis)
+    return CandidateNodeQuantizationConfig(qc=qc,
+                                           op_cfg=op_cfg,
+                                           activation_quantization_fn=activation_quantization_fn,
+                                           activation_quantization_params_fn=activation_quantization_params_fn,
+                                           weights_quantization_fn=weights_quantization_fn,
+                                           weights_quantization_params_fn=weights_quantization_params_fn,
+                                           weight_channel_axis=weight_channel_axis)
 
 
 def _create_node_candidates_qc(qc: QuantizationConfig,
