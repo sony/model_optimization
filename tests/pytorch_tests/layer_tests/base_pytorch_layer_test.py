@@ -33,7 +33,7 @@ from model_compression_toolkit import FrameworkInfo, pytorch_post_training_quant
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit.core.pytorch.constants import CALL_FUNCTION, OUTPUT, CALL_METHOD, PLACEHOLDER
-from model_compression_toolkit.core.pytorch.reader.graph_builders import DummyPlaceHolder, ConstantHolder
+from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, ConstantHolder
 from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy, to_torch_tensor
 from tests.common_tests.base_layer_test import BaseLayerTest, LayerTestMode
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO

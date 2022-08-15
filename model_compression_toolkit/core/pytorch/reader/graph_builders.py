@@ -23,51 +23,8 @@ from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.pytorch.constants import OUTPUT, PLACEHOLDER, TENSOR_META, CALL_FUNCTION, TYPE, \
-    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, GET_ATTR, CONSTANT
-
-
-class DummyPlaceHolder(torch.nn.Module):
-    """
-    Class for PlaceHolder operator since a Pytorch model doesn't have one but FX does.
-    """
-    def __name__(self):
-        return PLACEHOLDER
-
-    def forward(self, x):
-        return x
-
-
-class ConstantHolder(torch.nn.Module):
-    """
-    Class for saving constant values or parameters in graph inference.
-    """
-    def __init__(self, const_size):
-        super(ConstantHolder, self).__init__()
-        setattr(self, CONSTANT, torch.nn.Parameter(torch.empty(const_size)))
-
-    def __name__(self):
-        return CONSTANT
-
-    def forward(self):
-        return getattr(self, CONSTANT)
-
-
-class BufferHolder(torch.nn.Module):
-    """
-    Class for saving buffers in graph inference.
-    """
-    def __init__(self, const_size):
-        super(BufferHolder, self).__init__()
-        if torch.cuda.is_available():
-            setattr(self, CONSTANT, torch.FloatTensor(size=const_size).to(torch.device('cuda')))
-        else:
-            setattr(self, CONSTANT, torch.FloatTensor(size=const_size))
-
-    def __name__(self):
-        return CONSTANT
-
-    def forward(self):
-        return getattr(self, CONSTANT)
+    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, GET_ATTR, CONSTANT, BUFFER
+from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, ConstantHolder, BufferHolder
 
 
 def nodes_builder(model: GraphModule,
@@ -124,13 +81,12 @@ def nodes_builder(model: GraphModule,
         elif node.op == GET_ATTR:
             if node.meta[TYPE] == torch.Tensor:
                 node_type = BufferHolder
-                node_has_activation = False
             else:
                 node_type = ConstantHolder
-                node_has_activation = False
-                common.Logger.warning(
-                    'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
-                    'converting the model.')
+            node_has_activation = False
+            common.Logger.warning(
+                'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
+                'converting the model.')
         else:
             raise Exception(f'Unknown node type: {node.name}')
 
@@ -145,23 +101,30 @@ def nodes_builder(model: GraphModule,
             weights.update(named_buffer_weights)
 
         if node.op == GET_ATTR:
-            if node_type == BufferHolder:
-                named_parameters_weights = {CONSTANT: parameter for name, parameter in
-                                            model.named_parameters() if node.target == name}
-                named_buffer_weights = {CONSTANT: parameter for name, parameter in
-                                        model.named_buffers() if node.target == name}
-            else:
+            if node_type == ConstantHolder:
                 named_parameters_weights = {CONSTANT: to_numpy(parameter) for name, parameter in
                                             model.named_parameters() if node.target == name}
                 named_buffer_weights = {CONSTANT: to_numpy(parameter) for name, parameter in
                                         model.named_buffers() if node.target == name}
-            if len(named_parameters_weights) + len(named_buffer_weights) > 1:
-                raise Exception(
-                    f'Constant parameter can only have one tensor. Here we have {len(named_parameters_weights) + len(named_buffer_weights)}')
+                if len(named_parameters_weights) + len(named_buffer_weights) > 1:
+                    raise Exception(
+                        f'Constant parameter can only have one tensor. Here we have {len(named_parameters_weights) + len(named_buffer_weights)}')
 
-            weights.update(named_parameters_weights)
-            weights.update(named_buffer_weights)
-            framework_attr.update(const_size=weights.get(CONSTANT).shape)
+                weights.update(named_parameters_weights)
+                weights.update(named_buffer_weights)
+                framework_attr.update(const_size=weights.get(CONSTANT).shape)
+            elif node_type == BufferHolder:
+                named_parameters_weights = {BUFFER: to_numpy(parameter) for name, parameter in
+                                            model.named_parameters() if node.target == name}
+                named_buffer_weights = {BUFFER: to_numpy(parameter) for name, parameter in
+                                        model.named_buffers() if node.target == name}
+                if len(named_parameters_weights) + len(named_buffer_weights) > 1:
+                    raise Exception(
+                        f'Constant parameter can only have one tensor. Here we have {len(named_parameters_weights) + len(named_buffer_weights)}')
+
+                weights.update(named_parameters_weights)
+                weights.update(named_buffer_weights)
+                framework_attr.update(name=node.name)
 
         # extract input shapes
         input_shape = []
@@ -185,14 +148,14 @@ def nodes_builder(model: GraphModule,
         else:
             output_shape = []
 
-        # filter Nodes from framework attr
+        # filter Nodes from framework attributes, we replace these attributes with nx graph nodes
         framework_attr_filtered = {}
         for k, v in framework_attr.items():
             if not isinstance(v, torch.fx.node.Node):
                 framework_attr_filtered[k] = v
         framework_attr = framework_attr_filtered
 
-        # filter Nodes from node kwargs
+        # filter Nodes from node kwargs, we replace these attributes with nx graph nodes
         node_kwargs = {}
         for k, v in node.kwargs.items():
             if not isinstance(v, torch.fx.node.Node):

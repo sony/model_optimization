@@ -28,7 +28,9 @@ from model_compression_toolkit.core.common.graph.functional_node import Function
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-from model_compression_toolkit.core.pytorch.reader.graph_builders import DummyPlaceHolder, BufferHolder
+from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, BufferHolder
+from model_compression_toolkit.core.pytorch.utils import get_working_device
+from model_compression_toolkit.core.pytorch.constants import BUFFER
 
 
 def _build_input_tensors_list(node: BaseNode,
@@ -84,8 +86,6 @@ def _run_operation(n: BaseNode,
     functional_kwargs = n.op_call_kwargs if isinstance(n, FunctionalNode) else {}
     if isinstance(n, FunctionalNode) and n.inputs_as_list:
         out_tensors_of_n = op_func(input_tensors, *op_call_args, **functional_kwargs)
-    elif n.type == BufferHolder:
-        out_tensors_of_n = n.weights['constant']
     else:
         out_tensors_of_n = op_func(*input_tensors + op_call_args, **functional_kwargs)
 
@@ -162,10 +162,12 @@ class PytorchModel(torch.nn.Module):
     def _add_modules(self):
         for n in self.node_sort:
             if not isinstance(n, FunctionalNode):
-                    if n.type == BufferHolder:
-                        self.register_buffer(n.name, n.weights['constant'])
-                    else:
-                        self.add_module(n.name, node_builder(n))
+                if n.type == BufferHolder:
+                    self.add_module(n.name, node_builder(n))
+                    self.get_submodule(n.name). \
+                        register_buffer(n.name, torch.Tensor(n.get_weights_by_keys(BUFFER)).to(get_working_device()))
+                else:
+                    self.add_module(n.name, node_builder(n))
 
     def forward(self,
                 *args: Any) -> Any:
