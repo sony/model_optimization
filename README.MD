@@ -6,7 +6,7 @@ Model Compression Toolkit (MCT) is an open-source project for neural network mod
 
 Currently, this project supports hardware-friendly post-training quantization (HPTQ) with Tensorflow 2 and Pytorch [1]. 
 
-The MCT project is developed by researchers and engineers working at Sony Semiconductors Israel.
+The MCT project is developed by researchers and engineers working at Sony Semiconductor Israel.
 
 For more information, please visit our [project website](https://sony.github.io/model_optimization/).
 
