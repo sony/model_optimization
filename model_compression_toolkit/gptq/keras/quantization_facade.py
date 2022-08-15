@@ -19,7 +19,6 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.exporter import get_fully_quantized_keras_model
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -42,7 +41,7 @@ if common.constants.FOUND_TF:
     from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
     from keras.optimizer_v2.optimizer_v2 import OptimizerV2
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
-
+    from model_compression_toolkit.exporter import get_fully_quantized_keras_model
     from model_compression_toolkit import get_target_platform_capabilities
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
