@@ -12,21 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================\
-
 import numpy as np
 import tensorflow as tf
+from keras.engine.base_layer import Layer
+from tensorflow import TensorShape
 from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
-
-from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
+from typing import Dict, Any
 
 
 class FakeQuantQuantizer(Quantizer):
+    """
+    Quantizer using TensorFlow fake quant layer to quantize activations.
+    """
 
     def __init__(self,
-                 nbits,
-                 min_range,
-                 max_range,
+                 nbits: int,
+                 min_range: np.ndarray,
+                 max_range: np.ndarray,
                  ):
+        """
+
+        Args:
+            nbits: Number of bits to quantize.
+            min_range: Min quantization range.
+            max_range: Max quantization range.
+        """
         self.nbits = nbits
         self.min_range = tf.Variable(min_range,
                                      trainable=False,
@@ -36,16 +46,44 @@ class FakeQuantQuantizer(Quantizer):
                                      dtype=tf.float32)
 
 
-    def get_config(self):
+    def get_config(self) -> Dict[str, Any]:
+        """
+
+        Returns: Configuration of this FakeQuantQuantizer
+
+        """
         return {"nbits": self.nbits,
                 "min_range": self.min_range.numpy(),
                 "max_range": self.max_range.numpy()
                 }
 
-    def build(self, tensor_shape, name, layer):
+    def build(self, tensor_shape: TensorShape, name: str, layer: Layer) -> dict:
+        """
+        Add variables under layer's scope.
+
+        Args:
+            tensor_shape: Shape of tensor which needs to be quantized.
+            name: Name of tensor.
+            layer: Layer to add variables to.
+
+        Returns:
+            Dictionary with new layer's variables.
+        """
         return {}
 
     def __call__(self, inputs, training, weights, **kwargs):
+        """
+        Apply quantization to the input tensor.
+
+        Args:
+            inputs: Input tensor to be quantized.
+            training: Whether the graph is currently training.
+            weights: Dictionary of weights the quantizer can use to quantize the tensor. This contains the weights created in the `build` function.
+            **kwargs: Additional variables which may be passed to the quantizer.
+
+        Returns:
+            Quantized tensor.
+        """
         with tf.name_scope('FakeQuant'):
             return tf.quantization.fake_quant_with_min_max_vars(inputs,
                                                                 min=self.min_range,
