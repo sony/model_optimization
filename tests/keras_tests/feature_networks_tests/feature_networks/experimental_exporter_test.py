@@ -23,6 +23,8 @@ from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.a
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_activation_quantize_config \
     import \
     WeightsActivationQuantizeConfig
+from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import \
+    WeightsQuantizeConfig
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
@@ -49,4 +51,14 @@ class ExperimentalExporterTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(isinstance(quantized_model.layers[2], QuantizeWrapper))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[2].quantize_config, WeightsActivationQuantizeConfig))
+
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3], QuantizeWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.Conv2D))
+        self.unit_test.assertTrue(
+            isinstance(quantized_model.layers[3].quantize_config, WeightsQuantizeConfig))
+
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[4], QuantizeWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[4].layer, layers.ReLU))
+        self.unit_test.assertTrue(
+            isinstance(quantized_model.layers[4].quantize_config, ActivationQuantizeConfig))
 
