@@ -17,6 +17,7 @@ from typing import Callable, Tuple
 from typing import Dict, List
 import numpy as np
 
+from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPITarget
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_aggregation_methods import MpKpiAggregation
@@ -33,6 +34,7 @@ class MixedPrecisionSearchManager:
     def __init__(self,
                  graph: Graph,
                  fw_info: FrameworkInfo,
+                 fw_impl: FrameworkImplementation,
                  sensitivity_evaluator: SensitivityEvaluation,
                  kpi_functions: Dict[KPITarget, Tuple[MpKpiMetric, MpKpiAggregation]]):
         """
@@ -40,6 +42,7 @@ class MixedPrecisionSearchManager:
         Args:
             graph: Graph to search for its MP configuration.
             fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
+            fw_impl: FrameworkImplementation object with specific framework methods implementation.
             sensitivity_evaluator: A SensitivityEvaluation which provides a function that evaluates the sensitivity of
                 a bit-width configuration for the MP model.
             kpi_functions: A dictionary with pairs of (MpKpiMethod, MpKpiAggregationMethod) mapping a KPITarget to
@@ -48,6 +51,7 @@ class MixedPrecisionSearchManager:
 
         self.graph = graph
         self.fw_info = fw_info
+        self.fw_impl = fw_impl
         self.sensitivity_evaluator = sensitivity_evaluator
         self.layer_to_bitwidth_mapping = self.get_search_space()
         self.compute_metric_fn = self.get_sensitivity_metric()
@@ -103,7 +107,7 @@ class MixedPrecisionSearchManager:
         for kpi_target, kpi_fns in self.compute_kpi_functions.items():
             # kpi_fns is a pair of kpi computation method and kpi aggregation method (in this method we only need
             # the first one)
-            min_kpis[kpi_target] = kpi_fns[0](self.min_kpi_config, self.graph, self.fw_info)
+            min_kpis[kpi_target] = kpi_fns[0](self.min_kpi_config, self.graph, self.fw_info, self.fw_impl)
 
         return min_kpis
 
@@ -193,7 +197,8 @@ class MixedPrecisionSearchManager:
                 conf_node_idx,
                 candidate_idx),
             self.graph,
-            self.fw_info)
+            self.fw_info,
+            self.fw_impl)
 
     @staticmethod
     def replace_config_in_index(mp_cfg: List[int], idx: int, value: int) -> List[int]:

@@ -26,17 +26,20 @@ class KPITarget(Enum):
 
     Whenever adding a kpi metric to KPI class we should add a matching target to this enum.
 
-    WEIGHTS - KPI metric for weights quantization
+    WEIGHTS - Weights memory KPI metric.
 
-    ACTIVATION - KPI metric for activation quantization
+    ACTIVATION - Activation memory KPI metric.
 
-    TOTAL - KPI metric for total weights and activation.
+    TOTAL - Total memory KPI metric.
+
+    BOPS - Total Bit-Operations KPI Metric.
 
     """
 
     WEIGHTS = 'weights'
     ACTIVATION = 'activation'
     TOTAL = 'total'
+    BOPS = 'bops'
 
 
 class KPI:
@@ -47,22 +50,35 @@ class KPI:
     def __init__(self,
                  weights_memory: float = np.inf,
                  activation_memory: float = np.inf,
-                 total_memory: float = np.inf):
+                 total_memory: float = np.inf,
+                 bops: float = np.inf):
         """
 
         Args:
             weights_memory: Memory of a model's weights in bytes. Note that this includes only coefficients that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value, while the bias will not).
             activation_memory: Memory of a model's activation in bytes, according to the given activation kpi metric.
             total_memory: The sum of model's activation and weights memory in bytes, according to the given total kpi metric.
+            bops: The total bit-operations in the model.
         """
         self.weights_memory = weights_memory
         self.activation_memory = activation_memory
         self.total_memory = total_memory
+        self.bops = bops
 
     def __repr__(self):
         return f"Weights_memory: {self.weights_memory}, " \
                f"Activation_memory: {self.activation_memory}, " \
-               f"Total_memory: {self.total_memory}"
+               f"Total_memory: {self.total_memory}, " \
+               f"BOPS: {self.bops}"
+
+    def get_kpi_dict(self) -> Dict[KPITarget, float]:
+        """
+        Returns: a dictionary with the KPI object's values for each KPI target.
+        """
+        return {KPITarget.WEIGHTS: self.weights_memory,
+                KPITarget.ACTIVATION: self.activation_memory,
+                KPITarget.TOTAL: self.total_memory,
+                KPITarget.BOPS: self.bops}
 
     def set_kpi_by_target(self, kpis_mapping: Dict[KPITarget, float]):
         """
@@ -75,3 +91,4 @@ class KPI:
         self.weights_memory = kpis_mapping.get(KPITarget.WEIGHTS, np.inf)
         self.activation_memory = kpis_mapping.get(KPITarget.ACTIVATION, np.inf)
         self.total_memory = kpis_mapping.get(KPITarget.TOTAL, np.inf)
+        self.bops = kpis_mapping.get(KPITarget.BOPS, np.inf)

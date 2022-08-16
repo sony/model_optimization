@@ -21,6 +21,7 @@ from typing import List
 from model_compression_toolkit.core.common import Graph, Logger
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_functions_mapping import kpi_functions_mapping
+from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
 from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
     mp_integer_programming_search
@@ -42,6 +43,7 @@ search_methods = {
 
 def search_bit_width(graph_to_search_cfg: Graph,
                      fw_info: FrameworkInfo,
+                     fw_impl: FrameworkImplementation,
                      target_kpi: KPI,
                      sensitivity_evaluator: SensitivityEvaluation = None,
                      search_method: BitWidthSearchMethod = BitWidthSearchMethod.INTEGER_PROGRAMMING) -> List[int]:
@@ -56,6 +58,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
     Args:
         graph_to_search_cfg: Graph to search a MP configuration for.
         fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
+        fw_impl: FrameworkImplementation object with specific framework methods implementation.
         target_kpi: Target KPI to bound our feasible solution space s.t the configuration does not violate it.
         sensitivity_evaluator: A SensitivityEvaluation which provides a function that evaluates the sensitivity of
             a bit-width configuration for the MP model.
@@ -80,6 +83,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
     # Instantiate a manager object
     search_manager = MixedPrecisionSearchManager(graph,
                                                  fw_info,
+                                                 fw_impl,
                                                  sensitivity_evaluator,
                                                  kpi_functions)
 

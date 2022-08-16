@@ -192,6 +192,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         cfg = search_bit_width(graph_to_search_cfg=graph,
                                fw_info=DEFAULT_KERAS_INFO,
+                               fw_impl=keras_impl,
                                target_kpi=KPI(np.inf),
                                sensitivity_evaluator=keras_sens_eval,
                                search_method=BitWidthSearchMethod.INTEGER_PROGRAMMING)
@@ -199,6 +200,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         with self.assertRaises(Exception):
             cfg = search_bit_width(graph_to_search_cfg=graph,
                                    fw_info=DEFAULT_KERAS_INFO,
+                                   fw_impl=keras_impl,
                                    target_kpi=KPI(np.inf),
                                    sensitivity_evaluator=keras_sens_eval,
                                    search_method=None)
@@ -206,6 +208,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         with self.assertRaises(Exception):
             cfg = search_bit_width(graph_to_search_cfg=graph,
                                    fw_info=DEFAULT_KERAS_INFO,
+                                   fw_impl=keras_impl,
                                    target_kpi=None,
                                    sensitivity_evaluator=keras_sens_eval,
                                    search_method=BitWidthSearchMethod.INTEGER_PROGRAMMING)
