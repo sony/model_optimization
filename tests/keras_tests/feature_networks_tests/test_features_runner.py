@@ -20,7 +20,6 @@ from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_b
     ReLUBoundToPOTNetTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_dw_test import \
     BiasCorrectionDepthwiseTest
-from tests.keras_tests.feature_networks_tests.feature_networks.custom_test import CustomLayerTest
 
 from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
     DwConv2dReplacementTest
@@ -473,13 +472,6 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_gptq_new_exporter(self):
         self.test_gptq(experimental_facade=True,
                        experimental_exporter=True)
-
-    # TODO: remove custom objects - DONE
-    # TODO: remove uniform quantizer - DONE
-    # TODO: use constants in custom objects - DONE
-    # TODO: add function to exporter API - DONE
-    # TODO: add unit tests
-    # TODO: license, comments and type hints
 
 
     # Comment out due to problem in Tensorflow 2.8
