@@ -55,18 +55,19 @@ def get_weights_quantizer_for_node(node: BaseNode, weights_attr: List[str]) -> Q
     if weights_quantization_method not in SUPPORTED_WEIGHT_QUANTIZER_TYPES:
         Logger.error(f'Fully quantized models are now supported for {SUPPORTED_WEIGHT_QUANTIZER_TYPES} quantization methods, but node has {weights_quantization_method} quantization method')
 
+    weight_thresholds = node_w_qc.weights_quantization_params.get(THRESHOLD)
+
     # Compute quantizer params based on node's quantization params
     if weights_quantization_method in [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC]:
         if weights_quantization_method == QuantizationMethod.POWER_OF_TWO:
-            is_threshold_pot = int(np.log2(node_w_qc.weights_quantization_params.get(THRESHOLD))) == np.log2(node_w_qc.weights_quantization_params.get(THRESHOLD))
+            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in weight_thresholds.flatten()])
             if not is_threshold_pot:
-                Logger.error(f'Expected threshold to be power of 2 but is {node_w_qc.weights_quantization_params.get(THRESHOLD)}')
+                Logger.error(f'Expected threshold to be power of 2 but is {weight_thresholds}')
 
-        min_range = -node_w_qc.weights_quantization_params.get(THRESHOLD)
-        max_range = node_w_qc.weights_quantization_params.get(THRESHOLD) - calculate_delta(
-            node_w_qc.weights_quantization_params.get(THRESHOLD),
-            n_bits=node_w_qc.weights_n_bits,
-            signed=True)
+        min_range = -weight_thresholds
+        max_range = weight_thresholds - calculate_delta(weight_thresholds,
+                                                        n_bits=node_w_qc.weights_n_bits,
+                                                        signed=True)
 
     elif weights_quantization_method in [QuantizationMethod.UNIFORM]:
         min_range = node_w_qc.weights_quantization_params.get(RANGE_MIN)
@@ -107,17 +108,20 @@ def get_activations_quantizer_for_node(node: BaseNode) -> Quantizer:
             f'Fully quantized models are now supported for {SUPPORTED_ACTIVATION_QUANTIZER_TYPES} quantization methods, '
             f'but node has {activation_quantization_method} quantization method')
 
+    activation_thresholds = node_act_qc.activation_quantization_params.get(THRESHOLD)
+
     if activation_quantization_method in [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC]:
         if activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
-            is_threshold_pot = int(np.log2(node_act_qc.weights_quantization_params.get(THRESHOLD))) == np.log2(node_act_qc.weights_quantization_params.get(THRESHOLD))
+            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in activation_thresholds.flatten()])
             if not is_threshold_pot:
                 Logger.error(f'Expected threshold to be power of 2 but is {node_act_qc.activation_quantization_params.get(THRESHOLD)}')
 
         min_range = 0
         if node_act_qc.activation_quantization_params.get(SIGNED):
-            min_range = -node_act_qc.activation_quantization_params.get(THRESHOLD)
-        max_range = node_act_qc.activation_quantization_params.get(THRESHOLD) - calculate_delta(
-            node_act_qc.activation_quantization_params.get(THRESHOLD),
+            min_range = -activation_thresholds
+
+        max_range = activation_thresholds - calculate_delta(
+            activation_thresholds,
             n_bits=node_act_qc.activation_n_bits,
             signed=node_act_qc.activation_quantization_params.get(SIGNED))
     else:
