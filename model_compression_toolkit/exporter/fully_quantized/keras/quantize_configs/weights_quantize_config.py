@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Dict
 
 import tensorflow as tf
 from tensorflow import Tensor
@@ -36,15 +36,35 @@ class WeightsQuantizeConfig(QuantizeConfig):
     def __init__(self,
                  w_quantizer: Quantizer,
                  weight_attrs: List[str] = None):
+        """
+
+        Args:
+            w_quantizer: Quantizer for weights.
+            weight_attrs: Weights attributes to quantize.
+        """
 
         self.weight_attrs = weight_attrs
         self.w_quantizer = w_quantizer
 
-    def get_config(self):
+    def get_config(self) -> Dict[str, Any]:
+        """
+
+        Returns: Configuration of WeightsQuantizeConfig
+
+        """
         return {'w_quantizer': self.w_quantizer,
                 'weight_attrs': self.weight_attrs}
 
     def get_weights_and_quantizers(self, layer: Layer) -> List[Tuple[Tensor, Any]]:
+        """
+        Get the layer's weights to quantize and quantizers.
+
+        Args:
+            layer: Layer wrapped with this WeightsQuantizeConfig
+
+        Returns:
+            List of weights and quantizers to quantize these weights.
+        """
         return [(getattr(layer, self.weight_attrs[i]),
                  self.w_quantizer) for i in range(len(self.weight_attrs))]
 
