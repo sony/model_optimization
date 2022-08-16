@@ -20,6 +20,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_b
     ReLUBoundToPOTNetTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_dw_test import \
     BiasCorrectionDepthwiseTest
+from tests.keras_tests.feature_networks_tests.feature_networks.experimental_exporter_test import \
+    ExperimentalExporterTest
 
 from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
     DwConv2dReplacementTest
@@ -393,6 +395,10 @@ class FeatureNetworkTest(unittest.TestCase):
         ActivationDecompositionTest(self, activation_function='relu').run_test()
         ActivationDecompositionTest(self, activation_function='tanh').run_test()
         ActivationDecompositionTest(self, activation_function='softmax').run_test()
+
+    def test_experimental_exporter(self):
+        ExperimentalExporterTest(self).run_test(experimental_exporter=True,
+                                                experimental_facade=True)
 
     def test_layer_fusing(self):
         LayerFusingTest1(self).run_test()
