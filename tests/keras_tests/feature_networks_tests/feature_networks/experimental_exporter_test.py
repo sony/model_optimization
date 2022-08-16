@@ -15,13 +15,12 @@
 
 
 import tensorflow as tf
-import numpy as np
+from keras.engine.input_layer import InputLayer
+from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 
-from model_compression_toolkit.core.keras.constants import ACTIVATION, LINEAR
-from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
-from tests.common_tests.helpers.tensors_compare import cosine_similarity
+from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.activation_quantize_config import \
+    ActivationQuantizeConfig
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-import model_compression_toolkit as mct
 
 keras = tf.keras
 layers = keras.layers
@@ -39,5 +38,8 @@ class ExperimentalExporterTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        assert False
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[0], InputLayer))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[1], QuantizeWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[1].layer, InputLayer))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[1].quantize_config, ActivationQuantizeConfig))
 
