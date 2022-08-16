@@ -67,7 +67,7 @@ class ActivationQuantizeConfig(QuantizeConfig):
     def set_quantize_activations(self, layer, quantize_activations: ListWrapper):
         pass
 
-    def get_output_quantizers(self, layer: Layer) -> list:
+    def get_output_quantizers(self, layer: Layer) -> List[Quantizer]:
         """
         Quantize layer's outputs.
 

@@ -74,6 +74,16 @@ class WeightsQuantizeConfig(QuantizeConfig):
         return []
 
     def set_quantize_weights(self, layer: Layer, quantize_weights: List[Tensor]):
+        """
+        Set layer's weights with quantized weights.
+
+        Args:
+            layer: Layer wrapped with this WeightsQuantizeConfig
+            quantize_weights: Quantized weights to set to the layer
+
+        Returns:
+            None
+        """
         if len(self.weight_attrs) != len(quantize_weights):
             raise ValueError(
                 '`set_quantize_weights` called on layer {} with {} '
@@ -92,5 +102,5 @@ class WeightsQuantizeConfig(QuantizeConfig):
     def set_quantize_activations(self, layer, quantize_activations: ListWrapper):
         pass
 
-    def get_output_quantizers(self, layer: Layer) -> list:
+    def get_output_quantizers(self, layer: Layer) -> List[Quantizer]:
         return []

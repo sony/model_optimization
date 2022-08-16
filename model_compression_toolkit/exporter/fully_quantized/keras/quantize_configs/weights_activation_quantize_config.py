@@ -89,10 +89,39 @@ class WeightsActivationQuantizeConfig(QuantizeConfig):
         return self.act_config.get_activations_and_quantizers(layer)
 
     def set_quantize_weights(self, layer: Layer, quantize_weights: List[Tensor]):
+        """
+        Set layer's weights with quantized weights.
+
+        Args:
+            layer: Layer wrapped with this WeightsQuantizeConfig
+            quantize_weights: Quantized weights to set to the layer
+
+        Returns:
+            None
+        """
         self.weights_config.set_quantize_weights(layer, quantize_weights)
 
     def set_quantize_activations(self, layer, quantize_activations: ListWrapper):
+        """
+        Set layer's activations with quantized activations.
+
+        Args:
+            layer: Layer wrapped with this WeightsActivationQuantizeConfig
+            quantize_activations: Quantized activation to set to the layer
+
+        Returns:
+            None
+        """
         self.act_config.set_quantize_activations(layer, quantize_activations)
 
-    def get_output_quantizers(self, layer: Layer) -> list:
+    def get_output_quantizers(self, layer: Layer) -> List[Quantizer]:
+        """
+        Quantize layer's outputs.
+
+        Args:
+            layer: Layer to quantize its activations.
+
+        Returns: List of activation quantizers.
+
+        """
         return self.act_config.get_output_quantizers(layer)
