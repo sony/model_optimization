@@ -20,6 +20,9 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapp
 
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.activation_quantize_config import \
     ActivationQuantizeConfig
+from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_activation_quantize_config \
+    import \
+    WeightsActivationQuantizeConfig
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
@@ -42,4 +45,8 @@ class ExperimentalExporterTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(isinstance(quantized_model.layers[1], QuantizeWrapper))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[1].layer, InputLayer))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[1].quantize_config, ActivationQuantizeConfig))
+
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], QuantizeWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].quantize_config, WeightsActivationQuantizeConfig))
 
