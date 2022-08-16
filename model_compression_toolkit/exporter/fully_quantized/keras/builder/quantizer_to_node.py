@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+import numpy as np
+from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
 from typing import List
 
-from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.core.common import BaseNode, Logger
 from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import calculate_delta
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.fq_quantizer import FakeQuantQuantizer
 from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.weights_uniform_quantizer import \
     WeightsUniformQuantizer
-
 
 # Supporting other quantizer types in the future
 SUPPORTED_WEIGHT_QUANTIZER_TYPES = [QuantizationMethod.POWER_OF_TWO,
@@ -34,50 +34,85 @@ SUPPORTED_ACTIVATION_QUANTIZER_TYPES = [QuantizationMethod.POWER_OF_TWO,
                                         QuantizationMethod.UNIFORM]
 
 
-def get_weights_quantizer_for_node(node: BaseNode, weights_attr :List[str]):
+def get_weights_quantizer_for_node(node: BaseNode, weights_attr: List[str]) -> Quantizer:
+    """
+    Get weights quantizer for a node.
 
-    assert node.final_weights_quantization_cfg is not None, f'Can not set quantizer for a node with no final ' \
-                                                            f'weights quantization configuration'
+    Args:
+        node: Node to create a weight quantizer for.
+        weights_attr: Attributes of the layer to quantize its weights.
+
+    Returns:
+        Quantizer for the node's weights.
+
+    """
+    if node.final_weights_quantization_cfg is None:
+        Logger.critical(f'Can not set quantizer for a node with no final weights quantization configuration')
 
     node_w_qc = node.final_weights_quantization_cfg
     weights_quantization_method = node_w_qc.weights_quantization_method
-    assert weights_quantization_method in SUPPORTED_WEIGHT_QUANTIZER_TYPES, \
-        f'Fully quantized models are now supported for {SUPPORTED_WEIGHT_QUANTIZER_TYPES} quantization methods, but node ' \
-        f'has {weights_quantization_method} quantization method'
 
+    if weights_quantization_method not in SUPPORTED_WEIGHT_QUANTIZER_TYPES:
+        Logger.error(f'Fully quantized models are now supported for {SUPPORTED_WEIGHT_QUANTIZER_TYPES} quantization methods, but node has {weights_quantization_method} quantization method')
+
+    # Compute quantizer params based on node's quantization params
     if weights_quantization_method in [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC]:
-        # TODO: Add assertion for POT case that thresholds are POT
+        if weights_quantization_method == QuantizationMethod.POWER_OF_TWO:
+            is_threshold_pot = int(np.log2(node_w_qc.weights_quantization_params.get(THRESHOLD))) == np.log2(node_w_qc.weights_quantization_params.get(THRESHOLD))
+            if not is_threshold_pot:
+                Logger.error(f'Expected threshold to be power of 2 but is {node_w_qc.weights_quantization_params.get(THRESHOLD)}')
+
         min_range = -node_w_qc.weights_quantization_params.get(THRESHOLD)
         max_range = node_w_qc.weights_quantization_params.get(THRESHOLD) - calculate_delta(
             node_w_qc.weights_quantization_params.get(THRESHOLD),
             n_bits=node_w_qc.weights_n_bits,
             signed=True)
+
     elif weights_quantization_method in [QuantizationMethod.UNIFORM]:
         min_range = node_w_qc.weights_quantization_params.get(RANGE_MIN)
         max_range = node_w_qc.weights_quantization_params.get(RANGE_MAX)
-    else:
-        raise NotImplemented
 
-    assert len(weights_attr )==1, f'Currently, we support only one quantized weight per layer'
+    else:
+        Logger.error(f'For now fully quantized models support only {SUPPORTED_WEIGHT_QUANTIZER_TYPES} for weights quantization, but found {weights_quantization_method}')
+
+    if len(weights_attr) > 1:
+        Logger.error(f'Currently, we support only one quantized weight per layer, but received {len(weights_attr)} attributes to quantize')
+
     return WeightsUniformQuantizer(node_w_qc.weights_n_bits,
                                    min_range,
                                    max_range,
                                    node.get_weights_by_keys(weights_attr[0]))
 
 
-def get_activations_quantizer_for_node(node: BaseNode):
+def get_activations_quantizer_for_node(node: BaseNode) -> Quantizer:
+    """
+    Get activation quantizer for a node.
 
-    assert node.final_activation_quantization_cfg is not None, f'Can not set quantizer for a node with no final ' \
-                                                               f'activation quantization configuration'
+    Args:
+        node: Node to create an activation quantizer for.
+
+    Returns:
+        Quantizer for the node's activations.
+
+    """
+
+    if node.final_activation_quantization_cfg is None:
+        Logger.critical(f'Can not set quantizer for a node with no final activation quantization configuration')
 
     node_act_qc = node.final_activation_quantization_cfg
     activation_quantization_method = node_act_qc.activation_quantization_method
-    assert activation_quantization_method in SUPPORTED_ACTIVATION_QUANTIZER_TYPES, \
-        f'Fully quantized models are now supported for {SUPPORTED_ACTIVATION_QUANTIZER_TYPES} quantization methods, but node ' \
-        f'has {activation_quantization_method} quantization method'
+
+    if activation_quantization_method not in SUPPORTED_ACTIVATION_QUANTIZER_TYPES:
+        Logger.error(
+            f'Fully quantized models are now supported for {SUPPORTED_ACTIVATION_QUANTIZER_TYPES} quantization methods, '
+            f'but node has {activation_quantization_method} quantization method')
 
     if activation_quantization_method in [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC]:
-        # TODO: Add assertion for POT case that thresholds are POT
+        if activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
+            is_threshold_pot = int(np.log2(node_act_qc.weights_quantization_params.get(THRESHOLD))) == np.log2(node_act_qc.weights_quantization_params.get(THRESHOLD))
+            if not is_threshold_pot:
+                Logger.error(f'Expected threshold to be power of 2 but is {node_act_qc.activation_quantization_params.get(THRESHOLD)}')
+
         min_range = 0
         if node_act_qc.activation_quantization_params.get(SIGNED):
             min_range = -node_act_qc.activation_quantization_params.get(THRESHOLD)
@@ -86,7 +121,7 @@ def get_activations_quantizer_for_node(node: BaseNode):
             n_bits=node_act_qc.activation_n_bits,
             signed=node_act_qc.activation_quantization_params.get(SIGNED))
     else:
-        raise NotImplemented
+        Logger.error(f'For now fully quantized models support only {SUPPORTED_ACTIVATION_QUANTIZER_TYPES} for activation quantization, but found {activation_quantization_method}')
 
     return FakeQuantQuantizer(node_act_qc.activation_n_bits,
                               min_range,

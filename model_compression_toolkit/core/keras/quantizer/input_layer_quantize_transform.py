@@ -29,7 +29,7 @@ from model_compression_toolkit.core.keras.quantizer.mixed_precision.selective_qu
 
 class InputLayerWrapperTransform(InputLayerQuantize):
     """
-    Allows to configure an input layer with QuantizeWrapper for mixed-precision quantization.
+    Allows to configure an input layer with QuantizeWrapper given a QuantizeConfig object to wrap it.
     """
 
     def __init__(self, input_layer, fw_info, quantize_config: QuantizeConfig, custom_objects):

@@ -100,8 +100,7 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
 
             if len(nodes) == 1:
                 node = nodes[0]
-                return QuantizeWrapper(layer, get_quantization_config(node,
-                                                                      self.fw_info))
+                return QuantizeWrapper(layer, get_quantization_config(node))
 
             elif is_layer_fake_quant(layer):
                 return layer
@@ -124,8 +123,7 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
 
         input_transformer = mt.ModelTransformer(model, [InputLayerWrapperTransform(inp,
                                                                                    self.fw_info,
-                                                                                   get_quantization_config(inp,
-                                                                                                           self.fw_info),
+                                                                                   get_quantization_config(inp),
                                                                                    self.get_custom_objects()
                                                                                    )
                                                         for inp in model_inputs])

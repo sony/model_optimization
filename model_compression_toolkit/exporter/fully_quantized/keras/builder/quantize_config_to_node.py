@@ -15,8 +15,10 @@
 
 from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.default_8bit_quantize_configs import \
     NoOpQuantizeConfig
+from tensorflow_model_optimization.python.core.quantization.keras.quantize_config import QuantizeConfig
 
 from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.exporter.fully_quantized.keras.builder.quantizer_to_node import \
     get_weights_quantizer_for_node, get_activations_quantizer_for_node
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.activation_quantize_config import \
@@ -26,12 +28,21 @@ from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.w
     WeightsActivationQuantizeConfig
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import \
     WeightsQuantizeConfig
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 
 
-def get_quantization_config(node: BaseNode, fw_info:FrameworkInfo):
+def get_quantization_config(node: BaseNode) -> QuantizeConfig:
+    """
+    Create a QuantizeConfig to wrap a layer for its corresponding node.
+
+    Args:
+        node: Node to create a QuantizeConfig for.
+
+    Returns:
+        QuantizeConfig to use for wrapping the layer from the passed node.
+    """
+
     if node.is_weights_quantization_enabled() and not node.is_activation_quantization_enabled():
-        weight_attrs = fw_info.get_kernel_op_attributes(node.type)
+        weight_attrs = DEFAULT_KERAS_INFO.get_kernel_op_attributes(node.type)
         return WeightsQuantizeConfig(weight_attrs=weight_attrs,
                                      w_quantizer=get_weights_quantizer_for_node(node,
                                                                                 weight_attrs))
@@ -42,8 +53,8 @@ def get_quantization_config(node: BaseNode, fw_info:FrameworkInfo):
     elif not node.is_weights_quantization_enabled() and not node.is_activation_quantization_enabled():
         return NoOpQuantizeConfig()
 
-    weight_attrs = fw_info.get_kernel_op_attributes(node.type)
+    weight_attrs = DEFAULT_KERAS_INFO.get_kernel_op_attributes(node.type)
     return WeightsActivationQuantizeConfig(activation_quantizer=get_activations_quantizer_for_node(node),
                                            w_quantizer=get_weights_quantizer_for_node(node,
                                                                                       weight_attrs),
-                                           weight_attrs=fw_info.get_kernel_op_attributes(node.type))
+                                           weight_attrs=DEFAULT_KERAS_INFO.get_kernel_op_attributes(node.type))
