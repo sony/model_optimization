@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Dict
 
 import tensorflow as tf
 from tensorflow import Tensor
@@ -29,14 +29,27 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_confi
 
 
 class ActivationQuantizeConfig(QuantizeConfig):
+    """
+    QuantizeConfig to quantize a layer's activations.
+    """
 
     def __init__(self,
-                 activation_quantizer: Quantizer,
-                 ):
+                 activation_quantizer: Quantizer):
+        """
+
+        Args:
+            activation_quantizer: Quantizer for quantization the layer's activations.
+        """
+
         self.activation_quantizer = activation_quantizer
 
 
-    def get_config(self):
+    def get_config(self) -> Dict[str, Any]:
+        """
+
+        Returns: Configuration of ActivationQuantizeConfig
+
+        """
         return {
             'activation_quantizer': self.activation_quantizer}
 
@@ -55,4 +68,13 @@ class ActivationQuantizeConfig(QuantizeConfig):
         pass
 
     def get_output_quantizers(self, layer: Layer) -> list:
+        """
+        Quantize layer's outputs.
+
+        Args:
+            layer: Layer to quantize its activations.
+
+        Returns: List of activation quantizers.
+
+        """
         return [self.activation_quantizer]

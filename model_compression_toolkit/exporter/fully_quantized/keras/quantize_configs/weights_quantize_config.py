@@ -29,6 +29,9 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_confi
 
 
 class WeightsQuantizeConfig(QuantizeConfig):
+    """
+    QuantizeConfig to quantize a layer's weights.
+    """
 
     def __init__(self,
                  w_quantizer: Quantizer,
