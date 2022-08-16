@@ -20,7 +20,6 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW, FOUND_TF
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
@@ -35,6 +34,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.exporter import get_fully_quantized_keras_model
 
     from model_compression_toolkit import get_target_platform_capabilities
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
@@ -44,8 +44,8 @@ if FOUND_TF:
                                                       representative_data_gen: Callable,
                                                       target_kpi: KPI = None,
                                                       core_config: CoreConfig = CoreConfig(),
-                                                      fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                                                      target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
+                                                      target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC,
+                                                      new_experimental_exporter: bool = False):
         """
          Quantize a trained Keras model using post-training quantization. The model is quantized using a
          symmetric constraint quantization thresholds (power of two).
@@ -64,8 +64,8 @@ if FOUND_TF:
              representative_data_gen (Callable): Dataset used for calibration.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
-             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).  `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
              target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
+             new_experimental_exporter (bool): Whether exporting the quantized model using new exporter or not (in progress. Avoiding it for now is recommended).
 
          Returns:
 
@@ -111,6 +111,9 @@ if FOUND_TF:
              For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 
          """
+
+        fw_info = DEFAULT_KERAS_INFO
+
         KerasModelValidation(model=in_model,
                              fw_info=fw_info).validate()
 
@@ -144,13 +147,18 @@ if FOUND_TF:
                                         fw_impl,
                                         fw_info)
 
-        quantized_model, user_info = export_model(tg,
-                                                  fw_info,
-                                                  fw_impl,
-                                                  tb_w,
-                                                  bit_widths_config)
+        if new_experimental_exporter:
+            Logger.warning('Using new experimental exported models. '
+                           'Please do not use unless you are familiar with what you are doing')
+            return get_fully_quantized_keras_model(tg)
 
-        return quantized_model, user_info
+        return export_model(tg,
+                            fw_info,
+                            fw_impl,
+                            tb_w,
+                            bit_widths_config)
+
+
 
 else:
     # If tensorflow or tensorflow_model_optimization are not installed,

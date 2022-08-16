@@ -4,7 +4,7 @@ from typing import Any, List
 from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    DEFAULT_MIXEDPRECISION_CONFIG
+    DEFAULT_MIXEDPRECISION_CONFIG, MixedPrecisionQuantizationConfigV2
 import numpy as np
 
 from model_compression_toolkit.core.common.user_info import UserInformation

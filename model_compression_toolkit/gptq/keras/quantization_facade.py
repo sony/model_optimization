@@ -41,7 +41,7 @@ if common.constants.FOUND_TF:
     from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
     from keras.optimizer_v2.optimizer_v2 import OptimizerV2
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
-
+    from model_compression_toolkit.exporter import get_fully_quantized_keras_model
     from model_compression_toolkit import get_target_platform_capabilities
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
@@ -99,7 +99,8 @@ if common.constants.FOUND_TF:
                                                                target_kpi: KPI = None,
                                                                core_config: CoreConfig = CoreConfig(),
                                                                fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                                                               target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> \
+                                                               target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC,
+                                                               new_experimental_exporter: bool = False) -> \
     Tuple[Model, UserInformation]:
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
@@ -125,6 +126,7 @@ if common.constants.FOUND_TF:
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
+            new_experimental_exporter (bool): Whether exporting the quantized model using new exporter or not (in progress. Avoiding it for now is recommended).
 
         Returns:
 
@@ -203,9 +205,16 @@ if common.constants.FOUND_TF:
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen, tb_w, tg_gptq, fw_impl, fw_info)
 
-        quantized_model, user_info = export_model(tg_gptq, fw_info, fw_impl, tb_w, bit_widths_config)
+        if new_experimental_exporter:
+            Logger.warning('Using new experimental exported models. '
+                           'Please do not use unless you are familiar with what you are doing')
+            return get_fully_quantized_keras_model(tg_gptq)
 
-        return quantized_model, user_info
+        return export_model(tg,
+                            fw_info,
+                            fw_impl,
+                            tb_w,
+                            bit_widths_config)
 
 else:
     # If tensorflow or tensorflow_model_optimization are not installed,

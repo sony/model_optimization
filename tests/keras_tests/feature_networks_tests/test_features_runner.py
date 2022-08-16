@@ -20,8 +20,12 @@ from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_b
     ReLUBoundToPOTNetTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_dw_test import \
     BiasCorrectionDepthwiseTest
+from tests.keras_tests.feature_networks_tests.feature_networks.experimental_exporter_test import \
+    ExperimentalExporterTest
+
 from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
     DwConv2dReplacementTest
+
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.edit_error_method_test import \
     EditActivationErrorMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.change_qc_attr_test import \
@@ -121,8 +125,9 @@ class FeatureNetworkTest(unittest.TestCase):
         DwConv2dReplacementTest(self).run_test()
 
     def test_edit_error_method(self):
-        EditActivationErrorMethod(self).run_test()
         EditActivationErrorMethod(self).run_test(experimental_facade=True)
+        EditActivationErrorMethod(self).run_test()
+
 
     def test_change_qc_attr(self):
         ChangeFinalWeightQCAttrTest(self).run_test()
@@ -391,6 +396,10 @@ class FeatureNetworkTest(unittest.TestCase):
         ActivationDecompositionTest(self, activation_function='tanh').run_test()
         ActivationDecompositionTest(self, activation_function='softmax').run_test()
 
+    def test_experimental_exporter(self):
+        ExperimentalExporterTest(self).run_test(experimental_exporter=True,
+                                                experimental_facade=True)
+
     def test_layer_fusing(self):
         LayerFusingTest1(self).run_test()
         LayerFusingTest2(self).run_test()
@@ -458,13 +467,18 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_multi_input_to_node(self):
         MultiInputsToNodeTest(self).run_test()
 
-    def test_gptq(self):
-        GradientPTQTest(self).run_test()
-        GradientPTQWeightsUpdateTest(self).run_test()
-        GradientPTQLearnRateZeroTest(self).run_test()
-        GradientPTQWeightedLossTest(self).run_test()
-        GradientPTQWeightsUpdateTest(self, is_gumbel=True, sam_optimization=True).run_test()
-        GradientPTQLearnRateZeroTest(self, is_gumbel=True).run_test()
+    def test_gptq(self, experimental_facade=False, experimental_exporter=False):
+        GradientPTQTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQWeightsUpdateTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQLearnRateZeroTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQWeightedLossTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQWeightsUpdateTest(self, is_gumbel=True, sam_optimization=True).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQLearnRateZeroTest(self, is_gumbel=True).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+
+    def test_gptq_new_exporter(self):
+        self.test_gptq(experimental_facade=True,
+                       experimental_exporter=True)
+
 
     # Comment out due to problem in Tensorflow 2.8
     # def test_gptq_conv_group(self):
