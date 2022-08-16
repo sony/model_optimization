@@ -79,10 +79,11 @@ def get_weights_quantizer_for_node(node: BaseNode, weights_attr: List[str]) -> Q
     if len(weights_attr) > 1:
         Logger.error(f'Currently, we support only one quantized weight per layer, but received {len(weights_attr)} attributes to quantize')
 
-    return WeightsUniformQuantizer(node_w_qc.weights_n_bits,
-                                   min_range,
-                                   max_range,
-                                   node.get_weights_by_keys(weights_attr[0]))
+    return WeightsUniformQuantizer(nbits=node_w_qc.weights_n_bits,
+                                   min_range=min_range,
+                                   max_range=max_range,
+                                   weight=node.get_weights_by_keys(weights_attr[0]),
+                                   quantization_method=weights_quantization_method)
 
 
 def get_activations_quantizer_for_node(node: BaseNode) -> Quantizer:
@@ -127,6 +128,7 @@ def get_activations_quantizer_for_node(node: BaseNode) -> Quantizer:
     else:
         Logger.error(f'For now fully quantized models support only {SUPPORTED_ACTIVATION_QUANTIZER_TYPES} for activation quantization, but found {activation_quantization_method}')
 
-    return FakeQuantQuantizer(node_act_qc.activation_n_bits,
-                              min_range,
-                              max_range)
+    return FakeQuantQuantizer(nbits=node_act_qc.activation_n_bits,
+                              min_range=min_range,
+                              max_range=max_range,
+                              quantization_method=activation_quantization_method)

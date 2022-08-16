@@ -20,6 +20,7 @@ from tensorflow import TensorShape
 from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
 
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 
 class WeightsUniformQuantizer(Quantizer):
@@ -31,7 +32,8 @@ class WeightsUniformQuantizer(Quantizer):
                  nbits: int,
                  min_range: np.ndarray,
                  max_range: np.ndarray,
-                 weight: tf.Tensor):
+                 weight: tf.Tensor,
+                 quantization_method: QuantizationMethod):
         """
 
         Args:
@@ -39,6 +41,7 @@ class WeightsUniformQuantizer(Quantizer):
             min_range: Min quantization range.
             max_range: Max quantization range.
             weight: Tensor of weights to quantize.
+            quantization_method: Quantization method that is used (POT, Uniform, etc.)
         """
 
         super().__init__()
@@ -56,6 +59,7 @@ class WeightsUniformQuantizer(Quantizer):
 
         self.delta = (self.max_range - self.min_range) / (2 ** self.nbits - 1)
         self.weight = self._uniform_quantize(weight)
+        self.quantization_method = quantization_method
 
     def _uniform_quantize(self, weight: tf.Tensor) -> tf.Tensor:
         """
@@ -98,7 +102,8 @@ class WeightsUniformQuantizer(Quantizer):
         cfg = {"nbits": self.nbits,
                "min_range": self.min_range.numpy(),
                "max_range": self.max_range.numpy(),
-               "weight": self.weight.numpy()
+               "weight": self.weight.numpy(),
+               "quantization_method": self.quantization_method
                }
         return cfg
 

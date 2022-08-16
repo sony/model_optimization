@@ -19,6 +19,8 @@ from tensorflow import TensorShape
 from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
 from typing import Dict, Any
 
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+
 
 class FakeQuantQuantizer(Quantizer):
     """
@@ -29,13 +31,15 @@ class FakeQuantQuantizer(Quantizer):
                  nbits: int,
                  min_range: np.ndarray,
                  max_range: np.ndarray,
-                 ):
+                 quantization_method: QuantizationMethod):
         """
 
         Args:
             nbits: Number of bits to quantize.
             min_range: Min quantization range.
             max_range: Max quantization range.
+            quantization_method: Quantization method that is used (POT, Uniform, etc.)
+
         """
         self.nbits = nbits
         self.min_range = tf.Variable(min_range,
@@ -44,6 +48,7 @@ class FakeQuantQuantizer(Quantizer):
         self.max_range = tf.Variable(max_range,
                                      trainable=False,
                                      dtype=tf.float32)
+        self.quantization_method = quantization_method
 
 
     def get_config(self) -> Dict[str, Any]:
@@ -54,7 +59,8 @@ class FakeQuantQuantizer(Quantizer):
         """
         return {"nbits": self.nbits,
                 "min_range": self.min_range.numpy(),
-                "max_range": self.max_range.numpy()
+                "max_range": self.max_range.numpy(),
+                "quantization_method": self.quantization_method
                 }
 
     def build(self, tensor_shape: TensorShape, name: str, layer: Layer) -> dict:
