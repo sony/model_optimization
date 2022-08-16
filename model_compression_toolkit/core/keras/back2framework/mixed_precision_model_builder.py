@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Tuple
+from typing import List, Tuple, Any, Dict
 
 import tensorflow as tf
 import tensorflow_model_optimization.quantization.keras.graph_transformations.model_transformer as mt
@@ -140,7 +140,12 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         return model, user_info
 
 
-    def get_custom_objects(self):
+    def get_custom_objects(self) -> Dict[str, Any]:
+        """
+
+        Returns: Dictionary of custom objects needed to load this model builder's output.
+
+        """
         return {QuantizeWrapper.__name__:QuantizeWrapper,
                 SelectiveQuantizeConfig.__name__: SelectiveQuantizeConfig}
 

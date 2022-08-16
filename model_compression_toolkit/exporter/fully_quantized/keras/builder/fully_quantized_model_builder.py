@@ -20,7 +20,7 @@ from tensorflow.python.util.object_identity import Reference as TFReference
 from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.default_8bit_quantize_configs import \
     NoOpQuantizeConfig
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
@@ -133,7 +133,12 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
 
         return model, user_info
 
-    def get_custom_objects(self):
+    def get_custom_objects(self) -> Dict[str, Any]:
+        """
+
+        Returns: Dictionary of custom objects needed to load this model builder's output.
+
+        """
         return {QuantizeWrapper.__name__: QuantizeWrapper,
                 WeightsActivationQuantizeConfig.__name__: WeightsActivationQuantizeConfig,
                 ActivationQuantizeConfig.__name__: ActivationQuantizeConfig,
