@@ -502,7 +502,7 @@ class KerasImplementation(FrameworkImplementation):
         kernel_shape = node.get_weights_by_keys(fw_info.get_kernel_op_attributes(node.type)[0]).shape
         output_channel_axis, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
 
-        if node.type in [Conv2D, tf.nn.conv2d, Conv2DTranspose, tf.nn.conv2d_transpose]:
+        if node.type in [Conv2D, Conv2DTranspose]:
             # (C_out * W_out * H_out) * C_in * (W_kernel * H_kernel)
             return np.prod([x for x in output_shape if x is not None]) * \
                    input_shape[input_channel_axis] * \

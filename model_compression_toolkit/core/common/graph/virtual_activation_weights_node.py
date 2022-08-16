@@ -17,7 +17,7 @@ from typing import Dict, Any, Tuple
 
 from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.core.common.constants import VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX, \
-    VIRTUAL_WEIGHTS_SUFFIX, DEFAULT_CANDIDATE_BITWIDTH, VIRTUAL_ACTIVATION_SUFFIX, ACTIVATION, LINEAR
+    VIRTUAL_WEIGHTS_SUFFIX, DEFAULT_CANDIDATE_BITWIDTH, VIRTUAL_ACTIVATION_SUFFIX, ACTIVATION, LINEAR, FLOAT_BITWIDTH
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 import numpy as np
 
@@ -197,7 +197,10 @@ class VirtualActivationWeightsNode(BaseNode):
 
         """
         node_mac = fw_impl.get_node_mac_operations(self.original_weights_node, fw_info)
-        node_bops = self.candidates_quantization_cfg[candidate_idx].weights_quantization_cfg.weights_n_bits * \
-                    self.candidates_quantization_cfg[candidate_idx].activation_quantization_cfg.activation_n_bits * \
-                    node_mac
+        candidate = self.candidates_quantization_cfg[candidate_idx]
+        weights_bit = candidate.weights_quantization_cfg.weights_n_bits if \
+            candidate.weights_quantization_cfg.enable_weights_quantization else FLOAT_BITWIDTH
+        activation_bit = candidate.activation_quantization_cfg.activation_n_bits if \
+            candidate.activation_quantization_cfg.enable_activation_quantization else FLOAT_BITWIDTH
+        node_bops = weights_bit * activation_bit * node_mac
         return node_bops
