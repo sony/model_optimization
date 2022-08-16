@@ -145,8 +145,8 @@ def uniform_quantize_tensor(tensor_data: np.ndarray,
     clipped_tensor = np.clip(tensor_data, a_min=a, a_max=b)
 
     # Quantize the data between min/max of quantization range.
-    return delta * np.round((clipped_tensor - a) / delta) + a
-
+    q = delta * np.round((clipped_tensor - a) / delta) + a
+    return q
 
 
 def kmeans_assign_clusters(cluster_centers: np.ndarray,
