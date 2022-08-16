@@ -139,8 +139,8 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
         return model, user_info
 
-
-    def get_custom_objects(self) -> Dict[str, Any]:
+    @staticmethod
+    def get_custom_objects() -> Dict[str, Any]:
         """
 
         Returns: Dictionary of custom objects needed to load this model builder's output.
