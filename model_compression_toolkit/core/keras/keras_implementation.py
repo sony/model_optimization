@@ -506,7 +506,7 @@ class KerasImplementation(FrameworkImplementation):
             node: A graph node that wraps the operation for which the MAC count is computed.
             fw_info: FrameworkInfo object with information about the Keras model.
 
-        Returns: The MAC count og the operation
+        Returns: The MAC count of the operation
         """
 
         input_shape = node.input_shape
@@ -514,7 +514,7 @@ class KerasImplementation(FrameworkImplementation):
         kernel_shape = node.get_weights_by_keys(fw_info.get_kernel_op_attributes(node.type)[0]).shape
         output_channel_axis, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
 
-        if node.type is Conv2D or node.type is Conv2DTranspose:
+        if node.type in [Conv2D, Conv2DTranspose]:
             # (C_out * W_out * H_out) * C_in * (W_kernel * H_kernel)
             return np.prod([x for x in output_shape if x is not None]) * \
                    input_shape[input_channel_axis] * \
