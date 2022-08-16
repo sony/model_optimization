@@ -444,7 +444,7 @@ class PytorchImplementation(FrameworkImplementation):
             node: A graph node that wraps the operation for which the MAC count is computed.
             fw_info: FrameworkInfo object with information about the Pytorch model.
 
-        Returns: The MAC count og the operation
+        Returns: The MAC count of the operation
         """
 
         raise NotImplemented(f'BOPS KPI not supported in Pytorch yet')
