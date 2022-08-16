@@ -14,15 +14,17 @@
 # ==============================================================================
 
 
-from typing import Tuple, Any, List
+from typing import Tuple, Any
 
-from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
+
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.common.user_info import UserInformation
+
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 
 
