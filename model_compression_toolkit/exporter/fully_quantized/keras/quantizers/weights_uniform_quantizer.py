@@ -19,7 +19,8 @@ from keras.engine.base_layer import Layer
 from tensorflow import TensorShape
 from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
 
-from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import uniform_quantize_tensor, \
+    fix_range_to_include_zero
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 
@@ -46,36 +47,19 @@ class WeightsUniformQuantizer(Quantizer):
 
         super().__init__()
 
+
         min_range, max_range = fix_range_to_include_zero(np.array(min_range),
                                                          np.array(max_range),
                                                          nbits)
+        self.weight = uniform_quantize_tensor(weight,
+                                              range_min=min_range,
+                                              range_max=max_range,
+                                              n_bits=nbits).astype("float32")
         self.nbits = nbits
-        self.min_range = tf.Variable(min_range,
-                                     trainable=False,
-                                     dtype=tf.float32)
-        self.max_range = tf.Variable(max_range,
-                                     trainable=False,
-                                     dtype=tf.float32)
-
+        self.min_range = min_range
+        self.max_range = max_range
         self.delta = (self.max_range - self.min_range) / (2 ** self.nbits - 1)
-        self.weight = self._uniform_quantize(weight)
         self.quantization_method = quantization_method
-
-    def _uniform_quantize(self, weight: tf.Tensor) -> tf.Tensor:
-        """
-        Quantize Tensor uniformly.
-
-        Args:
-            weight: Tensor to quantize.
-
-        Returns:
-            Quantized tensor.
-        """
-        # Clip data in range
-        clipped_tensor = tf.keras.backend.clip(weight, self.min_range, self.max_range)
-        # Quantize the data between min/max of quantization range.
-        quantized_kernel = tf.keras.backend.round((clipped_tensor - self.min_range) / self.delta)
-        return quantized_kernel * self.delta + self.min_range
 
     def __call__(self, inputs, training, weights, **kwargs):
         """
@@ -100,9 +84,9 @@ class WeightsUniformQuantizer(Quantizer):
 
         """
         cfg = {"nbits": self.nbits,
-               "min_range": self.min_range.numpy(),
-               "max_range": self.max_range.numpy(),
-               "weight": self.weight.numpy(),
+               "min_range": self.min_range,
+               "max_range": self.max_range,
+               "weight": self.weight,
                "quantization_method": self.quantization_method
                }
         return cfg
