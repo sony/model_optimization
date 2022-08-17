@@ -19,6 +19,8 @@ import numpy as np
 from tensorflow import Tensor
 import tensorflow as tf
 
+from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MIN, RANGE_MAX
+
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 
 
@@ -35,6 +37,7 @@ from model_compression_toolkit.qat.keras.quantizer.configs.base_quantizer_config
 from model_compression_toolkit.core.keras.constants import KERNEL
 
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste import STEWeightQuantizer
+from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste import STEUniformWeightQuantizer
 from model_compression_toolkit.core.common.target_platform.op_quantization_config import QuantizationMethod
 from model_compression_toolkit.core import common
 from model_compression_toolkit.qat.common import WEIGHTS_QUANTIZATION_PARAMS
@@ -50,7 +53,7 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
                  num_bits,
                  channels_axis,
                  quantization_method: QuantizationMethod,
-                 threshold_values: np.ndarray):
+                 quantization_params: Dict):
         """
         Initialize a TrainableQuantizer and set as the weights quantizer.
         Args:
@@ -58,17 +61,19 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
             num_bits: number of bits to quantize
             channels_axis: axis of the channels in the tensor
             quantization_method (QuantizationMethod): quantization method, either SYMMETRIC or POWER_OF_TWO
-            threshold_values: thresholds calculated by the MCT core for the tensor.
+            quantization_params: quantization params for the quantization method.
         """
 
         self.weight_attrs = weight_attrs
         self.num_bits = num_bits
         self.weight_channel_axis = channels_axis
         self.quantization_method = quantization_method
-        self.threshold_values = threshold_values
+        self.quantization_params = quantization_params
 
-        if quantization_method in [QuantizationMethod.SYMMETRIC, QuantizationMethod.POWER_OF_TWO]:
+        if quantization_method in [QuantizationMethod.SYMMETRIC,
+                                   QuantizationMethod.POWER_OF_TWO]:
             is_power_of_two = QuantizationMethod.POWER_OF_TWO == quantization_method
+            threshold_values = quantization_params.get(THRESHOLD)
             self.weight_quantizer = STEWeightQuantizer(num_bits=num_bits,
                                                        per_axis=len(
                                                            threshold_values.flatten()) > 1,
@@ -76,6 +81,16 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
                                                        signed=True,
                                                        power_of_two=is_power_of_two,
                                                        quantization_axis=self.weight_channel_axis)
+        elif quantization_method in [QuantizationMethod.UNIFORM]:
+            min_values = quantization_params.get(RANGE_MIN)
+            max_values = quantization_params.get(RANGE_MAX)
+            self.weight_quantizer = STEUniformWeightQuantizer(num_bits=num_bits,
+                                                              per_axis=len(
+                                                                  max_values.flatten()) > 1,
+                                                              min_values=min_values,
+                                                              max_values=max_values,
+                                                              signed=True,
+                                                              quantization_axis=self.weight_channel_axis)
         else:
             common.Logger.error(f'Weight quantization method not implemented: {quantization_method}')
 
@@ -132,7 +147,12 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
         """
 
         config['quantization_method'] = QuantizationMethod(config['quantization_method'])
-        config['threshold_values'] = np.array(config['threshold_values'])
+        if THRESHOLD in config['quantization_params']:
+            config['quantization_params'][THRESHOLD] = np.array(config['quantization_params'][THRESHOLD])
+        if RANGE_MIN in config['quantization_params']:
+            config['quantization_params'][RANGE_MIN] = np.array(config['quantization_params'][RANGE_MIN])
+        if RANGE_MAX in config['quantization_params']:
+            config['quantization_params'][RANGE_MAX] = np.array(config['quantization_params'][RANGE_MAX])
         return cls(**config)
 
     def get_config(self) -> Dict[str, Any]:
@@ -144,7 +164,7 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
             'num_bits': self.num_bits,
             'channels_axis': self.weight_channel_axis,
             'quantization_method': self.quantization_method,
-            'threshold_values': self.threshold_values,
+            'quantization_params': self.quantization_params,
         }
 
     def update_layer_quantization_params(self, layer: Layer) -> (Dict[str, tf.Tensor], Dict[str, Dict], Dict):

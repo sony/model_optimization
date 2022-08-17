@@ -15,6 +15,7 @@
 
 
 import unittest
+import model_compression_toolkit as mct
 from model_compression_toolkit import QuantizationErrorMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_bound_to_power_of_2_test import \
     ReLUBoundToPOTNetTest
@@ -543,10 +544,13 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_qat(self):
         QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu')).run_test()
-        QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu'), finalize=True).run_test()
-        QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu')).run_test()
+        QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu'), finalize=True,
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
+        QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu'),
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM).run_test()
         QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu'), finalize=True).run_test()
-        QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu')).run_test()
+        QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu'),
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM).run_test()
         QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), finalize=True).run_test()
         # DW-Conv2D are tested under the tests below because an extra check is needed to verify the
         # quantization per channel of its kernel

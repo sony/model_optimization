@@ -27,15 +27,18 @@ layers = keras.layers
 
 
 class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
-    def __init__(self, unit_test, layer, weight_bits=2, activation_bits=4, finalize=False):
+    def __init__(self, unit_test, layer, weight_bits=2, activation_bits=4, finalize=False,
+                 weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO):
         self.layer = layer
         self.weight_bits = weight_bits
         self.activation_bits = activation_bits
         self.finalize = finalize
+        self.weights_quantization_method = weights_quantization_method
         super().__init__(unit_test)
 
     def get_tpc(self):
-        return get_tpc("QAT_test", weight_bits=self.weight_bits, activation_bits=self.activation_bits)
+        return get_tpc("QAT_test", weight_bits=self.weight_bits, activation_bits=self.activation_bits,
+                       weights_quantization_method=self.weights_quantization_method)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
