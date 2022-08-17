@@ -17,22 +17,24 @@ Model Compression Toolkit (MCT) is an open-source project for neural network mod
 ## Supported Features
 
 MCT supports different quantization methods:
-* Post training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental).
-* Gradient-based post training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental)
-* Quantization aware training (QAT)
+* Post training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental)
+* Gradient-based post training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental) *
+* Quantization aware training (QAT) *
 
-| Quantization Method | Complexity                                    | Accuracy Degradation | Computational Cost          |
-|---------------------|-----------------------------------------------|----------------------|-----------------------------|
-| PTQ                 | Low                                           | Small loss           | Low (order of minutes)      |
-| GPTQ                | Mild (parameters fine-tuning using gradients) | Negligible loss      | Mild (order of 2-3 hours)   |
-| QAT                 | High                                          | Almost lossless      | High (order of 12-36 hours) |
+*Experimental and subject to future changes.
+
+
+| Quantization Method | Complexity                                    | Computational Cost          |
+|---------------------|-----------------------------------------------|-----------------------------|
+| PTQ                 | Low                                           | Low (order of minutes)      |
+| GPTQ                | Mild (parameters fine-tuning using gradients) | Mild (order of 2-3 hours)   |
+| QAT                 | High                                          | High (order of 12-36 hours) |
 
 
 In addition, MCT supports different quantization schemes for quantizing weights and activations:
 * Power-Of-Two (hardware-friendly quantization [1])
 * Symmetric
 * Uniform
-* LUT
 
 Core features:
 * <ins>Graph optimizations:</ins> Transforming the model to an equivalent (yet, more efficient) model (for example, batch-normalization layer folding to its preceding linear layer).
@@ -41,7 +43,7 @@ Core features:
   * <ins>Shift negative correction:</ins> Symmetric activation quantization can hurt the model's performance when some layers output both negative and positive activations, but their range is asymmetric. For more details please visit [1].  
   * <ins>Bias correction:</ins> Weights quantization can bias the layer's ou-tput. Applying a correction to this layer's bias, can prevent this and improve the quantized model's performance.
   * <ins>Outliers filtering:</ins> Computing z-score for activation statistics to detect and remove outliers.
-* <ins>Clustering:</ins> Using non-uniform quantization grid to quantize the weights and activations to match their distributions.
+* <ins>Clustering:</ins> Using non-uniform quantization grid to quantize the weights and activations to match their distributions using look-up-tables for quantizing to clusters centroids.
 * <ins>Mixed-precision search:</ins> Assigning quantization bit-width per layer (for weights/activations), based on the layer's sensitivity to different bit-widths.
 * <ins>Visualization:</ins> You can use TensorBoard to observe useful information for troubleshooting the quantized model's performance (for example, the model in different phases of the quantization, collected statistics, similarity between layers of the float and quantized model and bit-width configuration for mixed-precision quantization). For more details, please read the [visualization documentation](https://sony.github.io/model_optimization/guidelines/visualization.html).   
 
@@ -81,7 +83,7 @@ For using with Tensorflow please install the packages:
 [tensorflow](https://www.tensorflow.org/install), 
 [tensorflow-model-optimization](https://www.tensorflow.org/model_optimization/guide/install)
 
-For using with Pytorch (experimental) please install the packages: 
+For using with PyTorch (experimental) please install the packages: 
 [torch](https://pytorch.org/)
 
 Also, a [requirements](requirements.txt) file can be used to set up your environment.
