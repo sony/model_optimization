@@ -1,8 +1,16 @@
 # Model Compression Toolkit (MCT)
 
-Model Compression Toolkit (MCT) is an open-source project for neural network model optimization under efficient, constrained hardware. This project provides researchers, developers, and engineers tools for optimizing and deploying state-of-the-art neural networks on efficient hardware. Specifically, this project aims to apply quantization to compress neural networks. 
+Model Compression Toolkit (MCT) is an open-source project for neural network model optimization under efficient, constrained hardware.
+
+This project provides researchers, developers, and engineers tools for optimizing and deploying state-of-the-art neural networks on efficient hardware.
+
+Specifically, this project aims to apply quantization to compress neural networks.
+
 <img src="docsrc/images/mct_block_diagram.svg" width="10000">
 
+MCT is developed by researchers and engineers working at Sony Semiconductor Israel.
+
+For more information and detailed API, please visit our [project website](https://sony.github.io/model_optimization/).
 
 
 ## Table of Contents
@@ -18,10 +26,8 @@ Model Compression Toolkit (MCT) is an open-source project for neural network mod
 
 MCT supports different quantization methods:
 * Post training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental)
-* Gradient-based post training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental) *
-* Quantization aware training (QAT) *
-
-*Experimental and subject to future changes.
+* Gradient-based post training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental)
+* Quantization aware training (QAT)[*](#experimental-features)
 
 
 | Quantization Method | Complexity                                    | Computational Cost          |
@@ -43,13 +49,16 @@ Core features:
   * <ins>Shift negative correction:</ins> Symmetric activation quantization can hurt the model's performance when some layers output both negative and positive activations, but their range is asymmetric. For more details please visit [1].  
   * <ins>Bias correction:</ins> Weights quantization can bias the layer's ou-tput. Applying a correction to this layer's bias, can prevent this and improve the quantized model's performance.
   * <ins>Outliers filtering:</ins> Computing z-score for activation statistics to detect and remove outliers.
-* <ins>Clustering:</ins> Using non-uniform quantization grid to quantize the weights and activations to match their distributions using look-up-tables for quantizing to clusters centroids.
+* <ins>Clustering:</ins> Using non-uniform quantization grid to quantize the weights and activations to match their distributions.[*](#experimental-features)
 * <ins>Mixed-precision search:</ins> Assigning quantization bit-width per layer (for weights/activations), based on the layer's sensitivity to different bit-widths.
 * <ins>Visualization:</ins> You can use TensorBoard to observe useful information for troubleshooting the quantized model's performance (for example, the model in different phases of the quantization, collected statistics, similarity between layers of the float and quantized model and bit-width configuration for mixed-precision quantization). For more details, please read the [visualization documentation](https://sony.github.io/model_optimization/guidelines/visualization.html).   
 
-MCT is developed by researchers and engineers working at Sony Semiconductors Israel.
 
-For more information and detailed API, please visit our [project website](https://sony.github.io/model_optimization/).
+#### Experimental features 
+
+Some features are experimental and subject to future changes. 
+ 
+For more details, we highly recommend visiting our project website where experimental features are mentioned as experimental.
 
 
 ## Getting Started
@@ -83,7 +92,7 @@ For using with Tensorflow please install the packages:
 [tensorflow](https://www.tensorflow.org/install), 
 [tensorflow-model-optimization](https://www.tensorflow.org/model_optimization/guide/install)
 
-For using with PyTorch (experimental) please install the packages: 
+For using with PyTorch please install the packages: 
 [torch](https://pytorch.org/)
 
 Also, a [requirements](requirements.txt) file can be used to set up your environment.
@@ -100,10 +109,6 @@ is tested on various versions:
 | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf27.yml/badge.svg) | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_11.yml/badge.svg) |
 | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf26.yml/badge.svg) | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_10.yml/badge.svg) |
 
-
-> **_NOTE:_**  Some features are not supported for all frameworks (for example, GPTQ is currently supported for TensorFlow models only).
-> 
-> For more details, we highly recommend visiting our project website where experimental features are mentioned as experimental.
 
 ### Usage Example 
 For an example of how to use the post-training quantization, using Keras,
