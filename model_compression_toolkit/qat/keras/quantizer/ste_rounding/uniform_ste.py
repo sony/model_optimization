@@ -48,7 +48,6 @@ class STEUniformWeightQuantizer(BaseTrainableQuantizer):
             min_values: Minimum values to use for the quantization.
             max_values: Maximum to use for the quantization.
             quantization_axis: Axis of tensor to use for the quantization.
-            power_of_two: Whether the threshold should be constrained or not.
         """
         self.num_bits = num_bits
         self.per_axis = per_axis
@@ -164,7 +163,7 @@ class STEUniformWeightQuantizer(BaseTrainableQuantizer):
         return {RANGE_MIN: self.quantizer_parameters[FQ_MIN].numpy().reshape(self.min_max_shape),
                 RANGE_MAX: self.quantizer_parameters[FQ_MAX].numpy().reshape(self.min_max_shape)}
 
-    def get_trainable_parameters(self):
+    def get_trainable_parameters(self) -> List[tf.Tensor]:
         """
         A function to get a list trainable of trainable parameters of the quantizer for QAT retraining
 
