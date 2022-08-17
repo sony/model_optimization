@@ -23,33 +23,36 @@ from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.pytorch.constants import OUTPUT, PLACEHOLDER, TENSOR_META, CALL_FUNCTION, TYPE, \
-    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, GET_ATTR, CONSTANT
+    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, GET_ATTR, CONSTANT, BUFFER
+from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, ConstantHolder, BufferHolder
 
 
-class DummyPlaceHolder(torch.nn.Module):
+def extract_holder_weights(constant_name, node_target, model, weights, to_numpy):
     """
-    Class for PlaceHolder operator since a Pytorch model doesn't have one but FX does.
+    Extract layer weights and named buffers for BufferHolder and ConstantHolder.
+    Args:
+        constant_name: name to write the parameters under, CONSTANT for ConstantHolder and
+         BUFFER for BufferHolder.
+        node_target: relevant parameter name from Pytorch FX model.
+        model: Pytorch FX model.
+        weights: dictionary containing the weights of the node.
+        to_numpy: Function to convert framework's tensor to a Numpy array.
+
+    Returns:
+        Updated weights dictionary.
     """
-    def __name__(self):
-        return PLACEHOLDER
+    named_parameters_weights = {constant_name: to_numpy(parameter) for name, parameter in
+                                model.named_parameters() if node_target == name}
+    named_buffer_weights = {constant_name: to_numpy(parameter) for name, parameter in
+                            model.named_buffers() if node_target == name}
+    if len(named_parameters_weights) + len(named_buffer_weights) > 1:
+        raise Exception(
+            f'Constant parameter can only have one tensor. Here we have '
+            f'{len(named_parameters_weights)+ len(named_buffer_weights)}')
 
-    def forward(self, x):
-        return x
-
-
-class ConstantHolder(torch.nn.Module):
-    """
-    Class for saving constant values or parameters in graph inference.
-    """
-    def __init__(self, const_size):
-        super(ConstantHolder, self).__init__()
-        setattr(self, CONSTANT, torch.nn.Parameter(torch.empty(const_size)))
-
-    def __name__(self):
-        return CONSTANT
-
-    def forward(self):
-        return getattr(self, CONSTANT)
+    weights.update(named_parameters_weights)
+    weights.update(named_buffer_weights)
+    return weights
 
 
 def nodes_builder(model: GraphModule,
@@ -104,7 +107,10 @@ def nodes_builder(model: GraphModule,
             else:
                 raise Exception(f'Call method of type \'{node.target}\' is currently not supported.')
         elif node.op == GET_ATTR:
-            node_type = ConstantHolder
+            if node.meta[TYPE] == torch.Tensor:
+                node_type = BufferHolder
+            else:
+                node_type = ConstantHolder
             node_has_activation = False
             common.Logger.warning(
                 'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
@@ -123,17 +129,12 @@ def nodes_builder(model: GraphModule,
             weights.update(named_buffer_weights)
 
         if node.op == GET_ATTR:
-            named_parameters_weights = {CONSTANT: to_numpy(parameter) for name, parameter in
-                                        model.named_parameters() if node.target == name}
-            named_buffer_weights = {CONSTANT: to_numpy(parameter) for name, parameter in
-                                    model.named_buffers() if node.target == name}
-            if len(named_parameters_weights) + len(named_buffer_weights) > 1:
-                raise Exception(
-                    f'Constant parameter can only have one tensor. Here we have {len(named_parameters_weights) + len(named_buffer_weights)}')
-
-            weights.update(named_parameters_weights)
-            weights.update(named_buffer_weights)
-            framework_attr.update(const_size=weights.get(CONSTANT).shape)
+            if node_type == ConstantHolder:
+                weights = extract_holder_weights(CONSTANT, node.target, model, weights, to_numpy)
+                framework_attr.update(const_size=weights.get(CONSTANT).shape)
+            elif node_type == BufferHolder:
+                weights = extract_holder_weights(BUFFER, node.target, model, weights, to_numpy)
+                framework_attr.update(name=node.name)
 
         # extract input shapes
         input_shape = []
@@ -156,6 +157,19 @@ def nodes_builder(model: GraphModule,
             output_shape = [[1]]
         else:
             output_shape = []
+
+        # filter Nodes from framework attributes, we replace these attributes with nx graph nodes
+        framework_attr_filtered = {}
+        for k, v in framework_attr.items():
+            if not isinstance(v, torch.fx.node.Node):
+                framework_attr_filtered[k] = v
+        framework_attr = framework_attr_filtered
+
+        # filter Nodes from node kwargs, we replace these attributes with nx graph nodes
+        node_kwargs = {}
+        for k, v in node.kwargs.items():
+            if not isinstance(v, torch.fx.node.Node):
+                node_kwargs[k] = v
 
         # initiate graph nodes
         if node.op in [CALL_METHOD, CALL_FUNCTION]:
@@ -182,7 +196,7 @@ def nodes_builder(model: GraphModule,
 
             kwargs = {FUNCTIONAL_OP: node_type,
                       OP_CALL_ARGS: op_call_args,
-                      OP_CALL_KWARGS: node.kwargs,
+                      OP_CALL_KWARGS: node_kwargs,
                       INPUTS_AS_LIST: inputs_as_list}
         else:
             graph_node_type = BaseNode
