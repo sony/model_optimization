@@ -113,7 +113,7 @@ is tested on various versions:
 For an example of how to use the post-training quantization, using Keras,
 please use this [link](tutorials/example_keras_mobilenet.py).
 
-For an example using Pytorch (experimental), please use this [link](tutorials/example_pytorch_mobilenet_v2.py).
+For an example using PyTorch, please use this [link](tutorials/example_pytorch_mobilenet_v2.py).
 
 For more examples please see the [tutorials' directory](tutorials).
 
