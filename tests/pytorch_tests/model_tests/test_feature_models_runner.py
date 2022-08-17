@@ -116,7 +116,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_bn_function(self):
         """
-        This tests check the batch_norm function.
+        This tests check the batch_norm function and demonstrates the usage of BufferHolder node.
         """
         BNFNetTest(self).run_test()
 

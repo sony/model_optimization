@@ -27,6 +27,34 @@ from model_compression_toolkit.core.pytorch.constants import OUTPUT, PLACEHOLDER
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, ConstantHolder, BufferHolder
 
 
+def extract_holder_weights(constant_name, node_target, model, weights, to_numpy):
+    """
+    Extract layer weights and named buffers for BufferHolder and ConstantHolder.
+    Args:
+        constant_name: name to write the parameters under, CONSTANT for ConstantHolder and
+         BUFFER for BufferHolder.
+        node_target: relevant parameter name from Pytorch FX model.
+        model: Pytorch FX model.
+        weights: dictionary containing the weights of the node.
+        to_numpy: Function to convert framework's tensor to a Numpy array.
+
+    Returns:
+        Updated weights dictionary.
+    """
+    named_parameters_weights = {constant_name: to_numpy(parameter) for name, parameter in
+                                model.named_parameters() if node_target == name}
+    named_buffer_weights = {constant_name: to_numpy(parameter) for name, parameter in
+                            model.named_buffers() if node_target == name}
+    if len(named_parameters_weights) + len(named_buffer_weights) > 1:
+        raise Exception(
+            f'Constant parameter can only have one tensor. Here we have '
+            f'{len(named_parameters_weights)+ len(named_buffer_weights)}')
+
+    weights.update(named_parameters_weights)
+    weights.update(named_buffer_weights)
+    return weights
+
+
 def nodes_builder(model: GraphModule,
                   module_dict: Dict,
                   to_numpy: Callable) -> Tuple[List, List, List, Dict]:
@@ -102,28 +130,10 @@ def nodes_builder(model: GraphModule,
 
         if node.op == GET_ATTR:
             if node_type == ConstantHolder:
-                named_parameters_weights = {CONSTANT: to_numpy(parameter) for name, parameter in
-                                            model.named_parameters() if node.target == name}
-                named_buffer_weights = {CONSTANT: to_numpy(parameter) for name, parameter in
-                                        model.named_buffers() if node.target == name}
-                if len(named_parameters_weights) + len(named_buffer_weights) > 1:
-                    raise Exception(
-                        f'Constant parameter can only have one tensor. Here we have {len(named_parameters_weights) + len(named_buffer_weights)}')
-
-                weights.update(named_parameters_weights)
-                weights.update(named_buffer_weights)
+                weights = extract_holder_weights(CONSTANT, node.target, model, weights, to_numpy)
                 framework_attr.update(const_size=weights.get(CONSTANT).shape)
             elif node_type == BufferHolder:
-                named_parameters_weights = {BUFFER: to_numpy(parameter) for name, parameter in
-                                            model.named_parameters() if node.target == name}
-                named_buffer_weights = {BUFFER: to_numpy(parameter) for name, parameter in
-                                        model.named_buffers() if node.target == name}
-                if len(named_parameters_weights) + len(named_buffer_weights) > 1:
-                    raise Exception(
-                        f'Constant parameter can only have one tensor. Here we have {len(named_parameters_weights) + len(named_buffer_weights)}')
-
-                weights.update(named_parameters_weights)
-                weights.update(named_buffer_weights)
+                weights = extract_holder_weights(BUFFER, node.target, model, weights, to_numpy)
                 framework_attr.update(name=node.name)
 
         # extract input shapes
