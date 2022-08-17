@@ -14,7 +14,7 @@
 # ==============================================================================
 from abc import ABC, abstractmethod
 import numpy as np
-from typing import Callable
+from typing import Callable, List, Any
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common import Graph, Logger
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -66,17 +66,17 @@ class GPTQTrainer(ABC):
         self.fxp_model, self.gptq_user_info = self.build_gptq_model()
 
     def get_optimizer_with_param(self,
-                                 flattened_trainable_weights,
-                                 flattened_bias_weights,
-                                 trainable_quantization_parameters,
-                                 temperature_weights):
+                                 flattened_trainable_weights: List[Any],
+                                 flattened_bias_weights: List[Any],
+                                 trainable_quantization_parameters: List[Any],
+                                 temperature_weights: List[Any]) -> List[Any]:
         """
         Create Optimizers with their trainable parameters
         Args:
-            flattened_trainable_weights: trainable weights parameters (flattened)
-            flattened_bias_weights:  trainable bias parameters (flattened)
-            trainable_quantization_parameters:  trainable quantization parameters
-            temperature_weights: temperature weights variables
+            flattened_trainable_weights: list of trainable weights parameters (flattened)
+            flattened_bias_weights: list of trainable bias parameters (flattened)
+            trainable_quantization_parameters: list of trainable quantization parameters
+            temperature_weights: list of temperature weights variables
         Returns:
             List of Optimizer objects with parameters
         """
