@@ -70,6 +70,17 @@ class GPTQTrainer(ABC):
                                  flattened_bias_weights,
                                  trainable_quantization_parameters,
                                  temperature_weights):
+        """
+        Create Optimizers with their trainable parameters
+        Args:
+            flattened_trainable_weights: trainable weights parameters (flattened)
+            flattened_bias_weights:  trainable bias parameters (flattened)
+            trainable_quantization_parameters:  trainable quantization parameters
+            temperature_weights: temperature weights variables
+        Returns:
+            List of Optimizer objects with parameters
+        """
+
         w2train = [*flattened_trainable_weights]
         if self.gptq_config.is_gumbel:
             if self.gptq_config.quantizer_config.temperature_learning:
