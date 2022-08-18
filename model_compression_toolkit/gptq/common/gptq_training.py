@@ -17,7 +17,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from typing import Callable, List, Any
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
-from model_compression_toolkit.core.common import Graph, Logger, BaseNode
+from model_compression_toolkit.core.common import Graph, Logger
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.gptq.common.gptq_graph import get_compare_points
@@ -227,14 +227,6 @@ def gptq_training(graph_float: Graph,
         Quantized graph for export
 
     """
-    #
-    # import tensorflow as tf
-    # import random
-    #
-    # np.random.seed(0)
-    # tf.random.set_seed(0)
-    # random.seed(0)
-
     # Get GPTQ object and initialize it
     gptq_trainer_obj = fw_impl.get_gptq_trainer_obj()
 
@@ -246,36 +238,9 @@ def gptq_training(graph_float: Graph,
                                     representative_data_gen)
 
     # Training process
-    for n in graph_quant.nodes:
-        print ('*******************************')
-        print(n.name)
-        print(n.final_activation_quantization_cfg)
-        print(n.final_weights_quantization_cfg)
-    print('*******************************')
-
-    # node:BaseNode = list(graph_quant.nodes)[0]
-    # print(np.sum(np.abs((node.get_weights_by_keys('kernel')))))
-    # print(np.sum(np.abs((node.get_weights_by_keys('kernel')))))
-    # print(np.sum(np.abs((node.get_weights_by_keys('bias')))))
-    # print(node.final_weights_quantization_cfg)
-    # print(node.final_activation_quantization_cfg)
-    print(gptq_config)
-    print(gptq_config.quantizer_config)
-
-
     gptq_trainer.train(representative_data_gen)
-
-    # print(np.sum(np.abs((list(graph_quant.nodes)[0].get_weights_by_keys('kernel')))))
-    # print(np.sum(np.abs((list(graph_quant.nodes)[0].get_weights_by_keys('bias')))))
 
     # Update graph
     graph_quant = gptq_trainer.update_graph()
-
-    # print(f'Post update: ')
-    # node = list(graph_quant.nodes)[0]
-    # print(node.final_weights_quantization_cfg)
-    # print(node.final_activation_quantization_cfg)
-    # print(np.sum(np.abs((node.get_weights_by_keys('kernel')))))
-    # print(np.sum(np.abs((node.get_weights_by_keys('bias')))))
 
     return graph_quant

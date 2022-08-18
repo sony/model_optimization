@@ -169,9 +169,9 @@ if common.constants.FOUND_TF:
 
             >>> gptq_config = get_keras_gptq_config(2000)
 
-            Pass the model with the representative dataset generator to get a quantized model: TODO: Fix example to use new experimental facade
+            Pass the model with the representative dataset generator to get a quantized model:
 
-            >>> quantized_model, quantization_info = mct.keras_post_training_quantization(model, repr_datagen, gptq_config, target_kpi=kpi, core_config=config)
+            >>> quantized_model, quantization_info = mct.keras_gradient_post_training_quantization_experimental(model, repr_datagen, gptq_config, target_kpi=kpi, core_config=config)
 
         """
         KerasModelValidation(model=in_model,

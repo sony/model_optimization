@@ -14,9 +14,8 @@
 # ==============================================================================
 from enum import Enum
 from typing import Callable, Any
-
-from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
+from model_compression_toolkit.core import common
 
 MAX_LSBS_CHANGE_MAP = {8: 4,
                        4: 2,
@@ -64,19 +63,6 @@ class GumbelConfig(object):
         self.n_cycles = n_cycles
         self.minimal_temp = minimal_temp
         self.maximal_temp = maximal_temp
-
-
-    def __repr__(self):
-        return self.__dict__.__repr__()
-
-
-    def __eq__(self, other):
-        if not isinstance(other, GumbelConfig):
-            return False
-        return self.gumbel_entropy_regularization == other.gumbel_entropy_regularization and \
-               self.temperature_learning == other.temperature_learning and \
-               self.maximal_temp == other.maximal_temp \
-               and self.minimal_temp == other.minimal_temp
 
 
 class GradientPTQConfig:
@@ -149,35 +135,6 @@ class GradientPTQConfig:
         self.quantizer_config = quantizer_config
         self.optimizer_quantization_parameter = optimizer_quantization_parameter
         self.optimizer_bias = optimizer_bias
-
-    def __eq__(self, other):
-        if not isinstance(other, GradientPTQConfig):
-            return False
-        return self.n_iter == other.n_iter and \
-               self.optimizer == other.optimizer and \
-               self.optimizer_rest == other.optimizer_rest and \
-               self.loss == other.loss and \
-               self.log_function == other.log_function and \
-               self.train_bias == other.train_bias and \
-               self.quantization_parameters_learning == other.quantization_parameters_learning and \
-               self.rounding_type == other.rounding_type and \
-               self.sam_optimization == other.sam_optimization and \
-               self.sam_optimization == other.sam_optimization and \
-               self.rho == other.rho and \
-               self.lsb_change_per_bit_width == other.lsb_change_per_bit_width and \
-               self.eps == other.eps and \
-               self.use_jac_based_weights == other.use_jac_based_weights and \
-               self.num_samples_for_loss == other.num_samples_for_loss and \
-               self.norm_weights == other.norm_weights and \
-               self.quantizer_config == other.quantizer_config and \
-               self.optimizer_quantization_parameter == other.optimizer_quantization_parameter and \
-               self.optimizer_bias == other.optimizer_bias
-
-
-
-    def __repr__(self):
-        return self.__dict__.__repr__()
-
 
     @property
     def is_gumbel(self) -> bool:
