@@ -37,20 +37,22 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         old exported model.
         """
         repr_dataset = lambda: [np.random.randn(1, 224, 224, 3)]
-        for seed in range(10):
-            self.set_seed(seed)
-            core_config = mct.CoreConfig(n_iter=1)
-            old_export_model, _ = mct.keras_post_training_quantization_experimental(in_model=MobileNetV2(),
-                                                                                    representative_data_gen=repr_dataset,
-                                                                                    core_config=core_config)
+        seed = np.random.randint(0, 100, size=1)
 
-            self.set_seed(seed)
-            core_config = mct.CoreConfig(n_iter=1)
-            new_export_model, _ = mct.keras_post_training_quantization_experimental(in_model=MobileNetV2(),
-                                                                                    core_config=core_config,
-                                                                                    representative_data_gen=repr_dataset,
-                                                                                    new_experimental_exporter=True)
-            images = repr_dataset()
-            diff = new_export_model(images) - old_export_model(images)
-            print(f'Max abs error: {np.max(np.abs(diff))}')
-            self.assertTrue(np.sum(np.abs(diff)) == 0)
+        self.set_seed(seed)
+        core_config = mct.CoreConfig(n_iter=1)
+        old_export_model, _ = mct.keras_post_training_quantization_experimental(in_model=MobileNetV2(),
+                                                                                representative_data_gen=repr_dataset,
+                                                                                core_config=core_config)
+
+        self.set_seed(seed)
+        core_config = mct.CoreConfig(n_iter=1)
+        new_export_model, _ = mct.keras_post_training_quantization_experimental(in_model=MobileNetV2(),
+                                                                                core_config=core_config,
+                                                                                representative_data_gen=repr_dataset,
+                                                                                new_experimental_exporter=True)
+
+        images = repr_dataset()
+        diff = new_export_model(images) - old_export_model(images)
+        print(f'Max abs error: {np.max(np.abs(diff))}')
+        self.assertTrue(np.sum(np.abs(diff)) == 0)
