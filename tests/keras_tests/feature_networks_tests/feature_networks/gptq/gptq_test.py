@@ -134,8 +134,6 @@ class GradientPTQTest(GradientPTQBaseTest):
         y = float_model(input_x)
         y_hat = quantized_model(input_x)
         cs = cosine_similarity(y.numpy(), y_hat.numpy())
-        if not np.isclose(cs, 1):
-            print('fail')
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check: {cs}')
 
 

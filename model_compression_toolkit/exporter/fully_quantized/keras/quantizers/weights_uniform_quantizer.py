@@ -33,7 +33,7 @@ class WeightsUniformQuantizer(Quantizer):
                  nbits: int,
                  min_range: np.ndarray,
                  max_range: np.ndarray,
-                 weight: tf.Tensor,
+                 weight: np.ndarray,
                  quantization_method: QuantizationMethod):
         """
 
@@ -46,7 +46,6 @@ class WeightsUniformQuantizer(Quantizer):
         """
 
         super().__init__()
-
 
         min_range, max_range = fix_range_to_include_zero(np.array(min_range),
                                                          np.array(max_range),
