@@ -171,7 +171,7 @@ if common.constants.FOUND_TF:
 
             Pass the model with the representative dataset generator to get a quantized model:
 
-            >>> quantized_model, quantization_info = mct.keras_post_training_quantization(model, repr_datagen, gptq_config, target_kpi=kpi, core_config=config)
+            >>> quantized_model, quantization_info = mct.keras_gradient_post_training_quantization_experimental(model, repr_datagen, gptq_config, target_kpi=kpi, core_config=config)
 
         """
         KerasModelValidation(model=in_model,
@@ -185,7 +185,6 @@ if common.constants.FOUND_TF:
 
             common.Logger.info("Using experimental mixed-precision quantization. "
                                "If you encounter an issue please file a bug.")
-
         tb_w = _init_tensorboard_writer(fw_info)
 
         fw_impl = KerasImplementation()
@@ -210,7 +209,7 @@ if common.constants.FOUND_TF:
                            'Please do not use unless you are familiar with what you are doing')
             return get_fully_quantized_keras_model(tg_gptq)
 
-        return export_model(tg,
+        return export_model(tg_gptq,
                             fw_info,
                             fw_impl,
                             tb_w,

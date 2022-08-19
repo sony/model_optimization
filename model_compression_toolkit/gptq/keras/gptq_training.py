@@ -67,9 +67,15 @@ class KerasGPTQTrainer(GPTQTrainer):
             fw_info: Framework information.
             representative_data_gen: Dataset to use for inputs of the models.
         """
-        super().__init__(graph_float, graph_quant, gptq_config, fw_impl, fw_info)
+        super().__init__(graph_float,
+                         graph_quant,
+                         gptq_config,
+                         fw_impl,
+                         fw_info)
+
         self.loss_list = []
         self.input_scale = 1
+
         trainable_weights, bias_weights, trainable_threshold, temperature_weights = get_trainable_parameters(
             self.fxp_model,
             fw_info,
@@ -91,6 +97,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                                                                   flattened_bias_weights,
                                                                   trainable_quantization_parameters,
                                                                   temperature_weights)
+        self.has_params_to_train = np.sum([len(optimizer_params_tuple[1]) for optimizer_params_tuple in self.optimizer_with_param])>0
 
         if self.float_user_info.input_scale != self.gptq_user_info.input_scale:
             common.Logger.error("Input scale mismatch between float and GPTQ networks")  # pragma: no cover
@@ -133,15 +140,23 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         with tf.GradientTape(persistent=True) as tape:
             y_fxp = self.fxp_model(input_data, training=training)  # running fxp model
-            loss_value = self.gptq_config.loss(y_fxp, in_y_float, self.fxp_weights_list, self.flp_weights_list,
-                                               self.compare_points_mean, self.compare_points_std,
+            loss_value = self.gptq_config.loss(y_fxp,
+                                               in_y_float,
+                                               self.fxp_weights_list,
+                                               self.flp_weights_list,
+                                               self.compare_points_mean,
+                                               self.compare_points_std,
                                                self.weights_for_average_loss)
+
             if self.gptq_config.is_gumbel and self.gptq_config.quantizer_config.temperature_learning:
                 gumbel_prob = get_gumbel_probability(self.fxp_model)
                 gumbel_reg = 0
                 for p in gumbel_prob:
                     entropy = -tf.reduce_mean(
-                        tf.reduce_sum(p * tf.math.log(tf.maximum(p, self.gptq_config.eps)), axis=0))
+                        tf.reduce_sum(p * tf.math.log(tf.maximum(p,
+                                                                 self.gptq_config.eps)),
+                                      axis=0))
+
                     gumbel_reg += entropy
                 gumbel_reg /= len(gumbel_prob)
                 loss_value += self.gptq_config.quantizer_config.gumbel_entropy_regularization * gumbel_reg
@@ -170,8 +185,12 @@ class KerasGPTQTrainer(GPTQTrainer):
         # ----------------------------------------------
         # Training loop
         # ----------------------------------------------
-        self.micro_training_loop(representative_data_gen, compute_gradients, self.optimizer_with_param,
-                                 self.gptq_config.n_iter, True)
+        if self.has_params_to_train:
+            self.micro_training_loop(representative_data_gen,
+                                     compute_gradients,
+                                     self.optimizer_with_param,
+                                     self.gptq_config.n_iter,
+                                     True)
 
     def micro_training_loop(self,
                             data_function: Callable,

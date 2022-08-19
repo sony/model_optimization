@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 from abc import ABC, abstractmethod
 import numpy as np
 from typing import Callable, List, Any
@@ -47,8 +48,8 @@ class GPTQTrainer(ABC):
             fw_impl: Framework implementation
             fw_info: Framework information
         """
-        self.graph_float = graph_float
-        self.graph_quant = graph_quant
+        self.graph_float = copy.deepcopy(graph_float)
+        self.graph_quant = copy.deepcopy(graph_quant)
         self.gptq_config = gptq_config
         self.fw_impl = fw_impl
         self.fw_info = fw_info
@@ -228,11 +229,18 @@ def gptq_training(graph_float: Graph,
     """
     # Get GPTQ object and initialize it
     gptq_trainer_obj = fw_impl.get_gptq_trainer_obj()
-    gptq_trainer = gptq_trainer_obj(graph_float, graph_quant, gptq_config, fw_impl, fw_info, representative_data_gen)
+
+    gptq_trainer = gptq_trainer_obj(graph_float,
+                                    graph_quant,
+                                    gptq_config,
+                                    fw_impl,
+                                    fw_info,
+                                    representative_data_gen)
 
     # Training process
     gptq_trainer.train(representative_data_gen)
 
     # Update graph
     graph_quant = gptq_trainer.update_graph()
+
     return graph_quant

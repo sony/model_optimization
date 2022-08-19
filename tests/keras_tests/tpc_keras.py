@@ -56,6 +56,15 @@ def get_quantization_disabled_keras_tpc(name):
     return generate_keras_tpc(name=name, tp_model=tp)
 
 
+def get_activation_quantization_disabled_keras_tpc(name):
+    tp = generate_test_tp_model({'enable_activation_quantization': False})
+    return generate_keras_tpc(name=name, tp_model=tp)
+
+def get_weights_quantization_disabled_keras_tpc(name):
+    tp = generate_test_tp_model({'enable_weights_quantization': False})
+    return generate_keras_tpc(name=name, tp_model=tp)
+
+
 def generate_activation_mp_tpc_keras(tp_model, name="activation_mp_keras_tp"):
     ftp_keras = tp.TargetPlatformCapabilities(tp_model,
                                               name=name)
