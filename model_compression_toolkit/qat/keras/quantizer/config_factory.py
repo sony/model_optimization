@@ -22,7 +22,6 @@ from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.d
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.qat.keras.quantizer.configs.weight_quantizer_config import WeightQuantizeConfig
-from model_compression_toolkit.core.common.constants import THRESHOLD
 
 
 QUANTIZATION_CONFIGS_DICT = {"WeightQuantizeConfig": WeightQuantizeConfig}
@@ -48,7 +47,7 @@ def quantization_config_builder(n: common.BaseNode,
                                   n.final_weights_quantization_cfg.weights_n_bits,
                                   n.final_weights_quantization_cfg.weights_channels_axis,
                                   n.final_weights_quantization_cfg.weights_quantization_method,
-                                  n.final_weights_quantization_cfg.weights_quantization_params.get(THRESHOLD))
+                                  n.final_weights_quantization_cfg.weights_quantization_params)
     else:
         qc = NoOpQuantizeConfig()
 

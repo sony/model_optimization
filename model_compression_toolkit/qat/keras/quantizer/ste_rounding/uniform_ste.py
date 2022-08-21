@@ -20,12 +20,12 @@ import tensorflow as tf
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.core.keras.quantizer.base_quantizer import BaseTrainableQuantizer
-from model_compression_toolkit.core.common.constants import THRESHOLD, MIN_THRESHOLD
+from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 
 
-class STEWeightQuantizer(BaseTrainableQuantizer):
+class STEUniformWeightQuantizer(BaseTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer inputs.
     """
@@ -34,9 +34,9 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
                  num_bits: int,
                  per_axis: bool,
                  signed: bool,
-                 threshold_values: np.ndarray,
-                 quantization_axis: int = -1,
-                 power_of_two: bool = True):
+                 min_values: np.ndarray,
+                 max_values: np.ndarray,
+                 quantization_axis: int = -1):
         """
         Initialize a TrainableWeightQuantizer object with parameters to use
         for the quantization.
@@ -45,37 +45,29 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
             num_bits: Number of bits to use for the quantization.
             per_axis: Whether to quantize per-channel or per-tensor.
             signed: Signedness to use for the quantization range.
-            threshold_values: Threshold to use for the quantization.
+            min_values: Minimum values to use for the quantization.
+            max_values: Maximum to use for the quantization.
             quantization_axis: Axis of tensor to use for the quantization.
-            power_of_two: Whether the threshold should be constrained or not.
         """
         self.num_bits = num_bits
         self.per_axis = per_axis
         self.signed = signed
-        self.threshold_values = threshold_values
-        self.threshold_shape = np.asarray(threshold_values).shape
-        self.np_threshold_values = np.reshape(np.asarray(threshold_values), [-1]) if self.per_axis else float(
-            threshold_values)
+        self.min_max_shape = np.asarray(max_values).shape
+        self.max_values = max_values
+        self.min_values = min_values
+        self.max = np.reshape(max_values, [-1]) if self.per_axis else float(max_values)
+        self.min = np.reshape(min_values, [-1]) if self.per_axis else float(min_values)
         self.quantization_axis = quantization_axis
 
-        if self.per_axis and self.quantization_axis not in [-1, len(self.threshold_shape)-1]:
+        if self.per_axis and self.quantization_axis not in [-1, len(self.min_max_shape)-1]:
             # Tensorflow's fake_quant_with_min_max_vars_per_channel only works on last axis, so
             # need to move the quantization axis to the last axis
-            self.perm_vec = list(np.arange(len(self.threshold_shape)))
-            self.perm_vec[self.quantization_axis] = len(self.threshold_shape)-1
-            self.perm_vec[len(self.threshold_shape)-1] = self.quantization_axis
+            self.perm_vec = list(np.arange(len(self.min_max_shape)))
+            self.perm_vec[self.quantization_axis] = len(self.min_max_shape)-1
+            self.perm_vec[len(self.min_max_shape)-1] = self.quantization_axis
         else:
             self.perm_vec = None
 
-        self.power_of_two = power_of_two
-
-        if self.power_of_two:
-            self.np_threshold_values = np.power(2.0, np.ceil(np.log2(np.maximum(self.np_threshold_values, MIN_THRESHOLD))))
-        delta = self.np_threshold_values / np.power(2.0, num_bits - int(signed))
-        min_int = -int(signed) * (2 ** (num_bits - int(signed)))
-        max_int = (2 ** (num_bits - int(signed))) - 1
-        self.min = delta * min_int
-        self.max = delta * max_int
         self.quantizer_parameters = {}
 
     def build(self,
@@ -93,13 +85,6 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
         Returns:
             Dictionary of new variables.
         """
-        ptq_threshold_tensor = layer.add_weight(
-            name + THRESHOLD_TENSOR,
-            shape=len(self.np_threshold_values) if self.per_axis else (),
-            initializer=tf.keras.initializers.Constant(1.0),
-            trainable=False)
-        ptq_threshold_tensor.assign(self.np_threshold_values)
-
         fq_min = layer.add_weight(
             name + FQ_MIN,
             shape=len(self.min) if self.per_axis else (),
@@ -115,8 +100,7 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
         fq_max.assign(self.max)
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {THRESHOLD_TENSOR: ptq_threshold_tensor,
-                                     FQ_MIN: fq_min, FQ_MAX: fq_max}
+        self.quantizer_parameters = {FQ_MIN: fq_min, FQ_MAX: fq_max}
         return self.quantizer_parameters
 
     def __call__(self, inputs: tf.Tensor,
@@ -159,9 +143,9 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
             'num_bits': self.num_bits,
             'per_axis': self.per_axis,
             'signed': self.signed,
-            'threshold_values': self.threshold_values,
-            'quantization_axis': self.quantization_axis,
-            'power_of_two': self.power_of_two
+            'min_values': self.min_values,
+            'max_values': self.max_values,
+            'quantization_axis': self.quantization_axis
         }
 
     def get_quant_config(self, layer) -> Dict[str, np.ndarray]:
@@ -176,10 +160,10 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
             Keys must match NodeQuantizationConfig attributes
 
         """
-        old_threshold = self.quantizer_parameters[THRESHOLD_TENSOR]
-        return {THRESHOLD: old_threshold.numpy().reshape(self.threshold_shape)}
+        return {RANGE_MIN: self.quantizer_parameters[FQ_MIN].numpy().reshape(self.min_max_shape),
+                RANGE_MAX: self.quantizer_parameters[FQ_MAX].numpy().reshape(self.min_max_shape)}
 
-    def get_trainable_parameters(self):
+    def get_trainable_parameters(self) -> List[tf.Tensor]:
         """
         A function to get a list trainable of trainable parameters of the quantizer for QAT retraining
 
@@ -195,7 +179,7 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
          Returns: A list of the quantizer parameters
 
          """
-        return [self.quantizer_parameters[THRESHOLD_TENSOR]]
+        return [self.quantizer_parameters[FQ_MIN], self.quantizer_parameters[FQ_MAX]]
 
     def __eq__(self, other: Any) -> bool:
         """
@@ -206,12 +190,12 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
         Returns:
             Whether they are equal or not.
         """
-        if not isinstance(other, STEWeightQuantizer):
+        if not isinstance(other, STEUniformWeightQuantizer):
             return False
 
         return (self.num_bits == other.num_bits and
                 self.per_axis == other.per_axis and
-                self.symmetric == other.symmetric)
+                self.signed == other.signed)
 
     def __ne__(self, other: Any) -> bool:
         """
@@ -220,6 +204,6 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
             other: Other object to compare.
 
         Returns:
-            Whether they are differ or not.
+            Whether they are different or not.
         """
         return not self.__eq__(other)
