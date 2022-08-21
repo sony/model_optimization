@@ -43,10 +43,15 @@ if common.constants.FOUND_TF:
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
     from model_compression_toolkit.gptq.keras.gptq_loss import GPTQMultipleTensorsLoss
-    from keras.optimizer_v2.optimizer_v2 import OptimizerV2
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.exporter import get_fully_quantized_keras_model
     from model_compression_toolkit import get_target_platform_capabilities
+
+    # As from TF2.9 optimizers package is changed
+    if tf.__version__ < "2.9":
+        from keras.optimizer_v2.optimizer_v2 import OptimizerV2
+    else:
+        from keras.optimizers.optimizer_v2.optimizer_v2 import OptimizerV2
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
