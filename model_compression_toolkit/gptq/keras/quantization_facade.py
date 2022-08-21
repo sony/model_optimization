@@ -31,7 +31,7 @@ from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
-LR_DEFAULT = 0.2
+LR_DEFAULT = 0.05
 LR_REST_DEFAULT = 1e-4
 LR_BIAS_DEFAULT = 1e-4
 LR_QUANTIZATION_PARAM_DEFAULT = 1e-4
@@ -51,12 +51,11 @@ if common.constants.FOUND_TF:
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
-    def get_keras_gptq_config(n_iter: int = 5000,
+    def get_keras_gptq_config(n_iter: int,
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT),
                               optimizer_rest: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_REST_DEFAULT),
                               loss: Callable = GPTQMultipleTensorsLoss(),
-                              log_function: Callable = None,
-                              train_bias: bool = False) -> GradientPTQConfig:
+                              log_function: Callable = None) -> GradientPTQConfig:
         """
         Create a GradientPTQConfig instance for Keras models.
 
@@ -66,7 +65,6 @@ if common.constants.FOUND_TF:
             optimizer_rest (OptimizerV2): Keras optimizer to use for fine-tuning of the bias variable.
             loss (Callable): loss to use during fine-tuning. should accept 4 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors, the 3rd is a list of quantized weights and the 4th is a list of float weights.
             log_function (Callable): Function to log information about the gptq process.
-            train_bias (bool): Whether to update the bias during the the fine-tuning or not.
 
         returns:
             a GradientPTQConfig object to use when fine-tuning the quantized model using gptq.
@@ -88,14 +86,14 @@ if common.constants.FOUND_TF:
             The configuration can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization` in order to quantize a keras model using gptq.
 
         """
-        bias_optimizer = tf.keras.optimizers.Adam(learning_rate=LR_BIAS_DEFAULT)
+        bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT)
         optimizer_quantization_parameter = tf.keras.optimizers.Adam(learning_rate=LR_QUANTIZATION_PARAM_DEFAULT)
         return GradientPTQConfig(n_iter,
                                  optimizer,
                                  optimizer_rest=optimizer_rest,
                                  loss=loss,
                                  log_function=log_function,
-                                 train_bias=train_bias,
+                                 train_bias=True,
                                  optimizer_bias=bias_optimizer,
                                  optimizer_quantization_parameter=optimizer_quantization_parameter)
 

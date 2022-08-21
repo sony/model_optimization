@@ -68,10 +68,10 @@ def multiple_tensors_mse_loss(y_list: List[tf.Tensor],
         return tf.reduce_mean(tf.stack(loss_values_list))
 
 
-
-
-
-def mse_loss_per_tensor(y: tf.Tensor, x: tf.Tensor, normalized: bool = False, p: int = 2) -> tf.Tensor:
+def mse_loss_per_tensor(y: tf.Tensor,
+                        x: tf.Tensor,
+                        normalized: bool = False,
+                        p: int = 2) -> tf.Tensor:
     """
     Compute the MSE of two tensors.
     Args:
@@ -115,12 +115,16 @@ def activation_mse(flp_act_list,
     else:
         return tf.reduce_mean(tf.stack(loss_values_list)), tf.reduce_mean(tf.stack(bias_loss_list))
 
+
+
 class GPTQMultipleTensorsLoss:
-    def __init__(self, norm_loss: bool = False):
+    def __init__(self, norm_loss: bool = True):
         self.alpha = None
         self.norm_loss = norm_loss
 
-    def __call__(self, fxp_act_list: List[tf.Tensor], flp_act_list: List[tf.Tensor],
+    def __call__(self,
+                 fxp_act_list: List[tf.Tensor],
+                 flp_act_list: List[tf.Tensor],
                  fxp_w_list: List[List[tf.Tensor]],
                  flp_w_list: List[List[tf.Tensor]],
                  act_bn_mean: List,
