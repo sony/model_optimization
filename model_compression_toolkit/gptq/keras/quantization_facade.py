@@ -15,21 +15,21 @@
 
 from typing import Callable, Tuple
 
-from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.user_info import UserInformation
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
-from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.exporter import export_model
+from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.gptq.runner import gptq_runner
+from model_compression_toolkit.core.exporter import export_model
+from model_compression_toolkit.core.analyzer import analyzer_model_quantization
+from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
 LR_DEFAULT = 0.2
 LR_REST_DEFAULT = 1e-4
@@ -44,7 +44,6 @@ if common.constants.FOUND_TF:
     from tensorflow.keras.models import Model
     from model_compression_toolkit.gptq.keras.gptq_loss import GPTQMultipleTensorsLoss
     from keras.optimizer_v2.optimizer_v2 import OptimizerV2
-
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.exporter import get_fully_quantized_keras_model
     from model_compression_toolkit import get_target_platform_capabilities
