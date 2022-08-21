@@ -15,31 +15,36 @@
 
 from typing import Callable, Tuple
 
+from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core import common
+from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW
-from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit import CoreConfig
-from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
-from model_compression_toolkit.gptq.runner import gptq_runner
-from model_compression_toolkit.core.exporter import export_model
-from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.core.common.user_info import UserInformation
+from model_compression_toolkit.core.exporter import export_model
+from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.runner import gptq_runner
 
 LR_DEFAULT = 0.2
+LR_REST_DEFAULT = 1e-4
+LR_BIAS_DEFAULT = 1e-4
+LR_QUANTIZATION_PARAM_DEFAULT = 1e-4
+
 if common.constants.FOUND_TF:
     import tensorflow as tf
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
-    from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
+    from model_compression_toolkit.gptq.keras.gptq_loss import GPTQMultipleTensorsLoss
     from keras.optimizer_v2.optimizer_v2 import OptimizerV2
+
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.exporter import get_fully_quantized_keras_model
     from model_compression_toolkit import get_target_platform_capabilities
@@ -47,12 +52,12 @@ if common.constants.FOUND_TF:
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
-    def get_keras_gptq_config(n_iter: int,
+    def get_keras_gptq_config(n_iter: int = 5000,
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT),
-                              optimizer_rest: OptimizerV2 = tf.keras.optimizers.Adam(),
-                              loss: Callable = multiple_tensors_mse_loss,
+                              optimizer_rest: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_REST_DEFAULT),
+                              loss: Callable = GPTQMultipleTensorsLoss(),
                               log_function: Callable = None,
-                              train_bias: bool = True) -> GradientPTQConfig:
+                              train_bias: bool = False) -> GradientPTQConfig:
         """
         Create a GradientPTQConfig instance for Keras models.
 
@@ -84,13 +89,16 @@ if common.constants.FOUND_TF:
             The configuration can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization` in order to quantize a keras model using gptq.
 
         """
-
+        bias_optimizer = tf.keras.optimizers.Adam(learning_rate=LR_BIAS_DEFAULT)
+        optimizer_quantization_parameter = tf.keras.optimizers.Adam(learning_rate=LR_QUANTIZATION_PARAM_DEFAULT)
         return GradientPTQConfig(n_iter,
                                  optimizer,
                                  optimizer_rest=optimizer_rest,
                                  loss=loss,
                                  log_function=log_function,
-                                 train_bias=train_bias)
+                                 train_bias=train_bias,
+                                 optimizer_bias=bias_optimizer,
+                                 optimizer_quantization_parameter=optimizer_quantization_parameter)
 
 
     def keras_gradient_post_training_quantization_experimental(in_model: Model,

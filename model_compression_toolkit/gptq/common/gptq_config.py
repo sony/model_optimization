@@ -17,8 +17,8 @@ from typing import Callable, Any
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core import common
 
-MAX_LSBS_CHANGE_MAP = {8: 4,
-                       4: 2,
+MAX_LSBS_CHANGE_MAP = {8: 1,
+                       4: 1,
                        2: 1}
 
 N_CYCLES = 4
@@ -85,7 +85,7 @@ class GradientPTQConfig:
                  eps: float = 1e-6,
                  use_jac_based_weights: bool = False,
                  num_samples_for_loss: int = 16,
-                 norm_weights: bool = True,
+                 norm_weights: bool = False,
                  quantizer_config: GumbelConfig = GumbelConfig(),
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None):
