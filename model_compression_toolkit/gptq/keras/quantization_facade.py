@@ -75,10 +75,6 @@ if common.constants.FOUND_TF:
 
             >>> gptq_conf = get_keras_gptq_config(n_iter=5)
 
-            To disable the biases training, one may set train_bias to false (enabled by default):
-
-            >>> gptq_conf = get_keras_gptq_config(n_iter=5, train_bias=false)
-
             Other Tensorflow optimizers can be passed:
 
             >>> gptq_conf = get_keras_gptq_config(n_iter=3, optimizer=tf.keras.optimizers.Nadam())

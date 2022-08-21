@@ -59,7 +59,7 @@ class TestGetGPTQConfig(unittest.TestCase):
                                 weights_bias_correction=False)  # disable bias correction when working with GPTQ
         gc = mct.GumbelConfig(temperature_learning=True)
         gptq_configurations = [get_keras_gptq_config(n_iter=1),
-                               get_keras_gptq_config(n_iter=1, train_bias=False),
+                               get_keras_gptq_config(n_iter=1),
                                GradientPTQConfig(1, optimizer=tf.keras.optimizers.RMSprop(),
                                                  optimizer_rest=tf.keras.optimizers.RMSprop(), train_bias=True,
                                                  sam_optimization=True, loss=multiple_tensors_mse_loss),
