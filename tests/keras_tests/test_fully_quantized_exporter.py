@@ -37,7 +37,7 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         old exported model.
         """
         repr_dataset = lambda: [np.random.randn(1, 224, 224, 3)]
-        seed = np.random.randint(0, 100, size=1)
+        seed = np.random.randint(0, 100, size=1)[0]
 
         self.set_seed(seed)
         core_config = mct.CoreConfig(n_iter=1)
