@@ -145,7 +145,12 @@ class MixedPrecisionSearchManager:
         kpi_matrix = []
         for c, c_n in enumerate(configurable_sorted_nodes):
             for candidate_idx in range(len(c_n.candidates_quantization_cfg)):
-                candidate_kpis = self.compute_candidate_relative_kpis(c, candidate_idx, target)
+                if candidate_idx == self.min_kpi_config[c]:
+                    # skip KPI computation for min configuration. Since we compute the difference from min_kpi it'll
+                    # always be 0 for all entries in the results vector.
+                    candidate_kpis = np.zeros(shape=self.min_kpi[target].shape)
+                else:
+                    candidate_kpis = self.compute_candidate_relative_kpis(c, candidate_idx, target)
                 kpi_matrix.append(np.asarray(candidate_kpis))
 
         # We need to transpose the calculated kpi matrix to allow later multiplication with
