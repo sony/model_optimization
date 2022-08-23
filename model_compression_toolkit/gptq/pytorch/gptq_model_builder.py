@@ -45,6 +45,7 @@ class GPTQPytorchModel(PytorchModel):
 
         super().__init__(graph,
                          append2output,
+                         DEFAULT_PYTORCH_INFO,
                          return_float_outputs)
 
         for node in graph.nodes():
@@ -77,7 +78,6 @@ class GPTQPytorchModelBuilder(PyTorchModelBuilder):
                  graph: common.Graph,
                  gptq_config: GradientPTQConfig,
                  append2output=None,
-                 fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                  return_float_outputs: bool = True):
         """
 
@@ -85,12 +85,11 @@ class GPTQPytorchModelBuilder(PyTorchModelBuilder):
             graph: Graph to build the model from.
             gptq_config: Configuration for GPTQ optimization.
             append2output: Nodes to append to model's output.
-            fw_info: Information about the specific framework of the model that is built.
             return_float_outputs: Whether the model returns float tensors or not.
         """
         super().__init__(graph,
                          append2output,
-                         fw_info,
+                         DEFAULT_PYTORCH_INFO,
                          return_float_outputs)
         self.gptq_config = gptq_config
 

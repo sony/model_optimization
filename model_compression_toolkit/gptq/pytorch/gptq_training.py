@@ -90,7 +90,6 @@ class PytorchGPTQTrainer(GPTQTrainer):
         return GPTQPytorchModelBuilder(self.graph_quant,
                                        self.gptq_config,
                                        append2output=self.compare_points,
-                                       fw_info=self.fw_info,
                                        return_float_outputs=True).build_model()
 
     def train(self, representative_data_gen: Callable):

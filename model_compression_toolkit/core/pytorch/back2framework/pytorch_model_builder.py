@@ -141,6 +141,7 @@ class PytorchModel(torch.nn.Module):
     def __init__(self,
                  graph: Graph,
                  append2output: List[Any] = None,
+                 fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                  return_float_outputs: bool = False):
         """
         Construct a Pytorch model.
@@ -148,6 +149,7 @@ class PytorchModel(torch.nn.Module):
         Args:
             graph: Graph to build its corresponding Pytorch model.
             append2output: List of nodes or OutTensor objects.
+            fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
             return_float_outputs: Whether the model returns float tensors or not.
         """
         super(PytorchModel, self).__init__()
@@ -156,6 +158,7 @@ class PytorchModel(torch.nn.Module):
         self.nodes_dict = {}
         self.append2output = append2output
         self.return_float_outputs = return_float_outputs
+        self.fw_info = fw_info
         self._add_modules()
 
     @abstractmethod
