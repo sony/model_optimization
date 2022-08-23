@@ -52,8 +52,9 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
         self.num_bits = num_bits
         self.per_axis = per_axis
         self.signed = signed
+        self.threshold_values = threshold_values
         self.threshold_shape = np.asarray(threshold_values).shape
-        self.threshold_values = np.reshape(np.asarray(threshold_values), [-1]) if self.per_axis else float(
+        self.np_threshold_values = np.reshape(np.asarray(threshold_values), [-1]) if self.per_axis else float(
             threshold_values)
         self.quantization_axis = quantization_axis
 
@@ -69,8 +70,8 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
         self.power_of_two = power_of_two
 
         if self.power_of_two:
-            self.threshold_values = np.power(2.0, np.ceil(np.log2(np.maximum(self.threshold_values, MIN_THRESHOLD))))
-        delta = self.threshold_values / np.power(2.0, num_bits - int(signed))
+            self.np_threshold_values = np.power(2.0, np.ceil(np.log2(np.maximum(self.np_threshold_values, MIN_THRESHOLD))))
+        delta = self.np_threshold_values / np.power(2.0, num_bits - int(signed))
         min_int = -int(signed) * (2 ** (num_bits - int(signed)))
         max_int = (2 ** (num_bits - int(signed))) - 1
         self.min = delta * min_int
@@ -94,10 +95,10 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
         """
         ptq_threshold_tensor = layer.add_weight(
             name + THRESHOLD_TENSOR,
-            shape=len(self.threshold_values) if self.per_axis else (),
+            shape=len(self.np_threshold_values) if self.per_axis else (),
             initializer=tf.keras.initializers.Constant(1.0),
             trainable=False)
-        ptq_threshold_tensor.assign(self.threshold_values)
+        ptq_threshold_tensor.assign(self.np_threshold_values)
 
         fq_min = layer.add_weight(
             name + FQ_MIN,

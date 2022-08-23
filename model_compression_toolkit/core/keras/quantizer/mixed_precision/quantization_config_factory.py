@@ -19,20 +19,20 @@ from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.d
     QuantizeConfig
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.quantizer.mixed_precision.selective_quantize_config import \
     SelectiveQuantizeConfig
 
 
 
-def quantization_config_builder_mixed_precision(n: common.BaseNode,
-                                                fw_info: FrameworkInfo) -> QuantizeConfig:
+def quantization_config_builder_mixed_precision(n: common.BaseNode) -> QuantizeConfig:
     """
     Build a QuantizeConfig for layers that should be wrapped in a QuantizeWrapper to
     be part of a mixed-precision model.
+
     Args:
         n: Node to build its QuantizeConfig.
-        fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
+
     Returns:
         QuantizeConfig to wrap the layer so it can work in MP Keras models.
     """
@@ -43,7 +43,7 @@ def quantization_config_builder_mixed_precision(n: common.BaseNode,
     node_q_cfg_candidates.sort(key=lambda x: (x.weights_quantization_cfg.weights_n_bits,
                                               x.activation_quantization_cfg.activation_n_bits), reverse=True)
 
-    float_weights = [n.get_weights_by_keys(attr) for attr in fw_info.get_kernel_op_attributes(n.type)]
+    float_weights = [n.get_weights_by_keys(attr) for attr in DEFAULT_KERAS_INFO.get_kernel_op_attributes(n.type)]
 
     max_cfg_candidates = n.find_max_candidates_indices()
     assert len(max_cfg_candidates) == 1, \
@@ -54,5 +54,5 @@ def quantization_config_builder_mixed_precision(n: common.BaseNode,
     # quantized using all possible bitwidhts in the node's candidates weights quantization configurations).
     return SelectiveQuantizeConfig(node_q_cfg=node_q_cfg_candidates,
                                    float_weights=float_weights,
-                                   weight_attrs=fw_info.get_kernel_op_attributes(n.type),
+                                   weight_attrs=DEFAULT_KERAS_INFO.get_kernel_op_attributes(n.type),
                                    max_candidate_idx=max_candidate_idx)

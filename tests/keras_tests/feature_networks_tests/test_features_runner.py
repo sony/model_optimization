@@ -15,18 +15,22 @@
 
 
 import unittest
+import model_compression_toolkit as mct
 from model_compression_toolkit import QuantizationErrorMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_bound_to_power_of_2_test import \
     ReLUBoundToPOTNetTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_dw_test import \
     BiasCorrectionDepthwiseTest
+from tests.keras_tests.feature_networks_tests.feature_networks.experimental_exporter_test import \
+    ExperimentalExporterTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_bops_test import \
     MixedPrecisionBopsBasicTest, MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, \
-    MixedPrecisionBopsAndWeightsKPITest, MixedPrecisionBopsAndActivationKPITest, MixedPrecisionBopsAndTotalKPITest, \
-    MixedPrecisionBopsWeightsActivationKPITest, MixedPrecisionBopsMultipleOutEdgesTest, \
-    MixedPrecisionActivationOnlyBopsTest
+    MixedPrecisionActivationOnlyBopsTest, MixedPrecisionBopsAndWeightsKPITest, MixedPrecisionBopsAndActivationKPITest, \
+    MixedPrecisionBopsAndTotalKPITest, MixedPrecisionBopsWeightsActivationKPITest, \
+    MixedPrecisionBopsMultipleOutEdgesTest
 from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
     DwConv2dReplacementTest
+
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.edit_error_method_test import \
     EditActivationErrorMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.change_qc_attr_test import \
@@ -126,8 +130,9 @@ class FeatureNetworkTest(unittest.TestCase):
         DwConv2dReplacementTest(self).run_test()
 
     def test_edit_error_method(self):
-        EditActivationErrorMethod(self).run_test()
         EditActivationErrorMethod(self).run_test(experimental_facade=True)
+        EditActivationErrorMethod(self).run_test()
+
 
     def test_change_qc_attr(self):
         ChangeFinalWeightQCAttrTest(self).run_test()
@@ -407,6 +412,10 @@ class FeatureNetworkTest(unittest.TestCase):
         ActivationDecompositionTest(self, activation_function='tanh').run_test()
         ActivationDecompositionTest(self, activation_function='softmax').run_test()
 
+    def test_experimental_exporter(self):
+        ExperimentalExporterTest(self).run_test(experimental_exporter=True,
+                                                experimental_facade=True)
+
     def test_layer_fusing(self):
         LayerFusingTest1(self).run_test()
         LayerFusingTest2(self).run_test()
@@ -474,13 +483,18 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_multi_input_to_node(self):
         MultiInputsToNodeTest(self).run_test()
 
-    def test_gptq(self):
-        GradientPTQTest(self).run_test()
-        GradientPTQWeightsUpdateTest(self).run_test()
-        GradientPTQLearnRateZeroTest(self).run_test()
-        GradientPTQWeightedLossTest(self).run_test()
-        GradientPTQWeightsUpdateTest(self, is_gumbel=True, sam_optimization=True).run_test()
-        GradientPTQLearnRateZeroTest(self, is_gumbel=True).run_test()
+    def test_gptq(self, experimental_facade=False, experimental_exporter=False):
+        GradientPTQTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQWeightsUpdateTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQLearnRateZeroTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQWeightedLossTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQWeightsUpdateTest(self, is_gumbel=True, sam_optimization=True).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQLearnRateZeroTest(self, is_gumbel=True).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+
+    # TODO: reuven - new experimental facade needs to be tested regardless the exporter.
+    # def test_gptq_new_exporter(self):
+    #     self.test_gptq(experimental_facade=True,
+    #                    experimental_exporter=True)
 
     # Comment out due to problem in Tensorflow 2.8
     # def test_gptq_conv_group(self):
@@ -545,10 +559,13 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_qat(self):
         QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu')).run_test()
-        QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu'), finalize=True).run_test()
-        QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu')).run_test()
+        QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu'), finalize=True,
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
+        QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu'),
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM).run_test()
         QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu'), finalize=True).run_test()
-        QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu')).run_test()
+        QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu'),
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM).run_test()
         QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), finalize=True).run_test()
         # DW-Conv2D are tested under the tests below because an extra check is needed to verify the
         # quantization per channel of its kernel

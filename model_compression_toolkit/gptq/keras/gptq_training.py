@@ -67,9 +67,15 @@ class KerasGPTQTrainer(GPTQTrainer):
             fw_info: Framework information.
             representative_data_gen: Dataset to use for inputs of the models.
         """
-        super().__init__(graph_float, graph_quant, gptq_config, fw_impl, fw_info)
+        super().__init__(graph_float,
+                         graph_quant,
+                         gptq_config,
+                         fw_impl,
+                         fw_info)
+
         self.loss_list = []
         self.input_scale = 1
+
         trainable_weights, bias_weights, trainable_threshold, temperature_weights = get_trainable_parameters(
             self.fxp_model,
             fw_info,
@@ -84,17 +90,21 @@ class KerasGPTQTrainer(GPTQTrainer):
                 "GPTQ: Mismatch between number of compare points, number of layers with trainable weights " +
                 "and number of float and quantized weights for loss")
 
-        self.flattened_trainable_weights = [w for layer_weights in trainable_weights for w in layer_weights]
-        self.flattened_bias_weights = [w for layer_weights in bias_weights for w in layer_weights]
-        self.trainable_quantization_parameters = trainable_threshold
-        self.temperature_weights = temperature_weights
+        flattened_trainable_weights = [w for layer_weights in trainable_weights for w in layer_weights]
+        flattened_bias_weights = [w for layer_weights in bias_weights for w in layer_weights]
+        trainable_quantization_parameters = trainable_threshold
+        self.optimizer_with_param = self.get_optimizer_with_param(flattened_trainable_weights,
+                                                                  flattened_bias_weights,
+                                                                  trainable_quantization_parameters,
+                                                                  temperature_weights)
+        self.has_params_to_train = np.sum([len(optimizer_params_tuple[1]) for optimizer_params_tuple in self.optimizer_with_param])>0
 
         if self.float_user_info.input_scale != self.gptq_user_info.input_scale:
             common.Logger.error("Input scale mismatch between float and GPTQ networks")  # pragma: no cover
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
-        self.weights_for_average_loss = self._compute_jacobian_based_weights(representative_data_gen)
+        self.weights_for_average_loss = self.compute_jacobian_based_weights(representative_data_gen)
 
     def build_gptq_model(self):
         """
@@ -130,15 +140,23 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         with tf.GradientTape(persistent=True) as tape:
             y_fxp = self.fxp_model(input_data, training=training)  # running fxp model
-            loss_value = self.gptq_config.loss(y_fxp, in_y_float, self.fxp_weights_list, self.flp_weights_list,
-                                               self.compare_points_mean, self.compare_points_std,
+            loss_value = self.gptq_config.loss(y_fxp,
+                                               in_y_float,
+                                               self.fxp_weights_list,
+                                               self.flp_weights_list,
+                                               self.compare_points_mean,
+                                               self.compare_points_std,
                                                self.weights_for_average_loss)
+
             if self.gptq_config.is_gumbel and self.gptq_config.quantizer_config.temperature_learning:
                 gumbel_prob = get_gumbel_probability(self.fxp_model)
                 gumbel_reg = 0
                 for p in gumbel_prob:
                     entropy = -tf.reduce_mean(
-                        tf.reduce_sum(p * tf.math.log(tf.maximum(p, self.gptq_config.eps)), axis=0))
+                        tf.reduce_sum(p * tf.math.log(tf.maximum(p,
+                                                                 self.gptq_config.eps)),
+                                      axis=0))
+
                     gumbel_reg += entropy
                 gumbel_reg /= len(gumbel_prob)
                 loss_value += self.gptq_config.quantizer_config.gumbel_entropy_regularization * gumbel_reg
@@ -159,42 +177,20 @@ class KerasGPTQTrainer(GPTQTrainer):
         Args:
             representative_data_gen: Dataset to use for inputs of the models.
         """
-        w2train = [*self.flattened_trainable_weights]
-        if self.gptq_config.is_gumbel:
-            if self.gptq_config.quantizer_config.temperature_learning:
-                w2train.extend(self.temperature_weights)
-
-        optimizer_with_param = [(self.gptq_config.optimizer, w2train)]
-        if self.gptq_config.train_bias or self.gptq_config.quantization_parameters_learning:
-            w2train_res = []
-            if self.gptq_config.train_bias:
-                if self.gptq_config.optimizer_bias is not None:
-                    optimizer_with_param.append((self.gptq_config.optimizer_bias, self.flattened_bias_weights))
-                else:
-                    w2train_res.extend(self.flattened_bias_weights)
-                    if self.gptq_config.optimizer_rest is None:
-                        common.Logger.error(
-                            "To enable bias micro training an additional optimizer is required, please define the optimizer_rest")
-            if self.gptq_config.quantization_parameters_learning:
-                if self.gptq_config.optimizer_quantization_parameter is not None:  # Ability ot override optimizer
-                    optimizer_with_param.append((self.gptq_config.optimizer_quantization_parameter,
-                                                 self.trainable_quantization_parameters))
-                else:
-                    w2train_res.extend(self.trainable_quantization_parameters)
-                if self.gptq_config.optimizer_rest is None:
-                    common.Logger.error(
-                        "To enable bias micro training an additional optimizer is required, please define the optimizer_rest")
-            optimizer_with_param.append((self.gptq_config.optimizer_rest, w2train_res))
-
         compute_gradients = self.compute_gradients
         if self.gptq_config.sam_optimization:
-            sam = SAM(self.fxp_model, self.compute_gradients, optimizer_with_param, self.gptq_config.rho)
+            sam = SAM(self.fxp_model, self.compute_gradients, self.optimizer_with_param, self.gptq_config.rho)
             compute_gradients = sam.compute_gradients
+
         # ----------------------------------------------
         # Training loop
         # ----------------------------------------------
-        self.micro_training_loop(representative_data_gen, compute_gradients, optimizer_with_param,
-                                 self.gptq_config.n_iter, True)
+        if self.has_params_to_train:
+            self.micro_training_loop(representative_data_gen,
+                                     compute_gradients,
+                                     self.optimizer_with_param,
+                                     self.gptq_config.n_iter,
+                                     True)
 
     def micro_training_loop(self,
                             data_function: Callable,
@@ -264,66 +260,3 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         return graph
 
-    def _compute_jacobian_based_weights(self,
-                                        representative_data_gen: Callable) -> np.ndarray:
-        """
-        Computes the jacobian-based weights using the framework's model_grad method per batch of images.
-
-        Args:
-            representative_data_gen: Dataset used for inference to compute the jacobian-based weights.
-
-        Returns: A vector of weights, one for each compare point,
-        to be used for the loss metric weighted average computation when running GPTQ training.
-        """
-        if self.gptq_config.use_jac_based_weights:
-            images = self._generate_images_batch(representative_data_gen, self.gptq_config.num_samples_for_loss)
-            points_apprx_jacobians_weights = []
-            for i in range(1, images.shape[0] + 1):
-                # Note that in GPTQ loss weights computation we assume that there aren't replacement output nodes,
-                # therefore, output_list is just the graph outputs, and we don't need the tuning factor for
-                # defining the output weights (since the output layer is not a compare point).
-                image_ip_gradients = self.fw_impl.model_grad(self.graph_float,
-                                                             {inode: images[i - 1:i] for inode in
-                                                              self.graph_float.get_inputs()},
-                                                             self.compare_points,
-                                                             output_list=[n.node for n in
-                                                                          self.graph_float.get_outputs()],
-                                                             all_outputs_indices=[],
-                                                             alpha=0,
-                                                             norm_weights=self.gptq_config.norm_weights)
-                points_apprx_jacobians_weights.append(image_ip_gradients)
-            return np.mean(points_apprx_jacobians_weights, axis=0)
-        else:
-            num_nodes = len(self.compare_points)
-            return np.asarray([1 / num_nodes for _ in range(num_nodes)])
-
-    @staticmethod
-    def _generate_images_batch(representative_data_gen: Callable, num_samples_for_loss: int) -> np.ndarray:
-        """
-        Construct batches of image samples for inference.
-
-        Args:
-            representative_data_gen: A callable method to retrieve images from Dataset.
-            num_samples_for_loss: Num of total images for evaluation.
-
-        Returns: A tensor of images batches
-        """
-
-        # First, select images to use for all measurements.
-        samples_count = 0  # Number of images we used so far to compute the distance matrix.
-        images = []
-        while samples_count < num_samples_for_loss:
-            # Get a batch of images to infer in both models.
-            inference_batch_input = representative_data_gen()
-            num_images = inference_batch_input[0].shape[0]
-
-            # If we sampled more images than we should,
-            # we take only a subset of these images and use only them.
-            if num_images > num_samples_for_loss - samples_count:
-                inference_batch_input = [x[:num_samples_for_loss - samples_count] for x in inference_batch_input]
-                assert num_samples_for_loss - samples_count == inference_batch_input[0].shape[0]
-                num_images = num_samples_for_loss - samples_count
-
-            images.append(inference_batch_input[0])
-            samples_count += num_images
-        return np.concatenate(images, axis=0)

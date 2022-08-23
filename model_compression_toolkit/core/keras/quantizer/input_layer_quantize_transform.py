@@ -18,6 +18,7 @@ from keras.engine.input_layer import InputLayer
 from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.default_8bit_transforms import \
     InputLayerQuantize
 from tensorflow_model_optimization.python.core.quantization.keras.graph_transformations import transforms
+from tensorflow_model_optimization.python.core.quantization.keras.quantize_config import QuantizeConfig
 
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 
@@ -26,24 +27,26 @@ from model_compression_toolkit.core.keras.quantizer.mixed_precision.quantization
 from model_compression_toolkit.core.keras.quantizer.mixed_precision.selective_quantize_config import SelectiveQuantizeConfig
 
 
-class InputLayerMixedPrecisionTransform(InputLayerQuantize):
+class InputLayerWrapperTransform(InputLayerQuantize):
     """
-    Allows to configure an input layer with QuantizeWrapper for mixed-precision quantization.
+    Allows to configure an input layer with QuantizeWrapper given a QuantizeConfig object to wrap it.
     """
 
-    def __init__(self, input_layer, fw_info):
-        super(InputLayerMixedPrecisionTransform, self).__init__()
+    def __init__(self, input_layer, fw_info, quantize_config: QuantizeConfig, custom_objects):
+        super(InputLayerWrapperTransform, self).__init__()
 
         self.input_layer = input_layer
         self.fw_info = fw_info
         self.name = self.input_layer.name
+        self.quantize_config = quantize_config
+        self.custom_objects = lambda: custom_objects
 
     def pattern(self):
         return transforms.LayerPattern('InputLayer', config={'name': self.name})
 
     def replacement(self, match_layer):
         layer_wrapper = QuantizeWrapper(InputLayer(input_shape=self.input_layer.input_shape),
-                                        quantization_config_builder_mixed_precision(self.input_layer, self.fw_info))
+                                        self.quantize_config)
         quantized_layer_name = f"quant_{self.name}"
         cfg_dict = keras.layers.serialize(layer_wrapper)
 
@@ -54,8 +57,4 @@ class InputLayerMixedPrecisionTransform(InputLayerQuantize):
 
         return layer_node
 
-    def custom_objects(self):
-        return {
-          'QuantizeWrapper': QuantizeWrapper,
-          'SelectiveQuantizeConfig': SelectiveQuantizeConfig,
-        }
+

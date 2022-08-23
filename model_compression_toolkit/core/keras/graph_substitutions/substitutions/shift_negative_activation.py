@@ -17,8 +17,8 @@ from typing import Tuple, Any
 
 import numpy as np
 import tensorflow as tf
-# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
-from keras.layers import TFOpLambda
+
+from tensorflow.python.keras.layers.core import TFOpLambda
 from tensorflow.keras.layers import Activation, Conv2D, Dense, DepthwiseConv2D, ZeroPadding2D, Reshape, \
     GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU
 
