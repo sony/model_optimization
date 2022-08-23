@@ -25,6 +25,10 @@ from model_compression_toolkit.core.common.similarity_analyzer import compute_kl
 from model_compression_toolkit.core.keras.back2framework.model_gradients import \
     keras_iterative_approx_jacobian_trace
 from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID, ARGMAX, LAYER_NAME
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.virtual_activation_weights_composition import \
+    VirtualActivationWeightsComposition
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weight_activation_split import \
+    WeightsActivationSplit
 from model_compression_toolkit.core.keras.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 
 if tf.__version__ < "2.6":
@@ -298,6 +302,14 @@ class KerasImplementation(FrameworkImplementation):
         """
 
         return [RemoveReLUUpperBound()]
+
+    def get_substitutions_virtual_weights_activation_coupling(self) -> List[common.BaseSubstitution]:
+        """
+        Returns: A list of Keras substitutions used to build a virtual graph with composed activation-weights pairs.
+        """
+
+        return [WeightsActivationSplit(),
+                VirtualActivationWeightsComposition()]
 
     def get_gptq_trainer_obj(self) -> Type[GPTQTrainer]:
         """

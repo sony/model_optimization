@@ -39,15 +39,32 @@ from model_compression_toolkit.core.keras.keras_implementation import KerasImple
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 
 
+class MockReconstructionHelper:
+    def __init__(self):
+        pass
+
+    def reconstruct_config_from_virtual_graph(self,
+                                              max_kpi_config,
+                                              changed_virtual_nodes_idx=None,
+                                              original_base_config=None):
+        return max_kpi_config
+
+
 class MockMixedPrecisionSearchManager:
     def __init__(self, layer_to_kpi_mapping):
         self.layer_to_bitwidth_mapping = {0: [0, 1, 2]}
         self.layer_to_kpi_mapping = layer_to_kpi_mapping
         self.compute_metric_fn = lambda x, y=None, z=None: 0
-        self.min_kpi = {KPITarget.WEIGHTS: [[1], [1], [1]], KPITarget.ACTIVATION: [[1], [1], [1]]}  # minimal kpi in the tests layer_to_kpi_mapping
+        self.min_kpi = {KPITarget.WEIGHTS: [[1], [1], [1]],
+                        KPITarget.ACTIVATION: [[1], [1], [1]],
+                        KPITarget.TOTAL: [[2], [2], [2]],
+                        KPITarget.BOPS: [[1], [1], [1]]}  # minimal kpi in the tests layer_to_kpi_mapping
         self.compute_kpi_functions = {KPITarget.WEIGHTS: (None, lambda v: [sum(v)]),
-                                      KPITarget.ACTIVATION: (None, lambda v: [sum(v)])}
+                                      KPITarget.ACTIVATION: (None, lambda v: [i for i in v]),
+                                      KPITarget.TOTAL: (None, lambda v: [sum(v[0]) + i for i in v[1]]),
+                                      KPITarget.BOPS: (None, lambda v: [sum(v)])}
         self.max_kpi_config = [0]
+        self.config_reconstruction_helper = MockReconstructionHelper()
 
     def compute_kpi_matrix(self, target):
         # minus 1 is normalization by the minimal kpi (which is always 1 in this test)
@@ -55,6 +72,11 @@ class MockMixedPrecisionSearchManager:
             kpi_matrix = [np.flip(np.array([kpi.weights_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]
         elif target == KPITarget.ACTIVATION:
             kpi_matrix = [np.flip(np.array([kpi.activation_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]
+        elif target == KPITarget.TOTAL:
+            kpi_matrix = [np.flip(np.array([kpi.total_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()])),
+                          np.flip(np.array([kpi.total_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]
+        elif target == KPITarget.BOPS:
+            kpi_matrix = [np.flip(np.array([kpi.bops - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]
         else:
             # not supposed to get here
             kpi_matrix = []
@@ -136,6 +158,32 @@ class TestLpSearchBitwidth(unittest.TestCase):
         self.assertTrue(len(bit_cfg) == 1)
         self.assertTrue(bit_cfg[0] == 2)
 
+    def test_search_total_kpi(self):
+        target_kpi = KPI(total_memory=2)
+        layer_to_kpi_mapping = {0: {2: KPI(total_memory=1),
+                                    1: KPI(total_memory=2),
+                                    0: KPI(total_memory=3)}}
+        mock_search_manager = MockMixedPrecisionSearchManager(layer_to_kpi_mapping)
+
+        bit_cfg = mp_integer_programming_search(mock_search_manager,
+                                                target_kpi=target_kpi)
+
+        self.assertTrue(len(bit_cfg) == 1)
+        self.assertTrue(bit_cfg[0] == 1)
+
+    def test_search_bops_kpi(self):
+        target_kpi = KPI(bops=2)
+        layer_to_kpi_mapping = {0: {2: KPI(bops=1),
+                                    1: KPI(bops=2),
+                                    0: KPI(bops=3)}}
+        mock_search_manager = MockMixedPrecisionSearchManager(layer_to_kpi_mapping)
+
+        bit_cfg = mp_integer_programming_search(mock_search_manager,
+                                                target_kpi=target_kpi)
+
+        self.assertTrue(len(bit_cfg) == 1)
+        self.assertTrue(bit_cfg[0] == 1)
+
 
 class TestSearchBitwidthConfiguration(unittest.TestCase):
 
@@ -194,7 +242,8 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                fw_info=DEFAULT_KERAS_INFO,
                                fw_impl=keras_impl,
                                target_kpi=KPI(np.inf),
-                               sensitivity_evaluator=keras_sens_eval,
+                               mp_config=core_config.mixed_precision_config,
+                               representative_data_gen=lambda: [np.random.random((1, 224, 224, 3))],
                                search_method=BitWidthSearchMethod.INTEGER_PROGRAMMING)
 
         with self.assertRaises(Exception):
@@ -202,7 +251,8 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                    fw_info=DEFAULT_KERAS_INFO,
                                    fw_impl=keras_impl,
                                    target_kpi=KPI(np.inf),
-                                   sensitivity_evaluator=keras_sens_eval,
+                                   mp_config=core_config.mixed_precision_config,
+                                   representative_data_gen=lambda: [np.random.random((1, 224, 224, 3))],
                                    search_method=None)
 
         with self.assertRaises(Exception):
@@ -210,7 +260,8 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                    fw_info=DEFAULT_KERAS_INFO,
                                    fw_impl=keras_impl,
                                    target_kpi=None,
-                                   sensitivity_evaluator=keras_sens_eval,
+                                   mp_config=core_config.mixed_precision_config,
+                                   representative_data_gen=lambda: [np.random.random((1, 224, 224, 3))],
                                    search_method=BitWidthSearchMethod.INTEGER_PROGRAMMING)
 
 

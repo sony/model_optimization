@@ -15,11 +15,14 @@
 from typing import Callable, Any
 import numpy as np
 
-from model_compression_toolkit import FrameworkInfo, KPI, MixedPrecisionQuantizationConfig, CoreConfig
+from model_compression_toolkit import FrameworkInfo, KPI, CoreConfig
 from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.runner import read_model_to_graph, get_finalized_graph
+from model_compression_toolkit.core.common.logger import Logger
 
 
 def compute_kpi_data(in_model: Any,
@@ -27,7 +30,8 @@ def compute_kpi_data(in_model: Any,
                      core_config: CoreConfig,
                      tpc: TargetPlatformCapabilities,
                      fw_info: FrameworkInfo,
-                     fw_impl: FrameworkImplementation) -> KPI:
+                     fw_impl: FrameworkImplementation,
+                     bops_kpi: bool = True) -> KPI:
     """
     Compute KPI information that can be relevant for defining target KPI for mixed precision search.
     Calculates maximal activation tensor, sum of weights' parameters and total (sum of both).
@@ -40,6 +44,7 @@ def compute_kpi_data(in_model: Any,
                                               the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+        bops_kpi: A flag that indicates whether to compute Bit-operations count as part of the KPI data. TODO: Remove this flag once BOPs KPI is supported in Pytorch framework.
 
     Returns: A KPI object with the results.
 
@@ -70,9 +75,17 @@ def compute_kpi_data(in_model: Any,
     # Compute total kpi - parameters sum + max activation tensor
     total_size = total_weights_params + max_activation_tensor_size
 
+    # Compute BOPS kpi - total count of bit-operations for all configurable layers with kernel
+    if bops_kpi:
+        bops_count = compute_total_bops(graph=transformed_graph, fw_info=fw_info, fw_impl=fw_impl)
+        bops_count = np.inf if len(bops_count) == 0 else sum(bops_count)
+    else:
+        bops_count = np.inf
+
     return KPI(weights_memory=total_weights_params,
                activation_memory=max_activation_tensor_size,
-               total_memory=total_size)
+               total_memory=total_size,
+               bops=bops_count)
 
 
 def compute_configurable_weights_params(graph: Graph, fw_info: FrameworkInfo) -> np.ndarray:
@@ -119,3 +132,36 @@ def compute_activation_output_sizes(graph: Graph) -> np.ndarray:
         activation_outputs.append(node_output_size)
 
     return np.array(activation_outputs)
+
+
+def compute_total_bops(graph: Graph, fw_info: FrameworkInfo, fw_impl: FrameworkImplementation) -> np.ndarray:
+    """
+    Computes a vector with the respective Bit-operations count for each configurable node that includes MAC operations.
+    The computation assumes that the graph is a representation of a float model, thus, BOPs computation uses 32-bit.
+
+    Args:
+        graph: Finalized Graph object.
+        fw_info: FrameworkInfo object about the specific framework
+            (e.g., attributes of different layers' weights to quantize).
+        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+
+    Returns: A vector of nodes' Bit-operations count.
+
+    """
+
+    bops = []
+
+    # Go over all configurable nodes that have kernels.
+    for n in graph.get_topo_sorted_nodes():
+        if n.has_weights_to_quantize(fw_info):
+            # If node doesn't have weights then its MAC count is 0, and we shouldn't consider it in the BOPS count.
+            incoming_edges = graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
+            if len(incoming_edges) != 1:
+                Logger.warning(f"Can't compute BOPS metric for node {n.name} with multiple inputs.")
+
+            node_mac = fw_impl.get_node_mac_operations(n, fw_info)
+
+            node_bops = (FLOAT_BITWIDTH ** 2) * node_mac
+            bops.append(node_bops)
+
+    return np.array(bops)

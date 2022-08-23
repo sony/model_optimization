@@ -15,9 +15,10 @@
 
 import copy
 from enum import Enum
+import numpy as np
+from typing import List, Callable
 
-from typing import List
-
+from model_compression_toolkit import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import Graph, Logger
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_functions_mapping import kpi_functions_mapping
@@ -31,6 +32,7 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 # When adding a new search_methods MP configuration method, these enum and factory dictionary
 # should be updated with it's kind and a search_method implementation.
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 
 
 class BitWidthSearchMethod(Enum):
@@ -45,7 +47,8 @@ def search_bit_width(graph_to_search_cfg: Graph,
                      fw_info: FrameworkInfo,
                      fw_impl: FrameworkImplementation,
                      target_kpi: KPI,
-                     sensitivity_evaluator: SensitivityEvaluation = None,
+                     mp_config: MixedPrecisionQuantizationConfigV2,
+                     representative_data_gen: Callable,
                      search_method: BitWidthSearchMethod = BitWidthSearchMethod.INTEGER_PROGRAMMING) -> List[int]:
     """
     Search for an MP configuration for a given graph. Given a search_method method (by default, it's linear
@@ -60,8 +63,8 @@ def search_bit_width(graph_to_search_cfg: Graph,
         fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
         fw_impl: FrameworkImplementation object with specific framework methods implementation.
         target_kpi: Target KPI to bound our feasible solution space s.t the configuration does not violate it.
-        sensitivity_evaluator: A SensitivityEvaluation which provides a function that evaluates the sensitivity of
-            a bit-width configuration for the MP model.
+        mp_config: Mixed-precision quantization configuration.
+        representative_data_gen: Dataset to use for retrieving images for the models inputs.
         search_method: BitWidthSearchMethod to define which searching method to use.
 
     Returns:
@@ -75,7 +78,19 @@ def search_bit_width(graph_to_search_cfg: Graph,
     if target_kpi is None:
         Logger.critical('Target KPI have to be passed for search_methods bit-width configuration')
 
+    # Set graph for MP search
     graph = copy.deepcopy(graph_to_search_cfg)  # Copy graph before searching
+    if target_kpi.bops < np.inf:
+        # Since Bit-operations count target KPI is set, we need to reconstruct the graph for the MP search
+        graph = substitute(graph, fw_impl.get_substitutions_virtual_weights_activation_coupling())
+
+    # Set Sensitivity Evaluator for MP search. It should always work with the original MP graph,
+    # even if a virtual graph was created (and is used only for BOPS KPI computation purposes)
+    se = fw_impl.get_sensitivity_evaluator(
+        graph_to_search_cfg,
+        mp_config,
+        representative_data_gen=representative_data_gen,
+        fw_info=fw_info)
 
     # Each pair of (KPI method, KPI aggregation) should match to a specific provided kpi target
     kpi_functions = kpi_functions_mapping
@@ -84,8 +99,9 @@ def search_bit_width(graph_to_search_cfg: Graph,
     search_manager = MixedPrecisionSearchManager(graph,
                                                  fw_info,
                                                  fw_impl,
-                                                 sensitivity_evaluator,
-                                                 kpi_functions)
+                                                 se,
+                                                 kpi_functions,
+                                                 original_graph=graph_to_search_cfg)
 
     if search_method in search_methods:  # Get a specific search function
         search_method_fn = search_methods.get(search_method)

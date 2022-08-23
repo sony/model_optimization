@@ -268,6 +268,12 @@ class PytorchImplementation(FrameworkImplementation):
         """
         return []
 
+    def get_substitutions_virtual_weights_activation_coupling(self) -> List[common.BaseSubstitution]:
+        """
+        Returns: A list of Pytorch substitutions used to build a virtual graph with composed activation-weights pairs.
+        """
+        raise Exception('This feature is currently not yet available for Pytorch models. Work in progress.')
+
     def get_gptq_trainer_obj(self) -> Type[GPTQTrainer]:
         """
         Returns: GPTQTrainer object
@@ -447,4 +453,7 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: The MAC count of the operation
         """
 
-        raise NotImplemented(f'BOPS KPI not supported in Pytorch yet')
+        # TODO: need to modify when implementing BOPS KPI for Pytorch. Currently, returning inf to prevent
+        #  crashing when running set_final_kpi at the end of Pytorch mixed-precision tests
+
+        return np.inf
