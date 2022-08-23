@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
 from abc import abstractmethod
-from typing import Tuple, Any, Dict, List
+from typing import Tuple, Any, Dict, List, Union
 
 import torch
 from networkx import topological_sort
@@ -66,7 +65,7 @@ def _build_input_tensors_list(node: BaseNode,
 def _run_operation(n: BaseNode,
                    input_tensors: List,
                    op_func: Any,
-                   quantize_node_activation_fn) -> List[torch.Tensor]:
+                   quantize_node_activation_fn) -> Tuple[Union[List,torch.Tensor], Union[List,torch.Tensor]]:
     """
     Applying the layer (op_func) to the input tensors (input_tensors).
     If quantized is set to True, and the layer's corresponding node (n) has quantization
@@ -76,24 +75,41 @@ def _run_operation(n: BaseNode,
         n: The corresponding node of the layer it runs.
         input_tensors: List of Pytorch tensors that are the layer's inputs.
         op_func: Module/functional to apply to the input tensors.
-
+        quantize_node_activation_fn: quantization function
     Returns:
-        A list of Pytorch tensors. The Module/functional output tensors after applying the
+        A tuple of Pytorch tensors. The Module/functional output tensors after applying the
         Module/functional to the input tensors.
     """
 
     op_call_args = n.op_call_args if isinstance(n, FunctionalNode) else []
     functional_kwargs = n.op_call_kwargs if isinstance(n, FunctionalNode) else {}
     if isinstance(n, FunctionalNode) and n.inputs_as_list:
-        out_tensors_of_n = op_func(input_tensors, *op_call_args, **functional_kwargs)
+        out_tensors_of_n_float = op_func(input_tensors, *op_call_args, **functional_kwargs)
     else:
-        out_tensors_of_n = op_func(*input_tensors + op_call_args, **functional_kwargs)
+        out_tensors_of_n_float = op_func(*input_tensors + op_call_args, **functional_kwargs)
 
     # Add a fake quant node if the node has an activation threshold.
+    out_tensors_of_n = out_tensors_of_n_float
     if n.is_activation_quantization_enabled():
-        out_tensors_of_n = quantize_node_activation_fn(n, out_tensors_of_n)
+        if isinstance(out_tensors_of_n_float, list):
+            out_tensors_of_n_float = torch.cat(out_tensors_of_n_float, dim=0)
+        out_tensors_of_n = quantize_node_activation_fn(n, out_tensors_of_n_float)
 
-    return out_tensors_of_n
+    return out_tensors_of_n, out_tensors_of_n_float
+
+
+def _find_by_node_name(node_to_output_tensors_dict: dict, node_name: str):
+    """
+    Args:
+        node_to_output_tensors_dict: A dictionary from a node to its output tensors.
+        node_name: Node name
+    Returns:
+        Out tensors if found node with name equal to node_name, None if no exist
+    """
+    for node in node_to_output_tensors_dict.keys():
+        if node.name == node_name:
+            return node_to_output_tensors_dict.get(node)
+    return None
 
 
 def _generate_outputs(
@@ -109,7 +125,7 @@ def _generate_outputs(
     """
     output = []
     for n in out_nodes:
-        out_tensors_of_n = node_to_output_tensors_dict.get(n)
+        out_tensors_of_n = _find_by_node_name(node_to_output_tensors_dict, n.name)
         if len(out_tensors_of_n) > 1:
             output.append(out_tensors_of_n)
         else:
@@ -125,7 +141,8 @@ class PytorchModel(torch.nn.Module):
     def __init__(self,
                  graph: Graph,
                  append2output: List[Any] = None,
-                 fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO):
+                 fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
+                 return_float_outputs: bool = False):
         """
         Construct a Pytorch model.
 
@@ -133,12 +150,14 @@ class PytorchModel(torch.nn.Module):
             graph: Graph to build its corresponding Pytorch model.
             append2output: List of nodes or OutTensor objects.
             fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
+            return_float_outputs: Whether the model returns float tensors or not.
         """
         super(PytorchModel, self).__init__()
         self.graph = graph
         self.node_sort = list(topological_sort(graph))
         self.nodes_dict = {}
         self.append2output = append2output
+        self.return_float_outputs = return_float_outputs
         self.fw_info = fw_info
         self._add_modules()
 
@@ -178,6 +197,7 @@ class PytorchModel(torch.nn.Module):
             torch Tensor/s which is/are the output of the model logic.
         """
         node_to_output_tensors_dict = dict()
+        node_to_output_tensors_dict_float = dict()
         configurable_nodes = self.graph.get_configurable_sorted_nodes_names()
         for n in self.node_sort:
             input_tensors = _build_input_tensors_list(n,
@@ -185,23 +205,28 @@ class PytorchModel(torch.nn.Module):
                                                       args,
                                                       node_to_output_tensors_dict)
 
-            op_func = self._get_op_func(n,
-                                        configurable_nodes)
-            out_tensors_of_n = _run_operation(n,  # Run node operation and fetch outputs
-                                              input_tensors,
-                                              op_func=op_func,
-                                              quantize_node_activation_fn=self._quantize_node_activations)
+            op_func = self._get_op_func(n, configurable_nodes)
+
+            # Run node operation and fetch outputs
+            out_tensors_of_n, out_tensors_of_n_float = _run_operation(n,
+                                                                      input_tensors,
+                                                                      op_func=op_func,
+                                                                      quantize_node_activation_fn=self._quantize_node_activations)
+
             if isinstance(out_tensors_of_n, list):
                 node_to_output_tensors_dict.update({n: out_tensors_of_n})
+                node_to_output_tensors_dict_float.update({n: out_tensors_of_n_float})
             else:
                 node_to_output_tensors_dict.update({n: [out_tensors_of_n]})
+                node_to_output_tensors_dict_float.update({n: [out_tensors_of_n_float]})
+
 
         if self.append2output:
             outputs = _generate_outputs(self.append2output,
-                                        node_to_output_tensors_dict)
+                                        node_to_output_tensors_dict_float if self.return_float_outputs else node_to_output_tensors_dict)
         else:
             outputs = _generate_outputs([ot.node for ot in self.graph.get_outputs()],
-                                        node_to_output_tensors_dict)
+                                        node_to_output_tensors_dict_float if self.return_float_outputs else node_to_output_tensors_dict)
             if len(outputs) == 1:
                 outputs = outputs[0]
         return outputs
@@ -246,9 +271,6 @@ class PyTorchModelBuilder(BaseModelBuilder):
                          fw_info,
                          return_float_outputs)
 
-        if return_float_outputs:
-            raise Exception("Running PyTorch model builder with return_float_outputs=True isn't supported yet")
-
     def build_model(self) -> Tuple[PytorchModel, UserInformation]:
         """
         Build a PyTorch model and return it.
@@ -256,4 +278,5 @@ class PyTorchModelBuilder(BaseModelBuilder):
 
         """
         return PytorchModel(self.graph,
-                            self.append2output), self.graph.user_info
+                            self.append2output,
+                            return_float_outputs=self.return_float_outputs), self.graph.user_info

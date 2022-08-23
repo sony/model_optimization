@@ -57,6 +57,7 @@ from tests.pytorch_tests.model_tests.feature_models.torch_tensor_attr_net_test i
 from tests.pytorch_tests.model_tests.feature_models.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, LayerFusingTest4
 from tests.pytorch_tests.model_tests.feature_models.bn_function_test import BNFNetTest
 
+from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccuracyTest, GPTQWeightsUpdateTest, GPTQLearnRateZeroTest
 
 class FeatureModelsTestRunner(unittest.TestCase):
 
@@ -380,6 +381,15 @@ class FeatureModelsTestRunner(unittest.TestCase):
                             kv_seq_len[iter], kdim[iter], vdim[iter], bias=True).run_test()
             MHALayerNetTest(self, num_heads[iter], q_seq_len[iter], qdim[iter] * num_heads[iter],
                             kv_seq_len[iter], kdim[iter], vdim[iter], bias=False).run_test()
+
+
+    def test_gptq(self):
+        """
+        This test checks the GPTQ feature.
+        """
+        GPTQAccuracyTest(self).run_test()
+        GPTQWeightsUpdateTest(self).run_test()
+        GPTQLearnRateZeroTest(self).run_test()
 
 
 if __name__ == '__main__':
