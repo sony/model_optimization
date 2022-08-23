@@ -44,6 +44,7 @@ def compute_kpi_data(in_model: Any,
                                               the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+        bops_kpi: A flag that indicates whether to compute Bit-operations count as part of the KPI data. TODO: Remove this flag once BOPs KPI is supported in Pytorch framework.
 
     Returns: A KPI object with the results.
 
@@ -136,6 +137,7 @@ def compute_activation_output_sizes(graph: Graph) -> np.ndarray:
 def compute_total_bops(graph: Graph, fw_info: FrameworkInfo, fw_impl: FrameworkImplementation) -> np.ndarray:
     """
     Computes a vector with the respective Bit-operations count for each configurable node that includes MAC operations.
+    The computation assumes that the graph is a representation of a float model, thus, BOPs computation uses 32-bit.
 
     Args:
         graph: Finalized Graph object.
@@ -155,7 +157,7 @@ def compute_total_bops(graph: Graph, fw_info: FrameworkInfo, fw_impl: FrameworkI
             # If node doesn't have weights then its MAC count is 0, and we shouldn't consider it in the BOPS count.
             incoming_edges = graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
             if len(incoming_edges) != 1:
-                Logger.critical(f"Can't compute BOPS metric for node {n.name} with multiple inputs.")
+                Logger.warning(f"Can't compute BOPS metric for node {n.name} with multiple inputs.")
 
             node_mac = fw_impl.get_node_mac_operations(n, fw_info)
 

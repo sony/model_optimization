@@ -313,7 +313,19 @@ class ConfigReconstructionHelper:
         self._clear_reconstruction_dict()
         return res_config
 
-    def reconstruct_node_config(self, n, virtual_mp_cfg, virtual_node_idx):
+    def reconstruct_node_config(self,
+                                n: BaseNode,
+                                virtual_mp_cfg: List[int],
+                                virtual_node_idx: int):
+        """
+        Reconstructs the original configuration for a single node. Updates the mapping inplace.
+
+        Args:
+            n: The node to reconstruct the configuration for.
+            virtual_mp_cfg: A mixed-precision configuration (list of candidates indices) of the virtual graph.
+            virtual_node_idx: The index of the virtual node in the virtual mixed-precision configuration.
+        """
+
         virtual_cfg_idx = virtual_mp_cfg[virtual_node_idx]
 
         if isinstance(n, VirtualActivationWeightsNode):
