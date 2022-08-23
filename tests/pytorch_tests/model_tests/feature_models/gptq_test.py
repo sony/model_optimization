@@ -61,7 +61,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
 
         # Run MCT with PTQ
         np.random.seed(self.seed)
-        ptq_model, ptq_qInfo = mct.pytorch_post_training_quantization_experimental(self.float_model,
+        ptq_model, ptq_user_info = mct.pytorch_post_training_quantization_experimental(self.float_model,
                                                                                    self.representative_data_gen,
                                                                                    core_config=self.get_core_config(),
                                                                                    fw_info=DEFAULT_PYTORCH_INFO,
@@ -75,7 +75,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
 
         # Run MCT with GPTQ
         np.random.seed(self.seed)
-        gptq_model, gptq_qInfo = mct.pytorch_gradient_post_training_quantization_experimental(self.float_model,
+        gptq_model, gptq_user_info = mct.pytorch_gradient_post_training_quantization_experimental(self.float_model,
                                                                                               self.representative_data_gen,
                                                                                               core_config=self.get_core_config(),
                                                                                               fw_info=DEFAULT_PYTORCH_INFO,
@@ -93,7 +93,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         x = to_torch_tensor(self.representative_data_gen())
 
         # Compare
-        self.compare(ptq_model, gptq_model, input_x=x, quantization_info=ptq_qInfo)
+        self.compare(ptq_model, gptq_model, input_x=x, quantization_info=gptq_user_info)
 
 
 class GPTQAccuracyTest(GPTQBaseTest):

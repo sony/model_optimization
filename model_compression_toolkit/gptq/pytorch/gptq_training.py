@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 from typing import Callable, List, Tuple
+
+import numpy as np
 from tqdm import tqdm
 import copy
 import torch
@@ -68,7 +70,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         self.flp_weights_list, self.fxp_weights_list = get_weights_for_loss(self.fxp_model)
         if not (len(self.compare_points) == len(trainable_weights) == len(self.flp_weights_list) == len(
                 self.fxp_weights_list)):
-            raise Exception(
+            Logger.error(
                 "GPTQ: Mismatch between number of compare points, number of layers with trainable weights " +
                 "and number of float and quantized weights for loss")
 
@@ -116,7 +118,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
     def compute_gradients(self,
                           y_float: List[torch.Tensor],
-                          input_tensors: List[torch.Tensor]) -> Tuple[torch.Tensor, List[torch.Tensor]]:
+                          input_tensors: List[torch.Tensor]) -> Tuple[torch.Tensor, List[np.ndarray]]:
         """
         Get outputs from both teacher and student networks. Compute the observed error,
         and use it to compute the gradients and applying them to the student weights.

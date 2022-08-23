@@ -14,44 +14,17 @@
 # ==============================================================================
 import torch
 import torch.nn as nn
-from typing import List
-from model_compression_toolkit.core.common.target_platform.op_quantization_config import QuantizationMethod
-from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MAX, RANGE_MIN
-from model_compression_toolkit.gptq.common.gptq_constants import THRESHOLD_TENSOR, AUXVAR
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
+from typing import List, Union
+from abc import abstractmethod
 
+class BaseWeightQuantizer(nn.Module):
 
-class GPTQWeightQuantizer(nn.Module):
-
-    def __init__(self,
-                 weights_quantization_cfg: NodeWeightsQuantizationConfig,
-                 weight_shape: torch.Size):
+    def __init__(self):
         """
-        Construct a Base Pytorch model that utilize a fake weight quantizer
-        Args:
-            weights_quantization_cfg: Configuration of weight quantization.
-            weight_shape: weight shape for auxiliary tensor creation.
+        Construct a Base Pytorch model that utilizes a fake weight quantizer
         """
         super().__init__()
-
-        self.signed = True
-        self.num_bits = weights_quantization_cfg.weights_n_bits
-        self.min_int = -int(self.signed) * (2 ** (self.num_bits - int(self.signed)))
-        self.max_int = (2 ** (self.num_bits - int(self.signed))) - 1
-        self.weight_shape = weight_shape
         self.trainable_params = dict()
-        self.per_channel = weights_quantization_cfg.weights_per_channel_threshold
-        if weights_quantization_cfg.weights_quantization_method == QuantizationMethod.UNIFORM:
-            # Uniform quantization
-            self.min_range = weights_quantization_cfg.weights_quantization_params.get(RANGE_MIN)
-            self.max_range = weights_quantization_cfg.weights_quantization_params.get(RANGE_MAX)
-        else:
-            # Symmetric quantization
-            threshold_values = weights_quantization_cfg.weights_quantization_params.get(THRESHOLD)
-            self.min_range = -threshold_values
-            self.max_range = threshold_values
-        self.delta_tensor = (self.max_range - self.min_range) / (2 ** self.num_bits)
-
 
     def get_trainable_params(self) -> List:
         """
@@ -61,16 +34,18 @@ class GPTQWeightQuantizer(nn.Module):
         """
         return [value for value in self.trainable_params.values() if value is not None]
 
+    @abstractmethod
     def get_aux_variable(self) -> torch.Tensor:
         """
         Returns auxiliary trainable variables
         """
-        return self.trainable_params.get(AUXVAR, None)
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s GPTQ model builder method.')
 
-
-    def get_quantization_variable(self) -> torch.Tensor:
+    @abstractmethod
+    def get_quantization_variable(self) -> Union[torch.Tensor, List]:
         """
         Returns quantization trainable variables
         """
-        return self.trainable_params.get(THRESHOLD_TENSOR, None)
-
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s GPTQ model builder method.')

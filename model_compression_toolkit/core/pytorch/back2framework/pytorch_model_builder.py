@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from abc import abstractmethod
-from typing import Tuple, Any, Dict, List
+from typing import Tuple, Any, Dict, List, Union
 
 import torch
 from networkx import topological_sort
@@ -65,7 +65,7 @@ def _build_input_tensors_list(node: BaseNode,
 def _run_operation(n: BaseNode,
                    input_tensors: List,
                    op_func: Any,
-                   quantize_node_activation_fn) -> Tuple[Any, Any]:
+                   quantize_node_activation_fn) -> Tuple[Union[List,torch.Tensor], Union[List,torch.Tensor]]:
     """
     Applying the layer (op_func) to the input tensors (input_tensors).
     If quantized is set to True, and the layer's corresponding node (n) has quantization
@@ -141,7 +141,6 @@ class PytorchModel(torch.nn.Module):
     def __init__(self,
                  graph: Graph,
                  append2output: List[Any] = None,
-                 fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                  return_float_outputs: bool = False):
         """
         Construct a Pytorch model.
@@ -149,7 +148,7 @@ class PytorchModel(torch.nn.Module):
         Args:
             graph: Graph to build its corresponding Pytorch model.
             append2output: List of nodes or OutTensor objects.
-            fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
+            return_float_outputs: Whether the model returns float tensors or not.
         """
         super(PytorchModel, self).__init__()
         self.graph = graph
@@ -157,7 +156,6 @@ class PytorchModel(torch.nn.Module):
         self.nodes_dict = {}
         self.append2output = append2output
         self.return_float_outputs = return_float_outputs
-        self.fw_info = fw_info
         self._add_modules()
 
     @abstractmethod

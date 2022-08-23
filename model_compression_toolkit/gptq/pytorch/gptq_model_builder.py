@@ -27,27 +27,24 @@ from model_compression_toolkit.gptq.pytorch.quantizer.quantizer_wrapper import q
 
 class GPTQPytorchModel(PytorchModel):
     """
-    Float PyTorch model.
+    Class for GPTQ PyTorch model.
     """
 
     def __init__(self,
                  graph: common.Graph,
                  gptq_config: GradientPTQConfig,
                  append2output=None,
-                 fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                  return_float_outputs: bool = True):
         """
         Args:
             graph: Graph to build the model from.
             gptq_config: Configuration for GPTQ optimization.
             append2output: Nodes to append to model's output.
-            fw_info: Information about the specific framework of the model that is built.
             return_float_outputs: Whether the model returns float tensors or not.
         """
 
         super().__init__(graph,
                          append2output,
-                         fw_info,
                          return_float_outputs)
 
         for node in graph.nodes():
@@ -106,5 +103,4 @@ class GPTQPytorchModelBuilder(PyTorchModelBuilder):
         return GPTQPytorchModel(self.graph,
                                 self.gptq_config,
                                 self.append2output,
-                                self.fw_info,
                                 self.return_float_outputs), self.graph.user_info

@@ -14,7 +14,7 @@
 # ==============================================================================
 import torch
 import numpy as np
-
+from typing import Union
 from model_compression_toolkit.core.pytorch.constants import CUDA, CPU
 
 
@@ -72,7 +72,7 @@ def to_torch_tensor(tensor):
         raise Exception(f'Conversion of type {type(tensor)} to {type(torch.Tensor)} is not supported')
 
 
-def torch_tensor_to_numpy(tensor: [torch.Tensor, list, tuple]) -> [np.ndarray, list, tuple]:
+def torch_tensor_to_numpy(tensor: Union[torch.Tensor, list, tuple]) -> Union[np.ndarray, list, tuple]:
     """
     Convert a Pytorch tensor to a Numpy array.
     Args:

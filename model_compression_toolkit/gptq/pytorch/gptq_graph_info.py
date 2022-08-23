@@ -46,7 +46,7 @@ def get_trainable_parameters(fxp_model: nn.Module,
     return trainable_aux_weights, trainable_bias, trainable_threshold
 
 
-def get_weights_for_loss(fxp_model: nn.Module) -> ([List[list], List[list]]):
+def get_weights_for_loss(fxp_model: nn.Module) -> [List, List]:
     """
     Get all float and quantized kernels for the GPTQ loss
 
