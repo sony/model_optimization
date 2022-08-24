@@ -16,6 +16,10 @@ import unittest
 
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
+from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
+    MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, MixedPrecisionActivationOnlyBopsTest, \
+    MixedPrecisionBopsAndWeightsKPITest, MixedPrecisionBopsAndActivationKPITest, MixedPrecisionBopsAndTotalKPITest, \
+    MixedPrecisionBopsWeightsActivationKPITest, MixedPrecisionBopsMultipleOutEdgesTest
 from tests.pytorch_tests.model_tests.feature_models.relu_replacement_test import SingleLayerReplacementTest, \
     ReluReplacementTest, ReluReplacementWithAddBiasTest
 from tests.pytorch_tests.model_tests.feature_models.remove_assert_test import AssertNetTest
@@ -368,6 +372,20 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the activation Mixed Precision search with functional node.
         """
         MixedPercisionActivationSearch4BitFunctional(self).run_test()
+
+    def test_mixed_precision_bops_kpi(self):
+        """
+        This test checks different scenarios for mixed-precision quantization with bit-operations constraint.
+        """
+        MixedPrecisionBopsBasicTest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsAllWeightsLayersTest(self).run_test(experimental_facade=True)
+        MixedPrecisionWeightsOnlyBopsTest(self).run_test(experimental_facade=True)
+        MixedPrecisionActivationOnlyBopsTest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsAndWeightsKPITest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsAndActivationKPITest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsAndTotalKPITest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsWeightsActivationKPITest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsMultipleOutEdgesTest(self).run_test(experimental_facade=True)
 
     def test_mha_layer_test(self):
         """

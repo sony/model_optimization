@@ -43,10 +43,6 @@ LAST_AXIS = -1
 DATA_TYPE = 'dtype'
 FLOAT_32 = 'float32'
 
-# Common layers attributes and operations names:
-ACTIVATION = 'activation'
-LINEAR = 'linear'
-
 # Version
 LATEST = 'latest'
 

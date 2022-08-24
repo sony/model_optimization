@@ -27,7 +27,7 @@ from model_compression_toolkit.core.keras.back2framework.model_gradients import 
 from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID, ARGMAX, LAYER_NAME
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.virtual_activation_weights_composition import \
     VirtualActivationWeightsComposition
-from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weight_activation_split import \
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weights_activation_split import \
     WeightsActivationSplit
 from model_compression_toolkit.core.keras.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 
@@ -506,7 +506,7 @@ class KerasImplementation(FrameworkImplementation):
             node: A graph node that wraps the operation for which the MAC count is computed.
             fw_info: FrameworkInfo object with information about the Keras model.
 
-        Returns: The MAC count of the operation
+        Returns: The MAC count og the operation
         """
 
         input_shape = node.input_shape
@@ -514,7 +514,7 @@ class KerasImplementation(FrameworkImplementation):
         kernel_shape = node.get_weights_by_keys(fw_info.get_kernel_op_attributes(node.type)[0]).shape
         output_channel_axis, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
 
-        if node.type in [Conv2D, Conv2DTranspose]:
+        if node.type is Conv2D or node.type is Conv2DTranspose:
             # (C_out * W_out * H_out) * C_in * (W_kernel * H_kernel)
             return np.prod([x for x in output_shape if x is not None]) * \
                    input_shape[input_channel_axis] * \
