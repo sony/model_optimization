@@ -90,8 +90,7 @@ if importlib.util.find_spec("torch") is not None:
                                 core_config,
                                 target_platform_capabilities,
                                 fw_info,
-                                fw_impl,
-                                bops_kpi=False)
+                                fw_impl)
 
 
     def pytorch_kpi_data_experimental(in_model: Module,
@@ -144,8 +143,7 @@ if importlib.util.find_spec("torch") is not None:
                                 core_config,
                                 target_platform_capabilities,
                                 fw_info,
-                                fw_impl,
-                                bops_kpi=False)
+                                fw_impl)
 
 else:
     # If torch is not installed,
