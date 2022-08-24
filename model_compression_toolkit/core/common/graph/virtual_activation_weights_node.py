@@ -17,12 +17,13 @@ from typing import Dict, Any, Tuple
 
 from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.core.common.constants import VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX, \
-    VIRTUAL_WEIGHTS_SUFFIX, DEFAULT_CANDIDATE_BITWIDTH, VIRTUAL_ACTIVATION_SUFFIX, ACTIVATION, LINEAR, FLOAT_BITWIDTH
+    VIRTUAL_WEIGHTS_SUFFIX, FLOAT_BITWIDTH , VIRTUAL_ACTIVATION_SUFFIX
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 import numpy as np
 
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
+from model_compression_toolkit.core.keras.constants import ACTIVATION, LINEAR
 
 
 class VirtualSplitNode(BaseNode):
@@ -30,7 +31,7 @@ class VirtualSplitNode(BaseNode):
     A class that represents a node that was split from a kernel node (node with weights).
     """
 
-    def __init__(self, origin_node: BaseNode):
+    def __init__(self, origin_node):
         """
         Init a VirtualSplitNode object.
 
@@ -59,7 +60,7 @@ class VirtualSplitWeightsNode(VirtualSplitNode):
     config.
     """
 
-    def __init__(self, origin_node: BaseNode):
+    def __init__(self, origin_node):
         """
         Init a VirtualSplitWeightsNode object.
 
@@ -74,17 +75,17 @@ class VirtualSplitWeightsNode(VirtualSplitNode):
         self.candidates_quantization_cfg = origin_node.get_unique_weights_candidates()
         for c in self.candidates_quantization_cfg:
             c.activation_quantization_cfg.enable_activation_quantization = False
-            c.activation_quantization_cfg.activation_n_bits = DEFAULT_CANDIDATE_BITWIDTH
+            c.activation_quantization_cfg.activation_n_bits = FLOAT_BITWIDTH
 
 
 class VirtualSplitActivationNode(VirtualSplitNode):
     """
     A class that represents a node that was split from a kernel node (node with weights) and holds the activation
-    operation of the original node. This node basically does not apply any operation and only holds the relevant
+    operation of the original node. This node baisically does not apply any operation and only holds the relevant
     activation candidate quantization config.
     """
 
-    def __init__(self, origin_node: BaseNode, activation_class: type):
+    def __init__(self, origin_node, activation_class):
         """
         Init a VirtualSplitActivationNode object.
 
@@ -95,7 +96,7 @@ class VirtualSplitActivationNode(VirtualSplitNode):
         super().__init__(origin_node)
 
         self.name = origin_node.name + VIRTUAL_ACTIVATION_SUFFIX
-        self.framework_attr = {ACTIVATION: LINEAR}  # TODO: verify that these values work for Pytorch substitution as well (when implementing in Pytorch)
+        self.framework_attr = {ACTIVATION: LINEAR}
         self.prior_info = origin_node.prior_info
         self.input_shape = origin_node.output_shape  # the kernel output is the activation input
         self.weights = {}
@@ -104,20 +105,14 @@ class VirtualSplitActivationNode(VirtualSplitNode):
         self.candidates_quantization_cfg = origin_node.get_unique_activation_candidates()
         for c in self.candidates_quantization_cfg:
             c.weights_quantization_cfg.enable_weights_quantization = False
-            c.weights_quantization_cfg.weights_n_bits = DEFAULT_CANDIDATE_BITWIDTH
+            c.weights_quantization_cfg.weights_n_bits = FLOAT_BITWIDTH
 
 
 class VirtualActivationWeightsNode(BaseNode):
     """
     A node that represents a composition of pair of sequential activation node and weights (kernel) node.
-    This structure is used for mixed-precision search with bit-operation KPI.
-    The node's candidates are the cartesian product of both nodes' candidates.
-
-    Important: note that not like regular BaseNode or FunctionalNode, in VirtualActivationWeightsNode the activation
-    candidates config refer to the quantization config of the activation that precedes the linear operation! instead of
-    the output of the linear operation.
-    It is ok, since this node is not meant to be used in a graph for creating an actual model, but only a virtual
-    representation of the model's graph only for allowing to compute the bit-operations KPI in mixed-precision.
+    This structure is used for mixed-precision with search with bit-operation KPI.
+    The node's candidates are the product of both nodes' candidates.
     """
 
     def __init__(self,
@@ -197,10 +192,7 @@ class VirtualActivationWeightsNode(BaseNode):
 
         """
         node_mac = fw_impl.get_node_mac_operations(self.original_weights_node, fw_info)
-        candidate = self.candidates_quantization_cfg[candidate_idx]
-        weights_bit = candidate.weights_quantization_cfg.weights_n_bits if \
-            candidate.weights_quantization_cfg.enable_weights_quantization else FLOAT_BITWIDTH
-        activation_bit = candidate.activation_quantization_cfg.activation_n_bits if \
-            candidate.activation_quantization_cfg.enable_activation_quantization else FLOAT_BITWIDTH
-        node_bops = weights_bit * activation_bit * node_mac
+        node_bops = self.candidates_quantization_cfg[candidate_idx].weights_quantization_cfg.weights_n_bits * \
+                    self.candidates_quantization_cfg[candidate_idx].activation_quantization_cfg.activation_n_bits * \
+                    node_mac
         return node_bops
