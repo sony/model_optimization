@@ -26,7 +26,7 @@ For more information and detailed API, please visit our [project website](https:
 
 MCT supports different quantization methods:
 * Post training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental)
-* Gradient-based post training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental)
+* Gradient-based post training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/pytorch_gradient_post_training_quantization_experimental.html#ug-pytorch-gradient-post-training-quantization-experimental)
 * Quantization aware training (QAT)[*](#experimental-features)
 
 
