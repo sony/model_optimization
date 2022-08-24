@@ -26,9 +26,11 @@ Functions
 - :ref:`pytorch_post_training_quantization_experimental<ug-pytorch_post_training_quantization_experimental>`: A function to use for post training quantization of PyTorch models (experimental).
 - :ref:`keras_post_training_quantization_experimental<ug-keras_post_training_quantization_experimental>`: A function to use for post training quantization of Keras models (experimental).
 - :ref:`keras_gradient_post_training_quantization_experimental<ug-keras_gradient_post_training_quantization_experimental>`: A function to use for gradient-based post training quantization of Keras models (experimental).
+- :ref:`pytorch_gradient_post_training_quantization_experimental<ug-pytorch_gradient_post_training_quantization_experimental>`: A function to use for gradient-based post training quantization of Pytorch models (experimental).
 - :ref:`keras_quantization_aware_training_init<ug-keras_quantization_aware_training_init>`: A function to use for preparing a model for Quantization Aware Training (Experimental)
 - :ref:`keras_quantization_aware_training_finalize<ug-keras_quantization_aware_training_finalize>`: A function to finalize a model after Quantization Aware Training to a model without QuantizeWrappers(Experimental)
 - :ref:`get_keras_gptq_config<ug-get_keras_gptq_config>`: A function to create a GradientPTQConfig instance to use for Keras models when using GPTQ (experimental).
+- :ref:`get_pytorch_gptq_config<ug-get_pytorch_gptq_config>`: A function to create a GradientPTQConfig instance to use for Pytorch models when using GPTQ (experimental).
 - :ref:`get_target_platform_capabilities<ug-get_target_platform_capabilities>`: A function to get a target platform model for Tensorflow and Pytorch.
 - :ref:`keras_kpi_data_experimental<ug-keras_kpi_data_experimental>`: A function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of Keras models (experimental).
 - :ref:`pytorch_kpi_data_experimental<ug-pytorch_kpi_data_experimental>`: A function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of PyTorch models (experimental).
