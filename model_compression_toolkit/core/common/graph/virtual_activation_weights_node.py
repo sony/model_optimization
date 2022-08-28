@@ -17,7 +17,7 @@ from typing import Dict, Any, Tuple
 
 from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.core.common.constants import VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX, \
-    VIRTUAL_WEIGHTS_SUFFIX, DEFAULT_CANDIDATE_BITWIDTH, VIRTUAL_ACTIVATION_SUFFIX, ACTIVATION, LINEAR, FLOAT_BITWIDTH
+    VIRTUAL_WEIGHTS_SUFFIX, DEFAULT_CANDIDATE_BITWIDTH, VIRTUAL_ACTIVATION_SUFFIX, FLOAT_BITWIDTH
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 import numpy as np
 
@@ -84,7 +84,7 @@ class VirtualSplitActivationNode(VirtualSplitNode):
     activation candidate quantization config.
     """
 
-    def __init__(self, origin_node: BaseNode, activation_class: type):
+    def __init__(self, origin_node: BaseNode, activation_class: type, fw_attr: dict):
         """
         Init a VirtualSplitActivationNode object.
 
@@ -95,7 +95,7 @@ class VirtualSplitActivationNode(VirtualSplitNode):
         super().__init__(origin_node)
 
         self.name = origin_node.name + VIRTUAL_ACTIVATION_SUFFIX
-        self.framework_attr = {ACTIVATION: LINEAR}  # TODO: verify that these values work for Pytorch substitution as well (when implementing in Pytorch)
+        self.framework_attr = fw_attr
         self.prior_info = origin_node.prior_info
         self.input_shape = origin_node.output_shape  # the kernel output is the activation input
         self.weights = {}

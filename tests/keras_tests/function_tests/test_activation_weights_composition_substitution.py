@@ -22,14 +22,14 @@ import numpy as np
 from model_compression_toolkit import DEFAULTCONFIG, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitActivationNode, \
-    VirtualSplitWeightsNode, VirtualActivationWeightsNode
+    VirtualActivationWeightsNode
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.virtual_activation_weights_composition import \
     VirtualActivationWeightsComposition
-from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weight_activation_split import \
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weights_activation_split import \
     WeightsActivationSplit
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute

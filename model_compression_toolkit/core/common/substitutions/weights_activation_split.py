@@ -13,27 +13,23 @@
 # limitations under the License.
 # ==============================================================================
 
-import tensorflow as tf
 import itertools
-from tensorflow.keras.layers import Dense, DepthwiseConv2D, Conv2D, Conv2DTranspose
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common import BaseNode, Graph, BaseSubstitution
-from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitWeightsNode, \
     VirtualSplitActivationNode
+from model_compression_toolkit.core.common.matchers.base_matcher import BaseMatcher
 
 
-class WeightsActivationSplit(BaseSubstitution):
-    def __init__(self):
-        """
-        Matches: (DepthwiseConv2D, Conv2D, Dense, Conv2DTranspose)
-        """
-        op2d_node = NodeOperationMatcher(DepthwiseConv2D) | \
-                    NodeOperationMatcher(Conv2D) | \
-                    NodeOperationMatcher(Dense) | \
-                    NodeOperationMatcher(Conv2DTranspose)
+class BaseWeightsActivationSplit(BaseSubstitution):
+    def __init__(self,
+                 activation_layer_type: type,
+                 fw_attr: dict,
+                 matcher_instance: BaseMatcher):
 
-        super().__init__(matcher_instance=op2d_node)
+        self.activation_layer_type = activation_layer_type
+        self.fw_attr = fw_attr
+        super().__init__(matcher_instance=matcher_instance)
 
     def substitute(self,
                    graph: Graph,
@@ -68,7 +64,7 @@ class WeightsActivationSplit(BaseSubstitution):
                                 f"all model layers should be composite.")
 
         weights_node = VirtualSplitWeightsNode(node)
-        activation_node = VirtualSplitActivationNode(node, tf.keras.layers.Activation)
+        activation_node = VirtualSplitActivationNode(node, self.activation_layer_type, self.fw_attr)
 
         # Update graph
         graph.add_node(weights_node)
