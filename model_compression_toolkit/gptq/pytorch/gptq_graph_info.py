@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import torch
 import torch.nn as nn
 from typing import List
 from model_compression_toolkit.gptq.pytorch.quantizer.quantizer_wrapper import WeightQuantizerWrapper
@@ -19,7 +20,8 @@ from model_compression_toolkit.gptq.pytorch.quantizer.quantizer_wrapper import W
 
 def get_trainable_parameters(fxp_model: nn.Module,
                              add_bias: bool = False,
-                             quantization_parameters_learning: bool = False) -> (List[nn.Parameter], List[nn.Parameter], List[nn.Parameter]):
+                             quantization_parameters_learning: bool = False,
+                             is_gumbel: bool = False) -> (List[nn.Parameter], List[nn.Parameter], List[nn.Parameter]):
     """
     Get trainable parameters from all layers in a model
 
@@ -27,6 +29,7 @@ def get_trainable_parameters(fxp_model: nn.Module,
         fxp_model: Model to get its trainable parameters.
         add_bias: Whether to include biases of the model (if there are) or not.
         quantization_parameters_learning: Whether to include quantization parameters of the model or not.
+        is_gumbel: Whether the fxp model is quantized using Gumbel Rounding
     Returns:
         A list of trainable variables in a model. Each item is a list of a layers weights.
     """
@@ -34,16 +37,35 @@ def get_trainable_parameters(fxp_model: nn.Module,
     trainable_aux_weights = nn.ParameterList()
     trainable_threshold = nn.ParameterList()
     trainable_bias = nn.ParameterList()
+    trainable_temperature = nn.ParameterList()
 
     for layer in fxp_model.modules():
         if isinstance(layer, WeightQuantizerWrapper):
             trainable_aux_weights.append(layer.weight_quantizer.get_aux_variable())
             if quantization_parameters_learning:
                 trainable_threshold.append(layer.weight_quantizer.get_quantization_variable())
+            if is_gumbel:
+                trainable_temperature.append(layer.weight_quantizer.get_temperature_variable())
             if add_bias and layer.op.bias is not None:
                 trainable_bias.append(layer.op.bias)
 
-    return trainable_aux_weights, trainable_bias, trainable_threshold
+    return trainable_aux_weights, trainable_bias, trainable_threshold, trainable_temperature
+
+
+def get_gumbel_probability(fxp_model: nn.Module) -> List[torch.Tensor]:
+    """
+    This function return the gumbel softmax probability of GumRounding
+    Args:
+        fxp_model: A model to be quantized with GumRounding
+
+    Returns: A list of tensors.
+
+    """
+    gumbel_prob_aux = []
+    for layer in fxp_model.modules():
+        if isinstance(layer, WeightQuantizerWrapper):
+            gumbel_prob_aux.append(layer.weight_quantizer.get_gumbel_probability())
+    return gumbel_prob_aux
 
 
 def get_weights_for_loss(fxp_model: nn.Module) -> [List, List]:
@@ -64,6 +86,6 @@ def get_weights_for_loss(fxp_model: nn.Module) -> [List, List]:
             # Collect pairs of float and quantized weights per layer
             weights = layer.op.weight
             flp_weights_list.append(weights)
-            fxp_weights_list.append(layer.weight_quantizer(weights))
+            fxp_weights_list.append(layer.weight_quantizer(weights, training=False))
 
     return flp_weights_list, fxp_weights_list

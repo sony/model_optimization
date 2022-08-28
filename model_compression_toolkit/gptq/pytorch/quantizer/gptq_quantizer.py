@@ -49,3 +49,25 @@ class BaseWeightQuantizer(nn.Module):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s GPTQ model builder method.')
+
+
+    @abstractmethod
+    def get_weight_quantization_params(self) -> dict:
+        """
+        Returns weight quantization dictionary params
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s GPTQ model builder method.')
+
+    @abstractmethod
+    def forward(self, w:nn.parameter, training:bool = True):
+        """
+        Forward-Pass
+        Args:
+            w: weights to quantize.
+            training: whether in training mode or not
+        Returns:
+            quantized weights
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s GPTQ model builder method.')
