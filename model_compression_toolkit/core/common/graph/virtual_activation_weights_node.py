@@ -17,7 +17,7 @@ from typing import Dict, Any, Tuple
 
 from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.core.common.constants import VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX, \
-    VIRTUAL_WEIGHTS_SUFFIX, VIRTUAL_ACTIVATION_SUFFIX, ACTIVATION, LINEAR, FLOAT_BITWIDTH
+    VIRTUAL_WEIGHTS_SUFFIX, VIRTUAL_ACTIVATION_SUFFIX, FLOAT_BITWIDTH
 
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 import numpy as np
