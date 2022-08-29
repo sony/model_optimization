@@ -12,21 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from tensorflow.keras.layers import Dense, DepthwiseConv2D, Conv2D, Conv2DTranspose
+import torch.nn
+from torch.nn import Conv2d, Linear, ConvTranspose2d
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
-from model_compression_toolkit.core.common.substitutions.virtual_activation_weights_composition import \
-    BaseVirtualActivationWeightsComposition
+from model_compression_toolkit.core.common.substitutions.weights_activation_split import BaseWeightsActivationSplit
 
 """
 Matches: (DepthwiseConv2D, Conv2D, Dense, Conv2DTranspose)
 """
-
-WEIGHTS_NODE = NodeOperationMatcher(DepthwiseConv2D) | \
-               NodeOperationMatcher(Conv2D) | \
-               NodeOperationMatcher(Dense) | \
-               NodeOperationMatcher(Conv2DTranspose)
+OP2D_NODE = NodeOperationMatcher(Conv2d) | \
+            NodeOperationMatcher(Linear) | \
+            NodeOperationMatcher(ConvTranspose2d)
 
 
-class VirtualActivationWeightsComposition(BaseVirtualActivationWeightsComposition):
+class WeightsActivationSplit(BaseWeightsActivationSplit):
+    """
+    Substitution extends BaseWeightsActivationSplit for Keras framework.
+    """
+
     def __init__(self):
-        super().__init__(matcher_instance=WEIGHTS_NODE)
+        """
+        Initializes a WeightsActivationSplit substitution for Keras framework.
+        """
+
+        super().__init__(activation_layer_type=torch.nn.Identity,
+                         fw_attr={},
+                         matcher_instance=OP2D_NODE)

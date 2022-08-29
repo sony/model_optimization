@@ -53,6 +53,10 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.sc
     ScaleEqualizationWithPad
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
     pytorch_apply_shift_negative_correction
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.virtual_activation_weights_composition import \
+    VirtualActivationWeightsComposition
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.weights_activation_split import \
+    WeightsActivationSplit
 from model_compression_toolkit.core.pytorch.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.pytorch.pytorch_node_prior_info import create_node_prior_info
 from model_compression_toolkit.core.pytorch.reader.reader import model_reader
@@ -272,7 +276,9 @@ class PytorchImplementation(FrameworkImplementation):
         """
         Returns: A list of Pytorch substitutions used to build a virtual graph with composed activation-weights pairs.
         """
-        raise Exception('This feature is currently not yet available for Pytorch models. Work in progress.')
+
+        return [WeightsActivationSplit(),
+                VirtualActivationWeightsComposition()]
 
     def get_gptq_trainer_obj(self) -> Type[GPTQTrainer]:
         """
@@ -453,7 +459,18 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: The MAC count of the operation
         """
 
-        # TODO: need to modify when implementing BOPS KPI for Pytorch. Currently, returning inf to prevent
-        #  crashing when running set_final_kpi at the end of Pytorch mixed-precision tests
+        input_shape = node.input_shape[0]
+        output_shape = node.output_shape[0]
+        kernel_shape = node.get_weights_by_keys(fw_info.get_kernel_op_attributes(node.type)[0]).shape
+        output_channel_axis, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
 
-        return np.inf
+        if node.type is Conv2d or node.type is ConvTranspose2d:
+            # (C_out * W_out * H_out) * C_in * (W_kernel * H_kernel)
+            return np.prod([x for x in output_shape if x is not None]) * \
+                   input_shape[input_channel_axis] * \
+                   (kernel_shape[0] * kernel_shape[1])
+        elif node.type is Linear:
+            # IN * OUT
+            return kernel_shape[0] * kernel_shape[1]
+        else:
+            return 0
