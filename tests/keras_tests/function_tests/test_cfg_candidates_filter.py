@@ -18,7 +18,7 @@ import unittest
 from tensorflow.keras.layers import Conv2D, ReLU, Input
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.constants import DEFAULT_CANDIDATE_BITWIDTH
+from model_compression_toolkit.core.common.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
@@ -183,7 +183,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
                         f"Expects 1 Conv layer candidates, number of candidates is {len(conv2d_candidates)}")
         candidate = conv2d_candidates[0]
         self.assertTrue((candidate.weights_quantization_cfg.weights_n_bits,
-                         candidate.activation_quantization_cfg.activation_n_bits) == (DEFAULT_CANDIDATE_BITWIDTH, 8))
+                         candidate.activation_quantization_cfg.activation_n_bits) == (FLOAT_BITWIDTH , 8))
 
 
 if __name__ == '__main__':

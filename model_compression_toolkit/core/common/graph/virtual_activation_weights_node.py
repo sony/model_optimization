@@ -17,7 +17,8 @@ from typing import Dict, Any, Tuple
 
 from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.core.common.constants import VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX, \
-    VIRTUAL_WEIGHTS_SUFFIX, DEFAULT_CANDIDATE_BITWIDTH, VIRTUAL_ACTIVATION_SUFFIX, FLOAT_BITWIDTH
+    VIRTUAL_WEIGHTS_SUFFIX, VIRTUAL_ACTIVATION_SUFFIX, FLOAT_BITWIDTH
+
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 import numpy as np
 
@@ -74,7 +75,7 @@ class VirtualSplitWeightsNode(VirtualSplitNode):
         self.candidates_quantization_cfg = origin_node.get_unique_weights_candidates()
         for c in self.candidates_quantization_cfg:
             c.activation_quantization_cfg.enable_activation_quantization = False
-            c.activation_quantization_cfg.activation_n_bits = DEFAULT_CANDIDATE_BITWIDTH
+            c.activation_quantization_cfg.activation_n_bits = FLOAT_BITWIDTH
 
 
 class VirtualSplitActivationNode(VirtualSplitNode):
@@ -104,7 +105,7 @@ class VirtualSplitActivationNode(VirtualSplitNode):
         self.candidates_quantization_cfg = origin_node.get_unique_activation_candidates()
         for c in self.candidates_quantization_cfg:
             c.weights_quantization_cfg.enable_weights_quantization = False
-            c.weights_quantization_cfg.weights_n_bits = DEFAULT_CANDIDATE_BITWIDTH
+            c.weights_quantization_cfg.weights_n_bits = FLOAT_BITWIDTH
 
 
 class VirtualActivationWeightsNode(BaseNode):

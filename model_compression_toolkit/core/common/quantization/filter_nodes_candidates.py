@@ -16,7 +16,7 @@ import copy
 from typing import List
 
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.constants import DEFAULT_CANDIDATE_BITWIDTH
+from model_compression_toolkit.core.common.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
 
@@ -57,8 +57,8 @@ def filter_node_candidates(node: BaseNode) -> List[CandidateNodeQuantizationConf
         # If both weights and activation quantization are disabled, but for some reason the node has multiple candidates
         # then replace it with a single dummy candidate with default bit-width values.
         single_dummy_candidate = filtered_candidates[0]
-        single_dummy_candidate.activation_quantization_cfg.activation_n_bits = DEFAULT_CANDIDATE_BITWIDTH
-        single_dummy_candidate.weights_quantization_cfg.weights_n_bits = DEFAULT_CANDIDATE_BITWIDTH
+        single_dummy_candidate.activation_quantization_cfg.activation_n_bits = FLOAT_BITWIDTH
+        single_dummy_candidate.weights_quantization_cfg.weights_n_bits = FLOAT_BITWIDTH
         filtered_candidates = [single_dummy_candidate]
 
     elif not node.is_activation_quantization_enabled():
@@ -70,7 +70,7 @@ def filter_node_candidates(node: BaseNode) -> List[CandidateNodeQuantizationConf
                                and not seen_candidates.add(candidate.weights_quantization_cfg)]
 
         for c in filtered_candidates:
-            c.activation_quantization_cfg.activation_n_bits = DEFAULT_CANDIDATE_BITWIDTH
+            c.activation_quantization_cfg.activation_n_bits = FLOAT_BITWIDTH
 
     elif not node.is_weights_quantization_enabled():
         # Remove candidates that have duplicated activation candidates for node with disabled weights quantization.
@@ -81,6 +81,6 @@ def filter_node_candidates(node: BaseNode) -> List[CandidateNodeQuantizationConf
                                and not seen_candidates.add(candidate.activation_quantization_cfg)]
 
         for c in filtered_candidates:
-            c.weights_quantization_cfg.weights_n_bits = DEFAULT_CANDIDATE_BITWIDTH
+            c.weights_quantization_cfg.weights_n_bits = FLOAT_BITWIDTH
 
     return filtered_candidates
