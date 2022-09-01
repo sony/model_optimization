@@ -16,6 +16,8 @@
 
 import os
 from typing import Callable, Tuple, Any, List, Dict
+
+import numpy as np
 from tqdm import tqdm
 
 from model_compression_toolkit.core import common
@@ -122,7 +124,7 @@ def core_runner(in_model: Any,
             bit_widths_config = core_config.mixed_precision_config.configuration_overwrite
 
     else:
-        bit_widths_config = None
+        bit_widths_config = []
 
     tg = set_bit_widths(core_config.mixed_precision_enable,
                         tg,
@@ -135,17 +137,17 @@ def core_runner(in_model: Any,
     common.Logger.info(f'Approximated model size (in bytes): {tg.get_memory()}')
     common.Logger.info(f'Approximated compression ratio: {round(graph.get_float_memory() / (tg.get_memory() + 1e-8), 3)}')
 
-    if target_kpi is not None:
-        # TODO: Currently, only tracking configurable nodes final KPI,
-        #  therefore, relevant only if ran in mixed-precision.
-        #  After modifying the MP KPIs to consider all nodes (not just configurable),
-        #  adjust the final KPI computation as well (and move it outside the if statement).
-        _set_final_kpi(graph=tg,
-                       final_bit_widths_config=bit_widths_config,
-                       kpi_functions_dict=kpi_functions_mapping,
-                       fw_info=fw_info,
-                       fw_impl=fw_impl)
+    # TODO: Currently, only tracking configurable nodes final KPI,
+    #  therefore, relevant only if ran in mixed-precision.
+    #  After modifying the MP KPIs to consider all nodes (not just configurable),
+    #  adjust the final KPI computation as well (and move it outside the if statement).
+    _set_final_kpi(graph=tg,
+                   final_bit_widths_config=bit_widths_config,
+                   kpi_functions_dict=kpi_functions_mapping,
+                   fw_info=fw_info,
+                   fw_impl=fw_impl)
 
+    if target_kpi is not None:
         # Retrieve lists of tuples (node, node's final weights/activation bitwidth)
         weights_conf_nodes_bitwidth = tg.get_final_weights_config()
         activation_conf_nodes_bitwidth = tg.get_final_activation_config()
@@ -439,7 +441,9 @@ def _set_final_kpi(graph: Graph,
         if kpi_target == KPITarget.BOPS:
             final_kpis_dict[kpi_target] = kpi_aggr(kpi_method(final_bit_widths_config, graph, fw_info, fw_impl, False), False)[0]
         else:
-            final_kpis_dict[kpi_target] = kpi_aggr(kpi_method(final_bit_widths_config, graph, fw_info, fw_impl), False)[0]
+            non_conf_kpi = kpi_method([], graph, fw_info, fw_impl)
+            conf_kpi = kpi_method(final_bit_widths_config, graph, fw_info, fw_impl)
+            final_kpis_dict[kpi_target] = kpi_aggr(np.concatenate([conf_kpi, non_conf_kpi]), False)[0]
 
     final_kpi = KPI()
     final_kpi.set_kpi_by_target(final_kpis_dict)
