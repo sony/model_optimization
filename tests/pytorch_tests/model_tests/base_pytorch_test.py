@@ -119,7 +119,9 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                 torch_traced = torch.jit.trace(quantized_model, input_x)
                 torch_script_model = torch.jit.script(torch_traced)
 
-    def run_test(self, seed=0, experimental_facade=False,):
+
+    def run_test(self, seed=0, experimental_facade=True, experimental_exporter=True):
+        self.experimental_exporter = experimental_exporter
         np.random.seed(seed)
         random.seed(a=seed)
         torch.random.manual_seed(seed)
@@ -131,18 +133,21 @@ class BasePytorchTest(BaseFeatureNetworkTest):
 
         ptq_models = {}
         model_float = self.create_feature_network(input_shapes)
-        if experimental_facade:
-            ptq_model, quantization_info = mct.pytorch_post_training_quantization_experimental(model_float,
-                                                                                               representative_data_gen,
-                                                                                               target_kpi=self.get_kpi(),
-                                                                                               core_config=self.get_core_config(),
-                                                                                               target_platform_capabilities=self.get_tpc())
-        else:
-            quant_config_dict = self.get_quantization_configs()
-            for model_name in quant_config_dict.keys():
-                quant_config = quant_config_dict[model_name]
-                tpc = self.get_tpc()[model_name]
-
+        quant_config_dict = self.get_quantization_configs()
+        for model_name in quant_config_dict.keys():
+            quant_config = quant_config_dict[model_name]
+            core_config = self.get_core_config()
+            core_config.quantization_config = quant_config
+            tpc = self.get_tpc()[model_name]
+            if experimental_facade:
+                ptq_model, quantization_info = mct.pytorch_post_training_quantization_experimental(in_module=model_float,
+                                                                                                   representative_data_gen=representative_data_gen,
+                                                                                                   target_kpi=self.get_kpi(),
+                                                                                                   core_config=core_config,
+                                                                                                   target_platform_capabilities=tpc,
+                                                                                                   new_experimental_exporter=experimental_exporter
+                                                                                                   )
+            else:
                 if isinstance(quant_config, MixedPrecisionQuantizationConfig):
                     ptq_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(model_float,
                                                                                                           representative_data_gen,
@@ -153,7 +158,8 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                                                                                                           gptq_config=self.get_gptq_config(),
                                                                                                           target_kpi=self.get_kpi(),
                                                                                                           target_platform_capabilities=tpc)
-                    ptq_models.update({model_name: ptq_model})
+
+
                 else:
                     ptq_model, quantization_info = mct.pytorch_post_training_quantization(model_float,
                                                                                           representative_data_gen,
@@ -162,6 +168,6 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                                                                                           fw_info=DEFAULT_PYTORCH_INFO,
                                                                                           network_editor=self.get_network_editor(),
                                                                                           target_platform_capabilities=tpc)
-                    ptq_models.update({model_name: ptq_model})
 
+            ptq_models.update({model_name: ptq_model})
         self.compare(ptq_models, model_float, input_x=x, quantization_info=quantization_info)

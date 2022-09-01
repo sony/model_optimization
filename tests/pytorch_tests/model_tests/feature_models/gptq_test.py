@@ -64,7 +64,6 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         ptq_model, ptq_user_info = mct.pytorch_post_training_quantization_experimental(self.float_model,
                                                                                    self.representative_data_gen,
                                                                                    core_config=self.get_core_config(),
-                                                                                   fw_info=DEFAULT_PYTORCH_INFO,
                                                                                    target_platform_capabilities=self.get_tpc()) if self.experimental \
             else mct.pytorch_post_training_quantization(self.float_model,
                                                         self.representative_data_gen,
@@ -78,7 +77,6 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         gptq_model, gptq_user_info = mct.pytorch_gradient_post_training_quantization_experimental(self.float_model,
                                                                                               self.representative_data_gen,
                                                                                               core_config=self.get_core_config(),
-                                                                                              fw_info=DEFAULT_PYTORCH_INFO,
                                                                                               target_platform_capabilities=self.get_tpc(),
                                                                                               gptq_config=self.get_gptq_config()) if self.experimental \
             else mct.pytorch_post_training_quantization(self.float_model,

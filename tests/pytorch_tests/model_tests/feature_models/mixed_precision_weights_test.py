@@ -50,6 +50,9 @@ class MixedPercisionBaseTest(BasePytorchTest):
         return {"mixed_precision_model": MixedPrecisionQuantizationConfig(qc,
                                                                           num_of_images=1)}
 
+    def get_mixed_precision_v2_config(self):
+        return mct.MixedPrecisionQuantizationConfigV2(num_of_images=1)
+
     def create_feature_network(self, input_shape):
         return MixedPrecisionNet(input_shape)
 
