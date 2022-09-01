@@ -95,6 +95,9 @@ def search_bit_width(graph_to_search_cfg: Graph,
     # Each pair of (KPI method, KPI aggregation) should match to a specific provided kpi target
     kpi_functions = kpi_functions_mapping
 
+    # Compute non-configurable nodes KPIs for each KPI target
+    non_conf_kpi_dict = _non_configurable_nodes_kpi(kpi_functions, target_kpi, graph, fw_info, fw_impl)
+
     # Instantiate a manager object
     search_manager = MixedPrecisionSearchManager(graph,
                                                  fw_info,
@@ -110,6 +113,26 @@ def search_bit_width(graph_to_search_cfg: Graph,
 
     # Search for the desired mixed-precision configuration
     result_bit_cfg = search_method_fn(search_manager,
-                                      target_kpi)
+                                      target_kpi,
+                                      non_conf_kpi_dict)
 
     return result_bit_cfg
+
+
+def _non_configurable_nodes_kpi(kpi_functions, target_kpi, graph, fw_info, fw_impl):
+    non_conf_kpi_dict = {}
+    for target, kpi_value in target_kpi.get_kpi_dict().items():
+        if not np.isinf(kpi_value):
+            # Call for the KPI method of the given target - empty quantization configuration list is passed since we
+            # compute for non-configurable nodes
+            kpi_vector = kpi_functions[target][0]([], graph, fw_info, fw_impl)
+
+            # # Call for the KPI aggregation of the given target -
+            # # False means that the call is not meant for defining KPI constraint
+            # aggr_kpi = kpi_functions[target][1](kpi_vector, False)
+            #
+            # non_conf_kpi_dict[target] = aggr_kpi
+
+            non_conf_kpi_dict[target] = kpi_vector
+
+    return non_conf_kpi_dict

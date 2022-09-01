@@ -47,23 +47,30 @@ def weights_size_kpi(mp_cfg: List[int],
 
     """
     weights_memory = []
-
-    # Go over all nodes that should be taken into consideration when computing the weights KPI.
     mp_nodes = graph.get_configurable_sorted_nodes_names()
-    for n in graph.get_sorted_weights_configurable_nodes():
-        node_idx = mp_nodes.index(n.name)
-        node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
-        node_nbits = node_qc.weights_quantization_cfg.weights_n_bits
 
-        n = _get_origin_weights_node(n)
+    if len(mp_cfg) == 0:
+        # Computing non-configurable nodes KPI
+        for n in graph.nodes:
+            if n.name not in mp_nodes:
+                if len(n.candidates_quantization_cfg) == 1:
+                    node_nbits = n.candidates_quantization_cfg[0].weights_quantization_cfg.weights_n_bits
+                    node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
+                    weights_memory.append(node_weights_memory_in_bytes)
+                else:
+                    Logger.warning(f"Non-configurable nodes should have a single quantization configuration candidate,"
+                                   f"but node {n.name} has {len(n.candidates_quantization_cfg)} candidates. "
+                                   f"The node's weights memory is not considered for the weights KPI computation.")
+    else:
+        # Go over configurable all nodes that should be taken into consideration when computing the weights KPI.
+        for n in graph.get_sorted_weights_configurable_nodes():
+            node_idx = mp_nodes.index(n.name)
+            node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
+            node_nbits = node_qc.weights_quantization_cfg.weights_n_bits
 
-        node_num_weights_params = 0
-        for attr in fw_info.get_kernel_op_attributes(n.type):
-            if attr is not None:
-                node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
+            node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
 
-        node_weights_memory_in_bytes = node_num_weights_params * node_nbits / BITS_TO_BYTES
-        weights_memory.append(node_weights_memory_in_bytes)
+            weights_memory.append(node_weights_memory_in_bytes)
 
     return np.array(weights_memory)
 
@@ -87,21 +94,31 @@ def activation_output_size_kpi(mp_cfg: List[int],
     Note that the vector is not necessarily of the same length as the given config.
 
     """
-
     activation_memory = []
-
-    # Go over all nodes that should be taken into consideration when computing the weights KPI.
     mp_nodes = graph.get_configurable_sorted_nodes_names()
-    for n in graph.get_sorted_activation_configurable_nodes():
-        node_idx = mp_nodes.index(n.name)
-        node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
-        node_nbits = node_qc.activation_quantization_cfg.activation_n_bits
 
-        n = _get_origin_activation_node(n)
+    if len(mp_cfg) == 0:
+        # Computing non-configurable nodes KPI
+        for n in graph.nodes:
+            if n.name not in mp_nodes:
+                if len(n.candidates_quantization_cfg) == 1:
+                    node_nbits = n.candidates_quantization_cfg[0].weights_quantization_cfg.weights_n_bits
+                    node_activation_memory_in_bytes = _compute_node_activation_memory(n, node_nbits)
+                    activation_memory.append(node_activation_memory_in_bytes)
+                else:
+                    Logger.warning(f"Non-configurable nodes should have a single quantization configuration candidate,"
+                                   f"but node {n.name} has {len(n.candidates_quantization_cfg)} candidates. "
+                                   f"The node's activation memory is not considered for the weights KPI computation.")
+    else:
+        # Go over all nodes that should be taken into consideration when computing the weights KPI.
+        for n in graph.get_sorted_activation_configurable_nodes():
+            node_idx = mp_nodes.index(n.name)
+            node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
+            node_nbits = node_qc.activation_quantization_cfg.activation_n_bits
 
-        node_output_size = n.get_total_output_params()
-        node_activation_memory_in_bytes = node_output_size * node_nbits / BITS_TO_BYTES
-        activation_memory.append(node_activation_memory_in_bytes)
+            node_activation_memory_in_bytes = _compute_node_activation_memory(n, node_nbits)
+
+            activation_memory.append(node_activation_memory_in_bytes)
 
     return np.array(activation_memory)
 
@@ -307,6 +324,24 @@ def _get_origin_activation_node(n: BaseNode) -> BaseNode:
         return n.origin_node
 
     return n
+
+
+def _compute_node_weights_memory(n, node_nbits, fw_info):
+    n = _get_origin_weights_node(n)
+
+    node_num_weights_params = 0
+    for attr in fw_info.get_kernel_op_attributes(n.type):
+        if attr is not None:
+            node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
+
+    return node_num_weights_params * node_nbits / BITS_TO_BYTES
+
+
+def _compute_node_activation_memory(n, node_nbits):
+    n = _get_origin_activation_node(n)
+    node_output_size = n.get_total_output_params()
+
+    return node_output_size * node_nbits / BITS_TO_BYTES
 
 
 class MpKpiMetric(Enum):
