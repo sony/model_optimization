@@ -95,7 +95,6 @@ if FOUND_TORCH:
                                                                  representative_data_gen: Callable,
                                                                  target_kpi: KPI = None,
                                                                  core_config: CoreConfig = CoreConfig(),
-                                                                 fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                                                                  gptq_config: GradientPTQConfig = None,
                                                                  target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
@@ -119,7 +118,6 @@ if FOUND_TORCH:
             representative_data_gen (Callable): Dataset used for calibration.
             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
-            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default PyTorch info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/pytorch/default_framework_info.py>`_
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to. `Default PyTorch TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/tpc_models/pytorch_tp_models/pytorch_default.py>`_
 
@@ -154,7 +152,7 @@ if FOUND_TORCH:
             common.Logger.info("Using experimental mixed-precision quantization. "
                                "If you encounter an issue please file a bug.")
 
-        tb_w = _init_tensorboard_writer(fw_info)
+        tb_w = _init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
 
         fw_impl = PytorchImplementation()
 
@@ -164,7 +162,7 @@ if FOUND_TORCH:
         graph, bit_widths_config = core_runner(in_model=model,
                                                representative_data_gen=representative_data_gen,
                                                core_config=core_config,
-                                               fw_info=fw_info,
+                                               fw_info=DEFAULT_PYTORCH_INFO,
                                                fw_impl=fw_impl,
                                                tpc=target_platform_capabilities,
                                                target_kpi=target_kpi,
@@ -173,14 +171,14 @@ if FOUND_TORCH:
         # ---------------------- #
         # GPTQ Runner
         # ---------------------- #
-        graph_gptq = gptq_runner(graph, gptq_config, representative_data_gen, fw_info, fw_impl, tb_w)
+        graph_gptq = gptq_runner(graph, gptq_config, representative_data_gen, DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
         if core_config.debug_config.analyze_similarity:
-            analyzer_model_quantization(representative_data_gen, tb_w, graph_gptq, fw_impl, fw_info)
+            analyzer_model_quantization(representative_data_gen, tb_w, graph_gptq, fw_impl, DEFAULT_PYTORCH_INFO)
 
         # ---------------------- #
         # Export
         # ---------------------- #
-        quantized_model, user_info = export_model(graph_gptq, fw_info, fw_impl, tb_w, bit_widths_config)
+        quantized_model, user_info = export_model(graph_gptq, DEFAULT_PYTORCH_INFO, fw_impl, tb_w, bit_widths_config)
 
         return quantized_model, user_info
 
