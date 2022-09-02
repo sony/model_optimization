@@ -120,16 +120,12 @@ For more examples please see the [tutorials' directory](tutorials).
 
 ## Results
 ### Keras
-As part of the MCT library, we have a set of example networks on image classification. These networks can be used as examples when using the package.
+Graph of [MobileNetV2](https://keras.io/api/applications/mobilenet/) accuracy on ImageNet vs average bit-width of weights, using 
+single-precision quantization, mixed-precision quantization, and mixed-precision quantization with GPTQ.
 
-* Image Classification Example with MobileNet V1 on ImageNet dataset
+<img src="docsrc/images/mbv2_accuracy_graph.png">
 
-| Network Name             | Float Accuracy  | 8Bit Accuracy   | Comments                             |
-| -------------------------| ---------------:| ---------------:| ------------------------------------:|
-| MobileNetV1 [2]          | 70.558          | 70.418          |                                      |
-
-
-For more results please see [1]
+For more results, please see [1]
 
 ### Pytorch
 We quantized classification networks from the torchvision library. 
