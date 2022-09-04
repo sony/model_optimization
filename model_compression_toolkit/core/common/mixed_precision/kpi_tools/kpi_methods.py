@@ -143,8 +143,30 @@ def total_weights_activation_kpi(mp_cfg: List[int],
 
     """
     weights_activation_memory = []
+    mp_nodes = graph.get_configurable_sorted_nodes_names()
 
-    if len(mp_cfg) > 0:
+    if len(mp_cfg) == 0:
+        # Computing non-configurable nodes KPI
+        for n in graph.nodes:
+            if n.name not in mp_nodes:
+                if len(n.candidates_quantization_cfg) == 1:
+                    node_weights_memory_in_bytes = 0
+                    if n.has_weights_quantization_enabled_candidate():
+                        node_weights_nbits = n.candidates_quantization_cfg[0].weights_quantization_cfg.weights_n_bits
+                        node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_weights_nbits, fw_info)
+
+                    node_activation_memory_in_bytes = 0
+                    if n.has_activation_quantization_enabled_candidate():
+                        node_activation_nbits = n.candidates_quantization_cfg[0].activation_quantization_cfg.activation_n_bits
+                        node_activation_memory_in_bytes = _compute_node_activation_memory(n, node_activation_nbits)
+
+                    weights_activation_memory.append(
+                        np.array([node_weights_memory_in_bytes, node_activation_memory_in_bytes]))
+                else:
+                    Logger.warning(f"Non-configurable nodes should have a single quantization configuration candidate,"
+                                   f"but node {n.name} has {len(n.candidates_quantization_cfg)} candidates. "
+                                   f"The node's activation memory is not considered for the weights KPI computation.")
+    else:
         # Go over all nodes that should be taken into consideration when computing the weights or
         # activation KPI (all configurable nodes).
         for node_idx, n in enumerate(graph.get_configurable_sorted_nodes()):
@@ -154,27 +176,15 @@ def total_weights_activation_kpi(mp_cfg: List[int],
 
             # Compute node's weights memory (if no weights to quantize then set to 0)
             node_weights_memory_in_bytes = 0
-            origin_node = n
             if n.is_weights_quantization_enabled() and not n.is_all_weights_candidates_equal():
-                n = _get_origin_weights_node(n)
-                node_num_weights_params = 0
-                for attr in fw_info.get_kernel_op_attributes(n.type):
-                    if attr is not None:
-                        node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
-                node_weights_memory_in_bytes = node_num_weights_params * node_weights_nbits / BITS_TO_BYTES
-
-            n = origin_node
+                node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_weights_nbits, fw_info)
 
             # Compute node's activation memory (if node's activation are not being quantized then set to 0)
             node_activation_memory_in_bytes = 0
             if n.is_activation_quantization_enabled() and not n.is_all_activation_candidates_equal():
-                n = _get_origin_activation_node(n)
-                node_output_size = n.get_total_output_params()
-                node_activation_memory_in_bytes = node_output_size * node_activation_nbits / BITS_TO_BYTES
+                node_activation_memory_in_bytes = _compute_node_activation_memory(n, node_activation_nbits)
 
             weights_activation_memory.append(np.array([node_weights_memory_in_bytes, node_activation_memory_in_bytes]))
-    else:
-        weights_activation_memory = [[0, 0]]
 
     return np.array(weights_activation_memory)
 
@@ -330,19 +340,19 @@ def _get_origin_activation_node(n: BaseNode) -> BaseNode:
 
 
 def _compute_node_weights_memory(n, node_nbits, fw_info):
-    n = _get_origin_weights_node(n)
+    origin_node = _get_origin_weights_node(n)
 
     node_num_weights_params = 0
-    for attr in fw_info.get_kernel_op_attributes(n.type):
+    for attr in fw_info.get_kernel_op_attributes(origin_node.type):
         if attr is not None:
-            node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
+            node_num_weights_params += origin_node.get_weights_by_keys(attr).flatten().shape[0]
 
     return node_num_weights_params * node_nbits / BITS_TO_BYTES
 
 
 def _compute_node_activation_memory(n, node_nbits):
-    n = _get_origin_activation_node(n)
-    node_output_size = n.get_total_output_params()
+    origin_node = _get_origin_activation_node(n)
+    node_output_size = origin_node.get_total_output_params()
 
     return node_output_size * node_nbits / BITS_TO_BYTES
 
