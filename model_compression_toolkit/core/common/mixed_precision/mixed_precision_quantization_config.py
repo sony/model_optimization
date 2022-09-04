@@ -49,7 +49,6 @@ class MixedPrecisionQuantizationConfigV2:
             norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
 
         """
-        assert compute_distance_fn is None
         self.compute_distance_fn = compute_distance_fn
         self.distance_weighting_method = distance_weighting_method
         self.num_of_images = num_of_images
