@@ -17,6 +17,7 @@ from torch.fx import symbolic_trace
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.constants import PYTORCH
+from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
@@ -34,10 +35,16 @@ The base test class for the feature networks
 
 
 class BasePytorchTest(BaseFeatureNetworkTest):
-    def __init__(self, unit_test, float_reconstruction_error=1e-7, convert_to_fx=True):
+    def __init__(self,
+                 unit_test,
+                 float_reconstruction_error=1e-7,
+                 convert_to_fx=True,
+                 experimental_exporter=False):
+
         super().__init__(unit_test)
         self.float_reconstruction_error = float_reconstruction_error
         self.convert_to_fx = convert_to_fx
+        self.experimental_exporter = experimental_exporter
 
     def get_tpc(self):
         return {
@@ -120,8 +127,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                 torch_script_model = torch.jit.script(torch_traced)
 
 
-    def run_test(self, seed=0, experimental_facade=True, experimental_exporter=True):
-        self.experimental_exporter = experimental_exporter
+    def run_test(self, seed=0, experimental_facade=True):
         np.random.seed(seed)
         random.seed(a=seed)
         torch.random.manual_seed(seed)
@@ -138,14 +144,19 @@ class BasePytorchTest(BaseFeatureNetworkTest):
             quant_config = quant_config_dict[model_name]
             core_config = self.get_core_config()
             core_config.quantization_config = quant_config
-            tpc = self.get_tpc()[model_name]
+
+            tpc = self.get_tpc()
+            if isinstance(tpc, dict):
+                tpc = tpc[model_name]
+            assert isinstance(tpc, TargetPlatformCapabilities)
+
             if experimental_facade:
                 ptq_model, quantization_info = mct.pytorch_post_training_quantization_experimental(in_module=model_float,
                                                                                                    representative_data_gen=representative_data_gen,
                                                                                                    target_kpi=self.get_kpi(),
                                                                                                    core_config=core_config,
                                                                                                    target_platform_capabilities=tpc,
-                                                                                                   new_experimental_exporter=experimental_exporter
+                                                                                                   new_experimental_exporter=self.experimental_exporter
                                                                                                    )
             else:
                 if isinstance(quant_config, MixedPrecisionQuantizationConfig):

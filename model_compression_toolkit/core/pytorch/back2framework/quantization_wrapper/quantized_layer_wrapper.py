@@ -15,20 +15,19 @@
 
 import copy
 import torch
-from typing import Any, List
+from typing import Any
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.core.pytorch.back2framework.quantization_wrapper.wrapper_quantize_config import \
+    WrapperQuantizeConfig
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-from model_compression_toolkit.core.pytorch.utils import set_model, to_torch_tensor
-from model_compression_toolkit.exporter.fully_quantized.pytorch.quantizers.symmetric_weights_quantizer import \
-    SymmetricWeightsQuantizer
-from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs.quantize_config import \
-    QuantizeConfig
+from model_compression_toolkit.core.pytorch.utils import set_model
 
 
-class FullyQuantizedLayerWrapper(torch.nn.Module):
+
+
+class QuantizedLayerWrapper(torch.nn.Module):
     """
     Class that wraps a Pytorch layer (nn.Module) to be used for mixed precision quantization.
     Allows to maintain quantized weights tensors for each of the layer's attributes that we want to quantize,
@@ -39,14 +38,14 @@ class FullyQuantizedLayerWrapper(torch.nn.Module):
     """
     def __init__(self,
                  n: BaseNode,
-                 quantize_config:QuantizeConfig):
+                 quantize_config:WrapperQuantizeConfig):
         """
         Construct a Pytorch model that constitutes as a wrapper for a Pytorch layer, built from a given graph node.
         Args:
             n: Node to build its Pytorch layer.
 
         """
-        super(FullyQuantizedLayerWrapper, self).__init__()
+        super(QuantizedLayerWrapper, self).__init__()
 
         self.is_function = isinstance(n, FunctionalNode)
 

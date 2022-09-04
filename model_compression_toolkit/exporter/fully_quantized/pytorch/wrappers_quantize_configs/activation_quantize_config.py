@@ -1,8 +1,10 @@
-from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs.quantize_config import \
-    QuantizeConfig
+from model_compression_toolkit.core.pytorch.back2framework.quantization_wrapper.wrapper_quantize_config import \
+    WrapperQuantizeConfig
 
 
-class ActivationQuantizeConfig(QuantizeConfig):
+
+
+class ActivationQuantizeConfig(WrapperQuantizeConfig):
 
     def __init__(self,
                  activation_quantizers):

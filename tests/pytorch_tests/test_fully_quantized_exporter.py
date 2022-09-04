@@ -23,10 +23,10 @@ import torchvision
 from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.core.pytorch.back2framework.quantization_wrapper.quantized_layer_wrapper import \
+    QuantizedLayerWrapper
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-from model_compression_toolkit.core.tpc_models.default_tpc.v3.tpc_pytorch import generate_pytorch_tpc
-from model_compression_toolkit.exporter.fully_quantized.pytorch.fully_quantized_layer_wrapper import \
-    FullyQuantizedLayerWrapper
+
 from model_compression_toolkit.exporter.fully_quantized.pytorch.quantizers.fq_quantizer import FakeQuantQuantizer
 from model_compression_toolkit.exporter.fully_quantized.pytorch.quantizers.symmetric_weights_quantizer import \
     SymmetricWeightsQuantizer
@@ -42,7 +42,6 @@ from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantiz
 from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs.weights_quantize_config \
     import \
     WeightsQuantizeConfig
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 tp = mct.target_platform
 
@@ -111,19 +110,19 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         return t.cpu().detach().numpy()
 
     def test_layers_wrapper(self):
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn, FullyQuantizedLayerWrapper))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn, QuantizedLayerWrapper))
         self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.layer, torch.nn.Conv2d))
         self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.quantization_config, WeightsQuantizeConfig))
 
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_2, FullyQuantizedLayerWrapper))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_2, QuantizedLayerWrapper))
         self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_2.layer, torch.nn.ReLU6))
         self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_2.quantization_config, ActivationQuantizeConfig))
 
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_0, FullyQuantizedLayerWrapper))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_0, QuantizedLayerWrapper))
         self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_0.layer, torch.nn.Dropout))
         self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_0.quantization_config, NoQuantizationQuantizeConfig))
 
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1, FullyQuantizedLayerWrapper))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1, QuantizedLayerWrapper))
         self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.layer, torch.nn.Linear))
         self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.quantization_config, WeightsActivationQuantizeConfig))
 
@@ -153,10 +152,6 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         self.assertTrue(len(self.fully_quantized_mbv2.classifier_0.quantization_config.get_weight_quantizers())==0)
         self.assertTrue(len(self.fully_quantized_mbv2.classifier_0.quantization_config.get_activation_quantizers())==0)
 
-
-    # def test_torch(self):
-    #     model_quantized = torchvision.models.quantization.mobilenet_v2(pretrained=True, quantize=True)
-    #     print(model_quantized)
 
 
     def test_save_and_load_model(self):

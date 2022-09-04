@@ -13,19 +13,26 @@
 # limitations under the License.
 # ==============================================================================
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.exporter.fully_quantized.pytorch.node_to_quantizer import get_weights_quantizer_for_node, \
+from model_compression_toolkit.core.pytorch.back2framework.quantization_wrapper.wrapper_quantize_config import \
+    WrapperQuantizeConfig
+from model_compression_toolkit.exporter.fully_quantized.pytorch.node_to_quantizer import \
+    get_weights_quantizer_for_node, \
     get_activations_quantizer_for_node
-from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs.quantize_config import \
-    QuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs\
+from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs.activation_quantize_config \
+    import \
+    ActivationQuantizeConfig
+from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs \
+    .no_quantization_quantize_config import \
+    NoQuantizationQuantizeConfig
+from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs \
     .weights_activation_quantize_config import \
     WeightsActivationQuantizeConfig
+from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs.weights_quantize_config \
+    import \
+    WeightsQuantizeConfig
 
-from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs.activation_quantize_config import ActivationQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs.weights_quantize_config import WeightsQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs.no_quantization_quantize_config import NoQuantizationQuantizeConfig
 
-def get_quantization_config(node: BaseNode) -> QuantizeConfig:
+def get_quantization_config(node: BaseNode) -> WrapperQuantizeConfig:
     """
     Create a QuantizeConfig to wrap a layer for its corresponding node.
 
@@ -35,8 +42,6 @@ def get_quantization_config(node: BaseNode) -> QuantizeConfig:
     Returns:
         QuantizeConfig to use for wrapping the layer from the passed node.
     """
-
-
 
     if node.is_activation_quantization_enabled() and node.is_weights_quantization_enabled():
         weight_quantizers = get_weights_quantizer_for_node(node)

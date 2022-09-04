@@ -25,12 +25,13 @@ from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder, \
     PytorchModel
-from model_compression_toolkit.core.pytorch.constants import BUFFER
-from model_compression_toolkit.core.pytorch.reader.node_holders import BufferHolder
+from model_compression_toolkit.core.pytorch.back2framework.quantization_wrapper.quantized_layer_wrapper import \
+    QuantizedLayerWrapper
+from model_compression_toolkit.core.pytorch.constants import BUFFER, CONSTANT
+from model_compression_toolkit.core.pytorch.reader.node_holders import BufferHolder, ConstantHolder
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 
-from model_compression_toolkit.exporter.fully_quantized.pytorch.fully_quantized_layer_wrapper import \
-    FullyQuantizedLayerWrapper
+
 from model_compression_toolkit.exporter.fully_quantized.pytorch.node_to_quantize_config import get_quantization_config
 from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs\
     .weights_activation_quantize_config import \
@@ -70,8 +71,13 @@ class FullyQuantizedPyTorchModel(PytorchModel):
                 self.add_module(n.name, node_builder(n))
                 self.get_submodule(n.name).register_buffer(n.name,
                                                            torch.Tensor(n.get_weights_by_keys(BUFFER)).to(get_working_device()))
+            elif n.type == ConstantHolder:
+                self.add_module(n.name, node_builder(n))
+                self.get_submodule(n.name).register_buffer(n.name,
+                                                           torch.Tensor(n.get_weights_by_keys(CONSTANT)).to(get_working_device()))
+
             else:
-                layer_wrapper = FullyQuantizedLayerWrapper(n, get_quantization_config(n))
+                layer_wrapper = QuantizedLayerWrapper(n, get_quantization_config(n))
                 self.add_module(n.name, layer_wrapper)
 
     def _get_op_func(self,

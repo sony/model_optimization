@@ -117,7 +117,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the BatchNorm folding feature, plus adding a residual connection.
         """
-        BNFoldingNetTest(self).run_test(experimental_facade=True, experimental_exporter=True)
+        BNFoldingNetTest(self).run_test(experimental_facade=True)
 
     def test_bn_function(self):
         """

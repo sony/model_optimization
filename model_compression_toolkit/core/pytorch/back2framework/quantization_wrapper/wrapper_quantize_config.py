@@ -1,7 +1,7 @@
 
 
 
-class QuantizeConfig:
+class WrapperQuantizeConfig:
 
     def __init__(self,
                  is_weight_quantized: bool,
