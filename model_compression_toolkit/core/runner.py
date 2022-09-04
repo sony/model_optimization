@@ -443,7 +443,10 @@ def _set_final_kpi(graph: Graph,
         else:
             non_conf_kpi = kpi_method([], graph, fw_info, fw_impl)
             conf_kpi = kpi_method(final_bit_widths_config, graph, fw_info, fw_impl)
-            final_kpis_dict[kpi_target] = kpi_aggr(np.concatenate([conf_kpi, non_conf_kpi]), False)[0]
+            if len(final_bit_widths_config) > 0:
+                final_kpis_dict[kpi_target] = kpi_aggr(np.concatenate([conf_kpi, non_conf_kpi]), False)[0]
+            else:
+                final_kpis_dict[kpi_target] = kpi_aggr(conf_kpi, False)[0]
 
     final_kpi = KPI()
     final_kpi.set_kpi_by_target(final_kpis_dict)

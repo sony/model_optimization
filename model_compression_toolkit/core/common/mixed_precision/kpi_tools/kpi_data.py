@@ -98,12 +98,13 @@ def compute_nodes_weights_params(graph: Graph, fw_info: FrameworkInfo) -> np.nda
 
     weights_params = []
     for n in graph.nodes:
-        node_num_weights_params = 0
-        for attr in fw_info.get_kernel_op_attributes(n.type):
-            if attr is not None:
-                node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
+        if n.has_weights_quantization_enabled_candidate():
+            node_num_weights_params = 0
+            for attr in fw_info.get_kernel_op_attributes(n.type):
+                if attr is not None:
+                    node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
 
-        weights_params.append(node_num_weights_params)
+            weights_params.append(node_num_weights_params)
 
     return np.array(weights_params)
 
@@ -121,10 +122,10 @@ def compute_activation_output_sizes(graph: Graph) -> np.ndarray:
 
     activation_outputs = []
     # Go over all nodes that have configurable activation.
-    # for n in graph.nodes:
-    for n in graph.get_sorted_activation_configurable_nodes():
-        node_output_size = n.get_total_output_params()
-        activation_outputs.append(node_output_size)
+    for n in graph.nodes:
+        if n.has_activation_quantization_enabled_candidate():
+            node_output_size = n.get_total_output_params()
+            activation_outputs.append(node_output_size)
 
     return np.array(activation_outputs)
 
