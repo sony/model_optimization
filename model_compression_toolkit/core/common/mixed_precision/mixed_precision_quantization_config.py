@@ -25,12 +25,12 @@ from model_compression_toolkit.core.common.similarity_analyzer import compute_ms
 class MixedPrecisionQuantizationConfigV2:
 
     def __init__(self,
-                 compute_distance_fn: Callable = compute_mse,
+                 compute_distance_fn: Callable = None,
                  distance_weighting_method: Callable = get_average_weights,
                  num_of_images: int = 32,
                  configuration_overwrite: List[int] = None,
                  num_interest_points_factor: float = 1.0,
-                 use_grad_based_weights: bool = False,
+                 use_grad_based_weights: bool = True,
                  output_grad_factor: float = 0.1,
                  norm_weights: bool = True):
         """
@@ -43,13 +43,13 @@ class MixedPrecisionQuantizationConfigV2:
             distance_weighting_method (Callable): Function to use when weighting the distances among different layers when computing the sensitivity metric.
             num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
             configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
-            num_interest_points_factor: A multiplication factor between zero and one (represents percentage) to reduce the number of interest points used to calculate the distance metric.
-            use_grad_based_weights: Whether to use gradient-based weights for weighted average distance metric computation.
-            output_grad_factor: A tuning parameter to be used for gradient-based weights.
-            norm_weights: Whether to normalize the returned weights (to get values between 0 and 1).
+            num_interest_points_factor (float): A multiplication factor between zero and one (represents percentage) to reduce the number of interest points used to calculate the distance metric.
+            use_grad_based_weights (bool): Whether to use gradient-based weights for weighted average distance metric computation.
+            output_grad_factor (float): A tuning parameter to be used for gradient-based weights.
+            norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
 
         """
-
+        assert compute_distance_fn is None
         self.compute_distance_fn = compute_distance_fn
         self.distance_weighting_method = distance_weighting_method
         self.num_of_images = num_of_images
