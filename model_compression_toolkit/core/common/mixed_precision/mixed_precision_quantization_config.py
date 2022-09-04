@@ -27,7 +27,7 @@ class MixedPrecisionQuantizationConfigV2:
     def __init__(self,
                  compute_distance_fn: Callable = None,
                  distance_weighting_method: Callable = get_average_weights,
-                 num_of_images: int = 32,
+                 num_of_images: int = 8,
                  configuration_overwrite: List[int] = None,
                  num_interest_points_factor: float = 1.0,
                  use_grad_based_weights: bool = True,
