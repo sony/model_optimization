@@ -38,7 +38,8 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_mixed_precision_v2_config(self):
-        return MixedPrecisionQuantizationConfigV2(num_of_images=1)
+        return MixedPrecisionQuantizationConfigV2(num_of_images=1,
+                                                  use_grad_based_weights=False)
 
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
@@ -52,7 +53,7 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
         return MixedPrecisionQuantizationConfig(qc, num_of_images=1)
 
     def get_input_shapes(self):
-        return [[self.val_batch_size, 224, 244, 3]]
+        return [[self.val_batch_size, 16, 16, 3]]
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

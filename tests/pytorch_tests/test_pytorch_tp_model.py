@@ -33,12 +33,13 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quant
 from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from tests.common_tests.test_tp_model import TEST_QC, TEST_QCO
+from tests.common_tests.timer_testcase import TimerTestCase
 from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import LayerTestModel
 
 tp = mct.target_platform
 
 
-class TestPytorchTPModel(unittest.TestCase):
+class TestPytorchTPModel(TimerTestCase):
 
     def test_pytorch_layers_with_params(self):
         hardtanh_with_params = LayerFilterParams(Hardtanh, Greater("max_val", 2))
@@ -214,7 +215,7 @@ class TestPytorchTPModel(unittest.TestCase):
 
 
 
-class TestGetPytorchTPC(unittest.TestCase):
+class TestGetPytorchTPC(TimerTestCase):
 
     def test_get_pytorch_models(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)

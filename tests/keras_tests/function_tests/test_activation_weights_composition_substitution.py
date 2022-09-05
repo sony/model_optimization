@@ -115,7 +115,7 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
     return graph
 
 
-class TestActivationWeightsComposition(unittest.TestCase):
+class TestActivationWeightsComposition(TimerTestCase):
 
     def _verify_two_conv_with_split_test(self, graph, v_graph, num_weights_candidates, num_activation_candidates):
         self.assertTrue(len(v_graph.nodes) == len(graph.nodes),

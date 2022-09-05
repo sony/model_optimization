@@ -19,6 +19,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_tp_model
 from model_compression_toolkit.core.common.target_platform import get_default_quantization_config_options, \
     TargetPlatformCapabilities
+from tests.common_tests.timer_testcase import TimerTestCase
 
 tp = mct.target_platform
 
@@ -37,7 +38,7 @@ TEST_QC = tp.OpQuantizationConfig(enable_activation_quantization=True,
 TEST_QCO = tp.QuantizationConfigOptions([TEST_QC])
 
 
-class TargetPlatformModelingTest(unittest.TestCase):
+class TargetPlatformModelingTest(TimerTestCase):
 
     def test_not_initialized_tp(self):
         with self.assertRaises(Exception) as e:
@@ -63,7 +64,7 @@ class TargetPlatformModelingTest(unittest.TestCase):
         self.assertEqual('Default QuantizationConfigOptions must contain only one option', str(e.exception))
 
 
-class OpsetTest(unittest.TestCase):
+class OpsetTest(TimerTestCase):
 
     def test_opset_qco(self):
         hm = tp.TargetPlatformModel(TEST_QCO, name='test')
@@ -100,7 +101,7 @@ class OpsetTest(unittest.TestCase):
         self.assertEqual('OperatorsSet must have unique names', str(e.exception))
 
 
-class QCOptionsTest(unittest.TestCase):
+class QCOptionsTest(TimerTestCase):
 
     def test_empty_qc_options(self):
         with self.assertRaises(AssertionError) as e:
@@ -137,7 +138,7 @@ class QCOptionsTest(unittest.TestCase):
         self.assertEqual('Can not retrieve QC options for None node', str(e.exception))
 
 
-class FusingTest(unittest.TestCase):
+class FusingTest(TimerTestCase):
 
     def test_fusing_single_opset(self):
         hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))

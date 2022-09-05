@@ -31,7 +31,7 @@ def model_gen():
     return tf.keras.models.Model(inputs=inputs, outputs=x)
 
 
-class TestQuantizationConfigurations(unittest.TestCase):
+class TestQuantizationConfigurations(TimerTestCase):
     def test_run_quantization_config_mbv1(self):
         x = np.random.randn(1, 4, 4, 3)
 

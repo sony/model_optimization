@@ -99,7 +99,7 @@ def prepare_graph(in_model, keras_impl):
     return graph
 
 
-class TestModelGradients(unittest.TestCase):
+class TestModelGradients(TimerTestCase):
 
     def _run_model_grad_test(self, graph, keras_impl):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()

@@ -101,7 +101,7 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list):
     return graph, split_graph
 
 
-class TestWeightsActivationSplit(unittest.TestCase):
+class TestWeightsActivationSplit(TimerTestCase):
 
     def _verify_single_conv_test(self, graph, split_graph, num_weights_candidates, num_activation_candidates):
         # verify that the convolution layer was split and that the new virtual node have the correct candidates

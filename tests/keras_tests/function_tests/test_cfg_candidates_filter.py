@@ -92,7 +92,7 @@ def create_model_conv2d_relu(input_shape):
     return keras.Model(inputs=inputs, outputs=outputs)
 
 
-class TestCfgCandidatesFilter(unittest.TestCase):
+class TestCfgCandidatesFilter(TimerTestCase):
 
     def test_cfg_filter_activation_only_nodes(self):
         input_shape = (8, 8, 3)

@@ -24,7 +24,7 @@ import model_compression_toolkit as mct
 tp = mct.target_platform
 
 
-class TestFullyQuantizedExporter(unittest.TestCase):
+class TestFullyQuantizedExporter(TimerTestCase):
 
     def set_seed(self, seed):
         np.random.seed(seed)

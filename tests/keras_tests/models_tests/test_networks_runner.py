@@ -128,7 +128,7 @@ def set_seed():
     tf.random.set_seed(1)
 
 
-class FeatureNetworkTest(unittest.TestCase):
+class FeatureNetworkTest(TimerTestCase):
 
     @classmethod
     def setUpClass(cls):

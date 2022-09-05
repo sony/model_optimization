@@ -26,12 +26,13 @@ from torch import add, multiply, mul, sub, flatten, reshape, split, unsqueeze, c
     dropout, sigmoid, tanh
 import operator
 
+from tests.common_tests.timer_testcase import TimerTestCase
 from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import BasePytorchLayerTest
 from tests.pytorch_tests.layer_tests.single_layer_models import ReshapeModel, SplitModel, ConcatModel, CatModel, \
     DropoutModel, UnsqueezeModel, MeanModel, PReluModel
 
 
-class LayerTest(unittest.TestCase):
+class LayerTest(TimerTestCase):
 
     def test_activation(self):
         BasePytorchLayerTest(self,

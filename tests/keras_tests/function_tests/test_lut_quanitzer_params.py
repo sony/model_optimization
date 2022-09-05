@@ -21,9 +21,10 @@ import numpy as np
 from model_compression_toolkit.core.common.constants import CLUSTER_CENTERS, SCALE_PER_CHANNEL
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import \
     lut_kmeans_tensor
+from tests.common_tests.timer_testcase import TimerTestCase
 
 
-class TestLUTQuantizerParams(unittest.TestCase):
+class TestLUTQuantizerParams(TimerTestCase):
 
     def test_properties(self):
         channel_axis = random.choice([0, 1, 2, 3])

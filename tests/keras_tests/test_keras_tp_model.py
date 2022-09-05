@@ -20,6 +20,9 @@ import numpy as np
 import tensorflow as tf
 
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+
+from tests.common_tests.timer_testcase import TimerTestCase
+
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, Conv2DTranspose, ReLU, Activation, Input
 else:
@@ -48,7 +51,7 @@ def get_node(layer):
     return graph.get_topo_sorted_nodes()[1]
 
 
-class TestKerasTPModel(unittest.TestCase):
+class TestKerasTPModel(TimerTestCase):
 
     def test_keras_layers_with_params(self):
         conv_with_params = LayerFilterParams(Conv2D,
@@ -212,7 +215,7 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertEqual(p1[1], LayerFilterParams(ReLU, Greater("max_value", 7), negative_slope=0))
 
 
-class TestGetKerasTPC(unittest.TestCase):
+class TestGetKerasTPC(TimerTestCase):
     def test_get_keras_tpc(self):
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
         model = MobileNetV2()

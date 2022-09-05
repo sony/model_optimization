@@ -22,6 +22,7 @@ from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
+from tests.common_tests.timer_testcase import TimerTestCase
 
 
 def create_model_1(input_shape):
@@ -139,7 +140,7 @@ def prepare_graph(in_model):
     return transformed_graph
 
 
-class TestBNInfoCollection(unittest.TestCase):
+class TestBNInfoCollection(TimerTestCase):
 
     def test_conv2d_bn_info_collection(self):
         input_shape = (8, 8, 3)

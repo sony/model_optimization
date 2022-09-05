@@ -22,16 +22,18 @@ from PIL import Image
 from pathlib import Path
 
 from model_compression_toolkit import FolderImageLoader
+from tests.common_tests.timer_testcase import TimerTestCase
 
 img_path = "./test_data_loader_dir/test_img.jpeg"
 img_shape = (224, 224, 3)
 sample_batch = 5
 
 
-class TestFolderLoader(unittest.TestCase):
+class TestFolderLoader(TimerTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         x = os.path.dirname(img_path)
         Path(x).mkdir(parents=True, exist_ok=True)
         im = Image.fromarray(np.random.random(img_shape).astype(np.uint8))
@@ -40,6 +42,7 @@ class TestFolderLoader(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(os.path.dirname(img_path))
+        super().tearDownClass()
 
     def test_data_loader(self):
         folder = os.path.dirname(img_path)

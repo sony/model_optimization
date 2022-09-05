@@ -151,37 +151,37 @@ class KmeansQuantizerTestZeroWeights(KmeansQuantizerTestBase):
 
 
 # This test checks that the Kmeans quantization has a different result than symmetric uniform quantization
-class RunKmeansTest(unittest.TestCase):
+class RunKmeansTest(TimerTestCase):
     def test_kmeans_quantizer(self):
         KmeansQuantizerTest(self, target_platform.QuantizationMethod.KMEANS).run_test()
 
 
 # This test checks that the LUT- Kmeans quantization has a different result than symmetric uniform quantization
-class RunLutKmeansTest(unittest.TestCase):
+class RunLutKmeansTest(TimerTestCase):
     def test_kmeans_quantizer(self):
         KmeansQuantizerTest(self, target_platform.QuantizationMethod.LUT_QUANTIZER).run_test()
 
 
 # In this test we have weights with less unique values than the number of clusters
-class RunKmeansTestManyClasses(unittest.TestCase):
+class RunKmeansTestManyClasses(TimerTestCase):
     def test_kmeans_quantizer(self):
         KmeansQuantizerTestManyClasses(self, target_platform.QuantizationMethod.KMEANS, weights_n_bits=8).run_test()
 
 
 # In this test we have weights with less unique values than the number of clusters
-class RunLutKmeansTestManyClasses(unittest.TestCase):
+class RunLutKmeansTestManyClasses(TimerTestCase):
     def test_kmeans_quantizer(self):
         KmeansQuantizerTestManyClasses(self, target_platform.QuantizationMethod.LUT_QUANTIZER, weights_n_bits=8).run_test()
 
 
 # This test checks the case where all the weight values are zero
-class RunKmeansTestZeroWeights(unittest.TestCase):
+class RunKmeansTestZeroWeights(TimerTestCase):
     def test_kmeans_quantizer_zero_weights(self):
         KmeansQuantizerTest(self, target_platform.QuantizationMethod.KMEANS).run_test()
 
 
 # This test checks the case where all the weight values are zero
-class RunLutKmeansTestZeroWeights(unittest.TestCase):
+class RunLutKmeansTestZeroWeights(TimerTestCase):
     def test_kmeans_quantizer_zero_weights(self):
         KmeansQuantizerTest(self, target_platform.QuantizationMethod.LUT_QUANTIZER).run_test()
 

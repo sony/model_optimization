@@ -21,10 +21,11 @@ from keras.layers import Softmax, Activation, LeakyReLU, ReLU, ZeroPadding2D, Up
     MaxPooling2D, Add, GlobalAveragePooling2D, Flatten, Dropout, Dot, DepthwiseConv2D, Dense, Cropping2D, \
     Conv2DTranspose, Conv2D, Concatenate, AveragePooling2D
 
+from tests.common_tests.timer_testcase import TimerTestCase
 from tests.keras_tests.layer_tests.base_keras_layer_test import BaseKerasLayerTest
 
 
-class LayerTest(unittest.TestCase):
+class LayerTest(TimerTestCase):
 
     def test_activation(self):
         BaseKerasLayerTest(self,

@@ -26,7 +26,7 @@ def random_datagen():
     return [np.random.random((1, 3, 224, 224))]
 
 
-class PytorchTestLogger(unittest.TestCase):
+class PytorchTestLogger(TimerTestCase):
 
     @classmethod
     def setUpClass(cls):

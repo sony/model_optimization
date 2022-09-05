@@ -14,6 +14,7 @@
 # ==============================================================================
 import unittest
 
+from tests.common_tests.timer_testcase import TimerTestCase
 from tests.pytorch_tests.function_tests.bn_info_collection_test import BNInfoCollectionTest, \
     Conv2D2BNInfoCollectionTest, Conv2DBNChainInfoCollectionTest, BNChainInfoCollectionTest, \
     BNLayerInfoCollectionTest, INP2BNInfoCollectionTest
@@ -23,7 +24,7 @@ from tests.pytorch_tests.function_tests.model_gradients_test import ModelGradien
     ModelGradientsCalculationTest, ModelGradientsAdvancedModelTest, ModelGradientsOutputReplacementTest
 
 
-class FunctionTestRunner(unittest.TestCase):
+class FunctionTestRunner(TimerTestCase):
 
     def test_conv2d_bn_info_collection(self):
         """

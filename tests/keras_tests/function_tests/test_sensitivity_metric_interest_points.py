@@ -28,6 +28,7 @@ from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
+from tests.common_tests.timer_testcase import TimerTestCase
 
 
 def build_ip_list_for_test(in_model, num_interest_points_factor):
@@ -63,7 +64,7 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
     return ips, graph, fw_info
 
 
-class TestSensitivityMetricInterestPoints(unittest.TestCase):
+class TestSensitivityMetricInterestPoints(TimerTestCase):
 
     def test_filtered_interest_points_set(self):
         in_model = DenseNet121()

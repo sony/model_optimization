@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     lut_kmeans_histogram
 
 
-class TestLUTQuantizerParams(unittest.TestCase):
+class TestLUTQuantizerParams(TimerTestCase):
 
     def test_signed_lut_activation_quantization_params(self):
         data = np.random.randn(3, 4, 5, 6)

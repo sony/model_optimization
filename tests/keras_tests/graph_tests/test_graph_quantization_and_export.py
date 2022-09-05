@@ -20,8 +20,10 @@ from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 import model_compression_toolkit as mct
 import tensorflow as tf
 
+from tests.common_tests.timer_testcase import TimerTestCase
 
-class TestTFLiteExport(unittest.TestCase):
+
+class TestTFLiteExport(TimerTestCase):
 
     def test_bn_folding_mbv1(self):
         model = MobileNetV2()

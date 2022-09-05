@@ -14,6 +14,7 @@
 # ==============================================================================
 import unittest
 
+from tests.common_tests.timer_testcase import TimerTestCase
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
@@ -63,7 +64,7 @@ from tests.pytorch_tests.model_tests.feature_models.bn_function_test import BNFN
 
 from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccuracyTest, GPTQWeightsUpdateTest, GPTQLearnRateZeroTest
 
-class FeatureModelsTestRunner(unittest.TestCase):
+class FeatureModelsTestRunner(TimerTestCase):
 
     def test_single_layer_replacement(self):
         """

@@ -96,7 +96,7 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
     return kpi_data
 
 
-class TestKPIData(unittest.TestCase):
+class TestKPIData(TimerTestCase):
 
     def test_kpi_data_basic_all_bitwidth(self):
         model, sum_parameters, max_tensor = basic_model()

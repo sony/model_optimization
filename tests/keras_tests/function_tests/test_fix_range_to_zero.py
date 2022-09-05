@@ -19,7 +19,7 @@ from model_compression_toolkit.core.common.quantization.quantizers.quantizers_he
     uniform_quantize_tensor, get_output_shape
 
 
-class TestFixRangeToZero(unittest.TestCase):
+class TestFixRangeToZero(TimerTestCase):
 
     def test_uniform_quantize_fix_range_to_zero(self):
         self.fix_range_test_run(min_max_range=[-1.5, 1.3333], data_range=[-1.5, 1.3333], n_bits=8)

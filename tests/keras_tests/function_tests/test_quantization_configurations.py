@@ -24,6 +24,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.timer_testcase import TimerTestCase
 
 
 def model_gen():
@@ -34,7 +35,7 @@ def model_gen():
     return tf.keras.models.Model(inputs=inputs, outputs=x)
 
 
-class TestQuantizationConfigurations(unittest.TestCase):
+class TestQuantizationConfigurations(TimerTestCase):
     def test_run_quantization_config_mbv1(self):
         x = np.random.randn(1, 16, 16, 3)
 

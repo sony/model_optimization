@@ -51,7 +51,7 @@ def random_datagen():
     return [np.random.random(SHAPE)]
 
 
-class TestGetGPTQConfig(unittest.TestCase):
+class TestGetGPTQConfig(TimerTestCase):
 
     def test_get_keras_gptq_config(self):
         qc = QuantizationConfig(QuantizationErrorMethod.MSE,

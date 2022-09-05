@@ -24,6 +24,7 @@ import tensorflow as tf
 import numpy as np
 
 from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import LUTFakeQuant
+from tests.common_tests.timer_testcase import TimerTestCase
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
@@ -153,7 +154,7 @@ class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
             self.unit_test.assertTrue(np.all(np.mod(ll.cluster_centers, 1) == 0))
 
 
-class RunKmeansTest(unittest.TestCase):
+class RunKmeansTest(TimerTestCase):
     def test_lut_quantizer(self):
         LUTWeightsQuantizerTest(self).run_test()
 

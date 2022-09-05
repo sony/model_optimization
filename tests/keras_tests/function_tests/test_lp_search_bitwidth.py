@@ -37,6 +37,7 @@ from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
+from tests.common_tests.timer_testcase import TimerTestCase
 
 
 class MockReconstructionHelper:
@@ -84,7 +85,7 @@ class MockMixedPrecisionSearchManager:
         return np.array(kpi_matrix)
 
 
-class TestLpSearchBitwidth(unittest.TestCase):
+class TestLpSearchBitwidth(TimerTestCase):
 
     def test_search_weights_only(self):
         target_kpi = KPI(weights_memory=2)
@@ -185,13 +186,15 @@ class TestLpSearchBitwidth(unittest.TestCase):
         self.assertTrue(bit_cfg[0] == 1)
 
 
-class TestSearchBitwidthConfiguration(unittest.TestCase):
+class TestSearchBitwidthConfiguration(TimerTestCase):
 
     def test_search_engine(self):
-        core_config = CoreConfig(n_iter=1, quantization_config=DEFAULTCONFIG,
+        core_config = CoreConfig(n_iter=1,
+                                 quantization_config=DEFAULTCONFIG,
                                  mixed_precision_config=MixedPrecisionQuantizationConfigV2(compute_mse,
                                                                                            get_average_weights,
-                                                                                           num_of_images=1))
+                                                                                           num_of_images=1,
+                                                                                           use_grad_based_weights=False))
 
         base_config, mixed_precision_cfg_list = get_op_quantization_configs()
         base_config = base_config.clone_and_edit(enable_activation_quantization=False)

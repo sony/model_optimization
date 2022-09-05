@@ -17,6 +17,8 @@ import unittest
 
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import calculate_delta, quantize_tensor
 
+from tests.common_tests.timer_testcase import TimerTestCase
+
 
 def ground_truth_quantize_tensor(tensor_data, threshold, n_bits, signed):
     # Compute the step size of quantized values.
@@ -31,7 +33,7 @@ def ground_truth_quantize_tensor(tensor_data, threshold, n_bits, signed):
                    a_max=threshold - delta)
 
 
-class TestUniformQuantizeTensor(unittest.TestCase):
+class TestUniformQuantizeTensor(TimerTestCase):
 
     def test_uniform_quantize_tensor_function(self):
         num_channels = 32

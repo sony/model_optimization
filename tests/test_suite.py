@@ -24,6 +24,7 @@ from tests.common_tests.function_tests.test_collectors_manipulation import TestC
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
+from tests.common_tests.timer_testcase import TimerTestCase
 
 found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
     "tensorflow_model_optimization") is not None
@@ -106,3 +107,5 @@ if __name__ == '__main__':
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)
     unittest.TextTestRunner(verbosity=0).run(comboSuite)
+    print({k: v for k, v in sorted(TimerTestCase.times_dict.items(), key=lambda item: item[1])})
+

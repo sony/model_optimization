@@ -17,6 +17,7 @@
 import unittest
 import model_compression_toolkit as mct
 from model_compression_toolkit import QuantizationErrorMethod
+from tests.common_tests.timer_testcase import TimerTestCase
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_bound_to_power_of_2_test import \
     ReLUBoundToPOTNetTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_dw_test import \
@@ -115,7 +116,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.uniform_range_sel
 layers = tf.keras.layers
 
 
-class FeatureNetworkTest(unittest.TestCase):
+class FeatureNetworkTest(TimerTestCase):
 
     def test_single_relu_replacement(self):
         SingleReluReplacementTest(self).run_test()

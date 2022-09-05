@@ -31,6 +31,7 @@ from model_compression_toolkit.core.tpc_models.default_tpc.latest import generat
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.timer_testcase import TimerTestCase
 
 
 def get_uniform_weights(kernel, in_channels, out_channels):
@@ -54,7 +55,7 @@ def create_network():
     return model
 
 
-class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
+class TestSymmetricThresholdSelectionWeights(TimerTestCase):
 
     def test_per_channel_weights_symmetric_threshold_selection_no_clipping(self):
         self.run_test_for_threshold_method(QuantizationErrorMethod.NOCLIPPING)

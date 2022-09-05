@@ -15,11 +15,15 @@
 
 
 import unittest
+import time
+
 import numpy as np
 from model_compression_toolkit.core.common.collectors.histogram_collector import HistogramCollector, interpolate_histogram
 
+from tests.common_tests.timer_testcase import TimerTestCase
 
-class TestHistogramCollector(unittest.TestCase):
+
+class TestHistogramCollector(TimerTestCase):
 
     def test_same(self):
         hc = HistogramCollector()

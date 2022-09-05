@@ -85,7 +85,7 @@ class NetworkTest(object):
         return [np.random.randn(*in_shape) for in_shape in inputs_list]
 
 
-class FeatureNetworkFloatTest(unittest.TestCase):
+class FeatureNetworkFloatTest(TimerTestCase):
 
     def run_network(self, model_float, input_shapes):
         inputs_list = NetworkTest.create_inputs(input_shapes)
