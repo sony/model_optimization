@@ -161,12 +161,13 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
 
         for target, kpi_value in target_kpi.get_kpi_dict().items():
             if not np.isinf(kpi_value):
+                non_conf_kpi_vector = None if non_conf_kpi_dict is None else non_conf_kpi_dict.get(target)
                 _add_set_of_kpi_constraints(search_manager=search_manager,
                                             target=target,
                                             target_kpi_value=kpi_value,
                                             indicators_matrix=indicators_matrix,
                                             lp_problem=lp_problem,
-                                            non_conf_kpi_vector=non_conf_kpi_dict[target])
+                                            non_conf_kpi_vector=non_conf_kpi_vector)
         # if not np.isinf(target_kpi.weights_memory):
         #     _add_set_of_kpi_constraints(search_manager=search_manager,
         #                                 target=KPITarget.WEIGHTS,
@@ -224,7 +225,10 @@ def _add_set_of_kpi_constraints(search_manager: MixedPrecisionSearchManager,
 
     # search_manager.compute_kpi_functions contains a pair of kpi_metric and kpi_aggregation for each kpi target
     # get aggregated KPI, considering both configurable and non-configurable nodes
-    aggr_kpi = search_manager.compute_kpi_functions[target][1](np.concatenate([kpi_sum_vector, non_conf_kpi_vector]))
+    if non_conf_kpi_vector is None or len(non_conf_kpi_vector) == 0:
+        aggr_kpi = search_manager.compute_kpi_functions[target][1](kpi_sum_vector)
+    else:
+        aggr_kpi = search_manager.compute_kpi_functions[target][1](np.concatenate([kpi_sum_vector, non_conf_kpi_vector]))
 
     # # aggregate configurable nodes KPI with non-configurable nodes KPI
     # final_aggr_kpi = search_manager.compute_kpi_functions[target][1]

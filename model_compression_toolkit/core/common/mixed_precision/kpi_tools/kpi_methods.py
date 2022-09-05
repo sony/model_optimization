@@ -102,7 +102,7 @@ def activation_output_size_kpi(mp_cfg: List[int],
         for n in graph.nodes:
             if n.name not in mp_nodes and n.has_activation_quantization_enabled_candidate():
                 if len(n.candidates_quantization_cfg) == 1:
-                    node_nbits = n.candidates_quantization_cfg[0].weights_quantization_cfg.weights_n_bits
+                    node_nbits = n.candidates_quantization_cfg[0].activation_quantization_cfg.activation_n_bits
                     node_activation_memory_in_bytes = _compute_node_activation_memory(n, node_nbits)
                     activation_memory.append(node_activation_memory_in_bytes)
                 else:
