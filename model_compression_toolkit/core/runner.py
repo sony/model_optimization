@@ -137,16 +137,12 @@ def core_runner(in_model: Any,
     common.Logger.info(f'Approximated model size (in bytes): {tg.get_memory()}')
     common.Logger.info(f'Approximated compression ratio: {round(graph.get_float_memory() / (tg.get_memory() + 1e-8), 3)}')
 
-    # TODO: Currently, only tracking configurable nodes final KPI,
-    #  therefore, relevant only if ran in mixed-precision.
-    #  After modifying the MP KPIs to consider all nodes (not just configurable),
-    #  adjust the final KPI computation as well (and move it outside the if statement).
     _set_final_kpi(graph=tg,
                    final_bit_widths_config=bit_widths_config,
                    kpi_functions_dict=kpi_functions_mapping,
                    fw_info=fw_info,
                    fw_impl=fw_impl)
-
+    print(tg.user_info.final_kpi)
     if target_kpi is not None:
         # Retrieve lists of tuples (node, node's final weights/activation bitwidth)
         weights_conf_nodes_bitwidth = tg.get_final_weights_config()
@@ -445,8 +441,12 @@ def _set_final_kpi(graph: Graph,
             conf_kpi = kpi_method(final_bit_widths_config, graph, fw_info, fw_impl)
             if len(final_bit_widths_config) > 0 and len(non_conf_kpi) > 0:
                 final_kpis_dict[kpi_target] = kpi_aggr(np.concatenate([conf_kpi, non_conf_kpi]), False)[0]
-            else:
+            elif len(final_bit_widths_config) > 0 and len(non_conf_kpi) == 0:
                 final_kpis_dict[kpi_target] = kpi_aggr(conf_kpi, False)[0]
+            else:
+                # final_bit_widths_config == 0 ==> no configurable nodes,
+                # thus, KPI can be computed from non_conf_kpi alone
+                final_kpis_dict[kpi_target] = kpi_aggr(non_conf_kpi, False)[0]
 
     final_kpi = KPI()
     final_kpi.set_kpi_by_target(final_kpis_dict)
