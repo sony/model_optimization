@@ -25,12 +25,12 @@ from model_compression_toolkit.core.common.similarity_analyzer import compute_ms
 class MixedPrecisionQuantizationConfigV2:
 
     def __init__(self,
-                 compute_distance_fn: Callable = compute_mse,
+                 compute_distance_fn: Callable = None,
                  distance_weighting_method: Callable = get_average_weights,
                  num_of_images: int = 32,
                  configuration_overwrite: List[int] = None,
                  num_interest_points_factor: float = 1.0,
-                 use_grad_based_weights: bool = False,
+                 use_grad_based_weights: bool = True,
                  output_grad_factor: float = 0.1,
                  norm_weights: bool = True):
         """

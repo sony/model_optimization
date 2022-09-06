@@ -186,7 +186,7 @@ class MixedPrecisionBopsAndActivationKPITest(MixedPrecisionBopsAllWeightsLayersT
         super().__init__(unit_test)
 
     def get_kpi(self):
-        return KPI(activation_memory=1000, bops=1785000)  # should require some quantization to all layers
+        return KPI(activation_memory=1000, bops=1782616)  # should require some quantization to all layers
 
 
 class MixedPrecisionBopsAndTotalKPITest(MixedPrecisionBopsAllWeightsLayersTest):
