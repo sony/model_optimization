@@ -16,11 +16,11 @@
 import copy
 from enum import Enum
 import numpy as np
-from typing import List, Callable
+from typing import List, Callable, Dict
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import Graph, Logger
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_functions_mapping import kpi_functions_mapping
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
@@ -119,19 +119,28 @@ def search_bit_width(graph_to_search_cfg: Graph,
     return result_bit_cfg
 
 
-def _non_configurable_nodes_kpi(kpi_functions, target_kpi, graph, fw_info, fw_impl):
+def _non_configurable_nodes_kpi(kpi_functions, target_kpi, graph, fw_info, fw_impl) -> Dict[KPITarget, np.ndarray]:
+    """
+    Computes a KPI vector of all non-configurable nodes in the given graph for each of the KPI target.
+
+    Args:
+        kpi_functions: A dictionary with pairs of (MpKpiMethod, MpKpiAggregationMethod) mapping a KPITarget to
+                a couple of kpi metric function and kpi aggregation function.
+        target_kpi: Target KPI to bound our feasible solution space s.t the configuration does not violate it.
+        graph: Graph to search a MP configuration for.
+        fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
+        fw_impl: FrameworkImplementation object with specific framework methods implementation.
+
+    Returns: A mapping between a KPITarget and its non-configurable nodes' KPI vector.
+
+    """
+
     non_conf_kpi_dict = {}
     for target, kpi_value in target_kpi.get_kpi_dict().items():
         if not np.isinf(kpi_value):
             # Call for the KPI method of the given target - empty quantization configuration list is passed since we
             # compute for non-configurable nodes
             kpi_vector = kpi_functions[target][0]([], graph, fw_info, fw_impl)
-
-            # # Call for the KPI aggregation of the given target -
-            # # False means that the call is not meant for defining KPI constraint
-            # aggr_kpi = kpi_functions[target][1](kpi_vector, False)
-            #
-            # non_conf_kpi_dict[target] = aggr_kpi
 
             non_conf_kpi_dict[target] = kpi_vector
 

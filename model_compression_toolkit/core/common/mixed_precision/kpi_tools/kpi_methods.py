@@ -33,8 +33,9 @@ def weights_size_kpi(mp_cfg: List[int],
                      fw_info: FrameworkInfo,
                      fw_impl: FrameworkImplementation) -> np.ndarray:
     """
-    Computes a KPIs vector with the respective weights' memory size for each weight configurable node,
+    Computes a KPIs vector with the respective weights' memory size for the given weight configurable node,
     according to the given mixed-precision configuration.
+    If an empty configuration is given, then computes KPI vector for non-configurable nodes.
 
     Args:
         mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
@@ -82,6 +83,7 @@ def activation_output_size_kpi(mp_cfg: List[int],
     """
     Computes a KPIs vector with the respective output memory size for each activation configurable node,
     according to the given mixed-precision configuration.
+    If an empty configuration is given, then computes KPI vector for non-configurable nodes.
 
     Args:
         mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
@@ -130,6 +132,7 @@ def total_weights_activation_kpi(mp_cfg: List[int],
     """
     Computes KPIs tensor with the respective weights size and output memory size for each activation configurable node,
     according to the given mixed-precision configuration.
+    If an empty configuration is given, then computes KPI vector for non-configurable nodes.
 
     Args:
         mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
@@ -344,7 +347,19 @@ def _get_origin_activation_node(n: BaseNode) -> BaseNode:
     return n
 
 
-def _compute_node_weights_memory(n, node_nbits, fw_info):
+def _compute_node_weights_memory(n, node_nbits, fw_info) -> float:
+    """
+    Computes the weights' memory of the given node.
+
+    Args:
+        n: A node to compute its weights' memory.
+        node_nbits: A bit-width in which the node's weights should be quantized.
+        fw_info: FrameworkInfo object about the specific framework.
+
+    Returns: The total memory of the node's weights when quantized to the given bit-width.
+
+    """
+
     origin_node = _get_origin_weights_node(n)
 
     node_num_weights_params = 0
@@ -355,7 +370,18 @@ def _compute_node_weights_memory(n, node_nbits, fw_info):
     return node_num_weights_params * node_nbits / BITS_TO_BYTES
 
 
-def _compute_node_activation_memory(n, node_nbits):
+def _compute_node_activation_memory(n, node_nbits) -> float:
+    """
+    Computes the activation tensor memory of the given node.
+
+    Args:
+        n: A node to compute its activation tensor memory.
+        node_nbits: A bit-width in which the node's weights should be quantized.
+
+    Returns: The total memory of the node's activation tensor when quantized to the given bit-width.
+
+    """
+
     origin_node = _get_origin_activation_node(n)
     node_output_size = origin_node.get_total_output_params()
 

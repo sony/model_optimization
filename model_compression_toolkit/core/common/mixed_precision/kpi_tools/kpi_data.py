@@ -85,7 +85,7 @@ def compute_kpi_data(in_model: Any,
 
 def compute_nodes_weights_params(graph: Graph, fw_info: FrameworkInfo) -> np.ndarray:
     """
-    Computes a vector with the respective weights' parameters size for each weight configurable node.
+    Computes a vector with the respective weights' parameters size for each node.
 
     Args:
         graph: Finalized Graph object.
@@ -111,7 +111,7 @@ def compute_nodes_weights_params(graph: Graph, fw_info: FrameworkInfo) -> np.nda
 
 def compute_activation_output_sizes(graph: Graph) -> np.ndarray:
     """
-    Computes a vector with the respective output tensor size for each activation configurable node.
+    Computes a vector with the respective output tensor size for each node.
 
     Args:
         graph: Finalized Graph object.

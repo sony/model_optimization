@@ -396,10 +396,22 @@ class BaseNode:
                              and not seen_candidates.add(candidate.activation_quantization_cfg)]
         return unique_candidates
 
-    def has_weights_quantization_enabled_candidate(self):
+    def has_weights_quantization_enabled_candidate(self) -> bool:
+        """
+        Checks whether the node has quantization configuration candidates that enable weights quantization.
+
+        Returns: True if the node has at list one quantization configuration candidate with weights quantization enabled.
+        """
+
         return len(self.candidates_quantization_cfg) > 0 and \
                any([c.weights_quantization_cfg.enable_weights_quantization for c in self.candidates_quantization_cfg])
 
-    def has_activation_quantization_enabled_candidate(self):
+    def has_activation_quantization_enabled_candidate(self) -> bool:
+        """
+        Checks whether the node has quantization configuration candidates that enable activation quantization.
+
+        Returns: True if the node has at list one quantization configuration candidate with activation quantization enabled.
+        """
+
         return len(self.candidates_quantization_cfg) > 0 and \
                any([c.activation_quantization_cfg.enable_activation_quantization for c in self.candidates_quantization_cfg])
