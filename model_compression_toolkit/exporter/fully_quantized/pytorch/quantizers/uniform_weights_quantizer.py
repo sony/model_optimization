@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+import numpy as np
 import torch
 
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import uniform_quantize_tensor
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 
-class SymmetricWeightsQuantizer(torch.nn.Module):
+class UniformWeightsQuantizer(torch.nn.Module):
     def __init__(self,
                  num_bits: int,
-                 min_range,
-                 max_range,
+                 min_range: np.ndarray,
+                 max_range: np.ndarray,
                  quantization_method: QuantizationMethod,
                  per_channel: bool,
                  output_channels_axis: int
@@ -36,13 +36,12 @@ class SymmetricWeightsQuantizer(torch.nn.Module):
 
         """
 
-        super(SymmetricWeightsQuantizer, self).__init__()
+        super(UniformWeightsQuantizer, self).__init__()
 
         self.num_bits = num_bits
         self.min_range = min_range
         self.max_range = max_range
         self.quantization_method = quantization_method
-        self.signed = True
         self.per_channel = per_channel
         self.output_channels_axis = output_channels_axis
 

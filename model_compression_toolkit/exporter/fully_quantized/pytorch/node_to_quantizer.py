@@ -23,11 +23,12 @@ from model_compression_toolkit.core.common.target_platform import QuantizationMe
 
 # Supporting other quantizer types in the future
 from model_compression_toolkit.exporter.fully_quantized.pytorch.quantizers.fq_quantizer import FakeQuantQuantizer
-from model_compression_toolkit.exporter.fully_quantized.pytorch.quantizers.symmetric_weights_quantizer import \
-    SymmetricWeightsQuantizer
+from model_compression_toolkit.exporter.fully_quantized.pytorch.quantizers.uniform_weights_quantizer import \
+    UniformWeightsQuantizer
 
 SUPPORTED_WEIGHT_QUANTIZER_TYPES = [QuantizationMethod.POWER_OF_TWO,
-                                    QuantizationMethod.SYMMETRIC]
+                                    QuantizationMethod.SYMMETRIC,
+                                    QuantizationMethod.UNIFORM]
 
 SUPPORTED_ACTIVATION_QUANTIZER_TYPES = [QuantizationMethod.POWER_OF_TWO,
                                         QuantizationMethod.SYMMETRIC,
@@ -55,8 +56,6 @@ def get_weights_quantizer_for_node(node: BaseNode):
     if weights_quantization_method not in SUPPORTED_WEIGHT_QUANTIZER_TYPES:
         Logger.error(f'Fully quantized models are now supported for {SUPPORTED_WEIGHT_QUANTIZER_TYPES} quantization methods, but node has {weights_quantization_method} quantization method')
 
-
-
     # Compute quantizer params based on node's quantization params
     if weights_quantization_method in [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC]:
         weight_thresholds = node_w_qc.weights_quantization_params.get(THRESHOLD)
@@ -75,13 +74,13 @@ def get_weights_quantizer_for_node(node: BaseNode):
         Logger.error(f'For now fully quantized models support only {SUPPORTED_WEIGHT_QUANTIZER_TYPES} for weights quantization, but found {weights_quantization_method}')
 
     # TODO: support multiple quantizers
-    return [SymmetricWeightsQuantizer(num_bits=node_w_qc.weights_n_bits,
-                                     max_range=max_range,
-                                     min_range=min_range,
-                                     quantization_method=node_w_qc.weights_quantization_method,
-                                     per_channel=node_w_qc.weights_per_channel_threshold,
-                                     output_channels_axis=node_w_qc.weights_channels_axis
-                                     )]
+    return [UniformWeightsQuantizer(num_bits=node_w_qc.weights_n_bits,
+                                    max_range=max_range,
+                                    min_range=min_range,
+                                    quantization_method=node_w_qc.weights_quantization_method,
+                                    per_channel=node_w_qc.weights_per_channel_threshold,
+                                    output_channels_axis=node_w_qc.weights_channels_axis
+                                    )]
 
 
 def get_activations_quantizer_for_node(node: BaseNode):
@@ -123,6 +122,11 @@ def get_activations_quantizer_for_node(node: BaseNode):
             activation_thresholds,
             n_bits=node_act_qc.activation_n_bits,
             signed=node_act_qc.activation_quantization_params.get(SIGNED))
+
+    elif activation_quantization_method in [QuantizationMethod.UNIFORM]:
+        min_range = node_act_qc.activation_quantization_params.get(RANGE_MIN)
+        max_range = node_act_qc.activation_quantization_params.get(RANGE_MAX)
+
     else:
         Logger.error(f'For now fully quantized models support only {SUPPORTED_ACTIVATION_QUANTIZER_TYPES} for activation quantization, but found {activation_quantization_method}')
 

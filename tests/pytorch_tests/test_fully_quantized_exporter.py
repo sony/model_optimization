@@ -29,7 +29,7 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 
 from model_compression_toolkit.exporter.fully_quantized.pytorch.quantizers.fq_quantizer import FakeQuantQuantizer
 from model_compression_toolkit.exporter.fully_quantized.pytorch.quantizers.symmetric_weights_quantizer import \
-    SymmetricWeightsQuantizer
+    UniformWeightsQuantizer
 from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs.activation_quantize_config \
     import \
     ActivationQuantizeConfig
@@ -129,13 +129,13 @@ class TestFullyQuantizedExporter(unittest.TestCase):
     def test_weights_qc(self):
         self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.quantization_config, WeightsQuantizeConfig))
         self.assertTrue(len(self.fully_quantized_mbv2.features_0_0_bn.quantization_config.get_weight_quantizers())==1)
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.quantization_config.get_weight_quantizers()[0], SymmetricWeightsQuantizer))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.quantization_config.get_weight_quantizers()[0], UniformWeightsQuantizer))
         self.assertTrue(len(self.fully_quantized_mbv2.features_0_0_bn.quantization_config.get_activation_quantizer())==0)
 
     def test_weights_activation_qc(self):
         self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.quantization_config, WeightsActivationQuantizeConfig))
         self.assertTrue(len(self.fully_quantized_mbv2.classifier_1.quantization_config.get_weight_quantizers())==1)
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.quantization_config.get_weight_quantizers()[0], SymmetricWeightsQuantizer))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.quantization_config.get_weight_quantizers()[0], UniformWeightsQuantizer))
         self.assertTrue(len(self.fully_quantized_mbv2.classifier_1.quantization_config.get_activation_quantizers())==1)
         self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.quantization_config.get_activation_quantizers()[0],FakeQuantQuantizer))
 
