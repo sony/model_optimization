@@ -134,9 +134,6 @@ def core_runner(in_model: Any,
     # This is since some actions regard the final configuration and should be edited.
     edit_network_graph(tg, fw_info, core_config.debug_config.network_editor)
 
-    common.Logger.info(f'Approximated model size (in bytes): {tg.get_memory()}')
-    common.Logger.info(f'Approximated compression ratio: {round(graph.get_float_memory() / (tg.get_memory() + 1e-8), 3)}')
-
     _set_final_kpi(graph=tg,
                    final_bit_widths_config=bit_widths_config,
                    kpi_functions_dict=kpi_functions_mapping,
