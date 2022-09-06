@@ -20,7 +20,6 @@ from model_compression_toolkit.core.common.constants import PYTORCH
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.exporter import export_model
@@ -39,6 +38,7 @@ if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
     from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
+    from model_compression_toolkit.exporter.fully_quantized.pytorch.fully_quantized_model_builder import get_fully_quantized_pytorch_model
     import torch
     from torch.nn import Module
     from torch.optim import Adam, Optimizer
@@ -96,7 +96,8 @@ if FOUND_TORCH:
                                                                  target_kpi: KPI = None,
                                                                  core_config: CoreConfig = CoreConfig(),
                                                                  gptq_config: GradientPTQConfig = None,
-                                                                 target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
+                                                                 target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC,
+                                                                 new_experimental_exporter: bool = False):
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds
@@ -178,9 +179,17 @@ if FOUND_TORCH:
         # ---------------------- #
         # Export
         # ---------------------- #
-        quantized_model, user_info = export_model(graph_gptq, DEFAULT_PYTORCH_INFO, fw_impl, tb_w, bit_widths_config)
+        if new_experimental_exporter:
+            Logger.warning('Using new experimental exported models. '
+                           'Please do not use unless you are familiar with what you are doing')
 
-        return quantized_model, user_info
+            return get_fully_quantized_pytorch_model(graph_gptq)
+
+        return export_model(graph_gptq,
+                            DEFAULT_PYTORCH_INFO,
+                            fw_impl,
+                            tb_w,
+                            bit_widths_config)
 
 else:
     # If torch is not installed,
