@@ -82,13 +82,13 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
         return MixedPrecisionQuantizationConfig(qc, num_of_images=1)
 
     def get_input_shapes(self):
-        return [[self.val_batch_size, 224, 244, 3]]
+        return [[self.val_batch_size, 16, 16, 3]]
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(30, 40)(inputs)
+        x = layers.Conv2D(32, 4)(inputs)
         x = layers.BatchNormalization()(x)
-        x = layers.Conv2D(50, 40)(x)
+        x = layers.Conv2D(32, 4)(x)
         outputs = layers.ReLU()(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
         return model
@@ -133,7 +133,7 @@ class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[2, 4],
-                                 weights_layers_channels_size=[30, 50],
+                                 weights_layers_channels_size=[32, 32],
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=256)
 
@@ -144,7 +144,7 @@ class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBase
 
     def get_kpi(self):
         # kpi is for 4 bits on average
-        return KPI(weights_memory=2544000 * 4 / 8, activation_memory=1211800 * 4 / 8)
+        return KPI(weights_memory=17920 * 4 / 8, activation_memory=5408 * 4 / 8)
 
     def get_tpc(self):
         eight_bits = get_base_eight_bits_config_op()
@@ -177,7 +177,7 @@ class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBase
 
     def get_kpi(self):
         # kpi is for 2 bits on average
-        return KPI(weights_memory=2544000.0 * 2 / 8, activation_memory=1211800.0 * 2 / 8)
+        return KPI(weights_memory=17920.0 * 2 / 8, activation_memory=5408.0 * 2 / 8)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
@@ -190,7 +190,7 @@ class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBase
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[2, 4],
-                                 weights_layers_channels_size=[30, 50],
+                                 weights_layers_channels_size=[32, 32],
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=4)
 
@@ -211,7 +211,7 @@ class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.DepthwiseConv2D(30)(inputs)
+        x = layers.DepthwiseConv2D(4)(inputs)
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
         model = keras.Model(inputs=inputs, outputs=x)
@@ -236,7 +236,7 @@ class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest
 
     def get_kpi(self):
         # return KPI(np.inf, np.inf)
-        return KPI(2700.0 * 4 / 8, 289743.0 * 4 / 8)
+        return KPI(48.0 * 4 / 8, 768.0 * 4 / 8)
 
     def get_tpc(self):
         eight_bits = get_base_eight_bits_config_op()
@@ -248,7 +248,7 @@ class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.DepthwiseConv2D(30)(inputs)
+        x = layers.DepthwiseConv2D(4)(inputs)
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
         model = keras.Model(inputs=inputs, outputs=x)
@@ -271,8 +271,8 @@ class MixedPrecisionActivationSplitLayerTest(MixedPrecisionActivationBaseTest):
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = tf.split(inputs, num_or_size_splits=2, axis=1)
-        c0 = layers.Conv2D(30, 40)(x[0])
-        c1 = layers.Conv2D(30, 40)(x[1])
+        c0 = layers.Conv2D(32, 4)(x[0])
+        c1 = layers.Conv2D(32, 4)(x[1])
         model = keras.Model(inputs=inputs, outputs=[c0, c1])
         return model
 
@@ -288,7 +288,7 @@ class MixedPrecisionActivationSplitLayerTest(MixedPrecisionActivationBaseTest):
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[3, 4],
-                                 weights_layers_channels_size=[30, 30],
+                                 weights_layers_channels_size=[32, 32],
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=256)
 
@@ -299,9 +299,9 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(30, 40)(inputs)
+        x = layers.Conv2D(32, 4)(inputs)
         x = layers.BatchNormalization()(x)
-        outputs = layers.Conv2D(30, 40)(x)
+        outputs = layers.Conv2D(32, 4)(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
         return model
 
@@ -343,9 +343,9 @@ class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBa
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(30, 40)(inputs)
+        x = layers.Conv2D(32, 4)(inputs)
         x = layers.BatchNormalization()(x)
-        outputs = layers.Conv2D(30, 40)(x)
+        outputs = layers.Conv2D(32, 4)(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
         return model
 
@@ -384,7 +384,7 @@ class MixedPrecisionActivationAddLayerTest(MixedPrecisionActivationBaseTest):
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(30, 40)(inputs)
+        x = layers.Conv2D(32, 4)(inputs)
         x = layers.Add()([x, x])
         model = keras.Model(inputs=inputs, outputs=x)
         return model
@@ -397,7 +397,7 @@ class MixedPrecisionActivationAddLayerTest(MixedPrecisionActivationBaseTest):
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[2],
-                                 weights_layers_channels_size=[30],
+                                 weights_layers_channels_size=[32],
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=256)
 
@@ -417,9 +417,9 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
         inputs_1 = layers.Input(shape=self.get_input_shapes()[0][1:])
         inputs_2 = layers.Input(shape=self.get_input_shapes()[0][1:])
         inputs_3 = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x1 = layers.Conv2D(30, 40)(inputs_1)
-        x2 = layers.Conv2D(30, 40)(inputs_2)
-        x3 = layers.Conv2D(30, 40)(inputs_3)
+        x1 = layers.Conv2D(32, 4)(inputs_1)
+        x2 = layers.Conv2D(32, 4)(inputs_2)
+        x3 = layers.Conv2D(32, 4)(inputs_3)
         outputs = layers.Concatenate()([x1, x2, x3])
         model = keras.Model(inputs=[inputs_1, inputs_2, inputs_3], outputs=outputs)
         return model
@@ -442,7 +442,7 @@ class MixedPrecisionTotalKPISearchTest(MixedPrecisionActivationBaseTest):
         super().__init__(unit_test, activation_layers_idx=[3, 5])
 
     def get_kpi(self):
-        return KPI(np.inf, np.inf, total_memory=(2544000 + 1211800) * 4 / 8)
+        return KPI(np.inf, np.inf, total_memory=(17920 + 5408) * 4 / 8)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
         # verify chosen activation bitwidth config
@@ -452,7 +452,7 @@ class MixedPrecisionTotalKPISearchTest(MixedPrecisionActivationBaseTest):
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[2, 4],
-                                 weights_layers_channels_size=[30, 50],
+                                 weights_layers_channels_size=[32, 32],
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=16)
 
@@ -469,8 +469,8 @@ class MixedPrecisionMultipleKPIsTightSearchTest(MixedPrecisionActivationBaseTest
         super().__init__(unit_test, activation_layers_idx=[3, 5])
 
     def get_kpi(self):
-        weights = 2544000 * 4 / 8
-        activation = 1211800 * 4 / 8
+        weights = 17920 * 4 / 8
+        activation = 5408 * 4 / 8
         return KPI(weights, activation, total_memory=weights + activation)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
@@ -481,7 +481,7 @@ class MixedPrecisionMultipleKPIsTightSearchTest(MixedPrecisionActivationBaseTest
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[2, 4],
-                                 weights_layers_channels_size=[30, 50],
+                                 weights_layers_channels_size=[32, 32],
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=16)
 
@@ -498,8 +498,8 @@ class MixedPrecisionReducedTotalKPISearchTest(MixedPrecisionActivationBaseTest):
         super().__init__(unit_test, activation_layers_idx=[3, 5])
 
     def get_kpi(self):
-        weights = 2544000 * 4 / 8
-        activation = 1211800 * 4 / 8
+        weights = 17920 * 4 / 8
+        activation = 5408 * 4 / 8
         return KPI(weights, activation, total_memory=(weights + activation) / 2)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
@@ -510,7 +510,7 @@ class MixedPrecisionReducedTotalKPISearchTest(MixedPrecisionActivationBaseTest):
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[2, 4],
-                                 weights_layers_channels_size=[30, 50],
+                                 weights_layers_channels_size=[32, 32],
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=16)
 

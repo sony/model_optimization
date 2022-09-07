@@ -203,7 +203,12 @@ def _model_outputs_computation(graph_float: common.Graph,
                                          input_nodes_to_input_tensors)
 
         # Gradients can be computed only on float32 tensors
-        out_tensors_of_n = tf.dtypes.cast(out_tensors_of_n, tf.float32)
+        if isinstance(out_tensors_of_n, list):
+            for i, t in enumerate(out_tensors_of_n):
+                out_tensors_of_n[i] = tf.dtypes.cast(t, tf.float32)
+        else:
+            out_tensors_of_n = tf.dtypes.cast(out_tensors_of_n, tf.float32)
+
         if n in interest_points:
             # Recording the relevant feature maps onto the gradient tape
             gradient_tape.watch(out_tensors_of_n)

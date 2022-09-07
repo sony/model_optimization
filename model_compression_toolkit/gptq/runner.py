@@ -51,7 +51,7 @@ def _apply_gptq(gptq_config: GradientPTQConfig,
     Returns:
 
     """
-    if gptq_config is not None:
+    if gptq_config is not None and gptq_config.n_iter > 0:
         common.Logger.info("Using experimental Gradient Based PTQ: If you encounter an issue "
                            "please file a bug. To disable it, do not pass a gptq configuration.")
 

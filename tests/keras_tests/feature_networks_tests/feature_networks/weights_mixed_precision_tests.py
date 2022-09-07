@@ -52,13 +52,13 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
         return MixedPrecisionQuantizationConfig(qc, num_of_images=1)
 
     def get_input_shapes(self):
-        return [[self.val_batch_size, 224, 244, 3]]
+        return [[self.val_batch_size, 16, 16, 3]]
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(30, 40)(inputs)
+        x = layers.Conv2D(32, 4)(inputs)
         x = layers.BatchNormalization()(x)
-        x = layers.Conv2D(50, 40)(x)
+        x = layers.Conv2D(32, 4)(x)
         outputs = layers.ReLU()(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
         return model
@@ -108,10 +108,10 @@ class MixedPercisionSearchTest(MixedPercisionBaseTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         assert (quantization_info.mixed_precision_cfg == [0,
                                                           0]).all()  # kpi is infinity -> should give best model - 8bits
-        for i in range(30):  # quantized per channel
+        for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(quantized_model.layers[2].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
-        for i in range(50):  # quantized per channel
+        for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(quantized_model.layers[4].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
 
@@ -129,14 +129,14 @@ class MixedPercisionSearchKPI4BitsAvgTest(MixedPercisionBaseTest):
 
     def get_kpi(self):
         # kpi is for 4 bits on average
-        return KPI(2544140 * 4 / 8)
+        return KPI(17920 * 4 / 8)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         assert (quantization_info.mixed_precision_cfg == [1, 1]).all()
-        for i in range(30):  # quantized per channel
+        for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(quantized_model.layers[2].weights[0][:, :, :, i]).flatten().shape[0] <= 16)
-        for i in range(50):  # quantized per channel
+        for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(quantized_model.layers[4].weights[0][:, :, :, i]).flatten().shape[0] <= 16)
 
@@ -154,14 +154,14 @@ class MixedPercisionSearchKPI2BitsAvgTest(MixedPercisionBaseTest):
 
     def get_kpi(self):
         # kpi is for 2 bits on average
-        return KPI(2544200 * 2 / 8)
+        return KPI(17920 * 2 / 8)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         assert (quantization_info.mixed_precision_cfg == [2, 2]).all()
-        for i in range(30):  # quantized per channel
+        for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(quantized_model.layers[2].weights[0][:, :, :, i]).flatten().shape[0] <= 4)
-        for i in range(50):  # quantized per channel
+        for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(quantized_model.layers[4].weights[0][:, :, :, i]).flatten().shape[0] <= 4)
 
@@ -182,7 +182,7 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.DepthwiseConv2D(30)(inputs)
+        x = layers.DepthwiseConv2D(4)(inputs)
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
         model = keras.Model(inputs=inputs, outputs=x)
@@ -245,9 +245,9 @@ class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         assert (quantization_info.mixed_precision_cfg == [0,
                                                           0]).all()  # kpi is infinity -> should give best model - 8bits
-        for i in range(30):  # quantized per channel
+        for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(quantized_model.layers[1].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
-        for i in range(50):  # quantized per channel
+        for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(quantized_model.layers[2].weights[0][:, :, :, i]).flatten().shape[0] <= 256)

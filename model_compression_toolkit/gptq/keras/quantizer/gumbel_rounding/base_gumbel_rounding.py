@@ -113,7 +113,6 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
         self.g_t = None
         self.p_t = None
         scale = self.cycle_iterations / (-2 * np.log(0.001))
-        common.Logger.info(f"Setting Gumbel Rounding with cycle size of {self.cycle_iterations}")
 
         def tau_function(i):
             """

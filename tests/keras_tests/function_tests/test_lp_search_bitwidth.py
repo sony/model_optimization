@@ -191,7 +191,8 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         core_config = CoreConfig(n_iter=1, quantization_config=DEFAULTCONFIG,
                                  mixed_precision_config=MixedPrecisionQuantizationConfigV2(compute_mse,
                                                                                            get_average_weights,
-                                                                                           num_of_images=1))
+                                                                                           num_of_images=1,
+                                                                                           use_grad_based_weights=False))
 
         base_config, mixed_precision_cfg_list = get_op_quantization_configs()
         base_config = base_config.clone_and_edit(enable_activation_quantization=False)
