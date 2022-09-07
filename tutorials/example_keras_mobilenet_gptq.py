@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+import argparse
 from keras.applications.mobilenet_v2 import MobileNetV2
 
 import model_compression_toolkit as mct
@@ -49,14 +50,30 @@ def normalization(x):
     return (x - MEAN) / STD
 
 
+def argument_handler():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--representative_dataset_dir', type=str, required=True, default=None,
+                        help='folder path for the representative dataset.')
+    parser.add_argument('--batch_size', type=int, default=50,
+                        help='batch size for the representative data.')
+    parser.add_argument('--num_calibration_iterations', type=int, default=10,
+                        help='number of iterations for calibration.')
+    parser.add_argument('--num_gptq_training_iterations', type=int, default=5000,
+                        help='number of iterations for gptq training.')
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
 
+    # Parse arguments
+    args = argument_handler()
+
     # Set the batch size of the images at each calibration iteration.
-    batch_size = 50
+    batch_size = args.batch_size
 
     # Set the path to the folder of images to load and use for the representative dataset.
     # Notice that the folder have to contain at least one image.
-    folder = '/path/to/images/folder'
+    folder = args.representative_dataset_dir
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
@@ -87,11 +104,11 @@ if __name__ == '__main__':
     # Create a model
     model = MobileNetV2()
 
-    # Create a core quantization configuration and set the number of calibration iterations to 10.
-    config = mct.CoreConfig(n_iter=10)
+    # Create a core quantization configuration and set the number of calibration iterations.
+    config = mct.CoreConfig(n_iter=args.num_calibration_iterations)
 
-    # Create a GPTQ quantization configuration and set the number of training iterations to 5000.
-    gptq_config = mct.get_keras_gptq_config(n_iter=5000)
+    # Create a GPTQ quantization configuration and set the number of training iterations.
+    gptq_config = mct.get_keras_gptq_config(n_iter=args.num_gptq_training_iterations)
 
     quantized_model, quantization_info = mct.keras_gradient_post_training_quantization_experimental(model,
                                                                                                     representative_data_gen,

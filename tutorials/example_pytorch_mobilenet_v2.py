@@ -18,6 +18,7 @@ This tutorial demonstrates how a model (more specifically, MobileNetV2) can be
 quantized and optimized using the Model Compression Toolkit (MCT).
 """
 
+import argparse
 from torchvision.models import mobilenet_v2
 import model_compression_toolkit as mct
 
@@ -29,14 +30,30 @@ def np_to_pil(img):
     return Image.fromarray(img)
 
 
+def argument_handler():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--representative_dataset_dir', type=str, required=True, default=None,
+                        help='folder path for the representative dataset.')
+    parser.add_argument('--batch_size', type=int, default=50,
+                        help='batch size for the representative data.')
+    parser.add_argument('--num_calibration_iterations', type=int, default=10,
+                        help='number of iterations for calibration.')
+    parser.add_argument('--z_threshold', type=int, default=16,
+                        help='set z threshold for outlier removal algorithm.')
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
 
+    # Parse arguments
+    args = argument_handler()
+
     # Set the batch size of the images at each calibration iteration.
-    batch_size = 50
+    batch_size = args.batch_size
 
     # Set the path to the folder of images to load and use for the representative dataset.
     # Notice that the folder have to contain at least one image.
-    folder = '/path/to/images/folder'
+    folder = args.representative_dataset_dir
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
@@ -72,16 +89,15 @@ if __name__ == '__main__':
 
 
     # Create a model and quantize it using the representative_data_gen as the calibration images.
-    # Set the number of calibration iterations to 20.
     model = mobilenet_v2(pretrained=True)
     # set quantization configuration
     quantization_config = mct.DEFAULTCONFIG
-    # Configure z threshold algorithm for outlier removal. Set z threshold to 16.
-    quantization_config.z_threshold = 16
+    # Configure z threshold algorithm for outlier removal. Set z threshold.
+    quantization_config.z_threshold = args.z_threshold
     # run post training quantization on the model to get the quantized model output
     quantized_model, quantization_info = mct.pytorch_post_training_quantization(model,
                                                                                 representative_data_gen,
                                                                                 target_platform_capabilities=target_platform_cap,
-                                                                                n_iter=20)
+                                                                                n_iter=args.num_calibration_iterations)
 
 

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+import argparse
 import model_compression_toolkit as mct
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
@@ -51,14 +52,32 @@ def normalization(x):
     return (x - MEAN) / STD
 
 
+def argument_handler():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--representative_dataset_dir', type=str, required=True, default=None,
+                        help='folder path for the representative dataset.')
+    parser.add_argument('--batch_size', type=int, default=50,
+                        help='batch size for the representative data.')
+    parser.add_argument('--num_calibration_iterations', type=int, default=10,
+                        help='number of iterations for calibration.')
+    parser.add_argument('--weights_compression_ratio', type=float, default=0.75,
+                        help='weights compression ratio.')
+    parser.add_argument('--activations_compression_ratio', type=float, default=0.5,
+                        help='activations compression ratio.')
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
 
+    # Parse arguments
+    args = argument_handler()
+
     # Set the batch size of the images at each calibration iteration.
-    batch_size = 50
+    batch_size = args.batch_size
 
     # Set the path to the folder of images to load and use for the representative dataset.
     # Notice that the folder have to contain at least one image.
-    folder = '/path/to/images/folder'
+    folder = args.representative_dataset_dir
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
@@ -81,8 +100,8 @@ if __name__ == '__main__':
     # Create a model to quantize.
     model = MobileNetV2()
 
-    # Set the number of calibration iterations to 10.
-    num_iter = 10
+    # Set the number of calibration iterations.
+    num_iter = args.num_calibration_iterations
 
     # Create a mixed-precision quantization configuration with possible mixed-precision search options.
     # MCT will search a mixed-precision configuration (namely, bit-width for each layer)
@@ -105,9 +124,12 @@ if __name__ == '__main__':
     # Set a constraint for each of the KPI metrics.
     # Create a KPI object to limit our returned model's size. Note that this values affects only layers and attributes
     # that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
-    # while the bias will not):
-    kpi = mct.KPI(kpi_data.weights_memory * 0.75,  # About 0.75 of the model's weights memory size when quantized with 8 bits.
-                  kpi_data.activation_memory * 0.5)  # About 0.5 of the model's activation size when quantized with 8 bits.
+    # while the bias will not)
+    # examples:
+    # weights_compression_ratio = 0.75 - About 0.75 of the model's weights memory size when quantized with 8 bits.
+    # activations_compression_ratio = 0.5 - About 0.5 of the model's activation size when quantized with 8 bits.
+    kpi = mct.KPI(kpi_data.weights_memory * args.weights_compression_ratio,
+                  kpi_data.activation_memory * args.activations_compression_ratio)
 
     # It is also possible to constraint only part of the KPI metric, e.g., by providing only weights_memory target
     # in the past KPI object, e.g., kpi = mct.KPI(kpi_data.weights_memory * 0.75)

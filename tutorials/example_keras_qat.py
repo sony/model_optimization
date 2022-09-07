@@ -22,6 +22,7 @@ The user can now Fine-Tune the QAT-ready model. Finally, the model is finalized 
 MCT replaces the QuantizeWrappers with their native layers and quantized weights.
 """
 
+import argparse
 import tensorflow as tf
 from keras.datasets import mnist
 from keras import Model, layers, datasets
@@ -135,17 +136,32 @@ def gen_representative_dataset(_images):
     return _generator().__next__
 
 
+def argument_handler():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--batch_size', type=int, default=128,
+                        help='batch size for model training.')
+    parser.add_argument('--num_epochs', type=int, default=15,
+                        help='number of epochs for model training.')
+    parser.add_argument('--num_calibration_iterations', type=int, default=10,
+                        help='number of iterations for calibration - model quantization before fine-tuning.')
+    return parser.parse_args()
+
+
+
 if __name__ == "__main__":
     """
     The code below is an example code of a user for fine tuning a float model with the MCT Quantization
     Aware Training API. 
     """
 
+    # Parse arguments
+    args = argument_handler()
+
     # init parameters
     num_classes = 10
     input_shape = (28, 28, 1)
-    batch_size = 128
-    epochs = 15
+    batch_size = args.batch_size
+    epochs = args.num_epochs
 
     # init model
     model = get_model(num_classes, input_shape)
@@ -171,7 +187,7 @@ if __name__ == "__main__":
     # the degradation caused by post training quantization.
     qat_model, _, _ = mct.keras_quantization_aware_training_init(model,
                                                                  representative_dataset,
-                                                                 core_config=mct.CoreConfig(n_iter=10),
+                                                                 core_config=mct.CoreConfig(n_iter=args.num_calibration_iterations),
                                                                  target_platform_capabilities=get_tpc())
 
     # Evaluate QAT-ready model accuracy from MCT. This model is fully quantized with QuantizeWrappers
