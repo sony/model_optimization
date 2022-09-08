@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.gptq.common.gptq_training import gptq_training
 
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
-from model_compression_toolkit.core.common.bias_correction.apply_bias_correction_to_graph import \
+from model_compression_toolkit.core.common.statistics_correction.apply_bias_correction_to_graph import \
     apply_bias_correction_to_graph
 
 

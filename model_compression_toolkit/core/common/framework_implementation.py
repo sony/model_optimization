@@ -215,6 +215,20 @@ class FrameworkImplementation(ABC):
                              f'framework\'s get_linear_collapsing_substitution method.')
 
     @abstractmethod
+    def get_substitutions_statistics_correction(self, quant_config: QuantizationConfig) -> \
+            List[common.BaseSubstitution]:
+        """
+        Returns A list of the framework substitutions used for statistics correction.
+
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+
+        Returns:
+            A list of the framework substitutions used for statistics correction.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_substitutions_statistics_correction method.')
+    @abstractmethod
     def get_residual_collapsing_substitution(self) -> List[common.BaseSubstitution]:
         """
         Returns: A list of the framework substitutions used for residual collapsing
@@ -256,6 +270,20 @@ class FrameworkImplementation(ABC):
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_substitutions_virtual_weights_activation_coupling method.')
 
+    @abstractmethod
+    def get_substitutions_after_second_moment_correction(self, quant_config: QuantizationConfig) \
+            -> List[common.BaseSubstitution]:
+        """
+        Return a list of the framework substitutions used after second moment statistics.
+
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+
+        Returns:
+            A list of the framework substitutions used after we apply second moment statistics.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_substitutions_after_second_moment_correction method.')
     @abstractmethod
     def get_gptq_trainer_obj(self):
         """
@@ -436,3 +464,35 @@ class FrameworkImplementation(ABC):
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_node_mac_operations method.')
+
+    @abstractmethod
+    def quantized_model_builder_for_second_moment_correction(self, graph, fw_info):
+        """
+        Build a framework model from a graph for second moment correction.
+
+        Args:
+            graph: Graph to build the from.
+            fw_info: FrameworkInfo object with information about the specific framework's model.
+
+        Returns:
+            Quantized model for second moment correction.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s quantized_model_builder_for_second_moment_correction method.')
+
+    def apply_second_moment_correction(self, model, core_config, representative_data_gen, graph):
+        """
+        Apply second moment statistics correction to graph.
+
+        Args:
+            model: Framework's model to apply second moment correction on.
+            core_config: QuantizationConfig of how the model should be quantized.
+            representative_data_gen: Dataset to use for retrieving images for the models inputs.
+            graph: Graph to update the parameters after the second moment correction.
+
+        Returns:
+            A function that applies second moment correction.
+        """
+
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s apply_second_moment_correction method.')

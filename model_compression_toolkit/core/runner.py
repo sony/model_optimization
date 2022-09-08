@@ -33,7 +33,7 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_methods
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
-from model_compression_toolkit.core.common.bias_correction.compute_bias_correction_of_graph import \
+from model_compression_toolkit.core.common.statistics_correction.compute_bias_correction_of_graph import \
     compute_bias_correction_of_graph
 
 from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
@@ -245,6 +245,11 @@ def get_finalized_graph(initial_graph: Graph,
 
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'after_candidates_filtering')
+
+    ######################################
+    # Statistics Correction
+    ######################################
+    transformed_graph = substitute(transformed_graph, fw_impl.get_substitutions_statistics_correction(quant_config))
 
     return transformed_graph
 

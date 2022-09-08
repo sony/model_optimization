@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 import operator
 from typing import List, Any, Tuple, Callable, Type, Dict
 
@@ -20,6 +21,7 @@ import torch
 from torch import sigmoid, softmax, add, cat, argmax
 from torch.nn import Conv2d, ConvTranspose2d, Linear
 from torch.nn import Module, Sigmoid, Softmax
+from tqdm import tqdm
 
 import model_compression_toolkit.core.pytorch.constants as pytorch_constants
 from model_compression_toolkit import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfigV2
@@ -32,16 +34,26 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
+from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework import get_pytorch_model_builder
 from model_compression_toolkit.core.pytorch.back2framework.model_gradients import \
     pytorch_iterative_approx_jacobian_trace
+from model_compression_toolkit.core.pytorch.constants import GAMMA, BETA, MOVING_MEAN, MOVING_VARIANCE
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
     pytorch_batchnorm_folding
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_reconstructing import \
+    BatchNormalizationReconstructing
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_refusing import \
+    pytorch_batchnorm_refusing
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.linear_collapsing import \
     pytorch_linear_collapsing
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
+    import MultiHeadAttentionDecomposition
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.permute_call_method import \
+    PermuteCallMethod
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.reshape_with_static_shapes import \
@@ -53,6 +65,8 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.sc
     ScaleEqualizationWithPad
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
     pytorch_apply_shift_negative_correction
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.softmax_shift import \
+    pytorch_softmax_shift
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.virtual_activation_weights_composition import \
     VirtualActivationWeightsComposition
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.weights_activation_split import \
@@ -60,13 +74,9 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.we
 from model_compression_toolkit.core.pytorch.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.pytorch.pytorch_node_prior_info import create_node_prior_info
 from model_compression_toolkit.core.pytorch.reader.reader import model_reader
-from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
+from model_compression_toolkit.core.pytorch.utils import set_model, to_torch_tensor
+from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.softmax_shift import \
-    pytorch_softmax_shift
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
-    import MultiHeadAttentionDecomposition
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.permute_call_method import PermuteCallMethod
 from model_compression_toolkit.gptq.pytorch.gptq_training import PytorchGPTQTrainer
 
 
@@ -237,6 +247,22 @@ class PytorchImplementation(FrameworkImplementation):
             substitutions_list.append(ReLUBoundToPowerOfTwo())
         return substitutions_list
 
+    def get_substitutions_statistics_correction(self, quant_config: QuantizationConfig
+                                                ) -> List[common.BaseSubstitution]:
+        """
+        Returns A list of the framework substitutions used for statistics correction.
+
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+
+        Returns:
+            A list of the framework substitutions used for statistics correction.
+        """
+        substitutions_list = []
+        if quant_config.weights_second_moment_correction:
+            substitutions_list.append(BatchNormalizationReconstructing())
+        return substitutions_list
+
     def get_residual_collapsing_substitution(self) -> List[common.BaseSubstitution]:
         """
         Returns: A list of the framework substitutions used for residual collapsing
@@ -279,6 +305,22 @@ class PytorchImplementation(FrameworkImplementation):
 
         return [WeightsActivationSplit(),
                 VirtualActivationWeightsComposition()]
+
+    def get_substitutions_after_second_moment_correction(self, quant_config: QuantizationConfig) \
+            -> List[common.BaseSubstitution]:
+        """
+        Return a list of the framework substitutions used after second moment statistics.
+
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+
+        Returns:
+            A list of the framework substitutions used after we apply second moment statistics.
+        """
+        substitutions_list = []
+        if quant_config.weights_second_moment_correction:
+            substitutions_list.append(pytorch_batchnorm_refusing())
+        return substitutions_list
 
     def get_gptq_trainer_obj(self) -> Type[GPTQTrainer]:
         """
@@ -474,3 +516,68 @@ class PytorchImplementation(FrameworkImplementation):
             return kernel_shape[0] * kernel_shape[1]
         else:
             return 0
+
+    def apply_second_moment_correction(self, quantized_model, core_config, representative_data_gen, graph):
+        """
+        Apply second moment statistics correction to graph.
+
+        Args:
+            quantized_model: Framework's model to apply second moment correction on.
+            core_config: QuantizationConfig of how the model should be quantized.
+            representative_data_gen: Dataset to use for retrieving images for the models inputs.
+            graph: Graph to update the parameters after the second moment correction.
+
+        Returns:
+            A function that applies second moment correction.
+        """
+        model = copy.deepcopy(quantized_model)
+        set_model(model)
+
+        # Move every BN to train mode
+        for module in model.modules():
+            if isinstance(module, torch.nn.BatchNorm2d):
+                module.train()
+
+        for _ in tqdm(range(core_config.quantization_config.weights_second_moment_iters)):
+            with torch.no_grad():
+                # TODO:
+                # take care of multiple input models
+                model(to_torch_tensor(representative_data_gen()[0]))
+
+        set_model(model)
+
+        # TODO:
+        # needs to check if gamma&beta are the same?
+        # Move every BN to eval mode and update the corresponding BN node params in the graph
+        for name, module in model.named_modules():
+            if isinstance(module, torch.nn.BatchNorm2d):
+                module.eval()
+                bn_node = graph.find_node_by_name(name)[0]
+                bn_node_weights = {GAMMA: module.weight.detach().cpu().numpy(),
+                                   BETA: module.bias.detach().cpu().numpy(),
+                                   MOVING_MEAN: module.running_mean.detach().cpu().numpy(),
+                                   MOVING_VARIANCE: module.running_var.detach().cpu().numpy()}
+                # TODO:
+                # check if to set w by key?
+                bn_node.weights = copy.deepcopy(bn_node_weights)
+
+    def quantized_model_builder_for_second_moment_correction(self, graph, fw_info):
+        """
+        Build a framework model from a graph for second moment correction.
+
+        Args:
+            graph: Graph to build the from.
+            fw_info: FrameworkInfo object with information about the specific framework's model.
+
+        Returns:
+            Quantized model for second moment correction.
+        """
+        # Quantize graph weights without activations
+        quantized_tg = quantize_graph_weights(graph,
+                                              fw_info=fw_info,
+                                              fw_impl=self)
+
+        quantized_model, user_info = self.model_builder(quantized_tg,
+                                                        mode=ModelBuilderMode.FLOAT,
+                                                        fw_info=fw_info)
+        return quantized_model
