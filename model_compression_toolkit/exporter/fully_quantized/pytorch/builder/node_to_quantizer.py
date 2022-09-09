@@ -14,7 +14,7 @@
 # ==============================================================================
 import numpy as np
 
-from typing import List
+from typing import List, Callable
 
 from model_compression_toolkit.core.common import BaseNode, Logger
 from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
@@ -25,6 +25,7 @@ from model_compression_toolkit.core.common.target_platform import QuantizationMe
 from model_compression_toolkit.exporter.fully_quantized.pytorch.quantizers.fq_quantizer import FakeQuantQuantizer
 from model_compression_toolkit.exporter.fully_quantized.pytorch.quantizers.uniform_weights_quantizer import \
     UniformWeightsQuantizer
+import torch
 
 SUPPORTED_WEIGHT_QUANTIZER_TYPES = [QuantizationMethod.POWER_OF_TWO,
                                     QuantizationMethod.SYMMETRIC,
@@ -35,13 +36,12 @@ SUPPORTED_ACTIVATION_QUANTIZER_TYPES = [QuantizationMethod.POWER_OF_TWO,
                                         QuantizationMethod.UNIFORM]
 
 
-def get_weights_quantizer_for_node(node: BaseNode):
+def get_weights_quantizer_for_node(node: BaseNode) -> List[Callable]:
     """
     Get weights quantizer for a node.
 
     Args:
         node: Node to create a weight quantizer for.
-        weights_attr: Attributes of the layer to quantize its weights.
 
     Returns:
         Quantizer for the node's weights.
@@ -73,7 +73,6 @@ def get_weights_quantizer_for_node(node: BaseNode):
     else:
         Logger.error(f'For now fully quantized models support only {SUPPORTED_WEIGHT_QUANTIZER_TYPES} for weights quantization, but found {weights_quantization_method}')
 
-    # TODO: support multiple quantizers
     return [UniformWeightsQuantizer(num_bits=node_w_qc.weights_n_bits,
                                     max_range=max_range,
                                     min_range=min_range,
@@ -83,7 +82,7 @@ def get_weights_quantizer_for_node(node: BaseNode):
                                     )]
 
 
-def get_activations_quantizer_for_node(node: BaseNode):
+def get_activations_quantizer_for_node(node: BaseNode) -> List[Callable]:
     """
     Get activation quantizer for a node.
 
@@ -130,7 +129,6 @@ def get_activations_quantizer_for_node(node: BaseNode):
     else:
         Logger.error(f'For now fully quantized models support only {SUPPORTED_ACTIVATION_QUANTIZER_TYPES} for activation quantization, but found {activation_quantization_method}')
 
-    # TODO: support multiple quantizers
     return [FakeQuantQuantizer(nbits=node_act_qc.activation_n_bits,
                               min_range=min_range,
                               max_range=max_range,

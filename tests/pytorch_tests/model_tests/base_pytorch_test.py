@@ -127,7 +127,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                 torch_script_model = torch.jit.script(torch_traced)
 
 
-    def run_test(self, seed=0, experimental_facade=True):
+    def run_test(self, seed=0, experimental_facade=False):
         np.random.seed(seed)
         random.seed(a=seed)
         torch.random.manual_seed(seed)

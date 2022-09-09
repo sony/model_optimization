@@ -19,7 +19,10 @@ from model_compression_toolkit.core.common.quantization.quantizers.quantizers_he
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 
-class UniformWeightsQuantizer(torch.nn.Module):
+class UniformWeightsQuantizer:
+    """
+    Uniform quantizer for a PyTorch weights module.
+    """
     def __init__(self,
                  num_bits: int,
                  min_range: np.ndarray,
@@ -29,15 +32,17 @@ class UniformWeightsQuantizer(torch.nn.Module):
                  output_channels_axis: int
                  ):
         """
-        Symmetric WeightsQuantizer a Pytorch model that constitutes as a wrapper for a Pytorch layer, built from a
-        given graph node.
-        Args:
-            n: Node to build its Pytorch layer.
 
+        Args:
+            num_bits: Number of bits for quantization.
+            min_range: Min range for quantization.
+            max_range: Max range for quantization.
+            quantization_method: Method the quantized weight was quantized according to.
+            per_channel: Whether the weight was quantized per-channel or not.
+            output_channels_axis: Dimension of channel axis (needed if it was quantized per-channel).
         """
 
         super(UniformWeightsQuantizer, self).__init__()
-
         self.num_bits = num_bits
         self.min_range = min_range
         self.max_range = max_range
@@ -45,7 +50,17 @@ class UniformWeightsQuantizer(torch.nn.Module):
         self.per_channel = per_channel
         self.output_channels_axis = output_channels_axis
 
-    def __call__(self, float_weight, *args, **kwargs):
+    def __call__(self, float_weight: np.ndarray, *args, **kwargs) -> np.ndarray:
+        """
+        Quantize tensor according to quantization params in the quantizer.
+
+        Args:
+            float_weight: Weights to quantize.
+
+        Returns:
+            Quantized tensor.
+
+        """
         return uniform_quantize_tensor(tensor_data=float_weight,
                                        range_min=self.min_range,
                                        range_max=self.max_range,

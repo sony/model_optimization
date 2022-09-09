@@ -44,20 +44,6 @@ class FakeQuantQuantizer:
         self.max_range = max_range
         self.quantization_method = quantization_method
 
-
-    def get_config(self) -> Dict[str, Any]:
-        """
-
-        Returns: Configuration of this FakeQuantQuantizer
-
-        """
-        return {"nbits": self.nbits,
-                "min_range": self.min_range.numpy(),
-                "max_range": self.max_range.numpy(),
-                "quantization_method": self.quantization_method
-                }
-
-
     def __call__(self, inputs):
         """
         Apply quantization to the input tensor.
@@ -69,6 +55,5 @@ class FakeQuantQuantizer:
             Quantized tensor.
         """
         return uniform_quantization(self.nbits,
-                             {RANGE_MIN:self.min_range,
-                              RANGE_MAX:self.max_range})(inputs)
-
+                                    {RANGE_MIN: self.min_range,
+                                     RANGE_MAX: self.max_range})(inputs)

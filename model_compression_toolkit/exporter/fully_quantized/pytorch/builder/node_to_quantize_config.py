@@ -15,7 +15,7 @@
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.pytorch.back2framework.quantization_wrapper.wrapper_quantize_config import \
     WrapperQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.pytorch.node_to_quantizer import \
+from model_compression_toolkit.exporter.fully_quantized.pytorch.builder.node_to_quantizer import \
     get_weights_quantizer_for_node, \
     get_activations_quantizer_for_node
 from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs.activation_quantize_config \
@@ -34,13 +34,14 @@ from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantiz
 
 def get_quantization_config(node: BaseNode) -> WrapperQuantizeConfig:
     """
-    Create a QuantizeConfig to wrap a layer for its corresponding node.
+    Create a WrapperQuantizeConfig to wrap a layer for its corresponding node.
 
     Args:
-        node: Node to create a QuantizeConfig for.
+        node: Node to create a WrapperQuantizeConfig for.
 
     Returns:
-        QuantizeConfig to use for wrapping the layer from the passed node.
+        WrapperQuantizeConfig to use for wrapping the layer from the passed node.
+
     """
 
     if node.is_activation_quantization_enabled() and node.is_weights_quantization_enabled():

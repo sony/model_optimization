@@ -17,10 +17,8 @@ from typing import List, Any, Tuple
 
 import torch
 
-from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
-from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder, \
@@ -32,27 +30,27 @@ from model_compression_toolkit.core.pytorch.reader.node_holders import BufferHol
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 
 
-from model_compression_toolkit.exporter.fully_quantized.pytorch.node_to_quantize_config import get_quantization_config
-from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs\
-    .weights_activation_quantize_config import \
-    WeightsActivationQuantizeConfig
+from model_compression_toolkit.exporter.fully_quantized.pytorch.builder.node_to_quantize_config import get_quantization_config
 
 
 def get_fully_quantized_pytorch_model(graph: Graph):
     """
-    Convert graph to fully quantized Keras model.
+    Convert graph to fully quantized PyTorch model.
 
     Args:
-        graph: Graph to convert to a Keras model.
+        graph: Graph to convert to a PyTorch model.
 
     Returns:
-        Fully quantized Keras model.
+        Fully quantized PyTorch model.
     """
     return FullyQuantizedPyTorchModelBuilder(graph=graph).build_model()
 
 
 
 class FullyQuantizedPyTorchModel(PytorchModel):
+    """
+    PyTorch model with all quantization information.
+    """
 
     def __init__(self,
                  graph: common.Graph):
@@ -66,6 +64,11 @@ class FullyQuantizedPyTorchModel(PytorchModel):
 
 
     def _add_modules(self):
+        """
+
+        Add nodes in graph as modules.
+
+        """
         for n in self.node_sort:
             if n.type == BufferHolder:
                 self.add_module(n.name, node_builder(n))
@@ -77,13 +80,24 @@ class FullyQuantizedPyTorchModel(PytorchModel):
                                                            torch.Tensor(n.get_weights_by_keys(CONSTANT)).to(get_working_device()))
 
             else:
+                # Create a wrapper based on the corresponding quantization config.
                 layer_wrapper = QuantizedLayerWrapper(n, get_quantization_config(n))
+                # Add the wrapped layer to the model.
                 self.add_module(n.name, layer_wrapper)
 
     def _get_op_func(self,
                      node: BaseNode,
                      configurable_nodes_names: List[str]) -> Any:
+        """
+        Get the operator corresponding to the passed node.
 
+        Args:
+            node: Node to get its op.
+            configurable_nodes_names: List of nodes that are configurable.
+
+        Returns:
+            Operator (module) of the node.
+        """
         return getattr(self, node.name)
 
     def _quantize_node_activations(self,
@@ -108,8 +122,9 @@ class FullyQuantizedPyTorchModel(PytorchModel):
 
 class FullyQuantizedPyTorchModelBuilder(PyTorchModelBuilder):
     """
-    Mixed-precision PyTorch model.
+    Fully-Quantized PyTorch model.
     """
+
     def __init__(self,
                  graph: common.Graph):
         """

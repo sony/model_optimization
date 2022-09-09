@@ -38,7 +38,7 @@ if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
     from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
-    from model_compression_toolkit.exporter.fully_quantized.pytorch.fully_quantized_model_builder import get_fully_quantized_pytorch_model
+    from model_compression_toolkit.exporter.fully_quantized.pytorch.builder.fully_quantized_model_builder import get_fully_quantized_pytorch_model
     import torch
     from torch.nn import Module
     from torch.optim import Adam, Optimizer
@@ -121,6 +121,7 @@ if FOUND_TORCH:
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to. `Default PyTorch TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/tpc_models/pytorch_tp_models/pytorch_default.py>`_
+            new_experimental_exporter (bool): Whether exporting the quantized model using new exporter or not (in progress. Avoiding it for now is recommended).
 
         Returns:
             A quantized module and information the user may need to handle the quantized module.
