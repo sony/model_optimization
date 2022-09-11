@@ -20,6 +20,9 @@ class DirectedBipartiteGraph(nx.DiGraph):
         self.add_nodes_from(a_nodes, bipartite=0)
         self.add_nodes_from(b_nodes, bipartite=1)
 
+        self.a_nodes = {n for n, d in self.nodes(data=True) if d["bipartite"] == 0}
+        self.b_nodes = set(self) - self.a_nodes
+
         # TODO: do we need to check edges validity or is it enforced by adding the 0-1 flag to the nodes?
         self.add_edges_from(edges_ab)
         self.add_edges_from(edges_ba)

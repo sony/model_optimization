@@ -320,6 +320,19 @@ class BaseNode:
 
         return sum([np.prod([x for x in output_shape if x is not None]) for output_shape in output_shapes])
 
+    def get_total_output_params(self):
+        """
+        Calculates the input size of the node.
+
+        Returns: Input size.
+        """
+        input_shapes = self.input_shape if isinstance(self.input_shape, List) else [self.input_shape]
+
+        # remove batch size (first element) from input shape
+        input_shapes = [s[1:] for s in input_shapes]
+
+        return sum([np.prod([x for x in input_shape if x is not None]) for input_shape in input_shapes])
+
     def find_min_candidates_indices(self) -> List[int]:
         """
         Returns a list with potential minimal candidates.
