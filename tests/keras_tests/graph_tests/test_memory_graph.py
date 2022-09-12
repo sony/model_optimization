@@ -15,11 +15,9 @@
 
 
 import unittest
-import numpy as np
 import keras
 from keras import Input
 from keras.layers import Conv2D, BatchNormalization, ReLU, Activation, Add
-from tensorflow import initializers
 import tensorflow as tf
 
 from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import MemoryGraph

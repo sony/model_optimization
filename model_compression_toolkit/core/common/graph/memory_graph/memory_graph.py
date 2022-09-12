@@ -1,3 +1,18 @@
+# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 from typing import List, Tuple, Any
 import numpy as np
 from model_compression_toolkit.core.common import BaseNode, Graph
@@ -56,22 +71,6 @@ class MemoryGraph(DirectedBipartiteGraph):
                     # Add current memory tensor as input to current node's successors
                     tensor_to_node.append((memory_tensor, oe.sink_node))
 
-        #
-        # node_to_memory_tensor = {n: ActivationMemoryTensor(n.output_shape, n.name) for n in model_graph.nodes}
-        #
-        # nodes = list(node_to_memory_tensor.keys())
-        # memory_tensors = list(node_to_memory_tensor.values())
-        #
-        # node_name_to_incoming_nodes = {n.name: [src_node for src_node in model_graph.incoming_edges(n)] for n in nodes}
-        # memory_tensor_to_node = {t: n for t in memory_tensors for n in nodes if
-        #                          n in node_name_to_incoming_nodes[t.node_name]}
-        #
-        # super().__init__(name=model_graph.name + "_memory_graph",
-        #                  a_nodes=nodes,
-        #                  b_nodes=memory_tensors,
-        #                  edges_ab=[(n, t) for n, t in node_to_memory_tensor.items()],
-        #                  edges_ba=[(t, n) for t, n in memory_tensor_to_node.items()])
-
         super().__init__(name=model_graph.name + "_memory_graph",
                          a_nodes=nodes,
                          b_nodes=memory_tensors,
@@ -84,7 +83,13 @@ class MemoryGraph(DirectedBipartiteGraph):
         nodes_total_memory = [n.get_total_input_params() + n.get_total_output_params() for n in nodes]  # input + output size of each node
         self.memory_lbound_single_op = max(nodes_total_memory)
 
-        self.sources_a = [n for n in self.a_nodes if len(list(self.predecessors(n))) == 0]  # TODO: this supposed to be the original graph's inputs, maybe add assertion for sanity
-        self.sinks_a = [n for n in self.a_nodes if len(list(self.successors(n))) == 0]  # TODO: this supposed to be the original graph's outputs, maybe add assertion for sanity
+        self.sources_a = [n for n in self.a_nodes if len(list(self.predecessors(n))) == 0]
+        self.sinks_a = [n for n in self.a_nodes if len(list(self.successors(n))) == 0]
+
+    def update_sources_a(self):
+        self.sources_a = [n for n in self.a_nodes if len(list(self.predecessors(n))) == 0]
+
+    def update_sinks_a(self):
+        self.sinks_a = [n for n in self.a_nodes if len(list(self.successors(n))) == 0]
 
     # TODO: add heuristics if necessary

@@ -1,7 +1,20 @@
-from typing import Any, List, Tuple
+# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
 
+from typing import Any, List, Tuple
 import networkx as nx
-from networkx.algorithms import bipartite
 
 
 class DirectedBipartiteGraph(nx.DiGraph):
@@ -17,22 +30,28 @@ class DirectedBipartiteGraph(nx.DiGraph):
 
         self.name = name
 
+        self.a_nodes = set()
+        self.b_nodes = set()
+        self._update_nodes_sets()
+
         self.add_nodes_from(a_nodes, bipartite=0)
         self.add_nodes_from(b_nodes, bipartite=1)
-
-        self.a_nodes = {n for n, d in self.nodes(data=True) if d["bipartite"] == 0}
-        self.b_nodes = set(self) - self.a_nodes
 
         # TODO: do we need to check edges validity or is it enforced by adding the 0-1 flag to the nodes?
         self.add_edges_from(edges_ab)
         self.add_edges_from(edges_ba)
 
+    def _update_nodes_sets(self):
+        self.a_nodes = {n for n, d in self.nodes(data=True) if d["bipartite"] == 0}
+        self.b_nodes = set(self) - self.a_nodes
 
-# if __name__ == "__main__":
-#     g = DirectedBipartiteGraph(
-#         name="test",
-#         a_nodes=[1, 2, 3, 4],
-#         b_nodes=['a', 'b', 'c'],
-#         edges_ab=[(1, 'a'), (2, 'b'), (2, 'c')],
-#         edges_ba=[('a', 3), ('a', 4), ('c', 4), ('c', 1)]
-#     )
+    def add_nodes_to_a(self, new_nodes):
+        self.add_nodes_from(new_nodes, bipartite=0)
+        self._update_nodes_sets()
+
+    def add_nodes_to_b(self, new_nodes):
+        self.add_nodes_from(new_nodes, bipartite=1)
+        self._update_nodes_sets()
+
+    def add_edges(self, new_edges):
+        self.add_edges_from(new_edges)

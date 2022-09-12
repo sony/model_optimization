@@ -12,3 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
+
+class MemoryElement:
+    def __init__(self, size):
+        self.size = size
+
+
+class MemoryElements:
+    def __init__(self, elements, total_size):
+        self.elements = elements
+        self.total_size = total_size
+
+    def add_element(self, new_element):
+        self.elements.add(new_element)
+        self.total_size += new_element.size
+
+    def add_elements_set(self, new_elements_set):
+        self.elements.update(new_elements_set)
+        self.total_size += sum([e.size for e in new_elements_set])
