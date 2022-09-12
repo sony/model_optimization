@@ -18,22 +18,7 @@ import numpy as np
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX, EDGE_SOURCE_INDEX
 from model_compression_toolkit.core.common.graph.memory_graph.bipartite_graph import DirectedBipartiteGraph
-
-
-class ActivationMemoryTensor:
-
-    def __init__(self, shape: Tuple[Any], node_name: str, node_output_index: int):
-
-        # remove batch size (first element) from output shape
-        self.shape = shape[1:]
-        self.total_size = self._get_tensor_total_size()
-
-        self.node_name = node_name
-        self.node_output_index = node_output_index
-
-    def _get_tensor_total_size(self):
-        assert all([x is not None for x in self.shape])
-        return np.prod(self.shape)
+from model_compression_toolkit.core.common.graph.memory_graph.memory_element import ActivationMemoryTensor
 
 
 class MemoryGraph(DirectedBipartiteGraph):
@@ -44,6 +29,8 @@ class MemoryGraph(DirectedBipartiteGraph):
         #  since their output might be some quantized node input.
         #  The actual memory of a CUT need to be calculated later based on the actual
         #  nodes that have activation to quantize.
+
+        self.model_graph = model_graph
 
         nodes = list(model_graph.nodes)
         memory_tensors = []
@@ -91,5 +78,27 @@ class MemoryGraph(DirectedBipartiteGraph):
 
     def update_sinks_a(self):
         self.sinks_a = [n for n in self.a_nodes if len(list(self.successors(n))) == 0]
+
+    def activation_tensor_children(self, activation_tensor):
+        return [oe[1] for oe in self.out_edges(activation_tensor)]
+
+    def activation_tensor_parents(self, activation_tensor):
+        return [ie[0] for ie in self.in_edges(activation_tensor)]
+
+    def operation_node_children(self, op_node):
+        return [oe[1] for oe in self.out_edges(op_node)]
+
+    def operation_node_parents(self, op_node):
+        return [ie[0] for ie in self.in_edges(op_node)]
+
+    # def get_op_children_names(self, op_name):
+    #     node = self.model_graph.find_node_by_name(op_name)
+    #     if len(node) == 0:
+    #         return []
+    #
+    #     assert len(node) == 1, "Node name must be unique"
+    #     node = node[0]
+    #
+    #     return [e.sink_node.name for e in self.model_graph.out_edges(node)]
 
     # TODO: add heuristics if necessary

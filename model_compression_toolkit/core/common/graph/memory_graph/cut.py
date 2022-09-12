@@ -24,6 +24,9 @@ class Cut:
         #  which needs to compute the Cut's memory size based on the memory elements
         raise NotImplementedError()
 
+    def get_record_names(self):
+        return {op.name for op in self.op_record}
+
     def __eq__(self, other):
         if isinstance(other, Cut):
             # TODO: take care of lists/sets equality here

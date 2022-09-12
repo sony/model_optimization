@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import List
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
@@ -49,10 +50,12 @@ class DummyActivationMemoryTensorGenerator:
             self.counter += 1
 
 
-# TODO: consider changing the name - it's not a memory graph, it builds a memory graph to rum Astar on its cuts
-class CutsMemoryGraph:
+class MaxCutAstar:
 
-    def __init__(self, memory_graph):
+    def __init__(self, memory_graph):#, memory_size_fn):
+
+        self.memory_graph = memory_graph
+        # self.memory_size_fn = memory_size_fn
 
         # In order to run Astar search on the graph we need to define a single source and a single target.
         # Dummy nodes are used for this purpose
@@ -65,7 +68,7 @@ class CutsMemoryGraph:
         src_dummy_b = next(gen_b)
         edges_src_ab = [(src_dummy_a, src_dummy_b)]
         edges_src_ba = [(src_dummy_b, src_a) for src_a in memory_graph.sources_a]
-        src_cut = Cut([src_dummy_a], {src_dummy_a}, MemoryElements(elements={src_dummy_b}, total_size=0))
+
         # Updated graph sinks - need to connect all sink nodes to a single sink node
         mid_b_nodes = [next(gen_b) for _ in memory_graph.sinks_a]
         sinks_fix_ab_edges = [(original_sink, mid_b) for original_sink, mid_b in zip(memory_graph.sinks_a, mid_b_nodes)]
@@ -79,14 +82,81 @@ class CutsMemoryGraph:
         target_dummy_b2 = next(gen_b)
         edges_target_ab = [(sink_fix_node_a, target_dummy_b1), (target_dummy_a1, target_dummy_b2)]
         edges_target_ba = [(target_dummy_b1, target_dummy_a1), (target_dummy_b2, target_dummy_a2)]
-        target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b1, target_dummy_b2}, total_size=0))
 
         # Update memory graph
         # New nodes
-        self.memory_graph = memory_graph
         self.memory_graph.add_nodes_to_a([src_dummy_a, sink_fix_node_a, target_dummy_a1, target_dummy_a2])
         self.memory_graph.add_nodes_to_b([src_dummy_b, target_dummy_b1, target_dummy_b2] + mid_b_nodes)
         # New Edges
         self.memory_graph.add_edges(edges_src_ab + edges_src_ba + sinks_fix_ba_edges + edges_target_ab + edges_target_ba)
         self.memory_graph.update_sources_a()
         self.memory_graph.update_sinks_a()
+
+        self.src_cut = Cut([src_dummy_a], {src_dummy_a}, MemoryElements(elements={src_dummy_b}, total_size=0))
+        self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b1.name, target_dummy_b2.name},
+                                                        total_size=0))
+
+    def clean_memory_for_next_step(self, cut: Cut) -> Cut:
+        """
+         This is an auxiliary function that removes irrelevant memory elements from a cut.
+         The memory elements are irrelevant if all operations depended on them have already been executed.
+
+        Args:
+            cut: A Cut to remove elements from.
+
+        Returns: A new Cut with updated memory elements list.
+
+        """
+
+        cut_records_names = cut.get_record_names()
+        filtered_memory_elements = set(filter(lambda elm: not all(child in cut_records_names for child in
+                                                                  self.memory_graph.activation_tensor_children(elm)),
+                                              cut.mem_elements.elemnts))
+
+        return Cut(cut.op_order, cut.op_record,
+                   mem_elements=MemoryElements(filtered_memory_elements,
+                                               sum([elm.size for elm in filtered_memory_elements])))
+
+    def can_expand(self, op_node: BaseNode, cut: Cut) -> bool:
+        """
+        Checks whether a cut can be expanded by adding an operation node to it, that is,
+        all the required memory elements for the operation computation exist in the cut.
+
+        Args:
+            op_node: An operation node to check if it can expand the cut.
+            cut: A cut that contains the op_node.
+
+        Returns: Whether the cut can be expanded by expanding the op_node.
+        """
+
+        return op_node not in cut.op_record and \
+               all([mem_element in self.memory_graph.operation_node_parents(op_node) for mem_element in cut.mem_elements])
+
+    def expand(self, cut: Cut) -> List[Cut]:
+        clean_cut = self.clean_memory_for_next_step(cut)
+
+        # candidates for expansion are children of the memory elements from the cleaned cut that can be expanded
+        candidates = []
+        for mem_element in clean_cut.mem_elements:
+            child_ops = self.memory_graph.activation_tensor_children(mem_element)
+            ops_to_expand = list(filter(lambda op: self.can_expand(op, clean_cut), child_ops))
+            candidates.extend(ops_to_expand)
+
+        # for each candidate a cut is returned with the candidate expanded
+        # (operation is added to record / order and resulting memory elements added to memory elements)
+
+        next_cuts = []
+        for candidate in candidates:
+            op_order = clean_cut.op_order + [candidate]
+
+            op_record = clean_cut.op_record.copy()
+            op_record.add(candidate)
+
+            mem_elements = clean_cut.mem_elements.copy()
+            mem_elements.add_elements_set(set(self.memory_graph.operation_node_children(candidate)))
+
+            expanded_cut = Cut(op_order, op_record, mem_elements)
+            next_cuts.append(expanded_cut)
+
+        return next_cuts
+
