@@ -9,9 +9,8 @@ class ActivationMemoryTensor:
 
     def __init__(self, shape: Tuple[Any], node_name: str, node_output_index: int):
 
-        # TODO: verify that batch size is actually being passed here
         # remove batch size (first element) from output shape
-        self.shape = [s[1:] for s in shape]
+        self.shape = shape[1:]
         self.total_size = self._get_tensor_total_size()
 
         self.node_name = node_name
@@ -36,7 +35,13 @@ class MemoryGraph(DirectedBipartiteGraph):
         node_to_tensor = []
         tensor_to_node = []
 
+        output_nodes = [output.node for output in model_graph.get_outputs()]
         for n in nodes:
+            if n in output_nodes:
+                # We don't add the output tensor of an output node (since it's not needed to be saved in memory).
+                # Also, if we do add its tensor than we won't have sink nodes.
+                # TODO: verify with Alon that this is the expected behavior.
+                continue
             n_outputs = [n.output_shape] if isinstance(n.output_shape, tuple) else n.output_shape
             out_edges = model_graph.out_edges(n, sort_by_attr=EDGE_SOURCE_INDEX)
 
@@ -79,7 +84,7 @@ class MemoryGraph(DirectedBipartiteGraph):
         nodes_total_memory = [n.get_total_input_params() + n.get_total_output_params() for n in nodes]  # input + output size of each node
         self.memory_lbound_single_op = max(nodes_total_memory)
 
-        self.sources = [n for n in self.a_nodes if len(list(self.predecessors(n))) == 0]  # TODO: this supposed to be the original graph's inputs, maybe add assertion for sanity
-        self.sinks = [n for n in self.a_nodes if len(list(self.successors(n))) == 0]  # TODO: this supposed to be the original graph's outputs, maybe add assertion for sanity
+        self.sources_a = [n for n in self.a_nodes if len(list(self.predecessors(n))) == 0]  # TODO: this supposed to be the original graph's inputs, maybe add assertion for sanity
+        self.sinks_a = [n for n in self.a_nodes if len(list(self.successors(n))) == 0]  # TODO: this supposed to be the original graph's outputs, maybe add assertion for sanity
 
     # TODO: add heuristics if necessary
