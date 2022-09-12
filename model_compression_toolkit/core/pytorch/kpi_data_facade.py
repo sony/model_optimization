@@ -60,13 +60,13 @@ if importlib.util.find_spec("torch") is not None:
 
             Import a Pytorch model:
 
-            >>> import torchvision.models.mobilenet_v2 as models
+            >>> from torchvision import models
             >>> module = models.mobilenet_v2()
 
             Create a random dataset generator:
 
             >>> import numpy as np
-            >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
+            >>> def repr_datagen(): return [np.random.random((1,3,224,224))]
 
             Import mct and call for KPI data calculation:
 
@@ -117,13 +117,13 @@ if importlib.util.find_spec("torch") is not None:
 
             Import a Pytorch model:
 
-            >>> import torchvision.models.mobilenet_v2 as models
+            >>> from torchvision import models
             >>> module = models.mobilenet_v2()
 
             Create a random dataset generator:
 
             >>> import numpy as np
-            >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
+            >>> def repr_datagen(): return [np.random.random((1,3,224,224))]
 
             Import mct and call for KPI data calculation:
 

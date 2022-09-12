@@ -68,13 +68,15 @@ if FOUND_TORCH:
 
         Examples:
 
-            Create a GradientPTQConfig to run for 5 iteration:
+            Import mct and Create a GradientPTQConfig to run for 5 iteration:
 
-            >>> gptq_conf = get_pytorch_gptq_config(n_iter=5)
+            >>> import model_compression_toolkit as mct
+            >>> gptq_conf = mct.get_pytorch_gptq_config(n_iter=5)
 
             Other Tensorflow optimizers can be passed with dummy params:
 
-            >>> gptq_conf = get_pytorch_gptq_config(n_iter=3, optimizer=torch.optim.Adam([torch.Tensor(1)]))
+            >>> import torch
+            >>> gptq_conf = mct.get_pytorch_gptq_config(n_iter=3, optimizer=torch.optim.Adam([torch.Tensor(1)]))
 
             The configuration can be passed to :func:`~model_compression_toolkit.pytorch_post_training_quantization` in order to quantize a pytorch model using gptq.
 
@@ -130,18 +132,21 @@ if FOUND_TORCH:
 
             Import a Pytorch module:
 
-            >>> import torchvision.models.mobilenet_v2 as models
+            >>> from torchvision import models
             >>> module = models.mobilenet_v2()
 
             Create a random dataset generator:
 
             >>> import numpy as np
-            >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
+            >>> def repr_datagen(): return [np.random.random((1,3,224,224))]
 
-            Import mct and pass the module with the representative dataset generator to get a quantized module:
+            Create mct core configurations with number of calibration iterations set to 1:
 
-            >>> import model_compression_toolkit as mct
-            >>> quantized_module, quantization_info = mct.pytorch_gradient_post_training_quantization_experimental(module, repr_datagen)
+            >>> config = mct.CoreConfig(n_iter=1)
+
+            Pass the module, the representative dataset generator and the configuration (optional) to get a quantized module
+
+            >>> quantized_module, quantization_info = mct.pytorch_gradient_post_training_quantization_experimental(module, repr_datagen, core_config=config, gptq_config=gptq_conf)
 
         """
 
