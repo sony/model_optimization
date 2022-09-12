@@ -540,9 +540,7 @@ class PytorchImplementation(FrameworkImplementation):
 
         for _ in tqdm(range(core_config.quantization_config.weights_second_moment_iters)):
             with torch.no_grad():
-                # TODO:
-                # take care of multiple input models
-                model(to_torch_tensor(representative_data_gen()[0]))
+                model(*to_torch_tensor(representative_data_gen()))
 
         set_model(model)
 

@@ -35,6 +35,8 @@ from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_t
     MixedPercisionActivationSearch4BitFunctional
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
+from tests.pytorch_tests.model_tests.feature_models.second_moment_correction_test import ConvSecondMomentNetTest, \
+    ConvTSecondMomentNetTest, MultipleInputsConvSecondMomentNetTest
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
     SoftmaxFunctionNetTest
 from tests.pytorch_tests.model_tests.feature_models.permute_substitution_test import PermuteSubstitutionTest
@@ -119,6 +121,24 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the BatchNorm folding feature, plus adding a residual connection.
         """
         BNFoldingNetTest(self).run_test()
+
+    def test_conv_second_moment_correction(self):
+        """
+        This is the test for the Second Moment Correction feature with Conv2d.
+        """
+        ConvSecondMomentNetTest(self).run_test()
+
+    def test_convt_second_moment_correction(self):
+        """
+        This is the test for the Second Moment Correction feature with ConvTranspose2d.
+        """
+        ConvTSecondMomentNetTest(self).run_test()
+
+    def test_multiple_inputs_conv_second_moment_correction(self):
+        """
+        This is the test for the Second Moment Correction feature with Multiple Inputs.
+        """
+        MultipleInputsConvSecondMomentNetTest(self).run_test()
 
     def test_bn_function(self):
         """
