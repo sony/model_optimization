@@ -14,7 +14,7 @@ This project enables researchers, developers and engineers an easily way to opti
 Currently, MCT supports hardware-friendly post training quantization (HPTQ) with Tensorflow 2 [1].
 
 
-MCT project is developed by researchers and engineers working in Sony Semiconductors Israel.
+MCT project is developed by researchers and engineers working in Sony Semiconductor Israel.
 
 Install
 ====================================
