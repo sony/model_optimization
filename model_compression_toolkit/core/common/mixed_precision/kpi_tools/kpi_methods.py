@@ -347,7 +347,7 @@ def _get_origin_activation_node(n: BaseNode) -> BaseNode:
     return n
 
 
-def _compute_node_weights_memory(n, node_nbits, fw_info) -> float:
+def _compute_node_weights_memory(n: BaseNode, node_nbits: int, fw_info: FrameworkInfo) -> float:
     """
     Computes the weights' memory of the given node.
 
@@ -370,7 +370,7 @@ def _compute_node_weights_memory(n, node_nbits, fw_info) -> float:
     return node_num_weights_params * node_nbits / BITS_TO_BYTES
 
 
-def _compute_node_activation_memory(n, node_nbits) -> float:
+def _compute_node_activation_memory(n: BaseNode, node_nbits: int) -> float:
     """
     Computes the activation tensor memory of the given node.
 
