@@ -16,6 +16,7 @@ from typing import Union, List
 from abc import abstractmethod
 import torch
 import numpy as np
+from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.gptq.pytorch.quantizer.gptq_quantizer import BaseWeightQuantizer
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
@@ -99,7 +100,7 @@ class BaseGumbelWeightQuantizer(BaseWeightQuantizer):
         self.update_gumbel_param = True
         scale = self.cycle_iterations / (-2 * np.log(0.001))
 
-        def tau_function(i):
+        def tau_function(i: int) -> float:
             """
             A function that generates the gumbel temperature.
             Args:
@@ -118,7 +119,7 @@ class BaseGumbelWeightQuantizer(BaseWeightQuantizer):
 
         self.tau_function = tau_function
 
-    def get_gumbel_probability(self):
+    def get_gumbel_probability(self) -> torch.Tensor:
         """
         A function that return the gumbel probability value.
         Returns: gumbel probability
@@ -146,5 +147,4 @@ class BaseGumbelWeightQuantizer(BaseWeightQuantizer):
         """
         Returns temperature trainable variables
         """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s GPTQ model builder method.')
+        raise Logger.error(f"{self.__class__.__name__} have to implement this abstract function.")

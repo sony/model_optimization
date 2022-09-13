@@ -83,7 +83,7 @@ class STEWeightQuantizer(BaseWeightQuantizer):
         """
         return {THRESHOLD: self.threshold_values}
 
-    def forward(self, w: nn.Parameter, training=True) -> nn.Parameter:
+    def forward(self, w: nn.Parameter, training: bool = True) -> nn.Parameter:
         """
         Weight fake quantizer
         Args:

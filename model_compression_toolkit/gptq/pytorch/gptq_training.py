@@ -150,7 +150,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
             for p in gumbel_prob:
                 entropy = -torch.mean(torch.sum(p * torch.log(torch.maximum(p, self.gptq_config.eps*torch.ones_like(p))),dim=0))
                 gumbel_reg += entropy
-            gumbel_reg /= len(gumbel_prob)
+            gumbel_reg = 0 if gumbel_reg == 0 else gumbel_reg/len(gumbel_prob)
             loss_value += self.gptq_config.quantizer_config.gumbel_entropy_regularization * gumbel_reg
 
         # Back-pass
