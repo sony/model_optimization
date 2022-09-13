@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List
+from typing import List, Callable
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
@@ -96,6 +96,57 @@ class MaxCutAstar:
         self.src_cut = Cut([src_dummy_a], {src_dummy_a}, MemoryElements(elements={src_dummy_b}, total_size=0))
         self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b1, target_dummy_b2},
                                                         total_size=0))
+
+    def solve(self, halt: Callable):
+        open_list = [self.src_cut]
+        closed_list = []
+        costs = {self.src_cut: self.src_cut.mem_elements.total_size}
+        routes = {self.src_cut: [self.src_cut]}
+
+        while not halt() and len(open_list) > 0:
+            # Choose next node to expand
+            next_cut = self.get_cut_to_expand(open_list, costs, routes)
+
+            cut_cost = costs[next_cut]
+            cut_route = routes[next_cut]
+
+            if next_cut == self.target_cut:
+                # TODO: in original code returning "Some", understand what it is?
+                return cut_cost, list(reversed(cut_route))
+
+            if self.is_pivot(next_cut):
+                # Can clear all search history
+                open_list = []
+                closed_list = []
+                routes = {}
+            else:
+                # Can remove only next_cut and put it in closed_list
+                del routes[next_cut]
+                closed_list.append(next_cut)
+
+            # Expand the chosen cut
+            expanded_cuts = self.expand(next_cut)
+            # Only consider nodes that where not already visited
+            expanded_cuts = list(filter(lambda c: c not in closed_list, expanded_cuts))
+            for c in expanded_cuts:
+                cost = self.accumulate(cut_cost, c.mem_elements.total_size)
+                if c not in open_list:  # TODO: doing here something with ordering - need to understand what - maybe cut can exists but only ordering should change?
+                    open_list.append(c)
+                    costs.update({c: cost})
+                    routes.update({c: [c] + cut_route})
+
+        # Halt or No Solution
+        return None
+
+    def get_cut_to_expand(self, open_list, costs, routes):
+        ordered_cuts_list = sorted(open_list,
+                                   key=lambda c: (self.accumulate(costs[c], self.estimate(c)), len(routes[c])),
+                                   reverse=False)
+
+        assert len(ordered_cuts_list) > 0
+
+        # TODO: verify that it removes the node from open and mention it in the method's documentation
+        return ordered_cuts_list.pop()
 
     def clean_memory_for_next_step(self, cut: Cut) -> Cut:
         """
@@ -205,4 +256,5 @@ class MaxCutAstar:
 
     def estimate(self, estimate_factor: float) -> float:
         return estimate_factor * self.memory_graph.memory_lbound_single_op
+
 
