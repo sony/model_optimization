@@ -45,7 +45,8 @@ class DummyActivationMemoryTensorGenerator:
         while True:
             yield ActivationMemoryTensor(shape=tuple(),
                                          node_name="dummy_tensor_" + str(self.counter),
-                                         node_output_index=0)
+                                         node_output_index=0,
+                                         total_size=0)
 
             self.counter += 1
 
@@ -60,8 +61,8 @@ class MaxCutAstar:
         # In order to run Astar search on the graph we need to define a single source and a single target.
         # Dummy nodes are used for this purpose
         # (2 for the src, 4 for the target, memory values are 0 to leave the memory requirement unaffected)
-        gen_a = iter(DummyBaseNodeGenerator)
-        gen_b = iter(DummyActivationMemoryTensorGenerator)
+        gen_a = iter(DummyBaseNodeGenerator())
+        gen_b = iter(DummyActivationMemoryTensorGenerator())
 
         # Source Cut
         src_dummy_a = next(gen_a)
@@ -93,7 +94,7 @@ class MaxCutAstar:
         self.memory_graph.update_sinks_a()
 
         self.src_cut = Cut([src_dummy_a], {src_dummy_a}, MemoryElements(elements={src_dummy_b}, total_size=0))
-        self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b1.name, target_dummy_b2.name},
+        self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b1, target_dummy_b2},
                                                         total_size=0))
 
     def clean_memory_for_next_step(self, cut: Cut) -> Cut:
@@ -109,13 +110,13 @@ class MaxCutAstar:
         """
 
         cut_records_names = cut.get_record_names()
-        filtered_memory_elements = set(filter(lambda elm: not all(child in cut_records_names for child in
+        filtered_memory_elements = set(filter(lambda elm: not all(child.name in cut_records_names for child in
                                                                   self.memory_graph.activation_tensor_children(elm)),
-                                              cut.mem_elements.elemnts))
+                                              cut.mem_elements.elements))
 
         return Cut(cut.op_order, cut.op_record,
                    mem_elements=MemoryElements(filtered_memory_elements,
-                                               sum([elm.size for elm in filtered_memory_elements])))
+                                               sum([elm.total_size for elm in filtered_memory_elements])))
 
     def can_expand(self, op_node: BaseNode, cut: Cut) -> bool:
         """
@@ -129,8 +130,9 @@ class MaxCutAstar:
         Returns: Whether the cut can be expanded by expanding the op_node.
         """
 
-        return op_node not in cut.op_record and \
-               all([mem_element in self.memory_graph.operation_node_parents(op_node) for mem_element in cut.mem_elements])
+        clean_cut = self.clean_memory_for_next_step(cut)
+        return op_node not in cut.op_record and len(cut.mem_elements.elements) > 0 and \
+               all([parent_mem_element in clean_cut.mem_elements.elements for parent_mem_element in self.memory_graph.operation_node_parents(op_node)])
 
     def expand(self, cut: Cut) -> List[Cut]:
         clean_cut = self.clean_memory_for_next_step(cut)
@@ -144,7 +146,6 @@ class MaxCutAstar:
 
         # for each candidate a cut is returned with the candidate expanded
         # (operation is added to record / order and resulting memory elements added to memory elements)
-
         next_cuts = []
         for candidate in candidates:
             op_order = clean_cut.op_order + [candidate]
@@ -173,8 +174,35 @@ class MaxCutAstar:
 
         clean_cut = self.clean_memory_for_next_step(cut)
 
-        mem_elements_parents = list(map(lambda mem_elm: self.memory_graph.activation_tensor_parents, cut.mem_elements))
-        unique_parents = []
-        unique_parents = set(map(unique_parents.extend, mem_elements_parents))
+        mem_elements_parents = list(map(lambda mem_elm: self.memory_graph.activation_tensor_parents(mem_elm), clean_cut.mem_elements.elements))
+        unique_parents = set(sum(mem_elements_parents, []))
 
         return len(unique_parents) == 1
+
+    @staticmethod
+    def accumulate(cost_1: float, cost_2: float) -> float:
+        """
+        A function defining the accumulation method of costs for Astar search.
+        We take the maximum memory requirement of the schedule, in order to find the minimal maximum out of all possible schedules.
+
+        Args:
+            cost_1: The first schedule option's cost.
+            cost_2: The second schedule option's cost.
+
+        Returns: The maximum out of the two costs.
+
+        """
+        return max(cost_1, cost_2)
+
+    # def ordering(self):
+    #     """
+    #     An ordering function for the Astar search, to define which possible expanded node is preferred,
+    #     based on its cost (e.g. the bigger or the smaller).
+    #
+    #     Returns: The
+    #
+    #     """
+
+    def estimate(self, estimate_factor: float) -> float:
+        return estimate_factor * self.memory_graph.memory_lbound_single_op
+

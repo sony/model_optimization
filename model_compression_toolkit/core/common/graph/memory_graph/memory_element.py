@@ -17,11 +17,11 @@ import numpy as np
 
 
 class ActivationMemoryTensor:
-    def __init__(self, shape: Tuple[Any], node_name: str, node_output_index: int):
+    def __init__(self, shape: Tuple[Any], node_name: str, node_output_index: int, total_size: float = -1):
 
         # remove batch size (first element) from output shape
         self.shape = shape[1:]
-        self.total_size = self._get_tensor_total_size()
+        self.total_size = self._get_tensor_total_size() if total_size == -1 else total_size
 
         self.node_name = node_name
         self.node_output_index = node_output_index
@@ -36,10 +36,10 @@ class MemoryElements:
         self.elements = elements
         self.total_size = total_size
 
-    def add_element(self, new_element):
+    def add_element(self, new_element: ActivationMemoryTensor):
         self.elements.add(new_element)
-        self.total_size += new_element.size
+        self.total_size += new_element.total_size
 
-    def add_elements_set(self, new_elements_set):
+    def add_elements_set(self, new_elements_set: Set[ActivationMemoryTensor]):
         self.elements.update(new_elements_set)
-        self.total_size += sum([e.size for e in new_elements_set])
+        self.total_size += sum([e.total_size for e in new_elements_set])
