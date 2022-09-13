@@ -160,3 +160,21 @@ class MaxCutAstar:
 
         return next_cuts
 
+    def is_pivot(self, cut: Cut) -> bool:
+        """
+        returns true if Cut is a pivot i.e. the cut must be in the selected route.
+        If all memory elements in the cut have the same parent it is a pivot.
+
+        Args:
+            cut: A Cut to check whether it is a pivot.
+
+        Returns: True if the given cut is a pivot.
+        """
+
+        clean_cut = self.clean_memory_for_next_step(cut)
+
+        mem_elements_parents = list(map(lambda mem_elm: self.memory_graph.activation_tensor_parents, cut.mem_elements))
+        unique_parents = []
+        unique_parents = set(map(unique_parents.extend, mem_elements_parents))
+
+        return len(unique_parents) == 1
