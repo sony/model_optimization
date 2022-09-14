@@ -37,8 +37,7 @@ class EditRule(_EditRule):
 
         >>> import model_compression_toolkit as mct
         >>> from tensorflow.keras.layers import Conv2D
-        >>> er_list = [EditRule(filter=mct.network_editor.NodeTypeFilter(Conv2D),
-        >>> action=mct.network_editor.ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=9))]
+        >>> er_list = [mct.network_editor.EditRule(filter=mct.network_editor.NodeTypeFilter(Conv2D), action=mct.network_editor.ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=9))]
 
         Then the rules list can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization`
         to modify the network during the quantization process.

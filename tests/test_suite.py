@@ -23,6 +23,7 @@ from tests.common_tests.function_tests.test_histogram_collector import TestHisto
 from tests.common_tests.function_tests.test_collectors_manipulation import TestCollectorsManipulations
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
+from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
 
 found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
@@ -71,6 +72,7 @@ if __name__ == '__main__':
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(OpsetTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(QCOptionsTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FusingTest))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCommonDocsExamples))
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
