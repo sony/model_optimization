@@ -29,9 +29,8 @@ class Cut:
 
     def __eq__(self, other):
         if isinstance(other, Cut):
-            # TODO: take care of lists/sets equality here
-            return self.op_order == other.op_order and self.op_record == other.op_record and self.mem_elements == other.mem_elements
+            return self.mem_elements == other.mem_elements
         return False
 
     def __hash__(self):
-        return hash((frozenset(self.op_order), frozenset(self.op_record), frozenset(self.mem_elements)))
+        return hash((frozenset(self.op_order), frozenset(self.op_record), self.mem_elements))

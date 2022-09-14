@@ -71,7 +71,7 @@ class TestMaxCutAstarInit(unittest.TestCase):
         # Verify target cut creation
         self.assertTrue(mc_astar.target_cut is not None)
         self.assertTrue(len(mc_astar.target_cut.op_record) == 0)
-        self.assertTrue(len(mc_astar.target_cut.mem_elements.elements) == 2)
+        self.assertTrue(len(mc_astar.target_cut.mem_elements.elements) == 1)
         self.assertTrue(mc_astar.target_cut.mem_elements.total_size == 0)
 
     def test_max_cut_astar_init_simple(self):
@@ -319,6 +319,22 @@ class TestMaxCutAstarExpand(unittest.TestCase):
         self.assertTrue(len(expanded_cuts[0].mem_elements.elements) == 3)
         self.assertTrue(len(expanded_cuts[1].mem_elements.elements) == 3)
 
+
+class TestMaxCutAstarSolve(unittest.TestCase):
+
+    def test_max_cut_astar_solve_simple(self):
+        model = simple_model((8, 8, 3))
+        graph = model_reader(model)
+        memory_graph = MemoryGraph(graph)
+
+        l_bound = memory_graph.memory_lbound_single_op
+        u_bound = 2 * sum([t.total_size for t in memory_graph.b_nodes]) - l_bound
+        estimate_factor = (u_bound + l_bound) / 2
+
+        mc_astar = MaxCutAstar(memory_graph, estimate_factor)
+
+        solution = mc_astar.solve(iter_limit=10)
+        self.assertIsNotNone(solution)
 
 if __name__ == '__main__':
     unittest.main()

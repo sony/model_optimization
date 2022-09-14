@@ -44,5 +44,14 @@ class MemoryElements:
         self.elements.update(new_elements_set)
         self.total_size += sum([e.total_size for e in new_elements_set])
 
+    def __eq__(self, other):
+        if isinstance(other, MemoryElements):
+            # MemoryElements are equal if they contain the exact same elements sets
+            return self.elements == other.elements
+        return False
+
+    def __hash__(self):
+        return hash((frozenset(self.elements)))
+
     def __copy__(self):
         return MemoryElements({elm for elm in self.elements}, self.total_size)

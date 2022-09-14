@@ -54,10 +54,11 @@ class DummyActivationMemoryTensorGenerator:
 
 class MaxCutAstar:
 
-    def __init__(self, memory_graph):#, memory_size_fn):
+    def __init__(self, memory_graph, estimate_factor: float = None):
 
         self.memory_graph = memory_graph
-        # self.memory_size_fn = memory_size_fn
+        self.estimate_factor = self.get_init_estimate_factor(memory_graph) \
+            if estimate_factor is None else estimate_factor
 
         # In order to run Astar search on the graph we need to define a single source and a single target.
         # Dummy nodes are used for this purpose
@@ -78,27 +79,34 @@ class MaxCutAstar:
         sinks_fix_ba_edges = [(t, sink_fix_node_a) for s, t in sinks_fix_ab_edges]
 
         # Target Cut
+        # TODO: do we need target dummy 2? Seems that its just causing problems - ask Alon.
         target_dummy_a1 = next(gen_a)
-        target_dummy_a2 = next(gen_a)
+        # target_dummy_a2 = next(gen_a)
         target_dummy_b1 = next(gen_b)
-        target_dummy_b2 = next(gen_b)
-        edges_target_ab = [(sink_fix_node_a, target_dummy_b1), (target_dummy_a1, target_dummy_b2)]
-        edges_target_ba = [(target_dummy_b1, target_dummy_a1), (target_dummy_b2, target_dummy_a2)]
+        # target_dummy_b2 = next(gen_b)
+        # edges_target_ab = [(sink_fix_node_a, target_dummy_b1), (target_dummy_a1, target_dummy_b2)]
+        edges_target_ab = [(sink_fix_node_a, target_dummy_b1)]
+        # edges_target_ba = [(target_dummy_b1, target_dummy_a1), (target_dummy_b2, target_dummy_a2)]
+        edges_target_ba = [(target_dummy_b1, target_dummy_a1)]
 
         # Update memory graph
         # New nodes
-        self.memory_graph.add_nodes_to_a([src_dummy_a, sink_fix_node_a, target_dummy_a1, target_dummy_a2])
-        self.memory_graph.add_nodes_to_b([src_dummy_b, target_dummy_b1, target_dummy_b2] + mid_b_nodes)
+        # self.memory_graph.add_nodes_to_a([src_dummy_a, sink_fix_node_a, target_dummy_a1, target_dummy_a2])
+        # self.memory_graph.add_nodes_to_b([src_dummy_b, target_dummy_b1, target_dummy_b2] + mid_b_nodes)
+        self.memory_graph.add_nodes_to_a([src_dummy_a, sink_fix_node_a, target_dummy_a1])
+        self.memory_graph.add_nodes_to_b([src_dummy_b, target_dummy_b1] + mid_b_nodes)
         # New Edges
         self.memory_graph.add_edges(edges_src_ab + edges_src_ba + sinks_fix_ab_edges + sinks_fix_ba_edges + edges_target_ab + edges_target_ba)
         self.memory_graph.update_sources_a()
         self.memory_graph.update_sinks_a()
 
         self.src_cut = Cut([src_dummy_a], {src_dummy_a}, MemoryElements(elements={src_dummy_b}, total_size=0))
-        self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b1, target_dummy_b2},
+        # self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b1, target_dummy_b2},
+        #                                                 total_size=0))
+        self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b1},
                                                         total_size=0))
 
-    def solve(self, iter_limit: int):
+    def solve(self, iter_limit: int):  # TODO: what is a reasonable default number of iterations to set?
         open_list = [self.src_cut]
         closed_list = []
         costs = {self.src_cut: self.src_cut.mem_elements.total_size}
@@ -125,6 +133,7 @@ class MaxCutAstar:
                 routes = {}
             else:
                 # Can remove only next_cut and put it in closed_list
+                open_list.remove(next_cut)
                 del routes[next_cut]
                 closed_list.append(next_cut)
 
@@ -140,6 +149,7 @@ class MaxCutAstar:
                     open_list.append(c)
                     costs.update({c: cost})
                     routes.update({c: [c] + cut_route})
+            print(expansion_count)
 
         # Halt or No Solution
         return None
@@ -150,9 +160,7 @@ class MaxCutAstar:
                                    reverse=False)
 
         assert len(ordered_cuts_list) > 0
-
-        # TODO: verify that it removes the node from open and mention it in the method's documentation
-        return ordered_cuts_list.pop()
+        return ordered_cuts_list[0]
 
     def clean_memory_for_next_step(self, cut: Cut) -> Cut:
         """
@@ -260,7 +268,13 @@ class MaxCutAstar:
     #
     #     """
 
-    def estimate(self, estimate_factor: float) -> float:
-        return estimate_factor * self.memory_graph.memory_lbound_single_op
+    def estimate(self, cut: Cut) -> float:
+        return self.estimate_factor * self.memory_graph.memory_lbound_single_op
+
+    @staticmethod
+    def get_init_estimate_factor(memory_graph):
+        l_bound = memory_graph.memory_lbound_single_op
+        u_bound = 2 * sum([t.total_size for t in memory_graph.b_nodes]) - l_bound
+        return (u_bound + l_bound) / 2
 
 
