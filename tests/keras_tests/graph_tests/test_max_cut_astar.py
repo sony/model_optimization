@@ -243,5 +243,82 @@ class TestMaxCutAstarIsPivot(unittest.TestCase):
             n = mc_astar.memory_graph.activation_tensor_children(list(act_tensor)[0])[0]
 
 
+class TestMaxCutAstarExpand(unittest.TestCase):
+
+    def test_max_cut_astar_expand_simple(self):
+        model = simple_model((8, 8, 3))
+        graph = model_reader(model)
+        memory_graph = MemoryGraph(graph)
+
+        mc_astar = MaxCutAstar(memory_graph)
+
+        # Expand source cut (add input node and activation tensor)
+        src_expand = mc_astar.expand(mc_astar.src_cut)
+        self.assertTrue(len(src_expand) == 1)
+        expanded_cut = src_expand[0]
+        input_act_tensor = [t.total_size for t in memory_graph.b_nodes if 'input' in t.node_name][0]
+        self.assertTrue(expanded_cut.mem_elements.total_size == input_act_tensor)
+        input_node = graph.get_topo_sorted_nodes()[0]
+        self.assertTrue(input_node in expanded_cut.op_record)
+
+        # Expand one more time - add conv node and activation tensor
+        input_expand = mc_astar.expand(expanded_cut)
+        self.assertTrue(len(input_expand) == 1)
+        expanded_cut = input_expand[0]
+        conv_act_tensor = [t.total_size for t in memory_graph.b_nodes if 'conv' in t.node_name][0]
+        self.assertTrue(expanded_cut.mem_elements.total_size == input_act_tensor + conv_act_tensor)
+        conv_node = graph.get_topo_sorted_nodes()[1]
+        self.assertTrue(conv_node in expanded_cut.op_record)
+
+    def test_max_cut_astar_expand_complex(self):
+        model = complex_model((8, 8, 3))
+        graph = model_reader(model)
+        memory_graph = MemoryGraph(graph)
+
+        mc_astar = MaxCutAstar(memory_graph)
+
+        # Test split node expansion
+        split_node = graph.get_topo_sorted_nodes()[4]
+        split_act_tensor = set([t for t in memory_graph.b_nodes if 'split' in t.node_name])
+        cut = Cut([split_node], {split_node},
+                  MemoryElements(split_act_tensor, sum([t.total_size for t in split_act_tensor])))
+
+        expanded_cuts = mc_astar.expand(cut)
+        self.assertTrue(len(expanded_cuts) == 2)
+
+        conv_after_split_node1 = graph.get_topo_sorted_nodes()[5]
+        conv_after_split_node2 = graph.get_topo_sorted_nodes()[6]
+        self.assertTrue((conv_after_split_node1 in expanded_cuts[0].op_record and
+                        conv_after_split_node2 not in expanded_cuts[0].op_record) or
+                        (conv_after_split_node1 not in expanded_cuts[0].op_record and
+                         conv_after_split_node2 in expanded_cuts[0].op_record))
+
+        self.assertTrue((conv_after_split_node1 in expanded_cuts[1].op_record and
+                         conv_after_split_node2 not in expanded_cuts[1].op_record) or
+                        (conv_after_split_node1 not in expanded_cuts[1].op_record and
+                         conv_after_split_node2 in expanded_cuts[1].op_record))
+
+        self.assertTrue(len(expanded_cuts[0].mem_elements.elements) == 3)
+        self.assertTrue(len(expanded_cuts[1].mem_elements.elements) == 3)
+
+        # Test expansion for add node
+        concat_node = graph.get_topo_sorted_nodes()[7]
+        second_relu_node = graph.get_topo_sorted_nodes()[9]
+        second_relu_act_tensor = mc_astar.memory_graph.operation_node_children(second_relu_node)[0]
+        concat_act_tensor = mc_astar.memory_graph.operation_node_children(concat_node)[0]
+        act_tensors = [second_relu_act_tensor, concat_act_tensor]
+        add_node = graph.get_topo_sorted_nodes()[10]
+
+        cut = Cut([concat_node, second_relu_node], {concat_node, second_relu_node},
+                  MemoryElements(set(act_tensors), sum([t.total_size for t in act_tensors])))
+
+        expanded_cuts = mc_astar.expand(cut)
+        self.assertTrue(len(expanded_cuts) == 2)
+        self.assertTrue(any([add_node in c.op_record for c in expanded_cuts]))
+
+        self.assertTrue(len(expanded_cuts[0].mem_elements.elements) == 3)
+        self.assertTrue(len(expanded_cuts[1].mem_elements.elements) == 3)
+
+
 if __name__ == '__main__':
     unittest.main()

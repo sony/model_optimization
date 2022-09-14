@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 from typing import List, Callable
 
 from model_compression_toolkit.core.common import BaseNode
@@ -31,7 +32,7 @@ class DummyBaseNodeGenerator:
                            input_shape=tuple(),
                            output_shape=tuple(),
                            weights={},
-                           layer_class=None,
+                           layer_class=None,  # TODO: set some dummy type? can cause problems if not
                            has_activation=False)
 
             self.counter += 1
@@ -89,7 +90,7 @@ class MaxCutAstar:
         self.memory_graph.add_nodes_to_a([src_dummy_a, sink_fix_node_a, target_dummy_a1, target_dummy_a2])
         self.memory_graph.add_nodes_to_b([src_dummy_b, target_dummy_b1, target_dummy_b2] + mid_b_nodes)
         # New Edges
-        self.memory_graph.add_edges(edges_src_ab + edges_src_ba + sinks_fix_ba_edges + edges_target_ab + edges_target_ba)
+        self.memory_graph.add_edges(edges_src_ab + edges_src_ba + sinks_fix_ab_edges + sinks_fix_ba_edges + edges_target_ab + edges_target_ba)
         self.memory_graph.update_sources_a()
         self.memory_graph.update_sinks_a()
 
@@ -97,21 +98,24 @@ class MaxCutAstar:
         self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b1, target_dummy_b2},
                                                         total_size=0))
 
-    def solve(self, halt: Callable):
+    def solve(self, iter_limit: int):
         open_list = [self.src_cut]
         closed_list = []
         costs = {self.src_cut: self.src_cut.mem_elements.total_size}
         routes = {self.src_cut: [self.src_cut]}
 
-        while not halt() and len(open_list) > 0:
+        expansion_count = 0
+
+        while expansion_count < iter_limit and len(open_list) > 0:
             # Choose next node to expand
-            next_cut = self.get_cut_to_expand(open_list, costs, routes)
+            next_cut = self._get_cut_to_expand(open_list, costs, routes)
 
             cut_cost = costs[next_cut]
             cut_route = routes[next_cut]
 
             if next_cut == self.target_cut:
                 # TODO: in original code returning "Some", understand what it is?
+                #  I think that it is just reverse ordering the path but not sure
                 return cut_cost, list(reversed(cut_route))
 
             if self.is_pivot(next_cut):
@@ -126,8 +130,10 @@ class MaxCutAstar:
 
             # Expand the chosen cut
             expanded_cuts = self.expand(next_cut)
+            expansion_count += 1
+
             # Only consider nodes that where not already visited
-            expanded_cuts = list(filter(lambda c: c not in closed_list, expanded_cuts))
+            expanded_cuts = list(filter(lambda _c: _c not in closed_list, expanded_cuts))
             for c in expanded_cuts:
                 cost = self.accumulate(cut_cost, c.mem_elements.total_size)
                 if c not in open_list:  # TODO: doing here something with ordering - need to understand what - maybe cut can exists but only ordering should change?
@@ -138,7 +144,7 @@ class MaxCutAstar:
         # Halt or No Solution
         return None
 
-    def get_cut_to_expand(self, open_list, costs, routes):
+    def _get_cut_to_expand(self, open_list, costs, routes):
         ordered_cuts_list = sorted(open_list,
                                    key=lambda c: (self.accumulate(costs[c], self.estimate(c)), len(routes[c])),
                                    reverse=False)
@@ -190,9 +196,9 @@ class MaxCutAstar:
 
         # candidates for expansion are children of the memory elements from the cleaned cut that can be expanded
         candidates = []
-        for mem_element in clean_cut.mem_elements:
+        for mem_element in clean_cut.mem_elements.elements:
             child_ops = self.memory_graph.activation_tensor_children(mem_element)
-            ops_to_expand = list(filter(lambda op: self.can_expand(op, clean_cut), child_ops))
+            ops_to_expand = list(filter(lambda op: self.can_expand(op, clean_cut) and op not in candidates, child_ops))
             candidates.extend(ops_to_expand)
 
         # for each candidate a cut is returned with the candidate expanded
@@ -204,7 +210,7 @@ class MaxCutAstar:
             op_record = clean_cut.op_record.copy()
             op_record.add(candidate)
 
-            mem_elements = clean_cut.mem_elements.copy()
+            mem_elements = copy.copy(clean_cut.mem_elements)
             mem_elements.add_elements_set(set(self.memory_graph.operation_node_children(candidate)))
 
             expanded_cut = Cut(op_order, op_record, mem_elements)

@@ -43,3 +43,6 @@ class MemoryElements:
     def add_elements_set(self, new_elements_set: Set[ActivationMemoryTensor]):
         self.elements.update(new_elements_set)
         self.total_size += sum([e.total_size for e in new_elements_set])
+
+    def __copy__(self):
+        return MemoryElements({elm for elm in self.elements}, self.total_size)
