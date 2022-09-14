@@ -23,7 +23,7 @@ from model_compression_toolkit import core
 RAISE_ON_ERROR = False
 
 
-class TestKerasDocsExamples(unittest.TestCase):
+class TestPytorchDocsExamples(unittest.TestCase):
 
     def test_pytorch_ptq_facade(self):
         doctest.testfile("quantization_facade.py", package=ptq.pytorch, verbose=True, raise_on_error=RAISE_ON_ERROR)

@@ -49,7 +49,7 @@ if found_tf:
     from tests.keras_tests.test_keras_tp_model import TestKerasTPModel
     from tests.keras_tests.function_tests.test_sensitivity_metric_interest_points import \
         TestSensitivityMetricInterestPoints
-
+    from tests.keras_tests.test_doc_examples import TestKerasDocsExamples
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -57,6 +57,7 @@ if found_pytorch:
     from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
     from tests.pytorch_tests.test_pytorch_tp_model import TestPytorchTPModel
+    from tests.pytorch_tests.test_doc_examples import TestPytorchDocsExamples
 
 
 if __name__ == '__main__':
@@ -87,6 +88,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformQuantizeTensor))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformRangeSelectionWeights))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasTPModel))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasDocsExamples))
 
         # Keras test layers are supported in TF2.6 or higher versions
         if tf.__version__ >= "2.6":
@@ -102,6 +104,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromName('test_resnet18', ModelTest))
         suiteList.append(unittest.TestLoader().loadTestsFromName('test_shufflenet_v2_x1_0', ModelTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchTPModel))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchDocsExamples))
 
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)
