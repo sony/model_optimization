@@ -174,7 +174,7 @@ if common.constants.FOUND_TF:
 
             Create GPTQ config:
 
-            >>> gptq_config = mct.get_keras_gptq_config(1)
+            >>> gptq_config = mct.get_keras_gptq_config(n_iter=1)
 
             Pass the model with the representative dataset generator to get a quantized model:
 

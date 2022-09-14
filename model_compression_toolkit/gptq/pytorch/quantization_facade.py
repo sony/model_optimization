@@ -68,7 +68,7 @@ if FOUND_TORCH:
 
         Examples:
 
-            Import mct and Create a GradientPTQConfig to run for 5 iteration:
+            Import MCT and Create a GradientPTQConfig to run for 5 iteration:
 
             >>> import model_compression_toolkit as mct
             >>> gptq_conf = mct.get_pytorch_gptq_config(n_iter=5)
@@ -140,7 +140,7 @@ if FOUND_TORCH:
             >>> import numpy as np
             >>> def repr_datagen(): return [np.random.random((1,3,224,224))]
 
-            Create mct core configurations with number of calibration iterations set to 1:
+            Create MCT core configurations with number of calibration iterations set to 1:
 
             >>> config = mct.CoreConfig(n_iter=1)
 

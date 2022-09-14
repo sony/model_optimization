@@ -25,11 +25,11 @@ RAISE_ON_ERROR = False
 
 class TestKerasDocsExamples(unittest.TestCase):
 
-    def test_keras_ptq_facade(self):
-        doctest.testfile("quantization_facade.py", package=ptq.keras, verbose=True, raise_on_error=RAISE_ON_ERROR)
+    def test_pytorch_ptq_facade(self):
+        doctest.testfile("quantization_facade.py", package=ptq.pytorch, verbose=True, raise_on_error=RAISE_ON_ERROR)
 
-    def test_keras_gptq_facade(self):
-        doctest.testfile("quantization_facade.py", package=gptq.keras, verbose=True, raise_on_error=RAISE_ON_ERROR)
+    def test_pytorch_gptq_facade(self):
+        doctest.testfile("quantization_facade.py", package=gptq.pytorch, verbose=True, raise_on_error=RAISE_ON_ERROR)
 
-    def test_keras_kpi_data_facade(self):
-        doctest.testfile("kpi_data_facade.py", package=core.keras, verbose=True, raise_on_error=RAISE_ON_ERROR)
+    def test_pytorch_kpi_data_facade(self):
+        doctest.testfile("kpi_data_facade.py", package=core.pytorch, verbose=True, raise_on_error=RAISE_ON_ERROR)

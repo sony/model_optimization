@@ -82,7 +82,7 @@ if FOUND_TORCH:
             >>> import numpy as np
             >>> def repr_datagen(): return [np.random.random((1,3,224,224))]
 
-            Import mct and pass the module with the representative dataset generator to get a quantized module
+            Import MCT and pass the module with the representative dataset generator to get a quantized module
             Set number of clibration iterations to 1:
 
             >>> import model_compression_toolkit as mct
