@@ -76,7 +76,7 @@ if common.constants.FOUND_TF:
 
         Examples:
 
-             Import MCT and tensorflow:
+             Import MCT and TensorFlow:
 
              >>> import model_compression_toolkit as mct
              >>> import tensorflow as tf
