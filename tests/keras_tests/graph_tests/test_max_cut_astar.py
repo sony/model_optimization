@@ -335,6 +335,31 @@ class TestMaxCutAstarSolve(unittest.TestCase):
 
         solution = mc_astar.solve(iter_limit=10)
         self.assertIsNotNone(solution)
+        cost, path = solution
+        for i, n in enumerate(graph.get_topo_sorted_nodes()):
+            self.assertTrue(n == path[i])
+
+    def test_max_cut_astar_solve_complex(self):
+        model = complex_model((8, 8, 3))
+        graph = model_reader(model)
+        memory_graph = MemoryGraph(graph)
+
+        l_bound = memory_graph.memory_lbound_single_op
+        u_bound = 2 * sum([t.total_size for t in memory_graph.b_nodes]) - l_bound
+        estimate_factor = (u_bound + l_bound) / 2
+
+        mc_astar = MaxCutAstar(memory_graph, estimate_factor)
+
+        solution = mc_astar.solve(iter_limit=20)
+        self.assertIsNotNone(solution)
+        cost, path = solution
+
+        all_tensors_sizes = [t.total_size for t in memory_graph.b_nodes]
+        self.assertTrue(max(all_tensors_sizes) < cost < sum(all_tensors_sizes))
+
+        for n in graph.get_topo_sorted_nodes():
+            self.assertTrue(n in path)
+
 
 if __name__ == '__main__':
     unittest.main()

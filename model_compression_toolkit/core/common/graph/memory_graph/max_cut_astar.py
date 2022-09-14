@@ -21,6 +21,10 @@ from model_compression_toolkit.core.common.graph.memory_graph.memory_element imp
 from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import ActivationMemoryTensor
 
 
+class DummpyType:
+    pass
+
+
 class DummyBaseNodeGenerator:
     def __init__(self):
         self.counter = 0
@@ -32,7 +36,7 @@ class DummyBaseNodeGenerator:
                            input_shape=tuple(),
                            output_shape=tuple(),
                            weights={},
-                           layer_class=None,  # TODO: set some dummy type? can cause problems if not
+                           layer_class=DummpyType,  # TODO: set some dummy type? can cause problems if not
                            has_activation=False)
 
             self.counter += 1
@@ -124,7 +128,8 @@ class MaxCutAstar:
             if next_cut == self.target_cut:
                 # TODO: in original code returning "Some", understand what it is?
                 #  I think that it is just reverse ordering the path but not sure
-                return cut_cost, list(reversed(cut_route))
+                # return cut_cost, list(reversed(cut_route))
+                return cut_cost, self._remove_dummys_from_path(cut_route[0].op_order)
 
             if self.is_pivot(next_cut):
                 # Can clear all search history
@@ -149,7 +154,6 @@ class MaxCutAstar:
                     open_list.append(c)
                     costs.update({c: cost})
                     routes.update({c: [c] + cut_route})
-            print(expansion_count)
 
         # Halt or No Solution
         return None
@@ -276,5 +280,10 @@ class MaxCutAstar:
         l_bound = memory_graph.memory_lbound_single_op
         u_bound = 2 * sum([t.total_size for t in memory_graph.b_nodes]) - l_bound
         return (u_bound + l_bound) / 2
+
+    @staticmethod
+    def _remove_dummys_from_path(path):
+        # TODO: make "dummy_node" a constant and use it here and in the DummyBaseNodeGenerator class
+        return list(filter(lambda n: 'dummy_node' not in n.name, path))
 
 
