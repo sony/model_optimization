@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 from typing import List
 from model_compression_toolkit.gptq.pytorch.quantizer.quantizer_wrapper import WeightQuantizerWrapper
-
+from model_compression_toolkit.gptq.pytorch.quantizer.gumbel_rounding.base_gumbel_weights_quantizer import BaseGumbelWeightQuantizer
 
 def get_trainable_parameters(fxp_model: nn.Module,
                              add_bias: bool = False,
@@ -63,7 +63,7 @@ def get_gumbel_probability(fxp_model: nn.Module) -> List[torch.Tensor]:
     """
     gumbel_prob_aux = []
     for layer in fxp_model.modules():
-        if isinstance(layer, WeightQuantizerWrapper):
+        if isinstance(layer, WeightQuantizerWrapper) and isinstance(layer.weight_quantizer, BaseGumbelWeightQuantizer):
             gumbel_prob_aux.append(layer.weight_quantizer.get_gumbel_probability())
     return gumbel_prob_aux
 

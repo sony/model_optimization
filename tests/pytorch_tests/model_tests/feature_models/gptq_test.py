@@ -195,7 +195,7 @@ class SymGumbelAccuracyTest2(GPTQBaseTest):
                                  optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
                                  loss=multiple_tensors_mse_loss,
                                  train_bias=True,
-                                 use_jac_based_weights=True,
+                                 use_jac_based_weights=False,
                                  optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
                                  quantization_parameters_learning=True,
                                  rounding_type=RoundingType.GumbelRounding)
