@@ -43,7 +43,7 @@ def get_trainable_parameters(fxp_model: nn.Module,
         if isinstance(layer, WeightQuantizerWrapper):
             trainable_aux_weights.append(layer.weight_quantizer.get_aux_variable())
             if quantization_parameters_learning:
-                trainable_threshold.append(layer.weight_quantizer.get_quantization_variable())
+                trainable_threshold.extend(layer.weight_quantizer.get_quantization_variable())
             if is_gumbel:
                 trainable_temperature.append(layer.weight_quantizer.get_temperature_variable())
             if add_bias and layer.op.bias is not None:

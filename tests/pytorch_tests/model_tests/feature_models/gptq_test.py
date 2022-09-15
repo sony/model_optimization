@@ -22,6 +22,7 @@ from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig,
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from tests.common_tests.helpers.tensors_compare import normalized_mse, calc_db
 from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
+from model_compression_toolkit.core.common.target_platform.op_quantization_config import QuantizationMethod
 
 
 class TestModel(nn.Module):
@@ -62,9 +63,9 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         # Run MCT with PTQ
         np.random.seed(self.seed)
         ptq_model, ptq_user_info = mct.pytorch_post_training_quantization_experimental(self.float_model,
-                                                                                   self.representative_data_gen,
-                                                                                   core_config=self.get_core_config(),
-                                                                                   target_platform_capabilities=self.get_tpc()) if self.experimental \
+                                                                                       self.representative_data_gen,
+                                                                                       core_config=self.get_core_config(),
+                                                                                       target_platform_capabilities=self.get_tpc()) if self.experimental \
             else mct.pytorch_post_training_quantization(self.float_model,
                                                         self.representative_data_gen,
                                                         n_iter=self.num_calibration_iter,
@@ -75,11 +76,11 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         # Run MCT with GPTQ
         np.random.seed(self.seed)
         gptq_model, gptq_user_info = mct.pytorch_gradient_post_training_quantization_experimental(self.float_model,
-                                                                                              self.representative_data_gen,
-                                                                                              core_config=self.get_core_config(),
-                                                                                              target_platform_capabilities=self.get_tpc(),
-                                                                                              gptq_config=self.get_gptq_config(),
-                                                                                              new_experimental_exporter=self.experimental_exporter) if self.experimental \
+                                                                                                  self.representative_data_gen,
+                                                                                                  core_config=self.get_core_config(),
+                                                                                                  target_platform_capabilities=self.get_tpc(),
+                                                                                                  gptq_config=self.get_gptq_config(),
+                                                                                                  new_experimental_exporter=self.experimental_exporter) if self.experimental \
             else mct.pytorch_post_training_quantization(self.float_model,
                                                         self.representative_data_gen,
                                                         n_iter=self.num_calibration_iter,
@@ -113,7 +114,7 @@ class STEAccuracyTest(GPTQBaseTest):
 
         NMSE_ptq = calc_db(normalized_mse(torch_tensor_to_numpy(y_float), torch_tensor_to_numpy(y_ptq))[0])
         NMSE_gptq = calc_db(normalized_mse(torch_tensor_to_numpy(y_float), torch_tensor_to_numpy(y_gptq))[0])
-        self.unit_test.assertTrue(NMSE_gptq <= NMSE_ptq + 1,
+        self.unit_test.assertTrue(NMSE_gptq <= NMSE_ptq + 2,
                                   msg="GPTQ MSE={:0.3f}dB) is much worst than PTQ MSE={:0.3f}dB)!".format(NMSE_gptq,
                                                                                                           NMSE_ptq))
 
@@ -183,7 +184,7 @@ class SymGumbelAccuracyTest(GPTQBaseTest):
 
         NMSE_ptq = calc_db(normalized_mse(torch_tensor_to_numpy(y_float), torch_tensor_to_numpy(y_ptq))[0])
         NMSE_gptq = calc_db(normalized_mse(torch_tensor_to_numpy(y_float), torch_tensor_to_numpy(y_gptq))[0])
-        self.unit_test.assertTrue(NMSE_gptq <= NMSE_ptq + 1,
+        self.unit_test.assertTrue(NMSE_gptq <= NMSE_ptq + 2,
                                   msg="GPTQ MSE={:0.3f}dB) is much worst than PTQ MSE={:0.3f}dB)!".format(NMSE_gptq,
                                                                                                           NMSE_ptq))
 
@@ -207,7 +208,7 @@ class SymGumbelAccuracyTest2(GPTQBaseTest):
 
         NMSE_ptq = calc_db(normalized_mse(torch_tensor_to_numpy(y_float), torch_tensor_to_numpy(y_ptq))[0])
         NMSE_gptq = calc_db(normalized_mse(torch_tensor_to_numpy(y_float), torch_tensor_to_numpy(y_gptq))[0])
-        self.unit_test.assertTrue(NMSE_gptq <= NMSE_ptq + 1,
+        self.unit_test.assertTrue(NMSE_gptq <= NMSE_ptq + 2,
                                   msg="GPTQ MSE={:0.3f}dB) is much worst than PTQ MSE={:0.3f}dB)!".format(NMSE_gptq,
                                                                                                           NMSE_ptq))
 
@@ -235,13 +236,92 @@ class SymGumbelWeightsUpdateTest(GPTQBaseTest):
         self.unit_test.assertTrue(all(w_diff), msg="GPTQ: some weights weren't updated")
 
 
-class SymGumbelLearnRateZeroTest(GPTQBaseTest):
+class UniformGumbelAccuracyTest(GPTQBaseTest):
+
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+        self.experimental = False
+
+    def get_tpc(self):
+        tpc = super().get_tpc()
+        # Set Uniform quantization
+        tpc.tp_model.default_qco.base_config.weights_quantization_method = QuantizationMethod.UNIFORM
+        return tpc
 
     def get_gptq_config(self):
-        return GradientPTQConfig(5,
-                                 optimizer=torch.optim.Adam([torch.Tensor([])], lr=0),
+        return GradientPTQConfig(100,
+                                 optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
                                  loss=multiple_tensors_mse_loss,
                                  train_bias=False,
+                                 use_jac_based_weights=True,
+                                 optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
+                                 quantization_parameters_learning=False,
+                                 rounding_type=RoundingType.GumbelRounding)
+
+    def compare(self, ptq_model, gptq_model, input_x=None, quantization_info=None):
+        y_float = self.float_model(input_x[0])
+        y_ptq = ptq_model(input_x)
+        y_gptq = gptq_model(input_x)
+
+        NMSE_ptq = calc_db(normalized_mse(torch_tensor_to_numpy(y_float), torch_tensor_to_numpy(y_ptq))[0])
+        NMSE_gptq = calc_db(normalized_mse(torch_tensor_to_numpy(y_float), torch_tensor_to_numpy(y_gptq))[0])
+        self.unit_test.assertTrue(NMSE_gptq <= NMSE_ptq + 2,
+                                  msg="GPTQ MSE={:0.3f}dB) is much worst than PTQ MSE={:0.3f}dB)!".format(NMSE_gptq,
+                                                                                                          NMSE_ptq))
+
+
+class UniformGumbelAccuracyTest2(GPTQBaseTest):
+
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+        self.experimental = False
+
+    def get_tpc(self):
+        tpc = super().get_tpc()
+        # Set Uniform quantization
+        tpc.tp_model.default_qco.base_config.weights_quantization_method = QuantizationMethod.UNIFORM
+        return tpc
+
+    def get_gptq_config(self):
+        return GradientPTQConfig(100,
+                                 optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
+                                 loss=multiple_tensors_mse_loss,
+                                 train_bias=True,
+                                 use_jac_based_weights=False,
+                                 optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
+                                 quantization_parameters_learning=True,
+                                 rounding_type=RoundingType.GumbelRounding)
+
+    def compare(self, ptq_model, gptq_model, input_x=None, quantization_info=None):
+        y_float = self.float_model(input_x[0])
+        y_ptq = ptq_model(input_x)
+        y_gptq = gptq_model(input_x)
+
+        NMSE_ptq = calc_db(normalized_mse(torch_tensor_to_numpy(y_float), torch_tensor_to_numpy(y_ptq))[0])
+        NMSE_gptq = calc_db(normalized_mse(torch_tensor_to_numpy(y_float), torch_tensor_to_numpy(y_gptq))[0])
+        self.unit_test.assertTrue(NMSE_gptq <= NMSE_ptq + 2,
+                                  msg="GPTQ MSE={:0.3f}dB) is much worst than PTQ MSE={:0.3f}dB)!".format(NMSE_gptq,
+                                                                                                          NMSE_ptq))
+
+
+class UniformGumbelWeightsUpdateTest(GPTQBaseTest):
+
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+        self.experimental = False
+
+    def get_tpc(self):
+        tpc = super().get_tpc()
+        # Set Uniform quantization
+        tpc.tp_model.default_qco.base_config.weights_quantization_method = QuantizationMethod.UNIFORM
+        return tpc
+
+    def get_gptq_config(self):
+        return GradientPTQConfig(50,
+                                 optimizer=torch.optim.Adam([torch.Tensor([])], lr=0.5),
+                                 loss=multiple_tensors_mse_loss,
+                                 train_bias=True,
+                                 optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=0.5),
                                  rounding_type=RoundingType.GumbelRounding)
 
     def compare(self, ptq_model, gptq_model, input_x=None, quantization_info=None):
@@ -252,7 +332,6 @@ class SymGumbelLearnRateZeroTest(GPTQBaseTest):
         self.unit_test.assertTrue(len(ptq_weights) == len(gptq_weights),
                                   msg='PTQ model number of weights different from GPTQ model!')
 
-        # check all weights were not updated in gptq model compared to ptq model
-        w_diffs = [np.isclose(np.max(np.abs(w_ptq - w_gptq)), 0, atol=1e-2) for w_ptq, w_gptq in zip(ptq_weights, gptq_weights)]
-        for w_diff in w_diffs:
-            self.unit_test.assertTrue(np.all(w_diff), msg="GPTQ: some weights were updated")
+        # check all weights were updated in gptq model compared to ptq model
+        w_diff = [np.any(w_ptq != w_gptq) for w_ptq, w_gptq in zip(ptq_weights, gptq_weights)]
+        self.unit_test.assertTrue(all(w_diff), msg="GPTQ: some weights weren't updated")

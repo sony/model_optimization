@@ -5,3 +5,5 @@ GPTQ_ITER = "_gptq_iter"
 AUXSHIFT = '_shift'
 TEMP = '_temp'
 WEIGHTS_QUANTIZATION_PARAMS = 'weights_quantization_params'
+PTQ_MIN_RANGE = "_min_range"
+PTQ_MAX_RANGE = "_max_range"
