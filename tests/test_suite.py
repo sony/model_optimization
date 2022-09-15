@@ -23,6 +23,7 @@ from tests.common_tests.function_tests.test_histogram_collector import TestHisto
 from tests.common_tests.function_tests.test_collectors_manipulation import TestCollectorsManipulations
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
+from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
 
 found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
@@ -50,7 +51,6 @@ if found_tf:
     from tests.keras_tests.function_tests.test_sensitivity_metric_interest_points import \
         TestSensitivityMetricInterestPoints
 
-
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
     from tests.pytorch_tests.model_tests.test_feature_models_runner import FeatureModelsTestRunner
@@ -70,6 +70,7 @@ if __name__ == '__main__':
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(OpsetTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(QCOptionsTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FusingTest))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCommonDocsExamples))
 
     # Add TF tests only if tensorflow is installed
     if found_tf:

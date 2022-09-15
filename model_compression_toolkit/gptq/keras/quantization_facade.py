@@ -76,13 +76,18 @@ if common.constants.FOUND_TF:
 
         Examples:
 
+             Import MCT and TensorFlow:
+
+             >>> import model_compression_toolkit as mct
+             >>> import tensorflow as tf
+
             Create a GradientPTQConfig to run for 5 iteration:
 
-            >>> gptq_conf = get_keras_gptq_config(n_iter=5)
+            >>> gptq_conf = mct.get_keras_gptq_config(n_iter=5)
 
             Other Tensorflow optimizers can be passed:
 
-            >>> gptq_conf = get_keras_gptq_config(n_iter=3, optimizer=tf.keras.optimizers.Nadam())
+            >>> gptq_conf = mct.get_keras_gptq_config(n_iter=3, optimizer=tf.keras.optimizers.Nadam())
 
             The configuration can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization` in order to quantize a keras model using gptq.
 
@@ -150,10 +155,6 @@ if common.constants.FOUND_TF:
             >>> import numpy as np
             >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
 
-            Import mct:
-
-            >>> import model_compression_toolkit as mct
-
             Create an MCT core config, containing the quantization configuration:
 
             >>> config = mct.CoreConfig()
@@ -162,7 +163,7 @@ if common.constants.FOUND_TF:
             with different bitwidths for different layers.
             The candidates bitwidth for quantization should be defined in the target platform model:
 
-            >>> config = mct.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
+            >>> config = mct.CoreConfig(n_iter=1, mixed_precision_config=mct.MixedPrecisionQuantizationConfigV2(num_of_images=1))
 
             For mixed-precision set a target KPI object:
             Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
@@ -173,7 +174,7 @@ if common.constants.FOUND_TF:
 
             Create GPTQ config:
 
-            >>> gptq_config = get_keras_gptq_config(2000)
+            >>> gptq_config = mct.get_keras_gptq_config(n_iter=1)
 
             Pass the model with the representative dataset generator to get a quantized model:
 

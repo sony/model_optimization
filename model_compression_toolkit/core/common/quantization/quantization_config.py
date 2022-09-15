@@ -89,7 +89,8 @@ class QuantizationConfig:
             enabling relu_bound_to_power_of_2, weights_bias_correction, and quantizing the weights per-channel,
             one can instantiate a quantization configuration:
 
-            >>> qc = QuantizationConfig(activation_error_method=QuantizationErrorMethod.NOCLIPPING,weights_error_method=QuantizationErrorMethod.MSE,relu_bound_to_power_of_2=True,weights_bias_correction=True,weights_per_channel_threshold=True)
+            >>> import model_compression_toolkit as mct
+            >>> qc = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.NOCLIPPING,weights_error_method=mct.QuantizationErrorMethod.MSE,relu_bound_to_power_of_2=True,weights_bias_correction=True,weights_per_channel_threshold=True)
 
 
             The QuantizationConfig instanse can then be passed to
