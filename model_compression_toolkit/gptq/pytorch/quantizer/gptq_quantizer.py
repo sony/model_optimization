@@ -14,8 +14,10 @@
 # ==============================================================================
 import torch
 import torch.nn as nn
-from typing import List, Union
+from typing import List, Union, Dict, Any
 from abc import abstractmethod
+from model_compression_toolkit.core.common import Logger
+
 
 class BaseWeightQuantizer(nn.Module):
 
@@ -39,13 +41,31 @@ class BaseWeightQuantizer(nn.Module):
         """
         Returns auxiliary trainable variables
         """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s GPTQ model builder method.')
+        raise Logger.error(f'{self.__class__.__name__} have to implement the this abstract function.')
 
     @abstractmethod
     def get_quantization_variable(self) -> Union[torch.Tensor, List]:
         """
         Returns quantization trainable variables
         """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s GPTQ model builder method.')
+        raise Logger.error(f'{self.__class__.__name__} have to implement the this abstract function.')
+
+
+    @abstractmethod
+    def get_weight_quantization_params(self) -> Dict[str, Any]:
+        """
+        Returns weight quantization dictionary params
+        """
+        raise Logger.error(f'{self.__class__.__name__} have to implement the this abstract function.')
+
+    @abstractmethod
+    def forward(self, w:nn.parameter, training:bool = True) -> torch.Tensor:
+        """
+        Forward-Pass
+        Args:
+            w: weights to quantize.
+            training: whether in training mode or not
+        Returns:
+            quantized weights
+        """
+        raise Logger.error(f'{self.__class__.__name__} have to implement the this abstract function.')

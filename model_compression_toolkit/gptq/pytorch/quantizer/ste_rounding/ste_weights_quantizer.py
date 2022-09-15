@@ -26,7 +26,7 @@ from model_compression_toolkit.core.common.constants import THRESHOLD
 
 class STEWeightQuantizer(BaseWeightQuantizer):
     """
-    Class that wraps a Pytorch layer (nn.Module) with trainable parameters to be used for GPTQ training.
+    Class that implements a quantizer with trainable parameters to be used for GPTQ training.
     """
 
     def __init__(self,
@@ -34,7 +34,7 @@ class STEWeightQuantizer(BaseWeightQuantizer):
                  gptq_config: GradientPTQConfig,
                  weight_shape: torch.Size):
         """
-        Construct a Pytorch model that utilize a fake weight quantizer of STE (Straight Through Estimator) for symmetric or power of 2 quantizer.
+        Construct a Pytorch model that utilize a fake weight quantizer of STE (Straight Through Estimator) for symmetric quantizer.
         Args:
             weights_quantization_cfg: Configuration of weight quantization
             gptq_config: GradientPTQConfig object with parameters about the tuning process.
@@ -48,7 +48,7 @@ class STEWeightQuantizer(BaseWeightQuantizer):
         self.max_int = (2 ** (self.num_bits - int(self.signed))) - 1
         self.weight_shape = weight_shape
         self.threshold_values = weights_quantization_cfg.weights_quantization_params.get(THRESHOLD)
-        self.delta_tensor = self.threshold_values / (2 ** (self.num_bits-1))
+        self.delta_tensor = self.threshold_values / (2 ** (self.num_bits-int(self.signed)))
         self.max_delta_change = gptq_config.lsb_change_per_bit_width.get(self.num_bits)
 
         # Set trainable tensors
@@ -77,11 +77,18 @@ class STEWeightQuantizer(BaseWeightQuantizer):
         """
         return []
 
-    def forward(self, w: nn.Parameter) -> nn.Parameter:
+    def get_weight_quantization_params(self) -> dict:
+        """
+        Returns weight quantization dictionary params
+        """
+        return {THRESHOLD: self.threshold_values}
+
+    def forward(self, w: nn.Parameter, training: bool = True) -> nn.Parameter:
         """
         Weight fake quantizer
         Args:
             w: weights to quantize.
+            training: whether in training mode or not
         Returns:
             quantized weights
         """
