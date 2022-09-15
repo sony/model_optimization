@@ -151,13 +151,24 @@ class MaxCutAstar:
             expanded_cuts = list(filter(lambda _c: _c not in closed_list, expanded_cuts))
             for c in expanded_cuts:
                 cost = self.accumulate(cut_cost, c.mem_elements.total_size)
-                if c not in open_list:  # TODO: doing here something with ordering - need to understand what - maybe cut can exists but only ordering should change?
-                    open_list.append(c)
-                    costs.update({c: cost})
-                    routes.update({c: [c] + cut_route})
+                if c not in open_list:
+                    self._update_expanded_node(c, cost, [c] + cut_route, open_list, costs, routes)
+                elif self.ordering(cost, costs[c]):
+                    # If we already saw this cut during the search with a larger cost, then we want to update the order
+                    # of the schedule in the cut
+                    # Remove call - removes the cut with the same memory elements but different ordering from open
+                    # Then - adds the cut with the improved ordering from open
+                    open_list.remove(c)
+                    self._update_expanded_node(c, cost, cut_route, open_list, costs, routes)
 
         # Halt or No Solution
         return None
+
+    @staticmethod
+    def _update_expanded_node(cut, cost, route, open_list, costs, routes):
+        open_list.append(cut)
+        costs.update({cut: cost})
+        routes.update({cut: [cut] + route})
 
     def _get_cut_to_expand(self, open_list, costs, routes):
         ordered_cuts_list = sorted(open_list,
@@ -264,14 +275,9 @@ class MaxCutAstar:
         """
         return max(cost_1, cost_2)
 
-    # def ordering(self):
-    #     """
-    #     An ordering function for the Astar search, to define which possible expanded node is preferred,
-    #     based on its cost (e.g. the bigger or the smaller).
-    #
-    #     Returns: The
-    #
-    #     """
+    @staticmethod
+    def ordering(cost_1, cost_2) -> bool:
+        return cost_1 < cost_2
 
     def estimate(self, cut: Cut) -> float:
         return self.estimate_factor * self.memory_graph.memory_lbound_single_op
