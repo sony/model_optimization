@@ -119,10 +119,16 @@ class ReLUBoundToPOTNetTest(BasePytorchTest):
         set_model(float_model)
         for model_name, quantized_model in quantized_models.items():
             set_model(quantized_model)
-            alpha_1 = (quantized_model.conv1.weight / float_model.conv1.weight).detach().cpu().numpy().mean()
-            beta_1 = (quantized_model.conv2.weight / float_model.conv2.weight).detach().cpu().numpy().mean()
-            alpha_2 = (quantized_model.conv3.weight / float_model.conv3.weight).detach().cpu().numpy().mean()
-            beta_2 = (quantized_model.conv4.weight / float_model.conv4.weight).detach().cpu().numpy().mean()
+            if self.experimental_exporter:
+                alpha_1 = (quantized_model.conv1.layer.weight / float_model.conv1.weight).detach().cpu().numpy().mean()
+                beta_1 = (quantized_model.conv2.layer.weight / float_model.conv2.weight).detach().cpu().numpy().mean()
+                alpha_2 = (quantized_model.conv3.layer.weight / float_model.conv3.weight).detach().cpu().numpy().mean()
+                beta_2 = (quantized_model.conv4.layer.weight / float_model.conv4.weight).detach().cpu().numpy().mean()
+            else:
+                alpha_1 = (quantized_model.conv1.weight / float_model.conv1.weight).detach().cpu().numpy().mean()
+                beta_1 = (quantized_model.conv2.weight / float_model.conv2.weight).detach().cpu().numpy().mean()
+                alpha_2 = (quantized_model.conv3.weight / float_model.conv3.weight).detach().cpu().numpy().mean()
+                beta_2 = (quantized_model.conv4.weight / float_model.conv4.weight).detach().cpu().numpy().mean()
 
             self.unit_test.assertTrue(np.allclose(alpha_1 * beta_1, 1, atol=1e-1))
             self.unit_test.assertTrue(np.allclose(alpha_1 * 6 / 8, 1, atol=1e-1))
@@ -161,10 +167,16 @@ class HardtanhBoundToPOTNetTest(BasePytorchTest):
         set_model(float_model)
         for model_name, quantized_model in quantized_models.items():
             set_model(quantized_model)
-            alpha_1 = (quantized_model.conv1.weight / float_model.conv1.weight).detach().cpu().numpy().mean()
-            beta_1 = (quantized_model.conv2.weight / float_model.conv2.weight).detach().cpu().numpy().mean()
-            alpha_2 = (quantized_model.conv5.weight / float_model.conv5.weight).detach().cpu().numpy().mean()
-            beta_2 = (quantized_model.conv6.weight / float_model.conv6.weight).detach().cpu().numpy().mean()
+            if self.experimental_exporter:
+                alpha_1 = (quantized_model.conv1.layer.weight / float_model.conv1.weight).detach().cpu().numpy().mean()
+                beta_1 = (quantized_model.conv2.layer.weight / float_model.conv2.weight).detach().cpu().numpy().mean()
+                alpha_2 = (quantized_model.conv5.layer.weight / float_model.conv5.weight).detach().cpu().numpy().mean()
+                beta_2 = (quantized_model.conv6.layer.weight / float_model.conv6.weight).detach().cpu().numpy().mean()
+            else:
+                alpha_1 = (quantized_model.conv1.weight / float_model.conv1.weight).detach().cpu().numpy().mean()
+                beta_1 = (quantized_model.conv2.weight / float_model.conv2.weight).detach().cpu().numpy().mean()
+                alpha_2 = (quantized_model.conv5.weight / float_model.conv5.weight).detach().cpu().numpy().mean()
+                beta_2 = (quantized_model.conv6.weight / float_model.conv6.weight).detach().cpu().numpy().mean()
 
             self.unit_test.assertTrue(np.allclose(alpha_1 * beta_1, 1, atol=1e-1))
             self.unit_test.assertTrue(np.allclose(alpha_1 * 6 / 8, 1, atol=1e-1))
@@ -173,7 +185,13 @@ class HardtanhBoundToPOTNetTest(BasePytorchTest):
             self.unit_test.assertTrue(np.allclose(alpha_2 * 6 / 8, 1, atol=1e-1))
             self.unit_test.assertTrue(np.allclose(8 / 6 * beta_2, 1, atol=1e-1))
 
-            self.unit_test.assertTrue(quantized_model.hardtanh2.max_val == float_model.hardtanh2.max_val)
-            self.unit_test.assertTrue(quantized_model.hardtanh2.min_val == float_model.hardtanh2.min_val)
-            self.unit_test.assertTrue(quantized_model.hardtanh3.max_val == float_model.hardtanh3.max_val)
-            self.unit_test.assertTrue(quantized_model.hardtanh3.min_val == float_model.hardtanh3.min_val)
+            if self.experimental_exporter:
+                self.unit_test.assertTrue(quantized_model.hardtanh2.layer.max_val == float_model.hardtanh2.max_val)
+                self.unit_test.assertTrue(quantized_model.hardtanh2.layer.min_val == float_model.hardtanh2.min_val)
+                self.unit_test.assertTrue(quantized_model.hardtanh3.layer.max_val == float_model.hardtanh3.max_val)
+                self.unit_test.assertTrue(quantized_model.hardtanh3.layer.min_val == float_model.hardtanh3.min_val)
+            else:
+                self.unit_test.assertTrue(quantized_model.hardtanh2.max_val == float_model.hardtanh2.max_val)
+                self.unit_test.assertTrue(quantized_model.hardtanh2.min_val == float_model.hardtanh2.min_val)
+                self.unit_test.assertTrue(quantized_model.hardtanh3.max_val == float_model.hardtanh3.max_val)
+                self.unit_test.assertTrue(quantized_model.hardtanh3.min_val == float_model.hardtanh3.min_val)

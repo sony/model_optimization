@@ -40,10 +40,11 @@ class TestModel(nn.Module):
 
 
 class GPTQBaseTest(BasePytorchFeatureNetworkTest):
-    def __init__(self, unit_test):
+    def __init__(self, unit_test, experimental_exporter=True):
         super().__init__(unit_test, input_shape=(3, 16, 16))
         self.seed = 0
         self.experimental = True
+        self.experimental_exporter = experimental_exporter
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING)
@@ -63,7 +64,6 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         ptq_model, ptq_user_info = mct.pytorch_post_training_quantization_experimental(self.float_model,
                                                                                    self.representative_data_gen,
                                                                                    core_config=self.get_core_config(),
-                                                                                   fw_info=DEFAULT_PYTORCH_INFO,
                                                                                    target_platform_capabilities=self.get_tpc()) if self.experimental \
             else mct.pytorch_post_training_quantization(self.float_model,
                                                         self.representative_data_gen,
@@ -77,9 +77,9 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         gptq_model, gptq_user_info = mct.pytorch_gradient_post_training_quantization_experimental(self.float_model,
                                                                                               self.representative_data_gen,
                                                                                               core_config=self.get_core_config(),
-                                                                                              fw_info=DEFAULT_PYTORCH_INFO,
                                                                                               target_platform_capabilities=self.get_tpc(),
-                                                                                              gptq_config=self.get_gptq_config()) if self.experimental \
+                                                                                              gptq_config=self.get_gptq_config(),
+                                                                                              new_experimental_exporter=self.experimental_exporter) if self.experimental \
             else mct.pytorch_post_training_quantization(self.float_model,
                                                         self.representative_data_gen,
                                                         n_iter=self.num_calibration_iter,

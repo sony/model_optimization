@@ -18,7 +18,10 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter, NodeTypeFilter
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod, ReplaceLayer
+from model_compression_toolkit.core.pytorch.back2framework.quantization_wrapper.quantized_layer_wrapper import \
+    QuantizedLayerWrapper
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
+
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -74,8 +77,14 @@ class SingleLayerReplacementTest(BasePytorchTest):
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         quantized_model = quantized_models.get('no_quantization')
-        self.unit_test.assertTrue(isinstance(quantized_model.activation1, Identity))
-        self.unit_test.assertTrue(isinstance(quantized_model.activation2, torch.nn.ReLU))
+        if self.experimental_exporter:
+            self.unit_test.assertTrue(isinstance(quantized_model.activation1, QuantizedLayerWrapper))
+            self.unit_test.assertTrue(isinstance(quantized_model.activation2, QuantizedLayerWrapper))
+            self.unit_test.assertTrue(isinstance(quantized_model.activation1.layer, Identity))
+            self.unit_test.assertTrue(isinstance(quantized_model.activation2.layer, torch.nn.ReLU))
+        else:
+            self.unit_test.assertTrue(isinstance(quantized_model.activation1, Identity))
+            self.unit_test.assertTrue(isinstance(quantized_model.activation2, torch.nn.ReLU))
 
 
 class ReluReplacementTest(SingleLayerReplacementTest):
@@ -94,8 +103,14 @@ class ReluReplacementTest(SingleLayerReplacementTest):
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         quantized_model = quantized_models.get('no_quantization')
         self.unit_test.assertTrue(torch.all(torch.eq(quantized_model(input_x), input_x[0])))
-        self.unit_test.assertTrue(isinstance(quantized_model.activation1, Identity))
-        self.unit_test.assertTrue(isinstance(quantized_model.activation2, Identity))
+        if self.experimental_exporter:
+            self.unit_test.assertTrue(isinstance(quantized_model.activation1, QuantizedLayerWrapper))
+            self.unit_test.assertTrue(isinstance(quantized_model.activation2, QuantizedLayerWrapper))
+            self.unit_test.assertTrue(isinstance(quantized_model.activation1.layer, Identity))
+            self.unit_test.assertTrue(isinstance(quantized_model.activation2.layer, Identity))
+        else:
+            self.unit_test.assertTrue(isinstance(quantized_model.activation1, Identity))
+            self.unit_test.assertTrue(isinstance(quantized_model.activation2, Identity))
 
 
 class AddBias(torch.nn.Module):
@@ -138,5 +153,11 @@ class ReluReplacementWithAddBiasTest(SingleLayerReplacementTest):
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         quantized_model = quantized_models.get('no_quantization')
         self.unit_test.assertTrue(torch.mean((quantized_model(input_x) - input_x[0])) == 6)
-        self.unit_test.assertTrue(isinstance(quantized_model.activation1, AddBias))
-        self.unit_test.assertTrue(isinstance(quantized_model.activation2, AddBias))
+        if self.experimental_exporter:
+            self.unit_test.assertTrue(isinstance(quantized_model.activation1, QuantizedLayerWrapper))
+            self.unit_test.assertTrue(isinstance(quantized_model.activation2, QuantizedLayerWrapper))
+            self.unit_test.assertTrue(isinstance(quantized_model.activation1.layer, AddBias))
+            self.unit_test.assertTrue(isinstance(quantized_model.activation2.layer, AddBias))
+        else:
+            self.unit_test.assertTrue(isinstance(quantized_model.activation1, AddBias))
+            self.unit_test.assertTrue(isinstance(quantized_model.activation2, AddBias))
