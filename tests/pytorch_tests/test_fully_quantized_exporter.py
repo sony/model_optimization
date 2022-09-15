@@ -28,7 +28,7 @@ from model_compression_toolkit.core.pytorch.back2framework.quantization_wrapper.
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 
 from model_compression_toolkit.exporter.fully_quantized.pytorch.quantizers.fq_quantizer import FakeQuantQuantizer
-from model_compression_toolkit.exporter.fully_quantized.pytorch.quantizers.symmetric_weights_quantizer import \
+from model_compression_toolkit.exporter.fully_quantized.pytorch.quantizers.uniform_weights_quantizer import \
     UniformWeightsQuantizer
 from model_compression_toolkit.exporter.fully_quantized.pytorch.wrappers_quantize_configs.activation_quantize_config \
     import \
