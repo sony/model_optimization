@@ -20,9 +20,7 @@ class Cut:
         self.mem_elements = mem_elements
 
     def memory_size(self):
-        # TODO: this is the equivalent to the scheduler's Cut "weight" method,
-        #  which needs to compute the Cut's memory size based on the memory elements
-        raise NotImplementedError()
+        return self.mem_elements.total_size
 
     def get_record_names(self):
         return {op.name for op in self.op_record}

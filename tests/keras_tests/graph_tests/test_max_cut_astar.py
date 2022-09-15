@@ -66,13 +66,13 @@ class TestMaxCutAstarInit(unittest.TestCase):
         self.assertTrue(mc_astar.src_cut is not None)
         self.assertTrue(len(mc_astar.src_cut.op_record) == 1)
         self.assertTrue(len(mc_astar.src_cut.mem_elements.elements) == 1)
-        self.assertTrue(mc_astar.src_cut.mem_elements.total_size == 0)
+        self.assertTrue(mc_astar.src_cut.memory_size() == 0)
 
         # Verify target cut creation
         self.assertTrue(mc_astar.target_cut is not None)
         self.assertTrue(len(mc_astar.target_cut.op_record) == 0)
         self.assertTrue(len(mc_astar.target_cut.mem_elements.elements) == 2)
-        self.assertTrue(mc_astar.target_cut.mem_elements.total_size == 0)
+        self.assertTrue(mc_astar.target_cut.memory_size() == 0)
 
     def test_max_cut_astar_init_simple(self):
         model = simple_model((8, 8, 3))
@@ -133,7 +133,7 @@ class TestMaxCutAstarCleanMemory(unittest.TestCase):
             mem_elements.add_elements_set(act_tensor)
             cut = Cut(nodes, set(nodes), mem_elements)
             clean_cut = mc_astar.clean_memory_for_next_step(cut)
-            total_memory.append((cut.mem_elements.total_size, clean_cut.mem_elements.total_size))
+            total_memory.append((cut.memory_size(), clean_cut.memory_size()))
 
             n = mc_astar.memory_graph.activation_tensor_children(list(act_tensor)[0])[0]
             mem_elements = clean_cut.mem_elements
@@ -171,7 +171,7 @@ class TestMaxCutAstarCanExpand(unittest.TestCase):
 
         cut4 = Cut([node0], {node0}, MemoryElements({act_tensor1}, act_tensor1.total_size))
         self.assertTrue(mc_astar.can_expand(node1, cut4),
-                         "Should be able to expand a the given cut with the given node")
+                        "Should be able to expand a the given cut with the given node")
 
     def test_max_cut_astar_can_expand_complex(self):
         model = complex_model((8, 8, 3))
@@ -257,7 +257,7 @@ class TestMaxCutAstarExpand(unittest.TestCase):
         self.assertTrue(len(src_expand) == 1)
         expanded_cut = src_expand[0]
         input_act_tensor = [t.total_size for t in memory_graph.b_nodes if 'input' in t.node_name][0]
-        self.assertTrue(expanded_cut.mem_elements.total_size == input_act_tensor)
+        self.assertTrue(expanded_cut.memory_size() == input_act_tensor)
         input_node = graph.get_topo_sorted_nodes()[0]
         self.assertTrue(input_node in expanded_cut.op_record)
 
@@ -266,7 +266,7 @@ class TestMaxCutAstarExpand(unittest.TestCase):
         self.assertTrue(len(input_expand) == 1)
         expanded_cut = input_expand[0]
         conv_act_tensor = [t.total_size for t in memory_graph.b_nodes if 'conv' in t.node_name][0]
-        self.assertTrue(expanded_cut.mem_elements.total_size == input_act_tensor + conv_act_tensor)
+        self.assertTrue(expanded_cut.memory_size() == input_act_tensor + conv_act_tensor)
         conv_node = graph.get_topo_sorted_nodes()[1]
         self.assertTrue(conv_node in expanded_cut.op_record)
 

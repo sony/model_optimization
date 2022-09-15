@@ -117,7 +117,7 @@ class MaxCutAstar:
     def solve(self, iter_limit: int):  # TODO: what is a reasonable default number of iterations to set?
         open_list = [self.src_cut]
         closed_list = []
-        costs = {self.src_cut: self.src_cut.mem_elements.total_size}
+        costs = {self.src_cut: self.src_cut.memory_size()}
         routes = {self.src_cut: [self.src_cut]}
 
         expansion_count = 0
@@ -150,7 +150,7 @@ class MaxCutAstar:
             # Only consider nodes that where not already visited
             expanded_cuts = list(filter(lambda _c: _c not in closed_list, expanded_cuts))
             for c in expanded_cuts:
-                cost = self.accumulate(cut_cost, c.mem_elements.total_size)
+                cost = self.accumulate(cut_cost, c.memory_size())
                 if c not in open_list:
                     self._update_expanded_node(c, cost, [c] + cut_route, open_list, costs, routes)
                 elif self.ordering(cost, costs[c]):
