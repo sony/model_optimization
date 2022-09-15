@@ -37,13 +37,7 @@ class MemoryGraph(DirectedBipartiteGraph):
         node_to_tensor = []
         tensor_to_node = []
 
-        output_nodes = [output.node for output in model_graph.get_outputs()]
         for n in nodes:
-            if n in output_nodes:
-                # We don't add the output tensor of an output node (since it's not needed to be saved in memory).
-                # Also, if we do add its tensor than we won't have sink nodes.
-                # TODO: verify with Alon that this is the expected behavior.
-                continue
             n_outputs = [n.output_shape] if isinstance(n.output_shape, tuple) else n.output_shape
             out_edges = model_graph.out_edges(n, sort_by_attr=EDGE_SOURCE_INDEX)
 
@@ -71,13 +65,20 @@ class MemoryGraph(DirectedBipartiteGraph):
         self.memory_lbound_single_op = max(nodes_total_memory)
 
         self.sources_a = [n for n in self.a_nodes if len(list(self.predecessors(n))) == 0]
-        self.sinks_a = [n for n in self.a_nodes if len(list(self.successors(n))) == 0]
+        # self.sinks_a = [n for n in self.a_nodes if len(list(self.successors(n))) == 0]
+        # Note that unlike the original scheduler,
+        # we don't need sinks_a since we assume all layers have activation tensor.
+        # In oppose to them we do need sinks_b to allow creating single target for astar in case of multiple outputs.
+        self.sinks_b = [n for n in self.b_nodes if len(list(self.successors(n))) == 0]
+        assert len([n for n in self.a_nodes if len(list(self.successors(n))) == 0]) == 0, \
+            "All operations should have an activation tensor, so there are no supposed to be sink nodes in side A," \
+            "of the bipartite memory graph."
 
     def update_sources_a(self):
         self.sources_a = [n for n in self.a_nodes if len(list(self.predecessors(n))) == 0]
 
-    def update_sinks_a(self):
-        self.sinks_a = [n for n in self.a_nodes if len(list(self.successors(n))) == 0]
+    def update_sinks_b(self):
+        self.sinks_b = [n for n in self.b_nodes if len(list(self.successors(n))) == 0]
 
     def activation_tensor_children(self, activation_tensor):
         return [oe[1] for oe in self.out_edges(activation_tensor)]
@@ -91,14 +92,3 @@ class MemoryGraph(DirectedBipartiteGraph):
     def operation_node_parents(self, op_node):
         return [ie[0] for ie in self.in_edges(op_node)]
 
-    # def get_op_children_names(self, op_name):
-    #     node = self.model_graph.find_node_by_name(op_name)
-    #     if len(node) == 0:
-    #         return []
-    #
-    #     assert len(node) == 1, "Node name must be unique"
-    #     node = node[0]
-    #
-    #     return [e.sink_node.name for e in self.model_graph.out_edges(node)]
-
-    # TODO: add heuristics if necessary

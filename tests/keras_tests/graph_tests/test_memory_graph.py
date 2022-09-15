@@ -83,9 +83,9 @@ class TestMemoryGraph(unittest.TestCase):
         memory_graph = MemoryGraph(graph)
 
         self.assertTrue(len(memory_graph.a_nodes) == 4)
-        self.assertTrue(len(memory_graph.b_nodes) == 3)
+        self.assertTrue(len(memory_graph.b_nodes) == 4)
         self.assertTrue(graph.get_topo_sorted_nodes()[0] in memory_graph.sources_a)
-        self.assertTrue(graph.get_topo_sorted_nodes()[-1] in memory_graph.sinks_a)
+        self.assertTrue(len(memory_graph.sinks_b) == 1)
         self.assertTrue(memory_graph.memory_lbound_single_op == 384)
 
         self.assertTrue(_is_bipartite(memory_graph))
@@ -98,9 +98,9 @@ class TestMemoryGraph(unittest.TestCase):
         memory_graph = MemoryGraph(graph)
 
         self.assertTrue(len(memory_graph.a_nodes) == 5)
-        self.assertTrue(len(memory_graph.b_nodes) == 5)
+        self.assertTrue(len(memory_graph.b_nodes) == 6)
         self.assertTrue(graph.get_topo_sorted_nodes()[0] in memory_graph.sources_a)
-        self.assertTrue(graph.get_topo_sorted_nodes()[-1] in memory_graph.sinks_a)
+        self.assertTrue(len(memory_graph.sinks_b) == 1)
         self.assertTrue(memory_graph.memory_lbound_single_op == 576)
 
         self.assertTrue(_is_bipartite(memory_graph))
@@ -116,9 +116,9 @@ class TestMemoryGraph(unittest.TestCase):
         memory_graph = MemoryGraph(graph)
 
         self.assertTrue(len(memory_graph.a_nodes) == 5)
-        self.assertTrue(len(memory_graph.b_nodes) == 4)
+        self.assertTrue(len(memory_graph.b_nodes) == 5)
         self.assertTrue(graph.get_topo_sorted_nodes()[0] in memory_graph.sources_a)
-        self.assertTrue(graph.get_topo_sorted_nodes()[-1] in memory_graph.sinks_a)
+        self.assertTrue(len(memory_graph.sinks_b) == 1)
         self.assertTrue(memory_graph.memory_lbound_single_op == 384)
 
         self.assertTrue(_is_bipartite(memory_graph))

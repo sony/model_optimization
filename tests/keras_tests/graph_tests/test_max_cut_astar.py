@@ -71,7 +71,7 @@ class TestMaxCutAstarInit(unittest.TestCase):
         # Verify target cut creation
         self.assertTrue(mc_astar.target_cut is not None)
         self.assertTrue(len(mc_astar.target_cut.op_record) == 0)
-        self.assertTrue(len(mc_astar.target_cut.mem_elements.elements) == 1)
+        self.assertTrue(len(mc_astar.target_cut.mem_elements.elements) == 2)
         self.assertTrue(mc_astar.target_cut.mem_elements.total_size == 0)
 
     def test_max_cut_astar_init_simple(self):
@@ -97,7 +97,7 @@ class TestMaxCutAstarCleanMemory(unittest.TestCase):
         mem_elements = mc_astar.src_cut.mem_elements
         n = mc_astar.memory_graph.activation_tensor_children(mc_astar.memory_graph.operation_node_children(nodes[0])[0])[0]
 
-        while n not in mc_astar.memory_graph.sinks_a:
+        while n != graph.get_topo_sorted_nodes()[-1]:
             nodes.append(n)
             act_tensor = set(mc_astar.memory_graph.operation_node_children(n))
             self.assertTrue(len(list(act_tensor)) == 1)
@@ -127,7 +127,7 @@ class TestMaxCutAstarCleanMemory(unittest.TestCase):
         # Only testing consistent and successful run, not testing any calculation correctness
         # except that at least at one point the cut got cleaner
         total_memory = []
-        while n not in mc_astar.memory_graph.sinks_a:
+        while n != graph.get_topo_sorted_nodes()[-1]:
             nodes.append(n)
             act_tensor = set(mc_astar.memory_graph.operation_node_children(n))
             mem_elements.add_elements_set(act_tensor)
@@ -231,7 +231,7 @@ class TestMaxCutAstarIsPivot(unittest.TestCase):
         mem_elements = mc_astar.src_cut.mem_elements
         n = mc_astar.memory_graph.activation_tensor_children(mc_astar.memory_graph.operation_node_children(nodes[0])[0])[0]
 
-        while n not in mc_astar.memory_graph.sinks_a:
+        while n != graph.get_topo_sorted_nodes()[-1]:
             nodes.append(n)
             act_tensor = set(mc_astar.memory_graph.operation_node_children(n))
             self.assertTrue(len(list(act_tensor)) == 1)
