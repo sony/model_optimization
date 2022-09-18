@@ -12,11 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from model_compression_toolkit.exporter.target_platform_export.keras.exporters.base_keras_exporter import BaseKerasExporter
+import keras
 
-from model_compression_toolkit.core.common.constants import FOUND_TF
+class Int8KerasExporter(BaseKerasExporter):
+    """
+    Exporter for int8 Keras models.
+    """
 
+    def export(self) -> keras.models.Model:
+        """
+        Convert fully-quantized Keras model to an int8 export-ready model.
 
-if FOUND_TF:
-    from model_compression_toolkit.exporter.fully_quantized.keras.builder.fully_quantized_model_builder import \
-        get_fully_quantized_keras_model
-    from model_compression_toolkit.exporter.target_platform_export.keras import export_keras_fully_quantized_model
+        Returns:
+            Int8 Keras model ready to export.
+        """
+        pass
+
+    def save_model(self, save_model_path: str):
+        """
+        Save exported model to a given path.
+        Args:
+            save_model_path: Path to save the model.
+
+        Returns:
+            None.
+        """
+        pass

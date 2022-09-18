@@ -1,0 +1,55 @@
+# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+from enum import Enum
+import keras
+from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.exporter.target_platform_export.keras.exporters.fakely_quant_keras_exporter import \
+    FakelyQuantKerasExporter
+from model_compression_toolkit.exporter.target_platform_export.keras.exporters.int8_keras_exporter import Int8KerasExporter
+
+
+class KerasExportMode(Enum):
+    FAKELY_QUANT = 0
+    INT8 = 1
+
+def export_keras_fully_quantized_model(model: keras.models.Model,
+                                       mode: KerasExportMode = KerasExportMode.FAKELY_QUANT,
+                                       save_model_path: str = None):
+    """
+    Prepare and return fully quantized model for export. Save exported model to
+    a path if passed.
+
+    Args:
+        model: Model to export.
+        mode: Mode to export the model according to.
+        save_model_path: Path to save the model.
+
+    Returns:
+        Exported model.
+    """
+
+    if mode == KerasExportMode.FAKELY_QUANT:
+        exporter = FakelyQuantKerasExporter(model)
+    else:
+        Logger.critical(f'Unsupported mode was used {mode.name} to export Keras model. Please see API for supported modes.')
+
+    model = exporter.export()
+    if save_model_path is not None:
+        exporter.save_model(save_model_path)
+    return model
+
+
+
+
