@@ -58,11 +58,11 @@ class DummyActivationMemoryTensorGenerator:
 
 class MaxCutAstar:
 
-    def __init__(self, memory_graph, estimate_factor: float = None):
+    def __init__(self, memory_graph):#, estimate_factor: float = None):
 
         self.memory_graph = memory_graph
-        self.estimate_factor = self.get_init_estimate_factor(memory_graph) \
-            if estimate_factor is None else estimate_factor
+        # self.estimate_factor = self.get_init_estimate_factor(memory_graph) \
+        #     if estimate_factor is None else estimate_factor
 
         # In order to run Astar search on the graph we need to define a single source and a single target.
         # Dummy nodes are used for this purpose.
@@ -114,7 +114,7 @@ class MaxCutAstar:
         self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b, target_dummy_b2},
                                                         total_size=0))
 
-    def solve(self, iter_limit: int):  # TODO: what is a reasonable default number of iterations to set?
+    def solve(self, estimate_factor: float, iter_limit: int):  # TODO: what is a reasonable default number of iterations to set?
         open_list = [self.src_cut]
         closed_list = []
         costs = {self.src_cut: self.src_cut.memory_size()}
@@ -124,12 +124,13 @@ class MaxCutAstar:
 
         while expansion_count < iter_limit and len(open_list) > 0:
             # Choose next node to expand
-            next_cut = self._get_cut_to_expand(open_list, costs, routes)
+            next_cut = self._get_cut_to_expand(open_list, costs, routes, estimate_factor)
 
             cut_cost = costs[next_cut]
             cut_route = routes[next_cut]
 
             if next_cut == self.target_cut:
+                print(expansion_count)
                 return cut_cost, self._remove_dummys_from_path(cut_route[0].op_order)
 
             if self.is_pivot(next_cut):
@@ -162,7 +163,7 @@ class MaxCutAstar:
                     self._update_expanded_node(c, cost, cut_route, open_list, costs, routes)
 
         # Halt or No Solution
-        return None
+        return 0, None
 
     @staticmethod
     def _update_expanded_node(cut, cost, route, open_list, costs, routes):
@@ -170,9 +171,9 @@ class MaxCutAstar:
         costs.update({cut: cost})
         routes.update({cut: [cut] + route})
 
-    def _get_cut_to_expand(self, open_list, costs, routes):
+    def _get_cut_to_expand(self, open_list, costs, routes, estimate_factor):
         ordered_cuts_list = sorted(open_list,
-                                   key=lambda c: (self.accumulate(costs[c], self.estimate(c)), len(routes[c])),
+                                   key=lambda c: (self.accumulate(costs[c], self.estimate(c, estimate_factor)), len(routes[c])),
                                    reverse=False)
 
         assert len(ordered_cuts_list) > 0
@@ -279,8 +280,8 @@ class MaxCutAstar:
     def ordering(cost_1, cost_2) -> bool:
         return cost_1 < cost_2
 
-    def estimate(self, cut: Cut) -> float:
-        return self.estimate_factor * self.memory_graph.memory_lbound_single_op
+    def estimate(self, cut: Cut, estimate_factor: float) -> float:
+        return estimate_factor * self.memory_graph.memory_lbound_single_op
 
     @staticmethod
     def get_init_estimate_factor(memory_graph):

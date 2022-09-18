@@ -61,8 +61,9 @@ class MemoryGraph(DirectedBipartiteGraph):
         # memory_lbound_single_op is a lower bound for any schedule of the graph.
         # the bound is defined as the maximum of memory requirements out of all operations in the graph
         # (for a single operation the memory requirement is the sum of the memory size of the children and parents)
-        nodes_total_memory = [n.get_total_input_params() + n.get_total_output_params() for n in nodes]  # input + output size of each node
-        self.memory_lbound_single_op = max(nodes_total_memory)
+        inputs_tensors_memory = [n.get_total_output_params() for n in nodes if n in model_graph.get_inputs()]
+        nodes_total_memory = [n.get_total_input_params() + n.get_total_output_params() for n in nodes if n not in model_graph.get_inputs()]  # input + output size of each node
+        self.memory_lbound_single_op = max(nodes_total_memory + inputs_tensors_memory)
 
         self.sources_a = [n for n in self.a_nodes if len(list(self.predecessors(n))) == 0]
         # self.sinks_a = [n for n in self.a_nodes if len(list(self.successors(n))) == 0]
