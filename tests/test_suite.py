@@ -50,6 +50,8 @@ if found_tf:
     from tests.keras_tests.test_keras_tp_model import TestKerasTPModel
     from tests.keras_tests.function_tests.test_sensitivity_metric_interest_points import \
         TestSensitivityMetricInterestPoints
+    from tests.keras_tests.function_tests.test_export_keras_fully_quantized_model import TestExporter
+
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -88,6 +90,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformQuantizeTensor))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformRangeSelectionWeights))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasTPModel))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestExporter))
 
         # Keras test layers are supported in TF2.6 or higher versions
         if tf.__version__ >= "2.6":

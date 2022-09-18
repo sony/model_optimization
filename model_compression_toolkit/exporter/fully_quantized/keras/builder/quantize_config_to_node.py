@@ -29,6 +29,12 @@ from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.w
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import \
     WeightsQuantizeConfig
 
+SUPPORTED_QUANTIZATION_CONFIG = [WeightsQuantizeConfig,
+                                 ActivationQuantizeConfig,
+                                 NoOpQuantizeConfig,
+                                 WeightsActivationQuantizeConfig]
+
+
 
 def get_quantization_config(node: BaseNode) -> QuantizeConfig:
     """

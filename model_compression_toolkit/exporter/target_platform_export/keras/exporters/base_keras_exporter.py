@@ -12,10 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from model_compression_toolkit.exporter.target_platform_export.fw_agonstic.exporter import Exporter
+import keras
 
-from model_compression_toolkit.core.common.constants import FOUND_TF
+class BaseKerasExporter(Exporter):
+    """
+    Base Keras exporter class.
+    """
 
-if FOUND_TF:
-    from model_compression_toolkit.exporter.fully_quantized.keras.builder.fully_quantized_model_builder import \
-        get_fully_quantized_keras_model
-    from model_compression_toolkit.exporter.target_platform_export.keras import export_keras_fully_quantized_model
+    def __init__(self, model: keras.models.Model):
+        """
+
+        Args:
+            model: Keras model to export.
+        """
+        super().__init__(model)
+
+
+
+
