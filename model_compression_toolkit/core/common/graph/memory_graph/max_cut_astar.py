@@ -114,7 +114,7 @@ class MaxCutAstar:
         self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b, target_dummy_b2},
                                                         total_size=0))
 
-    def solve(self, estimate_factor: float, iter_limit: int):  # TODO: what is a reasonable default number of iterations to set?
+    def solve(self, estimate_factor: float, iter_limit: int = 500):
         open_list = [self.src_cut]
         closed_list = []
         costs = {self.src_cut: self.src_cut.memory_size()}
@@ -130,7 +130,6 @@ class MaxCutAstar:
             cut_route = routes[next_cut]
 
             if next_cut == self.target_cut:
-                print(expansion_count)
                 return cut_cost, self._remove_dummys_from_path(cut_route[0].op_order)
 
             if self.is_pivot(next_cut):

@@ -17,7 +17,7 @@ from model_compression_toolkit.core.common.graph.memory_graph.memory_graph impor
 
 
 # TODO:  what is a reasonable iteration limit? and what is a good epsilon?
-def compute_graph_max_cut(memory_graph: MemoryGraph, n_iter: int = 50, astar_n_iter: int = 50, eps: float = 1e-2):
+def compute_graph_max_cut(memory_graph: MemoryGraph, n_iter: int = 50, astar_n_iter: int = 500, eps: float = 1e-2):
     max_cut_astar = MaxCutAstar(memory_graph=memory_graph)
     last_result = (0, None)  # TODO: consider creating an AstarResult class
     l_bound = memory_graph.memory_lbound_single_op
