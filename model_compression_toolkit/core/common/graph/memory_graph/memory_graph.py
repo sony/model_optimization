@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-from typing import List, Tuple, Any
-import numpy as np
+from types import MappingProxyType
+from typing import Dict
 from model_compression_toolkit.core.common import BaseNode, Graph
-from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX, EDGE_SOURCE_INDEX
+from model_compression_toolkit.core.common.constants import FLOAT_BITWIDTH
+from model_compression_toolkit.core.common.graph.edge import EDGE_SOURCE_INDEX
 from model_compression_toolkit.core.common.graph.memory_graph.bipartite_graph import DirectedBipartiteGraph
 from model_compression_toolkit.core.common.graph.memory_graph.memory_element import ActivationMemoryTensor
 
 
 class MemoryGraph(DirectedBipartiteGraph):
 
-    def __init__(self, model_graph: Graph):
+    def __init__(self, model_graph: Graph, node_to_activation_bitwidth: Dict[BaseNode, int] = None):
 
         # TODO: here we need to include all graph nodes, even nodes that don't have activation to quantize,
         #  since their output might be some quantized node input.
@@ -31,6 +31,10 @@ class MemoryGraph(DirectedBipartiteGraph):
         #  nodes that have activation to quantize.
 
         self.model_graph = model_graph
+
+        # Making the mapping immutable
+        self.node_to_activation_bitwidth = MappingProxyType({}) if node_to_activation_bitwidth is None \
+            else MappingProxyType(node_to_activation_bitwidth)
 
         nodes = list(model_graph.nodes)
         memory_tensors = []
@@ -42,7 +46,7 @@ class MemoryGraph(DirectedBipartiteGraph):
             out_edges = model_graph.out_edges(n, sort_by_attr=EDGE_SOURCE_INDEX)
 
             for i, ot in enumerate(n_outputs):
-                memory_tensor = ActivationMemoryTensor(ot, n.name, i)
+                memory_tensor = ActivationMemoryTensor(ot, n.name, i, n_bits=self.node_to_activation_bitwidth.get(n, FLOAT_BITWIDTH))
                 memory_tensors.append(memory_tensor)
                 # Add memory tensor as current node's output
                 node_to_tensor.append((n, memory_tensor))
@@ -61,8 +65,13 @@ class MemoryGraph(DirectedBipartiteGraph):
         # memory_lbound_single_op is a lower bound for any schedule of the graph.
         # the bound is defined as the maximum of memory requirements out of all operations in the graph
         # (for a single operation the memory requirement is the sum of the memory size of the children and parents)
-        inputs_tensors_memory = [n.get_total_output_params() for n in nodes if n in model_graph.get_inputs()]
-        nodes_total_memory = [n.get_total_input_params() + n.get_total_output_params() for n in nodes if n not in model_graph.get_inputs()]  # input + output size of each node
+        inputs_tensors_memory = [sum([t.total_size for t in self.operation_node_children(n)])
+                                 for n in nodes if n in model_graph.get_inputs()]
+
+        nodes_total_memory = [sum([t.total_size for t in self.operation_node_children(n)] +
+                                  [t.total_size for t in self.operation_node_parents(n)])
+                              for n in nodes if n not in model_graph.get_inputs()]
+
         self.memory_lbound_single_op = max(nodes_total_memory + inputs_tensors_memory)
 
         self.sources_a = [n for n in self.a_nodes if len(list(self.predecessors(n))) == 0]
