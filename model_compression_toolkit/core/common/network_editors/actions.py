@@ -365,7 +365,11 @@ class ReplaceLayer(BaseAction):
         Returns:
             The node after its layer functionality has been modified.
         """
-        weights, config = self.get_params_and_weights_fn(node.weights, **node.framework_attr)
+        activation_quantization_cfg = {}
+        if node.final_activation_quantization_cfg is not None:
+            activation_quantization_cfg = node.final_activation_quantization_cfg.activation_quantization_params
+
+        weights, config = self.get_params_and_weights_fn(node.weights, activation_quantization_cfg, **node.framework_attr)
         node.framework_attr = config
         node.weights = weights
         node.layer_class = self.layer_type
