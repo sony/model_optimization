@@ -123,6 +123,11 @@ def fusion(graph: Graph, tpc: TargetPlatformCapabilities) -> Graph:
         if is_valid_fusion(fusing_patterns, fusing_nodes):
             fused_nodes.extend(fusing_nodes)
             disable_nodes_activation_quantization(fusing_nodes[:-1])
-            fused_graph.user_info.add_fusion(fusing_nodes)
+            fused_graph.update_fused_nodes(fusing_nodes)
+
+    # TODO: ofirgo: we save fusions in user_info just for testability,
+    #  but I don't think we should expose this info in the user_info.
+    #  Consider removing it and change the tests that use it.
+    fused_graph.user_info.fusions = fused_graph.fused_nodes
 
     return fused_graph

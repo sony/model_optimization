@@ -44,11 +44,3 @@ class UserInformation:
 
     def set_mixed_precision_cfg(self, mp_cfg:List[int]):
         self.mixed_precision_cfg = mp_cfg
-
-    def add_fusion(self, fusing_nodes: List[BaseNode]):
-        """
-        Add fusion to fusion list
-        Args:
-            fusing_nodes: List of fused nodes
-        """
-        self.fusions.append(fusing_nodes)
