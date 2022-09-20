@@ -17,20 +17,18 @@ from typing import List, Tuple
 
 import tensorflow as tf
 from keras.models import Model
+from tensorflow.python.util.object_identity import Reference as TFReference
+from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 
+from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder, \
     is_layer_fake_quant, get_node_name_from_layer
-
-
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
-from model_compression_toolkit.core import common
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.gptq.keras.quantizer.config_factory import quantization_config_builder_gptq
-from tensorflow.python.util.object_identity import Reference as TFReference
 
 
 class GPTQKerasModelBuilder(KerasModelBuilder):
@@ -86,12 +84,15 @@ class GPTQKerasModelBuilder(KerasModelBuilder):
         model, user_info = super().build_model()
 
         def _quantize(layer):
-            nodes = self.graph.find_node_by_name(get_node_name_from_layer(layer))
-            if len(nodes) == 1:
-                node = nodes[0]
+
+            node = self.oh.layer_to_node_dict.get(layer)
+
+            if node is not None:
                 return QuantizeWrapper(layer, quantization_config_builder_gptq(node, self.fw_info, self.gptq_config))
+
             elif is_layer_fake_quant(layer):
                 return layer
+
             else:
                 raise Exception(
                     f"Mismatch between keras model and graph can't find node named: "
