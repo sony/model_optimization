@@ -166,7 +166,6 @@ class BasePytorchLayerTest(BaseLayerTest):
                 models.append(LayerTestModel(layer))
         return models
 
-
     def compare(self, quantized_model: Module, float_model: Module, input_x=None, quantization_info=None):
         quantized_model_fx = symbolic_trace(quantized_model)
         # Assert things that should happen when using FLOAT quantization mode

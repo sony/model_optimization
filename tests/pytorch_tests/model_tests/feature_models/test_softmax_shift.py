@@ -48,7 +48,7 @@ class SoftmaxBaseTest(BasePytorchTest):
         set_model(float_model)
         for model_name, quantized_model in quantized_models.items():
             set_model(quantized_model)
-            quant_bias = quantized_model.linear.bias
+            quant_bias = quantized_model.linear.layer.bias if self.experimental_exporter else quantized_model.linear.bias
             float_bias = float_model.linear.bias
             diff_bias = float_bias - quant_bias
             diff_bias = diff_bias.detach().cpu()

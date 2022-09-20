@@ -92,9 +92,7 @@ class BaseFeatureNetworkTest(BaseTest):
                                                                          gptq_config=self.get_gptq_config(),
                                                                          target_platform_capabilities=self.get_tpc())
 
-            self.compare(ptq_model,
-                         model_float,
-                         input_x=self.representative_data_gen(),
+            self.compare(ptq_model, model_float, input_x=self.representative_data_gen(),
                          quantization_info=quantization_info)
 
 

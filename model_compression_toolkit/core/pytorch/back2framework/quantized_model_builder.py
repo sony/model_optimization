@@ -61,7 +61,9 @@ class QuantizedPyTorchModel(PytorchModel):
             Output of the node.
 
         """
-        if node.final_activation_quantization_cfg:
+        if node.is_activation_quantization_enabled():
+            if isinstance(input_tensors, list):
+                input_tensors = torch.cat(input_tensors, dim=0)
             return node.final_activation_quantization_cfg.quantize_node_output(input_tensors)
         return input_tensors
 

@@ -73,7 +73,7 @@ if importlib.util.find_spec("tensorflow") is not None\
             Import MCT and call for KPI data calculation:
 
             >>> import model_compression_toolkit as mct
-            >>> kpi_data = keras_kpi_data(model, repr_datagen)
+            >>> kpi_data = mct.keras_kpi_data(model, repr_datagen)
 
 
         """
@@ -131,7 +131,7 @@ if importlib.util.find_spec("tensorflow") is not None\
             Import MCT and call for KPI data calculation:
 
             >>> import model_compression_toolkit as mct
-            >>> kpi_data = keras_kpi_data(model, repr_datagen)
+            >>> kpi_data = mct.keras_kpi_data(model, repr_datagen)
 
         """
 

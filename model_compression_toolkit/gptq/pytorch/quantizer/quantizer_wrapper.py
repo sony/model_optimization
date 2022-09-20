@@ -18,9 +18,11 @@ from model_compression_toolkit.core.common import BaseNode, Logger
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType
 from model_compression_toolkit.gptq.pytorch.quantizer.gptq_quantizer import BaseWeightQuantizer
 from model_compression_toolkit.gptq.pytorch.quantizer.ste_rounding.ste_weights_quantizer import STEWeightQuantizer
+from model_compression_toolkit.gptq.pytorch.quantizer.gumbel_rounding.sym_gumbel_weights_quantizer import SymmetricGumbelWeightQuantizer
 from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder
 from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
+from model_compression_toolkit.core.common.target_platform.op_quantization_config import QuantizationMethod
 
 
 class WeightQuantizerWrapper(nn.Module):
@@ -72,10 +74,27 @@ def quantizer_wrapper(node: BaseNode, gptq_config: GradientPTQConfig) -> nn.Modu
         gptq_config: GradientPTQConfig with parameters about the tuning process.
     """
     if node.is_weights_quantization_enabled():
-        if gptq_config.rounding_type == RoundingType.STE:
-            node_instance = WeightQuantizerWrapper(node, gptq_config, STEWeightQuantizer)
+        quantization_method = node.final_weights_quantization_cfg.weights_quantization_method
+        if quantization_method in [QuantizationMethod.SYMMETRIC, QuantizationMethod.POWER_OF_TWO]:
+            # STE quantizer
+            # ---------------
+            if gptq_config.rounding_type == RoundingType.STE:
+                node_instance = WeightQuantizerWrapper(node, gptq_config, STEWeightQuantizer)
+
+            # Symmetric Gumbel rounding quantizer
+            # ------------------------------------
+            elif gptq_config.rounding_type == RoundingType.GumbelRounding:
+                node_instance = WeightQuantizerWrapper(node, gptq_config, SymmetricGumbelWeightQuantizer)
+
+        elif quantization_method == QuantizationMethod.UNIFORM:
+            # Uniform Gumbel rounding quantizer
+            # ------------------------------------
+            if gptq_config.rounding_type == RoundingType.GumbelRounding:
+                Logger.error('No support for Uniform GumbelRounding GPTQ yet. Work in progress..')
+            else:
+                Logger.error(f"For quantization method {quantization_method}, GPTQ Rounding type {gptq_config.rounding_type} is not supported")
         else:
-            Logger.critical('No support for GumbelRounding GPTQ yet. Work in progress..')
+            Logger.error(f"For quantization method {quantization_method}, GPTQ Rounding type {gptq_config.rounding_type} is not supported")
     else:
         # No quantization
         node_instance = node_builder(node)

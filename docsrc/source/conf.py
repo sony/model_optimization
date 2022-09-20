@@ -19,8 +19,8 @@ sys.path.insert(0, os.path.abspath('../../'))
 # -- Project information -----------------------------------------------------
 
 project = 'MCT'
-copyright = '2022, Sony Semiconductors Israel'
-author = 'Sony Semiconductors Israel'
+copyright = '2022, Sony Semiconductor Israel'
+author = 'Sony Semiconductor Israel'
 
 # The full version, including alpha/beta/rc tags
 import model_compression_toolkit as mct

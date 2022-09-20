@@ -18,7 +18,8 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter, NodeTypeFilter
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod, ReplaceLayer
-from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
+from model_compression_toolkit.core.pytorch.back2framework.quantization_wrapper.quantized_layer_wrapper import \
+    QuantizedLayerWrapper
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -64,8 +65,14 @@ class DwConv2dReplacementTest(BasePytorchTest):
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         quantized_model = quantized_models.get('no_quantization')
-        self.unit_test.assertTrue(isinstance(quantized_model.conv1, torch.nn.Conv2d))
+        if self.experimental_exporter:
+            self.unit_test.assertTrue(isinstance(quantized_model.conv1, QuantizedLayerWrapper))
+            self.unit_test.assertTrue(isinstance(quantized_model.conv1.layer, torch.nn.Conv2d))
+            self.unit_test.assertTrue(torch.all(quantized_model.conv1.layer.weight == 1))
+        else:
+            self.unit_test.assertTrue(isinstance(quantized_model.conv1, torch.nn.Conv2d))
+            self.unit_test.assertTrue(torch.all(quantized_model.conv1.weight == 1))
         self.unit_test.assertTrue(torch.all(torch.eq(quantized_model(input_x), input_x[0])))
-        self.unit_test.assertTrue(torch.all(quantized_model.conv1.weight == 1))
+
 
 

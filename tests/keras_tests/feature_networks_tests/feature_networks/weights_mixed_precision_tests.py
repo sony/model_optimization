@@ -117,11 +117,10 @@ class MixedPercisionSearchTest(MixedPercisionBaseTest):
 
         # Verify final KPI
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.weights_memory == quantization_info.final_kpi.total_memory,
+            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory ==
+            quantization_info.final_kpi.total_memory,
             "Running weights mixed-precision with unconstrained KPI, "
-            "final weights memory and total memory should be equal.")
-        self.unit_test.assertTrue(quantization_info.final_kpi.activation_memory == 0,
-                                  "Running weights only mixed-precision, final activation memory should be 0.")
+            "final weights and activation memory sum should be equal to total memory.")
 
 
 class MixedPercisionSearchKPI4BitsAvgTest(MixedPercisionBaseTest):
@@ -143,11 +142,10 @@ class MixedPercisionSearchKPI4BitsAvgTest(MixedPercisionBaseTest):
 
         # Verify final KPI
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.weights_memory == quantization_info.final_kpi.total_memory,
-            "Running weights mixed-precision with unconstrained activation and total KPI, "
-            "final weights memory and total memory should be equal.")
-        self.unit_test.assertTrue(quantization_info.final_kpi.activation_memory == 0,
-                                  "Running weights only mixed-precision, final activation memory should be 0.")
+            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory ==
+            quantization_info.final_kpi.total_memory,
+            "Running weights mixed-precision with unconstrained KPI, "
+            "final weights and activation memory sum should be equal to total memory.")
 
 
 class MixedPercisionSearchKPI2BitsAvgTest(MixedPercisionBaseTest):
@@ -169,11 +167,10 @@ class MixedPercisionSearchKPI2BitsAvgTest(MixedPercisionBaseTest):
 
         # Verify final KPI
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.weights_memory == quantization_info.final_kpi.total_memory,
-            "Running weights mixed-precision with unconstrained activation and total KPI, "
-            "final weights memory and total memory should be equal.")
-        self.unit_test.assertTrue(quantization_info.final_kpi.activation_memory == 0,
-                                  "Running weights only mixed-precision, final activation memory should be 0.")
+            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory ==
+            quantization_info.final_kpi.total_memory,
+            "Running weights mixed-precision with unconstrained KPI, "
+            "final weights and activation memory sum should be equal to total memory.")
 
 
 class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
