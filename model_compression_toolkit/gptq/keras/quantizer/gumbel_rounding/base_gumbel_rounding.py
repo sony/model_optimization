@@ -26,6 +26,7 @@ from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.gumbel_softm
 from model_compression_toolkit.gptq.common import gptq_constants
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape
+from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 
 P_INIT = 0.01
 
@@ -243,15 +244,12 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
 
     def update_iteration(self, training, ar_iter):
         if self.temperature_learning:
-            self.tau = tf.minimum(tf.maximum(self.quantizer_parameters[gptq_constants.TEMP], self.minimal_temp),
-                                  self.maximal_temp)
+            self.tau = qutils.ste_clip(self.quantizer_parameters[gptq_constants.TEMP], self.maximal_temp,
+                                       self.minimal_temp)
         else:
             self.tau = self.tau_function(ar_iter)
         if self.update_gumbel_param and training:
 
-            if ar_iter % self.cycle_iterations == 0:
-                self.quantizer_parameters[gptq_constants.TEMP].assign(
-                    self.maximal_temp * np.ones(self.quantizer_parameters[gptq_constants.TEMP].shape))
             ar_iter.assign_add(1.0)
             self.g_t = sample_gumbel([self.m, *self.w_shape])
 

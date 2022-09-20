@@ -50,18 +50,19 @@ def gumbel_rounding_symmetric_quantizer(input_tensor: tf.Tensor,
     if power_of_two:
         max_tensor = qutils.power_of_two_max(max_tensor)
     delta = qutils.calculate_delta(max_tensor, num_bits, signed)
-    input_tensor_int = tf.stop_gradient(tf.round(input_tensor / delta))
+    input_tensor = tf.stop_gradient(input_tensor)
+    input_tensor_int = qutils.ste_round(input_tensor / delta)
     tensor_q = input_tensor_int + auxvar_tensor
     min_int = -int(signed) * (2 ** (num_bits - int(signed)))
     max_int = (2 ** (num_bits - int(signed))) - 1
-    return delta * qutils.ste_clip(tensor_q, max_val=max_int, min_val=min_int)
-
+    return delta * qutils.clip(tensor_q, max_val=max_int, min_val=min_int)
 
 class SymmetricGumbelRounding(GumbelRoundingBase):
     """
     Trainable constrained quantizer to quantize a layer inputs.
     """
     PTQ_THRESHOLD = "_ptq_threshold"
+    SCALE_PTQ = "_scale"
 
     def __init__(self, num_bits: int,
                  per_axis: bool,
@@ -118,10 +119,19 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
             name + self.PTQ_THRESHOLD,
             shape=self.k_threshold,
             initializer=tf.keras.initializers.Constant(1.0),
-            trainable=self.quantization_parameter_learning)
+            trainable=False)
         ptq_threshold_tensor.assign(self.threshold_values)
 
         self.quantizer_parameters.update({self.PTQ_THRESHOLD: ptq_threshold_tensor})
+
+        if self.quantization_parameter_learning and not self.power_of_two:
+            scale = layer.add_weight(
+                name + self.SCALE_PTQ,
+                shape=self.k_threshold,
+                initializer=tf.keras.initializers.Constant(1.0),
+                trainable=True)
+            self.quantizer_parameters.update({self.SCALE_PTQ: scale})
+
         return self.quantizer_parameters
 
     def get_quantization_variable(self) -> List[tf.Tensor]:
@@ -130,7 +140,10 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
         Returns: A list of the quantizer parameters
 
         """
-        return [self.quantizer_parameters[self.PTQ_THRESHOLD]]
+        if self.quantization_parameter_learning and not self.power_of_two:
+            return [self.quantizer_parameters[self.SCALE_PTQ]]
+        else:
+            return [self.quantizer_parameters[self.PTQ_THRESHOLD]]
 
     def __call__(self, inputs: tf.Tensor,
                  training: bool,
@@ -183,6 +196,10 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
                                                            self.num_bits,
                                                            self.signed,
                                                            self.power_of_two)
+            if self.quantization_parameter_learning and not self.power_of_two:
+                scale = tf.reshape(self.quantizer_parameters[self.SCALE_PTQ], reshape_shape)
+                q_tensor *= scale
+
             return q_tensor
         else:
             return gumbel_rounding_symmetric_quantizer(inputs, auxvar,
@@ -203,8 +220,13 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
             Keys must match NodeQuantizationConfig attributes
 
         """
-        old_threshold = self.quantizer_parameters[self.PTQ_THRESHOLD]
+
         if self.power_of_two:
+            old_threshold = self.quantizer_parameters[self.PTQ_THRESHOLD]
             old_threshold = qutils.power_of_two_max(old_threshold)
+        else:
+            old_threshold = self.quantizer_parameters[self.PTQ_THRESHOLD]
+            if self.quantization_parameter_learning:
+                old_threshold = old_threshold * self.quantizer_parameters[self.SCALE_PTQ]
         old_threshold = old_threshold.numpy().reshape(self.threshold_shape)
         return {THRESHOLD: old_threshold}
