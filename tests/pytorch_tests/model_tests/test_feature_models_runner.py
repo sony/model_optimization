@@ -58,7 +58,6 @@ from tests.pytorch_tests.model_tests.feature_models.reuse_layer_net_test import 
 from tests.pytorch_tests.model_tests.feature_models.shift_negative_activation_test import ShiftNegaviteActivationNetTest
 from tests.pytorch_tests.model_tests.feature_models.split_concat_net_test import SplitConcatNetTest
 from tests.pytorch_tests.model_tests.feature_models.torch_tensor_attr_net_test import TorchTensorAttrNetTest
-from tests.pytorch_tests.model_tests.feature_models.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, LayerFusingTest4
 from tests.pytorch_tests.model_tests.feature_models.bn_function_test import BNFNetTest
 from tests.pytorch_tests.model_tests.feature_models.gptq_test import STEAccuracyTest, STEWeightsUpdateTest, STELearnRateZeroTest
 from tests.pytorch_tests.model_tests.feature_models.gptq_test import SymGumbelAccuracyTest, SymGumbelWeightsUpdateTest, SymGumbelAccuracyTest2
@@ -300,15 +299,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         2. Nodes with multiple outputs and multiple inputs
         """
         SplitConcatNetTest(self).run_test()
-
-    def test_layer_fusing(self):
-        """
-        This test checks layer fusing: skipping activation quantization for layers in the fusion
-        """
-        LayerFusingTest1(self).run_test()
-        LayerFusingTest2(self).run_test()
-        LayerFusingTest3(self).run_test()
-        LayerFusingTest4(self).run_test()
 
     def test_torch_tensor_attr_net(self):
         """

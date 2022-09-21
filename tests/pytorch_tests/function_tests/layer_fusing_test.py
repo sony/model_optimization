@@ -16,19 +16,35 @@ import torch
 import torch.nn as nn
 from torch.nn import Conv2d, ReLU, SiLU, Sigmoid, Linear, Hardtanh
 from torch.nn.functional import relu, relu6
-import model_compression_toolkit as mct
-from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
 
+from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
+from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
+    set_quantization_configuration_to_graph
+
+from model_compression_toolkit import DEFAULTCONFIG
+from model_compression_toolkit.core.common.target_platform import LayerFilterParams
+from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
+from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
+from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
+
+import model_compression_toolkit as mct
 tp = mct.target_platform
 
 
-class BaseLayerFusingTest(BasePytorchFeatureNetworkTest):
+class BaseLayerFusingTest(BasePytorchTest):
 
     def __init__(self, unit_test):
-        super().__init__(unit_test=unit_test, input_shape=(3, 16, 16))
+        super().__init__(unit_test=unit_test)
         self.expected_fusions = []
+
+    def create_inputs_shape(self):
+        return [[self.val_batch_size, 3, 16, 16]]
+
+    def representative_data_gen(self):
+        input_shapes = self.create_inputs_shape()
+        return self.generate_inputs(input_shapes)
 
     def get_type(self, fusion):
         fusion_types = [x.type for x in fusion]
@@ -42,15 +58,39 @@ class BaseLayerFusingTest(BasePytorchFeatureNetworkTest):
                                                                              base_config=default_config)
         return generated_tp, mixed_precision_configuration_options
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(len(quantization_info.fusions) == len(self.expected_fusions), msg=f'Number of fusions is not as expected!')
-        for i,fusion in enumerate(quantization_info.fusions):
+    def prepare_graph(self, in_model, tpc):
+        fw_info = DEFAULT_PYTORCH_INFO
+        pytorch_impl = PytorchImplementation()
+        qc = DEFAULTCONFIG
+
+        graph = pytorch_impl.model_reader(in_model, self.representative_data_gen)  # model reading
+        graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())
+        for node in graph.nodes:
+            node.prior_info = pytorch_impl.get_node_prior_info(node=node,
+                                                               fw_info=fw_info,
+                                                               graph=graph)
+        graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(qc))
+
+        graph.set_fw_info(fw_info)
+        graph.set_tpc(tpc)
+
+        graph = set_quantization_configuration_to_graph(graph=graph,
+                                                        quant_config=qc)
+
+        fusion_graph = fusion(graph, tpc)
+
+        return fusion_graph
+
+    def _compare(self, fused_nodes):
+        self.unit_test.assertTrue(len(fused_nodes) == len(self.expected_fusions), msg=f'Number of fusions is not as expected!')
+        for i, fusion in enumerate(fused_nodes):
             self.unit_test.assertTrue(self.get_type(fusion) == self.expected_fusions[i], msg=f'Miss-match fusion compared to expected!')
+
 
 class LayerFusingTest1(BaseLayerFusingTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_fusions = [[Conv2d,ReLU]]
+        self.expected_fusions = [[nn.Conv2d, nn.ReLU]]
 
     def get_tpc(self):
         generated_tp, mixed_precision_configuration_options = super().get_tpc()
@@ -62,16 +102,23 @@ class LayerFusingTest1(BaseLayerFusingTest):
 
         pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp, name='layer_fusing_test')
         with pytorch_tpc:
-            tp.OperationsSetToLayers("Conv", [Conv2d])
+            tp.OperationsSetToLayers("Conv", [nn.Conv2d])
             tp.OperationsSetToLayers("AnyReLU", [torch.relu,
-                                                 ReLU])
+                                                 nn.ReLU])
         return pytorch_tpc
+
+    def run_test(self, seed=0, experimental_facade=False):
+        model_float = self.LayerFusingNetTest()
+        tpc = self.get_tpc()
+        graph = self.prepare_graph(model_float, tpc)
+
+        self._compare(graph.fused_nodes)
 
     class LayerFusingNetTest(nn.Module):
         def __init__(self):
             super().__init__()
-            self.conv1 = nn.Conv2d(3, 16, kernel_size=(3,3))
-            self.conv2 = nn.Conv2d(16, 32, kernel_size=(1,1))
+            self.conv1 = nn.Conv2d(3, 16, kernel_size=(3, 3))
+            self.conv2 = nn.Conv2d(16, 32, kernel_size=(1, 1))
             self.relu = nn.ReLU()
 
         def forward(self, x):
@@ -79,9 +126,6 @@ class LayerFusingTest1(BaseLayerFusingTest):
             x = self.conv2(x)
             y = self.relu(x)
             return y
-
-    def create_networks(self):
-        return self.LayerFusingNetTest()
 
 
 class LayerFusingTest2(BaseLayerFusingTest):
@@ -100,8 +144,15 @@ class LayerFusingTest2(BaseLayerFusingTest):
         pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp, name='layer_fusing_test')
         with pytorch_tpc:
             tp.OperationsSetToLayers("Conv", [Conv2d])
-            tp.OperationsSetToLayers("AnyAct", [ReLU,relu6,relu,SiLU,Sigmoid,LayerFilterParams(Hardtanh, min_val=0)])
+            tp.OperationsSetToLayers("AnyAct", [ReLU,relu6,relu,SiLU,Sigmoid, LayerFilterParams(Hardtanh, min_val=0)])
         return pytorch_tpc
+
+    def run_test(self, seed=0, experimental_facade=False):
+        model_float = self.LayerFusingNetTest()
+        tpc = self.get_tpc()
+        graph = self.prepare_graph(model_float, tpc)
+
+        self._compare(graph.fused_nodes)
 
     class LayerFusingNetTest(nn.Module):
         def __init__(self):
@@ -128,9 +179,6 @@ class LayerFusingTest2(BaseLayerFusingTest):
             y = self.swish(x)
             return y
 
-    def create_networks(self):
-        return self.LayerFusingNetTest()
-
 
 class LayerFusingTest3(BaseLayerFusingTest):
     def __init__(self, unit_test):
@@ -150,6 +198,13 @@ class LayerFusingTest3(BaseLayerFusingTest):
             tp.OperationsSetToLayers("Conv", [Conv2d])
             tp.OperationsSetToLayers("AnyAct", [ReLU,relu6,relu])
         return pytorch_tpc
+
+    def run_test(self, seed=0, experimental_facade=False):
+        model_float = self.LayerFusingNetTest()
+        tpc = self.get_tpc()
+        graph = self.prepare_graph(model_float, tpc)
+
+        self._compare(graph.fused_nodes)
 
     class LayerFusingNetTest(nn.Module):
         def __init__(self):
@@ -175,9 +230,6 @@ class LayerFusingTest3(BaseLayerFusingTest):
             x = self.conv5(x)
             y = self.swish(x)
             return y
-
-    def create_networks(self):
-        return self.LayerFusingNetTest()
 
 
 class LayerFusingTest4(BaseLayerFusingTest):
@@ -208,6 +260,13 @@ class LayerFusingTest4(BaseLayerFusingTest):
             tp.OperationsSetToLayers("Add", [torch.add])
             tp.OperationsSetToLayers("Swish", [SiLU])
         return pytorch_tpc
+
+    def run_test(self, seed=0, experimental_facade=False):
+        model_float = self.LayerFusingNetTest()
+        tpc = self.get_tpc()
+        graph = self.prepare_graph(model_float, tpc)
+
+        self._compare(graph.fused_nodes)
 
     class LayerFusingNetTest(nn.Module):
         def __init__(self):
@@ -242,7 +301,3 @@ class LayerFusingTest4(BaseLayerFusingTest):
             x3 = self.dense2(x3)
             y = self.swish(x3)
             return y
-
-    def create_networks(self):
-        return self.LayerFusingNetTest()
-
