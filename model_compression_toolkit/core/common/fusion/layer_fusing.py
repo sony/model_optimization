@@ -125,9 +125,4 @@ def fusion(graph: Graph, tpc: TargetPlatformCapabilities) -> Graph:
             disable_nodes_activation_quantization(fusing_nodes[:-1])
             fused_graph.update_fused_nodes(fusing_nodes)
 
-    # TODO: ofirgo: we save fusions in user_info just for testability,
-    #  but I don't think we should expose this info in the user_info.
-    #  Consider removing it and change the tests that use it.
-    fused_graph.user_info.fusions = fused_graph.fused_nodes
-
     return fused_graph
