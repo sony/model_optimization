@@ -40,7 +40,7 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
                  gamma_str: str,
                  beta_str: str,
                  moving_mean_str: str,
-                 moving__variance_str: str,
+                 moving_variance_str: str,
                  epsilon_str: str,
                  use_bias: str,
                  layer_name_str: str):
@@ -57,7 +57,8 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
             gamma_str: The framework specific attribute name of the batch norm layer's gamma parameter.
             beta_str: The framework specific attribute name of the batch norm layer's beta parameter.
             moving_mean_str: The framework specific attribute name of the batch norm layer's moving mean parameter.
-            moving__variance_str: The framework specific attribute name of the batch norm layer's moving variance parameter.
+            moving_variance_str: The framework specific attribute name of the batch norm layer's moving variance
+            parameter.
             epsilon_str: The framework specific attribute name of the batch norm layer's epsilon parameter.
             use_bias: The framework specific attribute name of the convolution layer's bias flag.
             layer_name_str: The framework specific attribute name of layer's name.
@@ -69,10 +70,11 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
         self.gamma_str = gamma_str
         self.beta_str = beta_str
         self.moving_mean_str = moving_mean_str
-        self.moving__variance_str = moving__variance_str
+        self.moving_variance_str = moving_variance_str
         self.epsilon_str = epsilon_str
         self.use_bias = use_bias
         self.layer_name_str = layer_name_str
+        self.layer_name_suffix = '_refused'
 
     def substitute(self,
                    graph: Graph,
@@ -91,32 +93,25 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
         num_nodes_before_substitution = len(graph.nodes)
         num_edges_before_substitution = len(graph.edges)
 
-        conv_node = edge_nodes[0]
+        source_node = edge_nodes[0]
 
         # If the linear operator is part of a reused group (it is the "base" node, or a reused node),
         # we should skip the substitution.
-        if conv_node.reuse or conv_node.reuse_group is not None:
+        if source_node.reuse or source_node.reuse_group is not None:
             return graph
 
         bn_node = edge_nodes[1]
 
-        if len(graph.get_next_nodes(conv_node)) > 1 or len(graph.get_prev_nodes(bn_node)) > 1:
+        if len(graph.get_next_nodes(source_node)) > 1 or len(graph.get_prev_nodes(bn_node)) > 1:
             return graph
 
-        kernel = conv_node.get_weights_by_keys(self.kernel_str)
-        bias = conv_node.get_weights_by_keys(self.bias_str)
+        kernel = source_node.get_weights_by_keys(self.kernel_str)
+        bias = source_node.get_weights_by_keys(self.bias_str)
         gamma = bn_node.get_weights_by_keys(self.gamma_str)
         beta = bn_node.get_weights_by_keys(self.beta_str)
         moving_mean = bn_node.get_weights_by_keys(self.moving_mean_str)
-        moving_variance = bn_node.get_weights_by_keys(self.moving__variance_str)
+        moving_variance = bn_node.get_weights_by_keys(self.moving_variance_str)
         eps = bn_node.framework_attr[self.epsilon_str]
-
-        # TODO:
-        # if gamma or beta is None raise Exception
-        if gamma is None:
-            gamma = 1.0
-        if beta is None:
-            beta = 0.0
 
         if bias is None:
             bias = 0.0
@@ -124,43 +119,50 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
         weights_scale = gamma / np.sqrt(moving_variance + eps)
         bias = beta + (bias - moving_mean) * weights_scale
 
-        kernel, kernel_name = self.update_kernel_for_bn_refusing_fn(conv_node, kernel, weights_scale)
+        if not isinstance(weights_scale, np.ndarray):
+            weights_scale = weights_scale.numpy()
 
-        framework_attr = copy.copy(conv_node.framework_attr)
+        kernel, kernel_name = self.update_kernel_for_bn_refusing_fn(source_node, kernel, weights_scale)
+
+        framework_attr = copy.copy(source_node.framework_attr)
         framework_attr[self.use_bias] = True
         if self.layer_name_str is not None:
-            framework_attr[self.layer_name_str] = conv_node.name + '_refused'
+            framework_attr[self.layer_name_str] = source_node.name + self.layer_name_suffix
 
         weights_dict = {kernel_name: kernel,
                         self.bias_str: bias}
 
-        conv_bn = copy.deepcopy(conv_node)
-        conv_bn_name = conv_node.name + '_refused'
+        conv_bn = copy.deepcopy(source_node)
+        conv_bn_name = source_node.name + self.layer_name_suffix
         conv_bn.name = conv_bn_name
         conv_bn.framework_attr = framework_attr
         conv_bn.weights = weights_dict
 
         graph.add_node(conv_bn)
         graph.reconnect_out_edges(current_node=bn_node, new_node=conv_bn)
-        graph.reconnect_in_edges(current_node=conv_node, new_node=conv_bn)
+        graph.reconnect_in_edges(current_node=source_node, new_node=conv_bn)
 
         graph.replace_output_node(current_node=bn_node, new_node=conv_bn)
 
         conv_bn.prior_info = bn_node.prior_info
+        in_stats = graph.get_in_stats_collector(source_node)
+        out_stats = graph.get_out_stats_collector(source_node)
+        graph.set_out_stats_collector_to_node(conv_bn, out_stats)
+        graph.node_to_in_stats_collector.update({conv_bn: in_stats})
 
-        graph.remove_edge(conv_node, bn_node)
+        graph.remove_edge(source_node, bn_node)
         graph.remove_node(bn_node)
-        graph.remove_node(conv_node)
+        graph.remove_node(source_node)
+
+        self._calc_weights_quantization_params(conv_bn, weights_scale)
 
         assert num_nodes_before_substitution - len(graph.nodes) == 1
         assert num_edges_before_substitution - len(graph.edges) == 1
-
-        self._calc_weights_quantization_params(conv_bn, weights_scale)
         return graph
 
     def _calc_weights_quantization_params(self,
                                           conv_bn: BaseNode,
-                                          weights_scale):
+                                          weights_scale: np.ndarray):
         """
         Update node weights quantization params.
         Args:
@@ -170,17 +172,22 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
         # In case of SYMMETRIC weight quantization method, we update the threshold by weights_scale
         if conv_bn.final_weights_quantization_cfg.weights_quantization_method == QuantizationMethod.SYMMETRIC:
             original_threshold = conv_bn.final_weights_quantization_cfg.weights_quantization_params[THRESHOLD]
+            corr_dict = copy.deepcopy(conv_bn.final_weights_quantization_cfg.weights_quantization_params)
             corr_threshold, _ = self.update_kernel_for_bn_refusing_fn(conv_bn, original_threshold, weights_scale)
-            corr_threshold_dict = {THRESHOLD: corr_threshold}
-            conv_bn.final_weights_quantization_cfg.set_weights_quantization_param(corr_threshold_dict)
+            corr_dict[THRESHOLD] = corr_threshold
+            conv_bn.final_weights_quantization_cfg.set_weights_quantization_param(corr_dict)
 
         # In case of SYMMETRIC weight quantization method, we update the range_min, range_max by weights_scale
         elif conv_bn.final_weights_quantization_cfg.weights_quantization_method == QuantizationMethod.UNIFORM:
+            corr_dict = copy.deepcopy(conv_bn.final_weights_quantization_cfg.weights_quantization_params)
             original_range_min = conv_bn.final_weights_quantization_cfg.weights_quantization_params[RANGE_MIN]
             corr_range_min, _ = self.update_kernel_for_bn_refusing_fn(conv_bn, original_range_min, weights_scale)
             original_range_max = conv_bn.final_weights_quantization_cfg.weights_quantization_params[RANGE_MAX]
             corr_range_max, _ = self.update_kernel_for_bn_refusing_fn(conv_bn, original_range_max, weights_scale)
-            corr_range_dict = {RANGE_MIN: corr_range_min, RANGE_MAX: corr_range_max}
-            conv_bn.final_weights_quantization_cfg.set_weights_quantization_param(corr_range_dict)
+            corr_dict[RANGE_MIN] = corr_range_min
+            corr_dict[RANGE_MAX] = corr_range_max
+            conv_bn.final_weights_quantization_cfg.set_weights_quantization_param(corr_dict)
 
-
+        else:
+            raise Exception("Second moment statistics correction feature disabled for models with weights "
+                            "quantization method of Power of 2")

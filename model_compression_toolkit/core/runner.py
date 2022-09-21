@@ -403,6 +403,7 @@ def _prepare_model_for_quantization(graph: Graph,
     # Compute bias correction to nodes' config candidates
     ########################################################
     tg_with_bias = compute_bias_correction_of_graph(transformed_graph,
+                                                    core_config,
                                                     fw_info,
                                                     fw_impl)
 

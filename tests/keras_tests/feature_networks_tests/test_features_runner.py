@@ -29,7 +29,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_b
     MixedPrecisionBopsAndTotalKPITest, MixedPrecisionBopsWeightsActivationKPITest, \
     MixedPrecisionBopsMultipleOutEdgesTest
 from tests.keras_tests.feature_networks_tests.feature_networks.second_moment_correction_test import \
-    DepthwiseConv2DSecondMomentTest, Conv2DSecondMomentTest, Conv2DTSecondMomentTest
+    DepthwiseConv2DSecondMomentTest, Conv2DSecondMomentTest, Conv2DTSecondMomentTest, \
+    DepthwiseConv2DWithMultiplierSecondMomentTest, ValueSecondMomentTest
 from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
     DwConv2dReplacementTest
 
@@ -461,14 +462,12 @@ class FeatureNetworkTest(unittest.TestCase):
         FourConv2DCollapsingTest(self).run_test()
         SixConv2DCollapsingTest(self).run_test()
 
-    def test_dwbn_second_moment(self):
+    def test_second_moment(self):
         DepthwiseConv2DSecondMomentTest(self).run_test()
-
-    def test_conv2dbn_second_moment(self):
+        # DepthwiseConv2DWithMultiplierSecondMomentTest(self).run_test()
         Conv2DSecondMomentTest(self).run_test()
-
-    def test_conv2dtransposebn_second_moment(self):
         Conv2DTSecondMomentTest(self).run_test()
+        ValueSecondMomentTest(self).run_test()
 
     def test_decompose_separable_conv(self):
         DecomposeSeparableConvTest(self).run_test()

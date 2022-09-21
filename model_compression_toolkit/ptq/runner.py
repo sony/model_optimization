@@ -47,19 +47,23 @@ def ptq_runner(tg: Graph,
         A graph after statistics correction
 
     """
-    #############################################
-    # Apply Bias Correction
-    #############################################
-    if core_config.quantization_config.weights_bias_correction:
-        tg = apply_bias_correction_to_graph(tg,
-                                            fw_impl=fw_impl)
-
+<<<<<<< HEAD
+=======
     #############################################
     # Apply Second Moment Correction
     #############################################
     if core_config.quantization_config.weights_second_moment_correction:
         tg = apply_second_moment_correction_to_graph(tg, representative_data_gen,
                                                      core_config, fw_info, fw_impl)
+
+>>>>>>> Add second moment correction
+    #############################################
+    # Apply Bias Correction
+    #############################################
+    if core_config.quantization_config.weights_bias_correction:
+        tg = apply_bias_correction_to_graph(tg,
+                                            core_config,
+                                            fw_impl=fw_impl)
     if tb_w is not None:
         tb_w.add_graph(tg, 'after_statistics_correction')
 

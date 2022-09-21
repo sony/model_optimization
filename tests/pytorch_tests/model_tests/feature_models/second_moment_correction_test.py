@@ -12,11 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import torch
+import copy
+import random
+from typing import Callable, List, Tuple
 
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.core.pytorch.constants import EPSILON_VAL
+import numpy as np
+import torch
+from torch.nn import Module
+
+from model_compression_toolkit import QuantizationConfig, DEFAULTCONFIG, FrameworkInfo, CoreConfig, DebugConfig
+from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common.network_editors import EditRule
+from model_compression_toolkit.core.common.statistics_correction.apply_second_moment_correction_to_graph import \
+    quantized_model_builder_for_second_moment_correction
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod, TargetPlatformCapabilities
+from model_compression_toolkit.core.pytorch.constants import EPSILON_VAL, GAMMA, BETA, MOVING_MEAN, MOVING_VARIANCE
+from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
+from model_compression_toolkit.core.pytorch.statistics_correction.apply_second_moment_correction import \
+    pytorch_apply_second_moment_correction
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_model
+from model_compression_toolkit.core.runner import _init_tensorboard_writer, core_runner
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
@@ -112,6 +128,7 @@ class ConvSecondMomentNet(torch.nn.Module):
     """
     This is the test for the Second Moment Correction feature with Conv2d.
     """
+
     def __init__(self):
         super(ConvSecondMomentNet, self).__init__()
         self.conv1 = torch.nn.Conv2d(1, 1, kernel_size=1, stride=1)
@@ -130,6 +147,7 @@ class ConvSecondMomentNetTest(BaseSecondMomentTest):
     """
     This is the test for the Second Moment Correction feature with Conv2d.
     """
+
     def create_feature_network(self, input_shape):
         return ConvSecondMomentNet()
 
@@ -138,6 +156,7 @@ class ConvTSecondMomentNet(torch.nn.Module):
     """
     This is the test for the Second Moment Correction feature with ConvTranspose2d.
     """
+
     def __init__(self):
         super(ConvTSecondMomentNet, self).__init__()
         self.conv1 = torch.nn.ConvTranspose2d(1, 1, kernel_size=1, stride=1)
@@ -156,6 +175,7 @@ class ConvTSecondMomentNetTest(BaseSecondMomentTest):
     """
     This is the test for the Second Moment Correction feature with ConvTranspose2d.
     """
+
     def create_feature_network(self, input_shape):
         return ConvTSecondMomentNet()
 
@@ -164,6 +184,7 @@ class MultipleInputsConvSecondMomentNet(torch.nn.Module):
     """
     This is the test for the Second Moment Correction feature with Multiple Inputs.
     """
+
     def __init__(self):
         super(MultipleInputsConvSecondMomentNet, self).__init__()
         self.conv1 = torch.nn.Conv2d(1, 1, kernel_size=1, stride=1)
@@ -196,6 +217,7 @@ class MultipleInputsConvSecondMomentNetTest(BaseSecondMomentTest):
     """
     This is the test for the Second Moment Correction feature with Multiple Inputs.
     """
+
     def create_feature_network(self, input_shape):
         return MultipleInputsConvSecondMomentNet()
 
@@ -260,3 +282,96 @@ class MultipleInputsConvSecondMomentNetTest(BaseSecondMomentTest):
             self.unit_test.assertTrue(torch.isclose(quantized_model_conv2_bias, calculated_bias2, atol=1e-1))
             self.unit_test.assertTrue(torch.isclose(quantized_model_conv3_weight, calculated_kernel3, atol=1e-1))
             self.unit_test.assertTrue(torch.isclose(quantized_model_conv3_bias, calculated_bias3, atol=1e-1))
+
+
+class ValueSecondMomentTest(BaseSecondMomentTest):
+    """
+    This is the test for the Second Moment Correction feature.
+    This test check that the gamma&beta values of the reconstructed BN didn't change during second moment application.
+    """
+
+    def create_feature_network(self, input_shape):
+        return ConvSecondMomentNet()
+
+    def run_test(self, seed=0, experimental_facade=False, ):
+        np.random.seed(seed)
+        random.seed(a=seed)
+        torch.random.manual_seed(seed)
+        fw_info = DEFAULT_PYTORCH_INFO
+        pytorch_impl = PytorchImplementation()
+        input_shapes = self.create_inputs_shape()
+        x = self.generate_inputs(input_shapes)
+
+        def representative_data_gen():
+            return x
+
+        model_float = self.create_feature_network(input_shapes)
+        quant_config_dict = self.get_quantization_configs()
+
+        for model_name in quant_config_dict.keys():
+            quant_config = quant_config_dict[model_name]
+            tpc = self.get_tpc()[model_name]
+            tg, graph_after_second_moment_correction = self.prepare_graph(model_float,
+                                                                          representative_data_gen,
+                                                                          n_iter=1,
+                                                                          quant_config=quant_config,
+                                                                          fw_info=DEFAULT_PYTORCH_INFO,
+                                                                          network_editor=self.get_network_editor(),
+                                                                          target_platform_capabilities=tpc)
+            for node in graph_after_second_moment_correction.nodes:
+                if node.layer_class == torch.nn.BatchNorm2d:
+                    bf_second_moment_node = tg.find_node_by_name(node.name)[0]
+
+                    gamma0 = bf_second_moment_node.get_weights_by_keys(GAMMA)
+                    beta0 = bf_second_moment_node.get_weights_by_keys(BETA)
+                    moving_mean0 = bf_second_moment_node.get_weights_by_keys(MOVING_MEAN)
+                    moving_variance0 = bf_second_moment_node.get_weights_by_keys(MOVING_VARIANCE)
+
+                    gamma1 = node.get_weights_by_keys(GAMMA)
+                    beta1 = node.get_weights_by_keys(BETA)
+                    moving_mean1 = node.get_weights_by_keys(MOVING_MEAN)
+                    moving_variance1 = node.get_weights_by_keys(MOVING_VARIANCE)
+
+                    # check that gamma&beta didn't change
+                    self.unit_test.assertTrue(gamma0 == gamma1)
+                    self.unit_test.assertTrue(beta0 == beta1)
+
+                    # check that moving_mean&moving_variance did change
+                    self.unit_test.assertFalse(moving_mean0 == moving_mean1)
+                    self.unit_test.assertFalse(moving_variance0 == moving_variance1)
+
+    def prepare_graph(self,
+                      in_model: Module,
+                      representative_data_gen: Callable,
+                      n_iter: int = 500,
+                      quant_config: QuantizationConfig = DEFAULTCONFIG,
+                      fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
+                      network_editor: List[EditRule] = [],
+                      analyze_similarity: bool = False,
+                      target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_INFO) -> \
+            Tuple[Graph, Graph]:
+
+        core_config = CoreConfig(n_iter,
+                                 quantization_config=quant_config,
+                                 debug_config=DebugConfig(analyze_similarity=analyze_similarity,
+                                                          network_editor=network_editor)
+                                 )
+
+        tb_w = _init_tensorboard_writer(fw_info)
+
+        fw_impl = PytorchImplementation()
+
+        tg, bit_widths_config = core_runner(in_model=in_model,
+                                            representative_data_gen=representative_data_gen,
+                                            core_config=core_config,
+                                            fw_info=fw_info,
+                                            fw_impl=fw_impl,
+                                            tpc=target_platform_capabilities,
+                                            tb_w=tb_w)
+        graph_to_apply_second_moment = copy.deepcopy(tg)
+        semi_quantized_model = quantized_model_builder_for_second_moment_correction(graph_to_apply_second_moment,
+                                                                                    fw_info, fw_impl)
+        pytorch_apply_second_moment_correction(semi_quantized_model, core_config, representative_data_gen,
+                                               graph_to_apply_second_moment)
+
+        return tg, graph_to_apply_second_moment

@@ -36,7 +36,7 @@ from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_t
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.second_moment_correction_test import ConvSecondMomentNetTest, \
-    ConvTSecondMomentNetTest, MultipleInputsConvSecondMomentNetTest
+    ConvTSecondMomentNetTest, MultipleInputsConvSecondMomentNetTest, ValueSecondMomentTest
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
     SoftmaxFunctionNetTest
 from tests.pytorch_tests.model_tests.feature_models.permute_substitution_test import PermuteSubstitutionTest
@@ -122,23 +122,14 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         BNFoldingNetTest(self).run_test()
 
-    def test_conv_second_moment_correction(self):
+    def test_second_moment_correction(self):
         """
-        This is the test for the Second Moment Correction feature with Conv2d.
+        These are tests for the Second Moment Correction.
         """
         ConvSecondMomentNetTest(self).run_test()
-
-    def test_convt_second_moment_correction(self):
-        """
-        This is the test for the Second Moment Correction feature with ConvTranspose2d.
-        """
         ConvTSecondMomentNetTest(self).run_test()
-
-    def test_multiple_inputs_conv_second_moment_correction(self):
-        """
-        This is the test for the Second Moment Correction feature with Multiple Inputs.
-        """
         MultipleInputsConvSecondMomentNetTest(self).run_test()
+        ValueSecondMomentTest(self).run_test()
 
     def test_bn_function(self):
         """
@@ -174,7 +165,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the permute substitution feature
         """
         PermuteSubstitutionTest(self).run_test()
-
 
     def test_relu_bound_to_power_of_2(self):
         """

@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import numpy as np
 from torch.nn import BatchNorm2d, Conv2d, ConvTranspose2d
 
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
-from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.substitutions.batchnorm_refusing import BatchNormalizationRefusing
 from model_compression_toolkit.core.pytorch.constants import KERNEL, BIAS, GAMMA, BETA, MOVING_MEAN, MOVING_VARIANCE, \
     EPSILON, USE_BIAS
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
+    update_kernel_for_bn_folding_fn
 
 
 def batchnorm_refusing_node_matchers():
@@ -36,38 +36,12 @@ def batchnorm_refusing_node_matchers():
     return bn_node, source_node
 
 
-def update_kernel_for_bn_refusing_fn(conv_node: BaseNode,
-                                     kernel: np.ndarray,
-                                     weights_scale: np.ndarray):
-    """
-    Args:
-        conv_node: Convolution node to update the weight/kernel.
-        kernel: The Convolution node's weight
-        weights_scale: Weight scale factor in which to multiply the conv node's weight.
-
-    Returns:
-        The modified convolution node's weight/kernel/
-    """
-    return kernel * weights_scale[:, None, None, None], KERNEL
-
-
 def pytorch_batchnorm_refusing() -> BatchNormalizationRefusing:
     """
-
+    Re-fuse BatchNormalization into preceding linear layers.
     Returns:
         A BatchNormalizationRefusing initialized for Pytorch models.
     """
     bn_node, source_node = batchnorm_refusing_node_matchers()
-    return BatchNormalizationRefusing(source_node,
-                                     bn_node,
-                                     update_kernel_for_bn_refusing_fn,
-                                     KERNEL,
-                                     BIAS,
-                                     GAMMA,
-                                     BETA,
-                                     MOVING_MEAN,
-                                     MOVING_VARIANCE,
-                                     EPSILON,
-                                     USE_BIAS,
-                                     layer_name_str=None,  # torch.nn.Modules don't have an attribute 'name'
-                                     )
+    return BatchNormalizationRefusing(source_node, bn_node, update_kernel_for_bn_folding_fn, KERNEL, BIAS, GAMMA, BETA,
+                                      MOVING_MEAN, MOVING_VARIANCE, EPSILON, USE_BIAS, layer_name_str=None)

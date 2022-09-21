@@ -14,12 +14,13 @@
 # ==============================================================================
 import copy
 
-from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 
 
 def apply_bias_correction_to_graph(graph_to_apply_bias_correction: Graph,
+                                   core_config: CoreConfig,
                                    fw_impl: FrameworkImplementation) -> Graph:
     """
     Get a graph, where each node has a final weights quantization configuration (with a bias
@@ -27,6 +28,7 @@ def apply_bias_correction_to_graph(graph_to_apply_bias_correction: Graph,
 
     Args:
         graph_to_apply_bias_correction: Graph to apply bias correction to.
+        core_config: CoreConfig containing parameters of how the model should be quantized.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
     Returns:
@@ -35,7 +37,8 @@ def apply_bias_correction_to_graph(graph_to_apply_bias_correction: Graph,
 
     graph = copy.deepcopy(graph_to_apply_bias_correction)
     for n in graph.nodes:
-        if n.is_weights_quantization_enabled():
+        if n.is_weights_quantization_enabled() and core_config.quantization_config.weights_bias_correction \
+                and not n.final_weights_quantization_cfg.weights_second_moment_correction:
             # If a kernel was quantized and weights bias correction is enabled in n.quantization_cfg,
             # a bias correction term was calculated during model preparation, and is used now in the node's bias term.
             if n.final_weights_quantization_cfg.weights_bias_correction:

@@ -102,8 +102,6 @@ def get_channels_axis(weights_quant_config: NodeWeightsQuantizationConfig,
             fw_info.kernel_channels_mapping is None:
         Logger.warning('Weights Per Channel Quantization requires channel mapping function,'
                        ' but framework info does not contain one')
-    # TODO:
-    # add weights_second_moment_correction?
     use_dummy = not weights_quant_config.weights_per_channel_threshold and not \
         weights_quant_config.weights_bias_correction
     kernel_channels_mapping = _get_kernel_channels_mapping(fw_info, use_dummy)

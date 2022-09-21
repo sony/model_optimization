@@ -12,34 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import copy
 from typing import List, Any, Tuple, Callable, Type, Dict
 
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.python.layers.base import Layer
-from tqdm import tqdm
 
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
-from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence, compute_cs, compute_mse
 from model_compression_toolkit.core.keras.back2framework.model_gradients import \
     keras_iterative_approx_jacobian_trace
 from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID, ARGMAX, LAYER_NAME
-from model_compression_toolkit.core.keras.graph_substitutions.substitutions.batchnorm_reconstructing import \
-    BatchNormalizationReconstructing
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.batchnorm_reconstruction import \
+    keras_batchnorm_reconstruction
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.virtual_activation_weights_composition import \
     VirtualActivationWeightsComposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weights_activation_split import \
     WeightsActivationSplit
 from model_compression_toolkit.core.keras.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
+from model_compression_toolkit.core.keras.statistics_correction.apply_second_moment_correction import \
+    keras_apply_second_moment_correction
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add
     from tensorflow.python.keras.layers.core import TFOpLambda
 else:
-    from keras.layers import BatchNormalization, Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, \
+    from keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, \
         Concatenate, Add
     from keras.layers.core import TFOpLambda
 
@@ -171,7 +170,6 @@ class KerasImplementation(FrameworkImplementation):
                                    fw_info=fw_info,
                                    return_float_outputs=return_float_outputs).build_model()
 
-
     def run_model_inference(self,
                             model: Any,
                             input_list: List[Any]) -> Tuple[tf.Tensor]:
@@ -284,7 +282,7 @@ class KerasImplementation(FrameworkImplementation):
         """
         substitutions_list = []
         if quant_config.weights_second_moment_correction:
-            substitutions_list.append(BatchNormalizationReconstructing())
+            substitutions_list.append(keras_batchnorm_reconstruction())
         return substitutions_list
 
     def get_residual_collapsing_substitution(self) -> List[common.BaseSubstitution]:
@@ -572,7 +570,11 @@ class KerasImplementation(FrameworkImplementation):
         else:
             return 0
 
-    def apply_second_moment_correction(self, quantized_model, core_config, representative_data_gen, graph):
+    def apply_second_moment_correction(self,
+                                       quantized_model: Any,
+                                       core_config: CoreConfig,
+                                       representative_data_gen: Callable,
+                                       graph: common.Graph):
         """
         Apply second moment statistics correction to graph.
 
@@ -583,49 +585,8 @@ class KerasImplementation(FrameworkImplementation):
             graph: Graph to update the parameters after the second moment correction.
 
         Returns:
-            A function that applies second moment correction.
+            A Graph after second moment correction.
         """
-        model = copy.deepcopy(quantized_model)
-
-        # Move every BN to train mode
-        for layer in model.layers:
-            if isinstance(layer, BatchNormalization):
-                layer.trainable = True
-
-        for _ in tqdm(range(core_config.quantization_config.weights_second_moment_iters)):
-            model(representative_data_gen(), training=True)
-
-        # TODO:
-        # needs to check if gamma&beta are the same?
-        # Move every BN to eval mode and update the corresponding BN node params in the graph
-        for layer in model.layers:
-            if isinstance(layer, BatchNormalization):
-                layer.trainable = False
-                bn_node = graph.find_node_by_name(layer.name)[0]
-                bn_node_weights = {keras_constants.GAMMA: layer.gamma,
-                                   keras_constants.BETA: layer.beta,
-                                   keras_constants.MOVING_MEAN: layer.moving_mean,
-                                   keras_constants.MOVING_VARIANCE: layer.moving_variance}
-                # TODO:
-                # check if to set w by key?
-                bn_node.weights = copy.deepcopy(bn_node_weights)
-
-    def quantized_model_builder_for_second_moment_correction(self, graph, fw_info):
-        """
-        Build a framework model from a graph for second moment correction.
-
-        Args:
-            graph: Graph to build the from.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
-
-        Returns:
-            Quantized model for second moment correction.
-        """
-        quantized_tg = quantize_graph_weights(graph,
-                                              fw_info=fw_info,
-                                              fw_impl=self)
-
-        quantized_model, user_info = self.model_builder(quantized_tg,
-                                                        mode=ModelBuilderMode.FLOAT,
-                                                        fw_info=fw_info)
-        return quantized_model
+        graph_after_second_moment_correction = keras_apply_second_moment_correction(quantized_model, core_config,
+                                                                                    representative_data_gen, graph)
+        return graph_after_second_moment_correction
