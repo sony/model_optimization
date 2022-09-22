@@ -14,7 +14,7 @@ This project enables researchers, developers and engineers an easily way to opti
 Currently, MCT supports hardware-friendly post training quantization (HPTQ) with Tensorflow 2 [1].
 
 
-MCT project is developed by researchers and engineers working in Sony Semiconductors Israel.
+MCT project is developed by researchers and engineers working in Sony Semiconductor Israel.
 
 Install
 ====================================
@@ -46,9 +46,6 @@ For using with Tensorflow please install the packages:
 For using with Pytorch please install the package:
 `torch <https://pytorch.org/>`_
 
-MCT is tested with:
-* Tensorflow version 2.8
-* Pytorch version 1.10.0.
 
 Supported Features
 ====================================
@@ -60,6 +57,8 @@ Keras:
 * :ref:`Hardware-friendly Post Training Quantization<ug-keras_post_training_quantization>` [1]
 * :ref:`Gradient base post training using knowledge distillation<ug-GradientPTQConfig>` (Experimental)
 * :ref:`Mixed-precision post training quantization<ug-keras_post_training_quantization_mixed_precision>` (Experimental)
+* :ref:`Init model for Quantization Aware Training<ug-keras_quantization_aware_training_init>` (Experimental)
+* :ref:`Finalize model after Quantization Aware Training<ug-keras_quantization_aware_training_finalize>` (Experimental)
 
 Pytorch (Experimental):
 

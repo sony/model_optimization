@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>MCT Quickstart Guideline for Pytorch models &#8212; MCT Documentation: ver 1.5.0</title>
+    <title>MCT Quickstart Guideline for Pytorch models &#8212; MCT Documentation: ver 1.6.0</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
@@ -39,7 +39,7 @@
         <li class="right" >
           <a href="quickstart_keras.html" title="MCT Quickstart Guideline for Keras models"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.5.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">MCT Quickstart Guideline for Pytorch models</a></li> 
       </ul>
     </div>  
@@ -53,99 +53,93 @@
 <span id="ug-quickstart-pytorch"></span><h1>MCT Quickstart Guideline for Pytorch models<a class="headerlink" href="#mct-quickstart-guideline-for-pytorch-models" title="Permalink to this heading">¶</a></h1>
 <p>Here is an example of a code that shows how to use MCT with Pytorch models.</p>
 <p>Import MCT and mobilenet_v2 from torchvision.models:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="kn">from</span> <span class="nn">torchvision.models</span> <span class="kn">import</span> <span class="n">mobilenet_v2</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchvision.models</span> <span class="kn">import</span> <span class="n">mobilenet_v2</span>
 <span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
-
 </pre></div>
 </div>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<p>Data preprocessing functions:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+<p>Data preprocessing imports and functions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
 <span class="kn">from</span> <span class="nn">torchvision</span> <span class="kn">import</span> <span class="n">transforms</span>
-
 
 <span class="k">def</span> <span class="nf">np_to_pil</span><span class="p">(</span><span class="n">img</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
-
 </pre></div>
 </div>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
 <p>Initialize data loader:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-    <span class="c1"># Set the batch size of the images at each calibration iteration.</span>
-    <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">50</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Set the batch size of the images at each calibration iteration.</span>
+<span class="n">batch_size</span> <span class="o">=</span> <span class="mi">50</span>
 
-    <span class="c1"># Set the path to the folder of images to load and use for the representative dataset.</span>
-    <span class="c1"># Notice that the folder have to contain at least one image.</span>
-    <span class="n">folder</span> <span class="o">=</span> <span class="s1">&#39;/path/to/images/folder&#39;</span>
+<span class="c1"># Set the path to the folder of images to load and use for the representative dataset.</span>
+<span class="c1"># Notice that the folder have to contain at least one image.</span>
+<span class="n">folder</span> <span class="o">=</span> <span class="s1">&#39;/path/to/images/folder&#39;</span>
 
-    <span class="c1"># Create a representative data generator, which returns a list of images.</span>
-    <span class="c1"># The images can be preprocessed using a list of preprocessing functions.</span>
-    <span class="kn">from</span> <span class="nn">model_compression_toolkit</span> <span class="kn">import</span> <span class="n">FolderImageLoader</span>
+<span class="c1"># Create a representative data generator, which returns a list of images.</span>
+<span class="c1"># The images can be preprocessed using a list of preprocessing functions.</span>
+<span class="kn">from</span> <span class="nn">model_compression_toolkit</span> <span class="kn">import</span> <span class="n">FolderImageLoader</span>
 
-    <span class="n">image_data_loader</span> <span class="o">=</span> <span class="n">FolderImageLoader</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span>
-                                          <span class="n">preprocessing</span><span class="o">=</span><span class="p">[</span><span class="n">np_to_pil</span><span class="p">,</span>
-                                                         <span class="n">transforms</span><span class="o">.</span><span class="n">Compose</span><span class="p">([</span>
-                                                             <span class="n">transforms</span><span class="o">.</span><span class="n">Resize</span><span class="p">(</span><span class="mi">256</span><span class="p">),</span>
-                                                             <span class="n">transforms</span><span class="o">.</span><span class="n">CenterCrop</span><span class="p">(</span><span class="mi">224</span><span class="p">),</span>
-                                                             <span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
-                                                             <span class="n">transforms</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="p">[</span><span class="mf">0.485</span><span class="p">,</span> <span class="mf">0.456</span><span class="p">,</span> <span class="mf">0.406</span><span class="p">],</span>
-                                                                                  <span class="n">std</span><span class="o">=</span><span class="p">[</span><span class="mf">0.229</span><span class="p">,</span> <span class="mf">0.224</span><span class="p">,</span> <span class="mf">0.225</span><span class="p">]),</span>
-                                                         <span class="p">])</span>
-                                                         <span class="p">],</span>
-                                          <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+<span class="n">image_data_loader</span> <span class="o">=</span> <span class="n">FolderImageLoader</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span>
+                                      <span class="n">preprocessing</span><span class="o">=</span><span class="p">[</span><span class="n">np_to_pil</span><span class="p">,</span>
+                                                     <span class="n">transforms</span><span class="o">.</span><span class="n">Compose</span><span class="p">([</span>
+                                                         <span class="n">transforms</span><span class="o">.</span><span class="n">Resize</span><span class="p">(</span><span class="mi">256</span><span class="p">),</span>
+                                                         <span class="n">transforms</span><span class="o">.</span><span class="n">CenterCrop</span><span class="p">(</span><span class="mi">224</span><span class="p">),</span>
+                                                         <span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
+                                                         <span class="n">transforms</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="p">[</span><span class="mf">0.485</span><span class="p">,</span> <span class="mf">0.456</span><span class="p">,</span> <span class="mf">0.406</span><span class="p">],</span>
+                                                                              <span class="n">std</span><span class="o">=</span><span class="p">[</span><span class="mf">0.229</span><span class="p">,</span> <span class="mf">0.224</span><span class="p">,</span> <span class="mf">0.225</span><span class="p">]),</span>
+                                                     <span class="p">])</span>
+                                                     <span class="p">],</span>
+                                      <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
 
-    <span class="c1"># Create a Callable representative dataset for calibration purposes.</span>
-    <span class="c1"># The function should be called without any arguments, and should return a list numpy arrays (array for each</span>
-    <span class="c1"># model&#39;s input).</span>
-    <span class="c1"># For example: A model has two input tensors - one with input shape of [3 X 32 X 32] and the second with</span>
-    <span class="c1"># an input shape of [3 X 224 X 224]. We calibrate the model using batches of 20 images.</span>
-    <span class="c1"># Calling representative_data_gen() should return a list</span>
-    <span class="c1"># of two numpy.ndarray objects where the arrays&#39; shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].</span>
-    <span class="k">def</span> <span class="nf">representative_data_gen</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">image_data_loader</span><span class="o">.</span><span class="n">sample</span><span class="p">()]</span>
-
+<span class="c1"># Create a Callable representative dataset for calibration purposes.</span>
+<span class="c1"># The function should be called without any arguments, and should return a list numpy arrays (array for each</span>
+<span class="c1"># model&#39;s input).</span>
+<span class="c1"># For example: A model has two input tensors - one with input shape of [3 X 32 X 32] and the second with</span>
+<span class="c1"># an input shape of [3 X 224 X 224]. We calibrate the model using batches of 20 images.</span>
+<span class="c1"># Calling representative_data_gen() should return a list</span>
+<span class="c1"># of two numpy.ndarray objects where the arrays&#39; shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].</span>
+<span class="k">def</span> <span class="nf">representative_data_gen</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">image_data_loader</span><span class="o">.</span><span class="n">sample</span><span class="p">()]</span>
 </pre></div>
 </div>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
 <p>Get a TargetPlatformCapabilities:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-    <span class="c1"># Get a TargetPlatformModel object that models the hardware for the quantized model inference.</span>
-    <span class="c1"># The model determines the quantization methods to use during the MCT optimization process.</span>
-    <span class="c1"># Here, for example, we use the default model that is attached to a Pytorch</span>
-    <span class="c1"># layers representation.</span>
-    <span class="n">target_platform_cap</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">get_target_platform_capabilities</span><span class="p">(</span><span class="s1">&#39;pytorch&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">)</span>
-
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get a TargetPlatformModel object that models the hardware for the quantized model inference.</span>
+<span class="c1"># The model determines the quantization methods to use during the MCT optimization process.</span>
+<span class="c1"># Here, for example, we use the default model that is attached to a Pytorch</span>
+<span class="c1"># layers representation.</span>
+<span class="n">target_platform_cap</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">get_target_platform_capabilities</span><span class="p">(</span><span class="s1">&#39;pytorch&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
 <p>Run Post Training Quantization:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-    <span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
-    <span class="c1"># Set the number of calibration iterations to 20.</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="n">mobilenet_v2</span><span class="p">(</span><span class="n">pretrained</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1"># set quantization configuration</span>
-    <span class="n">quantization_config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">DEFAULTCONFIG</span>
-    <span class="c1"># Configure z threshold algorithm for outlier removal. Set z threshold to 16.</span>
-    <span class="n">quantization_config</span><span class="o">.</span><span class="n">z_threshold</span> <span class="o">=</span> <span class="mi">16</span>
-    <span class="c1"># run post training quantization on the model to get the quantized model output</span>
-    <span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">pytorch_post_training_quantization</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
-                                                                                <span class="n">representative_data_gen</span><span class="p">,</span>
-                                                                                <span class="n">target_platform_capabilities</span><span class="o">=</span><span class="n">target_platform_cap</span><span class="p">,</span>
-                                                                                <span class="n">n_iter</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a model and quantize it using the representative_data_gen as the calibration images.</span>
+<span class="c1"># Set the number of calibration iterations to 20.</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">mobilenet_v2</span><span class="p">(</span><span class="n">pretrained</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+<span class="c1"># set quantization configuration</span>
+<span class="n">quantization_config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">DEFAULTCONFIG</span>
 
+<span class="c1"># Configure z threshold algorithm for outlier removal. Set z threshold to 16.</span>
+<span class="n">quantization_config</span><span class="o">.</span><span class="n">z_threshold</span> <span class="o">=</span> <span class="mi">16</span>
+
+<span class="c1"># run post training quantization on the model to get the quantized model output</span>
+<span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">pytorch_post_training_quantization</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
+                                                                            <span class="n">representative_data_gen</span><span class="p">,</span>
+                                                                            <span class="n">target_platform_capabilities</span><span class="o">=</span><span class="n">target_platform_cap</span><span class="p">,</span>
+                                                                            <span class="n">n_iter</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 </pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
 </div>
 </section>
 
@@ -192,12 +186,12 @@
         <li class="right" >
           <a href="quickstart_keras.html" title="MCT Quickstart Guideline for Keras models"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.5.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">MCT Quickstart Guideline for Pytorch models</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, Sony Semiconductors Israel.
+        &#169; Copyright 2022, Sony Semiconductor Israel.
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>
