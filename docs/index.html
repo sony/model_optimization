@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Model Compression Toolkit User Guide &#8212; MCT Documentation: ver 1.5.0</title>
+    <title>Model Compression Toolkit User Guide &#8212; MCT Documentation: ver 1.6.0</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="guidelines/visualization.html" title="Visualization within TensorBoard"
              accesskey="N">next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">MCT Documentation: ver 1.5.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">MCT Documentation: ver 1.6.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Model Compression Toolkit User Guide</a></li> 
       </ul>
     </div>  
@@ -52,7 +52,7 @@
 <p>Model Compression Toolkit (MCT) is an open source project for neural networks optimization that enables users to compress and quantize models.
 This project enables researchers, developers and engineers an easily way to optimized and quantized state-of-the-art neural network.</p>
 <p>Currently, MCT supports hardware-friendly post training quantization (HPTQ) with Tensorflow 2 [1].</p>
-<p>MCT project is developed by researchers and engineers working in Sony Semiconductors Israel.</p>
+<p>MCT project is developed by researchers and engineers working in Sony Semiconductor Israel.</p>
 </section>
 <section id="install">
 <h2>Install<a class="headerlink" href="#install" title="Permalink to this heading">¶</a></h2>
@@ -75,9 +75,6 @@ This project enables researchers, developers and engineers an easily way to opti
 <a class="reference external" href="https://www.tensorflow.org/model_optimization/guide/install">tensorflow-model-optimization</a></p>
 <p>For using with Pytorch please install the package:
 <a class="reference external" href="https://pytorch.org/">torch</a></p>
-<p>MCT is tested with:
-* Tensorflow version 2.8
-* Pytorch version 1.10.0.</p>
 </section>
 <section id="supported-features">
 <h2>Supported Features<a class="headerlink" href="#supported-features" title="Permalink to this heading">¶</a></h2>
@@ -87,6 +84,8 @@ This project enables researchers, developers and engineers an easily way to opti
 <li><p><a class="reference internal" href="api/api_docs/methods/keras_post_training_quantization.html#ug-keras-post-training-quantization"><span class="std std-ref">Hardware-friendly Post Training Quantization</span></a> [1]</p></li>
 <li><p><a class="reference internal" href="api/experimental_api_docs/classes/GradientPTQConfig.html#ug-gradientptqconfig"><span class="std std-ref">Gradient base post training using knowledge distillation</span></a> (Experimental)</p></li>
 <li><p><a class="reference internal" href="api/api_docs/methods/keras_post_training_quantization_mixed_precision.html#ug-keras-post-training-quantization-mixed-precision"><span class="std std-ref">Mixed-precision post training quantization</span></a> (Experimental)</p></li>
+<li><p><a class="reference internal" href="api/experimental_api_docs/methods/keras_quantization_aware_training_init.html#ug-keras-quantization-aware-training-init"><span class="std std-ref">Init model for Quantization Aware Training</span></a> (Experimental)</p></li>
+<li><p><a class="reference internal" href="api/experimental_api_docs/methods/keras_quantization_aware_training_export.html#ug-keras-quantization-aware-training-finalize"><span class="std std-ref">Finalize model after Quantization Aware Training</span></a> (Experimental)</p></li>
 </ul>
 <p>Pytorch (Experimental):</p>
 <ul class="simple">
@@ -184,12 +183,12 @@ This project enables researchers, developers and engineers an easily way to opti
         <li class="right" >
           <a href="guidelines/visualization.html" title="Visualization within TensorBoard"
              >next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">MCT Documentation: ver 1.5.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">MCT Documentation: ver 1.6.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Model Compression Toolkit User Guide</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, Sony Semiconductors Israel.
+        &#169; Copyright 2022, Sony Semiconductor Israel.
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>

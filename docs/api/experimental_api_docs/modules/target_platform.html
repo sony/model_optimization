@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>target_platform Module &#8212; MCT Documentation: ver 1.5.0</title>
+    <title>target_platform Module &#8212; MCT Documentation: ver 1.6.0</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.5.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">target_platform Module</a></li> 
       </ul>
     </div>  
@@ -67,6 +67,10 @@ are in use).</p>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
+<p>The object MCT should get called TargetPlatformCapabilities (or shortly TPC).
+This diagram demonstrates the main components:</p>
+<a class="reference internal image-reference" href="../../../_images/tpc.jpg"><img alt="../../../_images/tpc.jpg" src="../../../_images/tpc.jpg" style="width: 768.0px; height: 432.0px;" /></a>
+<p>Now, we will explain about each component with examples.</p>
 <p>The first part is configuring the quantization method for both wights and activations of an operator.
 Several methods can be used using QuantizationMethod API:</p>
 <section id="quantizationmethod">
@@ -487,9 +491,9 @@ can be used as follows:</p>
         <span class="c1"># ------------------- #</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">conv</span><span class="p">,</span> <span class="n">activations_after_conv_to_fuse</span><span class="p">])</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">fc</span><span class="p">,</span> <span class="n">activations_after_fc_to_fuse</span><span class="p">])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">conv</span><span class="p">,</span> <span class="n">add</span><span class="p">,</span> <span class="n">any_relu</span><span class="p">])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">conv</span><span class="p">,</span> <span class="n">any_relu</span><span class="p">,</span> <span class="n">add</span><span class="p">])</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">any_binary</span><span class="p">,</span> <span class="n">any_relu</span><span class="p">])</span>
+        <span class="c1"># tp.Fusing([conv, add, any_relu])</span>
+        <span class="c1"># tp.Fusing([conv, any_relu, add])</span>
 
     <span class="k">return</span> <span class="n">generated_tpc</span>
 </pre></div>
@@ -740,12 +744,12 @@ to the TargetPlatformCapabilities like in the following example:</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.5.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">target_platform Module</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, Sony Semiconductors Israel.
+        &#169; Copyright 2022, Sony Semiconductor Israel.
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>

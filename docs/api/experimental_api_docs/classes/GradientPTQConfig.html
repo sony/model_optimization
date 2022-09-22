@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>GradientPTQConfig Class &#8212; MCT Documentation: ver 1.5.0</title>
+    <title>GradientPTQConfig Class &#8212; MCT Documentation: ver 1.6.0</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.5.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">GradientPTQConfig Class</a></li> 
       </ul>
     </div>  
@@ -46,7 +46,7 @@
 <p><strong>The following API can be used to create a GradientPTQConfig instance which can be used for post training quantization using knowledge distillation from a teacher (float Keras model) to a student (the quantized Keras model)</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.GradientPTQConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">GradientPTQConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lsb_change_per_bit_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DefaultDict(MAX_LSBS_CHANGE_MAP,</span> <span class="pre">lambda</span> <span class="pre">:</span> <span class="pre">...)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.GradientPTQConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">GradientPTQConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_rest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantization_parameters_learning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sam_optimization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rounding_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">RoundingType.GumbelRounding</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lsb_change_per_bit_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DefaultDict(MAX_LSBS_CHANGE_MAP,</span> <span class="pre">lambda</span> <span class="pre">:</span> <span class="pre">...)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_jac_based_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples_for_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantizer_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">GumbelConfig()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_quantization_parameter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.GradientPTQConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configuration to use for quantization with GradientPTQ (experimental).</p>
 <p>Initialize a GradientPTQConfig.</p>
 <dl class="field-list simple">
@@ -54,15 +54,39 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n_iter</strong> (<em>int</em>) – Number of iterations to train.</p></li>
 <li><p><strong>optimizer</strong> (<em>Any</em>) – Optimizer to use.</p></li>
+<li><p><strong>optimizer_rest</strong> (<em>Any</em>) – Optimizer to use for bias and quantizer parameters.</p></li>
 <li><p><strong>loss</strong> (<em>Callable</em>) – The loss to use. should accept 6 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors,
 the 3rd is a list of quantized weights, the 4th is a list of float weights, the 5th and 6th lists are the mean and std of the tensors
 accordingly. see example in multiple_tensors_mse_loss</p></li>
 <li><p><strong>log_function</strong> (<em>Callable</em>) – Function to log information about the GPTQ process.</p></li>
 <li><p><strong>train_bias</strong> (<em>bool</em>) – Whether to update the bias during the training or not.</p></li>
+<li><p><strong>quantization_parameters_learning</strong> (<em>bool</em>) – Whether to update the quantization param during the training or not.</p></li>
+<li><p><strong>sam_optimization</strong> (<em>bool</em>) – Whether to use sam optimization.</p></li>
+<li><p><strong>rounding_type</strong> (<em>RoundingType</em>) – An enum that defines the rounding type (STE or GumbelRoudning).</p></li>
+<li><p><strong>rho</strong> (<em>rho</em>) – A floating point number that defines the sam optimization lookahead.</p></li>
 <li><p><strong>lsb_change_per_bit_width</strong> (<em>dict</em>) – Whether to update the bias during the training or not.</p></li>
+<li><p><strong>eps</strong> (<em>float</em>) – A floating point value for numeric stability.</p></li>
+<li><p><strong>use_jac_based_weights</strong> (<em>bool</em>) – Whether to use jacobian-based weights for weighted average loss.</p></li>
+<li><p><strong>num_samples_for_loss</strong> (<em>int</em>) – Number of samples to use for computing the jacobian-based weights.</p></li>
+<li><p><strong>norm_weights</strong> (<em>bool</em>) – Whether to normalize the returned weights (to get values between 0 and 1).</p></li>
+<li><p><strong>quantizer_config</strong> (<em>Any</em>) – A class the contins the quantizer specific config.</p></li>
+<li><p><strong>optimizer_quantization_parameter</strong> (<em>Any</em>) – Optimizer to override the rest optimizer  for quantizer parameters.</p></li>
+<li><p><strong>optimizer_bias</strong> (<em>Any</em>) – Optimizer to override the rest optimizerfor bias.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="model_compression_toolkit.GradientPTQConfig.is_gumbel">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_gumbel</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#model_compression_toolkit.GradientPTQConfig.is_gumbel" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function state if Gumbel Rounding is in use.
+Returns: boolean</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -94,12 +118,12 @@ accordingly. see example in multiple_tensors_mse_loss</p></li>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.5.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">GradientPTQConfig Class</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, Sony Semiconductors Israel.
+        &#169; Copyright 2022, Sony Semiconductor Israel.
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>

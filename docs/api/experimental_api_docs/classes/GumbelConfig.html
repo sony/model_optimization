@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>&lt;no title&gt; &#8212; MCT Documentation: ver 1.6.0</title>
+    <title>GumbelConfig Class &#8212; MCT Documentation: ver 1.6.0</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
@@ -32,7 +32,7 @@
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">&lt;no title&gt;</a></li> 
+        <li class="nav-item nav-item-this"><a href="">GumbelConfig Class</a></li> 
       </ul>
     </div>  
 
@@ -41,12 +41,28 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>This is an experimental new API. The previous API is still available and can be used as before (please
-visit <a class="reference internal" href="../../api_docs/index.html#ug-api-docs"><span class="std std-ref">previous API documentation</span></a> for more information). However, we recommend using the new API as the previous API is deprecated
-and will be removed in the future.</p>
-</div>
+  <section id="gumbelconfig-class">
+<span id="ug-gumbelconfig"></span><h1>GumbelConfig Class<a class="headerlink" href="#gumbelconfig-class" title="Permalink to this heading">¶</a></h1>
+<p><strong>The following API can be used to create a GumbelConfig instance which can be used for Gumbel Rounding.</strong></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.GumbelConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">GumbelConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature_learning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_cycles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">N_CYCLES</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimal_temp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">MIM_TEMP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximal_temp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">MAX_TEMP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gumbel_entropy_regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.GumbelConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configuration to use for quantization with Gumbel Rounding.</p>
+<p>Initialize a GumbelConfig.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>temperature_learning</strong> (<em>bool</em>) – Whether to update the temperature during the training or not.</p></li>
+<li><p><strong>gumbel_entropy_regularization</strong> (<em>float</em>) – A floating point number that defines the gumbel entropy regularization factor.</p></li>
+<li><p><strong>n_cycles</strong> (<em>int</em>) – A floating point number that defines the gumbel entropy regularization factor.</p></li>
+<li><p><strong>minimal_temp</strong> (<em>float</em>) – A floating point number that defines the gumbel entropy regularization factor.</p></li>
+<li><p><strong>maximal_temp</strong> (<em>float</em>) – A floating point number that defines the gumbel entropy regularization factor.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 
 
             <div class="clearer"></div>
@@ -76,7 +92,7 @@ and will be removed in the future.</p>
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
         <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">&lt;no title&gt;</a></li> 
+        <li class="nav-item nav-item-this"><a href="">GumbelConfig Class</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
