@@ -98,9 +98,8 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         conf_nodes_names = self.graph.get_configurable_sorted_nodes_names()
 
         def _quantize_multiple_nbits(layer):
-            nodes = self.graph.find_node_by_name(get_node_name_from_layer(layer))
-            if len(nodes) == 1:
-                node = nodes[0]
+            node = self.oh.layer_to_node_dict.get(layer)
+            if node is not None:
                 # Wrap only if its weights should be quantized
                 if node.name in conf_nodes_names:
                     if node.layer_class in [TFOpLambda, SlicingOpLambda]:

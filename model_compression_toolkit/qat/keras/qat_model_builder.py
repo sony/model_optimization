@@ -108,9 +108,8 @@ class QATKerasModelBuilder(KerasModelBuilder):
 
         # Wrap layers to be fine-tuned during QAT with QuantizeWrapper
         def _quantize(layer):
-            nodes = self.graph.find_node_by_name(get_node_name_from_layer(layer))
-            if len(nodes) == 1:
-                node = nodes[0]
+            node = self.oh.layer_to_node_dict.get(layer)
+            if node is not None:
                 if _is_qat_applicable(node, self.fw_info):
                     return QuantizeWrapper(layer,
                                            quantization_config_builder(node,
