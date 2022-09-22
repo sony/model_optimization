@@ -11,9 +11,11 @@ API Docs
 
 **Init module for MCT API.**
 
-.. literalinclude:: ../../../../tutorials/example_keras_mobilenet.py
-    :language: python
-    :lines: 16
+.. code-block:: python
+
+   import model_compression_toolkit as mct
+
+|
 
 Functions
 =========
