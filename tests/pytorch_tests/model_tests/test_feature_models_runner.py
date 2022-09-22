@@ -61,8 +61,8 @@ from tests.pytorch_tests.model_tests.feature_models.torch_tensor_attr_net_test i
 from tests.pytorch_tests.model_tests.feature_models.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, LayerFusingTest4
 from tests.pytorch_tests.model_tests.feature_models.bn_function_test import BNFNetTest
 from tests.pytorch_tests.model_tests.feature_models.gptq_test import STEAccuracyTest, STEWeightsUpdateTest, STELearnRateZeroTest
-from tests.pytorch_tests.model_tests.feature_models.gptq_test import SymGumbelAccuracyTest, SymGumbelWeightsUpdateTest, SymGumbelAccuracyTest2
-from tests.pytorch_tests.model_tests.feature_models.gptq_test import UniformGumbelAccuracyTest, UniformGumbelWeightsUpdateTest, UniformGumbelAccuracyTest2
+from tests.pytorch_tests.model_tests.feature_models.gptq_test import SymGumbelAccuracyTest, SymGumbelWeightsUpdateTest
+from tests.pytorch_tests.model_tests.feature_models.gptq_test import UniformGumbelAccuracyTest, UniformGumbelWeightsUpdateTest
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
@@ -411,10 +411,8 @@ class FeatureModelsTestRunner(unittest.TestCase):
         STEWeightsUpdateTest(self).run_test()
         STELearnRateZeroTest(self).run_test()
         SymGumbelAccuracyTest(self).run_test()
-        SymGumbelAccuracyTest2(self).run_test()
         SymGumbelWeightsUpdateTest(self).run_test()
         UniformGumbelAccuracyTest(self).run_test()
-        UniformGumbelAccuracyTest2(self).run_test()
         UniformGumbelWeightsUpdateTest(self).run_test()
 
 if __name__ == '__main__':

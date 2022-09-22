@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import numpy as np
 import torch
 import torch.nn as nn
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Dict
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.gptq.pytorch.quantizer.gumbel_rounding.base_gumbel_weights_quantizer import BaseGumbelWeightQuantizer, init_aux_var
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
@@ -80,7 +81,7 @@ class UniformGumbelWeightQuantizer(BaseGumbelWeightQuantizer):
         """
         return self.trainable_params.get(TEMP)
 
-    def get_weight_quant_params(self) -> dict:
+    def get_weight_quant_params(self) -> Dict[str, np.ndarray]:
         """
         Returns weight quantization dictionary params
         """
@@ -163,6 +164,5 @@ class UniformGumbelWeightQuantizer(BaseGumbelWeightQuantizer):
 
         # Quantize the data between min/max of quantization range.
         w_q = delta_tensor * w2 + a
-
         return w_q
 
