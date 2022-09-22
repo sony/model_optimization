@@ -32,9 +32,14 @@ class OperationHandler:
     """
 
     def __init__(self, graph: Graph):
-        self.node_sort = list(topological_sort(graph))  # hold nodes after sorting them
-        self.node_to_fw_op_dict = instance_builder(self.node_sort)  # hold dictionary from node to its equivalent
-        # Keras layer
+        # hold nodes after sorting them
+        self.node_sort = list(topological_sort(graph))
+
+        self.layer_to_node_dict = {}
+
+        # hold dictionary from node to its equivalent Keras layer
+        self.node_to_fw_op_dict = instance_builder(self.node_sort)
+
 
     def get_node_op_function(self, n: BaseNode) -> Layer:
         """
