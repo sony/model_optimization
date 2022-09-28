@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 3000
     env:
       COVERAGE_THRESHOlD: 80
     steps:
@@ -23,7 +23,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install tensorflow==2.8.*
+          pip install tensorflow==2.9.*
           pip install tensorflow_model_optimization
           pip install torch torchvision
           pip install coverage
