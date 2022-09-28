@@ -284,12 +284,13 @@ class KerasModelBuilder(BaseModelBuilder):
         # Save a mapping from the layer that created the tensor to the node (as this layer is not the
         # same instance as op_func. We do this to solve an issue that names are different between these
         # layers, thus we can not rely on the op_func name during model cloning (such as GPTQ, MP, etc.)
-        if isinstance(out_tensors_of_n_float, list):
-            # If layer has multiple outputs (e.g., split) we take the layer of the first output (as all outputs are
-            # from the same layer).
-            layer_from_tensor = out_tensors_of_n_float[0].node.layer
-        else:
-            layer_from_tensor = out_tensors_of_n_float.node.layer
-        self.oh.layer_to_node_dict[layer_from_tensor] = n
+        if not n.reuse:
+            if isinstance(out_tensors_of_n_float, list):
+                # If layer has multiple outputs (e.g., split) we take the layer of the first output (as all outputs are
+                # from the same layer).
+                layer_from_tensor = out_tensors_of_n_float[0].node.layer
+            else:
+                layer_from_tensor = out_tensors_of_n_float.node.layer
+            self.oh.layer_to_node_dict[layer_from_tensor] = n
 
         return out_tensors_of_n, out_tensors_of_n_float
