@@ -15,7 +15,7 @@
 from collections import namedtuple
 
 from copy import copy, deepcopy
-from typing import List, Tuple
+from typing import List, Tuple, Any
 
 import networkx as nx
 import numpy as np
@@ -72,6 +72,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                           **e.get_attributes())
         self.user_info = UserInformation()
         self.fw_info = fw_info
+        self.fused_nodes = []
 
     def set_fw_info(self,
                    fw_info: FrameworkInfo):
@@ -670,3 +671,13 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         sorted_conf_activation = self.get_sorted_activation_configurable_nodes()
         return [(n, n.final_activation_quantization_cfg.activation_n_bits) for n in sorted_conf_activation]
+
+    def update_fused_nodes(self, fusion: List[Any]):
+        """
+        Updates the graphs fusions list with a new list of nodes that have been fused.
+
+        Args:
+            fusion: A list of nodes that have been fused.
+
+        """
+        self.fused_nodes.append(fusion)
