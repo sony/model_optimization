@@ -16,6 +16,7 @@
 
 import numpy as np
 import tensorflow as tf
+from keras.layers import DepthwiseConv2D, ReLU
 
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
@@ -189,10 +190,10 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], DepthwiseConv2D))
+        self.unit_test.assertTrue(len(quantization_info.mixed_precision_cfg) == 1)
+        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg[0] == 0) # Assert model is quantized using 16 bits as KPI is inf
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3], ReLU))
 
     def get_tpc(self):
         base_config, _ = get_op_quantization_configs()
