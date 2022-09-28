@@ -108,6 +108,7 @@ class TargetPlatformCapabilities(ImmutableClass):
 
         """
         return {"Target Platform Capabilities": self.name,
+                "Version": self.version,
                 "Target Platform Model": self.tp_model.get_info(),
                 "Operations to layers": {op2layer.name:[l.__name__ for l in op2layer.layers] for op2layer in self.op_sets_to_layers.op_sets_to_layers}}
 
