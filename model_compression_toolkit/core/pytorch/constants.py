@@ -48,17 +48,19 @@ HARDTANH_MAX_VAL = 'max_val'
 
 # # Layers variables names:
 KERNEL = 'weight'
-KERNEL_SIZE = 'kernel_size'
 BIAS = 'bias'
 GAMMA = 'weight'
 BETA = 'bias'
-IN_CHANNELS = 'in_channels'
 MOVING_MEAN = 'running_mean'
 MOVING_VARIANCE = 'running_var'
 EPSILON = 'eps'
+EPSILON_VAL = 1e-5
+MOMENTUM = 'momentum'
+MOMENTUM_VAL = 0.1
 DIM = 'dim'
 IN_CHANNELS = 'in_channels'
 OUT_CHANNELS = 'out_channels'
+NUM_FEATURES = 'num_features'
 
 # torch devices
 CUDA = 'cuda'

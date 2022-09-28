@@ -40,8 +40,16 @@ from model_compression_toolkit.core.pytorch.back2framework.model_gradients impor
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
     pytorch_batchnorm_folding
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_reconstruction import \
+    pytorch_batchnorm_reconstruction
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_refusing import \
+    pytorch_batchnorm_refusing
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.linear_collapsing import \
     pytorch_linear_collapsing
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
+    import MultiHeadAttentionDecomposition
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.permute_call_method import \
+    PermuteCallMethod
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.reshape_with_static_shapes import \
@@ -53,6 +61,8 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.sc
     ScaleEqualizationWithPad
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.shift_negative_activation import \
     pytorch_apply_shift_negative_correction
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.softmax_shift import \
+    pytorch_softmax_shift
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.virtual_activation_weights_composition import \
     VirtualActivationWeightsComposition
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.weights_activation_split import \
@@ -60,13 +70,11 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.we
 from model_compression_toolkit.core.pytorch.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.pytorch.pytorch_node_prior_info import create_node_prior_info
 from model_compression_toolkit.core.pytorch.reader.reader import model_reader
-from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
+from model_compression_toolkit.core.pytorch.statistics_correction.apply_second_moment_correction import \
+    pytorch_apply_second_moment_correction
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
+from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.softmax_shift import \
-    pytorch_softmax_shift
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
-    import MultiHeadAttentionDecomposition
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.permute_call_method import PermuteCallMethod
 from model_compression_toolkit.gptq.pytorch.gptq_training import PytorchGPTQTrainer
 
 
@@ -237,6 +245,22 @@ class PytorchImplementation(FrameworkImplementation):
             substitutions_list.append(ReLUBoundToPowerOfTwo())
         return substitutions_list
 
+    def get_substitutions_statistics_correction(self, quant_config: QuantizationConfig
+                                                ) -> List[common.BaseSubstitution]:
+        """
+        Returns A list of the framework substitutions used for statistics correction.
+
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+
+        Returns:
+            A list of the framework substitutions used for statistics correction.
+        """
+        substitutions_list = []
+        if quant_config.weights_second_moment_correction:
+            substitutions_list.append(pytorch_batchnorm_reconstruction())
+        return substitutions_list
+
     def get_residual_collapsing_substitution(self) -> List[common.BaseSubstitution]:
         """
         Returns: A list of the framework substitutions used for residual collapsing
@@ -279,6 +303,22 @@ class PytorchImplementation(FrameworkImplementation):
 
         return [WeightsActivationSplit(),
                 VirtualActivationWeightsComposition()]
+
+    def get_substitutions_after_second_moment_correction(self, quant_config: QuantizationConfig) \
+            -> List[common.BaseSubstitution]:
+        """
+        Return a list of the framework substitutions used after second moment statistics.
+
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+
+        Returns:
+            A list of the framework substitutions used after we apply second moment statistics.
+        """
+        substitutions_list = []
+        if quant_config.weights_second_moment_correction:
+            substitutions_list.append(pytorch_batchnorm_refusing())
+        return substitutions_list
 
     def get_gptq_trainer_obj(self) -> Type[GPTQTrainer]:
         """
@@ -474,3 +514,24 @@ class PytorchImplementation(FrameworkImplementation):
             return kernel_shape[0] * kernel_shape[1]
         else:
             return 0
+
+    def apply_second_moment_correction(self,
+                                       quantized_model: Any,
+                                       core_config: CoreConfig,
+                                       representative_data_gen: Callable,
+                                       graph: common.Graph):
+        """
+        Build a framework model from a graph and apply second moment statistics correction to graph.
+
+        Args:
+            quantized_model: Framework's model to apply second moment correction on.
+            core_config: QuantizationConfig of how the model should be quantized.
+            representative_data_gen: Dataset to use for retrieving images for the models inputs.
+            graph: Graph to update the parameters after the second moment correction.
+
+        Returns:
+            A Graph after second moment correction.
+        """
+        graph_after_second_moment_correction = pytorch_apply_second_moment_correction(quantized_model, core_config,
+                                                                                      representative_data_gen, graph)
+        return graph_after_second_moment_correction

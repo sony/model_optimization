@@ -74,6 +74,9 @@ SCALE = 'scale'
 MOVING_MEAN = 'moving_mean'
 MOVING_VARIANCE = 'moving_variance'
 EPSILON = 'epsilon'
+EPSILON_VAL = 1e-5
+MOMENTUM = 'momentum'
+MOMENTUM_VAL = 0.9
 
 # MultiHeadAttention layer attributes:
 NUM_HEADS = 'num_heads'

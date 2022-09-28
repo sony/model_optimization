@@ -35,6 +35,8 @@ from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_t
     MixedPercisionActivationSearch4BitFunctional
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
+from tests.pytorch_tests.model_tests.feature_models.second_moment_correction_test import ConvSecondMomentNetTest, \
+    ConvTSecondMomentNetTest, MultipleInputsConvSecondMomentNetTest, ValueSecondMomentTest
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
     SoftmaxFunctionNetTest
 from tests.pytorch_tests.model_tests.feature_models.permute_substitution_test import PermuteSubstitutionTest
@@ -120,6 +122,15 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         BNFoldingNetTest(self).run_test()
 
+    def test_second_moment_correction(self):
+        """
+        These are tests for the Second Moment Correction.
+        """
+        ConvSecondMomentNetTest(self).run_test()
+        ConvTSecondMomentNetTest(self).run_test()
+        MultipleInputsConvSecondMomentNetTest(self).run_test()
+        ValueSecondMomentTest(self).run_test()
+
     def test_bn_function(self):
         """
         This tests check the batch_norm function and demonstrates the usage of BufferHolder node.
@@ -154,7 +165,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the permute substitution feature
         """
         PermuteSubstitutionTest(self).run_test()
-
 
     def test_relu_bound_to_power_of_2(self):
         """
