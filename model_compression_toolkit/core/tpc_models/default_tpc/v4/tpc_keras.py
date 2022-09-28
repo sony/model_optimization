@@ -23,7 +23,7 @@ else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, \
         Dropout, MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D
 
-from model_compression_toolkit.core.tpc_models.default_tpc.v3.tp_model import get_tp_model
+from model_compression_toolkit.core.tpc_models.default_tpc.v4.tp_model import get_tp_model
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.tpc_models.default_tpc.v4 import __version__ as TPC_VERSION
 
