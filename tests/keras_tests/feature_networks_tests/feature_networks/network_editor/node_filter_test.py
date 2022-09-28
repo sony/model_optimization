@@ -19,6 +19,8 @@ from model_compression_toolkit.core.common.quantization.quantization_params_fn_s
 import model_compression_toolkit as mct
 import tensorflow as tf
 
+from model_compression_toolkit.core.tpc_models.default_tpc.v4.tpc_keras import generate_keras_tpc
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
@@ -55,7 +57,11 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_tpc(self):
-        return get_16bit_tpc("scope_filter_test")
+        tp_model = generate_test_tp_model({
+            'weights_quantization_method': tp.QuantizationMethod.POWER_OF_TWO,
+            'activation_n_bits': 16,
+            'weights_n_bits': 16})
+        return generate_keras_tpc(name="scope_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
@@ -129,7 +135,11 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_tpc(self):
-        return get_16bit_tpc("name_filter_test")
+        tp_model = generate_test_tp_model({
+            'weights_quantization_method': tp.QuantizationMethod.POWER_OF_TWO,
+            'activation_n_bits': 16,
+            'weights_n_bits': 16})
+        return generate_keras_tpc(name="name_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
@@ -190,7 +200,11 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         return get_weights_quantization_params_fn(tp.QuantizationMethod.POWER_OF_TWO)
 
     def get_tpc(self):
-        return get_16bit_tpc("type_filter_test")
+        tp_model = generate_test_tp_model({
+            'weights_quantization_method': tp.QuantizationMethod.POWER_OF_TWO,
+            'activation_n_bits': 16,
+            'weights_n_bits': 16})
+        return generate_keras_tpc(name="type_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
