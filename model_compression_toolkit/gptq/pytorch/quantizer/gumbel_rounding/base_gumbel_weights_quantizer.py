@@ -20,7 +20,6 @@ from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.gptq.pytorch.quantizer.gptq_quantizer import BaseWeightQuantizer
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
-from model_compression_toolkit.core.common.constants import THRESHOLD
 from model_compression_toolkit.gptq.pytorch.quantizer.quant_utils import sample_gumbel
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.core.common.target_platform.op_quantization_config import QuantizationMethod
@@ -77,14 +76,10 @@ class BaseGumbelWeightQuantizer(BaseWeightQuantizer):
         """
         super().__init__()
 
-        self.signed = True
         self.power_of_two = QuantizationMethod.POWER_OF_TWO == weights_quantization_cfg.weights_quantization_method
         self.reshape_aux_shift = [-1, *[1 for _ in range(len(weight_shape))]]
         self.num_bits = weights_quantization_cfg.weights_n_bits
-        self.min_int = -int(self.signed) * (2 ** (self.num_bits - int(self.signed)))
-        self.max_int = (2 ** (self.num_bits - int(self.signed))) - 1
         self.weight_shape = weight_shape
-        self.threshold_values = weights_quantization_cfg.weights_quantization_params.get(THRESHOLD)
         self.max_delta_change = gptq_config.lsb_change_per_bit_width.get(self.num_bits)
         self.quantization_parameter_learning = gptq_config.quantization_parameters_learning
         self.m = 2 * self.max_delta_change + 1
