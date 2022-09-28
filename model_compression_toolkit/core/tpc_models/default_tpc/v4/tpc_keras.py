@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import tensorflow as tf
-from model_compression_toolkit.core.tpc_models.default_tpc.v3_lut import __version__ as TPC_VERSION
+
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, \
@@ -23,10 +23,12 @@ else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, \
         Dropout, MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D
 
-from model_compression_toolkit.core.tpc_models.default_tpc.v3_lut.tp_model import get_tp_model
+from model_compression_toolkit.core.tpc_models.default_tpc.v3.tp_model import get_tp_model
 import model_compression_toolkit as mct
+from model_compression_toolkit.core.tpc_models.default_tpc.v4 import __version__ as TPC_VERSION
 
 tp = mct.target_platform
+
 
 
 def get_keras_tpc() -> tp.TargetPlatformCapabilities:
@@ -34,8 +36,8 @@ def get_keras_tpc() -> tp.TargetPlatformCapabilities:
     get a Keras TargetPlatformCapabilities object with default operation sets to layers mapping.
     Returns: a Keras TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
-    lut_mp_tp_model = get_tp_model()
-    return generate_keras_tpc(name='default_keras_lut_mp_tpc', tp_model=lut_mp_tp_model)
+    default_tp_model = get_tp_model()
+    return generate_keras_tpc(name='default_keras_tpc', tp_model=default_tp_model)
 
 
 def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
@@ -49,9 +51,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
-    keras_tpc = tp.TargetPlatformCapabilities(tp_model,
-                                              name=name,
-                                              version=TPC_VERSION)
+    keras_tpc = tp.TargetPlatformCapabilities(tp_model, name=name, version=TPC_VERSION)
 
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", [Reshape,

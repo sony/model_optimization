@@ -24,6 +24,7 @@ from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish
 
 from model_compression_toolkit.core.tpc_models.default_tpc.v2.tp_model import get_tp_model
 import model_compression_toolkit as mct
+from model_compression_toolkit.core.tpc_models.default_tpc.v2 import __version__ as TPC_VERSION
 
 tp = mct.target_platform
 
@@ -47,7 +48,8 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
     """
 
     pytorch_tpc = tp.TargetPlatformCapabilities(tp_model,
-                                                name=name)
+                                                name=name,
+                                                version=TPC_VERSION)
 
     with pytorch_tpc:
         tp.OperationsSetToLayers("NoQuantization", [Dropout,
