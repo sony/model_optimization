@@ -14,16 +14,15 @@
 # ==============================================================================
 
 
-from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common import FrameworkInfo
-from model_compression_toolkit.core.common.graph.base_graph import Graph
 from typing import Callable
-from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
-from model_compression_toolkit.core.common.statistics_correction.apply_bias_correction_to_graph import \
-    apply_bias_correction_to_graph
-from model_compression_toolkit.core.common.statistics_correction.apply_second_moment_correction_to_graph import \
-    apply_second_moment_correction_to_graph
+
+from model_compression_toolkit.core.common import FrameworkInfo
+from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
+from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
+    apply_statistics_correction
+from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 
 
 def ptq_runner(tg: Graph,
@@ -39,7 +38,8 @@ def ptq_runner(tg: Graph,
         tg: Graph to apply PTQ and to quantize.
         representative_data_gen (Callable): Dataset used for calibration.
         core_config: CoreConfig containing parameters of how the model should be quantized.
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.)
+        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
+        groups of layers by how they should be quantized, etc.)
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tb_w: A TensorBoardWriter object initialized with the logger dir path if it was set, or None otherwise.
 
@@ -47,24 +47,8 @@ def ptq_runner(tg: Graph,
         A graph after statistics correction
 
     """
-<<<<<<< HEAD
-=======
     #############################################
-    # Apply Second Moment Correction
+    # Statistics Correction
     #############################################
-    if core_config.quantization_config.weights_second_moment_correction:
-        tg = apply_second_moment_correction_to_graph(tg, representative_data_gen,
-                                                     core_config, fw_info, fw_impl)
-
->>>>>>> Add second moment correction
-    #############################################
-    # Apply Bias Correction
-    #############################################
-    if core_config.quantization_config.weights_bias_correction:
-        tg = apply_bias_correction_to_graph(tg,
-                                            core_config,
-                                            fw_impl=fw_impl)
-    if tb_w is not None:
-        tb_w.add_graph(tg, 'after_statistics_correction')
-
+    tg = apply_statistics_correction(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
     return tg

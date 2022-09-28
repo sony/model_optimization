@@ -39,27 +39,28 @@ def keras_apply_second_moment_correction(quantized_model: Any,
     Returns:
         A function that applies second moment correction.
     """
-    model = copy.deepcopy(quantized_model)
 
     # Move every BN to train mode
-    for layer in model.layers:
-        node = graph.find_node_by_name(layer.name)[0]
-        if isinstance(layer, BatchNormalization) and node.final_weights_quantization_cfg\
-                .weights_second_moment_correction:
-            layer.trainable = True
+    for layer in quantized_model.layers:
+        if len(graph.find_node_by_name(layer.name)) > 0:
+            node = graph.find_node_by_name(layer.name)[0]
+            if isinstance(layer, BatchNormalization) and node.final_weights_quantization_cfg\
+                    .weights_second_moment_correction:
+                layer.trainable = True
 
     for _ in tqdm(range(core_config.quantization_config.weights_second_moment_iters)):
-        model(representative_data_gen(), training=True)
+        quantized_model(representative_data_gen(), training=True)
 
     # Move every BN to eval mode and update the corresponding BN node params in the graph
-    for layer in model.layers:
-        node = graph.find_node_by_name(layer.name)[0]
-        if isinstance(layer, BatchNormalization) and node.final_weights_quantization_cfg\
-                .weights_second_moment_correction:
-            layer.trainable = False
-            bn_node_weights = {keras_constants.GAMMA: layer.gamma,
-                               keras_constants.BETA: layer.beta,
-                               keras_constants.MOVING_MEAN: layer.moving_mean,
-                               keras_constants.MOVING_VARIANCE: layer.moving_variance}
-            node.weights = copy.deepcopy(bn_node_weights)
+    for layer in quantized_model.layers:
+        if len(graph.find_node_by_name(layer.name)) > 0:
+            node = graph.find_node_by_name(layer.name)[0]
+            if isinstance(layer, BatchNormalization) and node.final_weights_quantization_cfg\
+                    .weights_second_moment_correction:
+                layer.trainable = False
+                bn_node_weights = {keras_constants.GAMMA: layer.gamma,
+                                   keras_constants.BETA: layer.beta,
+                                   keras_constants.MOVING_MEAN: layer.moving_mean,
+                                   keras_constants.MOVING_VARIANCE: layer.moving_variance}
+                node.weights = copy.deepcopy(bn_node_weights)
     return graph

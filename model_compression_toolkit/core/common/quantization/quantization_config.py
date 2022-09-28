@@ -51,7 +51,7 @@ class QuantizationConfig:
                  relu_bound_to_power_of_2: bool = False,
                  weights_bias_correction: bool = True,
                  weights_second_moment_correction: bool = False,
-                 weights_second_moment_iters: int = 10,
+                 weights_second_moment_iters: int = 20,
                  weights_per_channel_threshold: bool = True,
                  input_scaling: bool = False,
                  softmax_shift: bool = False,

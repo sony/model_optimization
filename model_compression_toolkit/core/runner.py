@@ -21,40 +21,38 @@ import numpy as np
 from tqdm import tqdm
 
 from model_compression_toolkit.core import common
+from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
-from model_compression_toolkit.core.common import FrameworkInfo
+from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_aggregation_methods import MpKpiAggregation
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_functions_mapping import kpi_functions_mapping
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_methods import MpKpiMetric
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
+from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
+from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
-from model_compression_toolkit.core.common.statistics_correction.compute_bias_correction_of_graph import \
-    compute_bias_correction_of_graph
-
 from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
-from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
-
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
-
-from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
+from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
+    statistics_correction_runner
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.core.common.substitutions.linear_collapsing_substitution import linear_collapsing_substitute
-from model_compression_toolkit.core.common.model_collector import ModelCollector
-
-from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
+from model_compression_toolkit.core.common.substitutions.linear_collapsing_substitution import \
+    linear_collapsing_substitute
 from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
-from model_compression_toolkit.core.common.visualization.final_config_visualizer import WeightsFinalBitwidthConfigVisualizer, \
+from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
+    WeightsFinalBitwidthConfigVisualizer, \
     ActivationFinalBitwidthConfigVisualizer
+from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 
 
 def core_runner(in_model: Any,
@@ -246,11 +244,6 @@ def get_finalized_graph(initial_graph: Graph,
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'after_candidates_filtering')
 
-    ######################################
-    # Statistics Correction
-    ######################################
-    transformed_graph = substitute(transformed_graph, fw_impl.get_substitutions_statistics_correction(quant_config))
-
     return transformed_graph
 
 
@@ -399,16 +392,10 @@ def _prepare_model_for_quantization(graph: Graph,
         tb_w.add_graph(transformed_graph, 'post_statistics_collection_substitutions')
         tb_w.add_all_statistics(transformed_graph, 'post_statistics_collection_substitutions')
 
-    ########################################################
-    # Compute bias correction to nodes' config candidates
-    ########################################################
-    tg_with_bias = compute_bias_correction_of_graph(transformed_graph,
-                                                    core_config,
-                                                    fw_info,
-                                                    fw_impl)
-
-    if tb_w is not None:
-        tb_w.add_graph(tg_with_bias, 'bias_correction_computation')
+    ######################################
+    # Statistics Correction
+    ######################################
+    tg_with_bias = statistics_correction_runner(transformed_graph, core_config, fw_info, fw_impl, tb_w)
 
     for n in tg_with_bias.nodes:
         assert n.final_weights_quantization_cfg is None

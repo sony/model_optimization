@@ -15,7 +15,10 @@
 
 from typing import Callable
 
+from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core import common
+from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
+    apply_statistics_correction
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common import FrameworkInfo
@@ -68,6 +71,7 @@ def _apply_gptq(gptq_config: GradientPTQConfig,
 
 
 def gptq_runner(tg: Graph,
+                core_config: CoreConfig,
                 gptq_config: GradientPTQConfig,
                 representative_data_gen: Callable,
                 fw_info: FrameworkInfo,
@@ -79,6 +83,7 @@ def gptq_runner(tg: Graph,
 
     Args:
         tg: Graph to apply GPTQ and to quantize.
+        core_config: CoreConfig containing parameters of how the model should be quantized.
         gptq_config: GradientPTQConfig with parameters about the tuning process.
         representative_data_gen: Dataset used for calibration.
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.)
@@ -89,11 +94,12 @@ def gptq_runner(tg: Graph,
         A graph after model weights GPTQ fine-tuning.
 
     """
+
     #############################################
-    # Apply Bias Correction
+    # Apply Statistics Correction
     #############################################
-    tg_bias = apply_bias_correction_to_graph(tg,
-                                             fw_impl=fw_impl)
+    tg_bias = apply_statistics_correction(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
+
     if tb_w is not None:
         tb_w.add_graph(tg_bias, 'after_bias_correction')
     #############################################
