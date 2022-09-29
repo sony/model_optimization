@@ -25,6 +25,7 @@ N_CYCLES = 4
 MIM_TEMP = 0.5
 MAX_TEMP = 1.0
 GAMMA_TEMPERATURE = 0.1
+GUMBEL_SCALE = 0.5
 
 
 class RoundingType(Enum):
@@ -90,7 +91,7 @@ class GradientPTQConfig:
                  quantizer_config: GumbelConfig = GumbelConfig(),
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
-                 gumbel_scale: float = 0.5):
+                 gumbel_scale: float = GUMBEL_SCALE):
         """
         Initialize a GradientPTQConfig.
 

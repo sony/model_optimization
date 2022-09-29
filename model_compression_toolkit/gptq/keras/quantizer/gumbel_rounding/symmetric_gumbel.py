@@ -23,7 +23,7 @@ from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from typing import Dict, Any, List
 from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.gumbel_softmax import gumbel_softmax, ste_gumbel
-from model_compression_toolkit.core.common.constants import THRESHOLD
+from model_compression_toolkit.core.common.constants import THRESHOLD, GUMBEL_MAX_ITER
 from model_compression_toolkit.gptq.common import gptq_constants
 
 
@@ -73,7 +73,7 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
                  gumbel_config: GumbelConfig,
                  quantization_axis: int = -1,
                  max_lsbs_change_map: dict = DefaultDict({}, lambda: 1),
-                 max_iteration: int = 10000,
+                 max_iteration: int = GUMBEL_MAX_ITER,
                  gumbel_scale: float = 1.0):
         """
         Initialize a TrainableWeightQuantizer object with parameters to use

@@ -35,6 +35,7 @@ LR_DEFAULT = 0.15
 LR_REST_DEFAULT = 1e-4
 LR_BIAS_DEFAULT = 1e-4
 LR_QUANTIZATION_PARAM_DEFAULT = 1e-3
+GPTQ_MOMENTUM = 0.9
 
 if common.constants.FOUND_TF:
     import tensorflow as tf
@@ -59,7 +60,7 @@ if common.constants.FOUND_TF:
     def get_keras_gptq_config(n_iter: int,
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT),
                               optimizer_rest: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_REST_DEFAULT),
-                              loss: Callable = GPTQMultipleTensorsLoss(norm_loss=False),
+                              loss: Callable = GPTQMultipleTensorsLoss(),
                               log_function: Callable = None) -> GradientPTQConfig:
         """
         Create a GradientPTQConfig instance for Keras models.
@@ -92,8 +93,8 @@ if common.constants.FOUND_TF:
             The configuration can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization` in order to quantize a keras model using gptq.
 
         """
-        bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT, momentum=0.9)
-        optimizer_quantization_parameter = tf.keras.optimizers.SGD(learning_rate=LR_QUANTIZATION_PARAM_DEFAULT, momentum=0.9)
+        bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT, momentum=GPTQ_MOMENTUM)
+        optimizer_quantization_parameter = tf.keras.optimizers.SGD(learning_rate=LR_QUANTIZATION_PARAM_DEFAULT, momentum=GPTQ_MOMENTUM)
         return GradientPTQConfig(n_iter,
                                  optimizer,
                                  optimizer_rest=optimizer_rest,
