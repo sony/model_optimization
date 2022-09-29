@@ -91,7 +91,7 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
                                                                 max_lsbs_change_map=max_lsbs_change_map,
                                                                 max_iteration=gptq_config.n_iter,
                                                                 gumbel_config=gptq_config.quantizer_config,
-                                                                gumbel_norm=gptq_config.gumbel_norm)
+                                                                gumbel_scale=gptq_config.gumbel_scale)
             else:
                 common.Logger.error(
                     f"For quantization method {final_weights_quantization_cfg.weights_quantization_method}, GPTQ Rounding type {gptq_config.rounding_type} is not supported")
