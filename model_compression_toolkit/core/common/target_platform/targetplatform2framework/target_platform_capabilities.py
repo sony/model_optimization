@@ -38,12 +38,14 @@ class TargetPlatformCapabilities(ImmutableClass):
     """
     def __init__(self,
                  tp_model: TargetPlatformModel,
-                 name: str = "base"):
+                 name: str = "base",
+                 version: str = None):
         """
 
         Args:
             tp_model (TargetPlatformModel): Modeled hardware to attach framework information to.
             name (str): Name of the TargetPlatformCapabilities.
+            version (str): TPC version.
         """
 
         super().__init__()
@@ -55,6 +57,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         # Track the unused opsets for warning purposes.
         self.__tp_model_opsets_not_used = [s.name for s in tp_model.operator_set]
         self.remove_fusing_names_from_not_used_list()
+        self.version = version
 
     def get_layers_by_opset_name(self, opset_name: str) -> List[Any]:
         """
@@ -105,6 +108,7 @@ class TargetPlatformCapabilities(ImmutableClass):
 
         """
         return {"Target Platform Capabilities": self.name,
+                "Version": self.version,
                 "Target Platform Model": self.tp_model.get_info(),
                 "Operations to layers": {op2layer.name:[l.__name__ for l in op2layer.layers] for op2layer in self.op_sets_to_layers.op_sets_to_layers}}
 

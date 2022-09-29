@@ -238,12 +238,24 @@ class TestGetPytorchTPC(unittest.TestCase):
                                                                                     quant_config=mp_qc)
 
     def test_get_pytorch_supported_version(self):
-        mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
-        mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, "v1")
-        mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, "v2")
-        mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, "v3")
-        mct.get_target_platform_capabilities(PYTORCH, TFLITE_TP_MODEL, "v1")
-        mct.get_target_platform_capabilities(PYTORCH, QNNPACK_TP_MODEL, "v1")
+        tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)  # Latest
+        self.assertTrue(tpc.version == 'v4')
+        tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v4')
+        self.assertTrue(tpc.version == 'v4')
+        tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v3_lut')
+        self.assertTrue(tpc.version == 'v3_lut')
+        tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v3')
+        self.assertTrue(tpc.version == 'v3')
+        tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v2')
+        self.assertTrue(tpc.version == 'v2')
+        tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v1')
+        self.assertTrue(tpc.version == 'v1')
+
+        tpc = mct.get_target_platform_capabilities(PYTORCH, TFLITE_TP_MODEL, "v1")
+        self.assertTrue(tpc.version == 'v1')
+
+        tpc = mct.get_target_platform_capabilities(PYTORCH, QNNPACK_TP_MODEL, "v1")
+        self.assertTrue(tpc.version == 'v1')
 
     def test_get_pytorch_not_supported_platform(self):
         with self.assertRaises(Exception) as e:
