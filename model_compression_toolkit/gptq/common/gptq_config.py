@@ -24,6 +24,7 @@ MAX_LSBS_CHANGE_MAP = {8: 2,
 N_CYCLES = 4
 MIM_TEMP = 0.5
 MAX_TEMP = 1.0
+GAMMA_TEMPERATURE = 0.1
 
 
 class RoundingType(Enum):
@@ -46,7 +47,7 @@ class GumbelConfig(object):
                  n_cycles: int = N_CYCLES,
                  minimal_temp: float = MIM_TEMP,
                  maximal_temp: float = MAX_TEMP,
-                 gumbel_entropy_regularization: float = 0.01):
+                 gumbel_entropy_regularization: float = GAMMA_TEMPERATURE):
         """
         Initialize a GumbelConfig.
 

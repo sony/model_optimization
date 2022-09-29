@@ -31,10 +31,10 @@ from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
-LR_DEFAULT = 0.05
+LR_DEFAULT = 0.15
 LR_REST_DEFAULT = 1e-4
 LR_BIAS_DEFAULT = 1e-4
-LR_QUANTIZATION_PARAM_DEFAULT = 1e-4
+LR_QUANTIZATION_PARAM_DEFAULT = 1e-3
 
 if common.constants.FOUND_TF:
     import tensorflow as tf
@@ -59,7 +59,7 @@ if common.constants.FOUND_TF:
     def get_keras_gptq_config(n_iter: int,
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT),
                               optimizer_rest: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_REST_DEFAULT),
-                              loss: Callable = GPTQMultipleTensorsLoss(),
+                              loss: Callable = GPTQMultipleTensorsLoss(norm_loss=False),
                               log_function: Callable = None) -> GradientPTQConfig:
         """
         Create a GradientPTQConfig instance for Keras models.
@@ -92,14 +92,15 @@ if common.constants.FOUND_TF:
             The configuration can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization` in order to quantize a keras model using gptq.
 
         """
-        bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT)
-        optimizer_quantization_parameter = tf.keras.optimizers.Adam(learning_rate=LR_QUANTIZATION_PARAM_DEFAULT)
+        bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT, momentum=0.9)
+        optimizer_quantization_parameter = tf.keras.optimizers.SGD(learning_rate=LR_QUANTIZATION_PARAM_DEFAULT, momentum=0.9)
         return GradientPTQConfig(n_iter,
                                  optimizer,
                                  optimizer_rest=optimizer_rest,
                                  loss=loss,
                                  log_function=log_function,
                                  train_bias=True,
+                                 quantization_parameters_learning=True,
                                  optimizer_bias=bias_optimizer,
                                  optimizer_quantization_parameter=optimizer_quantization_parameter)
 
