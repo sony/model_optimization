@@ -227,8 +227,8 @@ class LayerTest(unittest.TestCase):
 
     def test_depthwiseConv2DTest(self):
         BaseKerasLayerTest(self,
-                           [DepthwiseConv2D(1),
-                            DepthwiseConv2D(1, depth_multiplier=3)
+                           [DepthwiseConv2D(3),
+                            DepthwiseConv2D(3, depth_multiplier=3)
                             ]).run_test()
 
     def test_dense(self):
