@@ -29,7 +29,8 @@ def sample_gumbel(shape, eps=1e-6) -> tf.Tensor:
     return -tf.math.log(-tf.math.log(u + eps) + eps)
 
 
-def gumbel_softmax(in_pi: tf.Tensor, in_tau: tf.Tensor, in_gumbel: tf.Tensor, eps: float = 1e-6, axis=0) -> tf.Tensor:
+def gumbel_softmax(in_pi: tf.Tensor, in_tau: tf.Tensor, in_gumbel: tf.Tensor, eps: float = 1e-6, axis=0,
+                   gumbel_norm: float = 1.0) -> tf.Tensor:
     """
     A gumbel softmax function.
     Args:
@@ -38,11 +39,12 @@ def gumbel_softmax(in_pi: tf.Tensor, in_tau: tf.Tensor, in_gumbel: tf.Tensor, ep
         in_gumbel: A tensor of gumbel random variable.
         eps: A small number for numeric stability.
         axis: A integer representing the axis of which the gumbel softmax applyed on.
+        gumbel_norm: A normalization factor for the gumbel tensor values
 
     Returns: A gumbel softmax probability tensor.
 
     """
-    return tf.nn.softmax((tf.nn.log_softmax(in_pi, axis=axis) + in_gumbel) / (in_tau + eps), axis=axis)
+    return tf.nn.softmax((tf.nn.log_softmax(in_pi, axis=axis) + gumbel_norm * in_gumbel) / (in_tau + eps), axis=axis)
 
 
 def ste_gumbel(in_prob: tf.Tensor) -> tf.Tensor:

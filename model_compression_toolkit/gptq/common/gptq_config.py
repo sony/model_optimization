@@ -88,7 +88,8 @@ class GradientPTQConfig:
                  norm_weights: bool = False,
                  quantizer_config: GumbelConfig = GumbelConfig(),
                  optimizer_quantization_parameter: Any = None,
-                 optimizer_bias: Any = None):
+                 optimizer_bias: Any = None,
+                 gumbel_norm: float = 0.5):
         """
         Initialize a GradientPTQConfig.
 
@@ -113,6 +114,7 @@ class GradientPTQConfig:
             quantizer_config (Any): A class the contins the quantizer specific config.
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
+            gumbel_norm (float): A normalization factor for the gumbel tensor values.
 
         """
         self.n_iter = n_iter
@@ -135,6 +137,7 @@ class GradientPTQConfig:
         self.quantizer_config = quantizer_config
         self.optimizer_quantization_parameter = optimizer_quantization_parameter
         self.optimizer_bias = optimizer_bias
+        self.gumbel_norm = gumbel_norm
 
     @property
     def is_gumbel(self) -> bool:
