@@ -6,8 +6,9 @@ import tensorflow as tf
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
+from packaging import version
 
-if tf.__version__ < "2.6":
+if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers.core import TFOpLambda
     from tensorflow.keras.models import Model
     from tensorflow.keras.layers import Input

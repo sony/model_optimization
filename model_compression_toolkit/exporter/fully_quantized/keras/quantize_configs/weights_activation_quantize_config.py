@@ -24,8 +24,9 @@ from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.a
     ActivationQuantizeConfig
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import \
     WeightsQuantizeConfig
+from packaging import version
 
-if tf.__version__ < "2.6":
+if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers import Layer
 else:
     from keras.engine.base_layer import Layer

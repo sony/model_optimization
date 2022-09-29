@@ -20,11 +20,12 @@ from tensorflow import Tensor
 import tensorflow as tf
 
 from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MIN, RANGE_MAX
+from packaging import version
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 
 
-if tf.__version__ < "2.6":
+if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers import Layer
 else:
     from keras.engine.base_layer import Layer

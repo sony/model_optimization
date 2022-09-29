@@ -17,6 +17,7 @@
 #  ----------------- Unit test framework
 import importlib
 import unittest
+from packaging import version
 
 #  ----------------  Individual test suites
 from tests.common_tests.function_tests.test_histogram_collector import TestHistogramCollector
@@ -90,7 +91,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasTPModel))
 
         # Keras test layers are supported in TF2.6 or higher versions
-        if tf.__version__ >= "2.6":
+        if version.parse(tf.__version__) >= version.parse("2.6"):
             suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLayerTest))
 
     if found_pytorch:

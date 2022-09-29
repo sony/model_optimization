@@ -18,9 +18,10 @@ from functools import partial
 
 import numpy as np
 import tensorflow as tf
+from packaging import version
 
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
-if tf.__version__ < "2.6":
+if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.keras.layers import Conv2D, Conv2DTranspose, ReLU, Activation, Input
 else:
     from keras.layers import Conv2D, Conv2DTranspose, ReLU, Activation

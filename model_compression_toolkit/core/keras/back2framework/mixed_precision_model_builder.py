@@ -28,8 +28,9 @@ from model_compression_toolkit.core.keras.quantizer.input_layer_quantize_transfo
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from model_compression_toolkit.core.keras.quantizer.mixed_precision.selective_quantize_config import \
     SelectiveQuantizeConfig
+from packaging import version
 
-if tf.__version__ < "2.6":
+if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers.core import TFOpLambda, SlicingOpLambda
 else:
     from keras.layers.core import TFOpLambda, SlicingOpLambda

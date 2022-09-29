@@ -23,8 +23,9 @@ from model_compression_toolkit.core.common.quantization.candidate_node_quantizat
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.core.keras.quantizer.mixed_precision.selective_activation_quantizer import \
     SelectiveActivationQuantizer
+from packaging import version
 
-if tf.__version__ < "2.6":
+if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers import Layer
 else:
     from keras.engine.base_layer import Layer

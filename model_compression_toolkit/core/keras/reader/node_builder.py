@@ -15,8 +15,9 @@
 from typing import Any
 
 import tensorflow as tf
+from packaging import version
 
-if tf.__version__ < "2.6":
+if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers.core import TFOpLambda, SlicingOpLambda
     from tensorflow.python.keras.engine.keras_tensor import KerasTensor
     from tensorflow.python.keras.engine.node import Node as KerasNode
