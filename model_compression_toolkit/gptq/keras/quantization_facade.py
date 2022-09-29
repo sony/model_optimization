@@ -49,8 +49,6 @@ if common.constants.FOUND_TF:
     from model_compression_toolkit import get_target_platform_capabilities
 
     # As from TF2.9 optimizers package is changed
-    # from keras.optimizers.optimizer_v2.optimizer_v2 import OptimizerV2
-
     if version.parse(tf.__version__) < version.parse("2.9"):
         from keras.optimizer_v2.optimizer_v2 import OptimizerV2
     else:
