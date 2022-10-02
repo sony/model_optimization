@@ -13,10 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 from model_compression_toolkit.core.common.constants import FOUND_TF, FOUND_TORCH
-from model_compression_toolkit.core.tpc_models.default_tpc.v3.tp_model import get_tp_model, generate_tp_model, get_op_quantization_configs
+
+from model_compression_toolkit.core.tpc_models.default_tpc.v4.tp_model import get_tp_model, generate_tp_model, get_op_quantization_configs
+
 if FOUND_TF:
-    from model_compression_toolkit.core.tpc_models.default_tpc.v3.tpc_keras import get_keras_tpc as get_keras_tpc_latest
-    from model_compression_toolkit.core.tpc_models.default_tpc.v3.tpc_keras import generate_keras_tpc
+    from model_compression_toolkit.core.tpc_models.default_tpc.v4.tpc_keras import get_keras_tpc as get_keras_tpc_latest
+    from model_compression_toolkit.core.tpc_models.default_tpc.v4.tpc_keras import generate_keras_tpc
+
 if FOUND_TORCH:
-    from model_compression_toolkit.core.tpc_models.default_tpc.v3.tpc_pytorch import get_pytorch_tpc as get_pytorch_tpc_latest
-    from model_compression_toolkit.core.tpc_models.default_tpc.v3.tpc_pytorch import generate_pytorch_tpc
+    from model_compression_toolkit.core.tpc_models.default_tpc.v4.tpc_pytorch import get_pytorch_tpc as get_pytorch_tpc_latest
+    from model_compression_toolkit.core.tpc_models.default_tpc.v4.tpc_pytorch import generate_pytorch_tpc

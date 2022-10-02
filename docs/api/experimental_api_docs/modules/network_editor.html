@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>network_editor Module &#8212; MCT Documentation: ver 1.5.0</title>
+    <title>network_editor Module &#8212; MCT Documentation: ver 1.6.0</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.5.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">network_editor Module</a></li> 
       </ul>
     </div>  
@@ -55,8 +55,7 @@ and the action is applied on these nodes during the quantization process.</p>
 <p>Create an EditRule to quantize all Conv2D wights using 9 bits:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">tensorflow.keras.layers</span> <span class="kn">import</span> <span class="n">Conv2D</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">er_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">EditRule</span><span class="p">(</span><span class="nb">filter</span><span class="o">=</span><span class="n">mct</span><span class="o">.</span><span class="n">network_editor</span><span class="o">.</span><span class="n">NodeTypeFilter</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">),</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">action</span><span class="o">=</span><span class="n">mct</span><span class="o">.</span><span class="n">network_editor</span><span class="o">.</span><span class="n">ChangeCandidatesWeightsQuantConfigAttr</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">9</span><span class="p">))]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">er_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">mct</span><span class="o">.</span><span class="n">network_editor</span><span class="o">.</span><span class="n">EditRule</span><span class="p">(</span><span class="nb">filter</span><span class="o">=</span><span class="n">mct</span><span class="o">.</span><span class="n">network_editor</span><span class="o">.</span><span class="n">NodeTypeFilter</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">),</span> <span class="n">action</span><span class="o">=</span><span class="n">mct</span><span class="o">.</span><span class="n">network_editor</span><span class="o">.</span><span class="n">ChangeCandidatesWeightsQuantConfigAttr</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">9</span><span class="p">))]</span>
 </pre></div>
 </div>
 <p>Then the rules list can be passed to <a class="reference internal" href="../../api_docs/methods/keras_post_training_quantization.html#model_compression_toolkit.keras_post_training_quantization" title="model_compression_toolkit.keras_post_training_quantization"><code class="xref py py-func docutils literal notranslate"><span class="pre">keras_post_training_quantization()</span></code></a>
@@ -270,12 +269,12 @@ to modify the network during the quantization process.</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.5.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">network_editor Module</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, Sony Semiconductors Israel.
+        &#169; Copyright 2022, Sony Semiconductor Israel.
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>

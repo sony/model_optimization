@@ -43,7 +43,7 @@ class Identity(keras.layers.Layer):
         return inputs
 
 
-def get_identity_params_from_relu(weights={}, **kwargs):
+def get_identity_params_from_relu(weights={}, activation_quantization_params={}, **kwargs):
     """
     return weights for the new layer (no modification is required)
     """
@@ -110,7 +110,7 @@ class AddBias(keras.layers.Layer):
         return inputs + self.bias
 
 
-def get_add_bias_params_from_relu(weights={}, **kwargs):
+def get_add_bias_params_from_relu(weights={}, activation_quantization_params={}, **kwargs):
     """
     return modified config and weights for the new layer
     """

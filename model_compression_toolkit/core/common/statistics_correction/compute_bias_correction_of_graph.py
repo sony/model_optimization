@@ -18,6 +18,7 @@ from typing import Any
 
 import numpy as np
 
+from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode, Logger, Graph
@@ -26,6 +27,7 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 
 
 def compute_bias_correction_of_graph(graph_co_compute_bias: Graph,
+                                     core_config: CoreConfig,
                                      fw_info: FrameworkInfo,
                                      fw_impl: FrameworkImplementation) -> Graph:
     """
@@ -35,6 +37,7 @@ def compute_bias_correction_of_graph(graph_co_compute_bias: Graph,
     Args:
         graph_co_compute_bias: Graph with nodes to compute the bias correction for
         each node's weights quantization configuration candidates.
+        core_config: CoreConfig containing parameters of how the model should be quantized.
         fw_info: Framework info like lists of nodes their kernel should quantized.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
@@ -45,7 +48,7 @@ def compute_bias_correction_of_graph(graph_co_compute_bias: Graph,
 
     graph = copy.deepcopy(graph_co_compute_bias)
     for n in graph.nodes:
-        if n.is_weights_quantization_enabled():
+        if n.is_weights_quantization_enabled() and core_config.quantization_config.weights_bias_correction:
             _compute_bias_correction_per_candidate_qc(n,
                                                       fw_info,
                                                       graph.get_in_stats_collector(n),
@@ -70,7 +73,8 @@ def _compute_bias_correction_per_candidate_qc(node: BaseNode,
     """
 
     for candidate_qc in node.candidates_quantization_cfg:
-        if candidate_qc.weights_quantization_cfg.enable_weights_quantization:
+        if candidate_qc.weights_quantization_cfg.enable_weights_quantization and not \
+                candidate_qc.weights_quantization_cfg.weights_second_moment_correction:
             quantized_kernel, io_channels_axes = get_quantized_kernel_by_weights_qc(fw_info,
                                                                                     node,
                                                                                     candidate_qc.weights_quantization_cfg,

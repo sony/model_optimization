@@ -41,6 +41,10 @@ class SymmetricGumbelWeightQuantizer(BaseGumbelWeightQuantizer):
             weight_shape: weight shape for auxiliary tensor creation.
         """
         super().__init__(weights_quantization_cfg, gptq_config, weight_shape)
+        self.signed = True
+        self.min_int = -int(self.signed) * (2 ** (self.num_bits - int(self.signed)))
+        self.max_int = (2 ** (self.num_bits - int(self.signed))) - 1
+        self.threshold_values = weights_quantization_cfg.weights_quantization_params.get(THRESHOLD)
 
         # Set trainable tensors
         self.set_trainable_params()
@@ -67,7 +71,7 @@ class SymmetricGumbelWeightQuantizer(BaseGumbelWeightQuantizer):
         """
         Returns quantization trainable variables
         """
-        return self.trainable_params.get(THRESHOLD_TENSOR)
+        return [self.trainable_params.get(THRESHOLD_TENSOR)]
 
     def get_temperature_variable(self) -> Union[torch.Tensor, List]:
         """

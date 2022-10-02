@@ -87,6 +87,20 @@ def ste_clip(x: [tf.Tensor, tf.Variable], max_val=1, min_val=None) -> tf.Tensor:
     return tf.stop_gradient(tf.math.minimum(tf.math.maximum(x, min_val), max_val) - x) + x
 
 
+def clip(x: [tf.Tensor, tf.Variable], max_val=1, min_val=None) -> tf.Tensor:
+    """
+    clip a variable between fixed values such that min_val<=output<=max_val
+    Args:
+        x: input variable
+        max_val: maximum value for clipping
+        min_val: minimum value for clipping (defaults to -max_val)
+    Returns:
+        clipped variable
+    """
+    min_val = -max_val if min_val is None else min_val
+    return tf.math.minimum(tf.math.maximum(x, min_val), max_val)
+
+
 def fix_range_to_include_zero(range_min: tf.Tensor,
                               range_max: tf.Tensor,
                               n_bits: int) -> Tuple[tf.Tensor, tf.Tensor]:

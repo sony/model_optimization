@@ -148,7 +148,7 @@ if FOUND_TF:
                                             target_kpi=target_kpi,
                                             tb_w=tb_w)
 
-        tg = ptq_runner(tg, fw_info, fw_impl, tb_w)
+        tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
 
         qat_model, user_info = QATKerasModelBuilder(graph=tg, fw_info=fw_info).build_model()
 

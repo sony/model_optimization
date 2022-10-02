@@ -110,10 +110,7 @@ if FOUND_TORCH:
                                             target_kpi=target_kpi,
                                             tb_w=tb_w)
 
-        tg = ptq_runner(tg,
-                        DEFAULT_PYTORCH_INFO,
-                        fw_impl,
-                        tb_w)
+        tg = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
 
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen,

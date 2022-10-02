@@ -123,6 +123,6 @@ def fusion(graph: Graph, tpc: TargetPlatformCapabilities) -> Graph:
         if is_valid_fusion(fusing_patterns, fusing_nodes):
             fused_nodes.extend(fusing_nodes)
             disable_nodes_activation_quantization(fusing_nodes[:-1])
-            fused_graph.user_info.add_fusion(fusing_nodes)
+            fused_graph.update_fused_nodes(fusing_nodes)
 
     return fused_graph

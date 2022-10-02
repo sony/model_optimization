@@ -127,9 +127,9 @@ if importlib.util.find_spec("tensorflow") is not None\
                                             tb_w=tb_w)
 
         if gptq_config is None:
-            tg = ptq_runner(tg, fw_info, fw_impl, tb_w)
+            tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
         else:
-            tg = gptq_runner(tg, gptq_config, representative_data_gen,
+            tg = gptq_runner(tg, core_config, gptq_config, representative_data_gen,
                              fw_info, fw_impl, tb_w)
 
         if core_config.debug_config.analyze_similarity:
@@ -253,7 +253,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                                             tb_w=tb_w)
 
         if gptq_config is None:
-            tg = ptq_runner(tg, fw_info, fw_impl, tb_w)
+            tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
         else:
             tg = gptq_runner(tg, gptq_config, representative_data_gen,
                              fw_info, fw_impl, tb_w)

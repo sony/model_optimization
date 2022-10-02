@@ -178,7 +178,7 @@ if FOUND_TORCH:
         # ---------------------- #
         # GPTQ Runner
         # ---------------------- #
-        graph_gptq = gptq_runner(graph, gptq_config, representative_data_gen, DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
+        graph_gptq = gptq_runner(graph, core_config, gptq_config, representative_data_gen, DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen, tb_w, graph_gptq, fw_impl, DEFAULT_PYTORCH_INFO)
 

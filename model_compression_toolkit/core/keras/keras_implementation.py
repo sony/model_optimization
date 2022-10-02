@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
 from typing import List, Any, Tuple, Callable, Type, Dict
 
 import numpy as np
@@ -25,17 +24,22 @@ from model_compression_toolkit.core.common.similarity_analyzer import compute_kl
 from model_compression_toolkit.core.keras.back2framework.model_gradients import \
     keras_iterative_approx_jacobian_trace
 from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID, ARGMAX, LAYER_NAME
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.batchnorm_reconstruction import \
+    keras_batchnorm_reconstruction
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.virtual_activation_weights_composition import \
     VirtualActivationWeightsComposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weights_activation_split import \
     WeightsActivationSplit
 from model_compression_toolkit.core.keras.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
+from model_compression_toolkit.core.keras.statistics_correction.apply_second_moment_correction import \
+    keras_apply_second_moment_correction
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add
     from tensorflow.python.keras.layers.core import TFOpLambda
 else:
-    from keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add
+    from keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, \
+        Concatenate, Add
     from keras.layers.core import TFOpLambda
 
 from model_compression_toolkit import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfigV2
@@ -55,6 +59,8 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.soft
     keras_softmax_shift
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.batchnorm_folding import \
     keras_batchnorm_folding
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.batchnorm_refusing import \
+    keras_batchnorm_refusing
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.linear_collapsing import \
     keras_linear_collapsing
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.residual_collapsing import \
@@ -67,7 +73,8 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remo
     RemoveReLUUpperBound
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.multi_head_attention_decomposition import \
     MultiHeadAttentionDecomposition
-from model_compression_toolkit.core.keras.graph_substitutions.substitutions.layer_norm_decomposition import LayerNormDecomposition
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.layer_norm_decomposition import \
+    LayerNormDecomposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.scale_equalization import \
     ScaleEqualization, ScaleEqualizationWithPad, ScaleEqualizationMidActivation, ScaleEqualizationMidActivationWithPad
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.separableconv_decomposition import \
@@ -76,7 +83,8 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.shif
     keras_apply_shift_negative_correction
 from model_compression_toolkit.core.keras.keras_node_prior_info import create_node_prior_info
 from model_compression_toolkit.core.keras.reader.reader import model_reader
-from model_compression_toolkit.core.common.collectors.statistics_collector_generator import create_stats_collector_for_node
+from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \
+    create_stats_collector_for_node
 import model_compression_toolkit.core.keras.constants as keras_constants
 from model_compression_toolkit.core.keras.tf_tensor_numpy import tf_tensor_to_numpy, to_tf_tensor
 from model_compression_toolkit.core.keras.back2framework import get_keras_model_builder
@@ -161,7 +169,6 @@ class KerasImplementation(FrameworkImplementation):
                                    append2output=append2output,
                                    fw_info=fw_info,
                                    return_float_outputs=return_float_outputs).build_model()
-
 
     def run_model_inference(self,
                             model: Any,
@@ -262,6 +269,22 @@ class KerasImplementation(FrameworkImplementation):
             substitutions_list.append(ReLUBoundToPowerOfTwo())
         return substitutions_list
 
+    def get_substitutions_statistics_correction(self, quant_config: QuantizationConfig) -> \
+            List[common.BaseSubstitution]:
+        """
+        Returns A list of the framework substitutions used for statistics correction.
+
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+
+        Returns:
+            A list of the framework substitutions used for statistics correction.
+        """
+        substitutions_list = []
+        if quant_config.weights_second_moment_correction:
+            substitutions_list.append(keras_batchnorm_reconstruction())
+        return substitutions_list
+
     def get_residual_collapsing_substitution(self) -> List[common.BaseSubstitution]:
         """
         Returns: A list of the framework substitutions used for residual collapsing
@@ -310,6 +333,22 @@ class KerasImplementation(FrameworkImplementation):
 
         return [WeightsActivationSplit(),
                 VirtualActivationWeightsComposition()]
+
+    def get_substitutions_after_second_moment_correction(self, quant_config: QuantizationConfig) \
+            -> List[common.BaseSubstitution]:
+        """
+        Return a list of the framework substitutions used after second moment statistics.
+
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+
+        Returns:
+            A list of the framework substitutions used after we apply second moment statistics.
+        """
+        substitutions_list = []
+        if quant_config.weights_second_moment_correction:
+            substitutions_list.append(keras_batchnorm_refusing())
+        return substitutions_list
 
     def get_gptq_trainer_obj(self) -> Type[GPTQTrainer]:
         """
@@ -530,3 +569,24 @@ class KerasImplementation(FrameworkImplementation):
             return kernel_shape[0] * kernel_shape[1]
         else:
             return 0
+
+    def apply_second_moment_correction(self,
+                                       quantized_model: Any,
+                                       core_config: CoreConfig,
+                                       representative_data_gen: Callable,
+                                       graph: common.Graph):
+        """
+        Apply second moment statistics correction to graph.
+
+        Args:
+            quantized_model: Framework's model to apply second moment correction on.
+            core_config: QuantizationConfig of how the model should be quantized.
+            representative_data_gen: Dataset to use for retrieving images for the models inputs.
+            graph: Graph to update the parameters after the second moment correction.
+
+        Returns:
+            A Graph after second moment correction.
+        """
+        graph_after_second_moment_correction = keras_apply_second_moment_correction(quantized_model, core_config,
+                                                                                    representative_data_gen, graph)
+        return graph_after_second_moment_correction

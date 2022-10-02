@@ -13,12 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 from abc import ABC, abstractmethod
-from typing import Callable, Any, List, Tuple, Type, Dict
+from typing import Callable, Any, List, Tuple, Dict
 
 import numpy as np
 
-from model_compression_toolkit.core import common
 from model_compression_toolkit import MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -26,8 +26,8 @@ from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
-from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
+from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core.common.user_info import UserInformation
 
 
@@ -140,7 +140,7 @@ class FrameworkImplementation(ABC):
 
         Args:
             graph: Graph to apply SNC on.
-            qc: Quantization configuration.
+            core_config: Quantization configuration.
             fw_info: FrameworkInfo object with information about the specific framework's model.
 
         Returns:
@@ -215,6 +215,21 @@ class FrameworkImplementation(ABC):
                              f'framework\'s get_linear_collapsing_substitution method.')
 
     @abstractmethod
+    def get_substitutions_statistics_correction(self, quant_config: QuantizationConfig) -> \
+            List[common.BaseSubstitution]:
+        """
+        Returns A list of the framework substitutions used for statistics correction.
+
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+
+        Returns:
+            A list of the framework substitutions used for statistics correction.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_substitutions_statistics_correction method.')
+
+    @abstractmethod
     def get_residual_collapsing_substitution(self) -> List[common.BaseSubstitution]:
         """
         Returns: A list of the framework substitutions used for residual collapsing
@@ -255,6 +270,21 @@ class FrameworkImplementation(ABC):
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_substitutions_virtual_weights_activation_coupling method.')
+
+    @abstractmethod
+    def get_substitutions_after_second_moment_correction(self, quant_config: QuantizationConfig) \
+            -> List[common.BaseSubstitution]:
+        """
+        Return a list of the framework substitutions used after second moment statistics.
+
+        Args:
+            quant_config: QuantizationConfig to determine which substitutions to return.
+
+        Returns:
+            A list of the framework substitutions used after we apply second moment statistics.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_substitutions_after_second_moment_correction method.')
 
     @abstractmethod
     def get_gptq_trainer_obj(self):
@@ -436,3 +466,24 @@ class FrameworkImplementation(ABC):
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_node_mac_operations method.')
+
+    @abstractmethod
+    def apply_second_moment_correction(self,
+                                       quantized_model: Any,
+                                       core_config: CoreConfig,
+                                       representative_data_gen: Callable,
+                                       graph: common.Graph):
+        """
+        Build a framework model from a graph and apply second moment statistics correction to graph.
+
+        Args:
+            quantized_model: Framework's model to apply second moment correction on.
+            core_config: QuantizationConfig of how the model should be quantized.
+            representative_data_gen: Dataset to use for retrieving images for the models inputs.
+            graph: Graph to update the parameters after the second moment correction.
+
+        Returns:
+            A Graph after second moment correction.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s apply_second_moment_correction method.')

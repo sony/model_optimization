@@ -42,7 +42,7 @@ class Identity(torch.nn.Module):
         return input
 
 
-def get_identity_params_from_relu(weights={}, **kwargs):
+def get_identity_params_from_relu(weights={}, activation_quantization_params={}, **kwargs):
     """
     return config and weights for the new layer (no change is required)
     """
@@ -124,7 +124,7 @@ class AddBias(torch.nn.Module):
         return input + self.bias
 
 
-def get_add_bias_params_from_relu(weights={}, **kwargs):
+def get_add_bias_params_from_relu(weights={}, activation_quantization_params={}, **kwargs):
     """
     return config and weights for the new layer (no change is required)
     """

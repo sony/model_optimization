@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>API Docs &#8212; MCT Documentation: ver 1.5.0</title>
+    <title>API Docs &#8212; MCT Documentation: ver 1.6.0</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css" />
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="../../guidelines/quickstart_pytorch.html" title="MCT Quickstart Guideline for Pytorch models"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">MCT Documentation: ver 1.5.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">API Docs</a></li> 
       </ul>
     </div>  
@@ -66,13 +66,17 @@ and will be removed in the future.</p>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental"><span class="std std-ref">pytorch_post_training_quantization_experimental</span></a>: Function to use for post training quantization of PyTorch models (experimental).</p></li>
-<li><p><a class="reference internal" href="methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental"><span class="std std-ref">keras_post_training_quantization_experimental</span></a>: Function to use for post training quantization of Keras models (experimental).</p></li>
-<li><p><a class="reference internal" href="methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental"><span class="std std-ref">keras_gradient_post_training_quantization_experimental</span></a>: Function to use for gradient-based post training quantization of Keras models (experimental).</p></li>
-<li><p><a class="reference internal" href="methods/get_keras_gptq_config.html#ug-get-keras-gptq-config"><span class="std std-ref">get_keras_gptq_config</span></a>: Function to create a GradientPTQConfig instance to use for Keras models when using GPTQ (experimental).</p></li>
-<li><p><a class="reference internal" href="methods/get_target_platform_capabilities.html#ug-get-target-platform-capabilities"><span class="std std-ref">get_target_platform_capabilities</span></a>: Function to get a target platform model for Tensorflow and Pytorch.</p></li>
-<li><p><a class="reference internal" href="methods/keras_kpi_data_experimental.html#ug-keras-kpi-data-experimental"><span class="std std-ref">keras_kpi_data_experimental</span></a>: Function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of Keras models (experimental).</p></li>
-<li><p><a class="reference internal" href="methods/pytorch_kpi_data_experimental.html#ug-pytorch-kpi-data-experimental"><span class="std std-ref">pytorch_kpi_data_experimental</span></a>: Function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of PyTorch models (experimental).</p></li>
+<li><p><a class="reference internal" href="methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental"><span class="std std-ref">pytorch_post_training_quantization_experimental</span></a>: A function to use for post training quantization of PyTorch models (experimental).</p></li>
+<li><p><a class="reference internal" href="methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental"><span class="std std-ref">keras_post_training_quantization_experimental</span></a>: A function to use for post training quantization of Keras models (experimental).</p></li>
+<li><p><a class="reference internal" href="methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental"><span class="std std-ref">keras_gradient_post_training_quantization_experimental</span></a>: A function to use for gradient-based post training quantization of Keras models (experimental).</p></li>
+<li><p><a class="reference internal" href="methods/pytorch_gradient_post_training_quantization_experimental.html#ug-pytorch-gradient-post-training-quantization-experimental"><span class="std std-ref">pytorch_gradient_post_training_quantization_experimental</span></a>: A function to use for gradient-based post training quantization of Pytorch models (experimental).</p></li>
+<li><p><a class="reference internal" href="methods/keras_quantization_aware_training_init.html#ug-keras-quantization-aware-training-init"><span class="std std-ref">keras_quantization_aware_training_init</span></a>: A function to use for preparing a model for Quantization Aware Training (Experimental)</p></li>
+<li><p><a class="reference internal" href="methods/keras_quantization_aware_training_export.html#ug-keras-quantization-aware-training-finalize"><span class="std std-ref">keras_quantization_aware_training_finalize</span></a>: A function to finalize a model after Quantization Aware Training to a model without QuantizeWrappers(Experimental)</p></li>
+<li><p><a class="reference internal" href="methods/get_keras_gptq_config.html#ug-get-keras-gptq-config"><span class="std std-ref">get_keras_gptq_config</span></a>: A function to create a GradientPTQConfig instance to use for Keras models when using GPTQ (experimental).</p></li>
+<li><p><a class="reference internal" href="methods/get_pytroch_gptq_config.html#ug-get-pytorch-gptq-config"><span class="std std-ref">get_pytorch_gptq_config</span></a>: A function to create a GradientPTQConfig instance to use for Pytorch models when using GPTQ (experimental).</p></li>
+<li><p><a class="reference internal" href="methods/get_target_platform_capabilities.html#ug-get-target-platform-capabilities"><span class="std std-ref">get_target_platform_capabilities</span></a>: A function to get a target platform model for Tensorflow and Pytorch.</p></li>
+<li><p><a class="reference internal" href="methods/keras_kpi_data_experimental.html#ug-keras-kpi-data-experimental"><span class="std std-ref">keras_kpi_data_experimental</span></a>: A function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of Keras models (experimental).</p></li>
+<li><p><a class="reference internal" href="methods/pytorch_kpi_data_experimental.html#ug-pytorch-kpi-data-experimental"><span class="std std-ref">pytorch_kpi_data_experimental</span></a>: A function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of PyTorch models (experimental).</p></li>
 </ul>
 </section>
 <section id="modules">
@@ -88,7 +92,8 @@ and will be removed in the future.</p>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="classes/GradientPTQConfig.html#ug-gradientptqconfig"><span class="std std-ref">GradientPTQConfig</span></a>: Class to configure GradientPTQC options for gradient based post training quantization.</p></li>
+<li><p><a class="reference internal" href="classes/GradientPTQConfig.html#ug-gradientptqconfig"><span class="std std-ref">GradientPTQConfig</span></a>: Class to configure GradientPTQ options for gradient based post training quantization.</p></li>
+<li><p><a class="reference internal" href="classes/GumbelConfig.html#ug-gumbelconfig"><span class="std std-ref">GumbelConfig</span></a>: Class to configure GumbelConfig options for gumbel rounding in GPTQ.</p></li>
 <li><p><a class="reference internal" href="classes/FolderImageLoader.html#ug-folderimageloader"><span class="std std-ref">FolderImageLoader</span></a>: Class to use an images directory as a representative dataset.</p></li>
 <li><p><a class="reference internal" href="classes/FrameworkInfo.html#ug-frameworkinfo"><span class="std std-ref">FrameworkInfo</span></a>: Class to wrap framework information to be used by MCT when optimizing models.</p></li>
 </ul>
@@ -155,12 +160,12 @@ and will be removed in the future.</p>
         <li class="right" >
           <a href="../../guidelines/quickstart_pytorch.html" title="MCT Quickstart Guideline for Pytorch models"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">MCT Documentation: ver 1.5.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">API Docs</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, Sony Semiconductors Israel.
+        &#169; Copyright 2022, Sony Semiconductor Israel.
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>

@@ -253,6 +253,7 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
         self.weights_error_method = qc.weights_error_method
         self.weights_n_bits = op_cfg.weights_n_bits
         self.weights_bias_correction = qc.weights_bias_correction
+        self.weights_second_moment_correction = qc.weights_second_moment_correction
         self.weights_per_channel_threshold = qc.weights_per_channel_threshold
         self.enable_weights_quantization = op_cfg.enable_weights_quantization
         self.min_threshold = qc.min_threshold
@@ -360,6 +361,7 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
                self.weights_quantization_method == other.weights_quantization_method and \
                self.weights_n_bits == other.weights_n_bits and \
                self.weights_bias_correction == other.weights_bias_correction and \
+               self.weights_second_moment_correction == other.weights_second_moment_correction and \
                self.weights_per_channel_threshold == other.weights_per_channel_threshold and \
                self.enable_weights_quantization == other.enable_weights_quantization and \
                self.min_threshold == other.min_threshold and \
@@ -373,6 +375,7 @@ class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
                      self.weights_quantization_method,
                      self.weights_n_bits,
                      self.weights_bias_correction,
+                     self.weights_second_moment_correction,
                      self.weights_per_channel_threshold,
                      self.enable_weights_quantization,
                      self.min_threshold,

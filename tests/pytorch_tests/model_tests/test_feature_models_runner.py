@@ -35,6 +35,8 @@ from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_t
     MixedPercisionActivationSearch4BitFunctional
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
+from tests.pytorch_tests.model_tests.feature_models.second_moment_correction_test import ConvSecondMomentNetTest, \
+    ConvTSecondMomentNetTest, MultipleInputsConvSecondMomentNetTest, ValueSecondMomentTest
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
     SoftmaxFunctionNetTest
 from tests.pytorch_tests.model_tests.feature_models.permute_substitution_test import PermuteSubstitutionTest
@@ -58,10 +60,11 @@ from tests.pytorch_tests.model_tests.feature_models.reuse_layer_net_test import 
 from tests.pytorch_tests.model_tests.feature_models.shift_negative_activation_test import ShiftNegaviteActivationNetTest
 from tests.pytorch_tests.model_tests.feature_models.split_concat_net_test import SplitConcatNetTest
 from tests.pytorch_tests.model_tests.feature_models.torch_tensor_attr_net_test import TorchTensorAttrNetTest
-from tests.pytorch_tests.model_tests.feature_models.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, LayerFusingTest4
 from tests.pytorch_tests.model_tests.feature_models.bn_function_test import BNFNetTest
 from tests.pytorch_tests.model_tests.feature_models.gptq_test import STEAccuracyTest, STEWeightsUpdateTest, STELearnRateZeroTest
-from tests.pytorch_tests.model_tests.feature_models.gptq_test import SymGumbelAccuracyTest, SymGumbelWeightsUpdateTest, SymGumbelAccuracyTest2
+from tests.pytorch_tests.model_tests.feature_models.gptq_test import SymGumbelAccuracyTest, SymGumbelWeightsUpdateTest
+from tests.pytorch_tests.model_tests.feature_models.gptq_test import UniformGumbelAccuracyTest, UniformGumbelWeightsUpdateTest
+
 
 class FeatureModelsTestRunner(unittest.TestCase):
 
@@ -119,6 +122,15 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         BNFoldingNetTest(self).run_test()
 
+    def test_second_moment_correction(self):
+        """
+        These are tests for the Second Moment Correction.
+        """
+        ConvSecondMomentNetTest(self).run_test()
+        ConvTSecondMomentNetTest(self).run_test()
+        MultipleInputsConvSecondMomentNetTest(self).run_test()
+        ValueSecondMomentTest(self).run_test()
+
     def test_bn_function(self):
         """
         This tests check the batch_norm function and demonstrates the usage of BufferHolder node.
@@ -153,7 +165,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the permute substitution feature
         """
         PermuteSubstitutionTest(self).run_test()
-
 
     def test_relu_bound_to_power_of_2(self):
         """
@@ -301,15 +312,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         SplitConcatNetTest(self).run_test()
 
-    def test_layer_fusing(self):
-        """
-        This test checks layer fusing: skipping activation quantization for layers in the fusion
-        """
-        LayerFusingTest1(self).run_test()
-        LayerFusingTest2(self).run_test()
-        LayerFusingTest3(self).run_test()
-        LayerFusingTest4(self).run_test()
-
     def test_torch_tensor_attr_net(self):
         """
         This tests checks a model that has calls to torch.Tensor functions,
@@ -409,8 +411,9 @@ class FeatureModelsTestRunner(unittest.TestCase):
         STEWeightsUpdateTest(self).run_test()
         STELearnRateZeroTest(self).run_test()
         SymGumbelAccuracyTest(self).run_test()
-        SymGumbelAccuracyTest2(self).run_test()
         SymGumbelWeightsUpdateTest(self).run_test()
+        UniformGumbelAccuracyTest(self).run_test()
+        UniformGumbelWeightsUpdateTest(self).run_test()
 
 if __name__ == '__main__':
     unittest.main()

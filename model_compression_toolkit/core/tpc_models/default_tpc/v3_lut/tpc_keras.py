@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import tensorflow as tf
+from model_compression_toolkit.core.tpc_models.default_tpc.v3_lut import __version__ as TPC_VERSION
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, \
@@ -48,7 +49,9 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
-    keras_tpc = tp.TargetPlatformCapabilities(tp_model, name=name)
+    keras_tpc = tp.TargetPlatformCapabilities(tp_model,
+                                              name=name,
+                                              version=TPC_VERSION)
 
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", [Reshape,

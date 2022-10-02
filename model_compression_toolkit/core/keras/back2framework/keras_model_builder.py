@@ -19,7 +19,6 @@ import tensorflow as tf
 from keras.models import Model
 
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
-
 from model_compression_toolkit.core.common.user_info import UserInformation
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
@@ -281,5 +280,17 @@ class KerasModelBuilder(BaseModelBuilder):
                         f"Trying to quantize node {n.name} activation of type {out_tensors_of_n_float.dtype} "
                         f"which is not supported, expected type float32")
                 out_tensors_of_n = self._quantize_node_activations(n, out_tensors_of_n_float)
+
+        # Save a mapping from the layer that created the tensor to the node (as this layer is not the
+        # same instance as op_func. We do this to solve an issue that names are different between these
+        # layers, thus we can not rely on the op_func name during model cloning (such as GPTQ, MP, etc.)
+        if not n.reuse:
+            if isinstance(out_tensors_of_n_float, list):
+                # If layer has multiple outputs (e.g., split) we take the layer of the first output (as all outputs are
+                # from the same layer).
+                layer_from_tensor = out_tensors_of_n_float[0].node.layer
+            else:
+                layer_from_tensor = out_tensors_of_n_float.node.layer
+            self.oh.layer_to_node_dict[layer_from_tensor] = n
 
         return out_tensors_of_n, out_tensors_of_n_float
