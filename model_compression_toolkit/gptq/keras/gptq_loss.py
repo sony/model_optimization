@@ -118,7 +118,7 @@ def activation_mse(flp_act_list,
 
 
 class GPTQMultipleTensorsLoss:
-    def __init__(self, norm_loss: bool = True):
+    def __init__(self, norm_loss: bool = False):
         self.alpha = None
         self.norm_loss = norm_loss
 

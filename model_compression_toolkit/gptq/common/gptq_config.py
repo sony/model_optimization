@@ -24,6 +24,8 @@ MAX_LSBS_CHANGE_MAP = {8: 2,
 N_CYCLES = 4
 MIM_TEMP = 0.5
 MAX_TEMP = 1.0
+GAMMA_TEMPERATURE = 0.1
+GUMBEL_SCALE = 0.5
 
 
 class RoundingType(Enum):
@@ -46,7 +48,7 @@ class GumbelConfig(object):
                  n_cycles: int = N_CYCLES,
                  minimal_temp: float = MIM_TEMP,
                  maximal_temp: float = MAX_TEMP,
-                 gumbel_entropy_regularization: float = 0.01):
+                 gumbel_entropy_regularization: float = GAMMA_TEMPERATURE):
         """
         Initialize a GumbelConfig.
 
@@ -88,7 +90,8 @@ class GradientPTQConfig:
                  norm_weights: bool = False,
                  quantizer_config: GumbelConfig = GumbelConfig(),
                  optimizer_quantization_parameter: Any = None,
-                 optimizer_bias: Any = None):
+                 optimizer_bias: Any = None,
+                 gumbel_scale: float = GUMBEL_SCALE):
         """
         Initialize a GradientPTQConfig.
 
@@ -113,6 +116,7 @@ class GradientPTQConfig:
             quantizer_config (Any): A class the contins the quantizer specific config.
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
+            gumbel_scale (float): A normalization factor for the gumbel tensor values.
 
         """
         self.n_iter = n_iter
@@ -135,6 +139,7 @@ class GradientPTQConfig:
         self.quantizer_config = quantizer_config
         self.optimizer_quantization_parameter = optimizer_quantization_parameter
         self.optimizer_bias = optimizer_bias
+        self.gumbel_scale = gumbel_scale
 
     @property
     def is_gumbel(self) -> bool:

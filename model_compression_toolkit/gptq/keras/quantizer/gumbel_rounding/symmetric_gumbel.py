@@ -23,7 +23,7 @@ from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from typing import Dict, Any, List
 from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.gumbel_softmax import gumbel_softmax, ste_gumbel
-from model_compression_toolkit.core.common.constants import THRESHOLD
+from model_compression_toolkit.core.common.constants import THRESHOLD, GUMBEL_MAX_ITER
 from model_compression_toolkit.gptq.common import gptq_constants
 
 
@@ -73,7 +73,8 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
                  gumbel_config: GumbelConfig,
                  quantization_axis: int = -1,
                  max_lsbs_change_map: dict = DefaultDict({}, lambda: 1),
-                 max_iteration: int = 10000):
+                 max_iteration: int = GUMBEL_MAX_ITER,
+                 gumbel_scale: float = 1.0):
         """
         Initialize a TrainableWeightQuantizer object with parameters to use
         for the quantization.
@@ -88,6 +89,7 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
             power_of_two: Whether the threshold should be constrained or not.
             max_lsbs_change_map: a mapping between number of bits to max lsb change.
             max_iteration: The number of iteration of gptq.
+            gumbel_scale: A normalization factor for the gumbel tensor values
         """
         super().__init__(num_bits, per_axis, signed, True, power_of_two, quantization_parameter_learning,
                          quantization_axis, gumbel_config,
@@ -97,6 +99,7 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
         self.threshold_values = np.reshape(np.asarray(threshold_values), [-1]) if self.per_axis else float(
             threshold_values)
         self.k_threshold = len(self.threshold_values) if self.per_axis else 1
+        self.gumbel_scale = gumbel_scale
 
     def build(self,
               tensor_shape: TensorShape,
@@ -178,7 +181,7 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
             # Gumbel Softmax
             #####################################################
             if training:
-                p_t = gumbel_softmax(auxvar, self.tau, self.g_t)
+                p_t = gumbel_softmax(auxvar, self.tau, self.g_t, gumbel_scale=self.gumbel_scale)
             else:
                 p_t = gumbel_softmax(auxvar, self.minimal_temp, 0)
                 p_t = ste_gumbel(p_t)
