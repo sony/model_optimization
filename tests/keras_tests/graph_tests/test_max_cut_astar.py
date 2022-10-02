@@ -54,6 +54,22 @@ def complex_model(input_shape):
     return keras.Model(inputs=inputs, outputs=outputs)
 
 
+def expanding_model(input_shape):
+    """
+    This is a model has a split which afterwards increases the size of the output tensor in one of the split paths.
+    """
+    inputs = Input(shape=input_shape)
+    x = Conv2D(2, 3)(inputs)
+    y = tf.split(x, num_or_size_splits=2, axis=0)
+    x1 = Conv2D(2, 3)(y[0])
+    x2 = Conv2D(2, 3)(y[1])
+    x_expand = Conv2D(20, 1)(x2)
+    x_relu = Activation('relu')(x_expand)
+    x_shrink = Conv2D(2, 1)(x_relu)
+    concat = keras.layers.Concatenate()([x1, x_shrink])
+    return keras.Model(inputs=inputs, outputs=concat)
+
+
 class TestMaxCutAstarInit(unittest.TestCase):
 
     def _run_max_cut_astar_initialization_test(self, model):
@@ -359,6 +375,28 @@ class TestMaxCutAstarSolve(unittest.TestCase):
         all_tensors_sizes = [t.total_size for t in memory_graph.b_nodes]
         self.assertTrue(max(all_tensors_sizes) < cost < sum(all_tensors_sizes))
         self.assertTrue(cost >= memory_graph.memory_lbound_single_op)
+
+        for n in graph.get_topo_sorted_nodes():
+            self.assertTrue(n in path)
+
+    def test_max_cut_astar_solve_expand(self):
+        model = expanding_model((8, 8, 3))
+        graph = model_reader(model)
+        memory_graph = MemoryGraph(graph)
+
+        l_bound = memory_graph.memory_lbound_single_op
+        u_bound = 2 * sum([t.total_size for t in memory_graph.b_nodes]) - l_bound
+        estimate_factor = (u_bound + l_bound) / 2
+
+        mc_astar = MaxCutAstar(memory_graph)
+
+        solution = mc_astar.solve(iter_limit=20, estimate_factor=estimate_factor)
+        self.assertIsNotNone(solution)
+        cost, path = solution
+
+        all_tensors_sizes = [t.total_size for t in memory_graph.b_nodes]
+        self.assertTrue(max(all_tensors_sizes) < cost < sum(all_tensors_sizes))
+        self.assertTrue(cost > memory_graph.memory_lbound_single_op)
 
         for n in graph.get_topo_sorted_nodes():
             self.assertTrue(n in path)
