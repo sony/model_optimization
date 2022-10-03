@@ -207,8 +207,13 @@ if common.constants.FOUND_TF:
                                             target_kpi=target_kpi,
                                             tb_w=tb_w)
 
-        tg_gptq = gptq_runner(tg, gptq_config, representative_data_gen,
-                              fw_info, fw_impl, tb_w)
+        tg_gptq = gptq_runner(tg,
+                              core_config,
+                              gptq_config,
+                              representative_data_gen,
+                              fw_info,
+                              fw_impl,
+                              tb_w)
 
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen, tb_w, tg_gptq, fw_impl, fw_info)
