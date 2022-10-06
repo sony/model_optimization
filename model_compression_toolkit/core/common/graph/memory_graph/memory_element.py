@@ -15,19 +15,12 @@
 from typing import Set, Tuple, Any
 import numpy as np
 
-from model_compression_toolkit.core.common.constants import FLOAT_BITWIDTH
-from model_compression_toolkit.core.common.memory_computation import compute_quantize_tensor_memory_bytes
-
 
 class ActivationMemoryTensor:
-    def __init__(self, shape: Tuple[Any], node_name: str, node_output_index: int, total_size: float = -1,
-                 n_bits: int = FLOAT_BITWIDTH):
+    def __init__(self, shape: Tuple[Any], node_name: str, node_output_index: int, total_size: float = -1):
 
         self.shape = shape[1:]  # remove batch size (first element) from output shape
-        self.n_bits = n_bits
-
-        num_params = self._get_tensor_total_size() if total_size == -1 else total_size
-        self.total_size = compute_quantize_tensor_memory_bytes(num_params, self.n_bits)
+        self.total_size = self._get_tensor_total_size() if total_size == -1 else total_size
 
         self.node_name = node_name
         self.node_output_index = node_output_index

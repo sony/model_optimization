@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import copy
-from typing import List, Callable
+from typing import List
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
@@ -58,11 +58,9 @@ class DummyActivationMemoryTensorGenerator:
 
 class MaxCutAstar:
 
-    def __init__(self, memory_graph):#, estimate_factor: float = None):
+    def __init__(self, memory_graph):
 
         self.memory_graph = memory_graph
-        # self.estimate_factor = self.get_init_estimate_factor(memory_graph) \
-        #     if estimate_factor is None else estimate_factor
 
         # In order to run Astar search on the graph we need to define a single source and a single target.
         # Dummy nodes are used for this purpose.
@@ -76,41 +74,25 @@ class MaxCutAstar:
         edges_src_ab = [(src_dummy_a, src_dummy_b)]
         edges_src_ba = [(src_dummy_b, src_a) for src_a in memory_graph.sources_a]
 
-        # Updated graph sinks - need to connect all sink nodes to a single sink node
-        # mid_b_nodes = [next(gen_b) for _ in memory_graph.sinks_a]
-        # sinks_fix_ab_edges = [(original_sink, mid_b) for original_sink, mid_b in zip(memory_graph.sinks_a, mid_b_nodes)]
-        # sink_fix_node_a = next(gen_a)  # this is the new single sink node
-        # sinks_fix_ba_edges = [(t, sink_fix_node_a) for s, t in sinks_fix_ab_edges]
-
         # Target Cut
         target_dummy_a = next(gen_a)
         target_dummy_a2 = next(gen_a)
         target_dummy_b = next(gen_b)
         target_dummy_b2 = next(gen_b)
-        # edges_target_ab = [(sink_fix_node_a, target_dummy_b1), (target_dummy_a1, target_dummy_b2)]
-        # edges_target_ab = [(sink_fix_node_a, target_dummy_b1)]
-        # edges_target_ba = [(target_dummy_b1, target_dummy_a1), (target_dummy_b2, target_dummy_a2)]
         edges_target_fix_ba = [(t, target_dummy_a) for t in memory_graph.sinks_b]
         edges_target_ab = [(target_dummy_a, target_dummy_b), (target_dummy_a2, target_dummy_b2)]
         edges_target_ba = [(target_dummy_b, target_dummy_a2)]
 
         # Update memory graph
         # New nodes
-        # self.memory_graph.add_nodes_to_a([src_dummy_a, sink_fix_node_a, target_dummy_a1, target_dummy_a2])
-        # self.memory_graph.add_nodes_to_b([src_dummy_b, target_dummy_b1, target_dummy_b2] + mid_b_nodes)
-        # self.memory_graph.add_nodes_to_a([src_dummy_a, sink_fix_node_a, target_dummy_a1])
         self.memory_graph.add_nodes_to_a([src_dummy_a, target_dummy_a, target_dummy_a2])
-        # self.memory_graph.add_nodes_to_b([src_dummy_b, target_dummy_b1] + mid_b_nodes)
         self.memory_graph.add_nodes_to_b([src_dummy_b, target_dummy_b, target_dummy_b2])
         # New Edges
-        # self.memory_graph.add_edges(edges_src_ab + edges_src_ba + sinks_fix_ab_edges + sinks_fix_ba_edges + edges_target_ab + edges_target_ba)
         self.memory_graph.add_edges(edges_src_ab + edges_src_ba + edges_target_fix_ba + edges_target_ab + edges_target_ba)
         self.memory_graph.update_sources_a()
         self.memory_graph.update_sinks_b()
 
         self.src_cut = Cut([src_dummy_a], {src_dummy_a}, MemoryElements(elements={src_dummy_b}, total_size=0))
-        # self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b1, target_dummy_b2},
-        #                                                 total_size=0))
         self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b, target_dummy_b2},
                                                         total_size=0))
 
@@ -130,7 +112,8 @@ class MaxCutAstar:
             cut_route = routes[next_cut]
 
             if next_cut == self.target_cut:
-                return cut_cost, self._remove_dummys_from_path(cut_route[0].op_order)
+                return cut_cost, self._remove_dummys_from_path(cut_route[0].op_order), \
+                       [self.clean_memory_for_next_step(c) for c in cut_route]
 
             if self.is_pivot(next_cut):
                 # Can clear all search history
@@ -152,7 +135,7 @@ class MaxCutAstar:
             for c in expanded_cuts:
                 cost = self.accumulate(cut_cost, c.memory_size())
                 if c not in open_list:
-                    self._update_expanded_node(c, cost, [c] + cut_route, open_list, costs, routes)
+                    self._update_expanded_node(c, cost, cut_route, open_list, costs, routes)
                 elif self.ordering(cost, costs[c]):
                     # If we already saw this cut during the search with a larger cost, then we want to update the order
                     # of the schedule in the cut

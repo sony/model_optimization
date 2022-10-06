@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from types import MappingProxyType
-from typing import Dict
 from model_compression_toolkit.core.common import BaseNode, Graph
-from model_compression_toolkit.core.common.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.common.graph.edge import EDGE_SOURCE_INDEX
 from model_compression_toolkit.core.common.graph.memory_graph.bipartite_graph import DirectedBipartiteGraph
 from model_compression_toolkit.core.common.graph.memory_graph.memory_element import ActivationMemoryTensor
@@ -23,7 +20,7 @@ from model_compression_toolkit.core.common.graph.memory_graph.memory_element imp
 
 class MemoryGraph(DirectedBipartiteGraph):
 
-    def __init__(self, model_graph: Graph, node_to_activation_bitwidth: Dict[BaseNode, int] = None):
+    def __init__(self, model_graph: Graph):
 
         # TODO: here we need to include all graph nodes, even nodes that don't have activation to quantize,
         #  since their output might be some quantized node input.
@@ -31,10 +28,6 @@ class MemoryGraph(DirectedBipartiteGraph):
         #  nodes that have activation to quantize.
 
         self.model_graph = model_graph
-
-        # Making the mapping immutable
-        self.node_to_activation_bitwidth = MappingProxyType({}) if node_to_activation_bitwidth is None \
-            else MappingProxyType(node_to_activation_bitwidth)
 
         nodes = list(model_graph.nodes)
         memory_tensors = []
@@ -46,7 +39,7 @@ class MemoryGraph(DirectedBipartiteGraph):
             out_edges = model_graph.out_edges(n, sort_by_attr=EDGE_SOURCE_INDEX)
 
             for i, ot in enumerate(n_outputs):
-                memory_tensor = ActivationMemoryTensor(ot, n.name, i, n_bits=self.node_to_activation_bitwidth.get(n, FLOAT_BITWIDTH))
+                memory_tensor = ActivationMemoryTensor(ot, n.name, i)
                 memory_tensors.append(memory_tensor)
                 # Add memory tensor as current node's output
                 node_to_tensor.append((n, memory_tensor))
@@ -75,7 +68,7 @@ class MemoryGraph(DirectedBipartiteGraph):
         self.memory_lbound_single_op = max(nodes_total_memory + inputs_tensors_memory)
 
         self.sources_a = [n for n in self.a_nodes if len(list(self.predecessors(n))) == 0]
-        # self.sinks_a = [n for n in self.a_nodes if len(list(self.successors(n))) == 0]
+
         # Note that unlike the original scheduler,
         # we don't need sinks_a since we assume all layers have activation tensor.
         # In oppose to them we do need sinks_b to allow creating single target for astar in case of multiple outputs.
