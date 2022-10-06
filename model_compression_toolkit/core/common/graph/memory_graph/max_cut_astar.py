@@ -13,25 +13,35 @@
 # limitations under the License.
 # ==============================================================================
 import copy
-from typing import List
+from typing import List, Tuple, Dict
 
 from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.core.common.constants import DUMMY_TENSOR, DUMMY_NODE
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
 from model_compression_toolkit.core.common.graph.memory_graph.memory_element import MemoryElements
-from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import ActivationMemoryTensor
+from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import ActivationMemoryTensor, MemoryGraph
 
 
 class DummpyType:
+    """
+    A dummy type class to use for dummy nodes layer type.
+    """
     pass
 
 
 class DummyBaseNodeGenerator:
+    """
+    A Dummy node which represents a "Side A" node (operation) in the memory graph for max cut AStar algorithm.
+    """
     def __init__(self):
         self.counter = 0
 
-    def __iter__(self):
+    def __iter__(self) -> BaseNode:
+        """
+        A generator of sequentially named dummy nodes.
+        """
         while True:
-            yield BaseNode(name="dummy_node_" + str(self.counter),
+            yield BaseNode(name=f"{DUMMY_NODE}_{self.counter}",
                            framework_attr={},
                            input_shape=tuple(),
                            output_shape=tuple(),
@@ -43,13 +53,19 @@ class DummyBaseNodeGenerator:
 
 
 class DummyActivationMemoryTensorGenerator:
+    """
+     A Dummy node which represents a "Side B" node (activation tensor) in the memory graph for max cut AStar algorithm.
+     """
     def __init__(self):
         self.counter = 0
 
-    def __iter__(self):
+    def __iter__(self) -> ActivationMemoryTensor:
+        """
+        A generator of sequentially named dummy nodes.
+        """
         while True:
             yield ActivationMemoryTensor(shape=tuple(),
-                                         node_name="dummy_tensor_" + str(self.counter),
+                                         node_name=f"{DUMMY_TENSOR}_{self.counter}",
                                          node_output_index=0,
                                          total_size=0)
 
@@ -57,8 +73,18 @@ class DummyActivationMemoryTensorGenerator:
 
 
 class MaxCutAstar:
+    """
+    Implements the AStar solver and all the relevant utility methods to run a search for schedule and max cut
+    on a model memory graph.
+    The solver returns a schedule, the max cut of the schedule and a set of all the cuts that are developed during
+    the computation of the model according to the returned schedule.
+    """
 
-    def __init__(self, memory_graph):
+    def __init__(self, memory_graph: MemoryGraph):
+        """
+        Args:
+            memory_graph: A MemoryGraph object to run the search on.
+        """
 
         self.memory_graph = memory_graph
 
@@ -96,7 +122,23 @@ class MaxCutAstar:
         self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b, target_dummy_b2},
                                                         total_size=0))
 
-    def solve(self, estimate_factor: float, iter_limit: int = 500):
+    def solve(self, estimate_factor: float, iter_limit: int = 500) -> Tuple[List[BaseNode], float, List[Cut]]:
+        """
+        The AStar solver function. This method runs an AStar-like search on the memory graph,
+        using the given estimate_factor as a heuristic gap for solutions to consider.
+
+        Args:
+            estimate_factor: A multiplication factor which allows the search to consider larger size of nodes in each
+                expansion step, in order to fasten the algorithm divergence towards a solution.
+            iter_limit: An upper limit for the number of expansion steps that the algorithm preforms.
+
+        Returns: A solution (if found within the steps limit) which contains:
+        - A schedule for computation of the model (List of nodes).
+        - The cost of a max cut of the found schedule.
+        - All the cuts that are developed during the computation on the model according to the found schedule (List of Cuts).
+
+        """
+
         open_list = [self.src_cut]
         closed_list = []
         costs = {self.src_cut: self.src_cut.memory_size()}
@@ -112,7 +154,7 @@ class MaxCutAstar:
             cut_route = routes[next_cut]
 
             if next_cut == self.target_cut:
-                return cut_cost, self._remove_dummys_from_path(cut_route[0].op_order), \
+                return self._remove_dummys_from_path(cut_route[0].op_order), cut_cost,\
                        [self.clean_memory_for_next_step(c) for c in cut_route]
 
             if self.is_pivot(next_cut):
@@ -145,15 +187,41 @@ class MaxCutAstar:
                     self._update_expanded_node(c, cost, cut_route, open_list, costs, routes)
 
         # Halt or No Solution
-        return 0, None
+        return None, 0, None
 
     @staticmethod
-    def _update_expanded_node(cut, cost, route, open_list, costs, routes):
+    def _update_expanded_node(cut: Cut, cost: float, route: List[Cut], open_list: List[Cut],
+                              costs: Dict[Cut, float], routes: Dict[Cut, List[Cut]]):
+        """
+        An auxiliary method for updating search data structures according to an expanded node.
+
+        Args:
+            cut: A cut to expand the search to.
+            cost: The cost of the cut.
+            route: The rout to the cut.
+            open_list: The search open list.
+            costs: The search utility mapping between cuts and their cost.
+            routes: The search utility mapping between cuts and their routes.
+
+        """
         open_list.append(cut)
         costs.update({cut: cost})
         routes.update({cut: [cut] + route})
 
-    def _get_cut_to_expand(self, open_list, costs, routes, estimate_factor):
+    def _get_cut_to_expand(self, open_list: List[Cut], costs: Dict[Cut, float], routes: Dict[Cut, List[Cut]],
+                           estimate_factor: float) -> Cut:
+        """
+        An auxiliary method for finding a cut for expanding the search out of a set of potential cuts for expansion.
+
+        Args:
+            open_list: The search open list.
+            costs: The search utility mapping between cuts and their cost.
+            routes: The search utility mapping between cuts and their routes.
+            estimate_factor: A multiplication factor to set extended boundaries on the potential cuts to exapand.
+
+        Returns: A sorted list of potential cuts for expansion (ordered by lowest cost first).
+
+        """
         ordered_cuts_list = sorted(open_list,
                                    key=lambda c: (self.accumulate(costs[c], self.estimate(c, estimate_factor)), len(routes[c])),
                                    reverse=False)
@@ -163,7 +231,7 @@ class MaxCutAstar:
 
     def clean_memory_for_next_step(self, cut: Cut) -> Cut:
         """
-         This is an auxiliary function that removes irrelevant memory elements from a cut.
+         An auxiliary function that removes irrelevant memory elements from a cut.
          The memory elements are irrelevant if all operations depended on them have already been executed.
 
         Args:
@@ -199,6 +267,15 @@ class MaxCutAstar:
                all([parent_mem_element in clean_cut.mem_elements.elements for parent_mem_element in self.memory_graph.operation_node_parents(op_node)])
 
     def expand(self, cut: Cut) -> List[Cut]:
+        """
+        Expends the search with the given cut.
+
+        Args:
+            cut: A cut to expand the search to.
+
+        Returns: A list of successors of the expanded cut.
+
+        """
         clean_cut = self.clean_memory_for_next_step(cut)
 
         # candidates for expansion are children of the memory elements from the cleaned cut that can be expanded
@@ -234,6 +311,7 @@ class MaxCutAstar:
             cut: A Cut to check whether it is a pivot.
 
         Returns: True if the given cut is a pivot.
+
         """
 
         clean_cut = self.clean_memory_for_next_step(cut)
@@ -246,7 +324,7 @@ class MaxCutAstar:
     @staticmethod
     def accumulate(cost_1: float, cost_2: float) -> float:
         """
-        A function defining the accumulation method of costs for Astar search.
+        A function that defines the accumulation method of costs for the Astar search.
         We take the maximum memory requirement of the schedule, in order to find the minimal maximum out of all possible schedules.
 
         Args:
@@ -260,20 +338,60 @@ class MaxCutAstar:
 
     @staticmethod
     def ordering(cost_1, cost_2) -> bool:
+        """
+        A function that defines the ordering method of costs for the Astar search.
+        We consider a lowest-first order.
+
+        Args:
+            cost_1: The first schedule option's cost.
+            cost_2: The second schedule option's cost.
+
+        Returns: True if the first cost is smaller than the second one, else otherwise.
+
+        """
         return cost_1 < cost_2
 
     def estimate(self, cut: Cut, estimate_factor: float) -> float:
+        """
+        A function that defines the estimation gap for the Astar search.
+        The estimation gap is used to sort the cuts that are considered for expanding the search in each iteration.
+
+        Args:
+            cut: A cut (not used in the default implementation, but can be used if overriding the method to consider
+                the actual cut in the estimation computation).
+            estimate_factor: The given estimate factor to the search.
+
+        Returns: An estimation value.
+
+        """
         return estimate_factor * self.memory_graph.memory_lbound_single_op
 
     @staticmethod
-    def get_init_estimate_factor(memory_graph):
+    def get_init_estimate_factor(memory_graph: MemoryGraph) -> float:
+        """
+        Returns an initial estimation value, which is based on the memory graph's upper and lower bounds.
+
+        Args:
+            memory_graph: A MemoryGraph object.
+
+        Returns: An initial estimate value.
+
+        """
         l_bound = memory_graph.memory_lbound_single_op
         u_bound = 2 * sum([t.total_size for t in memory_graph.b_nodes]) - l_bound
         return (u_bound + l_bound) / 2
 
     @staticmethod
     def _remove_dummys_from_path(path):
-        # TODO: make "dummy_node" a constant and use it here and in the DummyBaseNodeGenerator class
-        return list(filter(lambda n: 'dummy_node' not in n.name, path))
+        """
+        An auxiliary method which removes dummy nodes from a given list of nodes (a path in the graph).
+
+        Args:
+            path: A path in the graph (list of nodes).
+
+        Returns: The same list without any dummy nodes.
+
+        """
+        return list(filter(lambda n: DUMMY_NODE not in n.name, path))
 
 

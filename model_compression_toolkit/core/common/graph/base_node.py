@@ -307,7 +307,7 @@ class BaseNode:
                 return True
         return False
 
-    def get_total_output_params(self):
+    def get_total_output_params(self) -> float:
         """
         Calculates the output size of the node.
 
@@ -320,7 +320,7 @@ class BaseNode:
 
         return sum([np.prod([x for x in output_shape if x is not None]) for output_shape in output_shapes])
 
-    def get_total_input_params(self):
+    def get_total_input_params(self) -> float:
         """
         Calculates the input size of the node.
 

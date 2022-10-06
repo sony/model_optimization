@@ -12,20 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.core.common import BaseNode, Graph
+from typing import List
+
+from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.edge import EDGE_SOURCE_INDEX
 from model_compression_toolkit.core.common.graph.memory_graph.bipartite_graph import DirectedBipartiteGraph
 from model_compression_toolkit.core.common.graph.memory_graph.memory_element import ActivationMemoryTensor
 
 
 class MemoryGraph(DirectedBipartiteGraph):
+    """
+    A representation of a model's graph and intermediate activation tensors as a bipartite graph, to use for schedule
+    and max cut computations.
+    The graph is composed of two sides (sets) of nodes:
+    Side A - the model's graph nodes (operations).
+    Side B - the activation tensors of a computation of the model.
+    An edge e = (a, b) from side A to B exists in the graph if the tensor b is an output of the operation a.
+    An edge e = (b, a) from side B to A exists in the graph if the tensor b is an input of the operation a.
+    """
 
     def __init__(self, model_graph: Graph):
-
-        # TODO: here we need to include all graph nodes, even nodes that don't have activation to quantize,
-        #  since their output might be some quantized node input.
-        #  The actual memory of a CUT need to be calculated later based on the actual
-        #  nodes that have activation to quantize.
+        """
+        Args:
+            model_graph: A graph representation of a model.
+        """
 
         self.model_graph = model_graph
 
@@ -78,20 +88,64 @@ class MemoryGraph(DirectedBipartiteGraph):
             "of the bipartite memory graph."
 
     def update_sources_a(self):
+        """
+        Updates the list of Side A source nodes in the bipartite graph.
+        A node is a source if it doesn't have any incoming edges.
+        """
         self.sources_a = [n for n in self.a_nodes if len(list(self.predecessors(n))) == 0]
 
     def update_sinks_b(self):
+        """
+        Updates the list of Side B sinks nodes in the bipartite graph.
+        A node is a sink if it doesn't have any outgoing edges.
+        """
         self.sinks_b = [n for n in self.b_nodes if len(list(self.successors(n))) == 0]
 
-    def activation_tensor_children(self, activation_tensor):
+    def activation_tensor_children(self, activation_tensor: ActivationMemoryTensor) -> List[BaseNode]:
+        """
+        Returns the children nodes of a side B node (activation tensor) in the bipartite graph.
+
+        Args:
+            activation_tensor: Activation tensor which is a node in the graph.
+
+        Returns: A list of nodes from the model graph which are the child nodes of the given tensor.
+
+        """
         return [oe[1] for oe in self.out_edges(activation_tensor)]
 
-    def activation_tensor_parents(self, activation_tensor):
+    def activation_tensor_parents(self, activation_tensor: ActivationMemoryTensor) -> List[BaseNode]:
+        """
+        Returns the parents nodes of a side B node (activation tensor) in the bipartite graph.
+
+        Args:
+            activation_tensor: Activation tensor which is a node in the graph.
+
+        Returns: A list of nodes from the model graph which are the parents nodes of the given tensor.
+
+        """
         return [ie[0] for ie in self.in_edges(activation_tensor)]
 
-    def operation_node_children(self, op_node):
+    def operation_node_children(self, op_node: BaseNode) -> List[ActivationMemoryTensor]:
+        """
+        Returns the children nodes of a side A node (operation) in the bipartite graph.
+
+        Args:
+            op_node: BaseNode that represents an operation which is a node in the graph.
+
+        Returns: A list of nodes from the model graph which are the child nodes of the given operation.
+
+        """
         return [oe[1] for oe in self.out_edges(op_node)]
 
-    def operation_node_parents(self, op_node):
+    def operation_node_parents(self, op_node: BaseNode) -> List[ActivationMemoryTensor]:
+        """
+        Returns the parents nodes of a side A node (operation) in the bipartite graph.
+
+        Args:
+            op_node: BaseNode that represents an operation which is a node in the graph.
+
+        Returns: A list of nodes from the model graph which are the parents nodes of the given operation.
+
+        """
         return [ie[0] for ie in self.in_edges(op_node)]
 

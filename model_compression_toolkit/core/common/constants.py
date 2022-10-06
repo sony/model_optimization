@@ -112,3 +112,7 @@ WEIGHTS_QUANTIZATION_FN = 'weights_quantization_fn'
 ACTIVATION_QUANT_PARAMS_FN = 'activation_quantization_params_fn'
 WEIGHTS_QUANT_PARAMS_FN = 'weights_quantization_params_fn'
 WEIGHTS_CHANNELS_AXIS = 'weights_channels_axis'
+
+# Memory graph constants
+DUMMY_NODE = 'dummy_node'
+DUMMY_TENSOR = 'dummy_tensor'

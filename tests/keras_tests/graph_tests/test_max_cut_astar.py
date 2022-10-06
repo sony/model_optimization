@@ -351,7 +351,7 @@ class TestMaxCutAstarSolve(unittest.TestCase):
 
         solution = mc_astar.solve(iter_limit=10, estimate_factor=estimate_factor)
         self.assertIsNotNone(solution)
-        cost, path, cuts = solution
+        path, cost, cuts = solution
 
         self.assertTrue(cost >= memory_graph.memory_lbound_single_op)
         for i, n in enumerate(graph.get_topo_sorted_nodes()):
@@ -370,7 +370,7 @@ class TestMaxCutAstarSolve(unittest.TestCase):
 
         solution = mc_astar.solve(iter_limit=20, estimate_factor=estimate_factor)
         self.assertIsNotNone(solution)
-        cost, path, cuts = solution
+        path, cost, cuts = solution
 
         all_tensors_sizes = [t.total_size for t in memory_graph.b_nodes]
         self.assertTrue(max(all_tensors_sizes) < cost < sum(all_tensors_sizes))
@@ -392,7 +392,7 @@ class TestMaxCutAstarSolve(unittest.TestCase):
 
         solution = mc_astar.solve(iter_limit=20, estimate_factor=estimate_factor)
         self.assertIsNotNone(solution)
-        cost, path, cuts = solution
+        path, cost, cuts = solution
 
         all_tensors_sizes = [t.total_size for t in memory_graph.b_nodes]
         self.assertTrue(max(all_tensors_sizes) < cost < sum(all_tensors_sizes))
