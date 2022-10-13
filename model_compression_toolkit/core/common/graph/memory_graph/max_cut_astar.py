@@ -155,7 +155,7 @@ class MaxCutAstar:
 
             if next_cut == self.target_cut:
                 return self._remove_dummys_from_path(cut_route[0].op_order), cut_cost,\
-                       [self.clean_memory_for_next_step(c) for c in cut_route]
+                       [self.clean_memory_for_next_step(self._remove_dummys_from_cut(c)) for c in cut_route]
 
             if self.is_pivot(next_cut):
                 # Can clear all search history
@@ -382,7 +382,7 @@ class MaxCutAstar:
         return (u_bound + l_bound) / 2
 
     @staticmethod
-    def _remove_dummys_from_path(path):
+    def _remove_dummys_from_path(path: List[BaseNode]) -> List[BaseNode]:
         """
         An auxiliary method which removes dummy nodes from a given list of nodes (a path in the graph).
 
@@ -393,5 +393,23 @@ class MaxCutAstar:
 
         """
         return list(filter(lambda n: DUMMY_NODE not in n.name, path))
+
+    @staticmethod
+    def _remove_dummys_from_cut(cut: Cut) -> Cut:
+        """
+        An auxiliary method which removes dummy nodes from a given list of nodes (a path in the graph).
+
+        Args:
+            path: A path in the graph (list of nodes).
+
+        Returns: The same list without any dummy nodes.
+
+        """
+        filtered_memory_elements = set(filter(lambda elm: DUMMY_NODE not in elm.node_name, cut.mem_elements.elements))
+        filtered_ordered_op = list(filter(lambda n: DUMMY_NODE not in n.name, cut.op_order))
+
+        return Cut(filtered_ordered_op, set() if len(filtered_ordered_op) == 0 else set(filtered_ordered_op),
+                   mem_elements=MemoryElements(filtered_memory_elements,
+                                               sum([elm.total_size for elm in filtered_memory_elements])))
 
 
