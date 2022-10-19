@@ -86,10 +86,10 @@ def search_bit_width(graph_to_search_cfg: Graph,
 
     # If we only run weights compression with MP than no need to consider activation quantization when computing the
     # MP metric (it adds noise to the computation)
-    disable_activation_for_metric = target_kpi.weights_memory < np.inf and \
+    disable_activation_for_metric = (target_kpi.weights_memory < np.inf and
                                     (target_kpi.activation_memory == np.inf and
                                      target_kpi.total_memory == np.inf and
-                                     target_kpi.bops == np.inf)
+                                     target_kpi.bops == np.inf)) or graph_to_search_cfg.is_single_activation_cfg()
 
     # Set Sensitivity Evaluator for MP search. It should always work with the original MP graph,
     # even if a virtual graph was created (and is used only for BOPS KPI computation purposes)

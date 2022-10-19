@@ -171,8 +171,8 @@ class SensitivityEvaluation:
 
         evaluation_graph = copy.deepcopy(self.graph)
 
-        for n in evaluation_graph.get_topo_sorted_nodes():
-            if self.disable_activation_for_metric or n.is_all_activation_candidates_equal():
+        if self.disable_activation_for_metric:
+            for n in evaluation_graph.get_topo_sorted_nodes():
                 for c in n.candidates_quantization_cfg:
                     c.activation_quantization_cfg.enable_activation_quantization = False
 
