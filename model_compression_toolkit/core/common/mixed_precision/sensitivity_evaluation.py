@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
+
 import numpy as np
 from typing import Callable, Any, List
 
@@ -34,7 +36,8 @@ class SensitivityEvaluation:
                  fw_info: FrameworkInfo,
                  fw_impl: Any,
                  set_layer_to_bitwidth: Callable,
-                 get_quant_node_name: Callable):
+                 get_quant_node_name: Callable,
+                 disable_activation_for_metric: bool = False):
         """
         Initiates all relevant objects to manage a sensitivity evaluation for MP search.
         Create an object that allows to compute the sensitivity metric of an MP model (the sensitivity
@@ -57,6 +60,7 @@ class SensitivityEvaluation:
                     with a specific bit-width configuration.
             get_quant_node_name: A fw-dependent function that takes a node's name and outputs the node's name in a
                 quantized model (according to the fw conventions).
+            disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
         """
         self.graph = graph
         self.quant_config = quant_config
@@ -65,6 +69,7 @@ class SensitivityEvaluation:
         self.fw_impl = fw_impl
         self.set_layer_to_bitwidth = set_layer_to_bitwidth
         self.get_quant_node_name = get_quant_node_name
+        self.disable_activation_for_metric = disable_activation_for_metric
 
         # Get interest points for distance measurement and a list of sorted configurable nodes names
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names()
@@ -163,14 +168,21 @@ class SensitivityEvaluation:
             an MP model (which can be configured for a specific bitwidth configuration).
             Note that the type of the returned models is dependent on the used framework (TF/Pytorch).
         """
-        # Build a mixed-precision model which can be configured to use different bitwidth in different layers.
-        model_mp, _ = self.fw_impl.model_builder(self.graph,
+
+        evaluation_graph = copy.deepcopy(self.graph)
+
+        for n in evaluation_graph.get_topo_sorted_nodes():
+            if self.disable_activation_for_metric or n.is_all_activation_candidates_equal():
+                for c in n.candidates_quantization_cfg:
+                    c.activation_quantization_cfg.enable_activation_quantization = False
+
+        model_mp, _ = self.fw_impl.model_builder(evaluation_graph,
                                                  mode=ModelBuilderMode.MIXEDPRECISION,
                                                  append2output=self.interest_points,
                                                  fw_info=self.fw_info)
 
         # Build a baseline model.
-        baseline_model, _ = self.fw_impl.model_builder(self.graph,
+        baseline_model, _ = self.fw_impl.model_builder(evaluation_graph,
                                                        mode=ModelBuilderMode.FLOAT,
                                                        append2output=self.interest_points)
 

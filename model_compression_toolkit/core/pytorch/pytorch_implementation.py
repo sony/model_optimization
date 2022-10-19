@@ -330,7 +330,8 @@ class PytorchImplementation(FrameworkImplementation):
                                   graph: Graph,
                                   quant_config: MixedPrecisionQuantizationConfigV2,
                                   representative_data_gen: Callable,
-                                  fw_info: FrameworkInfo) -> SensitivityEvaluation:
+                                  fw_info: FrameworkInfo,
+                                  disable_activation_for_metric: bool = False) -> SensitivityEvaluation:
         """
         Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
         configuration (comparing to the float model).
@@ -340,6 +341,7 @@ class PytorchImplementation(FrameworkImplementation):
             quant_config: QuantizationConfig of how the model should be quantized.
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's model.
+            disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
 
         Returns:
             A SensitivityEvaluation object.
@@ -351,7 +353,8 @@ class PytorchImplementation(FrameworkImplementation):
                                      fw_info=fw_info,
                                      fw_impl=self,
                                      set_layer_to_bitwidth=set_layer_to_bitwidth,
-                                     get_quant_node_name=lambda node_name: f'{node_name}')
+                                     get_quant_node_name=lambda node_name: f'{node_name}',
+                                     disable_activation_for_metric=disable_activation_for_metric)
 
     def get_node_prior_info(self,
                             node: BaseNode,

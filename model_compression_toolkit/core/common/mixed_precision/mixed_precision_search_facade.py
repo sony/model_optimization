@@ -84,13 +84,21 @@ def search_bit_width(graph_to_search_cfg: Graph,
         # Since Bit-operations count target KPI is set, we need to reconstruct the graph for the MP search
         graph = substitute(graph, fw_impl.get_substitutions_virtual_weights_activation_coupling())
 
+    # If we only run weights compression with MP than no need to consider activation quantization when computing the
+    # MP metric (it adds noise to the computation)
+    disable_activation_for_metric = target_kpi.weights_memory < np.inf and \
+                                    (target_kpi.activation_memory == np.inf and
+                                     target_kpi.total_memory == np.inf and
+                                     target_kpi.bops == np.inf)
+
     # Set Sensitivity Evaluator for MP search. It should always work with the original MP graph,
     # even if a virtual graph was created (and is used only for BOPS KPI computation purposes)
     se = fw_impl.get_sensitivity_evaluator(
         graph_to_search_cfg,
         mp_config,
         representative_data_gen=representative_data_gen,
-        fw_info=fw_info)
+        fw_info=fw_info,
+        disable_activation_for_metric=disable_activation_for_metric)
 
     # Each pair of (KPI method, KPI aggregation) should match to a specific provided kpi target
     kpi_functions = kpi_functions_mapping

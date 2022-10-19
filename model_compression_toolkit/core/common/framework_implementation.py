@@ -299,7 +299,8 @@ class FrameworkImplementation(ABC):
                                   graph: Graph,
                                   quant_config: MixedPrecisionQuantizationConfigV2,
                                   representative_data_gen: Callable,
-                                  fw_info: FrameworkInfo) -> SensitivityEvaluation:
+                                  fw_info: FrameworkInfo,
+                                  disable_activation_for_metric: bool = False) -> SensitivityEvaluation:
         """
         Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
         configuration (comparing to the float model).
@@ -309,6 +310,7 @@ class FrameworkImplementation(ABC):
             quant_config: QuantizationConfig of how the model should be quantized.
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's model.
+            disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
 
         Returns:
             A function that computes the metric.
