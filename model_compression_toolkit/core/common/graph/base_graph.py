@@ -681,3 +681,12 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         self.fused_nodes.append(fusion)
+
+    def is_single_activation_cfg(self):
+        """
+        Checks whether all nodes in the graph that have activation quantization are quantized with the same bit-width.
+
+        Returns: True if all quantization config candidates of all nodes have the same activation quantization bit-width.
+
+        """
+        return all([n.is_all_activation_candidates_equal() for n in self.nodes])
