@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
     VirtualSplitWeightsNode, VirtualSplitActivationNode
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPITarget
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPITarget, KPI
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_aggregation_methods import MpKpiAggregation
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_methods import MpKpiMetric
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -41,6 +41,7 @@ class MixedPrecisionSearchManager:
                  fw_impl: FrameworkImplementation,
                  sensitivity_evaluator: SensitivityEvaluation,
                  kpi_functions: Dict[KPITarget, Tuple[MpKpiMetric, MpKpiAggregation]],
+                 target_kpi: KPI,
                  original_graph: Graph = None):
         """
 
@@ -52,6 +53,7 @@ class MixedPrecisionSearchManager:
                 a bit-width configuration for the MP model.
             kpi_functions: A dictionary with pairs of (MpKpiMethod, MpKpiAggregationMethod) mapping a KPITarget to
                 a couple of kpi metric function and kpi aggregation function.
+            target_kpi: Target KPI to bound our feasible solution space s.t the configuration does not violate it.
             original_graph: In case we have a search over a virtual graph (if we have BOPS KPI target), then this argument
                 will contain the original graph (for config reconstruction purposes).
         """
@@ -65,11 +67,11 @@ class MixedPrecisionSearchManager:
         self.compute_metric_fn = self.get_sensitivity_metric()
 
         self.compute_kpi_functions = kpi_functions
-
+        self.target_kpi = target_kpi
         self.min_kpi_config = self.graph.get_min_candidates_config()
         self.max_kpi_config = self.graph.get_max_candidates_config()
-
         self.min_kpi = self.compute_min_kpis()
+        self.non_conf_kpi_dict = self._non_configurable_nodes_kpi()
 
         self.config_reconstruction_helper = ConfigReconstructionHelper(virtual_graph=self.graph,
                                                                        original_graph=self.original_graph)
@@ -233,6 +235,60 @@ class MixedPrecisionSearchManager:
         updated_cfg = mp_cfg.copy()
         updated_cfg[idx] = value
         return updated_cfg
+
+    def _non_configurable_nodes_kpi(self) -> Dict[KPITarget, np.ndarray]:
+        """
+        Computes a KPI vector of all non-configurable nodes in the given graph for each of the KPI target.
+
+        Returns: A mapping between a KPITarget and its non-configurable nodes' KPI vector.
+        """
+
+        non_conf_kpi_dict = {}
+        for target, kpi_value in self.target_kpi.get_kpi_dict().items():
+            if not np.isinf(kpi_value):
+                # Call for the KPI method of the given target - empty quantization configuration list is passed since we
+                # compute for non-configurable nodes
+                if target == KPITarget.BOPS:
+                    kpi_vector = None
+                else:
+                    kpi_vector = self.compute_kpi_functions[target][0]([], self.graph, self.fw_info, self.fw_impl)
+
+                non_conf_kpi_dict[target] = kpi_vector
+
+        return non_conf_kpi_dict
+
+    def compute_kpi_for_config(self, config: List[int]) -> KPI:
+        """
+        Computes the KPI values for a given mixed-precision configuration.
+
+        Args:
+            config: A mixed-precision configuration (list of candidates indices)
+
+        Returns: A KPI object with the model's KPI values when quantized with the given config.
+
+        """
+
+        kpis_dict = {}
+
+        for kpi_target, kpi_fns in self.compute_kpi_functions.items():
+            # Passing False to kpi methods and aggregations to indicates that the computations
+            # are not for constraints setting
+            if kpi_target == KPITarget.BOPS:
+                configurable_nodes_kpi_vector = kpi_fns[0](config, self.original_graph, self.fw_info, self.fw_impl, False)
+            else:
+                configurable_nodes_kpi_vector = kpi_fns[0](config, self.original_graph, self.fw_info, self.fw_impl)
+            non_configurable_nodes_kpi_vector = self.non_conf_kpi_dict.get(kpi_target)
+            if non_configurable_nodes_kpi_vector is None or len(non_configurable_nodes_kpi_vector) == 0:
+                aggr_kpi = self.compute_kpi_functions[kpi_target][1](configurable_nodes_kpi_vector, False)
+            else:
+                aggr_kpi = self.compute_kpi_functions[kpi_target][1](
+                    np.concatenate([configurable_nodes_kpi_vector, non_configurable_nodes_kpi_vector]), False)
+
+            kpis_dict[kpi_target] = aggr_kpi[0]
+
+        config_kpi = KPI()
+        config_kpi.set_kpi_by_target(kpis_dict)
+        return config_kpi
 
 
 class ConfigReconstructionHelper:

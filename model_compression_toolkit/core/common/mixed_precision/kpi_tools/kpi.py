@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from enum import Enum
-from typing import Dict
+from typing import Dict, Any
 
 import numpy as np
 
@@ -92,3 +92,21 @@ class KPI:
         self.activation_memory = kpis_mapping.get(KPITarget.ACTIVATION, np.inf)
         self.total_memory = kpis_mapping.get(KPITarget.TOTAL, np.inf)
         self.bops = kpis_mapping.get(KPITarget.BOPS, np.inf)
+
+    def holds_constraints(self, kpi: Any) -> bool:
+        """
+        Checks whether the given KPI holds a set of KPI constraints defined by the currect KPI object.
+
+        Args:
+            kpi: A KPI object to check if it holds the constraints.
+
+        Returns: True if all the given KPI values are not greater than the referenced KPI values.
+
+        """
+        if not isinstance(kpi, KPI):
+            return False
+
+        return kpi.weights_memory <= self.weights_memory and \
+               kpi.activation_memory <= self.activation_memory and \
+               kpi.total_memory <= self.total_memory and \
+               kpi.bops <= self.bops

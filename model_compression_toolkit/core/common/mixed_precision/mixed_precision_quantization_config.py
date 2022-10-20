@@ -32,7 +32,8 @@ class MixedPrecisionQuantizationConfigV2:
                  num_interest_points_factor: float = 1.0,
                  use_grad_based_weights: bool = True,
                  output_grad_factor: float = 0.1,
-                 norm_weights: bool = True):
+                 norm_weights: bool = True,
+                 refine_mp_solution: bool = False):
         """
         Class with mixed precision parameters to quantize the input model.
         Unlike QuantizationConfig, number of bits for quantization is a list of possible bit widths to
@@ -54,6 +55,7 @@ class MixedPrecisionQuantizationConfigV2:
         self.distance_weighting_method = distance_weighting_method
         self.num_of_images = num_of_images
         self.configuration_overwrite = configuration_overwrite
+        self.refine_mp_solution = refine_mp_solution
 
         assert 0.0 < num_interest_points_factor <= 1.0, "num_interest_points_factor should represent a percentage of " \
                                                         "the base set of interest points that are required to be " \
