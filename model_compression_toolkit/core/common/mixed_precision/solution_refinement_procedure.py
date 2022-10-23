@@ -13,21 +13,34 @@
 # limitations under the License.
 # ==============================================================================
 from typing import List
+import copy
+from model_compression_toolkit import KPI
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import \
+    MixedPrecisionSearchManager
+from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import CandidateNodeQuantizationConfig
+
+import copy
+from typing import List
 
 from model_compression_toolkit import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import \
     MixedPrecisionSearchManager
+from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
+    CandidateNodeQuantizationConfig
 
 
 def greedy_solution_refinement_procedure(mp_solution: List[int],
                                          search_manager: MixedPrecisionSearchManager,
                                          target_kpi: KPI) -> List[int]:
     """
-    A greedy procedure to try and improve a mixed-precision solution that was found by a mixed-precision optimization algorithm.
-    This procedure tries to increase the bit-width precision of configurable nodes that did not get the maximal candidate
+    A greedy procedure to try and improve a mixed-precision solution that was found by a mixed-precision optimization
+    algorithm.
+    This procedure tries to increase the bit-width precision of configurable nodes that did not get the maximal
+    candidate
     in the found solution.
     It iteratively goes over all such nodes, computes the KPI values on a modified configuration (with the node's next
-    best candidate), filters out all configs that hold the KPI constraints and chooses one of them as an improvement step
+    best candidate), filters out all configs that hold the KPI constraints and chooses one of them as an improvement
+    step
     The choice is done in a greedy approach where we take the configuration that adds as less as possible to the KPIs.
 
     Args:
@@ -45,26 +58,66 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
     while changed:
         changed = False
         nodes_kpis = {}
+        nodes_next_candidate = {}
+
         for node_idx in range(len(mp_solution)):
             if new_solution[node_idx] == 0:
                 # layer has max config in the given solution, nothing to optimize
                 continue
 
-            node_next_candidate_idx = new_solution[node_idx] - 1
-            node_updated_kpis = search_manager.compute_kpi_for_config(
-                config=search_manager.replace_config_in_index(new_solution, node_idx, node_next_candidate_idx))
+            node_candidates = copy.deepcopy(search_manager.graph.get_configurable_sorted_nodes()[node_idx].candidates_quantization_cfg)
+            valid_candidates = _get_valid_candidates_indices(node_candidates, new_solution[node_idx])
 
-            nodes_kpis[node_idx] = node_updated_kpis
+            # Create a list of KPIs for the valid candidates.
+            valid_kpis = []
+            for valid_idx in valid_candidates:
+                node_updated_kpis = search_manager.compute_kpi_for_config(
+                    config=search_manager.replace_config_in_index(new_solution, node_idx, valid_idx))
+                valid_kpis.append(node_updated_kpis)
+
+            # filter out new configs that don't hold the KPI restrictions
+            nodes_kpis_list = [(node_idx, kpis) for node_idx, kpis in zip(valid_candidates,valid_kpis) if
+                               target_kpi.holds_constraints(kpis)]
+
+            if len(nodes_kpis_list) > 0:
+                sorted_by_kpi = sorted(nodes_kpis_list, key=lambda node_kpis: (node_kpis[1].total_memory,
+                                                                               node_kpis[1].weights_memory,
+                                                                               node_kpis[1].activation_memory))
+                nodes_kpis[node_idx] = sorted_by_kpi[0][1]
+                nodes_next_candidate[node_idx] = sorted_by_kpi[0][0]
+
 
         if len(nodes_kpis) > 0:
             # filter out new configs that don't hold the KPI restrictions
-            nodes_kpis_list = [(node_idx, kpis) for node_idx, kpis in nodes_kpis.items() if target_kpi.holds_constraints(kpis)]
+            nodes_kpis_list = [(node_idx, kpis) for node_idx, kpis in nodes_kpis.items()]
             sorted_by_kpi = sorted(nodes_kpis_list, key=lambda node_kpis: (node_kpis[1].total_memory,
                                                                            node_kpis[1].weights_memory,
                                                                            node_kpis[1].activation_memory))
-            if len(sorted_by_kpi) > 0:
-                node_to_upgrade = sorted_by_kpi[0][0]
-                new_solution[node_to_upgrade] = new_solution[node_to_upgrade] - 1
-                changed = True
+
+            node_idx_to_upgrade = sorted_by_kpi[0][0]
+            new_solution[node_idx_to_upgrade] = nodes_next_candidate[node_idx_to_upgrade]
+            changed = True
 
     return new_solution
+
+
+def _get_valid_candidates_indices(node_candidates: List[CandidateNodeQuantizationConfig],
+                                  current_chosen_index: int) -> List[int]:
+    """
+    Find node's valid candidates to try and improve the node's MP chosen candidate.
+    Valid indices are indices of candidates that are more
+
+    Args:
+        node_candidates: Candidates of the node.
+        current_chosen_index: Current index in MP configuration of the node.
+
+    Returns:
+        List of indices of valid candidates.
+    """
+
+    current_candidate = node_candidates[current_chosen_index]
+    weights_num_bits = current_candidate.weights_quantization_cfg.weights_n_bits
+    activation_num_bits = current_candidate.activation_quantization_cfg.activation_n_bits
+
+    # Filter candidates that have higher bit-width for both weights and activations (except for the current index).
+    return [i for i, c in enumerate(node_candidates) if c.activation_quantization_cfg.activation_n_bits >= activation_num_bits and c.weights_quantization_cfg.weights_n_bits >= weights_num_bits and not (c.activation_quantization_cfg.activation_n_bits == activation_num_bits and c.weights_quantization_cfg.weights_n_bits == weights_num_bits)]
