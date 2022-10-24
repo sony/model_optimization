@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import copy
+
 from typing import List
 
 from model_compression_toolkit import KPI
@@ -34,7 +34,7 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
     It iteratively goes over all such nodes, computes the KPI values on a modified configuration (with the node's next
     best candidate), filters out all configs that hold the KPI constraints and chooses one of them as an improvement
     step
-    The choice is done in a greedy approach where we take the configuration that adds as less as possible to the KPIs.
+    The choice is done in a greedy approach where we take the configuration that modifies the KPI the least.
 
     Args:
         mp_solution: A mixed-precision configuration that was found by a mixed-precision optimization algorithm.
@@ -58,22 +58,22 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
                 # layer has max config in the given solution, nothing to optimize
                 continue
 
-            node_candidates = copy.deepcopy(search_manager.graph.get_configurable_sorted_nodes()[node_idx].candidates_quantization_cfg)
+            node_candidates = search_manager.graph.get_configurable_sorted_nodes()[node_idx].candidates_quantization_cfg
             valid_candidates = _get_valid_candidates_indices(node_candidates, new_solution[node_idx])
 
             # Create a list of KPIs for the valid candidates.
-            valid_kpis = []
+            updated_kpis = []
             for valid_idx in valid_candidates:
                 node_updated_kpis = search_manager.compute_kpi_for_config(
                     config=search_manager.replace_config_in_index(new_solution, node_idx, valid_idx))
-                valid_kpis.append(node_updated_kpis)
+                updated_kpis.append(node_updated_kpis)
 
             # filter out new configs that don't hold the KPI restrictions
-            nodes_kpis_list = [(node_idx, kpis) for node_idx, kpis in zip(valid_candidates,valid_kpis) if
+            node_filtered_kpis = [(node_idx, kpis) for node_idx, kpis in zip(valid_candidates,updated_kpis) if
                                target_kpi.holds_constraints(kpis)]
 
-            if len(nodes_kpis_list) > 0:
-                sorted_by_kpi = sorted(nodes_kpis_list, key=lambda node_kpis: (node_kpis[1].total_memory,
+            if len(node_filtered_kpis) > 0:
+                sorted_by_kpi = sorted(node_filtered_kpis, key=lambda node_kpis: (node_kpis[1].total_memory,
                                                                                node_kpis[1].weights_memory,
                                                                                node_kpis[1].activation_memory))
                 nodes_kpis[node_idx] = sorted_by_kpi[0][1]
@@ -82,8 +82,8 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
 
         if len(nodes_kpis) > 0:
             # filter out new configs that don't hold the KPI restrictions
-            nodes_kpis_list = [(node_idx, kpis) for node_idx, kpis in nodes_kpis.items()]
-            sorted_by_kpi = sorted(nodes_kpis_list, key=lambda node_kpis: (node_kpis[1].total_memory,
+            node_filtered_kpis = [(node_idx, kpis) for node_idx, kpis in nodes_kpis.items()]
+            sorted_by_kpi = sorted(node_filtered_kpis, key=lambda node_kpis: (node_kpis[1].total_memory,
                                                                            node_kpis[1].weights_memory,
                                                                            node_kpis[1].activation_memory))
 
@@ -99,7 +99,7 @@ def _get_valid_candidates_indices(node_candidates: List[CandidateNodeQuantizatio
                                   current_chosen_index: int) -> List[int]:
     """
     Find node's valid candidates to try and improve the node's MP chosen candidate.
-    Valid indices are indices of candidates that are more
+    Valid indices are indices of candidates that have higher number of bits for both weights and activations.
 
     Args:
         node_candidates: Candidates of the node.
