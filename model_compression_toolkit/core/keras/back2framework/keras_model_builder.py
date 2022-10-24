@@ -17,12 +17,13 @@ from abc import abstractmethod
 
 import tensorflow as tf
 from keras.models import Model
+from packaging import version
 
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
 from model_compression_toolkit.core.common.user_info import UserInformation
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
-if tf.__version__ < "2.6":
+if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.keras.layers import Input
     from tensorflow.python.keras.layers.core import TFOpLambda
     from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer

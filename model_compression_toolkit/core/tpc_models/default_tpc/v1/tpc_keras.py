@@ -13,7 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 import tensorflow as tf
-if tf.__version__ < "2.6":
+from packaging import version
+
+if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Reshape, ZeroPadding2D, \
         Dropout, \
         MaxPooling2D, Activation, ReLU, Flatten, Cropping2D

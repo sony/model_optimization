@@ -14,6 +14,7 @@
 # ==============================================================================
 
 from typing import Callable, Tuple
+from packaging import version
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
@@ -49,7 +50,7 @@ if common.constants.FOUND_TF:
     from model_compression_toolkit import get_target_platform_capabilities
 
     # As from TF2.9 optimizers package is changed
-    if tf.__version__ < "2.9":
+    if version.parse(tf.__version__) < version.parse("2.9"):
         from keras.optimizer_v2.optimizer_v2 import OptimizerV2
     else:
         from keras.optimizers.optimizer_v2.optimizer_v2 import OptimizerV2

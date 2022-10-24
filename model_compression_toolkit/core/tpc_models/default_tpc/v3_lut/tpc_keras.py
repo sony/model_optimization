@@ -13,9 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 import tensorflow as tf
+from packaging import version
 from model_compression_toolkit.core.tpc_models.default_tpc.v3_lut import __version__ as TPC_VERSION
 
-if tf.__version__ < "2.6":
+if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, \
         Dropout, \
         MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D

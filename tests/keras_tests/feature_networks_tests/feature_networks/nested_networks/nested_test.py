@@ -16,8 +16,9 @@
 import tensorflow as tf
 
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
+from packaging import version
 
-if tf.__version__ < "2.6":
+if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.engine.functional import Functional
     from tensorflow.python.keras.engine.sequential import Sequential
 else:

@@ -19,8 +19,9 @@ from model_compression_toolkit.core.common.constants import SHIFT_NEGATIVE_NON_L
 from model_compression_toolkit.core.common.network_editors import EditRule, node_filters, actions
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_keras_tpc_latest
 from tests.keras_tests.tpc_keras import get_16bit_tpc
+from packaging import version
 
-if tf.__version__ < "2.6":
+if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers.core import TFOpLambda
 else:
     from keras.layers.core import TFOpLambda

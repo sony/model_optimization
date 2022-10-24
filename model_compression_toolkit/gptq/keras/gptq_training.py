@@ -20,8 +20,9 @@ from tqdm import tqdm
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from model_compression_toolkit.gptq.keras.gptq_model_builder import GPTQKerasModelBuilder
+from packaging import version
 
-if tf.__version__ < "2.6":
+if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
 else:
     from keras.engine.base_layer import TensorFlowOpLayer

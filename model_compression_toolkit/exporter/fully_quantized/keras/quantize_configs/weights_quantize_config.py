@@ -18,9 +18,10 @@ from typing import List, Tuple, Any, Dict
 import tensorflow as tf
 from tensorflow import Tensor
 from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
+from packaging import version
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
-if tf.__version__ < "2.6":
+if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers import Layer
 else:
     from keras.engine.base_layer import Layer
