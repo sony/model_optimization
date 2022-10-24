@@ -33,7 +33,7 @@ class MixedPrecisionQuantizationConfigV2:
                  use_grad_based_weights: bool = True,
                  output_grad_factor: float = 0.1,
                  norm_weights: bool = True,
-                 refine_mp_solution: bool = False):
+                 refine_mp_solution: bool = True):
         """
         Class with mixed precision parameters to quantize the input model.
         Unlike QuantizationConfig, number of bits for quantization is a list of possible bit widths to
@@ -44,10 +44,10 @@ class MixedPrecisionQuantizationConfigV2:
             distance_weighting_method (Callable): Function to use when weighting the distances among different layers when computing the sensitivity metric.
             num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
             configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
-            num_interest_points_factor: A multiplication factor between zero and one (represents percentage) to reduce the number of interest points used to calculate the distance metric.
-            use_grad_based_weights: Whether to use gradient-based weights for weighted average distance metric computation.
-            output_grad_factor: A tuning parameter to be used for gradient-based weights.
-            norm_weights: Whether to normalize the returned weights (to get values between 0 and 1).
+            num_interest_points_factor (float): A multiplication factor between zero and one (represents percentage) to reduce the number of interest points used to calculate the distance metric.
+            use_grad_based_weights (bool): Whether to use gradient-based weights for weighted average distance metric computation.
+            output_grad_factor (float): A tuning parameter to be used for gradient-based weights.
+            norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
             refine_mp_solution (bool): Whether to try to improve the final mixed-precision configuration using a greedy algorithm that searches layers to increase their bit-width, or not.
 
         """
