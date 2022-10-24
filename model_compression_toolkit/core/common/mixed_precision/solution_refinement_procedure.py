@@ -98,6 +98,7 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
             new_solution[node_idx_to_upgrade] = nodes_next_candidate[node_idx_to_upgrade]
             changed = True
 
+    Logger.info(f'Greedy MP algorithm changed configuration from: {mp_solution} to {new_solution}')
     return new_solution
 
 
