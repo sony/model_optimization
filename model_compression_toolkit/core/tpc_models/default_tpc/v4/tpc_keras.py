@@ -13,21 +13,22 @@
 # limitations under the License.
 # ==============================================================================
 import tensorflow as tf
-from packaging import version
 
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Reshape, ZeroPadding2D, \
+
+if tf.__version__ < "2.6":
+    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, \
         Dropout, \
-        MaxPooling2D, Activation, ReLU, Flatten, Cropping2D
+        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D
 else:
-    from keras.layers import Conv2D, DepthwiseConv2D, Reshape, ZeroPadding2D, \
-        Dropout, MaxPooling2D, Activation, ReLU, Flatten, Cropping2D
+    from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, \
+        Dropout, MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D
 
-from model_compression_toolkit.core.tpc_models.default_tpc.v1.tp_model import get_tp_model
+from model_compression_toolkit.core.tpc_models.default_tpc.v4.tp_model import get_tp_model
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.tpc_models.default_tpc.v1 import __version__ as TPC_VERSION
+from model_compression_toolkit.core.tpc_models.default_tpc.v4 import __version__ as TPC_VERSION
 
 tp = mct.target_platform
+
 
 
 def get_keras_tpc() -> tp.TargetPlatformCapabilities:
@@ -50,9 +51,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
-    keras_tpc = tp.TargetPlatformCapabilities(tp_model,
-                                              name=name,
-                                              version=TPC_VERSION)
+    keras_tpc = tp.TargetPlatformCapabilities(tp_model, name=name, version=TPC_VERSION)
 
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", [Reshape,
@@ -73,9 +72,18 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                           DepthwiseConv2D,
                                           tf.nn.conv2d,
                                           tf.nn.depthwise_conv2d])
+        tp.OperationsSetToLayers("FullyConnected", [Dense])
         tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                              tf.nn.relu6,
                                              tp.LayerFilterParams(ReLU, negative_slope=0.0),
                                              tp.LayerFilterParams(Activation, activation="relu")])
+        tp.OperationsSetToLayers("Add", [tf.add, Add])
+        tp.OperationsSetToLayers("Sub", [tf.subtract, Subtract])
+        tp.OperationsSetToLayers("Mul", [tf.math.multiply, Multiply])
+        tp.OperationsSetToLayers("Div", [tf.math.divide])
+        tp.OperationsSetToLayers("PReLU", [PReLU])
+        tp.OperationsSetToLayers("Swish", [tf.nn.swish, tp.LayerFilterParams(Activation, activation="swish")])
+        tp.OperationsSetToLayers("Sigmoid", [tf.nn.sigmoid, tp.LayerFilterParams(Activation, activation="sigmoid")])
+        tp.OperationsSetToLayers("Tanh", [tf.nn.tanh, tp.LayerFilterParams(Activation, activation="tanh")])
 
     return keras_tpc

@@ -22,9 +22,9 @@ from torch.nn import Dropout, Flatten, Hardtanh
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish
 
-from model_compression_toolkit.core.tpc_models.default_tpc.v3_lut.tp_model import get_tp_model
+from model_compression_toolkit.core.tpc_models.default_tpc.v3.tp_model import get_tp_model
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.tpc_models.default_tpc.v3_lut import __version__ as TPC_VERSION
+from model_compression_toolkit.core.tpc_models.default_tpc.v4 import __version__ as TPC_VERSION
 
 tp = mct.target_platform
 
@@ -34,8 +34,8 @@ def get_pytorch_tpc() -> tp.TargetPlatformCapabilities:
     get a Pytorch TargetPlatformCapabilities object with default operation sets to layers mapping.
     Returns: a Pytorch TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
-    lut_mp_tp_model = get_tp_model()
-    return generate_pytorch_tpc(name='default_pytorch_lut_mp_tpc', tp_model=lut_mp_tp_model)
+    default_tp_model = get_tp_model()
+    return generate_pytorch_tpc(name='default_pytorch_tpc', tp_model=default_tp_model)
 
 
 def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):

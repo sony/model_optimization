@@ -24,6 +24,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.tpc_models.default_tpc.v1.tpc_keras import get_keras_tpc as get_keras_tpc_v1
     from model_compression_toolkit.core.tpc_models.default_tpc.v2.tpc_keras import get_keras_tpc as get_keras_tpc_v2
     from model_compression_toolkit.core.tpc_models.default_tpc.v3.tpc_keras import get_keras_tpc as get_keras_tpc_v3
+    from model_compression_toolkit.core.tpc_models.default_tpc.v4.tpc_keras import get_keras_tpc as get_keras_tpc_v4
     from model_compression_toolkit.core.tpc_models.default_tpc.v3_lut.tpc_keras import get_keras_tpc as get_keras_tpc_v3_lut
 
     # Keras: TPC versioning
@@ -31,6 +32,7 @@ if FOUND_TF:
                              'v2': get_keras_tpc_v2(),
                              'v3': get_keras_tpc_v3(),
                              'v3_lut': get_keras_tpc_v3_lut(),
+                             'v4': get_keras_tpc_v4(),
                              LATEST: get_keras_tpc_latest()}
 
 ###############################
@@ -45,6 +47,8 @@ if FOUND_TORCH:
         get_pytorch_tpc as get_pytorch_tpc_v2
     from model_compression_toolkit.core.tpc_models.default_tpc.v3.tpc_pytorch import \
         get_pytorch_tpc as get_pytorch_tpc_v3
+    from model_compression_toolkit.core.tpc_models.default_tpc.v4.tpc_pytorch import \
+        get_pytorch_tpc as get_pytorch_tpc_v4
     from model_compression_toolkit.core.tpc_models.default_tpc.v3_lut.tpc_pytorch import \
         get_pytorch_tpc as get_pytorch_tpc_v3_lut
 
@@ -53,6 +57,7 @@ if FOUND_TORCH:
                                'v2': get_pytorch_tpc_v2(),
                                'v3': get_pytorch_tpc_v3(),
                                'v3_lut': get_pytorch_tpc_v3_lut(),
+                               'v4': get_pytorch_tpc_v4(),
                                LATEST: get_pytorch_tpc_latest()}
 
 tpc_dict = {TENSORFLOW: keras_tpc_models_dict,
