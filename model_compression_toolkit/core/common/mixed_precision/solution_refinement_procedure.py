@@ -12,13 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List
-import copy
-from model_compression_toolkit import KPI
-from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import \
-    MixedPrecisionSearchManager
-from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import CandidateNodeQuantizationConfig
-
 import copy
 from typing import List
 
@@ -27,7 +20,7 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_searc
     MixedPrecisionSearchManager
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
-
+from model_compression_toolkit.core.common.logger import Logger
 
 def greedy_solution_refinement_procedure(mp_solution: List[int],
                                          search_manager: MixedPrecisionSearchManager,
