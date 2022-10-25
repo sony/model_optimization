@@ -27,15 +27,14 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_searc
 from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
     mp_integer_programming_search
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-
-
-# When adding a new search_methods MP configuration method, these enum and factory dictionary
-# should be updated with it's kind and a search_method implementation.
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.mixed_precision.solution_refinement_procedure import \
+    greedy_solution_refinement_procedure
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 
 
 class BitWidthSearchMethod(Enum):
+    # When adding a new search_methods MP configuration method, these enum and factory dictionary
+    # should be updated with it's kind and a search_method implementation.
     INTEGER_PROGRAMMING = 0
 
 
@@ -103,15 +102,13 @@ def search_bit_width(graph_to_search_cfg: Graph,
     # Each pair of (KPI method, KPI aggregation) should match to a specific provided kpi target
     kpi_functions = kpi_functions_mapping
 
-    # Compute non-configurable nodes KPIs for each KPI target
-    non_conf_kpi_dict = _non_configurable_nodes_kpi(kpi_functions, target_kpi, graph, fw_info, fw_impl)
-
     # Instantiate a manager object
     search_manager = MixedPrecisionSearchManager(graph,
                                                  fw_info,
                                                  fw_impl,
                                                  se,
                                                  kpi_functions,
+                                                 target_kpi,
                                                  original_graph=graph_to_search_cfg)
 
     if search_method in search_methods:  # Get a specific search function
@@ -121,35 +118,9 @@ def search_bit_width(graph_to_search_cfg: Graph,
 
     # Search for the desired mixed-precision configuration
     result_bit_cfg = search_method_fn(search_manager,
-                                      target_kpi,
-                                      non_conf_kpi_dict)
+                                      target_kpi)
+
+    if mp_config.refine_mp_solution:
+        result_bit_cfg = greedy_solution_refinement_procedure(result_bit_cfg, search_manager, target_kpi)
 
     return result_bit_cfg
-
-
-def _non_configurable_nodes_kpi(kpi_functions, target_kpi, graph, fw_info, fw_impl) -> Dict[KPITarget, np.ndarray]:
-    """
-    Computes a KPI vector of all non-configurable nodes in the given graph for each of the KPI target.
-
-    Args:
-        kpi_functions: A dictionary with pairs of (MpKpiMethod, MpKpiAggregationMethod) mapping a KPITarget to
-                a couple of kpi metric function and kpi aggregation function.
-        target_kpi: Target KPI to bound our feasible solution space s.t the configuration does not violate it.
-        graph: Graph to search a MP configuration for.
-        fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
-        fw_impl: FrameworkImplementation object with specific framework methods implementation.
-
-    Returns: A mapping between a KPITarget and its non-configurable nodes' KPI vector.
-
-    """
-
-    non_conf_kpi_dict = {}
-    for target, kpi_value in target_kpi.get_kpi_dict().items():
-        if not np.isinf(kpi_value):
-            # Call for the KPI method of the given target - empty quantization configuration list is passed since we
-            # compute for non-configurable nodes
-            kpi_vector = kpi_functions[target][0]([], graph, fw_info, fw_impl)
-
-            non_conf_kpi_dict[target] = kpi_vector
-
-    return non_conf_kpi_dict
