@@ -46,11 +46,13 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
     Returns: A new, possibly updated, mixed-precision bit-width configuration.
 
     """
+    # Refinement is not supported for BOPs KPI for now...
+    if target_kpi.bops < np.inf:
+        Logger.info(f'Target KPI constraint BOPs - Skipping MP greedy solution refinement')
+        return mp_solution
+
     new_solution = mp_solution.copy()
     changed = True
-
-    # If target KPI is for BOPs the MP configuration suits the original graph
-    graph_of_mp_configuration = search_manager.original_graph if target_kpi.bops < np.inf else search_manager.graph
 
     while changed:
         changed = False
@@ -62,7 +64,7 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
                 # layer has max config in the given solution, nothing to optimize
                 continue
 
-            node_candidates = graph_of_mp_configuration.get_configurable_sorted_nodes()[node_idx].candidates_quantization_cfg
+            node_candidates = search_manager.graph.get_configurable_sorted_nodes()[node_idx].candidates_quantization_cfg
             valid_candidates = _get_valid_candidates_indices(node_candidates, new_solution[node_idx])
 
             # Create a list of KPIs for the valid candidates.
