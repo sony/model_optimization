@@ -1,126 +1,55 @@
 
-
-<!doctype html>
+<!DOCTYPE html>
 
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>Get KPI information for Keras Models &#8212; MCT Documentation: ver 1.6.0</title>
+    
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/scrolls.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
+    <link rel="stylesheet" href="_static/print.css" type="text/css" />
     
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/bizstyle.js"></script>
+    <script src="../../../_static/theme_extras.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <!--[if lt IE 9]>
-    <script src="_static/css3-mediaqueries.js"></script>
-    <![endif]-->
+    <link rel="search" title="Search" href="../../../search.html" /> 
   </head><body>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Get KPI information for Keras Models</a></li> 
-      </ul>
-    </div>  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body" role="main">
-            
+    <div id="content">
+      <div class="header">
+        <h1 class="heading"><a href="../../../index.html"
+          title="back to the documentation overview"><span>Get KPI information for Keras Models</span></a></h1>
+      </div>
+      <div class="relnav" role="navigation" aria-label="related navigation">
+        <a href="#">Get KPI information for Keras Models</a>
+      </div>
+      <div id="contentwrapper">
+        <div role="main">
+        
   <section id="get-kpi-information-for-keras-models">
 <span id="ug-keras-kpi-data-experimental"></span><h1>Get KPI information for Keras Models<a class="headerlink" href="#get-kpi-information-for-keras-models" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="model_compression_toolkit.keras_kpi_data_experimental">
-<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">keras_kpi_data_experimental</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">representative_data_gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fw_info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_KERAS_INFO</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_capabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">KERAS_DEFAULT_TPC</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.keras_kpi_data_experimental" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
-Builds the computation graph from the given model and hw modeling, and uses it to compute the KPI data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>in_model</strong> (<em>Model</em>) – Keras model to quantize.</p></li>
-<li><p><strong>representative_data_gen</strong> (<em>Callable</em>) – Dataset used for calibration.</p></li>
-<li><p><strong>core_config</strong> (<a class="reference internal" href="../modules/core_config.html#model_compression_toolkit.CoreConfig" title="model_compression_toolkit.CoreConfig"><em>CoreConfig</em></a>) – CoreConfig containing parameters for quantization and mixed precision of how the model should be quantized.</p></li>
-<li><p><strong>fw_info</strong> (<a class="reference internal" href="../classes/FrameworkInfo.html#model_compression_toolkit.FrameworkInfo" title="model_compression_toolkit.FrameworkInfo"><em>FrameworkInfo</em></a>) – Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). <a class="reference external" href="https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py">Default Keras info</a></p></li>
-<li><p><strong>target_platform_capabilities</strong> (<a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a>) – TargetPlatformCapabilities to optimize the Keras model according to. <a class="reference external" href="https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/tpc_models/keras_tp_models/keras_default.py">Default Keras TPC</a></p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A KPI object with total weights parameters sum and max activation tensor.</p>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<p>Import a Keras model:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">tensorflow.keras.applications.mobilenet</span> <span class="kn">import</span> <span class="n">MobileNet</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">MobileNet</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Create a random dataset generator:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">repr_datagen</span><span class="p">():</span> <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="mi">224</span><span class="p">,</span><span class="mi">224</span><span class="p">,</span><span class="mi">3</span><span class="p">))]</span>
-</pre></div>
-</div>
-<p>Import MCT and call for KPI data calculation:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">kpi_data</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">keras_kpi_data</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">repr_datagen</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="../modules/mixed_precision_quantization_config.html#model_compression_toolkit.KPI" title="model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi.KPI"><code class="xref py py-class docutils literal notranslate"><span class="pre">KPI</span></code></a></p>
-</dd>
-</dl>
-</dd></dl>
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">keras_kpi_data_experimental</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.keras_kpi_data_experimental" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </section>
 
 
-            <div class="clearer"></div>
-          </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
     </div>
-</div>
-<script>document.getElementById('searchbox').style.display = "block"</script>
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../genindex.html" title="General Index"
-             >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Get KPI information for Keras Models</a></li> 
-      </ul>
-    </div>
+
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Sony Semiconductor Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
     </div>
   </body>
 </html>

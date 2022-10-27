@@ -1,132 +1,55 @@
 
-
-<!doctype html>
+<!DOCTYPE html>
 
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>Pytorch Post Training Quantization &#8212; MCT Documentation: ver 1.6.0</title>
+    
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/scrolls.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
+    <link rel="stylesheet" href="_static/print.css" type="text/css" />
     
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/bizstyle.js"></script>
+    <script src="../../../_static/theme_extras.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <!--[if lt IE 9]>
-    <script src="_static/css3-mediaqueries.js"></script>
-    <![endif]-->
+    <link rel="search" title="Search" href="../../../search.html" /> 
   </head><body>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Pytorch Post Training Quantization</a></li> 
-      </ul>
-    </div>  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body" role="main">
-            
+    <div id="content">
+      <div class="header">
+        <h1 class="heading"><a href="../../../index.html"
+          title="back to the documentation overview"><span>Pytorch Post Training Quantization</span></a></h1>
+      </div>
+      <div class="relnav" role="navigation" aria-label="related navigation">
+        <a href="#">Pytorch Post Training Quantization</a>
+      </div>
+      <div id="contentwrapper">
+        <div role="main">
+        
   <section id="pytorch-post-training-quantization">
 <span id="ug-pytorch-post-training-quantization-experimental"></span><h1>Pytorch Post Training Quantization<a class="headerlink" href="#pytorch-post-training-quantization" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="model_compression_toolkit.pytorch_post_training_quantization_experimental">
-<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">pytorch_post_training_quantization_experimental</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">representative_data_gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_kpi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">CoreConfig()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_capabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_PYTORCH_TPC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_experimental_exporter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.pytorch_post_training_quantization_experimental" title="Permalink to this definition">¶</a></dt>
-<dd><p>Quantize a trained Pytorch module using post-training quantization.
-By default, the module is quantized using a symmetric constraint quantization thresholds
-(power of two) as defined in the default TargetPlatformCapabilities.
-The module is first optimized using several transformations (e.g. BatchNormalization folding to
-preceding layers). Then, using a given dataset, statistics (e.g. min/max, histogram, etc.) are
-being collected for each layer’s output (and input, depends on the quantization configuration).
-Thresholds are then being calculated using the collected statistics and the module is quantized
-(both coefficients and activations by default).
-If gptq_config is passed, the quantized weights are optimized using gradient based post
-training quantization by comparing points between the float and quantized modules, and minimizing the
-observed loss.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>in_module</strong> (<em>Module</em>) – Pytorch module to quantize.</p></li>
-<li><p><strong>representative_data_gen</strong> (<em>Callable</em>) – Dataset used for calibration.</p></li>
-<li><p><strong>target_kpi</strong> (<a class="reference internal" href="../modules/mixed_precision_quantization_config.html#model_compression_toolkit.KPI" title="model_compression_toolkit.KPI"><em>KPI</em></a>) – KPI object to limit the search of the mixed-precision configuration as desired.</p></li>
-<li><p><strong>core_config</strong> (<a class="reference internal" href="../modules/core_config.html#model_compression_toolkit.CoreConfig" title="model_compression_toolkit.CoreConfig"><em>CoreConfig</em></a>) – Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.</p></li>
-<li><p><strong>target_platform_capabilities</strong> (<a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a>) – TargetPlatformCapabilities to optimize the PyTorch model according to. <a class="reference external" href="https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/tpc_models/pytorch_tp_models/pytorch_default.py">Default PyTorch TPC</a></p></li>
-<li><p><strong>new_experimental_exporter</strong> (<em>bool</em>) – Whether exporting the quantized model using new exporter or not (in progress. Avoiding it for now is recommended).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A quantized module and information the user may need to handle the quantized module.</p>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<p>Import a Pytorch module:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">torchvision</span> <span class="kn">import</span> <span class="n">models</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">module</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">mobilenet_v2</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Create a random dataset generator:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">repr_datagen</span><span class="p">():</span> <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">224</span><span class="p">,</span><span class="mi">224</span><span class="p">))]</span>
-</pre></div>
-</div>
-<p>Import MCT and pass the module with the representative dataset generator to get a quantized module
-Set number of clibration iterations to 1:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">quantized_module</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">pytorch_post_training_quantization</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">repr_datagen</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">pytorch_post_training_quantization_experimental</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.pytorch_post_training_quantization_experimental" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </section>
 
 
-            <div class="clearer"></div>
-          </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
     </div>
-</div>
-<script>document.getElementById('searchbox').style.display = "block"</script>
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../genindex.html" title="General Index"
-             >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Pytorch Post Training Quantization</a></li> 
-      </ul>
-    </div>
+
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Sony Semiconductor Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
     </div>
   </body>
 </html>

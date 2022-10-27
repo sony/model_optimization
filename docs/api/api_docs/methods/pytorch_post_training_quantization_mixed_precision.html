@@ -1,161 +1,55 @@
 
-
-<!doctype html>
+<!DOCTYPE html>
 
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>Pytorch Post Training Mixed Precision Quantization (Experimental) &#8212; MCT Documentation: ver 1.6.0</title>
+    
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/scrolls.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
+    <link rel="stylesheet" href="_static/print.css" type="text/css" />
     
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/bizstyle.js"></script>
+    <script src="../../../_static/theme_extras.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <!--[if lt IE 9]>
-    <script src="_static/css3-mediaqueries.js"></script>
-    <![endif]-->
+    <link rel="search" title="Search" href="../../../search.html" /> 
   </head><body>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Pytorch Post Training Mixed Precision Quantization (Experimental)</a></li> 
-      </ul>
-    </div>  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body" role="main">
-            
+    <div id="content">
+      <div class="header">
+        <h1 class="heading"><a href="../../../index.html"
+          title="back to the documentation overview"><span>Pytorch Post Training Mixed Precision Quantization (Experimental)</span></a></h1>
+      </div>
+      <div class="relnav" role="navigation" aria-label="related navigation">
+        <a href="#">Pytorch Post Training Mixed Precision Quantization (Experimental)</a>
+      </div>
+      <div id="contentwrapper">
+        <div role="main">
+        
   <section id="pytorch-post-training-mixed-precision-quantization-experimental">
 <span id="ug-pytorch-post-training-quantization-mixed-precision"></span><h1>Pytorch Post Training Mixed Precision Quantization (Experimental)<a class="headerlink" href="#pytorch-post-training-mixed-precision-quantization-experimental" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="model_compression_toolkit.pytorch_post_training_quantization_mixed_precision">
-<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">pytorch_post_training_quantization_mixed_precision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">representative_data_gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_kpi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_MIXEDPRECISION_CONFIG</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fw_info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_PYTORCH_INFO</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network_editor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gptq_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">analyze_similarity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_capabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_PYTORCH_TPC</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.pytorch_post_training_quantization_mixed_precision" title="Permalink to this definition">¶</a></dt>
-<dd><p>Quantize a pretrained Pytorch model using post-training quantization. By default, the model is
-quantized using a symmetric constraint quantization thresholds (power of two) as defined in the
-default TargetPlatformCapabilities.
-The model is first optimized using several transformations (e.g. BatchNormalization folding to
-preceding layers). Then, using a given dataset, statistics (e.g. min/max, histogram, etc.) are
-being collected for each layer’s output (and input, depends on the quantization configuration).
-For each possible bit width (per layer) a threshold is then being calculated using the collected
-statistics. Then, using an ILP solver we find a mixed-precision configuration, and set a bit width
-for each quantizer (for both activations and weights quantizers, by default).
-In order to limit the maximal model’s size, a target KPI need to be passed after weights_memory
-is set (in bytes).
-The model is then quantized (both coefficients and activations by default).
-If gptq_config is passed, the quantized weights are optimized using gradient based post
-training quantization by comparing points between the float and quantized models, and minimizing the
-observed loss.
-Notice that this feature is experimental.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>in_model</strong> (<em>Model</em>) – Pytorch model to quantize.</p></li>
-<li><p><strong>representative_data_gen</strong> (<em>Callable</em>) – Dataset used for calibration.</p></li>
-<li><p><strong>target_kpi</strong> (<a class="reference internal" href="../../experimental_api_docs/modules/mixed_precision_quantization_config.html#model_compression_toolkit.KPI" title="model_compression_toolkit.KPI"><em>KPI</em></a>) – KPI object to limit the search of the mixed-precision configuration as desired.</p></li>
-<li><p><strong>n_iter</strong> (<em>int</em>) – Number of calibration iterations to run.</p></li>
-<li><p><strong>quant_config</strong> (<a class="reference internal" href="../modules/mixed_precision_quantization_config.html#model_compression_toolkit.MixedPrecisionQuantizationConfig" title="model_compression_toolkit.MixedPrecisionQuantizationConfig"><em>MixedPrecisionQuantizationConfig</em></a>) – QuantizationConfig containing parameters of how the model should be quantized.</p></li>
-<li><p><strong>fw_info</strong> (<a class="reference internal" href="../../experimental_api_docs/classes/FrameworkInfo.html#model_compression_toolkit.FrameworkInfo" title="model_compression_toolkit.FrameworkInfo"><em>FrameworkInfo</em></a>) – Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). <a class="reference external" href="https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/pytorch/default_framework_info.py">Default PyTorch info</a></p></li>
-<li><p><strong>network_editor</strong> (<em>List</em><em>[</em><a class="reference internal" href="../../experimental_api_docs/modules/network_editor.html#model_compression_toolkit.network_editor.EditRule" title="model_compression_toolkit.network_editor.EditRule"><em>EditRule</em></a><em>]</em>) – List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.</p></li>
-<li><p><strong>gptq_config</strong> (<a class="reference internal" href="../../experimental_api_docs/classes/GradientPTQConfig.html#model_compression_toolkit.GradientPTQConfig" title="model_compression_toolkit.GradientPTQConfig"><em>GradientPTQConfig</em></a>) – Configuration for using GPTQ (e.g. optimizer).</p></li>
-<li><p><strong>analyze_similarity</strong> (<em>bool</em>) – Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.</p></li>
-<li><p><strong>target_platform_capabilities</strong> (<a class="reference internal" href="../../experimental_api_docs/modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a>) – TargetPlatformCapabilities to optimize the PyTorch model according to. <a class="reference external" href="https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/tpc_models/pytorch_tp_models/pytorch_default.py">Default PyTorch TPC</a></p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A quantized model and information the user may need to handle the quantized model.</p>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<p>Import MCT:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
-</pre></div>
-</div>
-<p>Import a Pytorch model:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torchvision.models.mobilenet_v2</span> <span class="k">as</span> <span class="nn">models</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">module</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">mobilenet_v2</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Create a random dataset generator:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">repr_datagen</span><span class="p">():</span> <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="mi">224</span><span class="p">,</span><span class="mi">224</span><span class="p">,</span><span class="mi">3</span><span class="p">))]</span>
-</pre></div>
-</div>
-<p>Create a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
-The candidates bitwidth for quantization should be defined in the target platform model:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">MixedPrecisionQuantizationConfig</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Create a KPI object to limit our returned model’s size. Note that this value affects only coefficients
-that should be quantized (for example, the kernel of Conv2D in PyTorch will be affected by this value,
-while the bias will not):</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">kpi</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">KPI</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span> <span class="o">*</span> <span class="mf">0.75</span><span class="p">)</span>  <span class="c1"># About 0.75 of the model size when quantized with 8 bits.</span>
-</pre></div>
-</div>
-<p>Pass the model, the representative dataset generator, the configuration and the target KPI to get a
-quantized model:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">pytorch_post_training_quantization_mixed_precision</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">repr_datagen</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">quant_config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">target_kpi</span><span class="o">=</span><span class="n">kpi</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>For more configuration options, please take a look at our <a class="reference external" href="https://sony.github.io/model_optimization/api/experimental_api_docs/modules/mixed_precision_quantization_config.html#model_compression_toolkit.MixedPrecisionQuantizationConfigV2">API documentation</a>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserInformation</span></code>]</p>
-</dd>
-</dl>
-</dd></dl>
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">pytorch_post_training_quantization_mixed_precision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.pytorch_post_training_quantization_mixed_precision" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </section>
 
 
-            <div class="clearer"></div>
-          </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
     </div>
-</div>
-<script>document.getElementById('searchbox').style.display = "block"</script>
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../../genindex.html" title="General Index"
-             >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Pytorch Post Training Mixed Precision Quantization (Experimental)</a></li> 
-      </ul>
-    </div>
+
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Sony Semiconductor Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
     </div>
   </body>
 </html>
