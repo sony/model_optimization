@@ -8,7 +8,7 @@ gist:
 kramdown:
   math_engine: mathjax
   syntax_highlighter: rouge
-remote_theme: pages-themes/architect@v0.2.0
+remote_theme: pages-themes/cayman@v0.2.0
 
 title: model-compression-toolkit
 description: Open-source project for neural network model optimization under efficient, constrained hardware
