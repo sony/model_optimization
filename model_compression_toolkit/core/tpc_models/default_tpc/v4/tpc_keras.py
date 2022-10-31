@@ -75,8 +75,9 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
         tp.OperationsSetToLayers("FullyConnected", [Dense])
         tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                              tf.nn.relu6,
-                                             tp.LayerFilterParams(ReLU, negative_slope=0.0),
-                                             tp.LayerFilterParams(Activation, activation="relu")])
+                                             ReLU,
+                                             tp.LayerFilterParams(Activation, activation="relu"),
+                                             tp.LayerFilterParams(Activation, activation="leaky_relu")])
         tp.OperationsSetToLayers("Add", [tf.add, Add])
         tp.OperationsSetToLayers("Sub", [tf.subtract, Subtract])
         tp.OperationsSetToLayers("Mul", [tf.math.multiply, Multiply])
