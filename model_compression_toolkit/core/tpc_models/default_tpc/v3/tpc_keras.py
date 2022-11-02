@@ -18,10 +18,10 @@ from packaging import version
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, \
         Dropout, \
-        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D
+        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, \
-        Dropout, MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D
+        Dropout, MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU
 
 from model_compression_toolkit.core.tpc_models.default_tpc.v3.tp_model import get_tp_model
 import model_compression_toolkit as mct
@@ -76,8 +76,11 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
         tp.OperationsSetToLayers("FullyConnected", [Dense])
         tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                              tf.nn.relu6,
-                                             tp.LayerFilterParams(ReLU, negative_slope=0.0),
-                                             tp.LayerFilterParams(Activation, activation="relu")])
+                                             tf.nn.leaky_relu,
+                                             ReLU,
+                                             LeakyReLU,
+                                             tp.LayerFilterParams(Activation, activation="relu"),
+                                             tp.LayerFilterParams(Activation, activation="leaky_relu")])
         tp.OperationsSetToLayers("Add", [tf.add, Add])
         tp.OperationsSetToLayers("Sub", [tf.subtract, Subtract])
         tp.OperationsSetToLayers("Mul", [tf.math.multiply, Multiply])
