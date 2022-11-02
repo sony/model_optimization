@@ -59,9 +59,10 @@ def weights_size_kpi(mp_cfg: List[int],
                     node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
                     weights_memory.append(node_weights_memory_in_bytes)
                 else:
-                    Logger.warning(f"Non-configurable nodes should have a single quantization configuration candidate,"
-                                   f"but node {n.name} has {len(n.candidates_quantization_cfg)} candidates. "
-                                   f"The node's weights memory is not considered for the weights KPI computation.")
+                    if not n.reuse:
+                        Logger.warning(f"Non-configurable nodes should have a single quantization configuration candidate,"
+                                       f"but node {n.name} has {len(n.candidates_quantization_cfg)} candidates. "
+                                       f"The node's weights memory is not considered for the weights KPI computation.")
     else:
         # Go over configurable all nodes that should be taken into consideration when computing the weights KPI.
         for n in graph.get_sorted_weights_configurable_nodes():
@@ -166,9 +167,10 @@ def total_weights_activation_kpi(mp_cfg: List[int],
                     weights_activation_memory.append(
                         np.array([node_weights_memory_in_bytes, node_activation_memory_in_bytes]))
                 else:
-                    Logger.warning(f"Non-configurable nodes should have a single quantization configuration candidate,"
-                                   f"but node {n.name} has {len(n.candidates_quantization_cfg)} candidates. "
-                                   f"The node's activation memory is not considered for the weights KPI computation.")
+                    if not n.reuse:
+                        Logger.warning(f"Non-configurable nodes should have a single quantization configuration candidate,"
+                                       f"but node {n.name} has {len(n.candidates_quantization_cfg)} candidates. "
+                                       f"The node's activation memory is not considered for the weights KPI computation.")
     else:
         # Go over all nodes that should be taken into consideration when computing the weights or
         # activation KPI (all configurable nodes).
