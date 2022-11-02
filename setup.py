@@ -25,7 +25,7 @@ def read_install_requires():
 
 def get_log_description():
     print("Reading READEME File")
-    with open("README.MD", "r") as fh:
+    with open("README.md", "r") as fh:
         long_description = fh.read()
     return long_description
 
