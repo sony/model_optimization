@@ -58,7 +58,7 @@ def weights_size_kpi(mp_cfg: List[int],
                     node_nbits = n.candidates_quantization_cfg[0].weights_quantization_cfg.weights_n_bits
                     node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
                     weights_memory.append(node_weights_memory_in_bytes)
-                else:
+                elif not n.reuse:
                     Logger.warning(f"Non-configurable nodes should have a single quantization configuration candidate,"
                                    f"but node {n.name} has {len(n.candidates_quantization_cfg)} candidates. "
                                    f"The node's weights memory is not considered for the weights KPI computation.")
@@ -165,7 +165,7 @@ def total_weights_activation_kpi(mp_cfg: List[int],
 
                     weights_activation_memory.append(
                         np.array([node_weights_memory_in_bytes, node_activation_memory_in_bytes]))
-                else:
+                elif not n.reuse:
                     Logger.warning(f"Non-configurable nodes should have a single quantization configuration candidate,"
                                    f"but node {n.name} has {len(n.candidates_quantization_cfg)} candidates. "
                                    f"The node's activation memory is not considered for the weights KPI computation.")
