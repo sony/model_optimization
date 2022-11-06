@@ -37,7 +37,7 @@ def validate_before_compute_similarity(float_tensor: Any, fxp_tensor: Any):
     assert float_tensor.shape == fxp_tensor.shape
 
 
-def tensor_norm(x: np.ndarray, p: float = 2.0) -> np.float:
+def _similarity_tensor_norm(x: np.ndarray, p: float = 2.0) -> np.ndarray:
     """
     Compute the Lp-norm of a tensor x.
     Args:
@@ -45,7 +45,7 @@ def tensor_norm(x: np.ndarray, p: float = 2.0) -> np.float:
         p: P to use for the Lp norm computation
 
     Returns:
-        Lp norm of x.
+        Lp norm per sample in batch of tensor x.
     """
 
     return (np.abs(x) ** p).sum(axis=-1) ** (1.0/p)
@@ -158,8 +158,8 @@ def compute_cs(float_tensor: np.ndarray, fxp_tensor: np.ndarray, eps: float = 1e
     float_flat = flatten_tensor(float_tensor, batch)
     fxp_flat = flatten_tensor(fxp_tensor, batch)
 
-    float_norm = tensor_norm(float_flat)
-    fxp_norm = tensor_norm(fxp_flat)
+    float_norm = _similarity_tensor_norm(float_flat)
+    fxp_norm = _similarity_tensor_norm(fxp_flat)
 
     # -1 <= cs <= 1
     axis = None if not batch else 1
