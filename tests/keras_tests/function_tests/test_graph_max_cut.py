@@ -65,7 +65,7 @@ class TestGraphMaxCut(unittest.TestCase):
         graph = model_reader(model)
         memory_graph = MemoryGraph(graph)
 
-        max_cut_size, schedule, cuts = compute_graph_max_cut(memory_graph)
+        schedule, max_cut_size, cuts = compute_graph_max_cut(memory_graph)
         self.assertIsNotNone(schedule)
         self.assertIsNotNone(cuts)
         self.assertTrue(len(cuts) > 0)
@@ -77,7 +77,7 @@ class TestGraphMaxCut(unittest.TestCase):
         graph = model_reader(model)
         memory_graph = MemoryGraph(graph)
 
-        max_cut_size, schedule, cuts = compute_graph_max_cut(memory_graph)
+        schedule, max_cut_size, cuts = compute_graph_max_cut(memory_graph)
         self.assertIsNotNone(schedule)
         self.assertIsNotNone(cuts)
         self.assertTrue(len(cuts) > 0)
@@ -89,7 +89,7 @@ class TestGraphMaxCut(unittest.TestCase):
         graph = model_reader(model)
         memory_graph = MemoryGraph(graph)
 
-        max_cut_size, schedule, cuts = compute_graph_max_cut(memory_graph)
+        schedule, max_cut_size, cuts = compute_graph_max_cut(memory_graph)
         self.assertIsNotNone(schedule)
         self.assertIsNotNone(cuts)
         self.assertTrue(len(cuts) > 0)
@@ -100,7 +100,7 @@ class TestGraphMaxCut(unittest.TestCase):
         graph = model_reader(model)
         memory_graph = MemoryGraph(graph)
 
-        max_cut_size, schedule, cuts = compute_graph_max_cut(memory_graph, n_iter=50, astar_n_iter=500)
+        schedule, max_cut_size, cuts = compute_graph_max_cut(memory_graph, n_iter=50, astar_n_iter=500)
         self.assertIsNotNone(schedule)
         self.assertIsNotNone(cuts)
         self.assertTrue(len(cuts) > 0)
