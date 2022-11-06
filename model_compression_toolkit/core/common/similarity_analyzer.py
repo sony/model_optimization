@@ -41,7 +41,7 @@ def tensor_norm(x: np.ndarray, p: float = 2.0) -> np.float:
     """
     Compute the Lp-norm of a tensor x.
     Args:
-        x: Flattened tensor to compute its norm
+        x: Tensor to compute its norm
         p: P to use for the Lp norm computation
 
     Returns:
