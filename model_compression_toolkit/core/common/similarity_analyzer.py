@@ -48,7 +48,7 @@ def tensor_norm(x: np.ndarray, p: float = 2.0) -> np.float:
         Lp norm of x.
     """
 
-    return np.power(np.power(np.abs(x), p).sum(axis=-1), 1.0/p)
+    return (np.abs(x) ** p).sum(axis=-1) ** (1.0/p)
 
 
 def flatten_tensor(t: np.ndarray, batch: bool) -> np.ndarray:
@@ -66,7 +66,7 @@ def flatten_tensor(t: np.ndarray, batch: bool) -> np.ndarray:
     if batch:
         f_t = t.reshape([t.shape[0], -1])
     else:
-        f_t = t.reshape([1, -1])
+        f_t = t.flatten()
 
     return f_t
 
