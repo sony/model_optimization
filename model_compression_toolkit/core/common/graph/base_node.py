@@ -307,7 +307,7 @@ class BaseNode:
                 return True
         return False
 
-    def get_total_output_params(self):
+    def get_total_output_params(self) -> float:
         """
         Calculates the output size of the node.
 
@@ -319,6 +319,20 @@ class BaseNode:
         output_shapes = [s[1:] for s in output_shapes]
 
         return sum([np.prod([x for x in output_shape if x is not None]) for output_shape in output_shapes])
+
+    def get_total_input_params(self) -> float:
+        """
+        Calculates the total parameters in the node's input tensors.
+
+        Returns: Input size (i.e., total number of parameters).
+        """
+
+        input_shapes = self.input_shape if isinstance(self.input_shape, List) else [self.input_shape]
+
+        # remove batch size (first element) from input shape
+        input_shapes = [s[1:] for s in input_shapes]
+
+        return sum([np.prod([x for x in input_shape if x is not None]) for input_shape in input_shapes])
 
     def find_min_candidates_indices(self) -> List[int]:
         """
