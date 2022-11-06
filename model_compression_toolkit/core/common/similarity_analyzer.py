@@ -37,42 +37,43 @@ def validate_before_compute_similarity(float_tensor: Any, fxp_tensor: Any):
     assert float_tensor.shape == fxp_tensor.shape
 
 
-def tensor_batch_axis(shape: Tuple, batch: bool = False) -> Tuple:
-    """
-    Returns a list of axis for similarity analysis in case we want to run it on a batch
-    instead of a single image/flattened tensor.
-
-    Args:
-        shape: The shape of the data tensor to run similarity analysis on.
-        batch: Whether to run batch similarity analysis or not.
-
-    Returns: If not running on batch, returns None, otherwise, returns a tuple with all axis in the tensor shape except
-     the first one (batch axis).
-
-    """
-
-    return None if not batch else tuple([i for i in range(1, len(shape))])
-
-
-def tensor_norm(x: np.ndarray, p: float = 2.0, batch: bool = False) -> np.float:
+def tensor_norm(x: np.ndarray, p: float = 2.0) -> np.float:
     """
     Compute the Lp-norm of a tensor x.
     Args:
-        x: Tensor to compute its norm
+        x: Flattened tensor to compute its norm
         p: P to use for the Lp norm computation
-        batch: Whether to run batch similarity analysis or not.
 
     Returns:
         Lp norm of x.
     """
 
-    axis = tensor_batch_axis(x.shape, batch)
-    return np.power(np.power(np.abs(x), p).sum(axis=axis), 1.0/p)
+    return np.power(np.power(np.abs(x), p).sum(axis=-1), 1.0/p)
 
+
+def flatten_tensor(t: np.ndarray, batch: bool) -> np.ndarray:
+    """
+    Flattening the samples batch to allow similarity analysis computation per sample.
+
+    Args:
+        t: A tensor to be flattened.
+        batch: Whether the similarity computation is per image or per tensor.
+
+    Returns: A flattened tensor which has the number of samples as is first dimension.
+
+    """
+
+    if batch:
+        f_t = t.reshape([t.shape[0], -1])
+    else:
+        f_t = t.reshape([1, -1])
+
+    return f_t
 
 #########################
 # Similarity functions
 #########################
+
 
 def compute_mse(float_tensor: np.ndarray,
                 fxp_tensor: np.ndarray,
@@ -93,45 +94,15 @@ def compute_mse(float_tensor: np.ndarray,
         The MSE distance between the two tensors.
     """
     validate_before_compute_similarity(float_tensor, fxp_tensor)
-    axis = tensor_batch_axis(float_tensor.shape, batch)
-    error = np.power(float_tensor - fxp_tensor, 2.0).mean(axis=axis)
+
+    float_flat = flatten_tensor(float_tensor, batch)
+    fxp_flat = flatten_tensor(fxp_tensor, batch)
+
+    error = ((float_flat - fxp_flat) ** 2).mean(axis=-1)
     if norm:
-        error /= (np.power(float_tensor, 2.0).mean(axis=axis) + norm_eps)
+        error /= ((float_flat ** 2).mean(axis=-1) + norm_eps)
+
     return error
-
-
-def compute_nmse(float_tensor: np.ndarray, fxp_tensor: np.ndarray) -> float:
-    """
-    Compute the normalized mean square error between two numpy arrays.
-
-    Args:
-        float_tensor: First tensor to compare.
-        fxp_tensor: Second tensor to compare.
-
-    Returns:
-        The NMSE distance between the two tensors.
-    """
-    validate_before_compute_similarity(float_tensor, fxp_tensor)
-    normalized_float_tensor = float_tensor / tensor_norm(float_tensor)
-    normalized_fxp_tensor = fxp_tensor / tensor_norm(fxp_tensor)
-    return np.mean(np.power(normalized_float_tensor - normalized_fxp_tensor, 2.0))
-
-
-def compute_nmae(float_tensor: np.ndarray, fxp_tensor: np.ndarray) -> float:
-    """
-    Compute the normalized mean average error between two numpy arrays.
-
-    Args:
-        float_tensor: First tensor to compare.
-        fxp_tensor: Second tensor to compare.
-
-    Returns:
-        The NMAE distance between the two tensors.
-    """
-    validate_before_compute_similarity(float_tensor, fxp_tensor)
-    normalized_float_tensor = float_tensor / tensor_norm(float_tensor, 1.0)
-    normalized_fxp_tensor = fxp_tensor / tensor_norm(fxp_tensor, 1.0)
-    return np.mean(np.abs(normalized_float_tensor - normalized_fxp_tensor))
 
 
 def compute_mae(float_tensor: np.ndarray,
@@ -154,10 +125,13 @@ def compute_mae(float_tensor: np.ndarray,
     """
 
     validate_before_compute_similarity(float_tensor, fxp_tensor)
-    axis = tensor_batch_axis(float_tensor.shape, batch)
-    error = np.abs(float_tensor - fxp_tensor).mean(axis=axis)
+
+    float_flat = flatten_tensor(float_tensor, batch)
+    fxp_flat = flatten_tensor(fxp_tensor, batch)
+
+    error = np.abs(float_flat - fxp_flat).mean(axis=-1)
     if norm:
-        error /= (np.abs(float_tensor).mean(axis=axis) + norm_eps)
+        error /= (np.abs(float_flat).mean(axis=-1) + norm_eps)
     return error
 
 
@@ -181,11 +155,11 @@ def compute_cs(float_tensor: np.ndarray, fxp_tensor: np.ndarray, eps: float = 1e
     if np.all(fxp_tensor == 0) and np.all(float_tensor == 0):
         return 1.0
 
-    flatten_shape = -1 if not batch else (float_tensor.shape[0], -1)
-    float_flat = float_tensor.reshape(flatten_shape)
-    fxp_flat = fxp_tensor.reshape(flatten_shape)
-    float_norm = tensor_norm(float_flat, batch=batch)
-    fxp_norm = tensor_norm(fxp_flat, batch=batch)
+    float_flat = flatten_tensor(float_tensor, batch)
+    fxp_flat = flatten_tensor(fxp_tensor, batch)
+
+    float_norm = tensor_norm(float_flat)
+    fxp_norm = tensor_norm(fxp_flat)
 
     # -1 <= cs <= 1
     axis = None if not batch else 1
@@ -217,10 +191,13 @@ def compute_lp_norm(float_tensor: np.ndarray,
         The Lp-norm distance between the two tensors.
     """
     validate_before_compute_similarity(float_tensor, fxp_tensor)
-    axis = tensor_batch_axis(float_tensor.shape, batch)
-    error = np.power(np.abs(float_tensor - fxp_tensor), p).mean(axis=axis)
+
+    float_flat = flatten_tensor(float_tensor, batch)
+    fxp_flat = flatten_tensor(fxp_tensor, batch)
+
+    error = (np.abs(float_flat - fxp_flat) ** p).mean(axis=-1)
     if norm:
-        error /= (np.power(np.abs(float_tensor), p).mean(axis=axis) + norm_eps)
+        error /= ((np.abs(float_flat) ** p).mean(axis=-1) + norm_eps)
     return error
 
 
@@ -240,7 +217,11 @@ def compute_kl_divergence(float_tensor: np.ndarray, fxp_tensor: np.ndarray, batc
     """
 
     validate_before_compute_similarity(float_tensor, fxp_tensor)
-    axis = tensor_batch_axis(float_tensor.shape, batch)
-    non_zero_fxp_tensor = fxp_tensor.copy()
+
+    float_flat = flatten_tensor(float_tensor, batch)
+    fxp_flat = flatten_tensor(fxp_tensor, batch)
+
+    non_zero_fxp_tensor = fxp_flat.copy()
     non_zero_fxp_tensor[non_zero_fxp_tensor == 0] = EPS
-    return np.sum(np.where(float_tensor != 0, float_tensor * np.log(float_tensor / non_zero_fxp_tensor), 0), axis=axis)
+
+    return np.sum(np.where(float_flat != 0, float_flat * np.log(float_flat / non_zero_fxp_tensor), 0), axis=-1)
