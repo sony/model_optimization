@@ -22,7 +22,7 @@ from model_compression_toolkit.core.common.graph.memory_graph.memory_element imp
 from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import ActivationMemoryTensor, MemoryGraph
 
 
-class DummpyType:
+class DummyType:
     """
     A dummy type class to use for dummy nodes layer type.
     """
@@ -46,7 +46,7 @@ class DummyBaseNodeGenerator:
                            input_shape=tuple(),
                            output_shape=tuple(),
                            weights={},
-                           layer_class=DummpyType,
+                           layer_class=DummyType,
                            has_activation=False)
 
             self.counter += 1
@@ -67,7 +67,7 @@ class DummyActivationMemoryTensorGenerator:
             yield ActivationMemoryTensor(shape=tuple(),
                                          node_name=f"{DUMMY_TENSOR}_{self.counter}",
                                          node_output_index=0,
-                                         total_size=0)
+                                         init_size_to_zero=True)
 
             self.counter += 1
 

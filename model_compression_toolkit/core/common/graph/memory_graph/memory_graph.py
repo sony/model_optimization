@@ -25,7 +25,7 @@ class MemoryGraph(DirectedBipartiteGraph):
     A representation of a model's graph and intermediate activation tensors as a bipartite graph, to use for schedule
     and max cut computations.
     The graph is composed of two sides (sets) of nodes:
-    Side A - the model's graph nodes (operations).
+    Side A - the model's graph nodes (operation nodes).
     Side B - the activation tensors of a computation of the model.
     An edge e = (a, b) from side A to B exists in the graph if the tensor b is an output of the operation a.
     An edge e = (b, a) from side B to A exists in the graph if the tensor b is an input of the operation a.
@@ -62,8 +62,8 @@ class MemoryGraph(DirectedBipartiteGraph):
         super().__init__(name=model_graph.name + "_memory_graph",
                          a_nodes=nodes,
                          b_nodes=memory_tensors,
-                         edges_ab=[nt for nt in node_to_tensor],
-                         edges_ba=[tn for tn in tensor_to_node])
+                         edges_ab=node_to_tensor,
+                         edges_ba=tensor_to_node)
 
         # memory_lbound_single_op is a lower bound for any schedule of the graph.
         # the bound is defined as the maximum of memory requirements out of all operations in the graph
@@ -77,12 +77,16 @@ class MemoryGraph(DirectedBipartiteGraph):
 
         self.memory_lbound_single_op = max(nodes_total_memory + inputs_tensors_memory)
 
-        self.sources_a = [n for n in self.a_nodes if len(list(self.predecessors(n))) == 0]
+        self.sources_a = None
+        self.update_sources_a()
+        assert self.sources_a is not None, "the memory graph variable sources_a should have been initialized."
 
         # Note that unlike the original scheduler,
         # we don't need sinks_a since we assume all layers have activation tensor.
         # In oppose to them we do need sinks_b to allow creating single target for astar in case of multiple outputs.
-        self.sinks_b = [n for n in self.b_nodes if len(list(self.successors(n))) == 0]
+        self.sinks_b = None
+        self.update_sinks_b()
+        assert self.sinks_b is not None, "the memory graph variable sinks_b should have been initialized."
         assert len([n for n in self.a_nodes if len(list(self.successors(n))) == 0]) == 0, \
             "All operations should have an activation tensor, so there are no supposed to be sink nodes in side A," \
             "of the bipartite memory graph."

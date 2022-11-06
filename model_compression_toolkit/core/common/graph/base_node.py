@@ -322,10 +322,11 @@ class BaseNode:
 
     def get_total_input_params(self) -> float:
         """
-        Calculates the input size of the node.
+        Calculates the total parameters in the node's input tensors.
 
-        Returns: Input size.
+        Returns: Input size (i.e., total number of parameters).
         """
+
         input_shapes = self.input_shape if isinstance(self.input_shape, List) else [self.input_shape]
 
         # remove batch size (first element) from input shape

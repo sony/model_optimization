@@ -51,7 +51,7 @@ def compute_graph_max_cut(memory_graph: MemoryGraph,
         next_u_bound = min(estimate, max_cut_size)
         last_result = (schedule, max_cut_size, cuts)
 
-        if l_bound >= next_u_bound or l_bound * (1 + eps) > next_u_bound:
+        if l_bound * (1 + eps) >= next_u_bound:
             return last_result
 
         it += 1

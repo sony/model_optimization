@@ -21,17 +21,18 @@ class ActivationMemoryTensor:
     A representation of an activation output tensor of a model's layer.
     """
 
-    def __init__(self, shape: Tuple[Any], node_name: str, node_output_index: int, total_size: float = -1):
+    def __init__(self, shape: Tuple[Any], node_name: str, node_output_index: int, init_size_to_zero: bool = False):
         """
         Args:
             shape: The shape of the activation tensor.
             node_name: The name of the node which its output is represented by the object.
-            node_output_index:
-            total_size:
+            node_output_index: The index of this tensor in the node's outputs list.
+            init_size_to_zero: Whether to initialize the memory tensor size to 0 or not.
         """
 
         self.shape = shape[1:]  # remove batch size (first element) from output shape
-        self.total_size = self._get_tensor_total_size() if total_size == -1 else total_size
+        # The total size of a tensor is considered to be the number of elements in the tensor
+        self.total_size = self._get_tensor_total_size() if not init_size_to_zero else 0
 
         self.node_name = node_name
         self.node_output_index = node_output_index
@@ -102,7 +103,7 @@ class MemoryElements:
 
     def __copy__(self):
         """
-        Overrides the class copt method.
+        Overrides the class copy method.
         Creates a new set with the same elements that are in the copied object.
 
         Returns: A new MemoryElements object with a copied set of elements.
