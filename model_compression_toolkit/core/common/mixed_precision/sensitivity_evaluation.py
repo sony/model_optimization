@@ -278,8 +278,8 @@ class SensitivityEvaluation:
                 self.fw_impl.get_node_distance_fn(layer_class=self.interest_points[i].layer_class,
                                                   framework_attrs=self.interest_points[i].framework_attr,
                                                   compute_distance_fn=self.quant_config.compute_distance_fn)
-            for j in range(num_samples):
-                distance_matrix[i, j] = point_distance_fn(baseline_tensors[i][j], mp_tensors[i][j])
+
+            distance_matrix[i] = point_distance_fn(baseline_tensors[i], mp_tensors[i], batch=True)
 
         return distance_matrix
 
