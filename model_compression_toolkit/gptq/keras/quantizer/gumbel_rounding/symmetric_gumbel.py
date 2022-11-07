@@ -23,9 +23,9 @@ from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from typing import Dict, Any, List
 from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.gumbel_softmax import gumbel_softmax, ste_gumbel
-from model_compression_toolkit.core.common.constants import THRESHOLD, GUMBEL_MAX_ITER
+from model_compression_toolkit.core.common.constants import THRESHOLD, GUMBEL_MAX_ITER, MIN_THRESHOLD
 from model_compression_toolkit.gptq.common import gptq_constants
-
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import max_power_of_two
 
 def gumbel_rounding_symmetric_quantizer(input_tensor: tf.Tensor,
                                         auxvar_tensor: tf.Variable,
@@ -226,10 +226,11 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
 
         if self.power_of_two:
             old_threshold = self.quantizer_parameters[self.PTQ_THRESHOLD]
-            old_threshold = qutils.power_of_two_max(old_threshold)
+            old_threshold = max_power_of_two(old_threshold, MIN_THRESHOLD)
         else:
             old_threshold = self.quantizer_parameters[self.PTQ_THRESHOLD]
             if self.quantization_parameter_learning:
                 old_threshold = old_threshold * self.quantizer_parameters[self.SCALE_PTQ]
-        old_threshold = old_threshold.numpy().reshape(self.threshold_shape)
+            old_threshold = old_threshold.numpy()
+        old_threshold = old_threshold.reshape(self.threshold_shape)
         return {THRESHOLD: old_threshold}
