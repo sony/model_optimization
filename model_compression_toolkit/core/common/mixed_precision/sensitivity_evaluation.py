@@ -442,7 +442,7 @@ def get_output_replacement_nodes(graph: Graph,
     replacement_outputs = []
     for n in graph.get_outputs():
         prev_node = n.node
-        while not fw_impl.is_node_compatible_for_mp_metric_outputs(prev_node):
+        while not fw_impl.is_node_compatible_for_metric_outputs(prev_node):
             prev_node = graph.get_prev_nodes(n.node)
             assert len(prev_node) == 1, "A none MP compatible output node has multiple inputs, " \
                                         "which is incompatible for metric computation."

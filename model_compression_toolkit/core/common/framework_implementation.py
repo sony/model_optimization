@@ -436,21 +436,21 @@ class FrameworkImplementation(ABC):
                              f'framework\'s model_grad method.')
 
     @abstractmethod
-    def is_node_compatible_for_mp_metric_outputs(self,
+    def is_node_compatible_for_metric_outputs(self,
                                                  node: BaseNode) -> bool:
         """
-        Checks and returns whether the given node is compatible as output for mixed-precision metric computation
-        purposes.
+        Checks and returns whether the given node is compatible as output for metric computation
+        purposes and gradient-based weights calculation.
 
         Args:
             node: A BaseNode object.
 
-        Returns: Whether the node is compatible as output for MP metric computation or not.
+        Returns: Whether the node is compatible as output for metric computation or not.
 
         """
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s is_node_compatible_for_mp_metric_outputs method.')
+                             f'framework\'s is_node_compatible_for_metric_outputs method.')
 
     @abstractmethod
     def get_node_mac_operations(self,

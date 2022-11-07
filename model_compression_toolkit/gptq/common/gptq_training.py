@@ -17,7 +17,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from typing import Callable, List, Any
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
-from model_compression_toolkit.core.common import Graph, Logger
+from model_compression_toolkit.core.common import Graph, Logger, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.gptq.common.gptq_graph import get_compare_points
@@ -125,6 +125,9 @@ class GPTQTrainer(ABC):
         """
         if self.gptq_config.use_jac_based_weights:
             images = self._generate_images_batch(representative_data_gen, self.gptq_config.num_samples_for_loss)
+
+            model_output_replacement = self._get_model_output_replacement()
+
             points_apprx_jacobians_weights = []
             for i in range(1, images.shape[0] + 1):
                 # Note that in GPTQ loss weights computation we assume that there aren't replacement output nodes,
@@ -134,8 +137,7 @@ class GPTQTrainer(ABC):
                                                              {inode: self.fw_impl.to_tensor(images[i - 1:i]) for inode in
                                                               self.graph_float.get_inputs()},
                                                              self.compare_points,
-                                                             output_list=[n.node for n in
-                                                                          self.graph_float.get_outputs()],
+                                                             output_list=model_output_replacement,
                                                              all_outputs_indices=[],
                                                              alpha=0,
                                                              norm_weights=self.gptq_config.norm_weights)
@@ -206,6 +208,27 @@ class GPTQTrainer(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s update_graph method.')
+
+    def _get_model_output_replacement(self) -> List[BaseNode]:
+        """
+        If a model's output node is not compatible for the task of gradients computation we need to find a predecessor
+        node in the model's graph representation which is compatible and use it for the gradients' computation.
+        This method searches for this predecessor node for each output of the model.
+
+        Returns: A list of output replacement nodes.
+
+        """
+
+        replacement_outputs = []
+        for n in self.graph_float.get_outputs():
+            prev_node = n.node
+            while not self.fw_impl.is_node_compatible_for_metric_outputs(prev_node):
+                prev_node = self.graph_float.get_prev_nodes(n.node)
+                assert len(prev_node) == 1, "A none compatible output node has multiple inputs, " \
+                                            "which is incompatible for metric computation."
+                prev_node = prev_node[0]
+            replacement_outputs.append(prev_node)
+        return replacement_outputs
 
 
 def gptq_training(graph_float: Graph,
