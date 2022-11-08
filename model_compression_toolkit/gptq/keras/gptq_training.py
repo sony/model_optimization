@@ -193,6 +193,28 @@ class KerasGPTQTrainer(GPTQTrainer):
                                      self.gptq_config.n_iter,
                                      True)
 
+    @tf.function
+    def nano_training_step(self, input_data, in_compute_gradients, in_optimizer_with_param, is_training):
+        """
+        This function run part of the training step, wrapped by a tf.function for acceleration.
+        Args:
+            input_data: input data for the step.
+            in_compute_gradients: A callable function that compute the gradients.
+            in_optimizer_with_param: A list of optimizer classes to update with the corresponding parameters.
+            is_training: A boolean flag stating if the network is running in training mode.
+
+        Returns:
+            loss value and gradients
+
+        """
+
+        # run float model
+        y_float = self.float_model(input_data)
+        # rung quantized model and calculate loss & gradients
+        loss_value_step, grads = in_compute_gradients(y_float, input_data, in_optimizer_with_param,
+                                                      training=is_training)
+        return loss_value_step, grads
+
     def micro_training_loop(self,
                             data_function: Callable,
                             in_compute_gradients: Callable,
@@ -214,9 +236,8 @@ class KerasGPTQTrainer(GPTQTrainer):
         for _ in tqdm(range(int(n_iteration))):
             data = data_function()
             input_data = [d * self.input_scale for d in data]
-            y_float = self.float_model(input_data)  # running float model
-            loss_value_step, grads = in_compute_gradients(y_float, input_data, in_optimizer_with_param,
-                                                          training=is_training)
+
+            loss_value_step, grads = self.nano_training_step(input_data, in_compute_gradients, in_optimizer_with_param, is_training)
             # Run one step of gradient descent by updating
             # the value of the variables to minimize the loss.
             for i, (o, p) in enumerate(in_optimizer_with_param):
