@@ -15,6 +15,7 @@
 
 
 import os
+import random
 from typing import List, Callable
 
 import numpy as np
@@ -24,7 +25,7 @@ from PIL import Image
 FILETYPES = ['jpeg', 'jpg', 'bmp', 'png']
 
 
-class FolderImageLoader(object):
+class FolderImageLoader:
     """
 
     Class for images loading, processing and retrieving.
@@ -35,7 +36,8 @@ class FolderImageLoader(object):
                  folder: str,
                  preprocessing: List[Callable],
                  batch_size: int,
-                 file_types: List[str] = FILETYPES):
+                 file_types: List[str] = FILETYPES,
+                 num_cached_batches=None):
 
         """ Initialize a FolderImageLoader object.
 
@@ -45,6 +47,7 @@ class FolderImageLoader(object):
             preprocessing: List of functions to use when processing the images before retrieving them.
             batch_size: Number of images to retrieve each sample.
             file_types: Files types to scan in the folder. Default list is :data:`~model_compression_toolkit.core.common.data_loader.FILETYPES`
+            num_cached_batches: number of batches to save in cache (default None - don't cache images).
 
         Examples:
 
@@ -76,6 +79,16 @@ class FolderImageLoader(object):
         print(f"Finished Disk Scanning: Found {self.n_files} files")
         self.preprocessing = preprocessing
         self.batch_size = batch_size
+        if num_cached_batches is not None:
+            assert self.n_files > num_cached_batches * batch_size, f'Folder to load contains less images than requested cache.'
+            # collect batches to cache in memory
+            self.cached_batches = []
+            for _ in range(num_cached_batches):
+                self._sample()
+                self.cached_batches.append(self.next_batch_data)
+        else:
+            self.cached_batches = None
+        self.cache_index = 0
 
     def _sample(self):
         """
@@ -97,10 +110,20 @@ class FolderImageLoader(object):
     def sample(self):
         """
 
-        Returns: A sample of batch_size images from the folder the FolderImageLoader scanned.
+        Returns: A sample of batch_size images from the folder the FolderImageLoader scanned or from cached batches.
 
         """
 
-        self._sample()
-        data = self.next_batch_data  # get current data
+        if self.cached_batches is None:
+            self._sample()
+            data = self.next_batch_data  # get current data
+        else:
+            # get cached batch
+            data = self.cached_batches[self.cache_index]
+            self.cache_index += 1
+            if self.cache_index >= len(self.cached_batches):
+                # when all cached batches were used, initialize index and shuffle the cached batches list
+                self.cache_index = 0
+                random.shuffle(self.cached_batches)
+
         return data
