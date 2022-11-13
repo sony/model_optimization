@@ -40,6 +40,7 @@ from tests.pytorch_tests.model_tests.feature_models.second_moment_correction_tes
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
     SoftmaxFunctionNetTest
 from tests.pytorch_tests.model_tests.feature_models.permute_substitution_test import PermuteSubstitutionTest
+from tests.pytorch_tests.model_tests.feature_models.constant_conv_substitution_test import ConstantConvSubstitutionTest, ConstantConvReuseSubstitutionTest, ConstantConvTransposeSubstitutionTest
 from tests.pytorch_tests.model_tests.feature_models.multi_head_attention_test import MHALayerNetTest
 from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test import \
     ScaleEqualizationWithZeroPadNetTest, ScaleEqualizationNetTest, \
@@ -165,6 +166,14 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the permute substitution feature
         """
         PermuteSubstitutionTest(self).run_test()
+
+    def test_constant_conv_substitution(self):
+        """
+        This test checks the constant conv substitution feature
+        """
+        ConstantConvSubstitutionTest(self).run_test()
+        ConstantConvReuseSubstitutionTest(self).run_test()
+        ConstantConvTransposeSubstitutionTest(self).run_test()
 
     def test_relu_bound_to_power_of_2(self):
         """
