@@ -223,7 +223,7 @@ class PytorchImplementation(FrameworkImplementation):
                                        ScaleEqualizationWithPad(quant_config, fw_info)])
         return substitutions_list
 
-    def get_substitutions_prepare_graph(self) -> List[common.BaseSubstitution]:
+    def get_substitutions_prepare_graph(self, fw_info: FrameworkInfo = None) -> List[common.BaseSubstitution]:
         """
 
         Returns: A list of the framework substitutions used before we collect the prior information.
@@ -232,7 +232,7 @@ class PytorchImplementation(FrameworkImplementation):
         return [ReshapeWithStaticShapes(),
                 MultiHeadAttentionDecomposition(),
                 PermuteCallMethod(),
-                ConstantHolderConv()]
+                ConstantHolderConv(fw_info)]
 
     def get_substitutions_pre_statistics_collection(self,
                                                     quant_config: QuantizationConfig

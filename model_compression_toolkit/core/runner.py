@@ -190,7 +190,7 @@ def get_finalized_graph(initial_graph: Graph,
     ######################################
     # Graph substitution (prepare graph)
     ######################################
-    graph = substitute(initial_graph, fw_impl.get_substitutions_prepare_graph())
+    graph = substitute(initial_graph, fw_impl.get_substitutions_prepare_graph(fw_info))
 
     if tb_w is not None:
         tb_w.add_graph(graph, 'after_graph_preparation')

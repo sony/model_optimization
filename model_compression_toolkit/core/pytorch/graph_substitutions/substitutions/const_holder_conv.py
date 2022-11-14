@@ -20,19 +20,20 @@ from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.pytorch.reader.graph_builders import ConstantHolder
 from model_compression_toolkit.core.pytorch.constants import IN_CHANNELS, OUT_CHANNELS, KERNEL_SIZE, KERNEL, BIAS, CONSTANT
-
+from model_compression_toolkit.core.common import FrameworkInfo
 
 class ConstantHolderConv(common.BaseSubstitution):
     """
     Find "ConstantHolder" followed by conv layer to substitute a new single layer with weights if needed
     """
 
-    def __init__(self):
+    def __init__(self, fw_info: FrameworkInfo):
         """
         Matches: 'ConstantHolder' followed by conv layer
         """
         first_node = NodeOperationMatcher(ConstantHolder)
         second_node = NodeOperationMatcher(conv2d) | NodeOperationMatcher(conv_transpose2d)
+        self.fw_info = fw_info
         super().__init__(matcher_instance=EdgeMatcher(first_node, second_node))
 
     def substitute(self,
@@ -57,12 +58,12 @@ class ConstantHolderConv(common.BaseSubstitution):
         # Set new layer
         if second_node.type == conv2d:
             NewLayer = Conv2d
-            out_channel_index = 1
         elif second_node.type == conv_transpose2d:
             NewLayer = ConvTranspose2d
-            out_channel_index = 0
         else:
             return graph # skip substitution
+
+        out_channel_index, in_channel_index = self.fw_info.kernel_channels_mapping.get(NewLayer)
 
         # Check if there is a bias node
         bias_node = None
@@ -74,8 +75,8 @@ class ConstantHolderConv(common.BaseSubstitution):
         # Create new node of layer convolution
         weights = first_node.get_weights_by_keys(CONSTANT)
         framework_attr = second_node.framework_attr
-        framework_attr.update({OUT_CHANNELS: weights.shape[1-out_channel_index]})
-        framework_attr.update({IN_CHANNELS: weights.shape[out_channel_index]})
+        framework_attr.update({OUT_CHANNELS: weights.shape[out_channel_index]})
+        framework_attr.update({IN_CHANNELS: weights.shape[in_channel_index]})
         framework_attr.update({KERNEL_SIZE: weights.shape[2:]})
 
         new_node = BaseNode(name=second_node.name,
