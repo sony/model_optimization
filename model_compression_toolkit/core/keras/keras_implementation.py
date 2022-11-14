@@ -242,7 +242,7 @@ class KerasImplementation(FrameworkImplementation):
                                        ScaleEqualizationMidActivationWithPad(quant_config, fw_info)])
         return substitutions_list
 
-    def get_substitutions_prepare_graph(self) -> List[common.BaseSubstitution]:
+    def get_substitutions_prepare_graph(self, fw_info: FrameworkInfo = None) -> List[common.BaseSubstitution]:
         """
 
         Returns: A list of the framework substitutions used to prepare the graph.
