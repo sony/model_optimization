@@ -50,6 +50,8 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.mu
     import MultiHeadAttentionDecomposition
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.permute_call_method import \
     PermuteCallMethod
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.const_holder_conv import \
+    ConstantHolderConv
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.reshape_with_static_shapes import \
@@ -221,7 +223,7 @@ class PytorchImplementation(FrameworkImplementation):
                                        ScaleEqualizationWithPad(quant_config, fw_info)])
         return substitutions_list
 
-    def get_substitutions_prepare_graph(self) -> List[common.BaseSubstitution]:
+    def get_substitutions_prepare_graph(self, fw_info: FrameworkInfo = None) -> List[common.BaseSubstitution]:
         """
 
         Returns: A list of the framework substitutions used before we collect the prior information.
@@ -229,7 +231,8 @@ class PytorchImplementation(FrameworkImplementation):
         """
         return [ReshapeWithStaticShapes(),
                 MultiHeadAttentionDecomposition(),
-                PermuteCallMethod()]
+                PermuteCallMethod(),
+                ConstantHolderConv(fw_info)]
 
     def get_substitutions_pre_statistics_collection(self,
                                                     quant_config: QuantizationConfig

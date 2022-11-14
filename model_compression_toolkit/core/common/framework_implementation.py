@@ -183,7 +183,7 @@ class FrameworkImplementation(ABC):
                              f'framework\'s get_substitutions_channel_equalization method.')
 
     @abstractmethod
-    def get_substitutions_prepare_graph(self) -> List[common.BaseSubstitution]:
+    def get_substitutions_prepare_graph(self, fw_info: FrameworkInfo = None) -> List[common.BaseSubstitution]:
         """
 
         Returns: A list of the framework substitutions used to prepare the graph.
