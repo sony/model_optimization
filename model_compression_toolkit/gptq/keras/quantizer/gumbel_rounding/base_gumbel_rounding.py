@@ -29,13 +29,14 @@ from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 
 P_INIT = 0.01
+GR_SHIFT_BASE = 2
 
 
 def init_aux_var(ceil_indicator: np.ndarray, w_shape: List[int], m: int, p: float = P_INIT) -> np.ndarray:
     """
-    This function generate a random pi matrix for Gumbel Rounding
+    This function generate a random pi matrix for Gumbel Rounding such that the search start at the rounding point.
     Args:
-        ceil_indicator: an array of indicator if the value should be ceil or floor.
+        ceil_indicator: An array of indicator if the value should be ceil or floor.
         w_shape(List[int]): A list of integers that represent the shape of the weights tensor to be quantization.
         p(float): A floating point number that represent the probability of non round options of pi matrix.
         m(int):  An integer that define the number of shift.
@@ -112,7 +113,7 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
 
         self.max_lsbs_change_map = max_lsbs_change_map
         self.max_lsbs_change = max_lsbs_change_map.get(num_bits)
-        self.m = 2 * self.max_lsbs_change + 2
+        self.m = GR_SHIFT_BASE * self.max_lsbs_change + GR_SHIFT_BASE
 
         self.n_cycles = gumbel_config.n_cycles
         self.minimal_temp = gumbel_config.minimal_temp
