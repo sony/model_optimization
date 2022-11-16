@@ -27,7 +27,34 @@ from model_compression_toolkit.gptq.keras.quantizer.kernel_functions import get_
 from model_compression_toolkit.gptq.common import gptq_constants
 
 
-def symmetric_constrained_quantizer(input_tensor: tf.Tensor,
+def symmetric_quantizer(input_tensor: tf.Tensor,
+                                    max_tensor: tf.Tensor,
+                                    num_bits: int,
+                                    signed: bool,
+                                    power_of_two: bool = False) -> tf.Tensor:
+    """
+    Quantize a tensor symmetrically.
+    Args:
+        input_tensor: Tensor to quantize. values of this tensor are not changed during gptq.
+        max_tensor: Tensor with max values to compute the threshold.
+        num_bits: Num of bits to use.
+        signed: Signedness of the quantization range.
+        power_of_two: Whether the threshold should be constrained or not.
+
+    Returns:
+        A quantized tensor.
+    """
+
+    if power_of_two:
+        max_tensor = qutils.power_of_two_max(max_tensor)
+    delta = qutils.calculate_delta(max_tensor, num_bits, signed)
+    tensor_q = qutils.ste_round(input_tensor / delta)
+    min_int = -int(signed) * (2 ** (num_bits - int(signed)))
+    max_int = (2 ** (num_bits - int(signed))) - 1
+    return delta * qutils.ste_clip(tensor_q, max_val=max_int, min_val=min_int)
+
+
+def pertubation_symmetric_quantizer(input_tensor: tf.Tensor,
                                     auxvar_tensor: tf.Variable,
                                     max_tensor: tf.Tensor,
                                     num_bits: int,
@@ -164,7 +191,7 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
                 self.quantization_axis
             reshape_shape = [-1 if i == quantization_axis else 1 for i in range(n_axis)]
             ptq_threshold_tensor = tf.reshape(ptq_threshold_tensor, reshape_shape)
-            q_tensor = symmetric_constrained_quantizer(inputs, auxvar,
+            q_tensor = pertubation_symmetric_quantizer(inputs, auxvar,
                                                        ptq_threshold_tensor,
                                                        self.num_bits,
                                                        self.signed,
@@ -172,7 +199,7 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
                                                        max_lsbs_change=self.max_lsbs_change)
             return q_tensor
         else:
-            return symmetric_constrained_quantizer(inputs, auxvar,
+            return pertubation_symmetric_quantizer(inputs, auxvar,
                                                    ptq_threshold_tensor,
                                                    self.num_bits,
                                                    self.signed,
