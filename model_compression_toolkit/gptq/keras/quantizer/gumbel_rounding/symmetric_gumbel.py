@@ -17,7 +17,8 @@ import numpy as np
 
 from model_compression_toolkit import GumbelConfig
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
-from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.base_gumbel_rounding import GumbelRoundingBase
+from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.base_gumbel_rounding import GumbelRoundingBase, \
+    init_aux_var
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
@@ -26,6 +27,8 @@ from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.gumbel_softm
 from model_compression_toolkit.core.common.constants import THRESHOLD, GUMBEL_MAX_ITER, MIN_THRESHOLD
 from model_compression_toolkit.gptq.common import gptq_constants
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import max_power_of_two
+from model_compression_toolkit.gptq.keras.quantizer.ste_rounding.symmetric_ste import symmetric_quantizer
+
 
 def gumbel_rounding_symmetric_quantizer(input_tensor: tf.Tensor,
                                         auxvar_tensor: tf.Variable,
@@ -51,11 +54,12 @@ def gumbel_rounding_symmetric_quantizer(input_tensor: tf.Tensor,
         max_tensor = qutils.power_of_two_max(max_tensor)
     delta = qutils.calculate_delta(max_tensor, num_bits, signed)
     input_tensor = tf.stop_gradient(input_tensor)
-    input_tensor_int = qutils.ste_round(input_tensor / delta)
+    input_tensor_int = tf.floor(input_tensor / delta)
     tensor_q = input_tensor_int + auxvar_tensor
     min_int = -int(signed) * (2 ** (num_bits - int(signed)))
     max_int = (2 ** (num_bits - int(signed))) - 1
     return delta * qutils.clip(tensor_q, max_val=max_int, min_val=min_int)
+
 
 class SymmetricGumbelRounding(GumbelRoundingBase):
     """
@@ -125,7 +129,23 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
             trainable=False)
         ptq_threshold_tensor.assign(self.threshold_values)
 
-        self.quantizer_parameters.update({self.PTQ_THRESHOLD: ptq_threshold_tensor})
+        auxvar_tensor = layer.add_weight(
+            name + gptq_constants.AUXVAR,
+            shape=[self.m, *self.w_shape],
+            initializer=tf.keras.initializers.Constant(0.0),
+            trainable=True)
+        w = getattr(layer.layer, name)
+        q_error = w - symmetric_quantizer(w,
+                                          ptq_threshold_tensor,
+                                          num_bits=self.num_bits,
+                                          signed=True,
+                                          power_of_two=self.power_of_two)
+
+        ceil_indicator = (q_error < 0).numpy().astype("int")  # Negative error means the choose point is rounded to ceil.
+        auxvar_tensor.assign(init_aux_var(ceil_indicator, self.w_shape, self.m))
+
+        self.quantizer_parameters.update({gptq_constants.AUXVAR: auxvar_tensor,
+                                          self.PTQ_THRESHOLD: ptq_threshold_tensor})
 
         if self.quantization_parameter_learning and not self.power_of_two:
             scale = layer.add_weight(

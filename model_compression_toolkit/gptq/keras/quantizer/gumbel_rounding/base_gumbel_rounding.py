@@ -29,23 +29,32 @@ from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 
 P_INIT = 0.01
+GR_SHIFT_BASE = 2
 
 
-def _init_aux_var(w_shape: List[int], m: int, p: float = P_INIT) -> np.ndarray:
+def init_aux_var(ceil_indicator: np.ndarray, w_shape: List[int], m: int, p: float = P_INIT) -> np.ndarray:
     """
-    This function generate a random pi matrix for Gumbel Rounding
+    This function generate a random pi matrix for Gumbel Rounding such that the search start at the rounding point.
     Args:
-        w_shape(List[int]): A list of integers that represent the shape of the weights tensor to be quantization
+        ceil_indicator: An array of indicator if the value should be ceil or floor.
+        w_shape(List[int]): A list of integers that represent the shape of the weights tensor to be quantization.
         p(float): A floating point number that represent the probability of non round options of pi matrix.
-        m(int):  An integer that define the number of shift
+        m(int):  An integer that define the number of shift.
 
     Returns: A numpy array of pi tensor
 
     """
-    m_hat = m // 2
+    if m < 2:
+        common.logger.Logger.error("m must be larger than two")
+    if m % 2 != 0:
+        common.logger.Logger.error("m must be module two")
+    m_hat = m // 2 - 1
     shift = -np.log(-np.log(1 - p))
     n = np.random.randn(*[m, *w_shape]) * np.sqrt(np.power(np.pi, 2) / 6)
-    n[m_hat, :] += shift
+    n = n.reshape([m, -1]).T
+    ceil_indicator = ceil_indicator.flatten()
+    n[np.arange(ceil_indicator.size), ceil_indicator + m_hat] += shift
+    n = n.T.reshape(*[m, *w_shape])
     return n
 
 
@@ -59,7 +68,7 @@ def _init_shift_var(m: int) -> List[int]:
 
     """
     m_hat = m // 2
-    aux_index_shift = [-m_hat + i for i in range(m)]
+    aux_index_shift = [-m_hat + 1 + i for i in range(m)]
     return aux_index_shift
 
 
@@ -104,7 +113,7 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
 
         self.max_lsbs_change_map = max_lsbs_change_map
         self.max_lsbs_change = max_lsbs_change_map.get(num_bits)
-        self.m = 2 * self.max_lsbs_change + 1
+        self.m = GR_SHIFT_BASE * self.max_lsbs_change + GR_SHIFT_BASE
 
         self.n_cycles = gumbel_config.n_cycles
         self.minimal_temp = gumbel_config.minimal_temp
@@ -165,13 +174,6 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
             initializer=tf.keras.initializers.Constant(0.0),
             trainable=False)
 
-        auxvar_tensor = layer.add_weight(
-            name + gptq_constants.AUXVAR,
-            shape=[self.m, *self.w_shape],
-            initializer=tf.keras.initializers.Constant(0.0),
-            trainable=True)
-        auxvar_tensor.assign(_init_aux_var(self.w_shape, self.m))
-
         temp_tensor = layer.add_weight(
             name + gptq_constants.TEMP,
             shape=[1, *self.w_shape],
@@ -184,8 +186,7 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
                                         trainable=False)
         shift_tensor.assign(_init_shift_var(self.m))
 
-        self.quantizer_parameters = {gptq_constants.AUXVAR: auxvar_tensor,
-                                     gptq_constants.GPTQ_ITER: ar_iter,
+        self.quantizer_parameters = {gptq_constants.GPTQ_ITER: ar_iter,
                                      gptq_constants.AUXSHIFT: shift_tensor,
                                      gptq_constants.TEMP: temp_tensor}
         return self.quantizer_parameters
@@ -249,7 +250,6 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
         else:
             self.tau = self.tau_function(ar_iter)
         if self.update_gumbel_param and training:
-
             ar_iter.assign_add(1.0)
             self.g_t = sample_gumbel([self.m, *self.w_shape])
 

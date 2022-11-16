@@ -17,7 +17,8 @@ import numpy as np
 
 from model_compression_toolkit import GumbelConfig
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
-from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.base_gumbel_rounding import GumbelRoundingBase
+from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.base_gumbel_rounding import GumbelRoundingBase, \
+    init_aux_var
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
@@ -25,6 +26,7 @@ from typing import Dict, Any, List
 from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.gumbel_softmax import gumbel_softmax, ste_gumbel
 from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.gptq.common import gptq_constants
+from model_compression_toolkit.gptq.keras.quantizer.ste_rounding.uniform_ste import rounding_uniform_quantizer
 
 
 def gumbel_rounding_uniform_quantizer(tensor_data: tf.Tensor,
@@ -52,7 +54,7 @@ def gumbel_rounding_uniform_quantizer(tensor_data: tf.Tensor,
     # Compute the step size of quantized values.
     delta = (b - a) / (2 ** n_bits - 1)
 
-    input_tensor_int = tf.stop_gradient(tf.round((tensor_data - a) / delta))  # Apply rounding
+    input_tensor_int = tf.stop_gradient(tf.floor((tensor_data - a) / delta))  # Apply rounding
     tensor_q = input_tensor_int + auxvar_tensor
 
     # Clip data in range
@@ -131,7 +133,19 @@ class UniformGumbelRounding(GumbelRoundingBase):
             trainable=self.quantization_parameter_learning)
         min_range.assign(self.min_range)
 
-        self.quantizer_parameters.update({self.PTQ_MAX_RANGE: max_range,
+        auxvar_tensor = layer.add_weight(
+            name + gptq_constants.AUXVAR,
+            shape=[self.m, *self.w_shape],
+            initializer=tf.keras.initializers.Constant(0.0),
+            trainable=True)
+        w = getattr(layer.layer, name)
+        q_error = w - rounding_uniform_quantizer(w, min_range, max_range,
+                                                 n_bits=self.num_bits)
+        ceil_indicator = (q_error < 0).numpy().astype("int")  # Negative error means the choose point is rounded to ceil.
+        auxvar_tensor.assign(init_aux_var(ceil_indicator, self.w_shape, self.m))
+
+        self.quantizer_parameters.update({gptq_constants.AUXVAR: auxvar_tensor,
+                                          self.PTQ_MAX_RANGE: max_range,
                                           self.PTQ_MIN_RANGE: min_range})
         return self.quantizer_parameters
 
