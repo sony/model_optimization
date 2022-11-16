@@ -141,8 +141,8 @@ class UniformGumbelRounding(GumbelRoundingBase):
         w = getattr(layer.layer, name)
         q_error = w - rounding_uniform_quantizer(w, min_range, max_range,
                                                  n_bits=self.num_bits)
-        celled_indicator = (q_error < 0).numpy().astype("int")  # Negative error means the choose point is celled
-        auxvar_tensor.assign(init_aux_var(celled_indicator, self.w_shape, self.m))
+        ceil_indicator = (q_error < 0).numpy().astype("int")  # Negative error means the choose point is rounded to ceil.
+        auxvar_tensor.assign(init_aux_var(ceil_indicator, self.w_shape, self.m))
 
         self.quantizer_parameters.update({gptq_constants.AUXVAR: auxvar_tensor,
                                           self.PTQ_MAX_RANGE: max_range,

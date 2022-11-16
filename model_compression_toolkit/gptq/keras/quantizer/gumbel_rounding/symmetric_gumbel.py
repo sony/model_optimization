@@ -141,8 +141,8 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
                                           signed=True,
                                           power_of_two=self.power_of_two)
 
-        celled_indicator = (q_error < 0).numpy().astype("int")  # Negative error means the choose point is celled
-        auxvar_tensor.assign(init_aux_var(celled_indicator, self.w_shape, self.m))
+        ceil_indicator = (q_error < 0).numpy().astype("int")  # Negative error means the choose point is rounded to ceil.
+        auxvar_tensor.assign(init_aux_var(ceil_indicator, self.w_shape, self.m))
 
         self.quantizer_parameters.update({gptq_constants.AUXVAR: auxvar_tensor,
                                           self.PTQ_THRESHOLD: ptq_threshold_tensor})
