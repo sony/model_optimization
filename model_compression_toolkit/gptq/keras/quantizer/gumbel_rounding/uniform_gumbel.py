@@ -139,6 +139,17 @@ class UniformGumbelRounding(GumbelRoundingBase):
             initializer=tf.keras.initializers.Constant(0.0),
             trainable=True)
         w = getattr(layer.layer, name)
+
+        if self.per_axis:
+            input_shape = tensor_shape
+            n_axis = len(input_shape)
+            quantization_axis = n_axis + self.quantization_axis if self.quantization_axis < 0 else \
+                self.quantization_axis
+            reshape_shape = [-1 if i == quantization_axis else 1 for i in range(n_axis)]
+
+            min_range = tf.reshape(min_range, reshape_shape)
+            max_range = tf.reshape(max_range, reshape_shape)
+
         q_error = w - rounding_uniform_quantizer(w, min_range, max_range,
                                                  n_bits=self.num_bits)
         ceil_indicator = (q_error < 0).numpy().astype("int")  # Negative error means the choose point is rounded to ceil.
