@@ -259,7 +259,8 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
         else:
             old_threshold = self.quantizer_parameters[self.PTQ_THRESHOLD]
             if self.quantization_parameter_learning:
-                old_threshold = old_threshold * self.quantizer_parameters[self.SCALE_PTQ]
+                scale = tf.reshape(self.quantizer_parameters[self.SCALE_PTQ], self.threshold_shape)
+                old_threshold = old_threshold * scale
             old_threshold = old_threshold.numpy()
         old_threshold = old_threshold.reshape(self.threshold_shape)
         return {THRESHOLD: old_threshold}
