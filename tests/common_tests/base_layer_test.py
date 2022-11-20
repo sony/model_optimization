@@ -69,18 +69,16 @@ class BaseLayerTest(BaseTest):
                 if isinstance(qc, MixedPrecisionQuantizationConfig):
                     ptq_model, quantization_info = self.get_mixed_precision_ptq_facade()(model_float,
                                                                                          self.representative_data_gen,
-                                                                                         n_iter=self.num_calibration_iter,
                                                                                          quant_config=qc,
                                                                                          fw_info=self.get_fw_info(),
                                                                                          target_platform_capabilities=self.get_tpc())
                 else:
                     ptq_model, quantization_info = self.get_ptq_facade()(model_float,
                                                                          self.representative_data_gen,
-                                                                         n_iter=self.num_calibration_iter,
                                                                          quant_config=qc,
                                                                          fw_info=self.get_fw_info(),
                                                                          target_platform_capabilities=self.get_tpc())
 
-                self.compare(ptq_model, model_float, input_x=self.representative_data_gen(),
+                self.compare(ptq_model, model_float, input_x=self.representative_data_gen().__next__(),
                              quantization_info=quantization_info)
 

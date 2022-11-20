@@ -188,7 +188,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
 class TestSearchBitwidthConfiguration(unittest.TestCase):
 
     def test_search_engine(self):
-        core_config = CoreConfig(n_iter=1, quantization_config=DEFAULTCONFIG,
+        core_config = CoreConfig(quantization_config=DEFAULTCONFIG,
                                  mixed_precision_config=MixedPrecisionQuantizationConfigV2(compute_mse,
                                                                                            get_average_weights,
                                                                                            num_of_images=1,

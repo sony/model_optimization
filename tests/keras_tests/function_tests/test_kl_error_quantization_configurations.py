@@ -70,7 +70,6 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
             q_model, quantization_info = mct.keras_post_training_quantization(model,
                                                                               representative_data_gen,
-                                                                              n_iter=1,
                                                                               quant_config=qc,
                                                                               fw_info=DEFAULT_KERAS_INFO,
                                                                               target_platform_capabilities=tpc)
@@ -90,7 +89,6 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
             q_model, quantization_info = mct.keras_post_training_quantization(model,
                                                                               representative_data_gen,
-                                                                              n_iter=1,
                                                                               quant_config=qc,
                                                                               fw_info=DEFAULT_KERAS_INFO,
                                                                               target_platform_capabilities=tpc)

@@ -98,6 +98,7 @@ if FOUND_TORCH:
                                                                  target_kpi: KPI = None,
                                                                  core_config: CoreConfig = CoreConfig(),
                                                                  gptq_config: GradientPTQConfig = None,
+                                                                 gptq_representative_data_gen: Callable = None,
                                                                  target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC,
                                                                  new_experimental_exporter: bool = False):
         """
@@ -122,6 +123,7 @@ if FOUND_TORCH:
             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
+            gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to. `Default PyTorch TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/tpc_models/pytorch_tp_models/pytorch_default.py>`_
             new_experimental_exporter (bool): Whether exporting the quantized model using new exporter or not (in progress. Avoiding it for now is recommended).
 
@@ -138,11 +140,11 @@ if FOUND_TORCH:
             Create a random dataset generator:
 
             >>> import numpy as np
-            >>> def repr_datagen(): return [np.random.random((1,3,224,224))]
+            >>> def repr_datagen(): yield [np.random.random((1,3,224,224))]
 
             Create MCT core configurations with number of calibration iterations set to 1:
 
-            >>> config = mct.CoreConfig(n_iter=1)
+            >>> config = mct.CoreConfig()
 
             Pass the module, the representative dataset generator and the configuration (optional) to get a quantized module
 
@@ -178,7 +180,10 @@ if FOUND_TORCH:
         # ---------------------- #
         # GPTQ Runner
         # ---------------------- #
-        graph_gptq = gptq_runner(graph, core_config, gptq_config, representative_data_gen, DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
+        graph_gptq = gptq_runner(graph, core_config, gptq_config,
+                                 representative_data_gen,
+                                 gptq_representative_data_gen if gptq_representative_data_gen else representative_data_gen,
+                                 DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen, tb_w, graph_gptq, fw_impl, DEFAULT_PYTORCH_INFO)
 

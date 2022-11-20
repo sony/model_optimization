@@ -89,7 +89,7 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
     def run_test_for_threshold_method(self, threshold_method, per_channel=True):
         qc = QuantizationConfig(weights_error_method=threshold_method,
                                 weights_per_channel_threshold=per_channel)
-        core_config = CoreConfig(n_iter=1, quantization_config=qc)
+        core_config = CoreConfig(quantization_config=qc)
 
         tp = generate_test_tp_model({
             'weights_quantization_method': mct.target_platform.QuantizationMethod.SYMMETRIC})

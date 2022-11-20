@@ -87,13 +87,11 @@ if __name__ == '__main__':
     # calling representative_data_gen() should return a list
     # of two numpy.ndarray objects where the arrays' shapes are [(20, 32, 32, 3), (20, 224, 224, 3)].
     def representative_data_gen() -> list:
-        return [image_data_loader.sample()]
+        for _ in range(args.num_calibration_iterations):
+            yield [image_data_loader.sample()]
 
     # Create a model to quantize.
     model = mobilenet_v2()
-
-    # Set the number of calibration iterations.
-    num_iter = args.num_calibration_iterations
 
     # Create a mixed-precision quantization configuration with possible mixed-precision search options.
     # MCTwill search a mixed-precision configuration (namely, bit-width for each layer)
@@ -127,6 +125,5 @@ if __name__ == '__main__':
     quantized_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(model,
                                                                                                 representative_data_gen,
                                                                                                 target_kpi=kpi,
-                                                                                                n_iter=num_iter,
                                                                                                 quant_config=configuration,
                                                                                                 target_platform_capabilities=target_platform_cap)

@@ -126,7 +126,6 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                 torch_traced = torch.jit.trace(quantized_model, input_x)
                 torch_script_model = torch.jit.script(torch_traced)
 
-
     def run_test(self, seed=0, experimental_facade=False):
         np.random.seed(seed)
         random.seed(a=seed)
@@ -135,7 +134,8 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         x = self.generate_inputs(input_shapes)
 
         def representative_data_gen():
-            return x
+            for _ in range(self.num_calibration_iter):
+                yield x
 
         ptq_models = {}
         model_float = self.create_feature_network(input_shapes)
@@ -162,7 +162,6 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                 if isinstance(quant_config, MixedPrecisionQuantizationConfig):
                     ptq_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(model_float,
                                                                                                           representative_data_gen,
-                                                                                                          n_iter=self.num_calibration_iter,
                                                                                                           quant_config=quant_config,
                                                                                                           fw_info=DEFAULT_PYTORCH_INFO,
                                                                                                           network_editor=self.get_network_editor(),
@@ -174,7 +173,6 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                 else:
                     ptq_model, quantization_info = mct.pytorch_post_training_quantization(model_float,
                                                                                           representative_data_gen,
-                                                                                          n_iter=1,
                                                                                           quant_config=quant_config,
                                                                                           fw_info=DEFAULT_PYTORCH_INFO,
                                                                                           network_editor=self.get_network_editor(),

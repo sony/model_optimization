@@ -94,7 +94,8 @@ class NetworkTest(object):
 
     def run_network(self, inputs_list, qc, tpc):
         def representative_data_gen():
-            return inputs_list
+            for _ in range(self.num_calibration_iter):
+                yield inputs_list
 
         if self.gptq:
             arc = model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(n_iter=2,
@@ -108,7 +109,6 @@ class NetworkTest(object):
                                                                                 representative_data_gen,
                                                                                 quant_config=qc,
                                                                                 fw_info=DEFAULT_KERAS_INFO,
-                                                                                n_iter=self.num_calibration_iter,
                                                                                 gptq_config=arc,
                                                                                 target_platform_capabilities=tpc)
         else:
@@ -116,7 +116,6 @@ class NetworkTest(object):
                                                                                 representative_data_gen,
                                                                                 quant_config=qc,
                                                                                 fw_info=DEFAULT_KERAS_INFO,
-                                                                                n_iter=self.num_calibration_iter,
                                                                                 target_platform_capabilities=tpc)
         self.compare(inputs_list, ptq_model, qc, tpc)
 

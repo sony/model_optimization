@@ -44,7 +44,7 @@ class BaseLayerFusingTest(BasePytorchTest):
 
     def representative_data_gen(self):
         input_shapes = self.create_inputs_shape()
-        return self.generate_inputs(input_shapes)
+        yield self.generate_inputs(input_shapes)
 
     def get_type(self, fusion):
         fusion_types = [x.type for x in fusion]

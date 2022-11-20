@@ -56,8 +56,8 @@ def _collect_and_assign_act_threshold(graph: Graph,
                         fw_impl,
                         fw_info)
 
-    for _ in tqdm(range(core_config.n_iter)):
-        mi.infer(representative_data_gen())
+    for _data in tqdm(representative_data_gen()):
+        mi.infer(_data)
 
     for n in list(graph.nodes):
         if n.is_activation_quantization_enabled():

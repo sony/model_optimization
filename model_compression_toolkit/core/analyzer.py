@@ -17,7 +17,7 @@
 from typing import Callable
 
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common import FrameworkInfo
+from model_compression_toolkit.core.common import FrameworkInfo, Logger
 from model_compression_toolkit.core.common.constants import NUM_SAMPLES_DISTANCE_TENSORBOARD
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 
@@ -50,9 +50,13 @@ def analyzer_model_quantization(representative_data_gen: Callable,
                               fw_impl=fw_impl,
                               fw_info=fw_info)
 
-        for i in range(NUM_SAMPLES_DISTANCE_TENSORBOARD):
-            figure = visual.plot_distance_graph(representative_data_gen(),
+        for i, _data in enumerate(representative_data_gen()):
+            if i >= NUM_SAMPLES_DISTANCE_TENSORBOARD:
+                break
+            figure = visual.plot_distance_graph(_data,
                                                 distance_fn=compute_cs,
                                                 convert_to_range=lambda a: 1 - 2 * a)
             tb_w.add_figure(figure, f'similarity_distance_sample_{i}')
+        else:
+            Logger.warning(f'Not enough batches in representative dataset to generate {NUM_SAMPLES_DISTANCE_TENSORBOARD} figures')
         tb_w.close()

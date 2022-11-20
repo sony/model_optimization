@@ -161,9 +161,9 @@ class GPTQTrainer(ABC):
         # First, select images to use for all measurements.
         samples_count = 0  # Number of images we used so far to compute the distance matrix.
         images = []
-        while samples_count < num_samples_for_loss:
-            # Get a batch of images to infer in both models.
-            inference_batch_input = representative_data_gen()
+        for inference_batch_input in representative_data_gen():
+            if samples_count >= num_samples_for_loss:
+                break
             num_images = inference_batch_input[0].shape[0]
 
             # If we sampled more images than we should,
@@ -175,6 +175,11 @@ class GPTQTrainer(ABC):
 
             images.append(inference_batch_input[0])
             samples_count += num_images
+        else:
+            if samples_count < num_samples_for_loss:
+                Logger.warning(f'Not enough images in representative dataset to generate {num_samples_for_loss} data points, '
+                               f'only {samples_count} were generated')
+
         return np.concatenate(images, axis=0)
 
 

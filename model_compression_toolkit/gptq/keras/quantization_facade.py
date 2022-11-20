@@ -110,6 +110,7 @@ if common.constants.FOUND_TF:
     def keras_gradient_post_training_quantization_experimental(in_model: Model,
                                                                representative_data_gen: Callable,
                                                                gptq_config: GradientPTQConfig,
+                                                               gptq_representative_data_gen: Callable = None,
                                                                target_kpi: KPI = None,
                                                                core_config: CoreConfig = CoreConfig(),
                                                                fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
@@ -136,6 +137,7 @@ if common.constants.FOUND_TF:
             in_model (Model): Keras model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
+            gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
@@ -156,7 +158,7 @@ if common.constants.FOUND_TF:
             Create a random dataset generator:
 
             >>> import numpy as np
-            >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
+            >>> def repr_datagen(): yield [np.random.random((1,224,224,3))]
 
             Create an MCT core config, containing the quantization configuration:
 
@@ -166,7 +168,7 @@ if common.constants.FOUND_TF:
             with different bitwidths for different layers.
             The candidates bitwidth for quantization should be defined in the target platform model:
 
-            >>> config = mct.CoreConfig(n_iter=1, mixed_precision_config=mct.MixedPrecisionQuantizationConfigV2(num_of_images=1))
+            >>> config = mct.CoreConfig(mixed_precision_config=mct.MixedPrecisionQuantizationConfigV2(num_of_images=1))
 
             For mixed-precision set a target KPI object:
             Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
@@ -212,6 +214,7 @@ if common.constants.FOUND_TF:
                               core_config,
                               gptq_config,
                               representative_data_gen,
+                              gptq_representative_data_gen if gptq_representative_data_gen else representative_data_gen,
                               fw_info,
                               fw_impl,
                               tb_w)

@@ -74,6 +74,7 @@ def gptq_runner(tg: Graph,
                 core_config: CoreConfig,
                 gptq_config: GradientPTQConfig,
                 representative_data_gen: Callable,
+                gptq_representative_data_gen: Callable,
                 fw_info: FrameworkInfo,
                 fw_impl: FrameworkImplementation,
                 tb_w: TensorboardWriter) -> Graph:
@@ -86,6 +87,7 @@ def gptq_runner(tg: Graph,
         core_config: CoreConfig containing parameters of how the model should be quantized.
         gptq_config: GradientPTQConfig with parameters about the tuning process.
         representative_data_gen: Dataset used for calibration.
+        gptq_representative_data_gen: Dataset used for GPTQ training
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.)
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tb_w: A TensorBoardWriter object initialized with the logger dir path if it was set, or None otherwise.
@@ -106,7 +108,7 @@ def gptq_runner(tg: Graph,
     # Gradient Based Post Training Quantization
     #############################################
     tg_gptq = _apply_gptq(gptq_config,
-                          representative_data_gen,
+                          gptq_representative_data_gen,
                           tb_w,
                           tg,
                           tg_bias,

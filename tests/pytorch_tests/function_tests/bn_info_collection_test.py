@@ -154,7 +154,7 @@ class BNInfoCollectionTest(BasePytorchTest):
         x = self.generate_inputs(input_shapes)
 
         def representative_data_gen():
-            return x
+            yield x
 
         graph = pytorch_impl.model_reader(in_model, representative_data_gen)  # model reading
         graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())
@@ -203,7 +203,7 @@ class Conv2D2BNInfoCollectionTest(BasePytorchTest):
         x = self.generate_inputs(input_shapes)
 
         def representative_data_gen():
-            return x
+            yield x
 
         graph = pytorch_impl.model_reader(in_model, representative_data_gen)  # model reading
         graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())
@@ -275,7 +275,7 @@ class Conv2DBNChainInfoCollectionTest(BasePytorchTest):
         x = self.generate_inputs(input_shapes)
 
         def representative_data_gen():
-            return x
+            yield x
 
         graph = pytorch_impl.model_reader(in_model, representative_data_gen)  # model reading
         graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())
@@ -335,7 +335,7 @@ class BNChainInfoCollectionTest(BasePytorchTest):
         x = self.generate_inputs(input_shapes)
 
         def representative_data_gen():
-            return x
+            yield x
 
         graph = pytorch_impl.model_reader(in_model, representative_data_gen)  # model reading
         graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())
@@ -407,7 +407,7 @@ class BNLayerInfoCollectionTest(BasePytorchTest):
         x = self.generate_inputs(input_shapes)
 
         def representative_data_gen():
-            return x
+            yield x
 
         graph = pytorch_impl.model_reader(in_model, representative_data_gen)  # model reading
         graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())
@@ -515,7 +515,7 @@ class INP2BNInfoCollectionTest(BasePytorchTest):
         x = self.generate_inputs(input_shapes)
 
         def representative_data_gen():
-            return x
+            yield x
 
         graph = pytorch_impl.model_reader(in_model, representative_data_gen)  # model reading
         graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())

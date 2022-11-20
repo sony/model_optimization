@@ -217,7 +217,6 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
             qc = self.get_quantization_config()
             tg, graph_after_second_moment_correction = self.prepare_graph(model_float,
                                                                           self.representative_data_gen,
-                                                                          n_iter=self.num_calibration_iter,
                                                                           quant_config=qc,
                                                                           fw_info=self.get_fw_info(),
                                                                           network_editor=self.get_network_editor(),
@@ -247,7 +246,6 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
     def prepare_graph(self,
                       in_model: Model,
                       representative_data_gen: Callable,
-                      n_iter: int = 500,
                       quant_config: QuantizationConfig = DEFAULTCONFIG,
                       fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                       network_editor: List[EditRule] = [],
@@ -258,8 +256,7 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
         KerasModelValidation(model=in_model,
                              fw_info=fw_info).validate()
 
-        core_config = CoreConfig(n_iter,
-                                 quantization_config=quant_config,
+        core_config = CoreConfig(quantization_config=quant_config,
                                  debug_config=DebugConfig(analyze_similarity=analyze_similarity,
                                                           network_editor=network_editor)
                                  )

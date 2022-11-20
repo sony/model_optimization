@@ -78,7 +78,6 @@ class TestGetGPTQConfig(unittest.TestCase):
         for gptq_config in gptq_configurations:
             keras_post_training_quantization(in_model=build_model(SHAPE[1:]),
                                              representative_data_gen=random_datagen,
-                                             n_iter=1,
                                              quant_config=qc,
                                              gptq_config=gptq_config)
 

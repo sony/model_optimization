@@ -213,7 +213,6 @@ class TestPytorchTPModel(unittest.TestCase):
         self.assertEqual(p1[1], LayerFilterParams(torch.relu, Greater("max_value", 7), negative_slope=0))
 
 
-
 class TestGetPytorchTPC(unittest.TestCase):
 
     def test_get_pytorch_models(self):
@@ -221,11 +220,10 @@ class TestGetPytorchTPC(unittest.TestCase):
         model = mobilenet_v2(pretrained=True)
 
         def rep_data():
-            return [np.random.randn(1, 3, 224, 224)]
+            yield [np.random.randn(1, 3, 224, 224)]
 
         quantized_model, _ = mct.pytorch_post_training_quantization(model,
                                                                     rep_data,
-                                                                    n_iter=1,
                                                                     target_platform_capabilities=tpc)
 
         mp_qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
@@ -233,7 +231,6 @@ class TestGetPytorchTPC(unittest.TestCase):
         quantized_model, _ = mct.pytorch_post_training_quantization_mixed_precision(model,
                                                                                     rep_data,
                                                                                     target_kpi=mct.KPI(np.inf),
-                                                                                    n_iter=1,
                                                                                     target_platform_capabilities=tpc,
                                                                                     quant_config=mp_qc)
 
@@ -273,8 +270,11 @@ class TestGetPytorchTPC(unittest.TestCase):
         self.assertTrue(e.exception)
 
 
-
 def get_node(layer):
     model = LayerTestModel(layer)
-    graph = PytorchImplementation().model_reader(model, lambda: [np.random.randn(1, 3, 16, 16)])
+
+    def rep_data():
+        yield [np.random.randn(1, 3, 16, 16)]
+
+    graph = PytorchImplementation().model_reader(model, rep_data)
     return graph.get_topo_sorted_nodes()[1]

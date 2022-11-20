@@ -95,7 +95,8 @@ if __name__ == '__main__':
     # Calling representative_data_gen() should return a list
     # of two numpy.ndarray objects where the arrays' shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].
     def representative_data_gen() -> list:
-        return [image_data_loader.sample()]
+        for _ in range(args.num_calibration_iterations):
+            yield [image_data_loader.sample()]
 
 
     # Get a TargetPlatformModel object that models the hardware for the quantized model inference.
@@ -112,8 +113,7 @@ if __name__ == '__main__':
 
     # Create a core quantization configuration, set the mixed-precision configuration,
     # and set the number of calibration iterations.
-    config = mct.CoreConfig(n_iter=args.num_calibration_iterations,
-                            mixed_precision_config=mixed_precision_config)
+    config = mct.CoreConfig(mixed_precision_config=mixed_precision_config)
 
     # Get KPI information to constraint your model's memory size.
     # Retrieve a KPI object with helpful information of each KPI metric,

@@ -124,16 +124,16 @@ def get_dataset(_num_classes):
     return x_train, y_train, x_test, y_test
 
 
-def gen_representative_dataset(_images):
+def gen_representative_dataset(_images, num_calibration_iterations):
     # Return a Callable representative dataset for calibration purposes.
     # The function should be called without any arguments, and should return a list numpy arrays (array
     # for each model's input).
     # In this tutorial, each time the representative dataset is called it returns a list containing a single
     # MNIST image of shape (1, 28, 28, 1).
     def _generator():
-        for _img in _images:
-            yield [_img[np.newaxis, ...]]
-    return _generator().__next__
+        for _ind in range(num_calibration_iterations):
+            yield [_images[_ind][np.newaxis, ...]]
+    return _generator
 
 
 def argument_handler():
@@ -145,7 +145,6 @@ def argument_handler():
     parser.add_argument('--num_calibration_iterations', type=int, default=10,
                         help='number of iterations for calibration - model quantization before fine-tuning.')
     return parser.parse_args()
-
 
 
 if __name__ == "__main__":
@@ -180,14 +179,14 @@ if __name__ == "__main__":
 
     # prepare a representative dataset callable from the MNIST training images for calibrating the initial
     # quantization parameters by the MCT.
-    representative_dataset = gen_representative_dataset(x_train)
+    representative_dataset = gen_representative_dataset(x_train, args.num_calibration_iterations)
 
     # prepare model for QAT with MCT and return to user for fine-tuning. Due to the relatively easy
     # task of quantizing model trained on MNIST, a custom TPC is used in this example to demonstrate
     # the degradation caused by post training quantization.
     qat_model, _, _ = mct.keras_quantization_aware_training_init(model,
                                                                  representative_dataset,
-                                                                 core_config=mct.CoreConfig(n_iter=args.num_calibration_iterations),
+                                                                 core_config=mct.CoreConfig(),
                                                                  target_platform_capabilities=get_tpc())
 
     # Evaluate QAT-ready model accuracy from MCT. This model is fully quantized with QuantizeWrappers

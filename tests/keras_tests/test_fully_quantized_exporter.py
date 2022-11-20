@@ -40,13 +40,13 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         seed = np.random.randint(0, 100, size=1)[0]
 
         self.set_seed(seed)
-        core_config = mct.CoreConfig(n_iter=1)
+        core_config = mct.CoreConfig()
         old_export_model, _ = mct.keras_post_training_quantization_experimental(in_model=MobileNetV2(),
                                                                                 representative_data_gen=repr_dataset,
                                                                                 core_config=core_config)
 
         self.set_seed(seed)
-        core_config = mct.CoreConfig(n_iter=1)
+        core_config = mct.CoreConfig()
         new_export_model, _ = mct.keras_post_training_quantization_experimental(in_model=MobileNetV2(),
                                                                                 core_config=core_config,
                                                                                 representative_data_gen=repr_dataset,

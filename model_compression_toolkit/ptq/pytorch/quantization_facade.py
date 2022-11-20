@@ -78,13 +78,13 @@ if FOUND_TORCH:
             Create a random dataset generator:
 
             >>> import numpy as np
-            >>> def repr_datagen(): return [np.random.random((1,3,224,224))]
+            >>> def repr_datagen(): yield [np.random.random((1,3,224,224))]
 
             Import MCT and pass the module with the representative dataset generator to get a quantized module
             Set number of clibration iterations to 1:
 
             >>> import model_compression_toolkit as mct
-            >>> quantized_module, quantization_info = mct.pytorch_post_training_quantization(module, repr_datagen, n_iter=1)
+            >>> quantized_module, quantization_info = mct.pytorch_post_training_quantization(module, repr_datagen)
 
         """
 

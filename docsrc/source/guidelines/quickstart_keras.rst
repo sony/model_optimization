@@ -100,7 +100,6 @@ Run Post Training Quantization:
 
     quantized_model, quantization_info = mct.keras_post_training_quantization(model,
                                                                               representative_data_gen,
-                                                                              target_platform_capabilities=target_platform_cap,
-                                                                              n_iter=10)
+                                                                              target_platform_capabilities=target_platform_cap)
 
 |

@@ -339,9 +339,9 @@ class SensitivityEvaluation:
         # First, select images to use for all measurements.
         samples_count = 0  # Number of images we used so far to compute the distance matrix.
         images_batches = []
-        while samples_count < num_of_images:
-            # Get a batch of images to infer in both models.
-            inference_batch_input = self.representative_data_gen()
+        for inference_batch_input in self.representative_data_gen():
+            if samples_count >= num_of_images:
+                break
             batch_size = inference_batch_input[0].shape[0]
 
             # If we sampled more images than we should use in the distance matrix,
@@ -353,6 +353,10 @@ class SensitivityEvaluation:
 
             images_batches.append(inference_batch_input)
             samples_count += batch_size
+        else:
+            if samples_count < num_of_images:
+                Logger.warning(f'Not enough images in representative dataset to generate {num_of_images} data points, '
+                               f'only {samples_count} were generated')
         return images_batches
 
     def _update_ips_with_outputs_replacements(self):

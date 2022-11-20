@@ -85,17 +85,17 @@ if FOUND_TF:
              Create a random dataset generator:
 
              >>> import numpy as np
-             >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
+             >>> def repr_datagen(): yield [np.random.random((1,224,224,3))]
 
              Create a MCT core config, containing the quantization configuration and set the number of calibration iterations to 1:
 
-             >>> config = mct.CoreConfig(n_iter=1)
+             >>> config = mct.CoreConfig()
 
              If mixed precision is desired, create a MCT core config with a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
              The candidates bitwidth for quantization should be defined in the target platform model.
              In this example we use 1 image to search mixed-precision configuration:
 
-             >>> config = mct.CoreConfig(n_iter=1, mixed_precision_config=mct.MixedPrecisionQuantizationConfigV2(num_of_images=1))
+             >>> config = mct.CoreConfig(mixed_precision_config=mct.MixedPrecisionQuantizationConfigV2(num_of_images=1))
 
              For mixed-precision set a target KPI object:
              Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
