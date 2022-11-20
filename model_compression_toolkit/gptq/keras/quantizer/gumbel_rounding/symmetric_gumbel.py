@@ -135,6 +135,15 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
             initializer=tf.keras.initializers.Constant(0.0),
             trainable=True)
         w = getattr(layer.layer, name)
+
+        if self.per_axis:
+            input_shape = tensor_shape
+            n_axis = len(input_shape)
+            quantization_axis = n_axis + self.quantization_axis if self.quantization_axis < 0 else \
+                self.quantization_axis
+            reshape_shape = [-1 if i == quantization_axis else 1 for i in range(n_axis)]
+            ptq_threshold_tensor = tf.reshape(ptq_threshold_tensor, reshape_shape)
+
         q_error = w - symmetric_quantizer(w,
                                           ptq_threshold_tensor,
                                           num_bits=self.num_bits,
