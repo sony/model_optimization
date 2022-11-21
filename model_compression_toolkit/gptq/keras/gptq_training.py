@@ -235,7 +235,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         """
         i_iter = 0
         while n_iteration > i_iter:
-            for data in tqdm(data_function()):
+            for data in tqdm(data_function(), initial=i_iter, total=n_iteration):
                 input_data = [d * self.input_scale for d in data]
 
                 loss_value_step, grads = self.nano_training_step(input_data, in_compute_gradients, in_optimizer_with_param, is_training)

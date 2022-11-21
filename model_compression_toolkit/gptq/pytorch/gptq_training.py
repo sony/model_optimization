@@ -175,7 +175,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         """
         i_iter = 0
         while n_iteration > i_iter:
-            for data in tqdm(data_function()):
+            for data in tqdm(data_function(), initial=i_iter, total=n_iteration):
                 input_data = [d * self.input_scale for d in data]
                 input_tensor = to_torch_tensor(input_data)
                 y_float = self.float_model(input_tensor)  # running float model
