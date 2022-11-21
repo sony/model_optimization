@@ -260,7 +260,7 @@ def pytorch_iterative_approx_jacobian_trace(graph_float: common.Graph,
                 jac_v = torch.reshape(jac_v, [jac_v.shape[0], -1])
                 jac_trace_approx = torch.mean(torch.sum(torch.pow(jac_v, 2.0)))
                 trace_jv.append(jac_trace_approx)
-            ipts_jac_trace_approx.append(torch.sqrt(torch.mean(torch.stack(trace_jv))))  # Get averaged jacobian trace approximation
+            ipts_jac_trace_approx.append(2*torch.mean(torch.stack(trace_jv))/output.shape[-1])  # Get averaged jacobian trace approximation
         outputs_jacobians_approx.append(ipts_jac_trace_approx)
 
     mean_per_point = torch_tensor_to_numpy(torch.mean(torch.Tensor(outputs_jacobians_approx), dim=0))  # Get mean of jacobians of all model's outputs

@@ -51,7 +51,7 @@ class WeightQuantizerWrapper(nn.Module):
         setattr(getattr(self.op, KERNEL), 'requires_grad', True)
 
         # quantizer
-        self.weight_quantizer = weight_quantizer(node.final_weights_quantization_cfg, gptq_config, self.float_weight.shape)
+        self.weight_quantizer = weight_quantizer(node.final_weights_quantization_cfg, gptq_config, self.float_weight)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """

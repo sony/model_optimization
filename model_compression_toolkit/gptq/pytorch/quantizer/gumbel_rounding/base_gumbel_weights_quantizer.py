@@ -16,8 +16,8 @@ from typing import Union, List
 from abc import abstractmethod
 import torch
 import numpy as np
-from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
+from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.gptq.pytorch.quantizer.gptq_quantizer import BaseWeightQuantizer
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
 from model_compression_toolkit.gptq.pytorch.quantizer.quant_utils import sample_gumbel
@@ -25,24 +25,34 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.core.common.target_platform.op_quantization_config import QuantizationMethod
 
 P_INIT = 0.01
+GR_SHIFT_BASE = 2
 
 
-def init_aux_var(w_shape: torch.Size, m: int, p: float = P_INIT) -> torch.Tensor:
+def init_aux_var(ceil_indicator: torch.Tensor, w_shape: torch.Size, m: int, p: float = P_INIT) -> torch.Tensor:
     """
     This function generate a random pi matrix for Gumbel Rounding
     Args:
+        ceil_indicator: An array of indicator if the value should be ceil or floor.
         w_shape(torch.Size): A list of integers that represent the shape of the weights tensor to be quantization
-        p(float): A floating point number that represent the probability of non-round options of pi matrix.
         m(int):  An integer that define the number of shift
+        p(float): A floating point number that represent the probability of non-round options of pi matrix.
 
     Returns: A torch tensor of pi tensor
 
     """
-    m_hat = m // 2
+
+    if m < 2:
+        Logger.error("m must be larger than two")
+    if m % 2 != 0:
+        Logger.error("m must be module two")
+    m_hat = m // 2 - 1
     shift = -np.log(-np.log(1 - p))
-    n = torch.randn([m, *w_shape]) * np.sqrt(np.square(torch.pi) / 6)
-    n[m_hat, ...] += shift
-    return n
+    n = np.random.randn(*[m, *w_shape]) * np.sqrt(np.power(np.pi, 2) / 6)
+    n = n.reshape([m, -1]).T
+    ceil_indicator = ceil_indicator.cpu().numpy().flatten()
+    n[np.arange(ceil_indicator.size), ceil_indicator + m_hat] += shift
+    n = n.T.reshape(*[m, *w_shape])
+    return torch.from_numpy(n).float()
 
 
 def init_shift_var(m: int) -> torch.Tensor:
@@ -55,7 +65,7 @@ def init_shift_var(m: int) -> torch.Tensor:
 
     """
     m_hat = m // 2
-    aux_index_shift = [-m_hat + i for i in range(m)]
+    aux_index_shift = [-m_hat + i + 1 for i in range(m)]
     return torch.Tensor(aux_index_shift)
 
 
@@ -83,12 +93,13 @@ class BaseGumbelWeightQuantizer(BaseWeightQuantizer):
         self.weight_shape = weight_shape
         self.max_delta_change = gptq_config.lsb_change_per_bit_width.get(self.num_bits)
         self.quantization_parameter_learning = gptq_config.quantization_parameters_learning
-        self.m = 2 * self.max_delta_change + 1
+        self.m = GR_SHIFT_BASE * self.max_delta_change + GR_SHIFT_BASE
         self.minimal_temp = gptq_config.quantizer_config.minimal_temp
         self.maximal_temp = gptq_config.quantizer_config.maximal_temp
         self.temperature_learning = gptq_config.quantizer_config.temperature_learning
         self.cycle_iterations = max(1, int(gptq_config.n_epochs / gptq_config.quantizer_config.n_cycles))
         self.shift_tensor = to_torch_tensor(init_shift_var(self.m))
+        self.gumbel_scale = gptq_config.gumbel_scale
         self.tau = None
         self.g_t = 0
         self.p_t = None
