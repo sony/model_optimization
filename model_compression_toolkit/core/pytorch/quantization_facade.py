@@ -91,7 +91,7 @@ if importlib.util.find_spec("torch") is not None:
             Create a random dataset generator:
 
             >>> import numpy as np
-            >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
+            >>> def repr_datagen(): yield [np.random.random((1, 224, 224, 3))]
 
             Import mct and pass the module with the representative dataset generator to get a quantized module:
 

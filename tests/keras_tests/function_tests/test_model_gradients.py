@@ -73,7 +73,7 @@ def model_with_output_replacements(input_shape):
 
 
 def representative_dataset():
-    return [np.random.randn(1, 8, 8, 3).astype(np.float32)]
+    yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]
 
 
 def prepare_graph(in_model, keras_impl):

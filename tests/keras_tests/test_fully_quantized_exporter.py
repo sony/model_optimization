@@ -36,7 +36,8 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         Test that new fully quantized exporter model outputs the same as
         old exported model.
         """
-        repr_dataset = lambda: [np.random.randn(1, 224, 224, 3)]
+        def repr_dataset():
+            yield [np.random.randn(1, 224, 224, 3)]
         seed = np.random.randint(0, 100, size=1)[0]
 
         self.set_seed(seed)

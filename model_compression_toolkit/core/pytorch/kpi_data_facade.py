@@ -66,7 +66,7 @@ if importlib.util.find_spec("torch") is not None:
             Create a random dataset generator:
 
             >>> import numpy as np
-            >>> def repr_datagen(): return [np.random.random((1,3,224,224))]
+            >>> def repr_datagen(): yield [np.random.random((1, 3, 224, 224))]
 
             Import mct and call for KPI data calculation:
 
@@ -123,7 +123,7 @@ if importlib.util.find_spec("torch") is not None:
             Create a random dataset generator:
 
             >>> import numpy as np
-            >>> def repr_datagen(): return [np.random.random((1,3,224,224))]
+            >>> def repr_datagen(): yield [np.random.random((1, 3, 224, 224))]
 
             Import mct and call for KPI data calculation:
 

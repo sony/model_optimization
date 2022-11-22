@@ -26,7 +26,7 @@ from tensorboard.backend.event_processing import event_file_loader
 
 
 def random_datagen():
-    return [np.random.random((1, 224, 224, 3))]
+    yield [np.random.random((1, 224, 224, 3))]
 
 
 class TestLogger(unittest.TestCase):

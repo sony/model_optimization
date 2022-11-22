@@ -31,11 +31,11 @@ from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
 
 
 def small_random_datagen():
-    return [np.random.random((1, 8, 8, 3))]
+    yield [np.random.random((1, 8, 8, 3))]
 
 
 def large_random_datagen():
-    return [np.random.random((1, 224, 224, 3))]
+    yield [np.random.random((1, 224, 224, 3))]
 
 
 def compute_output_size(output_shape):
