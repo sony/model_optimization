@@ -29,7 +29,7 @@ layers = keras.layers
 
 class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, val_batch_size=32)
 
     def get_tpc(self):
         base_config, _ = get_op_quantization_configs()
