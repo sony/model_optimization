@@ -48,7 +48,7 @@ Core features:
   * <ins>Outliers filtering:</ins> Computing z-score for activation statistics to detect and remove outliers.
 * <ins>Clustering:</ins> Using non-uniform quantization grid to quantize the weights and activations to match their distributions.[*](#experimental-features)
 * <ins>Mixed-precision search:</ins> Assigning quantization bit-width per layer (for weights/activations), based on the layer's sensitivity to different bit-widths.
-* <ins>Visualization:</ins> You can use TensorBoard to observe useful information for troubleshooting the quantized model's performance (for example, the model in different phases of the quantization, collected statistics, similarity between layers of the float and quantized model and bit-width configuration for mixed-precision quantization). For more details, please read the [visualization documentation](guidelines/visualization.html).   
+* <ins>Visualization:</ins> You can use TensorBoard to observe useful information for troubleshooting the quantized model's performance (for example, the model in different phases of the quantization, collected statistics, similarity between layers of the float and quantized model and bit-width configuration for mixed-precision quantization). For more details, please read the [visualization documentation](https://sony.github.io/model_optimization/docs/guidelines/visualization.html).   
 
 
 #### Experimental features 
@@ -113,7 +113,7 @@ please use this [link](tutorials/example_keras_mobilenet.py).
 
 For an example using PyTorch, please use this [link](tutorials/example_pytorch_mobilenet_v2.py).
 
-For more examples please see the [tutorials' directory](tutorials).
+For more examples please see the [tutorials' directory](https://github.com/sony/model_optimization/tree/main/tutorials).
 
 
 ## Results
