@@ -10,7 +10,6 @@ Specifically, this project aims to apply quantization to compress neural network
 
 MCT is developed by researchers and engineers working at Sony Semiconductor Israel.
 
-For more information and detailed API, please visit our [project website](https://sony.github.io/model_optimization/).
 
 
 ## Table of Contents
@@ -21,12 +20,11 @@ For more information and detailed API, please visit our [project website](https:
 - [Contributions](#contributions)
 - [License](#license)
 
-
 ## Supported Features
 
 MCT supports different quantization methods:
-* Post training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental)
-* Gradient-based post training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/pytorch_gradient_post_training_quantization_experimental.html#ug-pytorch-gradient-post-training-quantization-experimental)
+* Post training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental)
+* Gradient-based post training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_gradient_post_training_quantization_experimental.html#ug-pytorch-gradient-post-training-quantization-experimental)
 * Quantization aware training (QAT)[*](#experimental-features)
 
 
@@ -50,7 +48,7 @@ Core features:
   * <ins>Outliers filtering:</ins> Computing z-score for activation statistics to detect and remove outliers.
 * <ins>Clustering:</ins> Using non-uniform quantization grid to quantize the weights and activations to match their distributions.[*](#experimental-features)
 * <ins>Mixed-precision search:</ins> Assigning quantization bit-width per layer (for weights/activations), based on the layer's sensitivity to different bit-widths.
-* <ins>Visualization:</ins> You can use TensorBoard to observe useful information for troubleshooting the quantized model's performance (for example, the model in different phases of the quantization, collected statistics, similarity between layers of the float and quantized model and bit-width configuration for mixed-precision quantization). For more details, please read the [visualization documentation](https://sony.github.io/model_optimization/guidelines/visualization.html).   
+* <ins>Visualization:</ins> You can use TensorBoard to observe useful information for troubleshooting the quantized model's performance (for example, the model in different phases of the quantization, collected statistics, similarity between layers of the float and quantized model and bit-width configuration for mixed-precision quantization). For more details, please read the [visualization documentation](guidelines/visualization.html).   
 
 
 #### Experimental features 
@@ -146,7 +144,7 @@ MCT aims at keeping a more up-to-date fork and welcomes contributions from anyon
 
 
 ## License
-[Apache License 2.0](LICENSE).
+[Apache License 2.0](LICENSE.md).
 
 ## References 
 

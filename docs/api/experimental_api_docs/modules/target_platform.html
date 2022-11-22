@@ -8,21 +8,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
     <title>target_platform Module &#8212; MCT Documentation: ver 1.6.0</title>
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
     
-    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
-    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/bizstyle.js"></script>
+    <script data-url_root="../../../" id="documentation_options" src="../../../static/documentation_options.js"></script>
+    <script src="../../../static/jquery.js"></script>
+    <script src="../../../static/underscore.js"></script>
+    <script src="../../../static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../static/doctools.js"></script>
+    <script src="../../../static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <!--[if lt IE 9]>
-    <script src="_static/css3-mediaqueries.js"></script>
+    <script src="static/css3-mediaqueries.js"></script>
     <![endif]-->
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -69,7 +69,7 @@ are in use).</p>
 </div>
 <p>The object MCT should get called TargetPlatformCapabilities (or shortly TPC).
 This diagram demonstrates the main components:</p>
-<a class="reference internal image-reference" href="../../../_images/tpc.jpg"><img alt="../../../_images/tpc.jpg" src="../../../_images/tpc.jpg" style="width: 768.0px; height: 432.0px;" /></a>
+<a class="reference internal image-reference" href="../../../images/tpc.jpg"><img alt="../../../images/tpc.jpg" src="../../../images/tpc.jpg" style="width: 768.0px; height: 432.0px;" /></a>
 <p>Now, we will explain about each component with examples.</p>
 <p>The first part is configuring the quantization method for both wights and activations of an operator.
 Several methods can be used using QuantizationMethod API:</p>
@@ -601,13 +601,14 @@ which attaches the layers representations to OperatorsSets in a TargetPlatformMo
 <h2>TargetPlatformCapabilities<a class="headerlink" href="#targetplatformcapabilities" title="Permalink to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.target_platform.TargetPlatformCapabilities">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">TargetPlatformCapabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tp_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'base'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">TargetPlatformCapabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tp_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'base'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="Permalink to this definition">¶</a></dt>
 <dd><p>Attach framework information to a modeled hardware.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tp_model</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.TargetPlatformModel" title="model_compression_toolkit.target_platform.TargetPlatformModel"><em>TargetPlatformModel</em></a>) – Modeled hardware to attach framework information to.</p></li>
 <li><p><strong>name</strong> (<em>str</em>) – Name of the TargetPlatformCapabilities.</p></li>
+<li><p><strong>version</strong> (<em>str</em>) – TPC version.</p></li>
 </ul>
 </dd>
 </dl>
@@ -620,17 +621,19 @@ to the TargetPlatformCapabilities like in the following example:</p>
 <section id="targetplatformcapabilities-code-example">
 <h2>TargetPlatformCapabilities Code Example<a class="headerlink" href="#targetplatformcapabilities-code-example" title="Permalink to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">packaging</span> <span class="kn">import</span> <span class="n">version</span>
 
-<span class="k">if</span> <span class="n">tf</span><span class="o">.</span><span class="n">__version__</span> <span class="o">&lt;</span> <span class="s2">&quot;2.6&quot;</span><span class="p">:</span>
+<span class="k">if</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;2.6&quot;</span><span class="p">):</span>
     <span class="kn">from</span> <span class="nn">tensorflow.keras.layers</span> <span class="kn">import</span> <span class="n">Conv2D</span><span class="p">,</span> <span class="n">DepthwiseConv2D</span><span class="p">,</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Reshape</span><span class="p">,</span> <span class="n">ZeroPadding2D</span><span class="p">,</span> \
         <span class="n">Dropout</span><span class="p">,</span> \
-        <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">Activation</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Subtract</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">,</span> <span class="n">PReLU</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Cropping2D</span>
+        <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">Activation</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Subtract</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">,</span> <span class="n">PReLU</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Cropping2D</span><span class="p">,</span> <span class="n">LeakyReLU</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">Conv2D</span><span class="p">,</span> <span class="n">DepthwiseConv2D</span><span class="p">,</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Reshape</span><span class="p">,</span> <span class="n">ZeroPadding2D</span><span class="p">,</span> \
-        <span class="n">Dropout</span><span class="p">,</span> <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">Activation</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Subtract</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">,</span> <span class="n">PReLU</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Cropping2D</span>
+        <span class="n">Dropout</span><span class="p">,</span> <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">Activation</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Subtract</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">,</span> <span class="n">PReLU</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Cropping2D</span><span class="p">,</span> <span class="n">LeakyReLU</span>
 
 <span class="kn">from</span> <span class="nn">model_compression_toolkit.core.tpc_models.default_tpc.v3.tp_model</span> <span class="kn">import</span> <span class="n">get_tp_model</span>
 <span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
+<span class="kn">from</span> <span class="nn">model_compression_toolkit.core.tpc_models.default_tpc.v3</span> <span class="kn">import</span> <span class="n">__version__</span> <span class="k">as</span> <span class="n">TPC_VERSION</span>
 
 <span class="n">tp</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">target_platform</span>
 
@@ -655,7 +658,9 @@ to the TargetPlatformCapabilities like in the following example:</p>
 <span class="sd">    Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">keras_tpc</span> <span class="o">=</span> <span class="n">tp</span><span class="o">.</span><span class="n">TargetPlatformCapabilities</span><span class="p">(</span><span class="n">tp_model</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">keras_tpc</span> <span class="o">=</span> <span class="n">tp</span><span class="o">.</span><span class="n">TargetPlatformCapabilities</span><span class="p">(</span><span class="n">tp_model</span><span class="p">,</span>
+                                              <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                                              <span class="n">version</span><span class="o">=</span><span class="n">TPC_VERSION</span><span class="p">)</span>
 
     <span class="k">with</span> <span class="n">keras_tpc</span><span class="p">:</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;NoQuantization&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">Reshape</span><span class="p">,</span>
@@ -679,18 +684,14 @@ to the TargetPlatformCapabilities like in the following example:</p>
         <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;FullyConnected&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">Dense</span><span class="p">])</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;AnyReLU&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span>
                                              <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu6</span><span class="p">,</span>
-                                             <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">ReLU</span><span class="p">,</span> <span class="n">negative_slope</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
-                                             <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">)])</span>
+                                             <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">leaky_relu</span><span class="p">,</span>
+                                             <span class="n">ReLU</span><span class="p">,</span>
+                                             <span class="n">LeakyReLU</span><span class="p">,</span>
+                                             <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">),</span>
+                                             <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;leaky_relu&quot;</span><span class="p">)])</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Add&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">Add</span><span class="p">])</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Sub&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">subtract</span><span class="p">,</span> <span class="n">Subtract</span><span class="p">])</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Mul&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">multiply</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Div&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">divide</span><span class="p">])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;PReLU&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">PReLU</span><span class="p">])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Swish&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">swish</span><span class="p">,</span> <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;swish&quot;</span><span class="p">)])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Sigmoid&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">,</span> <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;sigmoid&quot;</span><span class="p">)])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Tanh&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">tanh</span><span class="p">,</span> <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;tanh&quot;</span><span class="p">)])</span>
-
-    <span class="k">return</span> <span class="n">keras_tpc</span>
 </pre></div>
 </div>
 </section>

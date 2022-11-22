@@ -8,23 +8,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
     <title>Visualization within TensorBoard &#8212; MCT Documentation: ver 1.6.0</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/bizstyle.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../static/css/custom.css" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="../_static/doctools.js"></script>
-    <script src="../_static/bizstyle.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../static/documentation_options.js"></script>
+    <script src="../static/jquery.js"></script>
+    <script src="../static/underscore.js"></script>
+    <script src="../static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../static/doctools.js"></script>
+    <script src="../static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="MCT Quickstart Guideline for Keras models" href="quickstart_keras.html" />
     <link rel="prev" title="Model Compression Toolkit User Guide" href="../index.html" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <!--[if lt IE 9]>
-    <script src="_static/css3-mediaqueries.js"></script>
+    <script src="static/css3-mediaqueries.js"></script>
     <![endif]-->
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -64,35 +64,35 @@ To visualize them, TensorBoard should be launched with:</p>
 <div class="line"><br /></div>
 </div>
 <p>The graphs representing the model can be seen under the Graphs tab:</p>
-<a class="reference internal image-reference" href="../_images/tbwriter_graphs.png"><img alt="../_images/tbwriter_graphs.png" src="../_images/tbwriter_graphs.png" style="width: 283.2px; height: 248.4px;" /></a>
+<a class="reference internal image-reference" href="../images/tbwriter_graphs.png"><img alt="../images/tbwriter_graphs.png" src="../images/tbwriter_graphs.png" style="width: 283.2px; height: 248.4px;" /></a>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
 <p>Clicking on the Main Graph blocks will open a deeper view of the graph:</p>
-<a class="reference internal image-reference" href="../_images/tbwriter_graphs2.png"><img alt="../_images/tbwriter_graphs2.png" src="../_images/tbwriter_graphs2.png" style="width: 211.20000000000002px; height: 326.0px;" /></a>
-<a class="reference internal image-reference" href="../_images/tbwriter_graphs3.png"><img alt="../_images/tbwriter_graphs3.png" src="../_images/tbwriter_graphs3.png" style="width: 535.2px; height: 373.20000000000005px;" /></a>
+<a class="reference internal image-reference" href="../images/tbwriter_graphs2.png"><img alt="../images/tbwriter_graphs2.png" src="../images/tbwriter_graphs2.png" style="width: 211.20000000000002px; height: 326.0px;" /></a>
+<a class="reference internal image-reference" href="../images/tbwriter_graphs3.png"><img alt="../images/tbwriter_graphs3.png" src="../images/tbwriter_graphs3.png" style="width: 535.2px; height: 373.20000000000005px;" /></a>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
 <p>To observe the model at different stages of the quantization process, change the ‘Run’:</p>
-<a class="reference internal image-reference" href="../_images/tbwriter_stages.png"><img alt="../_images/tbwriter_stages.png" src="../_images/tbwriter_stages.png" style="width: 304.5px; height: 359.0px;" /></a>
+<a class="reference internal image-reference" href="../images/tbwriter_stages.png"><img alt="../images/tbwriter_stages.png" src="../images/tbwriter_stages.png" style="width: 304.5px; height: 359.0px;" /></a>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
 <p>To display the required memory (in bytes) of the graph at different stages, change the ‘Tag’ from ‘Default’ to ‘Resources’</p>
-<a class="reference internal image-reference" href="../_images/tbwriter_resources.png"><img alt="../_images/tbwriter_resources.png" src="../_images/tbwriter_resources.png" style="width: 391.8px; height: 224.4px;" /></a>
+<a class="reference internal image-reference" href="../images/tbwriter_resources.png"><img alt="../images/tbwriter_resources.png" src="../images/tbwriter_resources.png" style="width: 391.8px; height: 224.4px;" /></a>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
 <p>By clicking a node, its statistics will show up:</p>
-<a class="reference internal image-reference" href="../_images/tbwriter_resources_node.png"><img alt="../_images/tbwriter_resources_node.png" src="../_images/tbwriter_resources_node.png" style="width: 345.59999999999997px; height: 118.8px;" /></a>
+<a class="reference internal image-reference" href="../images/tbwriter_resources_node.png"><img alt="../images/tbwriter_resources_node.png" src="../images/tbwriter_resources_node.png" style="width: 345.59999999999997px; height: 118.8px;" /></a>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
 <p>During the quantization process, statistics are gathered at some layers’ output: histograms, min/max per channel and mean per channel.
 These statistics can be viewed under ‘Histograms’ (histograms) or ‘Scalars’ (min/max/mean per channel) for each layer that statistics were gathered in its output:</p>
-<a class="reference internal image-reference" href="../_images/tbwriter_histograms.png"><img alt="../_images/tbwriter_histograms.png" src="../_images/tbwriter_histograms.png" style="width: 356.0px; height: 339.0px;" /></a>
-<a class="reference internal image-reference" href="../_images/tbwriter_scalars.png"><img alt="../_images/tbwriter_scalars.png" src="../_images/tbwriter_scalars.png" style="width: 755.5px; height: 423.0px;" /></a>
+<a class="reference internal image-reference" href="../images/tbwriter_histograms.png"><img alt="../images/tbwriter_histograms.png" src="../images/tbwriter_histograms.png" style="width: 356.0px; height: 339.0px;" /></a>
+<a class="reference internal image-reference" href="../images/tbwriter_scalars.png"><img alt="../images/tbwriter_scalars.png" src="../images/tbwriter_scalars.png" style="width: 755.5px; height: 423.0px;" /></a>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
@@ -104,7 +104,7 @@ Mathematically, the cosine similarity is the division between the dot product of
 Thus, we can use it to measure the two models similarity, by measuring the cosine similarity
 of tensors along the networks in different pairs of points in the networks, where we would expect them to
 output similar tensors.</p>
-<img alt="../_images/cs_compare.png" src="../_images/cs_compare.png" />
+<img alt="../images/cs_compare.png" src="../images/cs_compare.png" />
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
@@ -118,7 +118,7 @@ TensorBoard UI.</p>
 final quantized model at different points can be viewed under ‘Images’.
 More specifically, 20 samples from the provided representative dataset generator, are inserted to both of
 the models, and the cosine similarity at the output of different layers are computed and displayed.</p>
-<a class="reference internal image-reference" href="../_images/tbwriter_cosinesimilarity.png"><img alt="../_images/tbwriter_cosinesimilarity.png" src="../_images/tbwriter_cosinesimilarity.png" style="width: 507.5px; height: 330.0px;" /></a>
+<a class="reference internal image-reference" href="../images/tbwriter_cosinesimilarity.png"><img alt="../images/tbwriter_cosinesimilarity.png" src="../images/tbwriter_cosinesimilarity.png" style="width: 507.5px; height: 330.0px;" /></a>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
@@ -131,7 +131,7 @@ The figures can be viewed under ‘Images’.
 For instance, when running mixed-precision quantization on MobileNetV2 for both weights and activation quantization
 we would expect to get the following figures (the first one displaying the activation configuration
 and the second one the weights configuration):</p>
-<img alt="../_images/mp_bitwidth_config.png" src="../_images/mp_bitwidth_config.png" />
+<img alt="../images/mp_bitwidth_config.png" src="../images/mp_bitwidth_config.png" />
 </section>
 
 
