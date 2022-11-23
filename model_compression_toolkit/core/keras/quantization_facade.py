@@ -54,6 +54,7 @@ if importlib.util.find_spec("tensorflow") is not None\
 
     def keras_post_training_quantization(in_model: Model,
                                          representative_data_gen: Callable,
+                                         n_iter: int = 500,
                                          quant_config: QuantizationConfig = DEFAULTCONFIG,
                                          fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                                          network_editor: List[EditRule] = [],
@@ -75,6 +76,7 @@ if importlib.util.find_spec("tensorflow") is not None\
         Args:
             in_model (Model): Keras model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
+            n_iter (int): Number of calibration iterations to run.
             quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized. `Default configuration. <https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/core/common/quantization/quantization_config.py#L154>`_
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
             network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
@@ -95,12 +97,12 @@ if importlib.util.find_spec("tensorflow") is not None\
             Create a random dataset generator:
 
             >>> import numpy as np
-            >>> def repr_datagen(): yield [np.random.random((1,224,224,3))]
+            >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
 
             Import mct and pass the model with the representative dataset generator to get a quantized model:
 
             >>> import model_compression_toolkit as mct
-            >>> quantized_model, quantization_info = mct.keras_post_training_quantization(model, repr_datagen)
+            >>> quantized_model, quantization_info = mct.keras_post_training_quantization(model, repr_datagen, n_iter=1)
 
         """
         KerasModelValidation(model=in_model,
@@ -115,8 +117,13 @@ if importlib.util.find_spec("tensorflow") is not None\
 
         fw_impl = KerasImplementation()
 
+        # convert old representative dataset generation to a generator
+        def _representative_data_gen():
+            for _ in range(n_iter):
+                yield representative_data_gen()
+
         tg, bit_widths_config = core_runner(in_model=in_model,
-                                            representative_data_gen=representative_data_gen,
+                                            representative_data_gen=_representative_data_gen,
                                             core_config=core_config,
                                             fw_info=fw_info,
                                             fw_impl=fw_impl,
@@ -124,13 +131,13 @@ if importlib.util.find_spec("tensorflow") is not None\
                                             tb_w=tb_w)
 
         if gptq_config is None:
-            tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
+            tg = ptq_runner(tg, _representative_data_gen, core_config, fw_info, fw_impl, tb_w)
         else:
-            tg = gptq_runner(tg, core_config, gptq_config, representative_data_gen, representative_data_gen,
+            tg = gptq_runner(tg, core_config, gptq_config, _representative_data_gen, _representative_data_gen,
                              fw_info, fw_impl, tb_w)
 
         if core_config.debug_config.analyze_similarity:
-            analyzer_model_quantization(representative_data_gen, tb_w, tg, fw_impl, fw_info)
+            analyzer_model_quantization(_representative_data_gen, tb_w, tg, fw_impl, fw_info)
 
         quantized_model, user_info = export_model(tg, fw_info, fw_impl, tb_w, bit_widths_config)
 
@@ -140,6 +147,7 @@ if importlib.util.find_spec("tensorflow") is not None\
     def keras_post_training_quantization_mixed_precision(in_model: Model,
                                                          representative_data_gen: Callable,
                                                          target_kpi: KPI,
+                                                         n_iter: int = 500,
                                                          quant_config: MixedPrecisionQuantizationConfig = DEFAULT_MIXEDPRECISION_CONFIG,
                                                          fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                                                          network_editor: List[EditRule] = [],
@@ -169,6 +177,7 @@ if importlib.util.find_spec("tensorflow") is not None\
              in_model (Model): Keras model to quantize.
              representative_data_gen (Callable): Dataset used for calibration.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
+             n_iter (int): Number of calibration iterations to run.
              quant_config (MixedPrecisionQuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized.
              fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
              network_editor (List[EditRule]): List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.
@@ -194,7 +203,7 @@ if importlib.util.find_spec("tensorflow") is not None\
              Create a random dataset generator:
 
              >>> import numpy as np
-             >>> def repr_datagen(): yield [np.random.random((1,224,224,3))]
+             >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
 
              Create a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
              The candidates bitwidth for quantization should be defined in the target platform model:
@@ -210,7 +219,7 @@ if importlib.util.find_spec("tensorflow") is not None\
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:
 
-             >>> quantized_model, quantization_info = mct.keras_post_training_quantization_mixed_precision(model,repr_datagen, target_kpi=kpi, quant_config=config)
+             >>> quantized_model, quantization_info = mct.keras_post_training_quantization_mixed_precision(model,repr_datagen, target_kpi=kpi, n_iter=10, quant_config=config)
 
              For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/experimental_api_docs/modules/mixed_precision_quantization_config.html#model_compression_toolkit.MixedPrecisionQuantizationConfigV2>`_.
 
@@ -237,8 +246,13 @@ if importlib.util.find_spec("tensorflow") is not None\
 
         fw_impl = KerasImplementation()
 
+        # convert old representative dataset generation to a generator
+        def _representative_data_gen():
+            for _ in range(n_iter):
+                yield representative_data_gen()
+
         tg, bit_widths_config = core_runner(in_model=in_model,
-                                            representative_data_gen=representative_data_gen,
+                                            representative_data_gen=_representative_data_gen,
                                             core_config=core_config,
                                             fw_info=fw_info,
                                             fw_impl=fw_impl,
@@ -247,13 +261,13 @@ if importlib.util.find_spec("tensorflow") is not None\
                                             tb_w=tb_w)
 
         if gptq_config is None:
-            tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
+            tg = ptq_runner(tg, _representative_data_gen, core_config, fw_info, fw_impl, tb_w)
         else:
-            tg = gptq_runner(tg, core_config, gptq_config, representative_data_gen, representative_data_gen,
+            tg = gptq_runner(tg, core_config, gptq_config, _representative_data_gen, _representative_data_gen,
                              fw_info, fw_impl, tb_w)
 
         if core_config.debug_config.analyze_similarity:
-            analyzer_model_quantization(representative_data_gen, tb_w, tg, fw_impl, fw_info)
+            analyzer_model_quantization(_representative_data_gen, tb_w, tg, fw_impl, fw_info)
 
         quantized_model, user_info = export_model(tg, fw_info, fw_impl, tb_w, bit_widths_config)
 

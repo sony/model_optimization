@@ -67,7 +67,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         # Run MCT with PTQ
         np.random.seed(self.seed)
         ptq_model, _ = mct.pytorch_post_training_quantization_experimental(self.float_model,
-                                                                           self.representative_data_gen,
+                                                                           self.representative_data_gen_experimental,
                                                                            core_config=self.get_core_config(),
                                                                            target_platform_capabilities=self.get_tpc()) if self.experimental \
             else mct.pytorch_post_training_quantization(self.float_model,
@@ -79,7 +79,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         # Run MCT with GPTQ
         np.random.seed(self.seed)
         gptq_model, quantization_info = mct.pytorch_gradient_post_training_quantization_experimental(self.float_model,
-                                                                                                     self.representative_data_gen,
+                                                                                                     self.representative_data_gen_experimental,
                                                                                                      core_config=self.get_core_config(),
                                                                                                      target_platform_capabilities=self.get_tpc(),
                                                                                                      gptq_config=self.get_gptq_config(),
@@ -92,7 +92,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
                                                         gptq_config=self.get_gptq_config())
 
         # Generate inputs
-        x = to_torch_tensor(self.representative_data_gen().__next__())
+        x = to_torch_tensor(self.representative_data_gen())
 
         # Compare
         bits = self.get_tpc().tp_model.default_qco.quantization_config_list[0].weights_n_bits

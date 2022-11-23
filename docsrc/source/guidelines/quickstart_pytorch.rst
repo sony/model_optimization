@@ -34,9 +34,8 @@ Initialize data loader:
 
 .. code-block:: python
 
-    # Set the batch size of the images at each calibration iteration and number of iterations
+    # Set the batch size of the images at each calibration iteration.
     batch_size = 50
-    n_iters = 20
 
     # Set the path to the folder of images to load and use for the representative dataset.
     # Notice that the folder have to contain at least one image.
@@ -59,15 +58,14 @@ Initialize data loader:
                                           batch_size=batch_size)
 
     # Create a Callable representative dataset for calibration purposes.
-    # The function should be called without any arguments, and should return a generator\iterator object that
-    # returns a list numpy arrays (array for each model's input) per iteration.
+    # The function should be called without any arguments, and should return a list numpy arrays (array for each
+    # model's input).
     # For example: A model has two input tensors - one with input shape of [3 X 32 X 32] and the second with
     # an input shape of [3 X 224 X 224]. We calibrate the model using batches of 20 images.
-    # Calling representative_data_gen() should return a generator\iterator that outputs two numpy.ndarray objects
-    # where the arrays' shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].
+    # Calling representative_data_gen() should return a list
+    # of two numpy.ndarray objects where the arrays' shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].
     def representative_data_gen() -> list:
-        for _ in range(n_iters):
-            yield [image_data_loader.sample()]
+        return [image_data_loader.sample()]
 
 
 |
@@ -90,6 +88,7 @@ Run Post Training Quantization:
 .. code-block:: python
 
     # Create a model and quantize it using the representative_data_gen as the calibration images.
+    # Set the number of calibration iterations to 20.
     model = mobilenet_v2(pretrained=True)
 
     # set quantization configuration
@@ -101,7 +100,8 @@ Run Post Training Quantization:
     # run post training quantization on the model to get the quantized model output
     quantized_model, quantization_info = mct.pytorch_post_training_quantization(model,
                                                                                 representative_data_gen,
-                                                                                target_platform_capabilities=target_platform_cap)
+                                                                                target_platform_capabilities=target_platform_cap,
+                                                                                n_iter=20)
 
 |
 

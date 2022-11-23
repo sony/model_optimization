@@ -94,8 +94,7 @@ class NetworkTest(object):
 
     def run_network(self, inputs_list, qc, tpc):
         def representative_data_gen():
-            for _ in range(self.num_calibration_iter):
-                yield inputs_list
+            return inputs_list
 
         if self.gptq:
             arc = model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(n_iter=2,

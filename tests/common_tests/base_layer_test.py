@@ -79,6 +79,6 @@ class BaseLayerTest(BaseTest):
                                                                          fw_info=self.get_fw_info(),
                                                                          target_platform_capabilities=self.get_tpc())
 
-                self.compare(ptq_model, model_float, input_x=self.representative_data_gen().__next__(),
+                self.compare(ptq_model, model_float, input_x=self.representative_data_gen(),
                              quantization_info=quantization_info)
 

@@ -64,7 +64,7 @@ class BaseFeatureNetworkTest(BaseTest):
             if experimental_facade:
                 core_config = self.get_core_config()
                 ptq_model, quantization_info = self.get_experimental_ptq_facade()(model_float,
-                                                                                  self.representative_data_gen,
+                                                                                  self.representative_data_gen_experimental,
                                                                                   target_kpi=self.get_kpi(),
                                                                                   core_config=core_config,
                                                                                   target_platform_capabilities=self.get_tpc(),
@@ -90,7 +90,7 @@ class BaseFeatureNetworkTest(BaseTest):
                                                                          gptq_config=self.get_gptq_config(),
                                                                          target_platform_capabilities=self.get_tpc())
 
-            self.compare(ptq_model, model_float, input_x=self.representative_data_gen().__next__(),
+            self.compare(ptq_model, model_float, input_x=self.representative_data_gen(),
                          quantization_info=quantization_info)
 
 

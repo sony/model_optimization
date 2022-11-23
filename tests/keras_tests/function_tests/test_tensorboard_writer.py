@@ -26,7 +26,7 @@ from tensorboard.backend.event_processing import event_file_loader
 
 
 def random_datagen():
-    yield [np.random.random((1, 224, 224, 3))]
+    return [np.random.random((1, 224, 224, 3))]
 
 
 class TestLogger(unittest.TestCase):
@@ -35,7 +35,7 @@ class TestLogger(unittest.TestCase):
     def setUpClass(cls):
         mct.core.common.Logger.set_log_file('/tmp/')
         model = MobileNet()
-        mct.keras_post_training_quantization(model, random_datagen, analyze_similarity=True)
+        mct.keras_post_training_quantization(model, random_datagen, n_iter=1, analyze_similarity=True)
 
     def test_tensorboard_log_dir(self):
         self.assertTrue(os.path.exists(os.path.join(mct.core.common.Logger.LOG_PATH, 'tensorboard_logs')))

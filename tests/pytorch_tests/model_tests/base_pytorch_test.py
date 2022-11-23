@@ -134,6 +134,9 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         x = self.generate_inputs(input_shapes)
 
         def representative_data_gen():
+            return x
+
+        def representative_data_gen_experimental():
             for _ in range(self.num_calibration_iter):
                 yield x
 
@@ -152,7 +155,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
 
             if experimental_facade:
                 ptq_model, quantization_info = mct.pytorch_post_training_quantization_experimental(in_module=model_float,
-                                                                                                   representative_data_gen=representative_data_gen,
+                                                                                                   representative_data_gen=representative_data_gen_experimental,
                                                                                                    target_kpi=self.get_kpi(),
                                                                                                    core_config=core_config,
                                                                                                    target_platform_capabilities=tpc,
