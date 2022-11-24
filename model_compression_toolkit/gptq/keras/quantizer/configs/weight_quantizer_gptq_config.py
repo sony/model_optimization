@@ -33,7 +33,7 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantizers imp
 from model_compression_toolkit.gptq.keras.quantizer.configs.base_quantizer_gptq_config import BaseQuantizeConfig
 from model_compression_toolkit.core.keras.constants import KERNEL
 
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2, RoundingType
 from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.symmetric_gumbel import SymmetricGumbelRounding
 from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.uniform_gumbel import UniformGumbelRounding
 from model_compression_toolkit.gptq.keras.quantizer.ste_rounding.symmetric_ste import STEWeightQuantizer
@@ -51,7 +51,7 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
 
     def __init__(self, weight_attrs: List[str],
                  final_weights_quantization_cfg: NodeWeightsQuantizationConfig,
-                 gptq_config: GradientPTQConfig):
+                 gptq_config: GradientPTQConfigV2):
         """
         Initialize a TrainableQuantizer and set as the weights quantizer.
         Args:
@@ -90,7 +90,7 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
                                                                 quantization_parameter_learning=gptq_config.quantization_parameters_learning,
                                                                 quantization_axis=weight_channel_axis,
                                                                 max_lsbs_change_map=max_lsbs_change_map,
-                                                                max_iteration=gptq_config.n_iter,
+                                                                max_iteration=gptq_config.n_epochs,
                                                                 gumbel_config=gptq_config.quantizer_config,
                                                                 gumbel_scale=gptq_config.gumbel_scale)
             else:

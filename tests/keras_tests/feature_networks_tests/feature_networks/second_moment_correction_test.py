@@ -54,7 +54,8 @@ class BaseSecondMomentTest(BaseKerasFeatureNetworkTest, ABC):
     """
 
     def __init__(self, unit_test):
-        super(BaseSecondMomentTest, self).__init__(unit_test=unit_test, val_batch_size=128, input_shape=(32, 32, 1))
+        super(BaseSecondMomentTest, self).__init__(unit_test=unit_test, val_batch_size=128,
+                                                   num_calibration_iter=100, input_shape=(32, 32, 1))
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 16,
@@ -63,7 +64,7 @@ class BaseSecondMomentTest(BaseKerasFeatureNetworkTest, ABC):
         return generate_keras_tpc(name="second_moment_correction_test", tp_model=tp)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(weights_second_moment_correction=True, weights_second_moment_iters=200)
+        return mct.QuantizationConfig(weights_second_moment_correction=True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         quantized_model_kernel = quantized_model.layers[2].weights[0]

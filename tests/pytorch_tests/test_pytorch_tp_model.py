@@ -224,6 +224,7 @@ class TestGetPytorchTPC(unittest.TestCase):
 
         quantized_model, _ = mct.pytorch_post_training_quantization(model,
                                                                     rep_data,
+                                                                    n_iter=1,
                                                                     target_platform_capabilities=tpc)
 
         mp_qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
@@ -231,6 +232,7 @@ class TestGetPytorchTPC(unittest.TestCase):
         quantized_model, _ = mct.pytorch_post_training_quantization_mixed_precision(model,
                                                                                     rep_data,
                                                                                     target_kpi=mct.KPI(np.inf),
+                                                                                    n_iter=1,
                                                                                     target_platform_capabilities=tpc,
                                                                                     quant_config=mp_qc)
 

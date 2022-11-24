@@ -149,3 +149,39 @@ class GradientPTQConfig:
 
         """
         return self.rounding_type == RoundingType.GumbelRounding
+
+
+class GradientPTQConfigV2(GradientPTQConfig):
+    """
+    Configuration to use for quantization with GradientPTQV2 (experimental).
+    """
+    def __init__(self, n_epochs: int, optimizer: Any, **kwargs):
+        """
+        Initialize a GradientPTQConfigV2.
+
+        Args:
+            n_epochs (int): Number of representative dataset epochs to train.
+            optimizer (Any): Optimizer to use.
+
+        """
+
+        super().__init__(n_iter=None, optimizer=optimizer, **kwargs)
+        self.n_epochs = n_epochs
+
+    @classmethod
+    def from_v1(cls, n_ptq_iter: int, config_v1: GradientPTQConfig):
+        """
+        Initialize a GradientPTQConfigV2 from GradientPTQConfig instance.
+
+        Args:
+            n_ptq_iter (int): Number of PTQ calibration iters (length of representative dataset).
+            config_v1 (GradientPTQConfig): A GPTQ config to convert to V2.
+
+        """
+        n_epochs = int(round(config_v1.n_iter) / n_ptq_iter)
+        v1_params = config_v1.__dict__
+        v1_params.pop('n_iter')
+        return cls(n_epochs, **v1_params)
+
+
+

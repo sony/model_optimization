@@ -52,7 +52,6 @@ class QuantizationConfig:
                  weights_bias_correction: bool = True,
                  weights_per_channel_threshold: bool = True,
                  weights_second_moment_correction: bool = False,
-                 weights_second_moment_iters: int = 20,
                  input_scaling: bool = False,
                  softmax_shift: bool = False,
                  shift_negative_activation_correction: bool = False,
@@ -73,7 +72,6 @@ class QuantizationConfig:
             relu_bound_to_power_of_2 (bool): Whether to use relu to power of 2 scaling correction or not.
             weights_bias_correction (bool): Whether to use weights bias correction or not.
             weights_second_moment_correction (bool): Whether to use weights second_moment correction or not.
-            weights_second_moment_iters (int): Number of calibration iterations to apply second moment correction.
             weights_per_channel_threshold (bool): Whether to quantize the weights per-channel or not (per-tensor).
             input_scaling (bool): Whether to use input scaling or not.
             softmax_shift (bool): Whether to use softmax shift or not.
@@ -107,7 +105,6 @@ class QuantizationConfig:
         self.relu_bound_to_power_of_2 = relu_bound_to_power_of_2
         self.weights_bias_correction = weights_bias_correction
         self.weights_second_moment_correction = weights_second_moment_correction
-        self.weights_second_moment_iters = weights_second_moment_iters
         self.weights_per_channel_threshold = weights_per_channel_threshold
         self.activation_channel_equalization = activation_channel_equalization
         self.input_scaling = input_scaling
@@ -131,7 +128,6 @@ DEFAULTCONFIG = QuantizationConfig(QuantizationErrorMethod.MSE,
                                    relu_bound_to_power_of_2=False,
                                    weights_bias_correction=True,
                                    weights_second_moment_correction=False,
-                                   weights_second_moment_iters=20,
                                    weights_per_channel_threshold=True,
                                    input_scaling=False,
                                    softmax_shift=False)

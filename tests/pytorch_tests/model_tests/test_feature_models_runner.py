@@ -411,7 +411,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
             MHALayerNetTest(self, num_heads[iter], q_seq_len[iter], qdim[iter] * num_heads[iter],
                             kv_seq_len[iter], kdim[iter], vdim[iter], bias=False).run_test()
 
-
     def test_gptq(self):
         """
         This test checks the GPTQ feature.
@@ -423,6 +422,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         SymGumbelWeightsUpdateTest(self).run_test()
         UniformGumbelAccuracyTest(self).run_test()
         UniformGumbelWeightsUpdateTest(self).run_test()
+
 
 if __name__ == '__main__':
     unittest.main()

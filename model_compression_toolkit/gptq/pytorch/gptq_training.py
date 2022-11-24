@@ -20,7 +20,7 @@ import copy
 import torch
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -31,6 +31,7 @@ from model_compression_toolkit.gptq.pytorch.gptq_graph_info import get_trainable
 from model_compression_toolkit.gptq.pytorch.quantizer.quantizer_wrapper import WeightQuantizerWrapper
 from model_compression_toolkit.gptq.pytorch.gptq_graph_info import get_gumbel_probability
 
+
 class PytorchGPTQTrainer(GPTQTrainer):
     """
     Pytorch GPTQ training class for fine-tuning a quantized model
@@ -39,7 +40,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
     def __init__(self,
                  graph_float: Graph,
                  graph_quant: Graph,
-                 gptq_config: GradientPTQConfig,
+                 gptq_config: GradientPTQConfigV2,
                  fw_impl: FrameworkImplementation,
                  fw_info: FrameworkInfo,
                  representative_data_gen: Callable):
@@ -52,7 +53,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         Args:
             graph_float: Graph to build a float networks from.
             graph_quant: Graph to build a quantized networks from.
-            gptq_config: GradientPTQConfig with parameters about the tuning process.
+            gptq_config: GradientPTQConfigV2 with parameters about the tuning process.
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
             fw_info: Framework information
             representative_data_gen: Dataset to use for inputs of the models.
@@ -117,7 +118,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         # ----------------------------------------------
         # Training loop
         # ----------------------------------------------
-        self.micro_training_loop(representative_data_gen, self.gptq_config.n_iter)
+        self.micro_training_loop(representative_data_gen, self.gptq_config.n_epochs)
 
     def compute_gradients(self,
                           y_float: List[torch.Tensor],
@@ -166,16 +167,15 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
     def micro_training_loop(self,
                             data_function: Callable,
-                            n_iteration: int):
+                            n_epochs: int):
         """
         This function run a micro training loop on given set of parameters.
         Args:
             data_function: A callable function that give a batch of samples.
-            n_iteration: Number of update iterations.
+            n_epochs: Number of update iterations of representative dataset.
         """
-        i_iter = 0
-        while n_iteration > i_iter:
-            for data in tqdm(data_function(), initial=i_iter, total=n_iteration):
+        for _ in tqdm(range(n_epochs)):
+            for data in data_function():
                 input_data = [d * self.input_scale for d in data]
                 input_tensor = to_torch_tensor(input_data)
                 y_float = self.float_model(input_tensor)  # running float model
@@ -190,9 +190,6 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                                   torch_tensor_to_numpy(self.optimizer_with_param[0][-1]))
                 self.loss_list.append(loss_value.item())
                 Logger.debug(f'last loss value: {self.loss_list[-1]}')
-                i_iter += 1
-                if i_iter >= n_iteration:
-                    break
 
     def update_graph(self) -> Graph:
         """

@@ -79,8 +79,7 @@ if __name__ == '__main__':
     # Calling representative_data_gen() should return a list
     # of two numpy.ndarray objects where the arrays' shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].
     def representative_data_gen() -> list:
-        for _ in range(args.num_calibration_iterations):
-            yield [image_data_loader.sample()]
+        return [image_data_loader.sample()]
 
     # Get a TargetPlatformModel object that models the hardware for the quantized model inference.
     # The model determines the quantization methods to use during the MCT optimization process.
@@ -98,7 +97,7 @@ if __name__ == '__main__':
     # run post training quantization on the model to get the quantized model output
     quantized_model, quantization_info = mct.pytorch_post_training_quantization(model,
                                                                                 representative_data_gen,
-                                                                                target_platform_capabilities=target_platform_cap
-                                                                                )
+                                                                                target_platform_capabilities=target_platform_cap,
+                                                                                n_iter=args.num_calibration_iterations)
 
 

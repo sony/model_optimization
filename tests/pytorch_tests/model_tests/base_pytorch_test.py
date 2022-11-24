@@ -165,6 +165,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                 if isinstance(quant_config, MixedPrecisionQuantizationConfig):
                     ptq_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(model_float,
                                                                                                           representative_data_gen,
+                                                                                                          n_iter=self.num_calibration_iter,
                                                                                                           quant_config=quant_config,
                                                                                                           fw_info=DEFAULT_PYTORCH_INFO,
                                                                                                           network_editor=self.get_network_editor(),
@@ -176,6 +177,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                 else:
                     ptq_model, quantization_info = mct.pytorch_post_training_quantization(model_float,
                                                                                           representative_data_gen,
+                                                                                          n_iter=self.num_calibration_iter,
                                                                                           quant_config=quant_config,
                                                                                           fw_info=DEFAULT_PYTORCH_INFO,
                                                                                           network_editor=self.get_network_editor(),

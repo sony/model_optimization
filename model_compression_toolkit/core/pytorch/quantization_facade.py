@@ -18,7 +18,7 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import PYTORCH
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GradientPTQConfigV2
 from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -126,7 +126,8 @@ if importlib.util.find_spec("torch") is not None:
         if gptq_config is None:
             tg = ptq_runner(tg, _representative_data_gen, core_config, fw_info, fw_impl, tb_w)
         else:
-            tg = gptq_runner(tg, core_config, gptq_config, _representative_data_gen, _representative_data_gen,
+            gptq_config_v2 = GradientPTQConfigV2.from_v1(n_iter, gptq_config)
+            tg = gptq_runner(tg, core_config, gptq_config_v2, _representative_data_gen, _representative_data_gen,
                              fw_info, fw_impl, tb_w)
 
         if core_config.debug_config.analyze_similarity:
@@ -251,7 +252,8 @@ if importlib.util.find_spec("torch") is not None:
         if gptq_config is None:
             tg = ptq_runner(tg, _representative_data_gen, core_config, fw_info, fw_impl, tb_w)
         else:
-            tg = gptq_runner(tg, core_config, gptq_config, _representative_data_gen, _representative_data_gen,
+            gptq_config_v2 = GradientPTQConfigV2.from_v1(n_iter, gptq_config)
+            tg = gptq_runner(tg, core_config, gptq_config_v2, _representative_data_gen, _representative_data_gen,
                              fw_info, fw_impl, tb_w)
 
         if core_config.debug_config.analyze_similarity:

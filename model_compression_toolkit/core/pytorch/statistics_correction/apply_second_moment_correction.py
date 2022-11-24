@@ -51,14 +51,9 @@ def pytorch_apply_second_moment_correction(quantized_model: Any,
                     .weights_second_moment_correction:
                 module.train()
 
-    i_iter = 0
-    while core_config.quantization_config.weights_second_moment_iters > i_iter:
-        for data in representative_data_gen():
-            with torch.no_grad():
-                model(*to_torch_tensor(data))
-            i_iter += 1
-            if i_iter >= core_config.quantization_config.weights_second_moment_iters:
-                break
+    with torch.no_grad():
+        for data in tqdm(representative_data_gen()):
+            model(*to_torch_tensor(data))
 
     set_model(model)
 

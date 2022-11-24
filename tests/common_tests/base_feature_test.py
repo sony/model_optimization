@@ -31,11 +31,13 @@ class BaseFeatureNetworkTest(BaseTest):
                          num_of_inputs=num_of_inputs,
                          input_shape=input_shape)
 
-
     def get_experimental_ptq_facade(self):
         raise NotImplemented
 
     def get_gptq_config(self):
+        return None
+
+    def get_gptq_configv2(self):
         return None
 
     def get_network_editor(self):
@@ -43,7 +45,6 @@ class BaseFeatureNetworkTest(BaseTest):
 
     def get_kpi(self):
         return None
-
 
     def analyze_similarity(self):
         return False
@@ -75,6 +76,7 @@ class BaseFeatureNetworkTest(BaseTest):
                 if isinstance(qc, MixedPrecisionQuantizationConfig):
                     ptq_model, quantization_info = self.get_mixed_precision_ptq_facade()(model_float,
                                                                                          self.representative_data_gen,
+                                                                                         n_iter=self.num_calibration_iter,
                                                                                          quant_config=qc,
                                                                                          fw_info=self.get_fw_info(),
                                                                                          network_editor=self.get_network_editor(),
@@ -84,6 +86,7 @@ class BaseFeatureNetworkTest(BaseTest):
                 else:
                     ptq_model, quantization_info = self.get_ptq_facade()(model_float,
                                                                          self.representative_data_gen,
+                                                                         n_iter=self.num_calibration_iter,
                                                                          quant_config=qc,
                                                                          fw_info=self.get_fw_info(),
                                                                          network_editor=self.get_network_editor(),

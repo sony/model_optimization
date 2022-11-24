@@ -223,6 +223,7 @@ class TestGetKerasTPC(unittest.TestCase):
 
         quantized_model, _ = mct.keras_post_training_quantization(model,
                                                                   rep_data,
+                                                                  n_iter=1,
                                                                   target_platform_capabilities=tpc)
 
         mp_qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
@@ -230,6 +231,7 @@ class TestGetKerasTPC(unittest.TestCase):
         quantized_model, _ = mct.keras_post_training_quantization_mixed_precision(model,
                                                                                   rep_data,
                                                                                   target_kpi=mct.KPI(np.inf),
+                                                                                  n_iter=1,
                                                                                   quant_config=mp_qc,
                                                                                   target_platform_capabilities=tpc)
 

@@ -29,7 +29,7 @@ else:
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.gptq.keras.graph_info import get_trainable_parameters, get_weights_for_loss, \
     get_gumbel_probability
@@ -50,7 +50,7 @@ class KerasGPTQTrainer(GPTQTrainer):
     def __init__(self,
                  graph_float: Graph,
                  graph_quant: Graph,
-                 gptq_config: GradientPTQConfig,
+                 gptq_config: GradientPTQConfigV2,
                  fw_impl: FrameworkImplementation,
                  fw_info: FrameworkInfo,
                  representative_data_gen: Callable):
@@ -190,7 +190,7 @@ class KerasGPTQTrainer(GPTQTrainer):
             self.micro_training_loop(representative_data_gen,
                                      compute_gradients,
                                      self.optimizer_with_param,
-                                     self.gptq_config.n_iter,
+                                     self.gptq_config.n_epochs,
                                      True)
 
     @tf.function
@@ -219,7 +219,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                             data_function: Callable,
                             in_compute_gradients: Callable,
                             in_optimizer_with_param: List[Tuple[tf.keras.optimizers.Optimizer, List[tf.Tensor]]],
-                            n_iteration: int,
+                            n_epochs: int,
                             is_training: bool):
         """
         This function run a micro training loop on given set of parameters.
@@ -227,15 +227,14 @@ class KerasGPTQTrainer(GPTQTrainer):
             data_function: A callable function that give a batch of samples.
             in_compute_gradients: A callable function that compute the gradients.
             in_optimizer_with_param: A list of optimizer classes to update with the corresponding parameters.
-            n_iteration: Number of update iteration.
+            n_epochs: Number of update iterations of representative dataset.
             is_training: A boolean flag stating if the network is running in training mode.
 
         Returns: None
 
         """
-        i_iter = 0
-        while n_iteration > i_iter:
-            for data in tqdm(data_function(), initial=i_iter, total=n_iteration):
+        for _ in tqdm(range(n_epochs)):
+            for data in data_function():
                 input_data = [d * self.input_scale for d in data]
 
                 loss_value_step, grads = self.nano_training_step(input_data, in_compute_gradients, in_optimizer_with_param, is_training)
@@ -248,9 +247,6 @@ class KerasGPTQTrainer(GPTQTrainer):
                                                   self.compare_points)
                 self.loss_list.append(loss_value_step.numpy())
                 common.Logger.debug(f'last loss value: {self.loss_list[-1]}')
-                i_iter += 1
-                if i_iter >= n_iteration:
-                    break
 
     def update_graph(self):
         """

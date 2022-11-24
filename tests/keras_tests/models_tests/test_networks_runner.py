@@ -108,6 +108,7 @@ class NetworkTest(object):
                                                                                 representative_data_gen,
                                                                                 quant_config=qc,
                                                                                 fw_info=DEFAULT_KERAS_INFO,
+                                                                                n_iter=self.num_calibration_iter,
                                                                                 gptq_config=arc,
                                                                                 target_platform_capabilities=tpc)
         else:
@@ -115,6 +116,7 @@ class NetworkTest(object):
                                                                                 representative_data_gen,
                                                                                 quant_config=qc,
                                                                                 fw_info=DEFAULT_KERAS_INFO,
+                                                                                n_iter=self.num_calibration_iter,
                                                                                 target_platform_capabilities=tpc)
         self.compare(inputs_list, ptq_model, qc, tpc)
 
