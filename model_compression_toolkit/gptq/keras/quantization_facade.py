@@ -20,7 +20,7 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
@@ -58,23 +58,23 @@ if common.constants.FOUND_TF:
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
-    def get_keras_gptq_config(n_iter: int,
+    def get_keras_gptq_config(n_epochs: int,
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT),
                               optimizer_rest: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_REST_DEFAULT),
                               loss: Callable = GPTQMultipleTensorsLoss(),
-                              log_function: Callable = None) -> GradientPTQConfig:
+                              log_function: Callable = None) -> GradientPTQConfigV2:
         """
-        Create a GradientPTQConfig instance for Keras models.
+        Create a GradientPTQConfigV2 instance for Keras models.
 
         args:
-            n_iter (int): Number of iterations to fine-tune.
+            n_epochs (int): Number of epochs for running the representative dataset for fine-tuning.
             optimizer (OptimizerV2): Keras optimizer to use for fine-tuning for auxiliry variable with a default learning rate set to 0.2.
             optimizer_rest (OptimizerV2): Keras optimizer to use for fine-tuning of the bias variable.
             loss (Callable): loss to use during fine-tuning. should accept 4 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors, the 3rd is a list of quantized weights and the 4th is a list of float weights.
             log_function (Callable): Function to log information about the gptq process.
 
         returns:
-            a GradientPTQConfig object to use when fine-tuning the quantized model using gptq.
+            a GradientPTQConfigV2 object to use when fine-tuning the quantized model using gptq.
 
         Examples:
 
@@ -83,33 +83,34 @@ if common.constants.FOUND_TF:
              >>> import model_compression_toolkit as mct
              >>> import tensorflow as tf
 
-            Create a GradientPTQConfig to run for 5 iteration:
+            Create a GradientPTQConfigV2 to run for 5 epochs:
 
-            >>> gptq_conf = mct.get_keras_gptq_config(n_iter=5)
+            >>> gptq_conf = mct.get_keras_gptq_config(n_epochs=5)
 
             Other Tensorflow optimizers can be passed:
 
-            >>> gptq_conf = mct.get_keras_gptq_config(n_iter=3, optimizer=tf.keras.optimizers.Nadam())
+            >>> gptq_conf = mct.get_keras_gptq_config(n_epochs=3, optimizer=tf.keras.optimizers.Nadam())
 
             The configuration can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization` in order to quantize a keras model using gptq.
 
         """
         bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT, momentum=GPTQ_MOMENTUM)
         optimizer_quantization_parameter = tf.keras.optimizers.SGD(learning_rate=LR_QUANTIZATION_PARAM_DEFAULT, momentum=GPTQ_MOMENTUM)
-        return GradientPTQConfig(n_iter,
-                                 optimizer,
-                                 optimizer_rest=optimizer_rest,
-                                 loss=loss,
-                                 log_function=log_function,
-                                 train_bias=True,
-                                 quantization_parameters_learning=True,
-                                 optimizer_bias=bias_optimizer,
-                                 optimizer_quantization_parameter=optimizer_quantization_parameter)
+        return GradientPTQConfigV2(n_epochs,
+                                   optimizer,
+                                   optimizer_rest=optimizer_rest,
+                                   loss=loss,
+                                   log_function=log_function,
+                                   train_bias=True,
+                                   quantization_parameters_learning=True,
+                                   optimizer_bias=bias_optimizer,
+                                   optimizer_quantization_parameter=optimizer_quantization_parameter)
 
 
     def keras_gradient_post_training_quantization_experimental(in_model: Model,
                                                                representative_data_gen: Callable,
-                                                               gptq_config: GradientPTQConfig,
+                                                               gptq_config: GradientPTQConfigV2,
+                                                               gptq_representative_data_gen: Callable = None,
                                                                target_kpi: KPI = None,
                                                                core_config: CoreConfig = CoreConfig(),
                                                                fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
@@ -135,7 +136,8 @@ if common.constants.FOUND_TF:
         Args:
             in_model (Model): Keras model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
-            gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
+            gptq_config (GradientPTQConfigV2): Configuration for using gptq (e.g. optimizer).
+            gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
@@ -153,10 +155,14 @@ if common.constants.FOUND_TF:
             >>> from tensorflow.keras.applications.mobilenet import MobileNet
             >>> model = MobileNet()
 
-            Create a random dataset generator:
+            Create a random dataset generator, for required number of calibration iterations (num_calibration_batches):
+            In this example a random dataset of 10 batches each containing 4 images is used.
 
             >>> import numpy as np
-            >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
+            >>> num_calibration_batches = 10
+            >>> def repr_datagen():
+            >>>     for _ in range(num_calibration_batches):
+            >>>         yield [np.random.random((4, 224, 224, 3))]
 
             Create an MCT core config, containing the quantization configuration:
 
@@ -166,7 +172,7 @@ if common.constants.FOUND_TF:
             with different bitwidths for different layers.
             The candidates bitwidth for quantization should be defined in the target platform model:
 
-            >>> config = mct.CoreConfig(n_iter=1, mixed_precision_config=mct.MixedPrecisionQuantizationConfigV2(num_of_images=1))
+            >>> config = mct.CoreConfig(mixed_precision_config=mct.MixedPrecisionQuantizationConfigV2(num_of_images=1))
 
             For mixed-precision set a target KPI object:
             Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
@@ -177,7 +183,7 @@ if common.constants.FOUND_TF:
 
             Create GPTQ config:
 
-            >>> gptq_config = mct.get_keras_gptq_config(n_iter=1)
+            >>> gptq_config = mct.get_keras_gptq_config(n_epochs=1)
 
             Pass the model with the representative dataset generator to get a quantized model:
 
@@ -212,6 +218,7 @@ if common.constants.FOUND_TF:
                               core_config,
                               gptq_config,
                               representative_data_gen,
+                              gptq_representative_data_gen if gptq_representative_data_gen else representative_data_gen,
                               fw_info,
                               fw_impl,
                               tb_w)

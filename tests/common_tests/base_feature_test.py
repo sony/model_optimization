@@ -31,11 +31,13 @@ class BaseFeatureNetworkTest(BaseTest):
                          num_of_inputs=num_of_inputs,
                          input_shape=input_shape)
 
-
     def get_experimental_ptq_facade(self):
         raise NotImplemented
 
     def get_gptq_config(self):
+        return None
+
+    def get_gptq_configv2(self):
         return None
 
     def get_network_editor(self):
@@ -43,7 +45,6 @@ class BaseFeatureNetworkTest(BaseTest):
 
     def get_kpi(self):
         return None
-
 
     def analyze_similarity(self):
         return False
@@ -53,8 +54,7 @@ class BaseFeatureNetworkTest(BaseTest):
                            network_editor=self.get_network_editor())
 
     def get_core_config(self):
-        return CoreConfig(n_iter=self.num_calibration_iter,
-                          quantization_config=self.get_quantization_config(),
+        return CoreConfig(quantization_config=self.get_quantization_config(),
                           mixed_precision_config=self.get_mixed_precision_v2_config(),
                           debug_config=self.get_debug_config())
 
@@ -63,10 +63,11 @@ class BaseFeatureNetworkTest(BaseTest):
         feature_networks = feature_networks if isinstance(feature_networks, list) else [feature_networks]
         for model_float in feature_networks:
             if experimental_facade:
+                core_config = self.get_core_config()
                 ptq_model, quantization_info = self.get_experimental_ptq_facade()(model_float,
-                                                                                  self.representative_data_gen,
+                                                                                  self.representative_data_gen_experimental,
                                                                                   target_kpi=self.get_kpi(),
-                                                                                  core_config=self.get_core_config(),
+                                                                                  core_config=core_config,
                                                                                   target_platform_capabilities=self.get_tpc(),
                                                                                   new_experimental_exporter=experimental_exporter
                                                                                   )

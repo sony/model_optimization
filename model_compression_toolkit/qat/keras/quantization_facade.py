@@ -90,10 +90,14 @@ if FOUND_TF:
              >>> from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
              >>> model = MobileNetV2()
 
-             Create a random dataset generator:
+            Create a random dataset generator, for required number of calibration iterations (num_calibration_batches):
+            In this example a random dataset of 10 batches each containing 4 images is used.
 
-             >>> import numpy as np
-             >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
+            >>> import numpy as np
+            >>> num_calibration_batches = 10
+            >>> def repr_datagen():
+            >>>     for _ in range(num_calibration_batches):
+            >>>         yield [np.random.random((4, 224, 224, 3))]
 
              Create a MCT core config, containing the quantization configuration:
 
@@ -183,7 +187,7 @@ if FOUND_TF:
              Create a random dataset generator:
 
              >>> import numpy as np
-             >>> def repr_datagen(): return [np.random.random((1,224,224,3))]
+             >>> def repr_datagen(): yield [np.random.random((1, 224, 224, 3))]
 
              Create a MCT core config, containing the quantization configuration:
 

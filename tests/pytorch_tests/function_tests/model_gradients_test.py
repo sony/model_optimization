@@ -161,15 +161,16 @@ class ModelGradientsCalculationTest(BasePytorchTest):
     def generate_inputs(input_shapes):
         return generate_inputs(input_shapes)
 
-    def representative_data_gen(self):
+    def representative_data_gen(self, n_iters=1):
         input_shapes = self.create_inputs_shape()
-        return self.generate_inputs(input_shapes)
+        for _ in range(n_iters):
+            yield self.generate_inputs(input_shapes)
 
     def run_test(self, seed=0):
         model_float = basic_derivative_model()
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph(model_float, self.representative_data_gen, pytorch_impl)
-        input_tensors = {inode: self.representative_data_gen()[0] for inode in graph.get_inputs()}
+        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
         output_list = [ipts[-1]]
@@ -199,13 +200,13 @@ class ModelGradientsBasicModelTest(BasePytorchTest):
 
     def representative_data_gen(self):
         input_shapes = self.create_inputs_shape()
-        return self.generate_inputs(input_shapes)
+        yield self.generate_inputs(input_shapes)
 
     def run_test(self, seed=0):
         model_float = basic_model()
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph(model_float, self.representative_data_gen, pytorch_impl)
-        input_tensors = {inode: self.representative_data_gen()[0] for inode in graph.get_inputs()}
+        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
         output_list = [ipts[-1]]
@@ -234,13 +235,13 @@ class ModelGradientsAdvancedModelTest(BasePytorchTest):
 
     def representative_data_gen(self):
         input_shapes = self.create_inputs_shape()
-        return self.generate_inputs(input_shapes)
+        yield self.generate_inputs(input_shapes)
 
     def run_test(self, seed=0):
         model_float = basic_model()
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph(model_float, self.representative_data_gen, pytorch_impl)
-        input_tensors = {inode: self.representative_data_gen()[0] for inode in graph.get_inputs()}
+        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
         output_list = [ipts[-1]]
@@ -269,13 +270,13 @@ class ModelGradientsOutputReplacementTest(BasePytorchTest):
 
     def representative_data_gen(self):
         input_shapes = self.create_inputs_shape()
-        return self.generate_inputs(input_shapes)
+        yield self.generate_inputs(input_shapes)
 
     def run_test(self, seed=0):
         model_float = model_with_output_replacements()
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph(model_float, self.representative_data_gen, pytorch_impl)
-        input_tensors = {inode: self.representative_data_gen()[0] for inode in graph.get_inputs()}
+        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
         output_list = [ipts[-2]]

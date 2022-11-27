@@ -27,11 +27,11 @@ from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 
 def small_random_datagen():
-    return [np.random.random((1, 8, 8, 3))]
+    yield [np.random.random((1, 8, 8, 3))]
 
 
 def large_random_datagen():
-    return [np.random.random((1, 224, 224, 3))]
+    yield [np.random.random((1, 224, 224, 3))]
 
 
 def compute_output_size(output_shape):
@@ -58,7 +58,7 @@ class BasicModel(torch.nn.Module):
         return getattr(self.conv1, KERNEL).detach().numpy().flatten().shape[0]
 
     def max_tensor(self):
-        _, l_shape = self(torch.from_numpy(small_random_datagen()[0]).float())
+        _, l_shape = self(torch.from_numpy(next(small_random_datagen())[0]).float())
         return compute_output_size(l_shape)
 
 
@@ -90,7 +90,7 @@ class ComplexModel(torch.nn.Module):
                getattr(self.conv2, KERNEL).detach().numpy().flatten().shape[0]
 
     def max_tensor(self):
-        _, l_shape = self(torch.from_numpy(large_random_datagen()[0]).float())
+        _, l_shape = self(torch.from_numpy(next(large_random_datagen())[0]).float())
         return compute_output_size(l_shape)
 
 

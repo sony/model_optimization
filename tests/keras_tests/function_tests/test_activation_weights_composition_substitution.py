@@ -84,7 +84,7 @@ def multiple_outputs_activation_model():
 
 
 def representative_dataset():
-    return [np.random.randn(1, 8, 8, 3).astype(np.float32)]
+    yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]
 
 
 def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_config):

@@ -36,17 +36,18 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         Test that new fully quantized exporter model outputs the same as
         old exported model.
         """
-        repr_dataset = lambda: [np.random.randn(1, 224, 224, 3)]
+        def repr_dataset():
+            yield [np.random.randn(1, 224, 224, 3)]
         seed = np.random.randint(0, 100, size=1)[0]
 
         self.set_seed(seed)
-        core_config = mct.CoreConfig(n_iter=1)
+        core_config = mct.CoreConfig()
         old_export_model, _ = mct.keras_post_training_quantization_experimental(in_model=MobileNetV2(),
                                                                                 representative_data_gen=repr_dataset,
                                                                                 core_config=core_config)
 
         self.set_seed(seed)
-        core_config = mct.CoreConfig(n_iter=1)
+        core_config = mct.CoreConfig()
         new_export_model, _ = mct.keras_post_training_quantization_experimental(in_model=MobileNetV2(),
                                                                                 core_config=core_config,
                                                                                 representative_data_gen=repr_dataset,

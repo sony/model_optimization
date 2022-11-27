@@ -54,12 +54,15 @@ class TestFullyQuantizedExporter(unittest.TestCase):
 
     def setUp(self) -> None:
         self.mbv2 = mobilenet_v2(pretrained=True)
-        self.representative_data_gen = lambda: to_torch_tensor([torch.randn(1, 3, 224, 224)])
+        self.representative_data_gen = self.random_data_gen
         self.fully_quantized_mbv2 = self.run_mct(self.mbv2)
 
+    def random_data_gen(self, n_iters=1):
+        for _ in range(n_iters):
+            yield to_torch_tensor([torch.randn(1, 3, 224, 224)])
 
     def run_mct(self, model):
-        core_config = mct.CoreConfig(n_iter=1)
+        core_config = mct.CoreConfig()
         new_export_model, _ = mct.pytorch_post_training_quantization_experimental(
             in_module=model,
             core_config=core_config,
@@ -78,11 +81,15 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         old exported model.
         """
         model = mobilenet_v2(pretrained=True)
-        repr_dataset = lambda: to_torch_tensor([torch.ones(1, 3, 224, 224)])
+
+        def repr_dataset(n_iters=1):
+            for _ in range(n_iters):
+                yield to_torch_tensor([torch.ones(1, 3, 224, 224)])
+
         seed = np.random.randint(0, 100, size=1)[0]
 
         self.set_seed(seed)
-        core_config = mct.CoreConfig(n_iter=1)
+        core_config = mct.CoreConfig()
         old_export_model, _ = mct.pytorch_post_training_quantization_experimental(
             in_module=model,
             representative_data_gen=repr_dataset,
@@ -90,7 +97,7 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         )
 
         self.set_seed(seed)
-        core_config = mct.CoreConfig(n_iter=1)
+        core_config = mct.CoreConfig()
         new_export_model, _ = mct.pytorch_post_training_quantization_experimental(
             in_module=model,
             core_config=core_config,
@@ -100,7 +107,7 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         def _to_numpy(t):
             return t.cpu().detach().numpy()
 
-        images = repr_dataset()
+        images = next(repr_dataset())
         diff = new_export_model(images) - old_export_model(images)
         w_delta = np.sum(np.abs(_to_numpy(old_export_model.features_0_0_bn.weight) - _to_numpy(new_export_model.features_0_0_bn.layer.weight)))
         self.assertTrue(w_delta == 0, f'Diff between weights: {w_delta}')
@@ -169,9 +176,9 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         model = copy.deepcopy(self.fully_quantized_mbv2)
         model.load_state_dict(torch.load(model_file))
         model.eval()
-        model(self.representative_data_gen())
+        model(next(self.representative_data_gen()))
 
-        torch_traced = torch.jit.trace(self.fully_quantized_mbv2, to_torch_tensor(self.representative_data_gen()))
+        torch_traced = torch.jit.trace(self.fully_quantized_mbv2, to_torch_tensor(next(self.representative_data_gen())))
         torch_script_filename = f'mbv2_fq_torchscript.pth'
         torch_script_model = torch.jit.script(torch_traced)
         torch_script_file = os.path.join(model_folder, torch_script_filename)
@@ -180,7 +187,7 @@ class TestFullyQuantizedExporter(unittest.TestCase):
 
         loaded_script_model = torch.jit.load(torch_script_file)
         loaded_script_model.eval()
-        images = self.representative_data_gen()[0]
+        images = next(self.representative_data_gen())[0]
         diff = loaded_script_model(images) - model(images)
         sum_abs_error = np.sum(np.abs(self._to_numpy(diff)))
         self.assertTrue(sum_abs_error==0, f'Difference between loaded torch script to loaded torch model: {sum_abs_error}')

@@ -17,7 +17,7 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import PYTORCH
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
 from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
@@ -48,56 +48,57 @@ if FOUND_TORCH:
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
 
-    def get_pytorch_gptq_config(n_iter: int,
+    def get_pytorch_gptq_config(n_epochs: int,
                                 optimizer: Optimizer = Adam([torch.Tensor([])], lr=LR_DEFAULT),
                                 optimizer_rest: Optimizer = Adam([torch.Tensor([])], lr=LR_REST_DEFAULT),
                                 loss: Callable = multiple_tensors_mse_loss,
-                                log_function: Callable = None) -> GradientPTQConfig:
+                                log_function: Callable = None) -> GradientPTQConfigV2:
         """
-        Create a GradientPTQConfig instance for Pytorch models.
+        Create a GradientPTQConfigV2 instance for Pytorch models.
 
         args:
-            n_iter (int): Number of iterations to fine-tune.
+            n_epochs (int): Number of epochs for running the representative dataset for fine-tuning.
             optimizer (Optimizer): Pytorch optimizer to use for fine-tuning for auxiliry variable.
             optimizer_rest (Optimizer): Pytorch optimizer to use for fine-tuning of the bias variable.
             loss (Callable): loss to use during fine-tuning. should accept 4 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors, the 3rd is a list of quantized weights and the 4th is a list of float weights.
             log_function (Callable): Function to log information about the gptq process.
 
         returns:
-            a GradientPTQConfig object to use when fine-tuning the quantized model using gptq.
+            a GradientPTQConfigV2 object to use when fine-tuning the quantized model using gptq.
 
         Examples:
 
-            Import MCT and Create a GradientPTQConfig to run for 5 iteration:
+            Import MCT and Create a GradientPTQConfigV2 to run for 5 epochs:
 
             >>> import model_compression_toolkit as mct
-            >>> gptq_conf = mct.get_pytorch_gptq_config(n_iter=5)
+            >>> gptq_conf = mct.get_pytorch_gptq_config(n_epochs=5)
 
-            Other Tensorflow optimizers can be passed with dummy params:
+            Other PyTorch optimizers can be passed with dummy params:
 
             >>> import torch
-            >>> gptq_conf = mct.get_pytorch_gptq_config(n_iter=3, optimizer=torch.optim.Adam([torch.Tensor(1)]))
+            >>> gptq_conf = mct.get_pytorch_gptq_config(n_epochs=3, optimizer=torch.optim.Adam([torch.Tensor(1)]))
 
             The configuration can be passed to :func:`~model_compression_toolkit.pytorch_post_training_quantization` in order to quantize a pytorch model using gptq.
 
         """
         bias_optimizer = Adam([torch.Tensor([])], lr=LR_BIAS_DEFAULT)
         optimizer_quantization_parameter = Adam([torch.Tensor([])], lr=LR_QUANTIZATION_PARAM_DEFAULT)
-        return GradientPTQConfig(n_iter,
-                                 optimizer,
-                                 optimizer_rest=optimizer_rest,
-                                 loss=loss,
-                                 log_function=log_function,
-                                 train_bias=True,
-                                 optimizer_quantization_parameter=optimizer_quantization_parameter,
-                                 optimizer_bias=bias_optimizer)
+        return GradientPTQConfigV2(n_epochs,
+                                   optimizer,
+                                   optimizer_rest=optimizer_rest,
+                                   loss=loss,
+                                   log_function=log_function,
+                                   train_bias=True,
+                                   optimizer_quantization_parameter=optimizer_quantization_parameter,
+                                   optimizer_bias=bias_optimizer)
 
 
     def pytorch_gradient_post_training_quantization_experimental(model: Module,
                                                                  representative_data_gen: Callable,
                                                                  target_kpi: KPI = None,
                                                                  core_config: CoreConfig = CoreConfig(),
-                                                                 gptq_config: GradientPTQConfig = None,
+                                                                 gptq_config: GradientPTQConfigV2 = None,
+                                                                 gptq_representative_data_gen: Callable = None,
                                                                  target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC,
                                                                  new_experimental_exporter: bool = False):
         """
@@ -121,7 +122,8 @@ if FOUND_TORCH:
             representative_data_gen (Callable): Dataset used for calibration.
             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
-            gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
+            gptq_config (GradientPTQConfigV2): Configuration for using gptq (e.g. optimizer).
+            gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to. `Default PyTorch TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/tpc_models/pytorch_tp_models/pytorch_default.py>`_
             new_experimental_exporter (bool): Whether exporting the quantized model using new exporter or not (in progress. Avoiding it for now is recommended).
 
@@ -135,14 +137,18 @@ if FOUND_TORCH:
             >>> from torchvision import models
             >>> module = models.mobilenet_v2()
 
-            Create a random dataset generator:
+            Create a random dataset generator, for required number of calibration iterations (num_calibration_batches):
+            In this example a random dataset of 10 batches each containing 4 images is used.
 
             >>> import numpy as np
-            >>> def repr_datagen(): return [np.random.random((1,3,224,224))]
+            >>> num_calibration_batches = 10
+            >>> def repr_datagen():
+            >>>     for _ in range(num_calibration_batches):
+            >>>         yield [np.random.random((4, 3, 224, 224))]
 
             Create MCT core configurations with number of calibration iterations set to 1:
 
-            >>> config = mct.CoreConfig(n_iter=1)
+            >>> config = mct.CoreConfig()
 
             Pass the module, the representative dataset generator and the configuration (optional) to get a quantized module
 
@@ -178,7 +184,10 @@ if FOUND_TORCH:
         # ---------------------- #
         # GPTQ Runner
         # ---------------------- #
-        graph_gptq = gptq_runner(graph, core_config, gptq_config, representative_data_gen, DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
+        graph_gptq = gptq_runner(graph, core_config, gptq_config,
+                                 representative_data_gen,
+                                 gptq_representative_data_gen if gptq_representative_data_gen else representative_data_gen,
+                                 DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen, tb_w, graph_gptq, fw_impl, DEFAULT_PYTORCH_INFO)
 

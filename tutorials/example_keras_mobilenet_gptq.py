@@ -92,7 +92,8 @@ if __name__ == '__main__':
     # Calling representative_data_gen() should return a list
     # of two numpy.ndarray objects where the arrays' shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].
     def representative_data_gen() -> list:
-        return [image_data_loader.sample()]
+        for _ in range(args.num_calibration_iterations):
+            yield [image_data_loader.sample()]
 
 
     # Get a TargetPlatformModel object that models the hardware for the quantized model inference.
@@ -105,7 +106,7 @@ if __name__ == '__main__':
     model = MobileNetV2()
 
     # Create a core quantization configuration and set the number of calibration iterations.
-    config = mct.CoreConfig(n_iter=args.num_calibration_iterations)
+    config = mct.CoreConfig()
 
     # Create a GPTQ quantization configuration and set the number of training iterations.
     gptq_config = mct.get_keras_gptq_config(n_iter=args.num_gptq_training_iterations)

@@ -32,6 +32,10 @@ class BaseTest:
     def representative_data_gen(self):
         return self.generate_inputs()
 
+    def representative_data_gen_experimental(self):
+        for _ in range(self.num_calibration_iter):
+            yield self.generate_inputs()
+
     def get_input_shapes(self):
         return [self.input_shape for _ in range(self.num_of_inputs)]
 

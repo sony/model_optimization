@@ -188,7 +188,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
 class TestSearchBitwidthConfiguration(unittest.TestCase):
 
     def test_search_engine(self):
-        core_config = CoreConfig(n_iter=1, quantization_config=DEFAULTCONFIG,
+        core_config = CoreConfig(quantization_config=DEFAULTCONFIG,
                                  mixed_precision_config=MixedPrecisionQuantizationConfigV2(compute_mse,
                                                                                            get_average_weights,
                                                                                            num_of_images=1,
@@ -230,13 +230,15 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         for i in range(10):
             mi.infer([np.random.randn(1, 224, 224, 3)])
 
+        def representative_data_gen():
+            yield [np.random.random((1, 224, 224, 3))]
+
         calculate_quantization_params(graph,
                                       fw_info,
                                       fw_impl=keras_impl)
         keras_sens_eval = keras_impl.get_sensitivity_evaluator(graph,
                                                                core_config.mixed_precision_config,
-                                                               representative_data_gen=lambda:
-                                                               [np.random.random((1, 224, 224, 3))],
+                                                               representative_data_gen,
                                                                fw_info=fw_info)
 
         cfg = search_bit_width(graph_to_search_cfg=graph,
@@ -244,7 +246,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                fw_impl=keras_impl,
                                target_kpi=KPI(np.inf),
                                mp_config=core_config.mixed_precision_config,
-                               representative_data_gen=lambda: [np.random.random((1, 224, 224, 3))],
+                               representative_data_gen=representative_data_gen,
                                search_method=BitWidthSearchMethod.INTEGER_PROGRAMMING)
 
         with self.assertRaises(Exception):
@@ -253,7 +255,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                    fw_impl=keras_impl,
                                    target_kpi=KPI(np.inf),
                                    mp_config=core_config.mixed_precision_config,
-                                   representative_data_gen=lambda: [np.random.random((1, 224, 224, 3))],
+                                   representative_data_gen=representative_data_gen,
                                    search_method=None)
 
         with self.assertRaises(Exception):
@@ -262,7 +264,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                    fw_impl=keras_impl,
                                    target_kpi=None,
                                    mp_config=core_config.mixed_precision_config,
-                                   representative_data_gen=lambda: [np.random.random((1, 224, 224, 3))],
+                                   representative_data_gen=representative_data_gen,
                                    search_method=BitWidthSearchMethod.INTEGER_PROGRAMMING)
 
 

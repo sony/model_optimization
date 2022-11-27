@@ -17,7 +17,7 @@ from abc import abstractmethod
 import torch
 import numpy as np
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
 from model_compression_toolkit.gptq.pytorch.quantizer.gptq_quantizer import BaseWeightQuantizer
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
 from model_compression_toolkit.gptq.pytorch.quantizer.quant_utils import sample_gumbel
@@ -25,6 +25,7 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.core.common.target_platform.op_quantization_config import QuantizationMethod
 
 P_INIT = 0.01
+
 
 def init_aux_var(w_shape: torch.Size, m: int, p: float = P_INIT) -> torch.Tensor:
     """
@@ -65,13 +66,13 @@ class BaseGumbelWeightQuantizer(BaseWeightQuantizer):
 
     def __init__(self,
                  weights_quantization_cfg: NodeWeightsQuantizationConfig,
-                 gptq_config: GradientPTQConfig,
+                 gptq_config: GradientPTQConfigV2,
                  weight_shape: torch.Size):
         """
         Construct a Pytorch model that utilize a fake weight quantizer of Gumbel rounding
         Args:
             weights_quantization_cfg: Configuration of weight quantization
-            gptq_config: GradientPTQConfig object with parameters about the tuning process.
+            gptq_config: GradientPTQConfigV2 object with parameters about the tuning process.
             weight_shape: weight shape for auxiliary tensor creation.
         """
         super().__init__()
@@ -86,7 +87,7 @@ class BaseGumbelWeightQuantizer(BaseWeightQuantizer):
         self.minimal_temp = gptq_config.quantizer_config.minimal_temp
         self.maximal_temp = gptq_config.quantizer_config.maximal_temp
         self.temperature_learning = gptq_config.quantizer_config.temperature_learning
-        self.cycle_iterations = int(gptq_config.n_iter / gptq_config.quantizer_config.n_cycles)
+        self.cycle_iterations = int(gptq_config.n_epochs / gptq_config.quantizer_config.n_cycles)
         self.shift_tensor = to_torch_tensor(init_shift_var(self.m))
         self.tau = None
         self.g_t = 0

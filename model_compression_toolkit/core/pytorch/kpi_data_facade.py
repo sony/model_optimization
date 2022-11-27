@@ -63,10 +63,14 @@ if importlib.util.find_spec("torch") is not None:
             >>> from torchvision import models
             >>> module = models.mobilenet_v2()
 
-            Create a random dataset generator:
+            Create a random dataset generator, for required number of calibration iterations (num_calibration_batches):
+            In this example a random dataset of 10 batches each containing 4 images is used.
 
             >>> import numpy as np
-            >>> def repr_datagen(): return [np.random.random((1,3,224,224))]
+            >>> num_calibration_batches = 10
+            >>> def repr_datagen():
+            >>>     for _ in range(num_calibration_batches):
+            >>>         yield [np.random.random((4, 3, 224, 224))]
 
             Import mct and call for KPI data calculation:
 
@@ -123,7 +127,7 @@ if importlib.util.find_spec("torch") is not None:
             Create a random dataset generator:
 
             >>> import numpy as np
-            >>> def repr_datagen(): return [np.random.random((1,3,224,224))]
+            >>> def repr_datagen(): yield [np.random.random((1, 3, 224, 224))]
 
             Import mct and call for KPI data calculation:
 

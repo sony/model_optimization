@@ -18,13 +18,14 @@ import torch.nn as nn
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GradientPTQConfigV2, RoundingType
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
 
 tp = mct.target_platform
+
 
 class TestModel(nn.Module):
     def __init__(self):
@@ -67,9 +68,9 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         # Run MCT with PTQ
         np.random.seed(self.seed)
         ptq_model, _ = mct.pytorch_post_training_quantization_experimental(self.float_model,
-                                                                                       self.representative_data_gen,
-                                                                                       core_config=self.get_core_config(),
-                                                                                       target_platform_capabilities=self.get_tpc()) if self.experimental \
+                                                                           self.representative_data_gen_experimental,
+                                                                           core_config=self.get_core_config(),
+                                                                           target_platform_capabilities=self.get_tpc()) if self.experimental \
             else mct.pytorch_post_training_quantization(self.float_model,
                                                         self.representative_data_gen,
                                                         n_iter=self.num_calibration_iter,
@@ -80,11 +81,11 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         # Run MCT with GPTQ
         np.random.seed(self.seed)
         gptq_model, quantization_info = mct.pytorch_gradient_post_training_quantization_experimental(self.float_model,
-                                                                                                  self.representative_data_gen,
-                                                                                                  core_config=self.get_core_config(),
-                                                                                                  target_platform_capabilities=self.get_tpc(),
-                                                                                                  gptq_config=self.get_gptq_config(),
-                                                                                                  new_experimental_exporter=self.experimental_exporter) if self.experimental \
+                                                                                                     self.representative_data_gen_experimental,
+                                                                                                     core_config=self.get_core_config(),
+                                                                                                     target_platform_capabilities=self.get_tpc(),
+                                                                                                     gptq_config=self.get_gptq_configv2(),
+                                                                                                     new_experimental_exporter=self.experimental_exporter) if self.experimental \
             else mct.pytorch_post_training_quantization(self.float_model,
                                                         self.representative_data_gen,
                                                         n_iter=self.num_calibration_iter,
@@ -113,6 +114,15 @@ class STEAccuracyTest(GPTQBaseTest):
                                  optimizer_bias=torch.optim.Adam([torch.Tensor([])], lr=0.4),
                                  rounding_type=RoundingType.STE)
 
+    def get_gptq_configv2(self):
+        return GradientPTQConfigV2(5,
+                                   optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
+                                   loss=multiple_tensors_mse_loss,
+                                   train_bias=False,
+                                   use_jac_based_weights=True,
+                                   optimizer_bias=torch.optim.Adam([torch.Tensor([])], lr=0.4),
+                                   rounding_type=RoundingType.STE)
+
     def gptq_compare(self, ptq_model, gptq_model, input_x=None, max_change=None):
         for ptq_param, gptq_param in zip(ptq_model.parameters(), gptq_model.parameters()):
             delta_w = torch.abs(gptq_param - ptq_param)
@@ -129,6 +139,14 @@ class STEWeightsUpdateTest(GPTQBaseTest):
                                  train_bias=True,
                                  optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=0.5),
                                  rounding_type=RoundingType.STE)
+
+    def get_gptq_configv2(self):
+        return GradientPTQConfigV2(50,
+                                   optimizer=torch.optim.Adam([torch.Tensor([])], lr=0.5),
+                                   loss=multiple_tensors_mse_loss,
+                                   train_bias=True,
+                                   optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=0.5),
+                                   rounding_type=RoundingType.STE)
 
     def compare(self, ptq_model, gptq_model, input_x=None, max_change=None):
         ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))
@@ -151,6 +169,13 @@ class STELearnRateZeroTest(GPTQBaseTest):
                                  loss=multiple_tensors_mse_loss,
                                  train_bias=False,
                                  rounding_type=RoundingType.STE)
+
+    def get_gptq_configv2(self):
+        return GradientPTQConfigV2(5,
+                                   optimizer=torch.optim.Adam([torch.Tensor([])], lr=0),
+                                   loss=multiple_tensors_mse_loss,
+                                   train_bias=False,
+                                   rounding_type=RoundingType.STE)
 
     def compare(self, ptq_model, gptq_model, input_x=None, quantization_info=None):
         ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))
@@ -178,6 +203,16 @@ class SymGumbelAccuracyTest(GPTQBaseTest):
                                  quantization_parameters_learning=True,
                                  rounding_type=RoundingType.GumbelRounding)
 
+    def get_gptq_configv2(self):
+        return GradientPTQConfigV2(5,
+                                   optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
+                                   loss=multiple_tensors_mse_loss,
+                                   train_bias=False,
+                                   use_jac_based_weights=True,
+                                   optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
+                                   quantization_parameters_learning=True,
+                                   rounding_type=RoundingType.GumbelRounding)
+
     def gptq_compare(self, ptq_model, gptq_model, input_x=None, max_change=None):
         for ptq_param, gptq_param in zip(ptq_model.parameters(), gptq_model.parameters()):
             delta_w = torch.abs(gptq_param - ptq_param)
@@ -194,6 +229,14 @@ class SymGumbelWeightsUpdateTest(GPTQBaseTest):
                                  train_bias=True,
                                  optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=0.5),
                                  rounding_type=RoundingType.GumbelRounding)
+
+    def get_gptq_configv2(self):
+        return GradientPTQConfigV2(50,
+                                   optimizer=torch.optim.Adam([torch.Tensor([])], lr=0.5),
+                                   loss=multiple_tensors_mse_loss,
+                                   train_bias=True,
+                                   optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=0.5),
+                                   rounding_type=RoundingType.GumbelRounding)
 
     def gptq_compare(self, ptq_model, gptq_model, input_x=None, max_change=None):
         ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))
@@ -228,6 +271,16 @@ class UniformGumbelAccuracyTest(GPTQBaseTest):
                                  quantization_parameters_learning=True,
                                  rounding_type=RoundingType.GumbelRounding)
 
+    def get_gptq_configv2(self):
+        return GradientPTQConfigV2(5,
+                                   optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
+                                   loss=multiple_tensors_mse_loss,
+                                   train_bias=False,
+                                   use_jac_based_weights=True,
+                                   optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
+                                   quantization_parameters_learning=True,
+                                   rounding_type=RoundingType.GumbelRounding)
+
     def gptq_compare(self, ptq_model, gptq_model, input_x=None, max_change=None):
         for ptq_param, gptq_param in zip(ptq_model.parameters(), gptq_model.parameters()):
             delta_w = torch.abs(gptq_param - ptq_param)
@@ -252,6 +305,14 @@ class UniformGumbelWeightsUpdateTest(GPTQBaseTest):
                                  train_bias=True,
                                  optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=0.5),
                                  rounding_type=RoundingType.GumbelRounding)
+
+    def get_gptq_configv2(self):
+        return GradientPTQConfigV2(50,
+                                   optimizer=torch.optim.Adam([torch.Tensor([])], lr=0.5),
+                                   loss=multiple_tensors_mse_loss,
+                                   train_bias=True,
+                                   optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=0.5),
+                                   rounding_type=RoundingType.GumbelRounding)
 
     def gptq_compare(self, ptq_model, gptq_model, input_x=None, max_change=None):
         ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))

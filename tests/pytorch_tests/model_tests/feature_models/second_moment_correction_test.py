@@ -72,6 +72,7 @@ class BaseSecondMomentTest(BasePytorchTest):
 
     def __init__(self, unit_test, float_reconstruction_error=1e-6):
         super().__init__(unit_test, float_reconstruction_error)
+        self.num_calibration_iter = 200
         self.i = 0
 
     def generate_inputs(self, input_shapes):
@@ -93,7 +94,6 @@ class BaseSecondMomentTest(BasePytorchTest):
     def get_quantization_configs(self):
         quant_config = self.get_quantization_config()
         quant_config.weights_second_moment_correction = True
-        quant_config.weights_second_moment_iters = 200
         return {"8bit_second_moment_correction": quant_config}
 
     # Check the Re-fusing of the reconstructed BN
@@ -303,7 +303,7 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
         x = self.generate_inputs(input_shapes)
 
         def representative_data_gen():
-            return x
+            yield x
 
         model_float = self.create_feature_network(input_shapes)
         quant_config_dict = self.get_quantization_configs()
@@ -313,7 +313,6 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
             tpc = self.get_tpc()[model_name]
             tg, graph_after_second_moment_correction = self.prepare_graph(model_float,
                                                                           representative_data_gen,
-                                                                          n_iter=1,
                                                                           quant_config=quant_config,
                                                                           fw_info=DEFAULT_PYTORCH_INFO,
                                                                           network_editor=self.get_network_editor(),
@@ -351,8 +350,7 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
                       target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_INFO) -> \
             Tuple[Graph, Graph]:
 
-        core_config = CoreConfig(n_iter,
-                                 quantization_config=quant_config,
+        core_config = CoreConfig(quantization_config=quant_config,
                                  debug_config=DebugConfig(analyze_similarity=analyze_similarity,
                                                           network_editor=network_editor)
                                  )

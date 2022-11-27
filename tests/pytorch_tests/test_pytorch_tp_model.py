@@ -213,7 +213,6 @@ class TestPytorchTPModel(unittest.TestCase):
         self.assertEqual(p1[1], LayerFilterParams(torch.relu, Greater("max_value", 7), negative_slope=0))
 
 
-
 class TestGetPytorchTPC(unittest.TestCase):
 
     def test_get_pytorch_models(self):
@@ -273,8 +272,11 @@ class TestGetPytorchTPC(unittest.TestCase):
         self.assertTrue(e.exception)
 
 
-
 def get_node(layer):
     model = LayerTestModel(layer)
-    graph = PytorchImplementation().model_reader(model, lambda: [np.random.randn(1, 3, 16, 16)])
+
+    def rep_data():
+        yield [np.random.randn(1, 3, 16, 16)]
+
+    graph = PytorchImplementation().model_reader(model, rep_data)
     return graph.get_topo_sorted_nodes()[1]

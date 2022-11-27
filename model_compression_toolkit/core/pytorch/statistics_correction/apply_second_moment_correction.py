@@ -51,9 +51,10 @@ def pytorch_apply_second_moment_correction(quantized_model: Any,
                     .weights_second_moment_correction:
                 module.train()
 
-    for _ in tqdm(range(core_config.quantization_config.weights_second_moment_iters)):
-        with torch.no_grad():
-            model(*to_torch_tensor(representative_data_gen()))
+    with torch.no_grad():
+        for data in tqdm(representative_data_gen()):
+            model(*to_torch_tensor(data))
+
     set_model(model)
 
     # Move every BN to eval mode and update the corresponding BN node params in the graph

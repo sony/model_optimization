@@ -22,6 +22,7 @@ from torchvision.models import mobilenet_v2
 import os
 import glob
 
+
 def random_datagen():
     return [np.random.random((1, 3, 224, 224))]
 

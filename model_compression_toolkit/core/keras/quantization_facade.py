@@ -19,7 +19,7 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GradientPTQConfigV2
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.network_editors.actions import EditRule
@@ -108,8 +108,7 @@ if importlib.util.find_spec("tensorflow") is not None\
         KerasModelValidation(model=in_model,
                              fw_info=fw_info).validate()
 
-        core_config = CoreConfig(n_iter,
-                                 quantization_config=quant_config,
+        core_config = CoreConfig(quantization_config=quant_config,
                                  debug_config=DebugConfig(analyze_similarity=analyze_similarity,
                                                           network_editor=network_editor)
                                  )
@@ -118,8 +117,13 @@ if importlib.util.find_spec("tensorflow") is not None\
 
         fw_impl = KerasImplementation()
 
+        # convert old representative dataset generation to a generator
+        def _representative_data_gen():
+            for _ in range(n_iter):
+                yield representative_data_gen()
+
         tg, bit_widths_config = core_runner(in_model=in_model,
-                                            representative_data_gen=representative_data_gen,
+                                            representative_data_gen=_representative_data_gen,
                                             core_config=core_config,
                                             fw_info=fw_info,
                                             fw_impl=fw_impl,
@@ -127,13 +131,14 @@ if importlib.util.find_spec("tensorflow") is not None\
                                             tb_w=tb_w)
 
         if gptq_config is None:
-            tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
+            tg = ptq_runner(tg, _representative_data_gen, core_config, fw_info, fw_impl, tb_w)
         else:
-            tg = gptq_runner(tg, core_config, gptq_config, representative_data_gen,
+            gptq_config_v2 = GradientPTQConfigV2.from_v1(n_iter, gptq_config)
+            tg = gptq_runner(tg, core_config, gptq_config_v2, _representative_data_gen, _representative_data_gen,
                              fw_info, fw_impl, tb_w)
 
         if core_config.debug_config.analyze_similarity:
-            analyzer_model_quantization(representative_data_gen, tb_w, tg, fw_impl, fw_info)
+            analyzer_model_quantization(_representative_data_gen, tb_w, tg, fw_impl, fw_info)
 
         quantized_model, user_info = export_model(tg, fw_info, fw_impl, tb_w, bit_widths_config)
 
@@ -232,8 +237,7 @@ if importlib.util.find_spec("tensorflow") is not None\
                            "If you encounter an issue please file a bug.")
 
         quantization_config, mp_config = quant_config.separate_configs()
-        core_config = CoreConfig(n_iter,
-                                 quantization_config=quantization_config,
+        core_config = CoreConfig(quantization_config=quantization_config,
                                  mixed_precision_config=mp_config,
                                  debug_config=DebugConfig(analyze_similarity=analyze_similarity,
                                                           network_editor=network_editor)
@@ -243,8 +247,13 @@ if importlib.util.find_spec("tensorflow") is not None\
 
         fw_impl = KerasImplementation()
 
+        # convert old representative dataset generation to a generator
+        def _representative_data_gen():
+            for _ in range(n_iter):
+                yield representative_data_gen()
+
         tg, bit_widths_config = core_runner(in_model=in_model,
-                                            representative_data_gen=representative_data_gen,
+                                            representative_data_gen=_representative_data_gen,
                                             core_config=core_config,
                                             fw_info=fw_info,
                                             fw_impl=fw_impl,
@@ -253,13 +262,14 @@ if importlib.util.find_spec("tensorflow") is not None\
                                             tb_w=tb_w)
 
         if gptq_config is None:
-            tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
+            tg = ptq_runner(tg, _representative_data_gen, core_config, fw_info, fw_impl, tb_w)
         else:
-            tg = gptq_runner(tg, core_config, gptq_config, representative_data_gen,
+            gptq_config_v2 = GradientPTQConfigV2.from_v1(n_iter, gptq_config)
+            tg = gptq_runner(tg, core_config, gptq_config_v2, _representative_data_gen, _representative_data_gen,
                              fw_info, fw_impl, tb_w)
 
         if core_config.debug_config.analyze_similarity:
-            analyzer_model_quantization(representative_data_gen, tb_w, tg, fw_impl, fw_info)
+            analyzer_model_quantization(_representative_data_gen, tb_w, tg, fw_impl, fw_info)
 
         quantized_model, user_info = export_model(tg, fw_info, fw_impl, tb_w, bit_widths_config)
 

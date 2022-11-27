@@ -219,7 +219,7 @@ class TestGetKerasTPC(unittest.TestCase):
         model = MobileNetV2()
 
         def rep_data():
-            return [np.random.randn(1, 224, 224, 3)]
+            yield [np.random.randn(1, 224, 224, 3)]
 
         quantized_model, _ = mct.keras_post_training_quantization(model,
                                                                   rep_data,

@@ -48,7 +48,7 @@ def build_model(in_input_shape: List[int]) -> tf.keras.Model:
 
 
 def random_datagen():
-    return [np.random.random(SHAPE)]
+    yield [np.random.random(SHAPE)]
 
 
 class TestGetGPTQConfig(unittest.TestCase):

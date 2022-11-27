@@ -48,8 +48,8 @@ def keras_apply_second_moment_correction(quantized_model: Any,
                     .weights_second_moment_correction:
                 layer.trainable = True
 
-    for _ in tqdm(range(core_config.quantization_config.weights_second_moment_iters)):
-        quantized_model(representative_data_gen(), training=True)
+    for data in tqdm(representative_data_gen()):
+        quantized_model(data, training=True)
 
     # Move every BN to eval mode and update the corresponding BN node params in the graph
     for layer in quantized_model.layers:

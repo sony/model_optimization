@@ -25,7 +25,7 @@ INPUT_SHAPE = (16, 16, 3)
 
 
 def representative_dataset():
-    return [np.random.randn(1, 16, 16, 3).astype(np.float32)]
+    yield [np.random.randn(1, 16, 16, 3).astype(np.float32)]
 
 
 def create_network_1(input_shape):

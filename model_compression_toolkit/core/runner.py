@@ -348,8 +348,8 @@ def _prepare_model_for_quantization(graph: Graph,
                         fw_impl,
                         fw_info)
 
-    for _ in tqdm(range(core_config.n_iter)):
-        mi.infer(representative_data_gen())
+    for _data in tqdm(representative_data_gen()):
+        mi.infer(_data)
 
     ######################################
     # Edit network according to user

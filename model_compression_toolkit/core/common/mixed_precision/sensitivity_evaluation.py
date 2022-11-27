@@ -141,7 +141,7 @@ class SensitivityEvaluation:
                                         node_idx)
 
         # Compute the distance matrix
-        distance_matrix = self._build_distance_metrix()
+        distance_matrix = self._build_distance_matrix()
 
         # Configure MP model back to the same configuration as the baseline model if baseline provided
         if baseline_mp_configuration is not None:
@@ -283,7 +283,7 @@ class SensitivityEvaluation:
 
         return distance_matrix
 
-    def _build_distance_metrix(self):
+    def _build_distance_matrix(self):
         """
         Builds a matrix that contains the distances between the baseline and MP models for each interest point.
         Returns: A distance matrix.
@@ -305,8 +305,6 @@ class SensitivityEvaluation:
         # Merge all distance matrices into a single distance matrix.
         distance_matrix = np.concatenate(distance_matrices, axis=1)
 
-        # Assert we used a correct number of images for computing the distance matrix
-        assert distance_matrix.shape[1] == self.quant_config.num_of_images
         return distance_matrix
 
     @staticmethod
@@ -339,9 +337,9 @@ class SensitivityEvaluation:
         # First, select images to use for all measurements.
         samples_count = 0  # Number of images we used so far to compute the distance matrix.
         images_batches = []
-        while samples_count < num_of_images:
-            # Get a batch of images to infer in both models.
-            inference_batch_input = self.representative_data_gen()
+        for inference_batch_input in self.representative_data_gen():
+            if samples_count >= num_of_images:
+                break
             batch_size = inference_batch_input[0].shape[0]
 
             # If we sampled more images than we should use in the distance matrix,
@@ -353,6 +351,10 @@ class SensitivityEvaluation:
 
             images_batches.append(inference_batch_input)
             samples_count += batch_size
+        else:
+            if samples_count < num_of_images:
+                Logger.warning(f'Not enough images in representative dataset to generate {num_of_images} data points, '
+                               f'only {samples_count} were generated')
         return images_batches
 
     def _update_ips_with_outputs_replacements(self):
