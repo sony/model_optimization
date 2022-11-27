@@ -36,7 +36,7 @@ tp = mct.target_platform
 
 class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, val_batch_size=32)
+        super().__init__(unit_test)
 
     def get_mixed_precision_v2_config(self):
         return MixedPrecisionQuantizationConfigV2(num_of_images=1)

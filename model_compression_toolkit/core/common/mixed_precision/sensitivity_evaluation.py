@@ -141,7 +141,7 @@ class SensitivityEvaluation:
                                         node_idx)
 
         # Compute the distance matrix
-        distance_matrix = self._build_distance_metrix()
+        distance_matrix = self._build_distance_matrix()
 
         # Configure MP model back to the same configuration as the baseline model if baseline provided
         if baseline_mp_configuration is not None:
@@ -283,7 +283,7 @@ class SensitivityEvaluation:
 
         return distance_matrix
 
-    def _build_distance_metrix(self):
+    def _build_distance_matrix(self):
         """
         Builds a matrix that contains the distances between the baseline and MP models for each interest point.
         Returns: A distance matrix.
@@ -305,8 +305,6 @@ class SensitivityEvaluation:
         # Merge all distance matrices into a single distance matrix.
         distance_matrix = np.concatenate(distance_matrices, axis=1)
 
-        # Assert we used a correct number of images for computing the distance matrix
-        assert distance_matrix.shape[1] == self.quant_config.num_of_images
         return distance_matrix
 
     @staticmethod

@@ -107,7 +107,7 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         def _to_numpy(t):
             return t.cpu().detach().numpy()
 
-        images = repr_dataset().__next__()
+        images = next(repr_dataset())
         diff = new_export_model(images) - old_export_model(images)
         w_delta = np.sum(np.abs(_to_numpy(old_export_model.features_0_0_bn.weight) - _to_numpy(new_export_model.features_0_0_bn.layer.weight)))
         self.assertTrue(w_delta == 0, f'Diff between weights: {w_delta}')
@@ -176,9 +176,9 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         model = copy.deepcopy(self.fully_quantized_mbv2)
         model.load_state_dict(torch.load(model_file))
         model.eval()
-        model(self.representative_data_gen().__next__())
+        model(next(self.representative_data_gen()))
 
-        torch_traced = torch.jit.trace(self.fully_quantized_mbv2, to_torch_tensor(self.representative_data_gen().__next__()))
+        torch_traced = torch.jit.trace(self.fully_quantized_mbv2, to_torch_tensor(next(self.representative_data_gen())))
         torch_script_filename = f'mbv2_fq_torchscript.pth'
         torch_script_model = torch.jit.script(torch_traced)
         torch_script_file = os.path.join(model_folder, torch_script_filename)
@@ -187,7 +187,7 @@ class TestFullyQuantizedExporter(unittest.TestCase):
 
         loaded_script_model = torch.jit.load(torch_script_file)
         loaded_script_model.eval()
-        images = self.representative_data_gen().__next__()[0]
+        images = next(self.representative_data_gen())[0]
         diff = loaded_script_model(images) - model(images)
         sum_abs_error = np.sum(np.abs(self._to_numpy(diff)))
         self.assertTrue(sum_abs_error==0, f'Difference between loaded torch script to loaded torch model: {sum_abs_error}')

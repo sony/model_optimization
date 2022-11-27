@@ -170,7 +170,7 @@ class ModelGradientsCalculationTest(BasePytorchTest):
         model_float = basic_derivative_model()
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph(model_float, self.representative_data_gen, pytorch_impl)
-        input_tensors = {inode: self.representative_data_gen().__next__()[0] for inode in graph.get_inputs()}
+        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
         output_list = [ipts[-1]]
@@ -206,7 +206,7 @@ class ModelGradientsBasicModelTest(BasePytorchTest):
         model_float = basic_model()
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph(model_float, self.representative_data_gen, pytorch_impl)
-        input_tensors = {inode: self.representative_data_gen().__next__()[0] for inode in graph.get_inputs()}
+        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
         output_list = [ipts[-1]]
@@ -241,7 +241,7 @@ class ModelGradientsAdvancedModelTest(BasePytorchTest):
         model_float = basic_model()
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph(model_float, self.representative_data_gen, pytorch_impl)
-        input_tensors = {inode: self.representative_data_gen().__next__()[0] for inode in graph.get_inputs()}
+        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
         output_list = [ipts[-1]]
@@ -276,7 +276,7 @@ class ModelGradientsOutputReplacementTest(BasePytorchTest):
         model_float = model_with_output_replacements()
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph(model_float, self.representative_data_gen, pytorch_impl)
-        input_tensors = {inode: self.representative_data_gen().__next__()[0] for inode in graph.get_inputs()}
+        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
         output_list = [ipts[-2]]

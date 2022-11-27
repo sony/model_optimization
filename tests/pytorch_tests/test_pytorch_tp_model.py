@@ -220,7 +220,7 @@ class TestGetPytorchTPC(unittest.TestCase):
         model = mobilenet_v2(pretrained=True)
 
         def rep_data():
-            yield [np.random.randn(1, 3, 224, 224)]
+            return [np.random.randn(1, 3, 224, 224)]
 
         quantized_model, _ = mct.pytorch_post_training_quantization(model,
                                                                     rep_data,

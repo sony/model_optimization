@@ -155,17 +155,73 @@ class GradientPTQConfigV2(GradientPTQConfig):
     """
     Configuration to use for quantization with GradientPTQV2 (experimental).
     """
-    def __init__(self, n_epochs: int, optimizer: Any, **kwargs):
+    def __init__(self,
+                 n_epochs: int,
+                 optimizer: Any,
+                 optimizer_rest: Any = None,
+                 loss: Callable = None,
+                 log_function: Callable = None,
+                 train_bias: bool = True,
+                 quantization_parameters_learning: bool = False,
+                 sam_optimization: bool = False,
+                 rounding_type: RoundingType = RoundingType.GumbelRounding,
+                 rho: float = 0.01,
+                 lsb_change_per_bit_width: dict = DefaultDict(MAX_LSBS_CHANGE_MAP, lambda: 1),
+                 eps: float = 1e-6,
+                 use_jac_based_weights: bool = True,
+                 num_samples_for_loss: int = 16,
+                 norm_weights: bool = False,
+                 quantizer_config: GumbelConfig = GumbelConfig(),
+                 optimizer_quantization_parameter: Any = None,
+                 optimizer_bias: Any = None,
+                 gumbel_scale: float = GUMBEL_SCALE):
         """
         Initialize a GradientPTQConfigV2.
 
         Args:
             n_epochs (int): Number of representative dataset epochs to train.
             optimizer (Any): Optimizer to use.
+            optimizer_rest (Any): Optimizer to use for bias and quantizer parameters.
+            loss (Callable): The loss to use. should accept 6 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors,
+             the 3rd is a list of quantized weights, the 4th is a list of float weights, the 5th and 6th lists are the mean and std of the tensors
+             accordingly. see example in multiple_tensors_mse_loss
+            log_function (Callable): Function to log information about the GPTQ process.
+            train_bias (bool): Whether to update the bias during the training or not.
+            quantization_parameters_learning (bool): Whether to update the quantization param during the training or not.
+            sam_optimization (bool): Whether to use sam optimization.
+            rounding_type (RoundingType): An enum that defines the rounding type (STE or GumbelRoudning).
+            rho (rho): A floating point number that defines the sam optimization lookahead.
+            lsb_change_per_bit_width (dict): Whether to update the bias during the training or not.
+            eps (float): A floating point value for numeric stability.
+            use_jac_based_weights (bool): Whether to use jacobian-based weights for weighted average loss.
+            num_samples_for_loss (int): Number of samples to use for computing the jacobian-based weights.
+            norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
+            quantizer_config (Any): A class the contins the quantizer specific config.
+            optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
+            optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
+            gumbel_scale (float): A normalization factor for the gumbel tensor values.
 
         """
 
-        super().__init__(n_iter=None, optimizer=optimizer, **kwargs)
+        super().__init__(n_iter=None,
+                         optimizer=optimizer,
+                         optimizer_rest=optimizer_rest,
+                         loss=loss,
+                         log_function=log_function,
+                         train_bias=train_bias,
+                         quantization_parameters_learning=quantization_parameters_learning,
+                         sam_optimization=sam_optimization,
+                         rounding_type=rounding_type,
+                         rho=rho,
+                         lsb_change_per_bit_width=lsb_change_per_bit_width,
+                         eps=eps,
+                         use_jac_based_weights=use_jac_based_weights,
+                         num_samples_for_loss=num_samples_for_loss,
+                         norm_weights=norm_weights,
+                         quantizer_config=quantizer_config,
+                         optimizer_quantization_parameter=optimizer_quantization_parameter,
+                         optimizer_bias=optimizer_bias,
+                         gumbel_scale=gumbel_scale)
         self.n_epochs = n_epochs
 
     @classmethod
