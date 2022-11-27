@@ -19,7 +19,7 @@ from setuptools import setup, find_packages
 
 
 def read_install_requires():
-    print("Reading install requirments")
+    print("Reading install requirements")
     return [r.split('\n')[0] for r in open('requirements.txt', 'r').readlines()]
 
 
@@ -38,20 +38,20 @@ def get_release_arguments():
 
 
 args = get_release_arguments()
-setup_obj = setup(name='model_compression_toolkit',
-                  long_description=get_log_description(),
-                  long_description_content_type="text/markdown",
-                  description='A Model Compression Toolkit for neural networks',
-                  packages=find_packages(
-                      exclude=["tests", "tests.*",
-                               "requirements", "requirements.*",
-                               "tutorials", "tutorials.*"]),
-                  classifiers=[
-                      "Programming Language :: Python :: 3",
-                      "License :: OSI Approved :: Apache Software License",
-                      "Operating System :: OS Independent",
-                      "Topic :: Scientific/Engineering :: Artificial Intelligence"
-                  ],
-                  install_requires=read_install_requires(),
-                  python_requires='>=3.6'
-                  )
+setup(name='model_compression_toolkit',
+      long_description=get_log_description(),
+      long_description_content_type="text/markdown",
+      description='A Model Compression Toolkit for neural networks',
+      packages=find_packages(
+          exclude=["tests", "tests.*",
+                   "requirements", "requirements.*",
+                   "tutorials", "tutorials.*"]),
+      classifiers=[
+          "Programming Language :: Python :: 3",
+          "License :: OSI Approved :: Apache Software License",
+          "Operating System :: OS Independent",
+          "Topic :: Scientific/Engineering :: Artificial Intelligence"
+      ],
+      install_requires=read_install_requires(),
+      python_requires='>=3.6'
+      )
