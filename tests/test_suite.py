@@ -55,7 +55,7 @@ if found_tf:
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
     from tests.pytorch_tests.model_tests.test_feature_models_runner import FeatureModelsTestRunner
-    from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
+    # from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
     from tests.pytorch_tests.test_pytorch_tp_model import TestPytorchTPModel
 
@@ -98,11 +98,11 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TorchLayerTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureModelsTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FunctionTestRunner))
-        suiteList.append(unittest.TestLoader().loadTestsFromName('test_mobilenet_v2', ModelTest))
-        suiteList.append(unittest.TestLoader().loadTestsFromName('test_mobilenet_v3', ModelTest))
-        suiteList.append(unittest.TestLoader().loadTestsFromName('test_efficientnet_b0', ModelTest))
-        suiteList.append(unittest.TestLoader().loadTestsFromName('test_resnet18', ModelTest))
-        suiteList.append(unittest.TestLoader().loadTestsFromName('test_shufflenet_v2_x1_0', ModelTest))
+        # suiteList.append(unittest.TestLoader().loadTestsFromName('test_mobilenet_v2', ModelTest))
+        # suiteList.append(unittest.TestLoader().loadTestsFromName('test_mobilenet_v3', ModelTest))
+        # suiteList.append(unittest.TestLoader().loadTestsFromName('test_efficientnet_b0', ModelTest))
+        # suiteList.append(unittest.TestLoader().loadTestsFromName('test_resnet18', ModelTest))
+        # suiteList.append(unittest.TestLoader().loadTestsFromName('test_shufflenet_v2_x1_0', ModelTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchTPModel))
 
     # ----------------   Join them together and run them

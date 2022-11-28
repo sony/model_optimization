@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from collections import Callable
+from collections.abc import Callable
 
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.kmeans_params import kmeans_tensor
