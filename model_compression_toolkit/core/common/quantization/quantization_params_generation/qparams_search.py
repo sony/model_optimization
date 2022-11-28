@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import itertools
-from collections import Callable
+from collections.abc import Callable
 from typing import Any, Tuple, Dict
 
 import numpy as np

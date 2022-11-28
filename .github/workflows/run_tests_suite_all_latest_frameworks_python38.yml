@@ -1,4 +1,4 @@
-name: Run Tests - All Latest Frameworks - Python 3.7
+name: Run Tests - All Latest Frameworks - Python 3.8
 on:
   workflow_dispatch: # Allow manual triggers
   schedule:
@@ -18,12 +18,12 @@ jobs:
       - name: Install Python 3
         uses: actions/setup-python@v1
         with:
-          python-version: '3.7'
+          python-version: '3.8'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install tensorflow
+          pip install tensorflow==2.10.*
           pip install tensorflow_model_optimization
           pip install torch torchvision
           pip install coverage

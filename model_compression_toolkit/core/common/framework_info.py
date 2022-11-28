@@ -14,7 +14,7 @@
 # ==============================================================================
 
 
-from collections import Callable
+from collections.abc import Callable
 from enum import Enum
 from typing import Dict, Any, List
 
