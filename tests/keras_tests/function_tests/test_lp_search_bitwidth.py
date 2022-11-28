@@ -65,6 +65,7 @@ class MockMixedPrecisionSearchManager:
                                       KPITarget.BOPS: (None, lambda v: [sum(v)])}
         self.max_kpi_config = [0]
         self.config_reconstruction_helper = MockReconstructionHelper()
+        self.non_conf_kpi_dict = None
 
     def compute_kpi_matrix(self, target):
         # minus 1 is normalization by the minimal kpi (which is always 1 in this test)
