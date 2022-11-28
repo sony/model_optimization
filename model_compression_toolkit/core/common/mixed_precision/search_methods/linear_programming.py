@@ -24,8 +24,7 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_searc
 
 
 def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
-                                  target_kpi: KPI = None,
-                                  non_conf_kpi_dict: Dict[KPITarget, np.ndarray] = None) -> List[int]:
+                                  target_kpi: KPI = None) -> List[int]:
     """
     Searching and returning a mixed-precision configuration using an ILP optimization solution.
     It first builds a mapping from each layer's index (in the model) to a dictionary that maps the
@@ -40,7 +39,6 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
         search_manager: MixedPrecisionSearchManager object to be used for problem formalization.
         target_kpi: KPI to constrain our LP problem with some resources limitations (like model' weights memory
         consumption).
-        non_conf_kpi_dict: A mapping between a KPITarget and its non-configurable nodes' KPI vector.
 
     Returns:
         The mixed-precision configuration (list of indices. Each indicates the bitwidth index of a node).
@@ -59,8 +57,7 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
                                     layer_to_metrics_mapping,
                                     layer_to_objective_vars_mapping,
                                     target_kpi,
-                                    search_manager,
-                                    non_conf_kpi_dict)
+                                    search_manager)
 
     lp_problem.solve()  # Try to solve the problem.
     assert lp_problem.status == LpStatusOptimal, Logger.critical(
@@ -116,8 +113,7 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
                        layer_to_metrics_mapping: Dict[int, Dict[int, float]],
                        layer_to_objective_vars_mapping: Dict[int, LpVariable],
                        target_kpi: KPI,
-                       search_manager: MixedPrecisionSearchManager,
-                       non_conf_kpi_dict: Dict[KPITarget, np.ndarray]) -> LpProblem:
+                       search_manager: MixedPrecisionSearchManager) -> LpProblem:
     """
     Formalize the LP problem by defining all inequalities that define the solution space.
 
@@ -130,7 +126,6 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
         value.
         target_kpi: KPI to reduce our feasible solution space.
         search_manager: MixedPrecisionSearchManager object to be used for kpi constraints formalization.
-        non_conf_kpi_dict: A mapping between a KPITarget and its non-configurable nodes' KPI vector.
 
     Returns:
         The formalized LP problem.
@@ -163,7 +158,8 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
 
         for target, kpi_value in target_kpi.get_kpi_dict().items():
             if not np.isinf(kpi_value):
-                non_conf_kpi_vector = None if non_conf_kpi_dict is None else non_conf_kpi_dict.get(target)
+                non_conf_kpi_vector = None if search_manager.non_conf_kpi_dict is None \
+                    else search_manager.non_conf_kpi_dict.get(target)
                 _add_set_of_kpi_constraints(search_manager=search_manager,
                                             target=target,
                                             target_kpi_value=kpi_value,
