@@ -166,7 +166,7 @@ class KerasModelBuilder(BaseModelBuilder):
                                                                            op_func,
                                                                            input_nodes_to_input_tensors)
 
-            if isinstance(out_tensors_of_n, list):
+            if isinstance(out_tensors_of_n, (list, tuple)):
                 node_to_output_tensors_dict.update({n: out_tensors_of_n})
                 node_to_output_tensors_dict_float.update({n: out_tensors_of_n_float})
             else:
@@ -286,7 +286,7 @@ class KerasModelBuilder(BaseModelBuilder):
         # same instance as op_func. We do this to solve an issue that names are different between these
         # layers, thus we can not rely on the op_func name during model cloning (such as GPTQ, MP, etc.)
         if not n.reuse:
-            if isinstance(out_tensors_of_n_float, list):
+            if isinstance(out_tensors_of_n_float, (list, tuple)):
                 # If layer has multiple outputs (e.g., split) we take the layer of the first output (as all outputs are
                 # from the same layer).
                 layer_from_tensor = out_tensors_of_n_float[0].node.layer
