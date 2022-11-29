@@ -1,4 +1,4 @@
-name: Run Tests - All Latest Frameworks - Python 3.9
+name: Python 3.9
 on:
   workflow_dispatch: # Allow manual triggers
   schedule:

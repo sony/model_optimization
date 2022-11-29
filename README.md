@@ -95,6 +95,20 @@ For using with PyTorch please install the packages:
 Also, a [requirements](requirements.txt) file can be used to set up your environment.
 
 
+### Supported Python Versions
+
+Currently, MCT is being tested on various Python versions:
+
+
+
+| Python Version                                                                                                                                                                                                                                                             |
+|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [![Run Tests - Python 3.10](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks_python310.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks_python310.yml) |
+| [![Run Tests - Python 3.9](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks_python39.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks_python39.yml)    |
+| [![Run Tests - Python 3.8](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks_python38.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks_python38.yml)    |
+| [![Run Tests - Python 3.7](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks_python37.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks_python37.yml)    |
+
+
 ### Supported NN-Frameworks Versions
 
 Currently, MCT supports compressing models of TensorFlow and PyTorch, and
