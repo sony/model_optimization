@@ -55,7 +55,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     # should be quantized on the modeled hardware:
     eight_bits = tp.OpQuantizationConfig(
         activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
         activation_n_bits=8,
         weights_n_bits=8,
         weights_per_channel_threshold=True,
@@ -154,7 +154,5 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         tp.Fusing([conv, activations_after_conv_to_fuse])
         tp.Fusing([fc, activations_after_fc_to_fuse])
         tp.Fusing([any_binary, any_relu])
-        #tp.Fusing([conv, add, any_relu])
-        #tp.Fusing([conv, any_relu, add])
 
     return generated_tpc
