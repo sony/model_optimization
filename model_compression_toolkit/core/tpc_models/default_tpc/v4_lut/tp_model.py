@@ -15,7 +15,8 @@
 from typing import List, Tuple
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.target_platform import OpQuantizationConfig, TargetPlatformModel
+from model_compression_toolkit.core.common.target_platform import OpQuantizationConfig, TargetPlatformModel, \
+    QuantizationMethod
 
 tp = mct.target_platform
 
@@ -31,18 +32,20 @@ def get_tp_model() -> TargetPlatformModel:
     Returns: A TargetPlatformModel object.
 
     """
+
     base_config, mixed_precision_cfg_list = get_op_quantization_configs()
+
     return generate_tp_model(default_config=base_config,
                              base_config=base_config,
                              mixed_precision_cfg_list=mixed_precision_cfg_list,
-                             name='default_tp_model')
+                             name='lut_mp_tp_model')
 
 
 def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig]]:
     """
     Creates a default configuration object for 8-bit quantization, to be used to set a default TargetPlatformModel.
     In addition, creates a default configuration objects list (with 8, 4 and 2 bit quantization) to be used as
-    default configuration for mixed-precision quantization.
+    default configuration for mixed-precision quantization with non-uniform quantizer for 2 and 4 bit candidates.
 
     Returns: An OpQuantizationConfig config object and a list of OpQuantizationConfig objects.
 
@@ -63,14 +66,13 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         fixed_zero_point=None,
         weights_multiplier_nbits=None)
 
-    # To quantize a model using mixed-precision, create
-    # a list with more than one OpQuantizationConfig.
-    # In this example, we quantize some operations' weights
-    # using 2, 4 or 8 bits, and when using 2 or 4 bits, it's possible
-    # to quantize the operations' activations using LUT.
-    four_bits = eight_bits.clone_and_edit(weights_n_bits=4)
-    two_bits = eight_bits.clone_and_edit(weights_n_bits=2)
-    mixed_precision_cfg_list = [eight_bits, four_bits, two_bits]
+    # Creating OpQuantizationConfig list to quantize a model using mixed-precision with non-uniform quantizer
+    # for 2 and 4 bit candidates (with Lookup-Table method).
+    four_bits_lut = eight_bits.clone_and_edit(weights_n_bits=4,
+                                              weights_quantization_method=QuantizationMethod.LUT_QUANTIZER)
+    two_bits_lut = eight_bits.clone_and_edit(weights_n_bits=2,
+                                             weights_quantization_method=QuantizationMethod.LUT_QUANTIZER)
+    mixed_precision_cfg_list = [eight_bits, four_bits_lut, two_bits_lut]
 
     return eight_bits, mixed_precision_cfg_list
 
@@ -115,13 +117,13 @@ def generate_tp_model(default_config: OpQuantizationConfig,
 
         # May suit for operations like: Dropout, Reshape, etc.
         tp.OperatorsSet("NoQuantization",
-                         tp.get_default_quantization_config_options().clone_and_edit(
-                             enable_weights_quantization=False,
-                             enable_activation_quantization=False))
+                        tp.get_default_quantization_config_options().clone_and_edit(
+                            enable_weights_quantization=False,
+                            enable_activation_quantization=False))
 
         # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects
         mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,
-                                                                              base_config=base_config)
+                                                                             base_config=base_config)
 
         # Define operator sets that use mixed_precision_configuration_options:
         conv = tp.OperatorsSet("Conv", mixed_precision_configuration_options)
