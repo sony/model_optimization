@@ -19,12 +19,13 @@ import tensorflow as tf
 
 import model_compression_toolkit as mct
 import model_compression_toolkit.gptq.common.gptq_config
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-from tests.keras_tests.tpc_keras import get_16bit_tpc
+from tests.keras_tests.tpc_keras import get_16bit_tpc, get_tpc
 
 keras = tf.keras
 layers = keras.layers
@@ -59,7 +60,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         self.sam_optimization = sam_optimization
 
     def get_tpc(self):
-        return get_16bit_tpc("gptq_test")
+        return get_tpc("gptq_test", 16, 16, QuantizationMethod.SYMMETRIC)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
