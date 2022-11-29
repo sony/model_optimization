@@ -38,14 +38,16 @@ def log2(x: tf.Tensor) -> tf.Tensor:
     """
     Compute log2 of a tensor.
     """
-    return tf.math.log(x) / tf.math.log(2.0)
+    return tf.experimental.numpy.log2(x)
 
 
 def power_of_two_max(max_tensor: tf.Tensor) -> tf.Tensor:
     """
     Compute the power of two threshold for a tensor.
     """
-    return tf.math.pow(2.0, ste_ceil(log2(tf.maximum(max_tensor, MIN_THRESHOLD))))
+    _2 = tf.convert_to_tensor(2.0, tf.float64)
+    return tf.cast(tf.math.pow(_2, ste_ceil(log2(tf.maximum(tf.cast(max_tensor, tf.float64),
+                                                            MIN_THRESHOLD)))), tf.float32)
 
 
 def calculate_delta(max_tensor: tf.Tensor,
