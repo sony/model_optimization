@@ -200,7 +200,7 @@ def standardize_tensor(x: Any) -> np.ndarray:
     Returns:
         Same tensor as numpy ndarray of float data type.
     """
-    x = x.astype(np.float)
+    x = x.astype(np.float64)
     if not isinstance(x, np.ndarray) and len(x.shape) == 0:
         x = np.asarray(x)
         x = x.reshape([1])

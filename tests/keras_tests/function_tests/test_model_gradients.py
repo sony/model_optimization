@@ -105,7 +105,7 @@ class TestModelGradients(unittest.TestCase):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
 
-        input_tensors = {inode: representative_dataset()[0] for inode in graph.get_inputs()}
+        input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
         output_nodes = [o.node for o in graph.output_nodes]
 
         x = keras_impl.model_grad(graph_float=graph,
@@ -127,7 +127,7 @@ class TestModelGradients(unittest.TestCase):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
 
-        input_tensors = {inode: representative_dataset()[0] for inode in graph.get_inputs()}
+        input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
         output_nodes = [o.node for o in graph.output_nodes]
         x = keras_impl.model_grad(graph_float=graph,
                                   model_input_tensors=input_tensors,
@@ -178,7 +178,7 @@ class TestModelGradients(unittest.TestCase):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
 
-        input_tensors = {inode: representative_dataset()[0] for inode in graph.get_inputs()}
+        input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
         output_nodes = [graph.get_topo_sorted_nodes()[-2]]
         output_indices = [len(interest_points) - 2, len(interest_points) - 1]
 
