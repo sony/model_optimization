@@ -109,7 +109,7 @@ if __name__ == '__main__':
     config = mct.CoreConfig()
 
     # Create a GPTQ quantization configuration and set the number of training iterations.
-    gptq_config = mct.get_keras_gptq_config(n_iter=args.num_gptq_training_iterations)
+    gptq_config = mct.get_keras_gptq_config(n_epochs=args.num_gptq_training_iterations)
 
     quantized_model, quantization_info = mct.keras_gradient_post_training_quantization_experimental(model,
                                                                                                     representative_data_gen,

@@ -53,7 +53,7 @@ class TestFullyQuantizedExporter(unittest.TestCase):
                                                                                 representative_data_gen=repr_dataset,
                                                                                 new_experimental_exporter=True)
 
-        images = repr_dataset()
+        images = next(repr_dataset())
         diff = new_export_model(images) - old_export_model(images)
         print(f'Max abs error: {np.max(np.abs(diff))}')
         self.assertTrue(np.sum(np.abs(diff)) == 0)
