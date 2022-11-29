@@ -52,7 +52,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     # should be quantized on the modeled hardware:
     eight_bits = tp.OpQuantizationConfig(
         activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-        weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
+        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
         activation_n_bits=8,
         weights_n_bits=8,
         weights_per_channel_threshold=True,
