@@ -223,12 +223,6 @@ class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
         activation_bits = [quantized_model.layers[i].inbound_nodes[0].call_kwargs.get('num_bits') for i in self.activation_layers_idx]
         self.unit_test.assertTrue((activation_bits == [8, 8]))
 
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        cs = cosine_similarity(y, y_hat)
-        # quantifying both weights and activation so similarity is approximately within error range of 1e-3
-        self.unit_test.assertTrue(np.isclose(cs, 1, rtol=1e-3), msg=f'fail cosine similarity check:{cs}')
-
 
 class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
