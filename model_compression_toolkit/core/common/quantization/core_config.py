@@ -31,7 +31,6 @@ class CoreConfig:
         """
 
         Args:
-            n_iter (int): Number of calibration iterations to run.
             quantization_config (QuantizationConfig): Config for quantization.
             mixed_precision_config (MixedPrecisionQuantizationConfigV2): Config for mixed precision quantization (optional, default=None).
             debug_config (DebugConfig): Config for debugging and editing the network quantization process.
