@@ -265,7 +265,7 @@ def shift_negative_function(graph: Graph,
 
         shift_value = _shift
         activation_threshold = _th
-        non_linear_node_cfg_candidate.activation_quantization_params['threshold'] = _th
+        non_linear_node_cfg_candidate.activation_quantization_params[THRESHOLD] = _th
 
     if zero_padding_node is not None:
         # Remove zero padding layer and save padding values for creating new pad layer
