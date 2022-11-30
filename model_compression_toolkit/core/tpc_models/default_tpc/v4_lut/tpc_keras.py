@@ -17,12 +17,11 @@ from packaging import version
 from model_compression_toolkit.core.tpc_models.default_tpc.v4_lut import __version__ as TPC_VERSION
 
 if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, \
-        Dropout, \
-        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU
+    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
+        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute
 else:
-    from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, \
-        Dropout, MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU
+    from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
+        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute
 
 from model_compression_toolkit.core.tpc_models.default_tpc.v4_lut.tp_model import get_tp_model
 import model_compression_toolkit as mct
@@ -57,6 +56,8 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", [Reshape,
                                                     tf.reshape,
+                                                    Permute,
+                                                    tf.transpose,
                                                     Flatten,
                                                     Cropping2D,
                                                     ZeroPadding2D,
@@ -66,6 +67,11 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     tf.quantization.fake_quant_with_min_max_vars,
                                                     tf.math.argmax,
                                                     tf.shape,
+                                                    tf.math.equal,
+                                                    tf.gather,
+                                                    tf.cast,
+                                                    tf.compat.v1.gather,
+                                                    tf.nn.top_k,
                                                     tf.__operators__.getitem,
                                                     tf.compat.v1.shape])
 
