@@ -16,7 +16,8 @@
 import operator
 
 import torch
-from torch import add, sub, mul, div, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, chunk, unbind
+from torch import add, sub, mul, div, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, chunk, unbind, topk, \
+    gather, equal, transpose, permute
 from torch.nn import Conv2d, Linear, BatchNorm2d
 from torch.nn import Dropout, Flatten, Hardtanh
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, LeakyReLU
@@ -63,7 +64,12 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     BatchNorm2d,
                                                     chunk,
                                                     unbind,
-                                                    torch.Tensor.size])
+                                                    torch.Tensor.size,
+                                                    permute,
+                                                    transpose,
+                                                    equal,
+                                                    gather,
+                                                    topk])
 
         tp.OperationsSetToLayers("Conv", [Conv2d])
         tp.OperationsSetToLayers("FullyConnected", [Linear])
