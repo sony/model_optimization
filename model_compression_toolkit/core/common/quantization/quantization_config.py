@@ -62,7 +62,8 @@ class QuantizationConfig:
                  linear_collapsing: bool = True,
                  residual_collapsing: bool = True,
                  shift_negative_ratio: float = 0.05,
-                 shift_negative_threshold_recalculation: bool = False):
+                 shift_negative_threshold_recalculation: bool = False,
+                 shift_negative_params_search: bool = False):
         """
         Class to wrap all different parameters the library quantize the input model according to.
 
@@ -83,6 +84,7 @@ class QuantizationConfig:
             block_collapsing (bool): Whether to collapse block one to another in the input network
             shift_negative_ratio (float): Value for the ratio between the minimal negative value of a non-linearity output to its activation threshold, which above it - shifting negative activation should occur if enabled.
             shift_negative_threshold_recalculation (bool): Whether or not to recompute the threshold after shifting negative activation.
+            shift_negative_params_search (bool): Whether to search for optimal shift and threshold in shift negative activation (experimental)
 
         Examples:
             One may create a quantization configuration to quantize a model according to.
@@ -117,6 +119,7 @@ class QuantizationConfig:
         self.residual_collapsing = residual_collapsing
         self.shift_negative_ratio = shift_negative_ratio
         self.shift_negative_threshold_recalculation = shift_negative_threshold_recalculation
+        self.shift_negative_params_search = shift_negative_params_search
 
     def __repr__(self):
         return str(self.__dict__)

@@ -34,12 +34,13 @@ layers = keras.layers
 
 class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, linear_op_to_test, activation_op_to_test, use_pad_layer=False, input_shape=(8, 8, 3),
-                 bypass_op_list=None):
+                 bypass_op_list=None, param_search=False):
         assert type(linear_op_to_test) in [layers.Conv2D, layers.Dense, layers.DepthwiseConv2D]
         self.linear_op_to_test = linear_op_to_test
         self.activation_op_to_test = activation_op_to_test
         self.use_pad_layer = use_pad_layer
         self.bypass_op_list = bypass_op_list
+        self.param_search = param_search
         super().__init__(unit_test, input_shape=input_shape, num_calibration_iter=100)
 
     def get_tpc(self):
@@ -49,7 +50,8 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
                                       False, False, weights_per_channel_threshold=True,
                                       shift_negative_activation_correction=True,
-                                      shift_negative_ratio=np.inf)
+                                      shift_negative_ratio=np.inf,
+                                      shift_negative_params_search=self.param_search)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
