@@ -171,10 +171,9 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the constant conv substitution feature
         """
-        for _ in range(1000):
-            ConstantConvSubstitutionTest(self).run_test()
-            ConstantConvReuseSubstitutionTest(self).run_test()
-            ConstantConvTransposeSubstitutionTest(self).run_test()
+        ConstantConvSubstitutionTest(self).run_test()
+        ConstantConvReuseSubstitutionTest(self).run_test()
+        ConstantConvTransposeSubstitutionTest(self).run_test()
 
     def test_relu_bound_to_power_of_2(self):
         """
