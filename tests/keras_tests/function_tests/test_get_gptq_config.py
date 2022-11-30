@@ -82,14 +82,12 @@ class TestGetGPTQConfig(unittest.TestCase):
                                  get_keras_gptq_config(n_epochs=1, optimizer=tf.keras.optimizers.Adam())]
 
         for i, gptq_config in enumerate(gptq_configurations):
-            print('v1', i)
             keras_post_training_quantization(in_model=build_model(SHAPE[1:]),
                                              representative_data_gen=random_datagen,
                                              n_iter=1,
                                              quant_config=qc,
                                              gptq_config=gptq_config)
         for i, gptq_config in enumerate(gptqv2_configurations):
-            print('v2', i)
             keras_gradient_post_training_quantization_experimental(in_model=build_model(SHAPE[1:]),
                                                                    representative_data_gen=random_datagen_experimental,
                                                                    core_config=cc,
