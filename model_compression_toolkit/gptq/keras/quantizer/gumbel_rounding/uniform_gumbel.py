@@ -119,19 +119,29 @@ class UniformGumbelRounding(GumbelRoundingBase):
             Dictionary of new variables.
         """
         super().build(tensor_shape, name, layer)
+
+        if self.per_axis:
+            input_shape = tensor_shape
+            n_axis = len(input_shape)
+            quantization_axis = n_axis + self.quantization_axis if self.quantization_axis < 0 else \
+                self.quantization_axis
+            reshape_shape = [self.k_threshold if i == quantization_axis else 1 for i in range(n_axis)]
+        else:
+            reshape_shape = [self.k_threshold]
+
         max_range = layer.add_weight(
             name + self.PTQ_MAX_RANGE,
-            shape=self.k_threshold,
+            shape=reshape_shape,
             initializer=tf.keras.initializers.Constant(1.0),
             trainable=self.quantization_parameter_learning)
-        max_range.assign(self.max_range)
+        max_range.assign(self.max_range.reshape(reshape_shape))
 
         min_range = layer.add_weight(
             name + self.PTQ_MIN_RANGE,
-            shape=self.k_threshold,
+            shape=reshape_shape,
             initializer=tf.keras.initializers.Constant(1.0),
             trainable=self.quantization_parameter_learning)
-        min_range.assign(self.min_range)
+        min_range.assign(self.min_range.reshape(reshape_shape))
 
         auxvar_tensor = layer.add_weight(
             name + gptq_constants.AUXVAR,
@@ -139,16 +149,6 @@ class UniformGumbelRounding(GumbelRoundingBase):
             initializer=tf.keras.initializers.Constant(0.0),
             trainable=True)
         w = getattr(layer.layer, name)
-
-        if self.per_axis:
-            input_shape = tensor_shape
-            n_axis = len(input_shape)
-            quantization_axis = n_axis + self.quantization_axis if self.quantization_axis < 0 else \
-                self.quantization_axis
-            reshape_shape = [-1 if i == quantization_axis else 1 for i in range(n_axis)]
-
-            min_range = tf.reshape(min_range, reshape_shape)
-            max_range = tf.reshape(max_range, reshape_shape)
 
         q_error = w - rounding_uniform_quantizer(w, min_range, max_range,
                                                  n_bits=self.num_bits)

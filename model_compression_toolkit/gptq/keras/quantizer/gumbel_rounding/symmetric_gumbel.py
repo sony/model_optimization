@@ -122,12 +122,21 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
         """
         super().build(tensor_shape, name, layer)
 
+        if self.per_axis:
+            input_shape = tensor_shape
+            n_axis = len(input_shape)
+            quantization_axis = n_axis + self.quantization_axis if self.quantization_axis < 0 else \
+                self.quantization_axis
+            reshape_shape = [self.k_threshold if i == quantization_axis else 1 for i in range(n_axis)]
+        else:
+            reshape_shape = [self.k_threshold]
+
         ptq_threshold_tensor = layer.add_weight(
             name + self.PTQ_THRESHOLD,
-            shape=self.k_threshold,
+            shape=reshape_shape,
             initializer=tf.keras.initializers.Constant(1.0),
             trainable=False)
-        ptq_threshold_tensor.assign(self.threshold_values)
+        ptq_threshold_tensor.assign(self.threshold_values.reshape(reshape_shape))
 
         auxvar_tensor = layer.add_weight(
             name + gptq_constants.AUXVAR,
@@ -135,14 +144,6 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
             initializer=tf.keras.initializers.Constant(0.0),
             trainable=True)
         w = getattr(layer.layer, name)
-
-        if self.per_axis:
-            input_shape = tensor_shape
-            n_axis = len(input_shape)
-            quantization_axis = n_axis + self.quantization_axis if self.quantization_axis < 0 else \
-                self.quantization_axis
-            reshape_shape = [-1 if i == quantization_axis else 1 for i in range(n_axis)]
-            ptq_threshold_tensor = tf.reshape(ptq_threshold_tensor, reshape_shape)
 
         q_error = w - symmetric_quantizer(w,
                                           ptq_threshold_tensor,
@@ -175,7 +176,7 @@ class SymmetricGumbelRounding(GumbelRoundingBase):
         if self.quantization_parameter_learning and not self.power_of_two:
             return [self.quantizer_parameters[self.SCALE_PTQ]]
         else:
-            return [self.quantizer_parameters[self.PTQ_THRESHOLD]]
+            return []
 
     def __call__(self, inputs: tf.Tensor,
                  training: bool,
