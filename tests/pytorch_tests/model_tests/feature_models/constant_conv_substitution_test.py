@@ -20,6 +20,7 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
+import numpy as np
 
 tp = mct.target_platform
 
@@ -37,7 +38,8 @@ class BaseConstantConvSubstitutionTest(BasePytorchFeatureNetworkTest):
         return generate_pytorch_tpc(name="permute_substitution_test", tp_model=tp)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
+                                      mct.QuantizationErrorMethod.NOCLIPPING,
                                       False, False, True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -45,7 +47,7 @@ class BaseConstantConvSubstitutionTest(BasePytorchFeatureNetworkTest):
         y = float_model(in_torch_tensor)
         y_hat = quantized_model(in_torch_tensor)
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
-        self.unit_test.assertTrue(torch.equal(y,y_hat), msg=f'out samples are not as expected!')
+        self.unit_test.assertTrue(np.isclose(y.cpu().detach().numpy(), y_hat.cpu().detach().numpy(), atol=1e-8).all(), msg=f'out samples are not as expected!')
 
 class ConstantConvSubstitutionTest(BaseConstantConvSubstitutionTest):
     def __init__(self, unit_test):
