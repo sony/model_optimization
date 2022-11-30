@@ -408,8 +408,10 @@ class PytorchImplementation(FrameworkImplementation):
         if compute_distance_fn is not None:
             return compute_distance_fn
 
-        elif layer_class in [Sigmoid, sigmoid, Softmax, softmax]:
+        elif layer_class in [Softmax, softmax]:
             return compute_kl_divergence
+        elif layer_class in [Sigmoid, sigmoid]:
+            return compute_cs
         elif layer_class == Linear:
             return compute_cs
         return compute_mse

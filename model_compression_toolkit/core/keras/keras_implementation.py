@@ -442,10 +442,14 @@ class KerasImplementation(FrameworkImplementation):
 
         if layer_class == Activation:
             node_type_name = framework_attrs[ACTIVATION]
-            if node_type_name == SOFTMAX or node_type_name == SIGMOID:
+            if node_type_name == SOFTMAX:
                 return compute_kl_divergence
-        elif layer_class == tf.nn.softmax or layer_class == tf.nn.sigmoid:
+            elif node_type_name == SIGMOID:
+                return compute_cs
+        elif layer_class == tf.nn.softmax:
             return compute_kl_divergence
+        elif layer_class == tf.nn.sigmoid:
+            return compute_cs
         elif layer_class == Dense:
             return compute_cs
         return compute_mse
