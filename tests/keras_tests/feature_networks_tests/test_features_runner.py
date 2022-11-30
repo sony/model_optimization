@@ -317,7 +317,7 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_shift_neg_activation_conv2d(self):
         ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, 4),
-                               activation_op_to_test=layers.Activation('swish')).run_test()
+                               activation_op_to_test=layers.Activation('swish'), param_search=True).run_test()
         ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, 4, strides=3),
                                activation_op_to_test=layers.Activation('swish')).run_test()
         ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (3, 4), strides=2),
@@ -352,7 +352,7 @@ class FeatureNetworkTest(unittest.TestCase):
                                use_pad_layer=True).run_test()
         ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (7, 5), strides=4),
                                activation_op_to_test=layers.Activation('swish'),
-                               use_pad_layer=True).run_test()
+                               use_pad_layer=True, param_search=True).run_test()
         ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (8, 10), strides=5),
                                activation_op_to_test=layers.Activation('swish'),
                                use_pad_layer=True).run_test()

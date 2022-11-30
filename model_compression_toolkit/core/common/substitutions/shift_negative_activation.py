@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
-
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import _mse_error_histogram
 
 """
 This substitution aims to solve an issue of activation with negative outputs where
@@ -238,14 +238,34 @@ def shift_negative_function(graph: Graph,
 
     # Calculate the shifting value by checking the quantized points of the shifted activation and
     # taking the minimal quantized point that is still positive.
-    q_points = np.linspace(0, activation_threshold - activation_threshold / (
-            2 ** non_linear_node_cfg_candidate.activation_n_bits),
-                           2 ** non_linear_node_cfg_candidate.activation_n_bits).astype(
-        'float32')  # Change to type float32 to support tensorflow dtypes
+    num_q_points = 2 ** non_linear_node_cfg_candidate.activation_n_bits
+    lsb = activation_threshold / num_q_points
+    q_points = np.linspace(0, activation_threshold - lsb, num_q_points).astype('float32')  # Change to type float32 to support tensorflow dtypes
 
     delta = q_points + min_to_correct
     delta[delta < 0] = np.inf
     shift_value = q_points[np.argmin(delta)]
+
+    if core_config.quantization_config.shift_negative_params_search:
+        hist_bins, hist_count = graph.get_out_stats_collector(non_linear_node).hc.get_histogram()
+
+        min_mse, _th, _shift = np.inf, None, None
+        for _activation_threshold in [activation_threshold, 2*activation_threshold]:
+            qparams = {THRESHOLD: _activation_threshold, SIGNED: False}
+            _lsb = _activation_threshold / num_q_points
+            _q_points = np.linspace(0, _activation_threshold - _lsb, num_q_points).astype('float32')  # Change to type float32 to support tensorflow dtypes
+            for _shift_value in _q_points:
+                _hist_bins = hist_bins.astype(np.float32) + _shift_value
+                q_bins = non_linear_node_cfg_candidate.activation_quantization_fn(non_linear_node_cfg_candidate.activation_n_bits,
+                                                                                  qparams)(_hist_bins)
+                mse = _mse_error_histogram(q_bins, None, _hist_bins, hist_count)
+                if mse < min_mse:
+                    min_mse = mse
+                    _th, _shift = _activation_threshold, _shift_value
+
+        shift_value = _shift
+        activation_threshold = _th
+        non_linear_node_cfg_candidate.activation_quantization_params[THRESHOLD] = _th
 
     if zero_padding_node is not None:
         # Remove zero padding layer and save padding values for creating new pad layer
