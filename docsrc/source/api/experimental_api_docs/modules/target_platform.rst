@@ -253,7 +253,7 @@ TargetPlatformModel Code Example
 
 .. literalinclude:: ../../../../../model_compression_toolkit/core/tpc_models/default_tpc/v3/tp_model.py
     :language: python
-    :lines: 15-158
+    :lines: 15-156
 
 |
 

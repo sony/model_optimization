@@ -492,8 +492,6 @@ can be used as follows:</p>
         <span class="n">tp</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">conv</span><span class="p">,</span> <span class="n">activations_after_conv_to_fuse</span><span class="p">])</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">fc</span><span class="p">,</span> <span class="n">activations_after_fc_to_fuse</span><span class="p">])</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">any_binary</span><span class="p">,</span> <span class="n">any_relu</span><span class="p">])</span>
-        <span class="c1"># tp.Fusing([conv, add, any_relu])</span>
-        <span class="c1"># tp.Fusing([conv, any_relu, add])</span>
 
     <span class="k">return</span> <span class="n">generated_tpc</span>
 </pre></div>
