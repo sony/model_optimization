@@ -73,14 +73,14 @@ if FOUND_TF:
 
          Examples:
 
-             Import MCT:
+            Import MCT:
 
-             >>> import model_compression_toolkit as mct
+            >>> import model_compression_toolkit as mct
 
-             Import a Keras model:
+            Import a Keras model:
 
-             >>> from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
-             >>> model = MobileNetV2()
+            >>> from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+            >>> model = MobileNetV2()
 
             Create a random dataset generator, for required number of calibration iterations (num_calibration_batches):
             In this example a random dataset of 10 batches each containing 4 images is used.
