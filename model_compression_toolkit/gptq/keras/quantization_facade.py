@@ -78,10 +78,10 @@ if common.constants.FOUND_TF:
 
         Examples:
 
-             Import MCT and TensorFlow:
+            Import MCT and TensorFlow:
 
-             >>> import model_compression_toolkit as mct
-             >>> import tensorflow as tf
+            >>> import model_compression_toolkit as mct
+            >>> import tensorflow as tf
 
             Create a GradientPTQConfigV2 to run for 5 epochs:
 

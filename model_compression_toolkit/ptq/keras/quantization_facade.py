@@ -91,7 +91,7 @@ if FOUND_TF:
             >>>     for _ in range(num_calibration_batches):
             >>>         yield [np.random.random((4, 224, 224, 3))]
 
-            Create a MCT core config, containing the quantization configuration and set the number of calibration iterations to 1:
+            Create a MCT core config, containing the quantization configuration:
 
             >>> config = mct.CoreConfig()
 
