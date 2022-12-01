@@ -91,29 +91,29 @@ if FOUND_TF:
             >>>     for _ in range(num_calibration_batches):
             >>>         yield [np.random.random((4, 224, 224, 3))]
 
-             Create a MCT core config, containing the quantization configuration and set the number of calibration iterations to 1:
+            Create a MCT core config, containing the quantization configuration and set the number of calibration iterations to 1:
 
-             >>> config = mct.CoreConfig()
+            >>> config = mct.CoreConfig()
 
-             If mixed precision is desired, create a MCT core config with a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
-             The candidates bitwidth for quantization should be defined in the target platform model.
-             In this example we use 1 image to search mixed-precision configuration:
+            If mixed precision is desired, create a MCT core config with a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
+            The candidates bitwidth for quantization should be defined in the target platform model.
+            In this example we use 1 image to search mixed-precision configuration:
 
-             >>> config = mct.CoreConfig(mixed_precision_config=mct.MixedPrecisionQuantizationConfigV2(num_of_images=1))
+            >>> config = mct.CoreConfig(mixed_precision_config=mct.MixedPrecisionQuantizationConfigV2(num_of_images=1))
 
-             For mixed-precision set a target KPI object:
-             Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
-             that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
-             while the bias will not):
+            For mixed-precision set a target KPI object:
+            Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
+            that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
+            while the bias will not):
 
-             >>> kpi = mct.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
+            >>> kpi = mct.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
 
-             Pass the model, the representative dataset generator, the configuration and the target KPI to get a
-             quantized model:
+            Pass the model, the representative dataset generator, the configuration and the target KPI to get a
+            quantized model:
 
-             >>> quantized_model, quantization_info = mct.keras_post_training_quantization_experimental(model, repr_datagen, kpi, core_config=config)
+            >>> quantized_model, quantization_info = mct.keras_post_training_quantization_experimental(model, repr_datagen, kpi, core_config=config)
 
-             For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
+            For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 
          """
 
