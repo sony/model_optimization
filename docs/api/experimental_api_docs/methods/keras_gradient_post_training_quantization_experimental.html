@@ -100,7 +100,7 @@ In this example a random dataset of 10 batches each containing 4 images is used.
 <p>If mixed precision is desired, create an MCT core config with a mixed-precision configuration, to quantize a model
 with different bitwidths for different layers.
 The candidates bitwidth for quantization should be defined in the target platform model:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">CoreConfig</span><span class="p">(</span><span class="n">mixed_precision_config</span><span class="o">=</span><span class="n">mct</span><span class="o">.</span><span class="n">MixedPrecisionQuantizationConfigV2</span><span class="p">(</span><span class="n">num_ofimages</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">CoreConfig</span><span class="p">(</span><span class="n">mixed_precision_config</span><span class="o">=</span><span class="n">mct</span><span class="o">.</span><span class="n">MixedPrecisionQuantizationConfigV2</span><span class="p">(</span><span class="n">num_of_images</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>For mixed-precision set a target KPI object:
