@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>target_platform Module &#8212; MCT Documentation: ver 1.6.0</title>
+    <title>target_platform Module &#8212; MCT Documentation: ver 1.7.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.7.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">target_platform Module</a></li> 
       </ul>
     </div>  
@@ -492,8 +492,6 @@ can be used as follows:</p>
         <span class="n">tp</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">conv</span><span class="p">,</span> <span class="n">activations_after_conv_to_fuse</span><span class="p">])</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">fc</span><span class="p">,</span> <span class="n">activations_after_fc_to_fuse</span><span class="p">])</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">any_binary</span><span class="p">,</span> <span class="n">any_relu</span><span class="p">])</span>
-        <span class="c1"># tp.Fusing([conv, add, any_relu])</span>
-        <span class="c1"># tp.Fusing([conv, any_relu, add])</span>
 
     <span class="k">return</span> <span class="n">generated_tpc</span>
 </pre></div>
@@ -626,10 +624,10 @@ to the TargetPlatformCapabilities like in the following example:</p>
 <span class="k">if</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;2.6&quot;</span><span class="p">):</span>
     <span class="kn">from</span> <span class="nn">tensorflow.keras.layers</span> <span class="kn">import</span> <span class="n">Conv2D</span><span class="p">,</span> <span class="n">DepthwiseConv2D</span><span class="p">,</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Reshape</span><span class="p">,</span> <span class="n">ZeroPadding2D</span><span class="p">,</span> \
         <span class="n">Dropout</span><span class="p">,</span> \
-        <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">Activation</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Subtract</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">,</span> <span class="n">PReLU</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Cropping2D</span><span class="p">,</span> <span class="n">LeakyReLU</span>
+        <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">Activation</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Subtract</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">,</span> <span class="n">PReLU</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Cropping2D</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">Conv2D</span><span class="p">,</span> <span class="n">DepthwiseConv2D</span><span class="p">,</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Reshape</span><span class="p">,</span> <span class="n">ZeroPadding2D</span><span class="p">,</span> \
-        <span class="n">Dropout</span><span class="p">,</span> <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">Activation</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Subtract</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">,</span> <span class="n">PReLU</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Cropping2D</span><span class="p">,</span> <span class="n">LeakyReLU</span>
+        <span class="n">Dropout</span><span class="p">,</span> <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">Activation</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Subtract</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">,</span> <span class="n">PReLU</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Cropping2D</span>
 
 <span class="kn">from</span> <span class="nn">model_compression_toolkit.core.tpc_models.default_tpc.v3.tp_model</span> <span class="kn">import</span> <span class="n">get_tp_model</span>
 <span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
@@ -684,14 +682,14 @@ to the TargetPlatformCapabilities like in the following example:</p>
         <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;FullyConnected&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">Dense</span><span class="p">])</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;AnyReLU&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span>
                                              <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu6</span><span class="p">,</span>
-                                             <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">leaky_relu</span><span class="p">,</span>
-                                             <span class="n">ReLU</span><span class="p">,</span>
-                                             <span class="n">LeakyReLU</span><span class="p">,</span>
-                                             <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">),</span>
-                                             <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;leaky_relu&quot;</span><span class="p">)])</span>
+                                             <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">ReLU</span><span class="p">,</span> <span class="n">negative_slope</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+                                             <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">)])</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Add&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">Add</span><span class="p">])</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Sub&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">subtract</span><span class="p">,</span> <span class="n">Subtract</span><span class="p">])</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Mul&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">multiply</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">])</span>
+        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Div&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">divide</span><span class="p">])</span>
+        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;PReLU&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">PReLU</span><span class="p">])</span>
+        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Swish&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">swish</span><span class="p">,</span> <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;swish&quot;</span><span class="p">)])</span>
 </pre></div>
 </div>
 </section>
@@ -745,7 +743,7 @@ to the TargetPlatformCapabilities like in the following example:</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.6.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.7.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">target_platform Module</a></li> 
       </ul>
     </div>

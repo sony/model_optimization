@@ -152,7 +152,5 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         tp.Fusing([conv, activations_after_conv_to_fuse])
         tp.Fusing([fc, activations_after_fc_to_fuse])
         tp.Fusing([any_binary, any_relu])
-        # tp.Fusing([conv, add, any_relu])
-        # tp.Fusing([conv, any_relu, add])
 
     return generated_tpc
