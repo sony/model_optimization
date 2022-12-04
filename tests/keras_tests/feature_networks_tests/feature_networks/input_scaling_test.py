@@ -42,7 +42,8 @@ class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
         fi = 2 if isinstance(float_model.layers[1], layers.ZeroPadding2D) else 1
         self.unit_test.assertTrue(is_layer_fake_quant(quantized_model.layers[1]))
         self.unit_test.assertTrue(quantization_info.input_scale != 1)
-        alpha = (float_model.layers[fi].weights[0] / quantized_model.layers[qi].weights[0]).numpy().mean()
+        # If quantized weight has zeros, the division is inf, and we ignore it by masking these values when computing mean
+        alpha = np.ma.masked_invalid((float_model.layers[fi].weights[0] / quantized_model.layers[qi].weights[0]).numpy()).mean()
         self.unit_test.assertTrue(np.allclose(alpha, quantization_info.input_scale, atol=1e-1))
 
 
