@@ -433,10 +433,17 @@ def _set_final_kpi(graph: Graph,
                 final_kpis_dict[kpi_target] = kpi_aggr(np.concatenate([conf_kpi, non_conf_kpi]), False)[0]
             elif len(final_bit_widths_config) > 0 and len(non_conf_kpi) == 0:
                 final_kpis_dict[kpi_target] = kpi_aggr(conf_kpi, False)[0]
-            else:
+            elif len(final_bit_widths_config) == 0 and len(non_conf_kpi) > 0:
                 # final_bit_widths_config == 0 ==> no configurable nodes,
                 # thus, KPI can be computed from non_conf_kpi alone
                 final_kpis_dict[kpi_target] = kpi_aggr(non_conf_kpi, False)[0]
+            else:
+                # No relevant nodes have been quantized with affect on the given target - since we only consider
+                # in the model's final size the quantized layers size, this means that the final size for this target
+                # is zero.
+                Logger.warning(f"No relevant quantized layers for the KPI target {kpi_target} were found, the recorder"
+                            f"final KPI for this target would be 0.")
+                final_kpis_dict[kpi_target] = 0
 
     final_kpi = KPI()
     final_kpi.set_kpi_by_target(final_kpis_dict)

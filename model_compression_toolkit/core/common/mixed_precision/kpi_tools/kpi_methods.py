@@ -49,12 +49,14 @@ def weights_size_kpi(mp_cfg: List[int],
     """
     weights_memory = []
     mp_nodes = graph.get_configurable_sorted_nodes_names()
+    weights_mp_nodes = [n.name for n in graph.get_sorted_weights_configurable_nodes()]
 
     if len(mp_cfg) == 0:
         # Computing non-configurable nodes KPI
         for n in graph.nodes:
             if n.name not in mp_nodes and n.has_weights_quantization_enabled_candidate():
-                if len(n.candidates_quantization_cfg) == 1:
+                if n.name not in weights_mp_nodes \
+                        and n.has_weights_quantization_enabled_candidate():
                     node_nbits = n.candidates_quantization_cfg[0].weights_quantization_cfg.weights_n_bits
                     node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
                     weights_memory.append(node_weights_memory_in_bytes)
@@ -98,12 +100,14 @@ def activation_output_size_kpi(mp_cfg: List[int],
     """
     activation_memory = []
     mp_nodes = graph.get_configurable_sorted_nodes_names()
+    activation_mp_nodes = [n.name for n in graph.get_sorted_activation_configurable_nodes()]
 
     if len(mp_cfg) == 0:
         # Computing non-configurable nodes KPI
         for n in graph.nodes:
-            if n.name not in mp_nodes and n.has_activation_quantization_enabled_candidate():
-                if len(n.candidates_quantization_cfg) == 1:
+            if n.name not in activation_mp_nodes \
+                    and n.has_activation_quantization_enabled_candidate():
+                if n.is_all_activation_candidates_equal():
                     node_nbits = n.candidates_quantization_cfg[0].activation_quantization_cfg.activation_n_bits
                     node_activation_memory_in_bytes = _compute_node_activation_memory(n, node_nbits)
                     activation_memory.append(node_activation_memory_in_bytes)
@@ -147,28 +151,47 @@ def total_weights_activation_kpi(mp_cfg: List[int],
     """
     weights_activation_memory = []
     mp_nodes = graph.get_configurable_sorted_nodes_names()
+    weights_mp_nodes = [n.name for n in graph.get_sorted_weights_configurable_nodes()]
+    activation_mp_nodes = [n.name for n in graph.get_sorted_activation_configurable_nodes()]
 
     if len(mp_cfg) == 0:
         # Computing non-configurable nodes KPI
         for n in graph.nodes:
+
+            non_configurable = False
+            node_weights_memory_in_bytes, node_activation_memory_in_bytes = 0, 0
+
+            # Non-configurable Weights
             if n.name not in mp_nodes:
-                if len(n.candidates_quantization_cfg) == 1:
-                    node_weights_memory_in_bytes = 0
-                    if n.has_weights_quantization_enabled_candidate():
-                        node_weights_nbits = n.candidates_quantization_cfg[0].weights_quantization_cfg.weights_n_bits
-                        node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_weights_nbits, fw_info)
+                if n.name not in mp_nodes and n.has_weights_quantization_enabled_candidate():
+                    if n.name not in weights_mp_nodes \
+                            and n.has_weights_quantization_enabled_candidate():
+                        node_nbits = n.candidates_quantization_cfg[0].weights_quantization_cfg.weights_n_bits
+                        node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
+                        non_configurable = True
 
-                    node_activation_memory_in_bytes = 0
-                    if n.has_activation_quantization_enabled_candidate():
-                        node_activation_nbits = n.candidates_quantization_cfg[0].activation_quantization_cfg.activation_n_bits
-                        node_activation_memory_in_bytes = _compute_node_activation_memory(n, node_activation_nbits)
+                    elif not n.reuse:
+                        Logger.warning(
+                            f"Non-configurable nodes should have a single quantization configuration candidate,"
+                            f"but node {n.name} has {len(n.candidates_quantization_cfg)} candidates. "
+                            f"The node's weights memory is not considered for the weights KPI computation.")
 
-                    weights_activation_memory.append(
-                        np.array([node_weights_memory_in_bytes, node_activation_memory_in_bytes]))
-                elif not n.reuse:
+            # Non-configurable Activation
+            if n.name not in activation_mp_nodes \
+                    and n.has_activation_quantization_enabled_candidate():
+                if n.is_all_activation_candidates_equal():
+                    node_nbits = n.candidates_quantization_cfg[0].activation_quantization_cfg.activation_n_bits
+                    node_activation_memory_in_bytes = _compute_node_activation_memory(n, node_nbits)
+                    non_configurable = True
+
+                else:
                     Logger.warning(f"Non-configurable nodes should have a single quantization configuration candidate,"
                                    f"but node {n.name} has {len(n.candidates_quantization_cfg)} candidates. "
                                    f"The node's activation memory is not considered for the weights KPI computation.")
+
+            if non_configurable:
+                weights_activation_memory.append(
+                    np.array([node_weights_memory_in_bytes, node_activation_memory_in_bytes]))
     else:
         # Go over all nodes that should be taken into consideration when computing the weights or
         # activation KPI (all configurable nodes).
