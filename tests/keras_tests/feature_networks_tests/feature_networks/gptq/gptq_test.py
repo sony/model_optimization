@@ -18,7 +18,7 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.gptq.common.gptq_config
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GumbelConfig, RoundingType
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -67,15 +67,15 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                                       True, False, True)
 
     def get_gptq_config(self):
-        return model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(5,
-                                                                                   optimizer=tf.keras.optimizers.Adam(
-                                                                                       learning_rate=0.0001),
-                                                                                   optimizer_rest=tf.keras.optimizers.Adam(
-                                                                                       learning_rate=0.0001),
-                                                                                   sam_optimization=self.sam_optimization,
-                                                                                   loss=multiple_tensors_mse_loss,
-                                                                                   rounding_type=model_compression_toolkit.gptq.common.gptq_config.RoundingType.GumbelRounding if self.is_gumbel else model_compression_toolkit.gptq.common.gptq_config.RoundingType.STE,
-                                                                                   train_bias=True)
+        return GradientPTQConfig(5,
+                                 optimizer=tf.keras.optimizers.Adam(
+                                     learning_rate=0.0001),
+                                 optimizer_rest=tf.keras.optimizers.Adam(
+                                     learning_rate=0.0001),
+                                 sam_optimization=self.sam_optimization,
+                                 loss=multiple_tensors_mse_loss,
+                                 rounding_type=RoundingType.GumbelRounding if self.is_gumbel else RoundingType.STE,
+                                 train_bias=True)
 
     def create_networks(self):
         in_shape = self.get_input_shapes()[0][1:]
@@ -141,17 +141,38 @@ class GradientPTQTest(GradientPTQBaseTest):
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check: {cs}')
 
 
+class GradientPTQNoTempLearningTest(GradientPTQBaseTest):
+
+    def get_gptq_config(self):
+        return GradientPTQConfig(1,
+                                 optimizer=tf.keras.optimizers.Adam(
+                                     learning_rate=0.0001),
+                                 optimizer_rest=tf.keras.optimizers.Adam(
+                                     learning_rate=0.0001),
+                                 sam_optimization=self.sam_optimization,
+                                 loss=multiple_tensors_mse_loss,
+                                 quantizer_config=GumbelConfig(temperature_learning=False),
+                                 rounding_type=RoundingType.GumbelRounding if self.is_gumbel else RoundingType.STE,
+                                 train_bias=True)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        y = float_model(input_x)
+        y_hat = quantized_model(input_x)
+        cs = cosine_similarity(y.numpy(), y_hat.numpy())
+        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check: {cs}')
+
+
 class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
 
     def get_gptq_config(self):
-        return model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(50,
-                                                                                   optimizer=tf.keras.optimizers.Adam(
-                                                                                       learning_rate=1e-2),
-                                                                                   optimizer_rest=tf.keras.optimizers.Adam(
-                                                                                       learning_rate=1e-1),
-                                                                                   train_bias=True,
-                                                                                   sam_optimization=self.sam_optimization,
-                                                                                   loss=multiple_tensors_mse_loss)
+        return GradientPTQConfig(50,
+                                 optimizer=tf.keras.optimizers.Adam(
+                                     learning_rate=1e-2),
+                                 optimizer_rest=tf.keras.optimizers.Adam(
+                                     learning_rate=1e-1),
+                                 train_bias=True,
+                                 sam_optimization=self.sam_optimization,
+                                 loss=multiple_tensors_mse_loss)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.weights) == len(quantized_gptq_model.weights),
@@ -169,14 +190,14 @@ class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
 class GradientPTQLearnRateZeroTest(GradientPTQBaseTest):
 
     def get_gptq_config(self):
-        return model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(1,
-                                                                                   optimizer=tf.keras.optimizers.SGD(
-                                                                                       learning_rate=0.0),
-                                                                                   optimizer_rest=tf.keras.optimizers.SGD(
-                                                                                       learning_rate=0.0),
-                                                                                   train_bias=True,
-                                                                                   sam_optimization=self.sam_optimization,
-                                                                                   loss=multiple_tensors_mse_loss)
+        return GradientPTQConfig(1,
+                                 optimizer=tf.keras.optimizers.SGD(
+                                     learning_rate=0.0),
+                                 optimizer_rest=tf.keras.optimizers.SGD(
+                                     learning_rate=0.0),
+                                 train_bias=True,
+                                 sam_optimization=self.sam_optimization,
+                                 loss=multiple_tensors_mse_loss)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.weights) == len(quantized_gptq_model.weights),
@@ -193,16 +214,16 @@ class GradientPTQLearnRateZeroTest(GradientPTQBaseTest):
 class GradientPTQWeightedLossTest(GradientPTQBaseTest):
 
     def get_gptq_config(self):
-        return model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(5,
-                                                                                   optimizer=tf.keras.optimizers.Adam(
-                                                                                       learning_rate=0.0001),
-                                                                                   optimizer_rest=tf.keras.optimizers.Adam(
-                                                                                       learning_rate=0.0001),
-                                                                                   loss=multiple_tensors_mse_loss,
-                                                                                   train_bias=True,
-                                                                                   use_jac_based_weights=True,
-                                                                                   num_samples_for_loss=16,
-                                                                                   norm_weights=False)
+        return GradientPTQConfig(5,
+                                 optimizer=tf.keras.optimizers.Adam(
+                                     learning_rate=0.0001),
+                                 optimizer_rest=tf.keras.optimizers.Adam(
+                                     learning_rate=0.0001),
+                                 loss=multiple_tensors_mse_loss,
+                                 train_bias=True,
+                                 use_jac_based_weights=True,
+                                 num_samples_for_loss=16,
+                                 norm_weights=False)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         y = float_model.predict(input_x)

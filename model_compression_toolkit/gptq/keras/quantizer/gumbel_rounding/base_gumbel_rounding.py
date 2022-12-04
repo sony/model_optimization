@@ -118,7 +118,7 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
         self.n_cycles = gumbel_config.n_cycles
         self.minimal_temp = gumbel_config.minimal_temp
         self.maximal_temp = gumbel_config.maximal_temp
-        self.cycle_iterations = int(self.max_iteration / self.n_cycles)
+        self.cycle_iterations = max(1, int(self.max_iteration / self.n_cycles))
         self.tau = None
         self.g_t = None
         self.p_t = None

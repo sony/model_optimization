@@ -62,7 +62,7 @@ from tests.pytorch_tests.model_tests.feature_models.shift_negative_activation_te
 from tests.pytorch_tests.model_tests.feature_models.split_concat_net_test import SplitConcatNetTest
 from tests.pytorch_tests.model_tests.feature_models.torch_tensor_attr_net_test import TorchTensorAttrNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_function_test import BNFNetTest
-from tests.pytorch_tests.model_tests.feature_models.gptq_test import STEAccuracyTest, STEWeightsUpdateTest, STELearnRateZeroTest
+from tests.pytorch_tests.model_tests.feature_models.gptq_test import STEAccuracyTest, STEWeightsUpdateTest, STELearnRateZeroTest, GumbelLearnRateZeroNoTempLearnTest
 from tests.pytorch_tests.model_tests.feature_models.gptq_test import SymGumbelAccuracyTest, SymGumbelWeightsUpdateTest
 from tests.pytorch_tests.model_tests.feature_models.gptq_test import UniformGumbelAccuracyTest, UniformGumbelWeightsUpdateTest
 
@@ -422,6 +422,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         SymGumbelWeightsUpdateTest(self).run_test()
         UniformGumbelAccuracyTest(self).run_test()
         UniformGumbelWeightsUpdateTest(self).run_test()
+        GumbelLearnRateZeroNoTempLearnTest(self).run_test()
 
 
 if __name__ == '__main__':

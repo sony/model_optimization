@@ -87,7 +87,7 @@ class BaseGumbelWeightQuantizer(BaseWeightQuantizer):
         self.minimal_temp = gptq_config.quantizer_config.minimal_temp
         self.maximal_temp = gptq_config.quantizer_config.maximal_temp
         self.temperature_learning = gptq_config.quantizer_config.temperature_learning
-        self.cycle_iterations = int(gptq_config.n_epochs / gptq_config.quantizer_config.n_cycles)
+        self.cycle_iterations = max(1, int(gptq_config.n_epochs / gptq_config.quantizer_config.n_cycles))
         self.shift_tensor = to_torch_tensor(init_shift_var(self.m))
         self.tau = None
         self.g_t = 0
