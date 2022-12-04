@@ -15,12 +15,14 @@
 
 import tensorflow as tf
 import tensorflow_model_optimization.quantization.keras.graph_transformations.model_transformer as mt
+from keras.layers import TFOpLambda
 from keras.models import Model
 from tensorflow.python.util.object_identity import Reference as TFReference
 from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.default_8bit_quantize_configs import \
     NoOpQuantizeConfig
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from typing import List, Tuple, Dict, Any
+
+from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
@@ -28,6 +30,7 @@ from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder, \
     is_layer_fake_quant, get_node_name_from_layer
 from model_compression_toolkit.core.keras.quantizer.input_layer_quantize_transform import InputLayerWrapperTransform
+
 from model_compression_toolkit.exporter.fully_quantized.keras.builder.quantize_config_to_node import \
     get_quantization_config
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.activation_quantize_config import \
@@ -37,9 +40,12 @@ from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.w
     WeightsActivationQuantizeConfig
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import \
     WeightsQuantizeConfig
+from model_compression_toolkit.exporter.fully_quantized.keras.quantize_wrapper import FullyQuantizedQuantizeWrapper
 from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.fq_quantizer import FakeQuantQuantizer
 from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.weights_uniform_quantizer import \
     WeightsUniformQuantizer
+
+
 
 
 def get_fully_quantized_keras_model(graph: Graph) -> tf.keras.models.Model:
@@ -96,11 +102,10 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
 
         def _wrap_layer_with_quantize_config(layer):
 
-            nodes = self.graph.find_node_by_name(get_node_name_from_layer(layer))
+            node = self.oh.layer_to_node_dict.get(layer)
 
-            if len(nodes) == 1:
-                node = nodes[0]
-                return QuantizeWrapper(layer, get_quantization_config(node))
+            if node is not None:
+                return FullyQuantizedQuantizeWrapper(layer, get_quantization_config(node), layer.output_shape)
 
             elif is_layer_fake_quant(layer):
                 return layer
@@ -115,6 +120,7 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
                                             input_tensors=None,
                                             clone_function=_wrap_layer_with_quantize_config)
 
+
         # We use a model transformer to wrap the input layer with QuantizeWrapper.
         # A model transformer allows to modify a layer in an existing model, by applying the given list of
         # transformers on the model (in this case,
@@ -122,11 +128,11 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
         model_inputs = self.graph.get_inputs()
 
         input_transformer = mt.ModelTransformer(model, [InputLayerWrapperTransform(inp,
-                                                                                   self.fw_info,
                                                                                    get_quantization_config(inp),
-                                                                                   self.get_custom_objects()
-                                                                                   )
+                                                                                   self.get_custom_objects(),
+                                                                                   FullyQuantizedQuantizeWrapper)
                                                         for inp in model_inputs])
+
         model = input_transformer.transform()[0]
 
         return model, user_info
@@ -138,7 +144,8 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
         Returns: Dictionary of custom objects needed to load this model builder's output.
 
         """
-        return {QuantizeWrapper.__name__: QuantizeWrapper,
+        return {FullyQuantizedQuantizeWrapper.__name__: FullyQuantizedQuantizeWrapper,
+                QuantizeWrapper.__name__: QuantizeWrapper,
                 WeightsActivationQuantizeConfig.__name__: WeightsActivationQuantizeConfig,
                 ActivationQuantizeConfig.__name__: ActivationQuantizeConfig,
                 WeightsQuantizeConfig.__name__: WeightsQuantizeConfig,
