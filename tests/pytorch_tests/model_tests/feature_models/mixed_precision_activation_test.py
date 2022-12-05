@@ -121,6 +121,21 @@ class MixedPercisionActivationSearch4BitFunctional(MixedPercisionActivationBaseT
         self.verify_config(quantization_info.mixed_precision_cfg , self.expected_config)
 
 
+class MixedPercisionWithOutputReplacementTest(MixedPercisionActivationBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+        self.expected_config = [0, 0, 0, 0]
+
+    def get_kpi(self):
+        return KPI(np.inf, np.inf)
+
+    def create_feature_network(self, input_shape):
+        return MixedPrecisionOutputReplacementNet(input_shape)
+
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        self.verify_config(quantization_info.mixed_precision_cfg , self.expected_config)
+
+
 class MixedPrecisionNet(torch.nn.Module):
     def __init__(self, input_shape):
         super(MixedPrecisionNet, self).__init__()
@@ -149,4 +164,23 @@ class MixedPrecisionFunctionalNet(torch.nn.Module):
         x1 = self.conv1(inp)
         x2 = self.conv2(inp)
         output = x1 + x2
+        return output
+
+
+class MixedPrecisionOutputReplacementNet(torch.nn.Module):
+    def __init__(self, input_shape):
+        super(MixedPrecisionOutputReplacementNet, self).__init__()
+        _, in_channels, _, _ = input_shape[0]
+        self.conv1 = torch.nn.Conv2d(in_channels, 3, kernel_size=3)
+        self.bn1 = torch.nn.BatchNorm2d(3)
+        self.conv2 = torch.nn.Conv2d(3, 4, kernel_size=5)
+        self.relu = torch.nn.ReLU()
+
+
+    def forward(self, inp):
+        x = self.conv1(inp)
+        x = self.bn1(x)
+        x = self.conv2(x)
+        x = self.relu(x)
+        output = torch.argmax(x, dim=-1)
         return output

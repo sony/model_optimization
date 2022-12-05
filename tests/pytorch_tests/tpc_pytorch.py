@@ -35,38 +35,39 @@ def generate_activation_mp_tpc_pytorch(tp_model, name="activation_mp_pytorch_tp"
                                               name=name)
     with ftp_torch:
         tp.OperationsSetToLayers("NoQuantization", [Dropout,
-                                                     Flatten,
-                                                     dropout,
-                                                     flatten,
-                                                     split,
-                                                     operator.getitem,
-                                                     reshape,
-                                                     unsqueeze,
-                                                     BatchNorm2d,
-                                                     torch.Tensor.size])
+                                                    Flatten,
+                                                    dropout,
+                                                    flatten,
+                                                    split,
+                                                    operator.getitem,
+                                                    reshape,
+                                                    unsqueeze,
+                                                    BatchNorm2d,
+                                                    torch.Tensor.size,
+                                                    torch.argmax])
 
         tp.OperationsSetToLayers("Weights_n_Activation", [Conv2d,
-                                                           Linear,
-                                                           ConvTranspose2d])
+                                                          Linear,
+                                                          ConvTranspose2d])
 
         tp.OperationsSetToLayers("Activation", [torch.relu,
-                                                 ReLU,
-                                                 ReLU6,
-                                                 relu,
-                                                 relu6,
-                                                 LayerFilterParams(Hardtanh, min_val=0),
-                                                 LayerFilterParams(hardtanh, min_val=0),
-                                                 operator.add,
-                                                 add,
-                                                 PReLU,
-                                                 prelu,
-                                                 SiLU,
-                                                 silu,
-                                                 Sigmoid,
-                                                 sigmoid,
-                                                 Tanh,
-                                                 tanh,
-                                                 DummyPlaceHolder])
+                                                ReLU,
+                                                ReLU6,
+                                                relu,
+                                                relu6,
+                                                LayerFilterParams(Hardtanh, min_val=0),
+                                                LayerFilterParams(hardtanh, min_val=0),
+                                                operator.add,
+                                                add,
+                                                PReLU,
+                                                prelu,
+                                                SiLU,
+                                                silu,
+                                                Sigmoid,
+                                                sigmoid,
+                                                Tanh,
+                                                tanh,
+                                                DummyPlaceHolder])
 
     return ftp_torch
 

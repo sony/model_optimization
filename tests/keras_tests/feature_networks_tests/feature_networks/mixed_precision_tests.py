@@ -514,3 +514,35 @@ class MixedPrecisionReducedTotalKPISearchTest(MixedPrecisionActivationBaseTest):
             quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory,
             "Running weights and activation mixed-precision, "
             "final total memory should be equal to sum of weights and activation memory.")
+
+
+class MixedPrecisionWithOutputReplacementTest(MixedPrecisionActivationBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test, activation_layers_idx=[1, 3, 7])
+
+    def get_kpi(self):
+        # kpi is infinity -> should give best model - 8bits on all layers for both weights and activations
+        return KPI(np.inf, np.inf)
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Conv2D(32, 4)(inputs)
+        x = layers.BatchNormalization()(x)
+        x = layers.Conv2D(32, 4)(x)
+        x = layers.ReLU()(x)
+        outputs = tf.argmax(x, axis=-1)
+        model = keras.Model(inputs=inputs, outputs=outputs)
+        return model
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        # verify chosen activation bitwidth config
+        # kpi is infinity -> should give best model - 8bits
+        activation_bits = [quantized_model.layers[i].inbound_nodes[0].call_kwargs.get('num_bits') for i in self.activation_layers_idx]
+        self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
+
+        self.verify_quantization(quantized_model, input_x,
+                                 weights_layers_idx=[2, 4],
+                                 weights_layers_channels_size=[32, 32],
+                                 activation_layers_idx=self.activation_layers_idx,
+                                 unique_tensor_values=256)
+

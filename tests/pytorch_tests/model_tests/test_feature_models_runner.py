@@ -32,7 +32,7 @@ from tests.pytorch_tests.model_tests.feature_models.residual_collapsing_test imp
 from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test import ReshapeNetTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPercisionActivationSearch8Bit, MixedPercisionActivationSearch2Bit, MixedPercisionActivationSearch4Bit, \
-    MixedPercisionActivationSearch4BitFunctional
+    MixedPercisionActivationSearch4BitFunctional, MixedPercisionWithOutputReplacementTest
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.second_moment_correction_test import ConvSecondMomentNetTest, \
@@ -397,6 +397,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
         MixedPrecisionBopsAndTotalKPITest(self).run_test(experimental_facade=True)
         MixedPrecisionBopsWeightsActivationKPITest(self).run_test(experimental_facade=True)
         MixedPrecisionBopsMultipleOutEdgesTest(self).run_test(experimental_facade=True)
+
+    def test_mixed_precision_output_replacement(self):
+        """
+        This test checks Mixed Precision with a network that requires output layer replacement for computing the
+        weighted distance metric.
+        """
+        MixedPercisionWithOutputReplacementTest(self).run_test()
 
     def test_mha_layer_test(self):
         """
