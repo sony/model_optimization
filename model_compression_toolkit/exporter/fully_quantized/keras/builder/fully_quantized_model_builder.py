@@ -40,7 +40,7 @@ from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.w
     WeightsActivationQuantizeConfig
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import \
     WeightsQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.keras.fully_quantized_quantize_wrapper import FullyQuantizedQuantizeWrapper
+from model_compression_toolkit.exporter.fully_quantized.keras.extended_quantize_wrapper import ExtendedQuantizeWrapper
 from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.fq_quantizer import FakeQuantQuantizer
 from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.weights_uniform_quantizer import \
     WeightsUniformQuantizer
@@ -105,7 +105,7 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
             node = self.oh.layer_to_node_dict.get(layer)
 
             if node is not None:
-                return FullyQuantizedQuantizeWrapper(layer, get_quantization_config(node), layer.output_shape)
+                return ExtendedQuantizeWrapper(layer, get_quantization_config(node), layer.output_shape)
 
             elif is_layer_fake_quant(layer):
                 return layer
@@ -130,7 +130,7 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
         input_transformer = mt.ModelTransformer(model, [InputLayerWrapperTransform(inp,
                                                                                    get_quantization_config(inp),
                                                                                    self.get_custom_objects(),
-                                                                                   FullyQuantizedQuantizeWrapper)
+                                                                                   ExtendedQuantizeWrapper)
                                                         for inp in model_inputs])
 
         model = input_transformer.transform()[0]
@@ -144,7 +144,7 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
         Returns: Dictionary of custom objects needed to load this model builder's output.
 
         """
-        return {FullyQuantizedQuantizeWrapper.__name__: FullyQuantizedQuantizeWrapper,
+        return {ExtendedQuantizeWrapper.__name__: ExtendedQuantizeWrapper,
                 QuantizeWrapper.__name__: QuantizeWrapper,
                 WeightsActivationQuantizeConfig.__name__: WeightsActivationQuantizeConfig,
                 ActivationQuantizeConfig.__name__: ActivationQuantizeConfig,

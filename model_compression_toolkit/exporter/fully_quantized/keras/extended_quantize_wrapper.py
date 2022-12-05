@@ -22,11 +22,11 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_confi
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 
 
-class FullyQuantizedQuantizeWrapper(QuantizeWrapper):
+class ExtendedQuantizeWrapper(QuantizeWrapper):
 
     """Quantizes the weights and activations of the keras layer it wraps, according
-    to the quantization config that is passed. This class was created to deal with TFOpLambda that could
-    not be used TF QuantizeWrapper since it does not implement compute_output_shape."""
+    to the quantization config that is passed. This class was created to deal with TFOpLambda that can
+    not use TF QuantizeWrapper since it does not implement compute_output_shape."""
 
     def __init__(self,
                  layer:Layer,
@@ -50,9 +50,9 @@ class FullyQuantizedQuantizeWrapper(QuantizeWrapper):
         if isinstance(layer, TFOpLambda):
             layer.compute_output_shape = self._compute_output_shape
 
-        super(FullyQuantizedQuantizeWrapper, self).__init__(layer=layer,
-                                                            quantize_config=quantize_config,
-                                                            **kwargs)
+        super(ExtendedQuantizeWrapper, self).__init__(layer=layer,
+                                                      quantize_config=quantize_config,
+                                                      **kwargs)
 
     def _compute_output_shape(self, input_shape: TensorShape) -> Tuple[Any]:
         """
@@ -73,7 +73,7 @@ class FullyQuantizedQuantizeWrapper(QuantizeWrapper):
         Returns: The layer configuration with the output shape, so it can be deserialized.
 
         """
-        cfg = super(FullyQuantizedQuantizeWrapper, self).get_config()
+        cfg = super(ExtendedQuantizeWrapper, self).get_config()
         cfg.update({'output_shape': self._output_shape})
         return cfg
 
