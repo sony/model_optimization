@@ -20,12 +20,8 @@ from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchN
 import numpy as np
 
 from model_compression_toolkit import DEFAULTCONFIG, MixedPrecisionQuantizationConfig
-from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitActivationNode, \
     VirtualSplitWeightsNode
-from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
-    set_quantization_configuration_to_graph
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weights_activation_split import \
     WeightsActivationSplit
@@ -35,6 +31,7 @@ from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_
 
 import model_compression_toolkit as mct
 from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
+from tests.keras_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
 
 tp = mct.target_platform
@@ -69,31 +66,19 @@ def representative_dataset():
     yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]
 
 
-def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list):
-    fw_info = DEFAULT_KERAS_INFO
-    qc = MixedPrecisionQuantizationConfig(DEFAULTCONFIG)
-
-    graph = keras_impl.model_reader(in_model, representative_dataset)  # model reading
-
+def get_tpc(mixed_precision_candidates_list):
     base_config, _ = get_op_quantization_configs()
     mp_tp_model = generate_tp_model_with_activation_mp(base_config, mixed_precision_candidates_list)
     tpc = generate_activation_mp_tpc_keras(tp_model=mp_tp_model)
 
-    graph.set_fw_info(fw_info)
-    graph.set_tpc(tpc)
+    return tpc
 
-    # Standard graph substitutions
-    graph = substitute(graph, keras_impl.get_substitutions_prepare_graph())
-    for node in graph.nodes:
-        node.prior_info = keras_impl.get_node_prior_info(node=node,
-                                                         fw_info=fw_info, graph=graph)
-    graph = substitute(graph, keras_impl.get_substitutions_pre_statistics_collection(qc))
 
-    graph = set_quantization_configuration_to_graph(graph=graph,
-                                                    quant_config=qc,
-                                                    mixed_precision_enable=True)
-    graph = fusion(graph, tpc)
-    graph = filter_nodes_candidates(graph)
+def test_setup(in_model, keras_impl, mixed_precision_candidates_list):
+    qc = MixedPrecisionQuantizationConfig(DEFAULTCONFIG)
+    graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset,
+                                       lambda name, _tp: get_tpc(mixed_precision_candidates_list), qc=qc,
+                                       mixed_precision_enabled=True)
 
     # Split graph substitution
     split_graph = substitute(graph, [WeightsActivationSplit()])
@@ -134,28 +119,28 @@ class TestWeightsActivationSplit(unittest.TestCase):
         in_model = single_conv_model()
         keras_impl = KerasImplementation()
 
-        graph, split_graph = prepare_graph(in_model, keras_impl, mixed_precision_candidates_list=_get_base_mp_nbits_candidates())
+        graph, split_graph = test_setup(in_model, keras_impl, mixed_precision_candidates_list=_get_base_mp_nbits_candidates())
         self._verify_single_conv_test(graph, split_graph, num_weights_candidates=3, num_activation_candidates=3)
 
     def test_single_conv_net_weights_only_split(self):
         in_model = single_conv_model()
         keras_impl = KerasImplementation()
 
-        graph, split_graph = prepare_graph(in_model, keras_impl, mixed_precision_candidates_list=[(8, 8), (4, 8), (2, 8)])
+        graph, split_graph = test_setup(in_model, keras_impl, mixed_precision_candidates_list=[(8, 8), (4, 8), (2, 8)])
         self._verify_single_conv_test(graph, split_graph, num_weights_candidates=3, num_activation_candidates=1)
 
     def test_single_conv_net_activation_only_split(self):
         in_model = single_conv_model()
         keras_impl = KerasImplementation()
 
-        graph, split_graph = prepare_graph(in_model, keras_impl, mixed_precision_candidates_list=[(8, 8), (8, 4), (8, 2)])
+        graph, split_graph = test_setup(in_model, keras_impl, mixed_precision_candidates_list=[(8, 8), (8, 4), (8, 2)])
         self._verify_single_conv_test(graph, split_graph, num_weights_candidates=1, num_activation_candidates=3)
 
     def test_all_weights_layers_split(self):
         in_model = multiple_weights_nodes_model()
         keras_impl = KerasImplementation()
 
-        graph, split_graph = prepare_graph(in_model, keras_impl, mixed_precision_candidates_list=_get_base_mp_nbits_candidates())
+        graph, split_graph = test_setup(in_model, keras_impl, mixed_precision_candidates_list=_get_base_mp_nbits_candidates())
         weights_node_types = [Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense]
         original_weights_nodes = [n for n in graph.get_topo_sorted_nodes() if n.type in weights_node_types]
 
@@ -180,4 +165,4 @@ class TestWeightsActivationSplit(unittest.TestCase):
         keras_impl = KerasImplementation()
 
         with self.assertRaises(Exception):
-            prepare_graph(in_model, keras_impl, mixed_precision_candidates_list=[(8, 2), (2, 4), (4, 8)])
+            test_setup(in_model, keras_impl, mixed_precision_candidates_list=[(8, 2), (2, 4), (4, 8)])

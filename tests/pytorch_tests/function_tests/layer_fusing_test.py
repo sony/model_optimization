@@ -17,16 +17,11 @@ import torch.nn as nn
 from torch.nn import Conv2d, ReLU, SiLU, Sigmoid, Linear, Hardtanh
 from torch.nn.functional import relu, relu6
 
-from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
-    set_quantization_configuration_to_graph
-
-from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.core.common.target_platform import LayerFilterParams
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
+from tests.keras_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 import model_compression_toolkit as mct
@@ -58,29 +53,6 @@ class BaseLayerFusingTest(BasePytorchTest):
                                                                              base_config=default_config)
         return generated_tp, mixed_precision_configuration_options
 
-    def prepare_graph(self, in_model, tpc):
-        fw_info = DEFAULT_PYTORCH_INFO
-        pytorch_impl = PytorchImplementation()
-        qc = DEFAULTCONFIG
-
-        graph = pytorch_impl.model_reader(in_model, self.representative_data_gen)  # model reading
-        graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())
-        for node in graph.nodes:
-            node.prior_info = pytorch_impl.get_node_prior_info(node=node,
-                                                               fw_info=fw_info,
-                                                               graph=graph)
-        graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(qc))
-
-        graph.set_fw_info(fw_info)
-        graph.set_tpc(tpc)
-
-        graph = set_quantization_configuration_to_graph(graph=graph,
-                                                        quant_config=qc)
-
-        fusion_graph = fusion(graph, tpc)
-
-        return fusion_graph
-
     def _compare(self, fused_nodes):
         self.unit_test.assertTrue(len(fused_nodes) == len(self.expected_fusions), msg=f'Number of fusions is not as expected!')
         for i, fusion in enumerate(fused_nodes):
@@ -109,8 +81,9 @@ class LayerFusingTest1(BaseLayerFusingTest):
 
     def run_test(self, seed=0, experimental_facade=False):
         model_float = self.LayerFusingNetTest()
-        tpc = self.get_tpc()
-        graph = self.prepare_graph(model_float, tpc)
+
+        graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
+                                           self.representative_data_gen, lambda name, _tp: self.get_tpc())
 
         self._compare(graph.fused_nodes)
 
@@ -149,8 +122,8 @@ class LayerFusingTest2(BaseLayerFusingTest):
 
     def run_test(self, seed=0, experimental_facade=False):
         model_float = self.LayerFusingNetTest()
-        tpc = self.get_tpc()
-        graph = self.prepare_graph(model_float, tpc)
+        graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
+                                           self.representative_data_gen, lambda name, _tp: self.get_tpc())
 
         self._compare(graph.fused_nodes)
 
@@ -201,8 +174,8 @@ class LayerFusingTest3(BaseLayerFusingTest):
 
     def run_test(self, seed=0, experimental_facade=False):
         model_float = self.LayerFusingNetTest()
-        tpc = self.get_tpc()
-        graph = self.prepare_graph(model_float, tpc)
+        graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
+                                           self.representative_data_gen, lambda name, _tp: self.get_tpc())
 
         self._compare(graph.fused_nodes)
 
@@ -263,8 +236,8 @@ class LayerFusingTest4(BaseLayerFusingTest):
 
     def run_test(self, seed=0, experimental_facade=False):
         model_float = self.LayerFusingNetTest()
-        tpc = self.get_tpc()
-        graph = self.prepare_graph(model_float, tpc)
+        graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
+                                           self.representative_data_gen, lambda name, _tp: self.get_tpc())
 
         self._compare(graph.fused_nodes)
 

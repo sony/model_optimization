@@ -15,18 +15,13 @@
 import torch
 from torch.nn import Conv2d, BatchNorm2d, ReLU
 
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
-    set_quantization_configuration_to_graph
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 import numpy as np
 
-from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs, \
-    generate_tp_model
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
+from tests.keras_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
@@ -115,30 +110,6 @@ class model_with_output_replacements(torch.nn.Module):
         return x
 
 
-def prepare_graph(in_model, representative_data_gen, pytorch_impl):
-    fw_info = DEFAULT_PYTORCH_INFO
-    qc = DEFAULTCONFIG
-
-    graph = pytorch_impl.model_reader(in_model, representative_data_gen)  # model reading
-    graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())
-    for node in graph.nodes:
-        node.prior_info = pytorch_impl.get_node_prior_info(node=node,
-                                                           fw_info=fw_info,
-                                                           graph=graph)
-    graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(qc))
-
-    base_config, op_cfg_list = get_op_quantization_configs()
-    tp = generate_tp_model(base_config, base_config, op_cfg_list, "model_grad_test")
-    tpc = generate_pytorch_tpc(name="model_grad_test", tp_model=tp)
-
-    graph.set_fw_info(fw_info)
-    graph.set_tpc(tpc)
-
-    graph = set_quantization_configuration_to_graph(graph=graph,
-                                                    quant_config=qc)
-    return graph
-
-
 def generate_inputs(inputs_shape):
     inputs = []
     for in_shape in inputs_shape:
@@ -169,7 +140,8 @@ class ModelGradientsCalculationTest(BasePytorchTest):
     def run_test(self, seed=0):
         model_float = basic_derivative_model()
         pytorch_impl = PytorchImplementation()
-        graph = prepare_graph(model_float, self.representative_data_gen, pytorch_impl)
+        graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
+                                           self.representative_data_gen, generate_pytorch_tpc)
         input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
@@ -205,7 +177,8 @@ class ModelGradientsBasicModelTest(BasePytorchTest):
     def run_test(self, seed=0):
         model_float = basic_model()
         pytorch_impl = PytorchImplementation()
-        graph = prepare_graph(model_float, self.representative_data_gen, pytorch_impl)
+        graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
+                                           self.representative_data_gen, generate_pytorch_tpc)
         input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
@@ -240,7 +213,8 @@ class ModelGradientsAdvancedModelTest(BasePytorchTest):
     def run_test(self, seed=0):
         model_float = basic_model()
         pytorch_impl = PytorchImplementation()
-        graph = prepare_graph(model_float, self.representative_data_gen, pytorch_impl)
+        graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
+                                           self.representative_data_gen, generate_pytorch_tpc)
         input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
@@ -275,7 +249,8 @@ class ModelGradientsOutputReplacementTest(BasePytorchTest):
     def run_test(self, seed=0):
         model_float = model_with_output_replacements()
         pytorch_impl = PytorchImplementation()
-        graph = prepare_graph(model_float, self.representative_data_gen, pytorch_impl)
+        graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
+                                           self.representative_data_gen, generate_pytorch_tpc)
         input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
