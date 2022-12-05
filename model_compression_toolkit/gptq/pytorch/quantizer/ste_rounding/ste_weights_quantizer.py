@@ -32,13 +32,13 @@ class STEWeightQuantizer(BaseWeightQuantizer):
     def __init__(self,
                  weights_quantization_cfg: NodeWeightsQuantizationConfig,
                  gptq_config: GradientPTQConfig,
-                 weight_shape: torch.Size):
+                 weight: torch.nn.Parameter):
         """
         Construct a Pytorch model that utilize a fake weight quantizer of STE (Straight Through Estimator) for symmetric quantizer.
         Args:
             weights_quantization_cfg: Configuration of weight quantization
             gptq_config: GradientPTQConfig object with parameters about the tuning process.
-            weight_shape: weight shape for auxiliary tensor creation.
+            weight: weight for auxiliary tensor creation.
         """
         super().__init__()
 
@@ -46,7 +46,7 @@ class STEWeightQuantizer(BaseWeightQuantizer):
         self.num_bits = weights_quantization_cfg.weights_n_bits
         self.min_int = -int(self.signed) * (2 ** (self.num_bits - int(self.signed)))
         self.max_int = (2 ** (self.num_bits - int(self.signed))) - 1
-        self.weight_shape = weight_shape
+        self.weight_shape = weight.shape
         self.threshold_values = weights_quantization_cfg.weights_quantization_params.get(THRESHOLD)
         self.delta_tensor = self.threshold_values / (2 ** (self.num_bits-int(self.signed)))
         self.max_delta_change = gptq_config.lsb_change_per_bit_width.get(self.num_bits)

@@ -18,11 +18,14 @@ from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import BaseNode
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder, PytorchModel
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.gptq.pytorch.quantizer.quantizer_wrapper import quantizer_wrapper
+from model_compression_toolkit.core.pytorch.utils import get_working_device
+from model_compression_toolkit.core.pytorch.constants import BUFFER
+from model_compression_toolkit.core.pytorch.reader.node_holders import BufferHolder
+from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder
 
 
 class GPTQPytorchModel(PytorchModel):
@@ -50,7 +53,12 @@ class GPTQPytorchModel(PytorchModel):
 
         for node in graph.nodes():
             if not isinstance(node, FunctionalNode):
-                self.add_module(node.name, quantizer_wrapper(node, gptq_config))
+                if node.type == BufferHolder:
+                    self.add_module(node.name, node_builder(node))
+                    self.get_submodule(node.name).register_buffer(node.name,torch.Tensor(node.get_weights_by_keys(BUFFER)).to(get_working_device()))
+                else:
+                    self.add_module(node.name, quantizer_wrapper(node, gptq_config))
+
 
     def _quantize_node_activations(self,
                                    node: BaseNode,
