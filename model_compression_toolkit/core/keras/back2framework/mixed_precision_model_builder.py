@@ -103,6 +103,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
             if node is not None:
                 # Wrap only if its weights should be quantized
                 if node.name in conf_nodes_names:
+                    # TODO: Maybe FullyQuantizedQuantizeWrapper to allow using TFOpLambda in MP
                     if node.layer_class in [TFOpLambda, SlicingOpLambda]:
                         Logger.critical(f"Activation mixed-precision is not supported for layers of type "
                                         f"{node.layer_class}. Please modify the TargetPlatformModel object, "
