@@ -442,7 +442,7 @@ def _set_final_kpi(graph: Graph,
                 # in the model's final size the quantized layers size, this means that the final size for this target
                 # is zero.
                 Logger.warning(f"No relevant quantized layers for the KPI target {kpi_target} were found, the recorded"
-                            f"final KPI for this target would be 0.")
+                               f"final KPI for this target would be 0.")
                 final_kpis_dict[kpi_target] = 0
 
     final_kpi = KPI()
