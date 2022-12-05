@@ -21,7 +21,6 @@ from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.d
 from tensorflow_model_optimization.python.core.quantization.keras.graph_transformations import transforms
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_config import QuantizeConfig
 
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 
 from model_compression_toolkit.core.common import BaseNode
 

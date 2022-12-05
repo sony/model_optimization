@@ -131,9 +131,9 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         model_inputs = self.graph.get_inputs()
 
         input_transformer = mt.ModelTransformer(model, [InputLayerWrapperTransform(inp,
-                                                                                   self.fw_info,
                                                                                    quantization_config_builder_mixed_precision(inp),
-                                                                                   self.get_custom_objects())
+                                                                                   self.get_custom_objects(),
+                                                                                   QuantizeWrapper)
                                                         for inp in model_inputs])
         model = input_transformer.transform()[0]
 
