@@ -40,7 +40,7 @@ from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.w
     WeightsActivationQuantizeConfig
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import \
     WeightsQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_wrapper import FullyQuantizedQuantizeWrapper
+from model_compression_toolkit.exporter.fully_quantized.keras.fully_quantized_quantize_wrapper import FullyQuantizedQuantizeWrapper
 from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.fq_quantizer import FakeQuantQuantizer
 from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.weights_uniform_quantizer import \
     WeightsUniformQuantizer
