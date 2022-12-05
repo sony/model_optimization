@@ -78,9 +78,6 @@ class NetworkTest(object):
             cs = cosine_similarity(output_f, output_q)
         if run_mode(tpc) == RunMode.FLOAT:
             self.unit_test.assertTrue(np.isclose(cs, 1, 0.001), msg=f'fail cosine similarity check: {cs}')
-        elif run_mode(tpc) == RunMode.EIGHT:
-            pass  # remove the cs check for 8 bit quantizaiton at this stage
-            # self.unit_test.assertTrue(np.isclose(cs, 1, atol=0.6), msg=f'fail cosine similarity check:{cs}')
         elif run_mode(tpc) == RunMode.TWO:
             self.unit_test.assertTrue(np.isclose(cs, 0, atol=0.5), msg=f'fail cosine similarity check:{cs}')
         if run_mode(tpc) == RunMode.EIGHT:
@@ -136,7 +133,7 @@ class FeatureNetworkTest(unittest.TestCase):
 
     @staticmethod
     def create_inputs(inputs_list):
-        return [np.random.randn(*in_shape) for in_shape in inputs_list]
+        return [np.ones(in_shape) for in_shape in inputs_list]
 
     def run_network(self, model_float, input_shapes, num_calibration_iter, gptq=False):
         inputs_list = FeatureNetworkTest.create_inputs(input_shapes)
