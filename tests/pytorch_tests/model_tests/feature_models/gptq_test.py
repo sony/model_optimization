@@ -18,7 +18,7 @@ import torch.nn as nn
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GradientPTQConfigV2, RoundingType
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GradientPTQConfigV2, RoundingType, GumbelConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
@@ -176,6 +176,38 @@ class STELearnRateZeroTest(GPTQBaseTest):
                                    loss=multiple_tensors_mse_loss,
                                    train_bias=False,
                                    rounding_type=RoundingType.STE)
+
+    def compare(self, ptq_model, gptq_model, input_x=None, quantization_info=None):
+        ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))
+        gptq_weights = torch_tensor_to_numpy(list(gptq_model.parameters()))
+
+        # check number of weights are equal
+        self.unit_test.assertTrue(len(ptq_weights) == len(gptq_weights),
+                                  msg='PTQ model number of weights different from GPTQ model!')
+
+        # check all weights were not updated in gptq model compared to ptq model
+        w_diffs = [np.isclose(np.max(np.abs(w_ptq - w_gptq)), 0) for w_ptq, w_gptq in zip(ptq_weights, gptq_weights)]
+        for w_diff in w_diffs:
+            self.unit_test.assertTrue(np.all(w_diff), msg="GPTQ: some weights were updated")
+
+
+class GumbelLearnRateZeroNoTempLearnTest(GPTQBaseTest):
+
+    def get_gptq_config(self):
+        return GradientPTQConfig(1,
+                                 optimizer=torch.optim.Adam([torch.Tensor([])], lr=0),
+                                 loss=multiple_tensors_mse_loss,
+                                 train_bias=False,
+                                 quantizer_config=GumbelConfig(temperature_learning=False),
+                                 rounding_type=RoundingType.GumbelRounding)
+
+    def get_gptq_configv2(self):
+        return GradientPTQConfigV2(1,
+                                   optimizer=torch.optim.Adam([torch.Tensor([])], lr=0),
+                                   loss=multiple_tensors_mse_loss,
+                                   train_bias=False,
+                                   quantizer_config=GumbelConfig(temperature_learning=False),
+                                   rounding_type=RoundingType.GumbelRounding)
 
     def compare(self, ptq_model, gptq_model, input_x=None, quantization_info=None):
         ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))
