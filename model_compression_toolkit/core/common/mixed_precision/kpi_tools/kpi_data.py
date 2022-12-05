@@ -152,8 +152,7 @@ def compute_total_bops(graph: Graph, fw_info: FrameworkInfo, fw_impl: FrameworkI
         if n.has_weights_to_quantize(fw_info):
             # If node doesn't have weights then its MAC count is 0, and we shouldn't consider it in the BOPS count.
             incoming_edges = graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
-            if len(incoming_edges) != 1:
-                Logger.warning(f"Can't compute BOPS metric for node {n.name} with multiple inputs.")
+            assert len(incoming_edges) == 1, f"Can't compute BOPS metric for node {n.name} with multiple inputs."
 
             node_mac = fw_impl.get_node_mac_operations(n, fw_info)
 
