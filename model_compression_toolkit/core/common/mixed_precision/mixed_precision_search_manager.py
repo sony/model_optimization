@@ -245,15 +245,14 @@ class MixedPrecisionSearchManager:
 
         non_conf_kpi_dict = {}
         for target, kpi_value in self.target_kpi.get_kpi_dict().items():
-            if not np.isinf(kpi_value):
-                # Call for the KPI method of the given target - empty quantization configuration list is passed since we
-                # compute for non-configurable nodes
-                if target == KPITarget.BOPS:
-                    kpi_vector = None
-                else:
-                    kpi_vector = self.compute_kpi_functions[target][0]([], self.graph, self.fw_info, self.fw_impl)
+            # Call for the KPI method of the given target - empty quantization configuration list is passed since we
+            # compute for non-configurable nodes
+            if target == KPITarget.BOPS:
+                kpi_vector = None
+            else:
+                kpi_vector = self.compute_kpi_functions[target][0]([], self.graph, self.fw_info, self.fw_impl)
 
-                non_conf_kpi_dict[target] = kpi_vector
+            non_conf_kpi_dict[target] = kpi_vector
 
         return non_conf_kpi_dict
 
