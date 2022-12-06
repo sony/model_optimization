@@ -24,6 +24,8 @@ from tests.pytorch_tests.function_tests.layer_fusing_test import LayerFusingTest
 from tests.pytorch_tests.function_tests.model_gradients_test import ModelGradientsBasicModelTest, \
     ModelGradientsCalculationTest, ModelGradientsAdvancedModelTest, ModelGradientsOutputReplacementTest
 from tests.pytorch_tests.function_tests.set_layer_to_bitwidth_test import TestSetSingleAttrToBitwidth, TestSetLayerToBitwidth
+from tests.pytorch_tests.function_tests.test_sensitivity_eval_output_replacement import \
+    TestSensitivityEvalWithArgmaxOutputReplacementNodes, TestSensitivityEvalWithSoftmaxOutputReplacementNodes
 
 
 class FunctionTestRunner(unittest.TestCase):
@@ -116,6 +118,13 @@ class FunctionTestRunner(unittest.TestCase):
         """
         TestSetLayerToBitwidth(self).run_test()
         TestSetSingleAttrToBitwidth(self).run_test()
+
+    def test_sensitivity_eval_outputs_replacement(self):
+        """
+        This test checks the functionality output replacement nodes in sensitivity evaluation for mixed precision..
+        """
+        # TestSensitivityEvalWithArgmaxOutputReplacementNodes(self).run_test()
+        TestSensitivityEvalWithSoftmaxOutputReplacementNodes(self).run_test()
 
 
 if __name__ == '__main__':
