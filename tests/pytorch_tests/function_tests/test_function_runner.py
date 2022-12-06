@@ -23,6 +23,7 @@ from tests.pytorch_tests.function_tests.layer_fusing_test import LayerFusingTest
     LayerFusingTest4
 from tests.pytorch_tests.function_tests.model_gradients_test import ModelGradientsBasicModelTest, \
     ModelGradientsCalculationTest, ModelGradientsAdvancedModelTest, ModelGradientsOutputReplacementTest
+from tests.pytorch_tests.function_tests.set_layer_to_bitwidth_test import TestSetSingleAttrToBitwidth, TestSetLayerToBitwidth
 
 
 class FunctionTestRunner(unittest.TestCase):
@@ -107,6 +108,14 @@ class FunctionTestRunner(unittest.TestCase):
         LayerFusingTest2(self).run_test()
         LayerFusingTest3(self).run_test()
         LayerFusingTest4(self).run_test()
+
+    def test_mixed_precision_set_bitwidth(self):
+        """
+        This test checks the functionality of setting a configurable layer's weights bit-width for mixed precision
+        layer wrapper.
+        """
+        TestSetLayerToBitwidth(self).run_test()
+        TestSetSingleAttrToBitwidth(self).run_test()
 
 
 if __name__ == '__main__':

@@ -127,7 +127,7 @@ class MixedPrecisionQuantizationConfig(QuantizationConfig):
             elif hasattr(_dummy_mp_config_experimental, k):
                 mp_dict.update({k: v})
             else:
-                raise Exception(f'Attribute "{k}" mismatch: exists in MixedPrecisionQuantizationConfig but not in MixedPrecisionQuantizationConfigV2')
+                raise Exception(f'Attribute "{k}" mismatch: exists in MixedPrecisionQuantizationConfig but not in MixedPrecisionQuantizationConfigV2')  # pragma: no cover
 
         return QuantizationConfig(**qc_dict), MixedPrecisionQuantizationConfigV2(**mp_dict)
 

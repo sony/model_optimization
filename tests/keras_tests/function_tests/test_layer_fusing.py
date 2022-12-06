@@ -11,6 +11,8 @@ from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
 import model_compression_toolkit as mct
+from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
+
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Activation, ReLU, Add
 else:
@@ -176,30 +178,6 @@ def get_type(fusion):
     return fusion_types
 
 
-def prepare_graph(in_model, tpc):
-    fw_info = DEFAULT_KERAS_INFO
-    qc = DEFAULTCONFIG
-    keras_impl = KerasImplementation()
-    graph = keras_impl.model_reader(in_model, representative_dataset)
-
-    graph.set_fw_info(fw_info)
-    graph.set_tpc(tpc)
-
-    # Standard graph substitutions
-    graph = substitute(graph, keras_impl.get_substitutions_prepare_graph())
-    for node in graph.nodes:
-        node.prior_info = keras_impl.get_node_prior_info(node=node,
-                                                         fw_info=fw_info, graph=graph)
-    graph = substitute(graph, keras_impl.get_substitutions_pre_statistics_collection(qc))
-
-    graph = set_quantization_configuration_to_graph(graph=graph,
-                                                    quant_config=qc,
-                                                    mixed_precision_enable=True)
-    fusion_graph = fusion(graph, tpc)
-
-    return fusion_graph
-
-
 class TestLayerFusing(unittest.TestCase):
     def _compare(self, fused_nodes, expected_fusions):
         self.assertTrue(len(fused_nodes) == len(expected_fusions),
@@ -210,36 +188,36 @@ class TestLayerFusing(unittest.TestCase):
 
     def test_layer_fusing_1(self):
         expected_fusions = [[Conv2D, Activation]]
-        tpc = get_tpc_1()
         model = create_network_1(INPUT_SHAPE)
 
-        fusion_graph = prepare_graph(model, tpc)
+        fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
+                                                  representative_dataset, lambda name, _tp: get_tpc_1())
 
         self._compare(fusion_graph.fused_nodes, expected_fusions)
 
     def test_layer_fusing_2(self):
         expected_fusions = [[Conv2D, Activation], [Conv2D, ReLU], [Conv2D, tf.nn.sigmoid], [Conv2D, Activation]]
-        tpc = get_tpc_2()
         model = create_network_2(INPUT_SHAPE)
 
-        fusion_graph = prepare_graph(model, tpc)
+        fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
+                                                  representative_dataset, lambda name, _tp: get_tpc_2())
 
         self._compare(fusion_graph.fused_nodes, expected_fusions)
 
     def test_layer_fusing_3(self):
         expected_fusions = [[Conv2D, Activation]]
-        tpc = get_tpc_3()
         model = create_network_3(INPUT_SHAPE)
 
-        fusion_graph = prepare_graph(model, tpc)
+        fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
+                                                  representative_dataset, lambda name, _tp: get_tpc_3())
 
         self._compare(fusion_graph.fused_nodes, expected_fusions)
 
     def test_layer_fusing_4(self):
         expected_fusions = [[Conv2D, Activation, Add], [Conv2D, Activation, Add], [Conv2D, Activation], [Conv2D, ReLU, Add], [Dense, tf.nn.silu], [Dense, Activation]]
-        tpc = get_tpc_4()
         model = create_network_4(INPUT_SHAPE)
 
-        fusion_graph = prepare_graph(model, tpc)
+        fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
+                                                  representative_dataset, lambda name, _tp: get_tpc_4())
 
         self._compare(fusion_graph.fused_nodes, expected_fusions)

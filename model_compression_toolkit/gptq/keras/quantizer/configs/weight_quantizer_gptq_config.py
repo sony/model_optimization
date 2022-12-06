@@ -111,7 +111,7 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
                                                           quantization_parameter_learning=gptq_config.quantization_parameters_learning,
                                                           quantization_axis=weight_channel_axis,
                                                           max_lsbs_change_map=max_lsbs_change_map,
-                                                          max_iteration=gptq_config.n_iter,
+                                                          max_iteration=gptq_config.n_epochs,
                                                           gumbel_config=gptq_config.quantizer_config)
 
     def enable_update(self):

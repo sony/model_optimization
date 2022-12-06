@@ -6,17 +6,13 @@ from tensorflow import initializers
 import numpy as np
 import tensorflow as tf
 
-from model_compression_toolkit import DEFAULTCONFIG
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
-    set_quantization_configuration_to_graph
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_tp_model, \
-    get_op_quantization_configs
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 
 import model_compression_toolkit as mct
+from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
+
 tp = mct.target_platform
 
 
@@ -76,29 +72,6 @@ def representative_dataset():
     yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]
 
 
-def prepare_graph(in_model, keras_impl):
-    fw_info = DEFAULT_KERAS_INFO
-    qc = DEFAULTCONFIG
-
-    graph = keras_impl.model_reader(in_model, representative_dataset)  # model reading
-    graph = substitute(graph, keras_impl.get_substitutions_prepare_graph())
-    for node in graph.nodes:
-        node.prior_info = keras_impl.get_node_prior_info(node=node,
-                                                         fw_info=fw_info, graph=graph)
-    graph = substitute(graph, keras_impl.get_substitutions_pre_statistics_collection(qc))
-
-    base_config, op_cfg_list = get_op_quantization_configs()
-    tp = generate_tp_model(base_config, base_config, op_cfg_list, "model_grad_test")
-    tpc = generate_keras_tpc(name="model_grad_test", tp_model=tp)
-
-    graph.set_fw_info(fw_info)
-    graph.set_tpc(tpc)
-
-    graph = set_quantization_configuration_to_graph(graph=graph,
-                                                    quant_config=qc)
-    return graph
-
-
 class TestModelGradients(unittest.TestCase):
 
     def _run_model_grad_test(self, graph, keras_impl):
@@ -122,7 +95,7 @@ class TestModelGradients(unittest.TestCase):
         input_shape = (8, 8, 3)
         in_model = basic_derivative_model(input_shape)
         keras_impl = KerasImplementation()
-        graph = prepare_graph(in_model, keras_impl)
+        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
 
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
@@ -157,7 +130,7 @@ class TestModelGradients(unittest.TestCase):
         input_shape = (8, 8, 3)
         in_model = basic_model(input_shape)
         keras_impl = KerasImplementation()
-        graph = prepare_graph(in_model, keras_impl)
+        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
 
         self._run_model_grad_test(graph, keras_impl)
 
@@ -165,7 +138,7 @@ class TestModelGradients(unittest.TestCase):
         input_shape = (8, 8, 3)
         in_model = advenced_model(input_shape)
         keras_impl = KerasImplementation()
-        graph = prepare_graph(in_model, keras_impl)
+        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
 
         self._run_model_grad_test(graph, keras_impl)
 
@@ -173,7 +146,7 @@ class TestModelGradients(unittest.TestCase):
         input_shape = (8, 8, 3)
         in_model = model_with_output_replacements(input_shape)
         keras_impl = KerasImplementation()
-        graph = prepare_graph(in_model, keras_impl)
+        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
 
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
