@@ -32,6 +32,7 @@ from model_compression_toolkit.core.tpc_models.default_tpc.latest import generat
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
 
 
 def get_random_weights(kernel, in_channels, out_channels):
@@ -52,6 +53,18 @@ def create_network():
     model.layers[1].set_weights([conv_w1])
     model.layers[2].set_weights([conv_w2])
     return model
+
+
+def representative_dataset():
+    yield [np.random.randn(1, 16, 16, 4).astype(np.float32)]
+
+
+def get_tpc():
+    tp = generate_test_tp_model({
+        'weights_quantization_method': mct.target_platform.QuantizationMethod.UNIFORM})
+    tpc = generate_keras_tpc(name="uniform_range_selection_test", tp_model=tp)
+
+    return tpc
 
 
 class TestUniformRangeSelectionWeights(unittest.TestCase):
@@ -89,39 +102,11 @@ class TestUniformRangeSelectionWeights(unittest.TestCase):
     def run_test_for_threshold_method(self, threshold_method, per_channel=True):
         qc = QuantizationConfig(weights_error_method=threshold_method,
                                 weights_per_channel_threshold=per_channel)
-        core_config = CoreConfig(quantization_config=qc)
 
-        tp = generate_test_tp_model({
-            'weights_quantization_method': mct.target_platform.QuantizationMethod.UNIFORM})
-        tpc = generate_keras_tpc(name="uniform_range_selection_test", tp_model=tp)
-
-        fw_info = DEFAULT_KERAS_INFO
         in_model = create_network()
-        keras_impl = KerasImplementation()
-        graph = keras_impl.model_reader(in_model, None)  # model reading
-        graph.set_tpc(tpc)
-        graph.set_fw_info(fw_info)
-        graph = set_quantization_configuration_to_graph(graph=graph,
-                                                        quant_config=core_config.quantization_config,
-                                                        mixed_precision_enable=core_config.mixed_precision_enable)
-        for node in graph.nodes:
-            node.prior_info = keras_impl.get_node_prior_info(node=node,
-                                                             fw_info=fw_info,
-                                                             graph=graph)
-        analyzer_graph(keras_impl.attach_sc_to_node,
-                       graph,
-                       fw_info)
-
-        mi = ModelCollector(graph,
-                            fw_info=DEFAULT_KERAS_INFO,
-                            fw_impl=keras_impl)
-
-        for i in range(10):
-            mi.infer([np.random.randn(1, 16, 16, 4)])
-
-        calculate_quantization_params(graph,
-                                      fw_info,
-                                      fw_impl=keras_impl)
+        graph = prepare_graph_with_quantization_parameters(in_model, KerasImplementation(), DEFAULT_KERAS_INFO,
+                                                           representative_dataset, lambda name, _tp: get_tpc(),
+                                                           qc=qc, input_shape=(1, 16, 16, 4))
 
         nodes_list = list(graph.nodes)
         conv1_min = nodes_list[0].candidates_quantization_cfg[0].weights_quantization_cfg.weights_quantization_params[RANGE_MIN].flatten()

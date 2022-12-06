@@ -145,7 +145,7 @@ class SelectiveQuantizeConfig(QuantizeConfig):
             if attr is None:  # set bit width to all weights of the layer
                 for q in self.weight_quantizers:
                     q.set_active_quantization_config_index(index)
-            else:  # set bit width to a specific selectivequantizer
+            else:  # set bit width to a specific attribute
                 i = self.weight_attrs.index(attr)
                 q = self.weight_quantizers[i]
                 q.set_active_quantization_config_index(index)
