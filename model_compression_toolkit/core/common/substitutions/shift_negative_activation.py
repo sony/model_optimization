@@ -26,6 +26,7 @@ from model_compression_toolkit.core.common.quantization.core_config import CoreC
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import _mse_error_histogram
+from model_compression_toolkit.core.common.quantization.quantization_params_generation import z_score_filter
 
 """
 This substitution aims to solve an issue of activation with negative outputs where
@@ -248,6 +249,8 @@ def shift_negative_function(graph: Graph,
 
     if core_config.quantization_config.shift_negative_params_search:
         hist_bins, hist_count = graph.get_out_stats_collector(non_linear_node).hc.get_histogram()
+        hist_count = z_score_filter(non_linear_node_cfg_candidate.z_threshold,
+                                    hist_bins, hist_count)
 
         min_mse, _th, _shift = np.inf, None, None
         for _activation_threshold in [activation_threshold, 2*activation_threshold]:
