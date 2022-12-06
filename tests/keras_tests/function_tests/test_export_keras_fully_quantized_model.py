@@ -19,16 +19,22 @@ import unittest
 import keras.models
 import numpy as np
 import tensorflow as tf
+from keras import Input
+from keras.layers import Conv2D
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.exporter.target_platform_export.keras import export_keras_fully_quantized_model, \
     KerasExportMode
-from tests.keras_tests.tpc_keras import get_activation_quantization_disabled_keras_tpc
 
-tp = mct.target_platform
 
 SAVED_MODEL_PATH = '/tmp/exported_tf_fakelyquant.h5'
+
+def _get_model(input_shape):
+    inputs = Input(shape=input_shape)
+    outputs = Conv2D(3, 3)(inputs)
+    outputs = tf.quantization.fake_quant_with_min_max_vars(outputs, -2, 5, 8)
+    return keras.Model(inputs=inputs, outputs=outputs)
 
 
 class TestExporter(unittest.TestCase):
@@ -37,8 +43,9 @@ class TestExporter(unittest.TestCase):
         os.remove(SAVED_MODEL_PATH)
 
     def setUp(self) -> None:
-        self.mbv2 = MobileNetV2()
-        self.representative_data_gen = lambda: [np.random.randn(1, 224, 224, 3)]
+        input_shape = (8,8,3)
+        self.mbv2 = _get_model(input_shape)
+        self.representative_data_gen = lambda: [np.random.randn(*((1,)+input_shape))]
         self.fully_quantized_mbv2 = self.run_mct(self.mbv2)
         self.exported_mbv2 = export_keras_fully_quantized_model(model=self.fully_quantized_mbv2,
                                                                 mode=KerasExportMode.FAKELY_QUANT,
@@ -46,12 +53,10 @@ class TestExporter(unittest.TestCase):
 
     def run_mct(self, model):
         core_config = mct.CoreConfig()
-        tpc = get_activation_quantization_disabled_keras_tpc('test_keras_exporter')
 
         new_export_model, _ = mct.keras_post_training_quantization_experimental(
             in_model=model,
             core_config=core_config,
-            target_platform_capabilities=tpc,
             representative_data_gen=self.representative_data_gen,
             new_experimental_exporter=True)
         return new_export_model
