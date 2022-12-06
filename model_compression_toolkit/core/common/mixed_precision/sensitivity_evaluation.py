@@ -157,7 +157,7 @@ class SensitivityEvaluation:
         Evaluates the baseline model on all images and saves the obtained lists of tensors in a list for later use.
         Initiates a class variable self.baseline_tensors_list
         """
-        self.baseline_tensors_list = [self._tensors_as_list(self.fw_impl.to_numpy(self.baseline_model(images)))
+        self.baseline_tensors_list = [self.fw_impl.to_numpy(self.baseline_model(images))
                                       for images in self.images_batches]
 
     def _build_models(self) -> Any:
@@ -241,7 +241,7 @@ class SensitivityEvaluation:
                     current_layer = self.fw_impl.get_model_layer_by_name(model_mp, node_name)
                     self.set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
                 else:
-                    raise Exception("The last configurable node is not included in the list of interest points for"
+                    raise Exception("The last configurable node is not included in the list of interest points for"  # pragma: no cover
                                     "sensitivity evaluation metric for the mixed-precision search.")
 
         else:  # use the entire mp_model_configuration to configure the model
@@ -252,7 +252,7 @@ class SensitivityEvaluation:
                     self.set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
                 else:
                     raise Exception("The last configurable node is not included in the list of interest points for"
-                                    "sensitivity evaluation metric for the mixed-precision search.")
+                                    "sensitivity evaluation metric for the mixed-precision search.")  # pragma: no cover
 
     def _compute_distance_matrix(self,
                                  baseline_tensors: List[Any],
@@ -296,7 +296,7 @@ class SensitivityEvaluation:
         for images, baseline_tensors in zip(self.images_batches, self.baseline_tensors_list):
             # when using model.predict(), it does not use the QuantizeWrapper functionality
             mp_tensors = self.model_mp(images)
-            mp_tensors = self._tensors_as_list(self.fw_impl.to_numpy(mp_tensors))
+            mp_tensors = self.fw_impl.to_numpy(mp_tensors)
 
             # Build distance matrix: similarity between the baseline model to the float model
             # in every interest point for every image in the batch.
@@ -380,21 +380,6 @@ class SensitivityEvaluation:
         output_indices = [self.interest_points.index(n.node) for n in self.graph.get_outputs()]
         replacement_indices = [self.interest_points.index(n) for n in self.outputs_replacement_nodes]
         return list(set(output_indices + replacement_indices))
-
-    @staticmethod
-    def _tensors_as_list(tensors: Any) -> List[Any]:
-        """
-        Create a list of tensors if they are not in a list already.
-        This functions helpful when the graph has only one node (so the model's output is a Tensor and not a list of
-        Tensors).
-        Args:
-            tensors: Tensors to return as a list.
-        Returns:
-            List of tensors.
-        """
-        if not isinstance(tensors, list):
-            return [tensors]
-        return tensors
 
 
 def get_mp_interest_points(graph: Graph,

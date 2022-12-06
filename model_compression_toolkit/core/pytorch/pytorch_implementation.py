@@ -492,7 +492,7 @@ class PytorchImplementation(FrameworkImplementation):
 
         """
 
-        return node.layer_class not in [argmax]
+        return node.layer_class not in [argmax, softmax]
 
     def get_node_mac_operations(self,
                                 node: BaseNode,
