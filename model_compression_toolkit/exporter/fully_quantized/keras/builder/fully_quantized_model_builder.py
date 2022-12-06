@@ -13,8 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import List, Tuple, Dict, Any
-
 import tensorflow as tf
 import tensorflow_model_optimization.quantization.keras.graph_transformations.model_transformer as mt
 from keras.layers import TFOpLambda
@@ -35,7 +33,6 @@ from model_compression_toolkit.core.keras.quantizer.input_layer_quantize_transfo
 
 from model_compression_toolkit.exporter.fully_quantized.keras.builder.quantize_config_to_node import \
     get_quantization_config
-from model_compression_toolkit.exporter.fully_quantized.keras.extended_quantize_wrapper import ExtendedQuantizeWrapper
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.activation_quantize_config import \
     ActivationQuantizeConfig
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_activation_quantize_config \
@@ -47,8 +44,6 @@ from model_compression_toolkit.exporter.fully_quantized.keras.extended_quantize_
 from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.fq_quantizer import FakeQuantQuantizer
 from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.weights_uniform_quantizer import \
     WeightsUniformQuantizer
-
-
 
 
 def get_fully_quantized_keras_model(graph: Graph) -> tf.keras.models.Model:
