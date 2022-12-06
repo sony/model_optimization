@@ -243,15 +243,13 @@ def bops_kpi(mp_cfg: List[int],
                          fw_info,
                          fw_impl)
 
-    if len(mp_cfg) == 0:
-        # BOPs KPI method considers non-configurable nodes, therefore, it doesn't need separate implementation
-        # for non-configurable nodes only.
-        bops = []
-    else:
-        virtual_bops_nodes = [n for n in graph.get_topo_sorted_nodes() if isinstance(n, VirtualActivationWeightsNode)]
+    # BOPs KPI method considers non-configurable nodes, therefore, it doesn't need separate implementation
+    # for non-configurable nodes for setting a constraint (no need for separate implementation for len(mp_cfg) = 0).
 
-        mp_nodes = graph.get_configurable_sorted_nodes_names()
-        bops = [n.get_bops_count(fw_impl, fw_info, candidate_idx=_get_node_cfg_idx(n, mp_cfg, mp_nodes)) for n in virtual_bops_nodes]
+    virtual_bops_nodes = [n for n in graph.get_topo_sorted_nodes() if isinstance(n, VirtualActivationWeightsNode)]
+
+    mp_nodes = graph.get_configurable_sorted_nodes_names()
+    bops = [n.get_bops_count(fw_impl, fw_info, candidate_idx=_get_node_cfg_idx(n, mp_cfg, mp_nodes)) for n in virtual_bops_nodes]
 
     return np.array(bops)
 
