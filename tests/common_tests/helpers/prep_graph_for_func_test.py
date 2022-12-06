@@ -28,7 +28,7 @@ import model_compression_toolkit as mct
 tp = mct.target_platform
 
 
-def prepare_graph_with_configs(in_model, keras_impl, fw_info, representative_dataset, get_tpc_func,
+def prepare_graph_with_configs(in_model, fw_impl, fw_info, representative_dataset, get_tpc_func,
                                qc=DEFAULTCONFIG, mixed_precision_enabled=False):
 
     # TPC
@@ -44,31 +44,31 @@ def prepare_graph_with_configs(in_model, keras_impl, fw_info, representative_dat
                                 representative_data_gen=representative_dataset,
                                 tpc=tpc,
                                 fw_info=fw_info,
-                                fw_impl=keras_impl)
+                                fw_impl=fw_impl)
 
     # Finalize graph with quantization configs
     graph = get_finalized_graph(graph,
                                 tpc=tpc,
                                 quant_config=qc,
                                 fw_info=fw_info,
-                                fw_impl=keras_impl,
+                                fw_impl=fw_impl,
                                 mixed_precision_enable=mixed_precision_enabled)
 
     return graph
 
 
-def prepare_graph_with_quantization_parameters(in_model, keras_impl, fw_info, representative_dataset, get_tpc_func,
+def prepare_graph_with_quantization_parameters(in_model, fw_impl, fw_info, representative_dataset, get_tpc_func,
                                                input_shape, qc=DEFAULTCONFIG, mixed_precision_enabled=False):
-    graph = prepare_graph_with_configs(in_model, keras_impl, fw_info, representative_dataset, get_tpc_func,
+    graph = prepare_graph_with_configs(in_model, fw_impl, fw_info, representative_dataset, get_tpc_func,
                                        qc, mixed_precision_enabled)
 
-    analyzer_graph(node_analyze_func=keras_impl.attach_sc_to_node,
+    analyzer_graph(node_analyze_func=fw_impl.attach_sc_to_node,
                    graph=graph,
                    fw_info=fw_info,
                    qc=qc)
 
     mi = ModelCollector(graph,
-                        fw_impl=keras_impl,
+                        fw_impl=fw_impl,
                         fw_info=fw_info)
 
     for i in range(10):
@@ -76,6 +76,6 @@ def prepare_graph_with_quantization_parameters(in_model, keras_impl, fw_info, re
 
     calculate_quantization_params(graph,
                                   fw_info=fw_info,
-                                  fw_impl=keras_impl)
+                                  fw_impl=fw_impl)
 
     return graph

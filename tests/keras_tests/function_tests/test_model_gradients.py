@@ -11,7 +11,7 @@ from model_compression_toolkit.core.keras.keras_implementation import KerasImple
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 
 import model_compression_toolkit as mct
-from tests.keras_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
+from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 
 tp = mct.target_platform
 

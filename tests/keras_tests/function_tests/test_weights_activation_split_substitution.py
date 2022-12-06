@@ -31,7 +31,7 @@ from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_
 
 import model_compression_toolkit as mct
 from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
-from tests.keras_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
+from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
 
 tp = mct.target_platform

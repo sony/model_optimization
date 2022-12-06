@@ -23,7 +23,7 @@ from model_compression_toolkit.core.pytorch.default_framework_info import DEFAUL
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.core.pytorch.mixed_precision.mixed_precision_wrapper import PytorchMixedPrecisionWrapper
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
-from tests.keras_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
+from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 
@@ -50,7 +50,7 @@ def test_setup(representative_data_gen):
     return node
 
 
-class TestPytorchSetLayerToBitwidth(BasePytorchTest):
+class TestSetLayerToBitwidth(BasePytorchTest):
 
     def __init__(self, unit_test):
         super().__init__(unit_test)
@@ -88,7 +88,7 @@ class TestPytorchSetLayerToBitwidth(BasePytorchTest):
                                              prev_attr_weights_dict[attr].detach().cpu().numpy()))
 
 
-class TestPytorchSetSingleAttrToBitwidth(BasePytorchTest):
+class TestSetSingleAttrToBitwidth(BasePytorchTest):
 
     def __init__(self, unit_test):
         super().__init__(unit_test)

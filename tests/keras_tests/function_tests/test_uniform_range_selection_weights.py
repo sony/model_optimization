@@ -32,7 +32,7 @@ from model_compression_toolkit.core.tpc_models.default_tpc.latest import generat
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
-from tests.keras_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
+from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
 
 
 def get_random_weights(kernel, in_channels, out_channels):

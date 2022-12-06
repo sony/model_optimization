@@ -21,7 +21,7 @@ from model_compression_toolkit.core.common.target_platform import LayerFilterPar
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
-from tests.keras_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
+from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 import model_compression_toolkit as mct

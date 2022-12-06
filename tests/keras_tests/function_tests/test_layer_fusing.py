@@ -11,7 +11,7 @@ from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
 import model_compression_toolkit as mct
-from tests.keras_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
+from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 
 if tf.__version__ < "2.6":
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Activation, ReLU, Add
