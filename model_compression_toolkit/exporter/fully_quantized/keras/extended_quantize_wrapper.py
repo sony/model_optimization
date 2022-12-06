@@ -26,7 +26,9 @@ class ExtendedQuantizeWrapper(QuantizeWrapper):
 
     """Quantizes the weights and activations of the keras layer it wraps, according
     to the quantization config that is passed. This class was created to deal with TFOpLambda that can
-    not use TF QuantizeWrapper since it does not implement compute_output_shape."""
+    not use TF QuantizeWrapper since it does not implement compute_output_shape.
+    Notice that reused layers do not have a compute_output_shape method, thus the added method
+    is irrelevant for wrapping them."""
 
     def __init__(self,
                  layer:Layer,
