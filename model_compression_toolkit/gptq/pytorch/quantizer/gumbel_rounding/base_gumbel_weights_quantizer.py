@@ -23,6 +23,7 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 from model_compression_toolkit.gptq.pytorch.quantizer.quant_utils import sample_gumbel
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.core.common.target_platform.op_quantization_config import QuantizationMethod
+from model_compression_toolkit.gptq.pytorch.quantizer.quant_utils import ste_clip
 
 P_INIT = 0.01
 GR_SHIFT_BASE = 2
@@ -86,7 +87,6 @@ class BaseGumbelWeightQuantizer(BaseWeightQuantizer):
             weight_shape: weight shape for auxiliary tensor creation.
         """
         super().__init__()
-
         self.power_of_two = QuantizationMethod.POWER_OF_TWO == weights_quantization_cfg.weights_quantization_method
         self.reshape_aux_shift = [-1, *[1 for _ in range(len(weight_shape))]]
         self.num_bits = weights_quantization_cfg.weights_n_bits
@@ -140,12 +140,10 @@ class BaseGumbelWeightQuantizer(BaseWeightQuantizer):
             training: whether in training mode or not
         """
         if self.temperature_learning:
-            self.tau = torch.clip(self.temp_tensor, self.minimal_temp, self.maximal_temp)
+            self.tau = ste_clip(self.temp_tensor, self.minimal_temp, self.maximal_temp)
         else:
             self.tau = self.tau_function(self.n_iter)
         if self.update_gumbel_param and training:
-            if self.cycle_iterations > 0 and self.n_iter % self.cycle_iterations == 0:
-                self.temp_tensor.data = self.maximal_temp * to_torch_tensor(torch.ones(self.temp_tensor.shape))
             self.n_iter += 1
             self.g_t = sample_gumbel([self.m, *self.weight_shape])
 
