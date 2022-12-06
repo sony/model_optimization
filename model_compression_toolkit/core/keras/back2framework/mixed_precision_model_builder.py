@@ -103,6 +103,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
             if node is not None:
                 # Wrap only if its weights should be quantized
                 if node.name in conf_nodes_names:
+                    # TODO: Maybe FullyQuantizedQuantizeWrapper to allow using TFOpLambda in MP
                     if node.layer_class in [TFOpLambda, SlicingOpLambda]:
                         Logger.critical(f"Activation mixed-precision is not supported for layers of type "  # pragma: no cover
                                         f"{node.layer_class}. Please modify the TargetPlatformModel object, "
@@ -131,9 +132,9 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         model_inputs = self.graph.get_inputs()
 
         input_transformer = mt.ModelTransformer(model, [InputLayerWrapperTransform(inp,
-                                                                                   self.fw_info,
                                                                                    quantization_config_builder_mixed_precision(inp),
-                                                                                   self.get_custom_objects())
+                                                                                   self.get_custom_objects(),
+                                                                                   QuantizeWrapper)
                                                         for inp in model_inputs])
         model = input_transformer.transform()[0]
 
