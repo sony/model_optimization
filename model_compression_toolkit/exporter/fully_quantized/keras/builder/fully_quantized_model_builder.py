@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
+from typing import List, Tuple, Dict, Any
+
 import tensorflow as tf
 import tensorflow_model_optimization.quantization.keras.graph_transformations.model_transformer as mt
 from keras.layers import TFOpLambda
@@ -25,7 +27,7 @@ from typing import List, Tuple, Dict, Any
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common import BaseNode, Graph
+from model_compression_toolkit.core.common import BaseNode, Graph, Logger
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder, \
     is_layer_fake_quant, get_node_name_from_layer
@@ -33,6 +35,7 @@ from model_compression_toolkit.core.keras.quantizer.input_layer_quantize_transfo
 
 from model_compression_toolkit.exporter.fully_quantized.keras.builder.quantize_config_to_node import \
     get_quantization_config
+from model_compression_toolkit.exporter.fully_quantized.keras.extended_quantize_wrapper import ExtendedQuantizeWrapper
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.activation_quantize_config import \
     ActivationQuantizeConfig
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_activation_quantize_config \
@@ -105,7 +108,15 @@ class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
             node = self.oh.layer_to_node_dict.get(layer)
 
             if node is not None:
-                return ExtendedQuantizeWrapper(layer, get_quantization_config(node), layer.output_shape)
+                # In case of layers that are in reused groups, output_shape does not exist.
+                layer_output_shape = layer.output_shape if (node.reuse_group is None) else None
+                # For now, we do not support reused TFOpLambda layers.
+                if isinstance(layer, TFOpLambda) and layer_output_shape is None:
+                    Logger.error(
+                        f'Output shape must be inferred to use ExtendedQuantizeWrapper, but it seems that TFOpLambda '
+                        f'layer {layer.name} has no output shape. If it is a reused layer, MCT does not support '
+                        f'reused TFOpLambda layers for now.')
+                return ExtendedQuantizeWrapper(layer, get_quantization_config(node), layer_output_shape)
 
             elif is_layer_fake_quant(layer):
                 return layer
