@@ -27,6 +27,9 @@ from tests.common_tests.function_tests.test_threshold_selection import TestThres
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
+from tests.keras_tests.function_tests.test_sensitivity_eval_output_replacement import \
+    TestSensitivityEvalWithOutputReplacementNodes
+from tests.keras_tests.function_tests.test_set_layer_to_bitwidth import TestKerasSetLayerToBitwidth
 
 found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
     "tensorflow_model_optimization") is not None
@@ -91,6 +94,8 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformQuantizeTensor))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformRangeSelectionWeights))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasTPModel))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasSetLayerToBitwidth))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityEvalWithOutputReplacementNodes))
 
         # Keras test layers are supported in TF2.6 or higher versions
         if version.parse(tf.__version__) >= version.parse("2.6"):
