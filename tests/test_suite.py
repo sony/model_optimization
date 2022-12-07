@@ -22,6 +22,7 @@ from packaging import version
 #  ----------------  Individual test suites
 from tests.common_tests.function_tests.test_histogram_collector import TestHistogramCollector
 from tests.common_tests.function_tests.test_collectors_manipulation import TestCollectorsManipulations
+from tests.common_tests.function_tests.test_kpi_object import TestKPIObject
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
@@ -72,6 +73,7 @@ if __name__ == '__main__':
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(QCOptionsTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FusingTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCommonDocsExamples))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKPIObject))
 
     # Add TF tests only if tensorflow is installed
     if found_tf:

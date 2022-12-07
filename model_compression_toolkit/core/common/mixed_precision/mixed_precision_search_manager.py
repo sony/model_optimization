@@ -350,7 +350,7 @@ class ConfigReconstructionHelper:
 
         if changed_virtual_nodes_idx is not None:
             if original_base_config is None:
-                Logger.critical("Must provide a base original config in order to run config reconstruction for partial"
+                Logger.critical("Must provide a base original config in order to run config reconstruction for partial"  # pragma: no cover
                                 "set of nodes.")
 
             updated_virtual_nodes = \
