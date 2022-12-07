@@ -28,6 +28,10 @@ class BaseKerasExporter(Exporter):
         """
         super().__init__(model)
 
+    @staticmethod
+    def get_custom_objects(self):
+        return {}
+
 
 
 

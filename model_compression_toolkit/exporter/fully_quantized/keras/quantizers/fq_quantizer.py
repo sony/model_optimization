@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================\
+
+from typing import Dict, Any
 import numpy as np
 import tensorflow as tf
 from keras.engine.base_layer import Layer
 from tensorflow import TensorShape
 from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
-from typing import Dict, Any
 
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
@@ -60,7 +61,7 @@ class FakeQuantQuantizer(Quantizer):
         return {"nbits": self.nbits,
                 "min_range": self.min_range.numpy(),
                 "max_range": self.max_range.numpy(),
-                "quantization_method": self.quantization_method
+                "quantization_method": self.quantization_method,
                 }
 
     def build(self, tensor_shape: TensorShape, name: str, layer: Layer) -> dict:

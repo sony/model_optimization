@@ -46,7 +46,8 @@ def export_keras_fully_quantized_model(model: keras.models.Model,
     model = exporter.export()
     if save_model_path is not None:
         exporter.save_model(save_model_path)
-    return model
+
+    return model, exporter.get_custom_objects()
 
 
 

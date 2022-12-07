@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from functools import partial
+
 import keras.models
 import keras.models
 import tensorflow as tf
@@ -25,11 +27,14 @@ from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.exporter.fully_quantized.keras.builder.quantize_config_to_node import \
     SUPPORTED_QUANTIZATION_CONFIG
 from model_compression_toolkit.exporter.fully_quantized.keras.extended_quantize_wrapper import ExtendedQuantizeWrapper
+from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.activation_quantize_config import \
+    ActivationQuantizeConfig
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_activation_quantize_config \
     import \
     WeightsActivationQuantizeConfig
 from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import \
     WeightsQuantizeConfig
+from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.fq_quantizer import FakeQuantQuantizer
 from model_compression_toolkit.exporter.target_platform_export.keras.exporters.base_keras_exporter import \
     BaseKerasExporter
 
@@ -72,7 +77,7 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                     f'quantization config of type {type(layer.quantize_config)}')
 
             # If weights are quantized, use the quantized weight for the new built layer.
-            if type(layer.quantize_config) in [WeightsQuantizeConfig]:
+            if type(layer.quantize_config) in [WeightsQuantizeConfig, WeightsActivationQuantizeConfig]:
                 new_layer = layer.layer.__class__.from_config(layer.layer.get_config())
                 with tf.name_scope(new_layer.name):
                     new_layer.build(layer.input_shape)
@@ -83,7 +88,7 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                     val = None
                     for qw in layer.weights:
                         if w.name in qw.name:
-                            if w.name.split('/')[-1].split(':')[0] in layer.quantize_config.weight_attrs:
+                            if w.name.split('/')[-1].split(':')[0] in layer.quantize_config.get_config()['weight_attrs']:
                                 val = layer.quantize_config.get_weights_and_quantizers(layer.layer)[0][1].weight
                             else:
                                 val = qw
@@ -93,66 +98,30 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
 
                 new_layer.set_weights(weights_list)
                 new_layer.trainable = False
+
+                if isinstance(layer.quantize_config, WeightsActivationQuantizeConfig):
+                    new_layer = ExtendedQuantizeWrapper(new_layer, layer.quantize_config.act_config)
+
                 return new_layer
 
-            elif isinstance(layer.quantize_config, WeightsActivationQuantizeConfig):
-                new_layer = layer.layer.__class__.from_config(layer.layer.get_config())
-                with tf.name_scope(new_layer.name):
-                    new_layer.build(layer.input_shape)
-
-                # Build a list of the layer's new weights.
-                weights_list = []
-                for w in new_layer.weights:
-                    val = None
-                    for qw in layer.weights:
-                        if w.name in qw.name:
-                            if w.name.split('/')[-1].split(':')[0] in layer.quantize_config.weights_config.weight_attrs:
-                                val = layer.quantize_config.get_weights_and_quantizers(layer.layer)[0][1].weight
-                            else:
-                                val = qw
-                    if val is None:
-                        Logger.error(f'Could not match weight name: {w.name}')
-                    weights_list.append(val)
-
-                new_layer.set_weights(weights_list)
-                new_layer.trainable = False
-                return new_layer
+            elif type(layer.quantize_config) in [ActivationQuantizeConfig]:
+                return layer
 
             elif isinstance(layer.quantize_config, NoOpQuantizeConfig):
                 return layer.layer
 
-        # clone each layer in the model and apply _unwrap_quantize_wrappera to layers wrapped with a QuantizeWrapper.
+        # clone each layer in the model and apply _unwrap_quantize_wrapper to layers wrapped with a QuantizeWrapper.
         self.exported_model = tf.keras.models.clone_model(self.model,
                                                           input_tensors=None,
                                                           clone_function=_unwrap_quantize_wrapper)
 
         return self.exported_model
 
-    def parse_fully_quantized_model_config(self):
-        cfg = self.model.get_config()
-        layers_cfg = cfg['layers']
-        new_layers_cfg = []
-        for l in layers_cfg:
-            new_layers_cfg.extend(self.parse_fully_quantized_layer_config(l))
-
-        return new_layers_cfg
-
-
-    def parse_fully_quantized_layer_config(self, l):
-        if l['class_name'] == 'InputLayer':
-            return l
-        elif l['class_name'] == 'ExtendedQuantizeWrapper':
-            return self.parse_extended_quantize_wrapper_config(l)
-
-
-    def parse_extended_quantize_wrapper_config(self, l):
-        if l['layer']['class_name'] == 'InputLayer':
-            new_layers_cfg.append()
-
-    def create_fq_layer_cfg(self, quantize_config_cfg):
-        if quantize_config_cfg['class_name']=='ActivationQuantizeConfig':
-
-
+    @staticmethod
+    def get_custom_objects():
+        return {ExtendedQuantizeWrapper.__name__: ExtendedQuantizeWrapper,
+                ActivationQuantizeConfig.__name__: ActivationQuantizeConfig,
+                FakeQuantQuantizer.__name__: FakeQuantQuantizer}
 
     def save_model(self, save_model_path: str):
         """
