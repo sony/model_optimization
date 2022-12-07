@@ -38,12 +38,12 @@ def update_kernel_for_bn_folding_fn(conv_layer: layers.Conv2D,
                                     weights_scale):
     """
     Args:
-        conv_layer: Convolution layer to update the weight/kernel.
-        kernel: The Convolution layer's weight
-        weights_scale: Weight scale factor in which to multiply the conv node's weight.
+        conv_layer: Convolution layer to update the weights.
+        kernel: The Convolution layer's weights.
+        weights_scale: Weights scale factor in which to multiply the conv layer's weights by.
 
     Returns:
-        The modified convolution layer's weight/kernel/
+        The modified convolution layer's weights.
     """
     if conv_layer.__class__ == layers.DepthwiseConv2D:
         kernel = kernel * weights_scale.reshape(1, 1, kernel.shape[-2], kernel.shape[-1])
