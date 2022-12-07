@@ -112,7 +112,7 @@ def activation_output_size_kpi(mp_cfg: List[int],
                     node_activation_memory_in_bytes = _compute_node_activation_memory(n, node_nbits)
                     activation_memory.append(node_activation_memory_in_bytes)
                 else:
-                    Logger.warning(f"Non-configurable nodes should have a single quantization configuration candidate,"
+                    Logger.warning(f"Non-configurable nodes should have a single quantization configuration candidate,"  # pragma: no cover
                                    f"but node {n.name} has {len(n.candidates_quantization_cfg)} candidates. "
                                    f"The node's activation memory is not considered for the weights KPI computation.")
     else:
@@ -185,7 +185,7 @@ def total_weights_activation_kpi(mp_cfg: List[int],
                     non_configurable = True
 
                 else:
-                    Logger.warning(f"Non-configurable nodes should have a single quantization configuration candidate,"
+                    Logger.warning(f"Non-configurable nodes should have a single quantization configuration candidate,"  # pragma: no cover
                                    f"but node {n.name} has {len(n.candidates_quantization_cfg)} candidates. "
                                    f"The node's activation memory is not considered for the weights KPI computation.")
 
@@ -281,7 +281,7 @@ def _bops_kpi(mp_cfg: List[int],
             # If node doesn't have weights then its MAC count is 0, and we shouldn't consider it in the BOPS count.
             incoming_edges = graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
             if len(incoming_edges) != 1:
-                Logger.critical(f"Can't compute BOPS metric for node {n.name} with multiple inputs.")
+                Logger.critical(f"Can't compute BOPS metric for node {n.name} with multiple inputs.")  # pragma: no cover
 
             input_activation_node = incoming_edges[0].source_node
             if len(graph.out_edges(input_activation_node)) > 1:
