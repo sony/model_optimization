@@ -33,6 +33,27 @@ layers = keras.layers
 tp = mct.target_platform
 
 
+def update_kernel_for_bn_folding_fn(conv_layer: layers.Conv2D,
+                                    kernel: np.ndarray,
+                                    weights_scale):
+    """
+    Args:
+        conv_layer: Convolution layer to update the weights.
+        kernel: The Convolution layer's weights.
+        weights_scale: Weights scale factor to multiply the conv layer's weights by.
+
+    Returns:
+        The modified convolution layer's weights.
+    """
+    if conv_layer.__class__ == layers.DepthwiseConv2D:
+        kernel = kernel * weights_scale.reshape(1, 1, kernel.shape[-2], kernel.shape[-1])
+    elif conv_layer.__class__ == layers.Conv2DTranspose:
+        kernel = kernel * weights_scale.reshape(1, 1, -1, 1)
+    else:
+        kernel = kernel * weights_scale.reshape(1, 1, 1, -1)
+    return kernel
+
+
 class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
 
     def __init__(self, unit_test):
@@ -40,9 +61,9 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 16,
-                                      'activation_n_bits': 16,
-                                      'enable_weights_quantization': False,
-                                      'enable_activation_quantization': False})
+                                     'activation_n_bits': 16,
+                                     'enable_weights_quantization': False,
+                                     'enable_activation_quantization': False})
         return generate_keras_tpc(name="bn_folding_test", tp_model=tp)
 
     def get_quantization_config(self):
@@ -50,6 +71,43 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
                                       False, False, True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        # check the conv weights after the bn folding
+        float_conv = float_model.layers[1]
+
+        if float_conv.__class__ == layers.SeparableConv2D:
+            float_kernel = float_conv.weights[1]
+            float_bias = float_conv.weights[2]
+
+            quant_conv = quantized_model.layers[2]
+        else:
+            float_kernel = float_conv.weights[0]
+            float_bias = float_conv.weights[1]
+
+            quant_conv = quantized_model.layers[1]
+
+        quant_kernel = quant_conv.weights[0]
+        quant_bias = quant_conv.weights[1]
+
+        float_bn = float_model.layers[2]
+        float_gamma = float_bn.weights[0]
+        float_beta = float_bn.weights[1]
+        float_moving_mean = float_bn.weights[2]
+        float_moving_variance = float_bn.weights[3]
+        float_epsilon = float_bn.epsilon
+
+        weights_scale = float_gamma / np.sqrt(float_moving_variance + float_epsilon)
+        bias = float_beta + (float_bias - float_moving_mean) * weights_scale
+        kernel = update_kernel_for_bn_folding_fn(conv_layer=float_conv, kernel=float_kernel.numpy(),
+                                                 weights_scale=weights_scale.numpy())
+
+        self.unit_test.assertTrue(np.all(quant_kernel.numpy() == kernel))
+        self.unit_test.assertTrue(np.all(quant_bias.numpy() == bias))
+
+        # check for no bn after the bn folding
+        self.unit_test.assertFalse(layers.BatchNormalization in
+                                   [layer.__class__ for layer in quantized_model.layers])
+
+        # check the output didn't change
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)
         cs = cosine_similarity(y, y_hat)
@@ -63,7 +121,11 @@ class Conv2DBNFoldingTest(BaseBatchNormalizationFolding):
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(2, 3, padding='same')(inputs)
-        x = layers.BatchNormalization()(x)
+        x = layers.BatchNormalization(
+            beta_initializer="zeros",
+            gamma_initializer="ones",
+            moving_mean_initializer="zeros",
+            moving_variance_initializer="ones")(x)
         x = layers.Activation('relu')(x)
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
@@ -75,7 +137,11 @@ class Conv2DBNConcatnFoldingTest(BaseBatchNormalizationFolding):
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(2, 3, padding='same')(inputs)
-        x_bn = layers.BatchNormalization()(x)
+        x_bn = layers.BatchNormalization(
+            beta_initializer="zeros",
+            gamma_initializer="ones",
+            moving_mean_initializer="zeros",
+            moving_variance_initializer="ones")(x)
         x = layers.Activation('relu')(x_bn)
         x2 = layers.Activation('tanh')(x_bn)
         x = layers.Concatenate()([x, x_bn, x2])
@@ -90,7 +156,11 @@ class Conv2DTransposeBNFoldingTest(BaseBatchNormalizationFolding):
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2DTranspose(2, 3, padding='same')(inputs)
-        x = layers.BatchNormalization()(x)
+        x = layers.BatchNormalization(
+            beta_initializer="zeros",
+            gamma_initializer="ones",
+            moving_mean_initializer="zeros",
+            moving_variance_initializer="ones")(x)
         x = layers.Activation('relu')(x)
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
@@ -102,7 +172,11 @@ class DepthwiseConv2DBNFoldingTest(BaseBatchNormalizationFolding):
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.DepthwiseConv2D(1, padding='same')(inputs)
-        x = layers.BatchNormalization()(x)
+        x = layers.BatchNormalization(
+            beta_initializer="zeros",
+            gamma_initializer="ones",
+            moving_mean_initializer="zeros",
+            moving_variance_initializer="ones")(x)
         x = layers.Activation('relu')(x)
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
@@ -114,7 +188,11 @@ class DepthwiseConv2DBNFoldingHighMultiplierTest(BaseBatchNormalizationFolding):
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.DepthwiseConv2D(1, padding='same', depth_multiplier=3)(inputs)
-        x = layers.BatchNormalization()(x)
+        x = layers.BatchNormalization(
+            beta_initializer="zeros",
+            gamma_initializer="ones",
+            moving_mean_initializer="zeros",
+            moving_variance_initializer="ones")(x)
         x = layers.Activation('relu')(x)
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
@@ -126,6 +204,10 @@ class SeparableConv2DBNFoldingTest(BaseBatchNormalizationFolding):
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.SeparableConv2D(1, 3, padding='same')(inputs)
-        x = layers.BatchNormalization()(x)
+        x = layers.BatchNormalization(
+            beta_initializer="zeros",
+            gamma_initializer="ones",
+            moving_mean_initializer="zeros",
+            moving_variance_initializer="ones")(x)
         x = layers.Activation('relu')(x)
         return tf.keras.models.Model(inputs=inputs, outputs=x)

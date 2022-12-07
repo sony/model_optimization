@@ -157,6 +157,16 @@ class BasePytorchLayerTest(BaseLayerTest):
     def generate_inputs(self):
         return to_torch_tensor([torch.randn(*in_shape) for in_shape in self.get_input_shapes()])
 
+    def predict(self, model, input_tensor):
+        if torch.cuda.is_available() and not self.use_cpu:
+            device = 'cuda'
+        else:
+            device = 'cpu'
+        model.to(device)
+        input_tensor = [input_tensor] if not isinstance(input_tensor, list) else input_tensor
+        input_tensor = [t.to(device) for t in input_tensor]
+        return model(*input_tensor)
+
     def create_networks(self):
         models = []
         for layer in self.get_layers():
@@ -178,8 +188,8 @@ class BasePytorchLayerTest(BaseLayerTest):
 
         # Check inference is possible
         input_tensors = self.generate_inputs()
-        quantized_model(*input_tensors)
-        quantized_model_fx(*input_tensors)
+        self.predict(quantized_model, input_tensors)
+        self.predict(quantized_model_fx, input_tensors)
 
     def __compare_8bits_quantization_mode(self, float_model, quantized_model, quantized_model_fx):
         fw_info = self.get_fw_info()
@@ -228,8 +238,8 @@ class BasePytorchLayerTest(BaseLayerTest):
                     self.unit_test.assertFalse(float_weight is None)
                     self.unit_test.assertTrue(np.sum(np.abs(v - float_weight)) == 0.0)
         input_tensors = self.generate_inputs()
-        y = float_model(*input_tensors)
-        y_hat = quantized_model(*input_tensors)
+        y = self.predict(float_model, input_tensors)
+        y_hat = self.predict(quantized_model, input_tensors)
         if isinstance(y, (list, tuple)):
             for fo, qo in zip(y, y_hat):
                 distance = torch_tensor_to_numpy(torch.sum(torch.abs(fo - qo)))

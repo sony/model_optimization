@@ -126,7 +126,7 @@ class LayerTest(unittest.TestCase):
                                  ConvTranspose2d(8, 8, 3, bias=True),
                                  ConvTranspose2d(8, 12, 3, bias=False),
                                  BatchNorm2d(8)
-                             ], input_shape=(8, 10, 10)).run_test()
+                             ], input_shape=(8, 10, 10), use_cpu=True).run_test()
 
     def test_linear_ops(self):
         BasePytorchLayerTest(self,

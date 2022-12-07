@@ -82,7 +82,7 @@ class NetworkTest(object):
 
     @staticmethod
     def create_inputs(inputs_list):
-        return [np.random.randn(*in_shape) for in_shape in inputs_list]
+        return [np.ones(in_shape) for in_shape in inputs_list]
 
 
 class FeatureNetworkFloatTest(unittest.TestCase):
