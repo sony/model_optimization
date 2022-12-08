@@ -18,9 +18,8 @@ import unittest
 
 import keras.models
 import numpy as np
-import tensorflow as tf
 from keras import Input
-from keras.layers import Conv2D
+from keras.layers import Conv2D, BatchNormalization, ReLU, Dropout, Dense
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.exporter.model_exporter.keras import keras_export_model, \
@@ -28,26 +27,34 @@ from model_compression_toolkit.exporter.model_exporter.keras import keras_export
 
 SAVED_MODEL_PATH = '/tmp/exported_tf_fakelyquant.h5'
 
-from keras.applications.mobilenet_v2 import MobileNetV2
 
 
 def _get_model(input_shape):
-    return MobileNetV2()
+    inputs = Input(shape=input_shape)
+    x = Conv2D(3, 3)(inputs)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+    x = Conv2D(3, 3)(x)
+    x = Conv2D(3, 3)(x)
+    x = ReLU(max_value=6)(x)
+    x = Dropout(rate=0.5)(x)
+    outputs = Dense(10)(x)
+    return keras.Model(inputs=inputs, outputs=outputs)
 
 
-class TestExporter(unittest.TestCase):
+class TestKerasFakeQuantExporter(unittest.TestCase):
 
     def tearDown(self):
         os.remove(SAVED_MODEL_PATH)
 
     def setUp(self) -> None:
-        input_shape = (224,224,3)
-        self.mbv2 = _get_model(input_shape)
+        input_shape = (32,32,3)
+        self.model = _get_model(input_shape)
         self.representative_data_gen = lambda: [np.random.randn(*((1,)+input_shape))]
-        self.fully_quantized_mbv2 = self.run_mct(self.mbv2, new_experimental_exporter=True)
-        self.exported_mbv2, self.custom_objects = keras_export_model(model=self.fully_quantized_mbv2,
-                                                                     mode=KerasExportMode.FAKELY_QUANT,
-                                                                     save_model_path=SAVED_MODEL_PATH)
+        self.exportable_model = self.run_mct(self.model, new_experimental_exporter=True)
+        self.exported_model, self.custom_objects = keras_export_model(model=self.exportable_model,
+                                                                      mode=KerasExportMode.FAKELY_QUANT,
+                                                                      save_model_path=SAVED_MODEL_PATH)
 
     def run_mct(self, model, new_experimental_exporter):
         core_config = mct.CoreConfig()
@@ -64,7 +71,7 @@ class TestExporter(unittest.TestCase):
         Test that the exported model and fully quantized model predicting the same results.
         """
         images = self.representative_data_gen()
-        diff = self.exported_mbv2(images) - self.fully_quantized_mbv2(images)
+        diff = self.exported_model(images) - self.exportable_model(images)
         print(f'Max abs error: {np.max(np.abs(diff))}')
         self.assertTrue(np.sum(np.abs(diff)) == 0)
 
@@ -75,6 +82,6 @@ class TestExporter(unittest.TestCase):
         """
         loaded_model = keras.models.load_model(SAVED_MODEL_PATH, self.custom_objects)
         images = self.representative_data_gen()
-        diff = loaded_model(images) - self.fully_quantized_mbv2(images)
+        diff = loaded_model(images) - self.exportable_model(images)
         print(f'Max abs error: {np.max(np.abs(diff))}')
         self.assertTrue(np.sum(np.abs(diff)) == 0)

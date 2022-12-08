@@ -22,6 +22,8 @@ from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.d
     NoOpQuantizeConfig
 
 from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import \
+    BaseKerasExporter
 from model_compression_toolkit.exporter.model_wrapper.keras.builder.quantize_config_to_node import \
     SUPPORTED_QUANTIZATION_CONFIG
 from model_compression_toolkit.exporter.model_wrapper.keras.extended_quantize_wrapper import ExtendedQuantizeWrapper
@@ -33,8 +35,6 @@ from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.wei
 from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.weights_quantize_config import \
     WeightsQuantizeConfig
 from model_compression_toolkit.exporter.model_wrapper.keras.quantizers.fq_quantizer import FakeQuantQuantizer
-from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import \
-    BaseKerasExporter
 
 
 class FakelyQuantKerasExporter(BaseKerasExporter):
@@ -91,11 +91,18 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
 
                 # Build a list of the layer's new weights.
                 weights_list = []
+                # Go over weights, check if they should be quantized, and quantize if this is the case:
                 for w in new_layer.weights:
                     val = None
                     for qw in layer.weights:
                         if w.name in qw.name:
-                            if w.name.split('/')[-1].split(':')[0] in layer.quantize_config.get_config()['weight_attrs']:
+                            # Use quantized weight if layer attribute should be quantized.
+                            # For example: check if 'kernel_0' is an attribute
+                            # that should be quantized. First, extract 'kernel' from variable name, check if the
+                            # quantize config contains this as an attribute for quantization. If so -
+                            # Take the quantized weight from it and set it to the new layer.
+                            if w.name.split('/')[-1].split(':')[0] in layer.quantize_config.get_config()[
+                                'weight_attrs']:
                                 val = layer.quantize_config.get_weights_and_quantizers(layer.layer)[0][1].weight
                             else:
                                 val = qw
@@ -130,7 +137,7 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
         return self.exported_model
 
     @staticmethod
-    def get_custom_objects()->Dict[str, type]:
+    def get_custom_objects() -> Dict[str, type]:
         """
 
         Returns: A dictionary with objects for loading the exported model.
