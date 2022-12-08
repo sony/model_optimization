@@ -136,23 +136,6 @@ class SelectiveWeightsQuantizer(Quantizer):
                                       f'index {index}'
         self.active_quantization_config_index = index
 
-    def get_active_quantization_config_index(self) -> int:
-        """
-
-        Returns: The index the quantizer uses when is selects which quantized weight
-        to use when asked to (in __call__).
-
-        """
-        return self.active_quantization_config_index
-
-    def get_active_quantized_weight(self) -> np.ndarray:
-        """
-
-        Returns: The current active quantized weight the quantizer holds.
-
-        """
-        return self.quantized_weights[self.active_quantization_config_index]
-
     def get_config(self) -> Dict[str, Any]:
         """
         Returns: Configuration of TrainableQuantizer.
