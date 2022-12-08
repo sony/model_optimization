@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Callable
+
 from model_compression_toolkit.exporter.model_exporter.fw_agonstic.exporter import Exporter
 import keras
 
@@ -21,13 +23,16 @@ class BaseKerasExporter(Exporter):
     Base Keras exporter class.
     """
 
-    def __init__(self, model: keras.models.Model):
+    def __init__(self,
+                 model: keras.models.Model,
+                 is_layer_exportable_fn: Callable):
         """
-
         Args:
-            model: Keras model to export.
+            model: Model to export.
+            is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
         """
-        super().__init__(model)
+        super().__init__(model,
+                         is_layer_exportable_fn)
 
     @staticmethod
     def get_custom_objects():
