@@ -27,8 +27,6 @@ from tests.common_tests.function_tests.test_threshold_selection import TestThres
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
-from tests.keras_tests.function_tests.test_sensitivity_eval_output_replacement import \
-    TestSensitivityEvalWithOutputReplacementNodes
 
 found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
     "tensorflow_model_optimization") is not None
