@@ -24,9 +24,10 @@ from model_compression_toolkit.core.common.quantization.candidate_node_quantizat
 from model_compression_toolkit.core.keras.quantizer.mixed_precision.selective_activation_quantizer import \
     SelectiveActivationQuantizer
 from packaging import version
+from model_compression_toolkit.core.common.logger import Logger
 
 if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.python.keras.layers import Layer
+    from tensorflow.python.keras.layers import Layer  # pragma: no cover
 else:
     from keras.engine.base_layer import Layer
 from tensorflow.python.training.tracking.data_structures import ListWrapper
@@ -189,17 +190,15 @@ class SelectiveQuantizeConfig(QuantizeConfig):
         """
         if self.enable_weights_quantization:
             if len(self.weight_attrs) != len(quantize_weights):
-                raise ValueError(
-                    '`set_quantize_weights` called on layer {} with {} '
-                    'weight parameters, but layer expects {} values.'.format(
-                        layer.name, len(quantize_weights), len(self.weight_attrs)))
+                Logger.error('`set_quantize_weights` called on layer {} with {} '  # pragma: no cover
+                             'weight parameters, but layer expects {} values.'.format(layer.name, len(quantize_weights),
+                                                                                      len(self.weight_attrs)))
 
             for weight_attr, weight in zip(self.weight_attrs, quantize_weights):
                 current_weight = getattr(layer, weight_attr)
                 if current_weight.shape != weight.shape:
-                    raise ValueError('Existing layer weight shape {} is incompatible with'
-                                     'provided weight shape {}'.format(
-                        current_weight.shape, weight.shape))
+                    Logger.error('Existing layer weight shape {} is incompatible with'  # pragma: no cover
+                                 'provided weight shape {}'.format(current_weight.shape, weight.shape))
 
                 setattr(layer, weight_attr, weight)
 
