@@ -123,7 +123,7 @@ class FunctionTestRunner(unittest.TestCase):
         """
         This test checks the functionality output replacement nodes in sensitivity evaluation for mixed precision..
         """
-        # TestSensitivityEvalWithArgmaxOutputReplacementNodes(self).run_test()
+        TestSensitivityEvalWithArgmaxOutputReplacementNodes(self).run_test()
         TestSensitivityEvalWithSoftmaxOutputReplacementNodes(self).run_test()
 
 
