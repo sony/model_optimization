@@ -101,13 +101,6 @@ class SelectiveQuantizeConfig(QuantizeConfig):
         self.activation_selective_quantizer = None if not self.enable_activation_quantization else \
             SelectiveActivationQuantizer(node_q_cfg, max_candidate_idx=max_candidate_idx)
 
-    def get_candidate_nbits(self) -> List[Tuple[int, int]]:
-        """
-        Returns: All possible number of bits the SelectiveQuantizeConfig holds.
-        """
-        return [(x.weights_quantization_cfg.weights_n_bits, x.activation_quantization_cfg.activation_n_bits)
-                for x in self.node_q_cfg]
-
     def set_bit_width_index(self,
                             index: int,
                             attr: str = None):
