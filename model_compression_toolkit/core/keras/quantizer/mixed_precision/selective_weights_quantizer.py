@@ -144,7 +144,9 @@ class SelectiveWeightsQuantizer(Quantizer):
         return {  # pragma: no cover
             'node_q_cfg': self.node_q_cfg,
             'float_weight': self.float_weight,
-            'quantizer_fn_list': self.quantizer_fn_list
+            'quantizer_fn_list': self.quantizer_fn_list,
+            'quantized_weights': self.quantized_weights,
+            'active_quantization_config_index': self.active_quantization_config_index
         }
 
     def __eq__(self, other: Any) -> bool:
@@ -161,7 +163,9 @@ class SelectiveWeightsQuantizer(Quantizer):
 
         return (self.node_q_cfg == other.node_q_cfg and
                 self.float_weight == other.float_weight and
-                self.quantizer_fn_list == other.quantizer_fn_list)
+                self.quantizer_fn_list == other.quantizer_fn_list and
+                self.self.quantized_weights == other.self.quantized_weights and
+                self.active_quantization_config_index == other.active_quantization_config_index)
 
     def __ne__(self, other: Any) -> bool:
         """

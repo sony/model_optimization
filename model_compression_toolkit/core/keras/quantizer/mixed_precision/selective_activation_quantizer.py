@@ -128,6 +128,8 @@ class SelectiveActivationQuantizer(Quantizer):
 
         return {  # pragma: no cover
             'node_q_cfg': self.node_q_cfg,
+            'active_quantization_config_index': self.active_quantization_config_index,
+            'activation_quantizers': self.activation_quantizers
         }
 
     def __eq__(self, other: Any) -> bool:
@@ -143,7 +145,9 @@ class SelectiveActivationQuantizer(Quantizer):
         if not isinstance(other, SelectiveActivationQuantizer):
             return False
 
-        return self.node_q_cfg == other.node_q_cfg
+        return self.node_q_cfg == other.node_q_cfg and \
+               self.active_quantization_config_index == other.node_q_cfg and \
+               self.activation_quantizers == other.activation_quantizers
 
     def __ne__(self, other: Any) -> bool:
         """
