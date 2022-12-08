@@ -48,20 +48,23 @@ from model_compression_toolkit.exporter.model_wrapper.keras.quantizers.weights_u
 
 def get_exportable_keras_model(graph: Graph) -> tf.keras.models.Model:
     """
-    Convert graph to fully quantized Keras model.
+    Convert graph to an exportable Keras model (model with all quantization parameters).
+    An exportable model can then be exported using model_exporter, to retrieve the
+    final exported model.
 
     Args:
-        graph: Graph to convert to a Keras model.
+        graph: Graph to convert to an exportable Keras model.
 
     Returns:
-        Fully quantized Keras model.
+        Exportable Keras model.
     """
+
     return FullyQuantizedKerasModelBuilder(graph=graph).build_model()
 
 
 class FullyQuantizedKerasModelBuilder(KerasModelBuilder):
     """
-    Builder of fully-quantized Keras models.
+    Builder of exportable Keras models (fully quantized).
     """
 
     def __init__(self,

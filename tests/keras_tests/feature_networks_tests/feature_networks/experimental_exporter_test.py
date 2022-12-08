@@ -18,12 +18,12 @@ import tensorflow as tf
 from keras.engine.input_layer import InputLayer
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.activation_quantize_config import \
+from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.activation_quantize_config import \
     ActivationQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_activation_quantize_config \
+from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.weights_activation_quantize_config \
     import \
     WeightsActivationQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import \
+from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.weights_quantize_config import \
     WeightsQuantizeConfig
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 

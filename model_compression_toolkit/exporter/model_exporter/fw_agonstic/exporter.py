@@ -23,6 +23,11 @@ from model_compression_toolkit.core.common import Logger
 class Exporter:
     """
     Base class to define API for an Exporter class that exports and save models.
+    At initiation, it gets a model to export. This model must be an exportable model.
+    Each exporter needs to implement a method called 'export' which export the model
+    (convert an exportable model to a final model to run on the target platform),
+    and a method named 'save_model' to allow the saving and serialization of the
+    exported model.
     """
 
     def __init__(self, model: Any):
