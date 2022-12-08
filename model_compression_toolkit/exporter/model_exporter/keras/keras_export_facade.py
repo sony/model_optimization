@@ -15,16 +15,16 @@
 from enum import Enum
 import keras
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.exporter.target_platform_export.keras.exporters.fakely_quant_keras_exporter import \
+from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import \
     FakelyQuantKerasExporter
 
 
 class KerasExportMode(Enum):
     FAKELY_QUANT = 0
 
-def export_keras_fully_quantized_model(model: keras.models.Model,
-                                       mode: KerasExportMode = KerasExportMode.FAKELY_QUANT,
-                                       save_model_path: str = None):
+def keras_export_model(model: keras.models.Model,
+                       mode: KerasExportMode = KerasExportMode.FAKELY_QUANT,
+                       save_model_path: str = None):
     """
     Prepare and return fully quantized model for export. Save exported model to
     a path if passed.

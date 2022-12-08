@@ -12,30 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from functools import partial
 
 import keras.models
 import keras.models
 import tensorflow as tf
-import tensorflow_model_optimization as tfmot
 from keras.engine.base_layer import Layer
-from keras.engine.input_layer import InputLayer
 from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.default_8bit_quantize_configs import \
     NoOpQuantizeConfig
 
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.exporter.fully_quantized.keras.builder.quantize_config_to_node import \
+from model_compression_toolkit.exporter.model_wrapper.keras.builder.quantize_config_to_node import \
     SUPPORTED_QUANTIZATION_CONFIG
-from model_compression_toolkit.exporter.fully_quantized.keras.extended_quantize_wrapper import ExtendedQuantizeWrapper
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.activation_quantize_config import \
+from model_compression_toolkit.exporter.model_wrapper.keras.extended_quantize_wrapper import ExtendedQuantizeWrapper
+from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.activation_quantize_config import \
     ActivationQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_activation_quantize_config \
+from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.weights_activation_quantize_config \
     import \
     WeightsActivationQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import \
+from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.weights_quantize_config import \
     WeightsQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.fq_quantizer import FakeQuantQuantizer
-from model_compression_toolkit.exporter.target_platform_export.keras.exporters.base_keras_exporter import \
+from model_compression_toolkit.exporter.model_wrapper.keras.quantizers.fq_quantizer import FakeQuantQuantizer
+from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import \
     BaseKerasExporter
 
 

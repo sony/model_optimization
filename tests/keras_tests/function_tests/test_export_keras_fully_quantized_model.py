@@ -23,7 +23,7 @@ from keras import Input
 from keras.layers import Conv2D
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.exporter.target_platform_export.keras import export_keras_fully_quantized_model, \
+from model_compression_toolkit.exporter.model_exporter.keras import keras_export_model, \
     KerasExportMode
 
 SAVED_MODEL_PATH = '/tmp/exported_tf_fakelyquant.h5'
@@ -45,9 +45,9 @@ class TestExporter(unittest.TestCase):
         self.mbv2 = _get_model(input_shape)
         self.representative_data_gen = lambda: [np.random.randn(*((1,)+input_shape))]
         self.fully_quantized_mbv2 = self.run_mct(self.mbv2, new_experimental_exporter=True)
-        self.exported_mbv2, self.custom_objects = export_keras_fully_quantized_model(model=self.fully_quantized_mbv2,
-                                                                                     mode=KerasExportMode.FAKELY_QUANT,
-                                                                                     save_model_path=SAVED_MODEL_PATH)
+        self.exported_mbv2, self.custom_objects = keras_export_model(model=self.fully_quantized_mbv2,
+                                                                     mode=KerasExportMode.FAKELY_QUANT,
+                                                                     save_model_path=SAVED_MODEL_PATH)
 
     def run_mct(self, model, new_experimental_exporter):
         core_config = mct.CoreConfig()
@@ -58,11 +58,6 @@ class TestExporter(unittest.TestCase):
             representative_data_gen=self.representative_data_gen,
             new_experimental_exporter=new_experimental_exporter)
         return new_export_model
-
-    def set_seed(self, seed):
-        tf.random.set_seed(seed)
-        np.random.seed(seed)
-        random.seed(seed)
 
     def test_sanity(self):
         """

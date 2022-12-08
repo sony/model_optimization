@@ -31,22 +31,22 @@ from model_compression_toolkit.core.keras.back2framework.keras_model_builder imp
     is_layer_fake_quant, get_node_name_from_layer
 from model_compression_toolkit.core.keras.quantizer.input_layer_quantize_transform import InputLayerWrapperTransform
 
-from model_compression_toolkit.exporter.fully_quantized.keras.builder.quantize_config_to_node import \
+from model_compression_toolkit.exporter.model_wrapper.keras.builder.quantize_config_to_node import \
     get_quantization_config
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.activation_quantize_config import \
+from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.activation_quantize_config import \
     ActivationQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_activation_quantize_config \
+from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.weights_activation_quantize_config \
     import \
     WeightsActivationQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import \
+from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.weights_quantize_config import \
     WeightsQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.keras.extended_quantize_wrapper import ExtendedQuantizeWrapper
-from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.fq_quantizer import FakeQuantQuantizer
-from model_compression_toolkit.exporter.fully_quantized.keras.quantizers.weights_uniform_quantizer import \
+from model_compression_toolkit.exporter.model_wrapper.keras.extended_quantize_wrapper import ExtendedQuantizeWrapper
+from model_compression_toolkit.exporter.model_wrapper.keras.quantizers.fq_quantizer import FakeQuantQuantizer
+from model_compression_toolkit.exporter.model_wrapper.keras.quantizers.weights_uniform_quantizer import \
     WeightsUniformQuantizer
 
 
-def get_fully_quantized_keras_model(graph: Graph) -> tf.keras.models.Model:
+def get_exportable_keras_model(graph: Graph) -> tf.keras.models.Model:
     """
     Convert graph to fully quantized Keras model.
 

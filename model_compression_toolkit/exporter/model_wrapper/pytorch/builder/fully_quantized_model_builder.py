@@ -30,7 +30,7 @@ from model_compression_toolkit.core.pytorch.reader.node_holders import BufferHol
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 
 
-from model_compression_toolkit.exporter.fully_quantized.pytorch.builder.node_to_quantize_config import get_quantization_config
+from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantize_config import get_quantization_config
 
 
 def get_fully_quantized_pytorch_model(graph: Graph):

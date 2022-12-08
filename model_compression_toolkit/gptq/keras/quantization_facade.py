@@ -46,7 +46,7 @@ if common.constants.FOUND_TF:
     from tensorflow.keras.models import Model
     from model_compression_toolkit.gptq.keras.gptq_loss import GPTQMultipleTensorsLoss
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
-    from model_compression_toolkit.exporter import get_fully_quantized_keras_model
+    from model_compression_toolkit.exporter import get_exportable_keras_model
     from model_compression_toolkit import get_target_platform_capabilities
 
     # As from TF2.9 optimizers package is changed
@@ -229,7 +229,7 @@ if common.constants.FOUND_TF:
         if new_experimental_exporter:
             Logger.warning('Using new experimental exported models. '
                            'Please do not use unless you are familiar with what you are doing')
-            return get_fully_quantized_keras_model(tg_gptq)
+            return get_exportable_keras_model(tg_gptq)
 
         return export_model(tg_gptq,
                             fw_info,

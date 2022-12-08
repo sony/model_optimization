@@ -12,4 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from model_compression_toolkit.exporter.model_exporter.fw_agonstic.exporter import Exporter
+import keras
+
+class BaseKerasExporter(Exporter):
+    """
+    Base Keras exporter class.
+    """
+
+    def __init__(self, model: keras.models.Model):
+        """
+
+        Args:
+            model: Keras model to export.
+        """
+        super().__init__(model)
+
+    @staticmethod
+    def get_custom_objects(self):
+        return {}
+
+
+
 

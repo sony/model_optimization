@@ -19,14 +19,14 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_confi
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.exporter.fully_quantized.keras.builder.quantizer_to_node import \
+from model_compression_toolkit.exporter.model_wrapper.keras.builder.quantizer_to_node import \
     get_weights_quantizer_for_node, get_activations_quantizer_for_node
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.activation_quantize_config import \
+from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.activation_quantize_config import \
     ActivationQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_activation_quantize_config \
+from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.weights_activation_quantize_config \
     import \
     WeightsActivationQuantizeConfig
-from model_compression_toolkit.exporter.fully_quantized.keras.quantize_configs.weights_quantize_config import \
+from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.weights_quantize_config import \
     WeightsQuantizeConfig
 
 SUPPORTED_QUANTIZATION_CONFIG = [WeightsQuantizeConfig,
