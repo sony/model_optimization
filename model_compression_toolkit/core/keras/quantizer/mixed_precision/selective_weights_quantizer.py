@@ -136,12 +136,12 @@ class SelectiveWeightsQuantizer(Quantizer):
                                       f'index {index}'
         self.active_quantization_config_index = index
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> Dict[str, Any]:  # pragma: no cover
         """
         Returns: Configuration of TrainableQuantizer.
         """
 
-        return {  # pragma: no cover
+        return {
             'node_q_cfg': self.node_q_cfg,
             'float_weight': self.float_weight,
             'quantizer_fn_list': self.quantizer_fn_list,
@@ -149,7 +149,7 @@ class SelectiveWeightsQuantizer(Quantizer):
             'active_quantization_config_index': self.active_quantization_config_index
         }
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: Any) -> bool:  # pragma: no cover
         """
         Check if equals to another object.
         Args:
@@ -167,7 +167,7 @@ class SelectiveWeightsQuantizer(Quantizer):
                 self.self.quantized_weights == other.self.quantized_weights and
                 self.active_quantization_config_index == other.active_quantization_config_index)
 
-    def __ne__(self, other: Any) -> bool:
+    def __ne__(self, other: Any) -> bool:  # pragma: no cover
         """
         Check if not equals to another object.
         Args:

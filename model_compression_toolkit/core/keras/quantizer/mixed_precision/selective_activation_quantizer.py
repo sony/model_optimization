@@ -121,18 +121,18 @@ class SelectiveActivationQuantizer(Quantizer):
                                       f'index {index}'
         self.active_quantization_config_index = index
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> Dict[str, Any]:  # pragma: no cover
         """
         Returns: Configuration of TrainableQuantizer.
         """
 
-        return {  # pragma: no cover
+        return {
             'node_q_cfg': self.node_q_cfg,
             'active_quantization_config_index': self.active_quantization_config_index,
             'activation_quantizers': self.activation_quantizers
         }
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: Any) -> bool:  # pragma: no cover
         """
         Check if equals to another object.
 
@@ -149,7 +149,7 @@ class SelectiveActivationQuantizer(Quantizer):
                self.active_quantization_config_index == other.node_q_cfg and \
                self.activation_quantizers == other.activation_quantizers
 
-    def __ne__(self, other: Any) -> bool:
+    def __ne__(self, other: Any) -> bool:  # pragma: no cover
         """
         Check if not equals to another object.
 
