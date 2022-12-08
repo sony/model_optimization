@@ -12,3 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
+from model_compression_toolkit.core.common.constants import FOUND_TF
+
+if FOUND_TF:
+    from model_compression_toolkit.exporter.model_wrapper.keras.validate_layer import is_keras_layer_exportable

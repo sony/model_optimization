@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict
+from typing import Dict, Callable
 
 import keras.models
 import keras.models
@@ -41,12 +41,16 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
     """
     Exporter for fakely-quant Keras models.
     The exporter expects to receive an exportable model (where each layer's full quantization parameters
-    can be retreived), and convert it into a fakely-quant model (namely, weights that are in fake-quant
+    can be retrieved), and convert it into a fakely-quant model (namely, weights that are in fake-quant
     format) and fake-quant layers for the activations.
     """
 
-    def __init__(self, model: keras.models.Model):
-        super().__init__(model)
+    def __init__(self,
+                 model: keras.models.Model,
+                 is_layer_exportable_fn: Callable):
+
+        super().__init__(model,
+                         is_layer_exportable_fn)
 
     def export(self) -> keras.models.Model:
         """
@@ -70,18 +74,7 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                 Layer after unwrapping.
 
             """
-            # All layers should be wrapped using ExtendedQuantizeWrapper
-            assert isinstance(layer,
-                              ExtendedQuantizeWrapper), f'Exporting FullyQuantized model requires each layer to be ' \
-                                                        f'wrapped with ExtendedQuantizeWrapper, but {layer.name} is ' \
-                                                        f'of type {type(layer)}'
-
-            # Make sure all layers have a supported quantize config (according to the
-            # model_wrapper definition.
-            if not isinstance(layer.quantize_config, tuple(SUPPORTED_QUANTIZATION_CONFIG)):
-                Logger.error(
-                    f'Supported quantization configs are {tuple(SUPPORTED_QUANTIZATION_CONFIG)}, but layer has a'
-                    f'quantization config of type {type(layer.quantize_config)}')
+            assert self.is_layer_exportable_fn(layer), f'Layer {layer.name} is not exportable.'
 
             # If weights are quantized, use the quantized weight for the new built layer.
             if type(layer.quantize_config) in [WeightsQuantizeConfig, WeightsActivationQuantizeConfig]:
@@ -100,7 +93,7 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                             # For example: check if 'kernel_0' is an attribute
                             # that should be quantized. First, extract 'kernel' from variable name, check if the
                             # quantize config contains this as an attribute for quantization. If so -
-                            # Take the quantized weight from it and set it to the new layer.
+                            # Take the quantized weight from the quantize_config and set it to the new layer.
                             if w.name.split('/')[-1].split(':')[0] in layer.quantize_config.get_config()[
                                 'weight_attrs']:
                                 val = layer.quantize_config.get_weights_and_quantizers(layer.layer)[0][1].weight

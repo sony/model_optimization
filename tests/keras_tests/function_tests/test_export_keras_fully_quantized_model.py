@@ -24,6 +24,7 @@ from keras.layers import Conv2D, BatchNormalization, ReLU, Dropout, Dense
 import model_compression_toolkit as mct
 from model_compression_toolkit.exporter.model_exporter.keras import keras_export_model, \
     KerasExportMode
+from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_exportable
 
 SAVED_MODEL_PATH = '/tmp/exported_tf_fakelyquant.h5'
 
@@ -53,6 +54,7 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         self.representative_data_gen = lambda: [np.random.randn(*((1,)+input_shape))]
         self.exportable_model = self.run_mct(self.model, new_experimental_exporter=True)
         self.exported_model, self.custom_objects = keras_export_model(model=self.exportable_model,
+                                                                      is_layer_exportable_fn=is_keras_layer_exportable,
                                                                       mode=KerasExportMode.FAKELY_QUANT,
                                                                       save_model_path=SAVED_MODEL_PATH)
 

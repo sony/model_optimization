@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Any
 
 from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.default_8bit_quantize_configs import \
     NoOpQuantizeConfig
@@ -33,7 +34,6 @@ SUPPORTED_QUANTIZATION_CONFIG = [WeightsQuantizeConfig,
                                  ActivationQuantizeConfig,
                                  NoOpQuantizeConfig,
                                  WeightsActivationQuantizeConfig]
-
 
 
 def get_quantization_config(node: BaseNode) -> QuantizeConfig:

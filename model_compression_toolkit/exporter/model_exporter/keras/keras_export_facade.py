@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 from enum import Enum
+from typing import Callable
+
 import keras
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import \
@@ -24,6 +26,7 @@ class KerasExportMode(Enum):
 
 
 def keras_export_model(model: keras.models.Model,
+                       is_layer_exportable_fn: Callable,
                        mode: KerasExportMode = KerasExportMode.FAKELY_QUANT,
                        save_model_path: str = None):
     """
@@ -32,6 +35,7 @@ def keras_export_model(model: keras.models.Model,
 
     Args:
         model: Model to export.
+        is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
         mode: Mode to export the model according to.
         save_model_path: Path to save the model.
 
@@ -40,7 +44,8 @@ def keras_export_model(model: keras.models.Model,
     """
 
     if mode == KerasExportMode.FAKELY_QUANT:
-        exporter = FakelyQuantKerasExporter(model)
+        exporter = FakelyQuantKerasExporter(model, is_layer_exportable_fn)
+
     else:
         Logger.critical(
             f'Unsupported mode was used {mode.name} to export Keras model. Please see API for supported modes.')

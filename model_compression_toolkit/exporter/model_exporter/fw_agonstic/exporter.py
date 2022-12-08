@@ -15,7 +15,7 @@
 
 
 from abc import abstractmethod
-from typing import Any
+from typing import Any, Callable
 
 from model_compression_toolkit.core.common import Logger
 
@@ -30,13 +30,16 @@ class Exporter:
     exported model.
     """
 
-    def __init__(self, model: Any):
+    def __init__(self, model: Any, is_layer_exportable_fn: Callable):
         """
 
         Args:
             model: Model to export.
+            is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
+
         """
         self.model = model
+        self.is_layer_exportable_fn = is_layer_exportable_fn
 
     @abstractmethod
     def export(self) -> Any:
