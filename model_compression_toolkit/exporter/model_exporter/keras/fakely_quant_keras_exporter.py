@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Dict
 
 import keras.models
 import keras.models
@@ -39,6 +40,9 @@ from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter
 class FakelyQuantKerasExporter(BaseKerasExporter):
     """
     Exporter for fakely-quant Keras models.
+    The exporter expects to receive an exportable model (where each layer's full quantization parameters
+    can be retreived), and convert it into a fakely-quant model (namely, weights that are in fake-quant
+    format) and fake-quant layers for the activations.
     """
 
     def __init__(self, model: keras.models.Model):
@@ -46,15 +50,18 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
 
     def export(self) -> keras.models.Model:
         """
-        Convert fully-quantized Keras model to a fakely-quant export-ready model.
+        Convert an exportable (fully-quantized) Keras model to a fakely-quant model
+        (namely, weights that are in fake-quant format) and fake-quant layers for the activations.
 
         Returns:
-            Fake-quant Keras model ready to export.
+            Fake-quant Keras model.
         """
 
         def _unwrap_quantize_wrapper(layer: Layer):
             """
-            Convert layer wrapped with QuantizeWrapper to the layer it wraps, so it's ready to export.
+            Convert layer wrapped with ExtendedQuantizeWrapper to the layer it wraps,
+             so it's ready to export. Notice that layers with activation quantization remain
+             wrapped using ExtendedQuantizeWrapper to contain its activation quantizer.
 
             Args:
                 layer: Layer to unwrap.
@@ -63,11 +70,14 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                 Layer after unwrapping.
 
             """
+            # All layers should be wrapped using ExtendedQuantizeWrapper
             assert isinstance(layer,
                               ExtendedQuantizeWrapper), f'Exporting FullyQuantized model requires each layer to be ' \
                                                         f'wrapped with ExtendedQuantizeWrapper, but {layer.name} is ' \
                                                         f'of type {type(layer)}'
 
+            # Make sure all layers have a supported quantize config (according to the
+            # model_wrapper definition.
             if not isinstance(layer.quantize_config, tuple(SUPPORTED_QUANTIZATION_CONFIG)):
                 Logger.error(
                     f'Supported quantization configs are {tuple(SUPPORTED_QUANTIZATION_CONFIG)}, but layer has a'
@@ -96,14 +106,19 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                 new_layer.set_weights(weights_list)
                 new_layer.trainable = False
 
+                # If activations are also quantized, wrap the layer back using ActivationQuantizeConfig
+                # from original wrapper (weights wrapping is no longer needed).
                 if isinstance(layer.quantize_config, WeightsActivationQuantizeConfig):
                     new_layer = ExtendedQuantizeWrapper(new_layer, layer.quantize_config.act_config)
 
                 return new_layer
 
+            # If this is a layer with activation quantization only, just return it
+            # as activation quantization in the fake-quant case uses the wrapper for quantization.
             elif type(layer.quantize_config) in [ActivationQuantizeConfig]:
                 return layer
 
+            # No quantization -> just use the inner layer.
             elif isinstance(layer.quantize_config, NoOpQuantizeConfig):
                 return layer.layer
 
@@ -115,12 +130,17 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
         return self.exported_model
 
     @staticmethod
-    def get_custom_objects():
+    def get_custom_objects()->Dict[str, type]:
+        """
+
+        Returns: A dictionary with objects for loading the exported model.
+
+        """
         return {ExtendedQuantizeWrapper.__name__: ExtendedQuantizeWrapper,
                 ActivationQuantizeConfig.__name__: ActivationQuantizeConfig,
                 FakeQuantQuantizer.__name__: FakeQuantQuantizer}
 
-    def save_model(self, save_model_path: str):
+    def save_model(self, save_model_path: str) -> None:
         """
         Save exported model to a given path.
         Args:

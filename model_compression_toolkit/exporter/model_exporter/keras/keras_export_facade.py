@@ -22,6 +22,7 @@ from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_
 class KerasExportMode(Enum):
     FAKELY_QUANT = 0
 
+
 def keras_export_model(model: keras.models.Model,
                        mode: KerasExportMode = KerasExportMode.FAKELY_QUANT,
                        save_model_path: str = None):
@@ -41,14 +42,11 @@ def keras_export_model(model: keras.models.Model,
     if mode == KerasExportMode.FAKELY_QUANT:
         exporter = FakelyQuantKerasExporter(model)
     else:
-        Logger.critical(f'Unsupported mode was used {mode.name} to export Keras model. Please see API for supported modes.')
+        Logger.critical(
+            f'Unsupported mode was used {mode.name} to export Keras model. Please see API for supported modes.')
 
     model = exporter.export()
     if save_model_path is not None:
         exporter.save_model(save_model_path)
 
     return model, exporter.get_custom_objects()
-
-
-
-

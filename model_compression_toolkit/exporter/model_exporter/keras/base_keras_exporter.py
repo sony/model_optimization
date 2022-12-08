@@ -15,6 +15,7 @@
 from model_compression_toolkit.exporter.model_exporter.fw_agonstic.exporter import Exporter
 import keras
 
+
 class BaseKerasExporter(Exporter):
     """
     Base Keras exporter class.
@@ -31,7 +32,3 @@ class BaseKerasExporter(Exporter):
     @staticmethod
     def get_custom_objects():
         return {}
-
-
-
-
