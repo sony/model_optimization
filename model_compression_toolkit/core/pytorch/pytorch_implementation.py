@@ -65,8 +65,8 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.sh
     pytorch_apply_shift_negative_correction
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.softmax_shift import \
     pytorch_softmax_shift
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.virtual_activation_weights_composition import \
-    VirtualActivationWeightsComposition
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.virtual_activation_weights_composition \
+    import VirtualActivationWeightsComposition
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.weights_activation_split import \
     WeightsActivationSplit
 from model_compression_toolkit.core.pytorch.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
@@ -118,16 +118,20 @@ class PytorchImplementation(FrameworkImplementation):
 
     def model_reader(self,
                      module: Module,
-                     representative_data_gen: Callable) -> Graph:
+                     representative_data_gen: Callable,
+                     model_leaf_layers: list = None) -> Graph:
         """
         Convert a framework's module into a graph.
         Args:
             module: Framework's module.
             representative_data_gen (Callable): Dataset used for calibration.
+            model_leaf_layers (list): List of the module's custom layers, these layers shouldn't be divided into
+            their submodules and their quantization will not be optimized.
         Returns:
             Graph representing the input module.
         """
-        return model_reader(module, representative_data_gen, self.to_numpy, self.to_tensor)
+        return model_reader(module, representative_data_gen, self.to_numpy, self.to_tensor,
+                            model_leaf_layers=model_leaf_layers)
 
     def model_builder(self,
                       graph: Graph,

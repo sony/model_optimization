@@ -16,6 +16,8 @@ import unittest
 
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
+from tests.pytorch_tests.model_tests.feature_models.custom_layer_test import ConvCustomLayerNetTest, \
+    ConvBNCustomLayerNetTest, ConvCustomLayer, ConvBNCustomLayer
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
     MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, MixedPrecisionActivationOnlyBopsTest, \
     MixedPrecisionBopsAndWeightsKPITest, MixedPrecisionBopsAndActivationKPITest, MixedPrecisionBopsAndTotalKPITest, \
@@ -144,6 +146,14 @@ class FeatureModelsTestRunner(unittest.TestCase):
         removed from the graph during quantization.
         """
         BrokenNetTest(self).run_test()
+
+    def test_custom_layer_net(self):
+        """
+        This tests checks that custom layers are passing the quantization procedure.
+        """
+        ConvCustomLayerNetTest(self).run_test(experimental_facade=True, model_leafs=[None, [ConvCustomLayer]])
+        ConvBNCustomLayerNetTest(self).run_test(experimental_facade=True,
+                                                model_leafs=[None, [ConvCustomLayer, ConvBNCustomLayer]])
 
     def test_linear_collapsing(self):
         """

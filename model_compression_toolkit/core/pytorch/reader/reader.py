@@ -19,8 +19,9 @@ from typing import Callable, Dict
 
 import numpy as np
 import torch
-from torch.fx import symbolic_trace
+from torch.fx import symbolic_trace, GraphModule
 from torch.fx.passes.shape_prop import ShapeProp
+from torchvision.models.feature_extraction import NodePathTracer
 
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.pytorch.reader.graph_builders import edges_builder, nodes_builder
@@ -71,7 +72,8 @@ def build_graph(model: torch.fx.GraphModule,
 
 def fx_graph_module_generation(pytorch_model: torch.nn.Module,
                                representative_data_gen: Callable,
-                               to_tensor: Callable) -> torch.fx.GraphModule:
+                               to_tensor: Callable,
+                               model_leaf_layers: list = None) -> torch.fx.GraphModule:
     """
     Generates a fx.GraphModule from a torch.nn.Module.
 
@@ -79,12 +81,21 @@ def fx_graph_module_generation(pytorch_model: torch.nn.Module,
         pytorch_model: A dynamic Pytorch model.
         representative_data_gen (Callable): Representative dataset used for shape inference.
         to_tensor: Function to convert a Numpy array to a framework's tensor.
+        model_leaf_layers (list): List of the module's custom layers, these layers shouldn't be divided into
+        their submodules and their quantization will not be optimized.
 
     Returns:
         A fx.GraphModule (static model) representing the Pytorch model.
     """
     set_model(pytorch_model)
-    symbolic_traced = symbolic_trace(pytorch_model)
+    if model_leaf_layers is not None:
+        # Only if user mentioned symbolic traced layers
+        tracer = NodePathTracer(leaf_modules=model_leaf_layers)
+        graph = tracer.trace(pytorch_model)
+        name = pytorch_model.__class__.__name__ if isinstance(pytorch_model, torch.nn.Module) else pytorch_model.__name__
+        symbolic_traced = GraphModule(tracer.root, graph, name)
+    else:
+        symbolic_traced = symbolic_trace(pytorch_model)
     inputs = next(representative_data_gen())
     input_for_shape_infer = [to_tensor(i) for i in inputs]
     ShapeProp(symbolic_traced).propagate(*input_for_shape_infer)
@@ -130,7 +141,8 @@ def remove_broken_nodes_from_graph(graph):
 def model_reader(model: torch.nn.Module,
                  representative_data_gen: Callable,
                  to_numpy: Callable,
-                 to_tensor: Callable) -> Graph:
+                 to_tensor: Callable,
+                 model_leaf_layers: list = None) -> Graph:
     """
     Reads a Pytorch model and converts it to an FX Graph using the fx toolkit. Then, builds a base graph representing
     the fx graph. Finally, we filter "broken nodes" (nodes without outputs, for example: "assert").
@@ -139,12 +151,15 @@ def model_reader(model: torch.nn.Module,
         representative_data_gen (Callable): Dataset used for calibration.
         to_numpy: Function to convert framework's tensor to a Numpy array.
         to_tensor: Function to convert a Numpy array to a framework's tensor.
+        model_leaf_layers (list): List of the module's custom layers, these layers shouldn't be divided into
+        their submodules and their quantization will not be optimized.
 
     Returns:
         Base graph of the Pytorch model.
     """
     logging.info("Start Model Reading...")
-    fx_model = fx_graph_module_generation(model, representative_data_gen, to_tensor)
+    fx_model = fx_graph_module_generation(model, representative_data_gen, to_tensor,
+                                          model_leaf_layers=model_leaf_layers)
     graph = build_graph(fx_model, to_numpy)
     graph = remove_broken_nodes_from_graph(graph)
     return graph

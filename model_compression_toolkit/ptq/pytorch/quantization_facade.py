@@ -43,7 +43,8 @@ if FOUND_TORCH:
                                                         target_kpi: KPI = None,
                                                         core_config: CoreConfig = CoreConfig(),
                                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC,
-                                                        new_experimental_exporter: bool = False):
+                                                        new_experimental_exporter: bool = False,
+                                                        model_leaf_layers: list = None):
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds
@@ -64,6 +65,8 @@ if FOUND_TORCH:
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to. `Default PyTorch TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/tpc_models/pytorch_tp_models/pytorch_default.py>`_
             new_experimental_exporter (bool): Whether exporting the quantized model using new exporter or not (in progress. Avoiding it for now is recommended).
+            model_leaf_layers (list): List of the module's custom layers, these layers shouldn't be divided into their
+            submodules and their quantization will not be optimized.
 
         Returns:
             A quantized module and information the user may need to handle the quantized module.
@@ -112,7 +115,8 @@ if FOUND_TORCH:
                                             fw_impl=fw_impl,
                                             tpc=target_platform_capabilities,
                                             target_kpi=target_kpi,
-                                            tb_w=tb_w)
+                                            tb_w=tb_w,
+                                            model_leaf_layers=model_leaf_layers)
 
         tg = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
 

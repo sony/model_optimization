@@ -108,12 +108,16 @@ class KerasImplementation(FrameworkImplementation):
 
     def model_reader(self,
                      model: Model,
-                     representative_data_gen: Callable) -> Graph:
+                     representative_data_gen: Callable,
+                     model_leaf_layers: list = None) -> Graph:
         """
         Convert a framework's model into a graph.
         Args:
             model: Framework's model.
             representative_data_gen (Callable): Dataset used for calibration.
+            model_leaf_layers (list): For PyTorch only!
+            List of the module's custom layers, these layers shouldn't be divided into
+            their submodules and their quantization will not be optimized.
 
         Returns:
             Graph representing the input model.
