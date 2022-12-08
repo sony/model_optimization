@@ -141,7 +141,7 @@ class SelectiveWeightsQuantizer(Quantizer):
         Returns: Configuration of TrainableQuantizer.
         """
 
-        return {
+        return {  # pragma: no cover
             'node_q_cfg': self.node_q_cfg,
             'float_weight': self.float_weight,
             'quantizer_fn_list': self.quantizer_fn_list

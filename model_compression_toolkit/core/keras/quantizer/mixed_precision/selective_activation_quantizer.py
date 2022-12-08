@@ -126,7 +126,7 @@ class SelectiveActivationQuantizer(Quantizer):
         Returns: Configuration of TrainableQuantizer.
         """
 
-        return {
+        return {  # pragma: no cover
             'node_q_cfg': self.node_q_cfg,
         }
 
