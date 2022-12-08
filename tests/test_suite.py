@@ -52,6 +52,14 @@ if found_tf:
     from tests.keras_tests.test_keras_tp_model import TestKerasTPModel
     from tests.keras_tests.function_tests.test_sensitivity_metric_interest_points import \
         TestSensitivityMetricInterestPoints
+    from tests.keras_tests.function_tests.test_weights_activation_split_substitution import TestWeightsActivationSplit
+    from tests.keras_tests.function_tests.test_activation_weights_composition_substitution import \
+        TestActivationWeightsComposition
+    from tests.keras_tests.function_tests.test_graph_max_cut import TestGraphMaxCut
+    from tests.keras_tests.function_tests.test_model_gradients import TestModelGradients
+    from tests.keras_tests.function_tests.test_sensitivity_eval_output_replacement import \
+        TestSensitivityEvalWithOutputReplacementNodes
+    from tests.keras_tests.function_tests.test_set_layer_to_bitwidth import TestKerasSetLayerToBitwidth
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -91,6 +99,12 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformQuantizeTensor))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformRangeSelectionWeights))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasTPModel))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestWeightsActivationSplit))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationWeightsComposition))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestModelGradients))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphMaxCut))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasSetLayerToBitwidth))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityEvalWithOutputReplacementNodes))
 
         # Keras test layers are supported in TF2.6 or higher versions
         if version.parse(tf.__version__) >= version.parse("2.6"):
