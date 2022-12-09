@@ -33,7 +33,7 @@ if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
     from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
     from torch.nn import Module
-    from model_compression_toolkit.exporter.fully_quantized.pytorch.builder.fully_quantized_model_builder import get_fully_quantized_pytorch_model
+    from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_fully_quantized_pytorch_model
     from model_compression_toolkit import get_target_platform_capabilities
 
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
