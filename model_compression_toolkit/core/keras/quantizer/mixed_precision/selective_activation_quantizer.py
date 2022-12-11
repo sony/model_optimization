@@ -121,23 +121,18 @@ class SelectiveActivationQuantizer(Quantizer):
                                       f'index {index}'
         self.active_quantization_config_index = index
 
-    def get_active_quantization_config_index(self) -> int:
-        """
-        Returns: The index the quantizer uses when is selects which quantized weight
-        to use when asked to (in __call__).
-        """
-        return self.active_quantization_config_index
-
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> Dict[str, Any]:  # pragma: no cover
         """
         Returns: Configuration of TrainableQuantizer.
         """
 
         return {
             'node_q_cfg': self.node_q_cfg,
+            'active_quantization_config_index': self.active_quantization_config_index,
+            'activation_quantizers': self.activation_quantizers
         }
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: Any) -> bool:  # pragma: no cover
         """
         Check if equals to another object.
 
@@ -150,9 +145,11 @@ class SelectiveActivationQuantizer(Quantizer):
         if not isinstance(other, SelectiveActivationQuantizer):
             return False
 
-        return self.node_q_cfg == other.node_q_cfg
+        return self.node_q_cfg == other.node_q_cfg and \
+               self.active_quantization_config_index == other.node_q_cfg and \
+               self.activation_quantizers == other.activation_quantizers
 
-    def __ne__(self, other: Any) -> bool:
+    def __ne__(self, other: Any) -> bool:  # pragma: no cover
         """
         Check if not equals to another object.
 

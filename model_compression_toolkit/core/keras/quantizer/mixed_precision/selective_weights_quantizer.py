@@ -136,24 +136,7 @@ class SelectiveWeightsQuantizer(Quantizer):
                                       f'index {index}'
         self.active_quantization_config_index = index
 
-    def get_active_quantization_config_index(self) -> int:
-        """
-
-        Returns: The index the quantizer uses when is selects which quantized weight
-        to use when asked to (in __call__).
-
-        """
-        return self.active_quantization_config_index
-
-    def get_active_quantized_weight(self) -> np.ndarray:
-        """
-
-        Returns: The current active quantized weight the quantizer holds.
-
-        """
-        return self.quantized_weights[self.active_quantization_config_index]
-
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> Dict[str, Any]:  # pragma: no cover
         """
         Returns: Configuration of TrainableQuantizer.
         """
@@ -161,10 +144,12 @@ class SelectiveWeightsQuantizer(Quantizer):
         return {
             'node_q_cfg': self.node_q_cfg,
             'float_weight': self.float_weight,
-            'quantizer_fn_list': self.quantizer_fn_list
+            'quantizer_fn_list': self.quantizer_fn_list,
+            'quantized_weights': self.quantized_weights,
+            'active_quantization_config_index': self.active_quantization_config_index
         }
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: Any) -> bool:  # pragma: no cover
         """
         Check if equals to another object.
         Args:
@@ -178,9 +163,11 @@ class SelectiveWeightsQuantizer(Quantizer):
 
         return (self.node_q_cfg == other.node_q_cfg and
                 self.float_weight == other.float_weight and
-                self.quantizer_fn_list == other.quantizer_fn_list)
+                self.quantizer_fn_list == other.quantizer_fn_list and
+                self.self.quantized_weights == other.self.quantized_weights and
+                self.active_quantization_config_index == other.active_quantization_config_index)
 
-    def __ne__(self, other: Any) -> bool:
+    def __ne__(self, other: Any) -> bool:  # pragma: no cover
         """
         Check if not equals to another object.
         Args:
