@@ -94,8 +94,7 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                             # that should be quantized. First, extract 'kernel' from variable name, check if the
                             # quantize config contains this as an attribute for quantization. If so -
                             # Take the quantized weight from the quantize_config and set it to the new layer.
-                            if w.name.split('/')[-1].split(':')[0] in layer.quantize_config.get_config()[
-                                'weight_attrs']:
+                            if w.name.split('/')[-1].split(':')[0] in layer.quantize_config.get_config()['weight_attrs']:
                                 val = layer.quantize_config.get_weights_and_quantizers(layer.layer)[0][1].weight
                             else:
                                 val = qw
@@ -118,9 +117,13 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
             elif type(layer.quantize_config) in [ActivationQuantizeConfig]:
                 return layer
 
-            # No quantization -> just use the inner layer.
+            # Ideally we want in the case of no quantization to simply use the inner layer.
+            # But for some reason when using SNC we are having issues to use the inner layer.
+            # The clone_model method tries to reconstruct a model from the unwrapped configuration,
+            # but when we have two TFOpLambda (like in the case of SNC: add and pad) one after another,
+            # the output shape of the first one is in correct (it adds a new axis
             elif isinstance(layer.quantize_config, NoOpQuantizeConfig):
-                return layer.layer
+                return layer
 
         # clone each layer in the model and apply _unwrap_quantize_wrapper to layers wrapped with a QuantizeWrapper.
         self.exported_model = tf.keras.models.clone_model(self.model,
@@ -138,7 +141,8 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
         """
         return {ExtendedQuantizeWrapper.__name__: ExtendedQuantizeWrapper,
                 ActivationQuantizeConfig.__name__: ActivationQuantizeConfig,
-                FakeQuantQuantizer.__name__: FakeQuantQuantizer}
+                FakeQuantQuantizer.__name__: FakeQuantQuantizer,
+                NoOpQuantizeConfig.__name__: NoOpQuantizeConfig}
 
     def save_model(self, save_model_path: str) -> None:
         """

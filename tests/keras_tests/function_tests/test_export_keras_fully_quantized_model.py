@@ -19,7 +19,7 @@ import unittest
 import keras.models
 import numpy as np
 from keras import Input
-from keras.layers import Conv2D, BatchNormalization, ReLU, Dropout, Dense
+from keras.layers import Conv2D, BatchNormalization, ReLU, Dropout, Dense, Activation
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.exporter.model_exporter.keras import keras_export_model, \
@@ -29,14 +29,14 @@ from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_expo
 SAVED_MODEL_PATH = '/tmp/exported_tf_fakelyquant.h5'
 
 
-
 def _get_model(input_shape):
     inputs = Input(shape=input_shape)
     x = Conv2D(3, 3)(inputs)
     x = BatchNormalization()(x)
     x = ReLU()(x)
     x = Conv2D(3, 3)(x)
-    x = Conv2D(3, 3)(x)
+    x = Activation('swish')(x)
+    x = Conv2D(3, 3, padding='same')(x)
     x = ReLU(max_value=6)(x)
     x = Dropout(rate=0.5)(x)
     outputs = Dense(10)(x)
