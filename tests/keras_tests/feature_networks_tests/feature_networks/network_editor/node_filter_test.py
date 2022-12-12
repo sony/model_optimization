@@ -12,22 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.core.common.matchers.node_matcher import NodeAndMatcher
-from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
-    get_weights_quantization_params_fn
-
-import model_compression_toolkit as mct
+import numpy as np
 import tensorflow as tf
 
-from model_compression_toolkit.core.tpc_models.default_tpc.v4.tpc_keras import generate_keras_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
-from tests.keras_tests.tpc_keras import get_16bit_tpc
-from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-import numpy as np
-from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, \
-    NodeTypeFilter
+import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.network_editors.actions import ChangeCandidatesActivationQuantConfigAttr, \
     ChangeQuantizationParamFunction, EditRule, ChangeCandidatesWeightsQuantConfigAttr
+from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, \
+    NodeTypeFilter
+from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
+    get_weights_quantization_params_fn, get_activation_quantization_params_fn
+from model_compression_toolkit.core.tpc_models.default_tpc.v4.tpc_keras import generate_keras_tpc
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
 layers = keras.layers
@@ -196,8 +193,11 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         self.conv_w[0, 0, 0, 0] = 1.1
         super().__init__(unit_test)
 
-    def params_fn(self):
+    def weights_params_fn(self):
         return get_weights_quantization_params_fn(tp.QuantizationMethod.POWER_OF_TWO)
+
+    def activations_params_fn(self):
+        return get_activation_quantization_params_fn(tp.QuantizationMethod.POWER_OF_TWO)
 
     def get_tpc(self):
         tp_model = generate_test_tp_model({
@@ -216,7 +216,10 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
                 EditRule(filter=NodeTypeFilter(self.type_to_change),
                          action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
                 EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
-                         action=ChangeQuantizationParamFunction(weights_quantization_params_fn=self.params_fn())),
+                         action=ChangeQuantizationParamFunction(weights_quantization_params_fn=self.weights_params_fn())),
+                EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
+                         action=ChangeQuantizationParamFunction(
+                             activation_quantization_params_fn=self.activations_params_fn())),
                 EditRule(filter=NodeNameFilter(self.node_to_change_name) and NodeTypeFilter(layers.ReLU),
                          action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=16))]
 
@@ -244,66 +247,3 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
             quantized_model.layers[3].inbound_nodes[0].call_kwargs['num_bits'] == self.activation_n_bits)
         self.unit_test.assertTrue(
             quantized_model.layers[5].inbound_nodes[0].call_kwargs['num_bits'] == self.activation_n_bits)
-
-
-class FilterLogicTest(BaseKerasFeatureNetworkTest):
-    '''
-    - Check "and" and "or" operations between filters
-    - Check threshold function action
-    - Check "and" between filters
-    '''
-
-    def __init__(self, unit_test, activation_n_bits: int = 3, weights_n_bits: int = 3):
-        self.node_to_change_name = 'conv_to_change'
-        self.type_to_change = layers.Conv2D
-        self.activation_n_bits = activation_n_bits
-        self.weights_n_bits = weights_n_bits
-        self.kernel = 3
-        self.num_conv_channels = 4
-        self.conv_w = np.random.uniform(0, 1,
-                                        [self.kernel, self.kernel, self.num_conv_channels, self.num_conv_channels])
-        # set a weight above 1
-        self.conv_w[0, 0, 0, 0] = 1.1
-        super().__init__(unit_test)
-
-    def params_fn(self):
-        return get_weights_quantization_params_fn(
-            tp.QuantizationMethod.POWER_OF_TWO,
-            cmo.QuantizationErrorMethod.NOCLIPPING)
-
-    def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
-                                      tp.QuantizationMethod.POWER_OF_TWO,
-                                      tp.QuantizationMethod.POWER_OF_TWO, 16, 16,
-                                      False, False, False)
-
-    def get_network_editor(self):
-        return [(NodeTypeFilter(self.type_to_change),
-                 ChangeQuantConfigAttr(weights_n_bits=self.weights_n_bits, activation_n_bits=self.activation_n_bits)),
-                (NodeAndMatcher(NodeTypeFilter(self.type_to_change), NodeNameFilter(self.node_to_change_name)),
-                 ChangeQuantizationParamFunction(weights_quantization_params_fn=self.params_fn())),
-                (NodeAndMatcher(NodeTypeFilter(layers.ReLU), NodeNameFilter(self.node_to_change_name)),
-                 ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=16))
-                ]
-
-    def get_input_shapes(self):
-        return [[self.val_batch_size, 224, 224, self.num_conv_channels]]
-
-    def create_networks(self):
-        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.node_to_change_name)(inputs)
-        outputs = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False)(x)
-        model = keras.Model(inputs=inputs, outputs=outputs)
-
-        # set conv weights to be integers uniformly distributed between
-        # -(kernel*kernel*num_conv_channels*num_conv_channels)/2 : +(
-        # kernel*kernel*num_conv_channels*num_conv_channels)/2
-        model.layers[1].set_weights([self.conv_w])
-        model.layers[2].set_weights([self.conv_w])
-        return model
-
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        # check that the two conv in the network have different weights. In order for this to happen, their weight's num
-        # bits needed to change, and one of the conv's threshold function needed to change to 'no_clipping'
-        self.unit_test.assertTrue(
-            quantized_model.layers[2].weights[0].numpy().max() != quantized_model.layers[4].weights[0].numpy().max())
