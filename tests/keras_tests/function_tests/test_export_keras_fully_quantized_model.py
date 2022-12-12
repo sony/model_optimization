@@ -22,8 +22,7 @@ from keras import Input
 from keras.layers import Conv2D, BatchNormalization, ReLU, Dropout, Dense
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.exporter.model_exporter.keras import keras_export_model, \
-    KerasExportMode
+from model_compression_toolkit.exporter.model_exporter import keras_export_model, KerasExportMode
 from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_exportable
 
 SAVED_MODEL_PATH = '/tmp/exported_tf_fakelyquant.h5'
