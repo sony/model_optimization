@@ -157,7 +157,8 @@ class SensitivityEvaluation:
         Evaluates the baseline model on all images and saves the obtained lists of tensors in a list for later use.
         Initiates a class variable self.baseline_tensors_list
         """
-        self.baseline_tensors_list = [self.fw_impl.to_numpy(self.baseline_model(images))
+        self.baseline_tensors_list = [self.fw_impl.to_numpy(self.fw_impl.sensitivity_eval_inference(self.baseline_model,
+                                                                                                    images))
                                       for images in self.images_batches]
 
     def _build_models(self) -> Any:
@@ -295,7 +296,7 @@ class SensitivityEvaluation:
         # Compute the distance matrix for num_of_images images.
         for images, baseline_tensors in zip(self.images_batches, self.baseline_tensors_list):
             # when using model.predict(), it does not use the QuantizeWrapper functionality
-            mp_tensors = self.model_mp(images)
+            mp_tensors = self.fw_impl.sensitivity_eval_inference(self.model_mp, images)
             mp_tensors = self.fw_impl.to_numpy(mp_tensors)
 
             # Build distance matrix: similarity between the baseline model to the float model

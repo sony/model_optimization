@@ -32,7 +32,7 @@ from tests.pytorch_tests.model_tests.feature_models.residual_collapsing_test imp
 from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test import ReshapeNetTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPercisionActivationSearch8Bit, MixedPercisionActivationSearch2Bit, MixedPercisionActivationSearch4Bit, \
-    MixedPercisionActivationSearch4BitFunctional
+    MixedPercisionActivationSearch4BitFunctional, MixedPercisionActivationMultipleInputs
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.second_moment_correction_test import ConvSecondMomentNetTest, \
@@ -383,6 +383,12 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the activation Mixed Precision search with functional node.
         """
         MixedPercisionActivationSearch4BitFunctional(self).run_test()
+
+    def test_mixed_precision_multiple_inputs(self):
+        """
+        This test checks the activation Mixed Precision search with multiple inputs to model.
+        """
+        MixedPercisionActivationMultipleInputs(self).run_test(experimental_facade=True)
 
     def test_mixed_precision_bops_kpi(self):
         """
