@@ -12,7 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.exporter.model_exporter.keras.keras_export_facade import \
-    keras_export_model, KerasExportMode
 
 

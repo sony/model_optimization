@@ -17,3 +17,4 @@ from model_compression_toolkit.core.common.constants import FOUND_TF
 
 if FOUND_TF:
     from model_compression_toolkit.exporter.model_wrapper.keras.validate_layer import is_keras_layer_exportable
+    from model_compression_toolkit.exporter.model_wrapper.keras.builder.fully_quantized_model_builder import get_exportable_keras_model
