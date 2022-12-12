@@ -44,9 +44,9 @@ class EditRule(_EditRule):
     """
 
     def __repr__(self):
-        _str = f'filter={type(self.filter).__name__}{self.filter.__dict__}'  # pragma: no cove
-        _str = f'{_str} ; action={type(self.action).__name__}{self.action.kwargs}'  # pragma: no cove
-        return _str  # pragma: no cove
+        _str = f'filter={type(self.filter).__name__}{self.filter.__dict__}'  # pragma: no cover
+        _str = f'{_str} ; action={type(self.action).__name__}{self.action.kwargs}'  # pragma: no cover
+        return _str  # pragma: no cover
 
     pass
 
@@ -71,7 +71,7 @@ class BaseAction(ABC):
             Node after action is applied.
 
         """
-        pass  # pragma: no cove
+        pass  # pragma: no cover
 
 
 class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
@@ -244,9 +244,6 @@ class ChangeFinalActivationQuantizationMethod(BaseAction):
 
             activation_quantization_fn = fw_info.activation_quantizer_mapping.get(self.activation_quantization_method)
 
-            if activation_quantization_fn is None:
-                raise Exception('Unknown quantization method for activation')  # pragma: no cove
-
             node.final_activation_quantization_cfg.set_activation_quantization_fn(activation_quantization_fn)
             node.final_activation_quantization_cfg.activation_quantization_method = self.activation_quantization_method
 
@@ -288,7 +285,7 @@ class ChangeCandidatesActivationQuantizationMethod(BaseAction):
                     self.activation_quantization_method)
 
                 if activation_quantization_fn is None:
-                    raise Exception('Unknown quantization method for activations')  # pragma: no cove
+                    raise Exception('Unknown quantization method for activations')  # pragma: no cover
 
                 qc.activation_quantization_cfg.set_activation_quantization_fn(activation_quantization_fn)
                 qc.activation_quantization_cfg.activation_quantization_method = self.activation_quantization_method
@@ -332,7 +329,7 @@ class ChangeFinalWeightsQuantizationMethod(BaseAction):
             weights_quantization_fn = fw_info.weights_quantizer_mapping.get(self.weights_quantization_method)
 
             if weights_quantization_fn is None:
-                raise Exception('Unknown quantization method for weights')  # pragma: no cove
+                raise Exception('Unknown quantization method for weights')  # pragma: no cover
 
             node.final_weights_quantization_cfg.set_weights_quantization_fn(weights_quantization_fn)
             node.final_weights_quantization_cfg.weights_quantization_method = self.weights_quantization_method
@@ -376,7 +373,7 @@ class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
                 weights_quantization_fn = fw_info.weights_quantizer_mapping.get(self.weights_quantization_method)
 
                 if weights_quantization_fn is None:
-                    raise Exception('Unknown quantization method for weights')  # pragma: no cove
+                    raise Exception('Unknown quantization method for weights')  # pragma: no cover
 
                 qc.weights_quantization_cfg.set_weights_quantization_fn(weights_quantization_fn)
                 qc.weights_quantization_cfg.weights_quantization_method = self.weights_quantization_method
