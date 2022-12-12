@@ -284,9 +284,6 @@ class ChangeCandidatesActivationQuantizationMethod(BaseAction):
                 activation_quantization_params_fn = get_activation_quantization_params_fn(
                     self.activation_quantization_method)
 
-                if node.prior_info.is_output_bounded():
-                    activation_quantization_params_fn = quantization_params_generation.no_clipping_selection_min_max
-
                 qc.activation_quantization_cfg.set_activation_quantization_params_fn(activation_quantization_params_fn)
                 activation_quantization_fn = fw_info.activation_quantizer_mapping.get(
                     self.activation_quantization_method)
