@@ -188,7 +188,7 @@ class MixedPrecisionMultipleInputsNet(torch.nn.Module):
 
     def forward(self, x, y, z, w):
         x1 = self.conv1(x)
-        x2 = self.conv1(y)
-        x3 = self.conv1(z)
-        x4 = self.conv1(w)
-        return torch.concat([x1, x2, x3, x4])
+        x2 = self.conv2(y)
+        x3 = self.conv3(z)
+        x4 = self.conv4(w)
+        return torch.concat([x1, x2, x3, x4], dim=1)
