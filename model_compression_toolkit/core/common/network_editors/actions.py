@@ -17,10 +17,9 @@ from abc import ABC, abstractmethod
 from collections import namedtuple
 from typing import Callable
 
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import Graph, Logger
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
-from model_compression_toolkit.core.common.quantization import quantization_params_generation
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
 
@@ -45,9 +44,9 @@ class EditRule(_EditRule):
     """
 
     def __repr__(self):
-        _str = f'filter={type(self.filter).__name__}{self.filter.__dict__}'
-        _str = f'{_str} ; action={type(self.action).__name__}{self.action.kwargs}'
-        return _str
+        _str = f'filter={type(self.filter).__name__}{self.filter.__dict__}'  # pragma: no cove
+        _str = f'{_str} ; action={type(self.action).__name__}{self.action.kwargs}'  # pragma: no cove
+        return _str  # pragma: no cove
 
     pass
 
@@ -72,7 +71,7 @@ class BaseAction(ABC):
             Node after action is applied.
 
         """
-        pass
+        pass  # pragma: no cove
 
 
 class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
@@ -206,6 +205,52 @@ class ChangeQuantizationParamFunction(BaseAction):
                 nqc.weights_quantization_cfg.set_weights_quantization_params_fn(self.weights_quantization_params_fn)
 
 
+class ChangeFinalActivationQuantizationMethod(BaseAction):
+    """
+    Class ChangeFinalActivationQuantizationMethod to change a node's weights/activations quantizer function.
+    """
+
+    def __init__(self, activation_quantization_method=None):
+        """
+        Init a ChangeFinalActivationQuantizationMethod object.
+
+        Args:
+            activation_quantization_method: a quantization method for a node's activations.
+        """
+
+        self.activation_quantization_method = activation_quantization_method
+
+    def apply(self, node: BaseNode, graph, fw_info):
+        """
+        Change the node's activations quantization function.
+
+        Args:
+            node: Node object to change its threshold selection function.
+            graph: Graph to apply the action on.
+            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
+                     groups of layers by how they should be quantized, etc.)
+
+        Returns:
+            The node after its quantization function has been modified.
+        """
+
+        if self.activation_quantization_method is not None and node.final_activation_quantization_cfg is not None:
+
+            activation_quantization_params_fn = get_activation_quantization_params_fn(
+                self.activation_quantization_method)
+
+            node.final_activation_quantization_cfg.set_activation_quantization_params_fn(
+                activation_quantization_params_fn)
+
+            activation_quantization_fn = fw_info.activation_quantizer_mapping.get(self.activation_quantization_method)
+
+            if activation_quantization_fn is None:
+                raise Exception('Unknown quantization method for activation')  # pragma: no cove
+
+            node.final_activation_quantization_cfg.set_activation_quantization_fn(activation_quantization_fn)
+            node.final_activation_quantization_cfg.activation_quantization_method = self.activation_quantization_method
+
+
 class ChangeCandidatesActivationQuantizationMethod(BaseAction):
     """
     Class ChangeQuantizationMethod to change a node's activations quantizer function.
@@ -236,18 +281,17 @@ class ChangeCandidatesActivationQuantizationMethod(BaseAction):
         if self.activation_quantization_method is not None:
             for qc in node.candidates_quantization_cfg:
                 activation_quantization_params_fn = get_activation_quantization_params_fn(
-                    self.activation_quantization_method, qc.activation_quantization_cfg.activation_error_method)
-
-                if node.prior_info.is_output_bounded():
-                    activation_quantization_params_fn = quantization_params_generation.no_clipping_selection_min_max
+                    self.activation_quantization_method)
 
                 qc.activation_quantization_cfg.set_activation_quantization_params_fn(activation_quantization_params_fn)
-                activation_quantization_fn = fw_info.activation_quantizer_mapping.get(self.activation_quantization_method)
+                activation_quantization_fn = fw_info.activation_quantizer_mapping.get(
+                    self.activation_quantization_method)
 
                 if activation_quantization_fn is None:
-                    raise Exception('Unknown quantization method for activations')
+                    raise Exception('Unknown quantization method for activations')  # pragma: no cove
 
                 qc.activation_quantization_cfg.set_activation_quantization_fn(activation_quantization_fn)
+                qc.activation_quantization_cfg.activation_quantization_method = self.activation_quantization_method
 
 
 class ChangeFinalWeightsQuantizationMethod(BaseAction):
@@ -279,19 +323,19 @@ class ChangeFinalWeightsQuantizationMethod(BaseAction):
             The node after its quantization function has been modified.
         """
 
-        if self.weights_quantization_method is not None:
+        if self.weights_quantization_method is not None and node.final_weights_quantization_cfg is not None:
 
-            weights_quantization_params_fn = get_weights_quantization_params_fn(self.weights_quantization_method,
-                                                                                node.final_weights_quantization_cfg.weights_threshold_method)
+            weights_quantization_params_fn = get_weights_quantization_params_fn(self.weights_quantization_method)
 
             node.final_weights_quantization_cfg.set_weights_quantization_params_fn(weights_quantization_params_fn)
 
             weights_quantization_fn = fw_info.weights_quantizer_mapping.get(self.weights_quantization_method)
 
             if weights_quantization_fn is None:
-                raise Exception('Unknown quantization method for weights')
+                raise Exception('Unknown quantization method for weights')  # pragma: no cove
 
             node.final_weights_quantization_cfg.set_weights_quantization_fn(weights_quantization_fn)
+            node.final_weights_quantization_cfg.weights_quantization_method = self.weights_quantization_method
 
 
 class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
@@ -332,9 +376,10 @@ class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
                 weights_quantization_fn = fw_info.weights_quantizer_mapping.get(self.weights_quantization_method)
 
                 if weights_quantization_fn is None:
-                    raise Exception('Unknown quantization method for weights')
+                    raise Exception('Unknown quantization method for weights')  # pragma: no cove
 
                 qc.weights_quantization_cfg.set_weights_quantization_fn(weights_quantization_fn)
+                qc.weights_quantization_cfg.weights_quantization_method = self.weights_quantization_method
 
 
 class ReplaceLayer(BaseAction):
@@ -369,9 +414,9 @@ class ReplaceLayer(BaseAction):
         if node.final_activation_quantization_cfg is not None:
             activation_quantization_cfg = node.final_activation_quantization_cfg.activation_quantization_params
 
-        weights, config = self.get_params_and_weights_fn(node.weights, activation_quantization_cfg, **node.framework_attr)
+        weights, config = self.get_params_and_weights_fn(node.weights, activation_quantization_cfg,
+                                                         **node.framework_attr)
         node.framework_attr = config
         node.weights = weights
         node.layer_class = self.layer_type
         Logger.warning(f'Layer {node.name} was replaced but quantization parameters were set by original layer')
-
