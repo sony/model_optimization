@@ -79,11 +79,10 @@ def generate_tp_model_with_activation_mp(base_cfg, mp_bitwidth_candidates_list, 
         swish = tp.OperatorsSet("Swish", mixed_precision_configuration_options)
         sigmoid = tp.OperatorsSet("Sigmoid", mixed_precision_configuration_options)
         tanh = tp.OperatorsSet("Tanh", mixed_precision_configuration_options)
-        hardsigmoid = tp.OperatorsSet("HardSigmoid", mixed_precision_configuration_options)
         tp.OperatorsSet("Input", mixed_precision_configuration_options)
 
-        activations_after_conv_to_fuse = tp.OperatorSetConcat(any_relu, swish, prelu, sigmoid, tanh, hardsigmoid)
-        activations_after_fc_to_fuse = tp.OperatorSetConcat(any_relu, swish, sigmoid, tanh, hardsigmoid)
+        activations_after_conv_to_fuse = tp.OperatorSetConcat(any_relu, swish, prelu, sigmoid, tanh)
+        activations_after_fc_to_fuse = tp.OperatorSetConcat(any_relu, swish, sigmoid)
         any_binary = tp.OperatorSetConcat(add, sub, mul, div)
 
         # Fusions
