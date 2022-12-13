@@ -27,7 +27,6 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
-from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
 tp = mct.target_platform

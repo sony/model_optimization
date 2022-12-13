@@ -16,7 +16,6 @@
 import tensorflow as tf
 from keras.engine.input_layer import InputLayer
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.constants import LATEST
 
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \
     generate_mixed_precision_test_tp_model, generate_tp_model_with_activation_mp

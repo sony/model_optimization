@@ -26,7 +26,6 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import 
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.user_info import UserInformation
-from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
 
 keras = tf.keras
