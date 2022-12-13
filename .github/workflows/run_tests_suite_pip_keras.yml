@@ -1,0 +1,53 @@
+name: Test pip install
+on:
+  workflow_dispatch: # Allow manual triggers
+    inputs:
+      mct_version:
+        description: 'MCT version'
+        required: true
+        default: 'v1.7.0'
+      python_version:
+        description: 'Python version'
+        required: false
+        default: '3.10'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install Python 3
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{  inputs.python_version  }}
+      - name: Install dependencies
+        run: |
+          git checkout tags/${{  inputs.mct_version  }}
+          pip install -r requirements.txt
+          pip install tensorflow tensorflow-model-optimization
+          pip install torch torchvision
+      - name: Build WHL file
+        run: |
+          version=$(python -c 'import model_compression_toolkit; print(model_compression_toolkit.__version__)')
+          now=$(date +'%d%m%Y-%H%M%S')
+          echo "nightly_version=$version.$now" >> $GITHUB_ENV
+          sed -i "s/attr: model_compression_toolkit.__version__/$version.$now/g" setup.cfg
+          sed -i "s/name='model_compression_toolkit'/name='model-compression-toolkit'/g" setup.py
+          python setup.py sdist bdist_wheel
+      - name: Install WHL file
+        run: |
+          whl_file=$(find . -iname "*.whl")
+          echo $whl_file
+          pip install $whl_file
+          pip list
+          python -c 'import model_compression_toolkit; print(f'MCT version: {model_compression_toolkit.__version__}')'
+      - name: Remove MCT code
+        run: |
+          rm -rf model_compression_toolkit
+      - name: Run Tests
+        run: |
+          python -m unittest discover tests/common_tests --verbose &
+          python -m unittest discover tests/keras_tests --verbose &
+          python -m unittest discover tests/pytorch_tests --verbose
