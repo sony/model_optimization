@@ -17,17 +17,9 @@ from keras.engine.input_layer import InputLayer
 import tensorflow as tf
 import model_compression_toolkit as mct
 
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \
+    generate_mixed_precision_test_tp_model, generate_tp_model_with_activation_mp
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
-from packaging import version
-
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
-        Dropout, \
-        MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, BatchNormalization
-else:
-    from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
-        Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, BatchNormalization
 
 tp = mct.target_platform
 
@@ -63,50 +55,62 @@ def get_activation_quantization_disabled_keras_tpc(name):
     tp = generate_test_tp_model({'enable_activation_quantization': False})
     return generate_keras_tpc(name=name, tp_model=tp)
 
+
 def get_weights_quantization_disabled_keras_tpc(name):
     tp = generate_test_tp_model({'enable_weights_quantization': False})
     return generate_keras_tpc(name=name, tp_model=tp)
 
 
-def generate_activation_mp_tpc_keras(tp_model, name="activation_mp_keras_tp"):
-    ftp_keras = tp.TargetPlatformCapabilities(tp_model,
-                                              name=name)
-    with ftp_keras:
-        tp.OperationsSetToLayers("NoQuantization", [Reshape,
-                                                    tf.reshape,
-                                                    Flatten,
-                                                    Cropping2D,
-                                                    ZeroPadding2D,
-                                                    Dropout,
-                                                    MaxPooling2D,
-                                                    tf.split,
-                                                    tf.quantization.fake_quant_with_min_max_vars,
-                                                    tf.math.argmax,
-                                                    tf.shape,
-                                                    tf.__operators__.getitem])
+def get_weights_only_mp_tpc_keras(base_config, mp_bitwidth_candidates_list, name):
+    mp_tp_model = generate_mixed_precision_test_tp_model(base_cfg=base_config,
+                                                         mp_bitwidth_candidates_list=mp_bitwidth_candidates_list)
+    return generate_keras_tpc(name=name, tp_model=mp_tp_model)
 
-        tp.OperationsSetToLayers("Weights_n_Activation", [Conv2D,
-                                                          DepthwiseConv2D,
-                                                          tf.nn.conv2d,
-                                                          tf.nn.depthwise_conv2d,
-                                                          Dense,
-                                                          Conv2DTranspose,
-                                                          tf.nn.conv2d_transpose])
 
-        tp.OperationsSetToLayers("Activation", [tf.nn.relu,
-                                                tf.nn.relu6,
-                                                tp.LayerFilterParams(ReLU, negative_slope=0.0),
-                                                tp.LayerFilterParams(Activation, activation="relu"),
-                                                tf.add,
-                                                Add,
-                                                PReLU,
-                                                tf.nn.swish,
-                                                tp.LayerFilterParams(Activation, activation="swish"),
-                                                tf.nn.sigmoid,
-                                                tp.LayerFilterParams(Activation, activation="sigmoid"),
-                                                tf.nn.tanh,
-                                                tp.LayerFilterParams(Activation, activation="tanh"),
-                                                InputLayer,
-                                                BatchNormalization])
+def get_tpc_with_activation_mp_keras(base_config, mp_bitwidth_candidates_list, name):
+    mp_tp_model = generate_tp_model_with_activation_mp(base_cfg=base_config,
+                                                       mp_bitwidth_candidates_list=mp_bitwidth_candidates_list)
+    return generate_keras_tpc(name=name, tp_model=mp_tp_model)
 
-    return ftp_keras
+# def generate_activation_mp_tpc_keras(tp_model, name="activation_mp_keras_tp"):
+#     ftp_keras = tp.TargetPlatformCapabilities(tp_model,
+#                                               name=name)
+#     with ftp_keras:
+#         tp.OperationsSetToLayers("NoQuantization", [Reshape,
+#                                                     tf.reshape,
+#                                                     Flatten,
+#                                                     Cropping2D,
+#                                                     ZeroPadding2D,
+#                                                     Dropout,
+#                                                     MaxPooling2D,
+#                                                     tf.split,
+#                                                     tf.quantization.fake_quant_with_min_max_vars,
+#                                                     tf.math.argmax,
+#                                                     tf.shape,
+#                                                     tf.__operators__.getitem])
+#
+#         tp.OperationsSetToLayers("Weights_n_Activation", [Conv2D,
+#                                                           DepthwiseConv2D,
+#                                                           tf.nn.conv2d,
+#                                                           tf.nn.depthwise_conv2d,
+#                                                           Dense,
+#                                                           Conv2DTranspose,
+#                                                           tf.nn.conv2d_transpose])
+#
+#         tp.OperationsSetToLayers("Activation", [tf.nn.relu,
+#                                                 tf.nn.relu6,
+#                                                 tp.LayerFilterParams(ReLU, negative_slope=0.0),
+#                                                 tp.LayerFilterParams(Activation, activation="relu"),
+#                                                 tf.add,
+#                                                 Add,
+#                                                 PReLU,
+#                                                 tf.nn.swish,
+#                                                 tp.LayerFilterParams(Activation, activation="swish"),
+#                                                 tf.nn.sigmoid,
+#                                                 tp.LayerFilterParams(Activation, activation="sigmoid"),
+#                                                 tf.nn.tanh,
+#                                                 tp.LayerFilterParams(Activation, activation="tanh"),
+#                                                 InputLayer,
+#                                                 BatchNormalization])
+#
+#     return ftp_keras

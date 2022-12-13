@@ -23,7 +23,7 @@ from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_
 import tensorflow as tf
 import numpy as np
 
-from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
+from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
 keras = tf.keras
 layers = keras.layers
@@ -43,9 +43,10 @@ class BaseMixedPrecisionBopsTest(BaseKerasFeatureNetworkTest):
 
     def get_tpc(self):
         base_config, _ = get_op_quantization_configs()
-        mp_tp_model = generate_tp_model_with_activation_mp(base_config, self.mixed_precision_candidates_list)
 
-        return generate_activation_mp_tpc_keras(tp_model=mp_tp_model)
+        return get_tpc_with_activation_mp_keras(base_config=base_config,
+                                                mp_bitwidth_candidates_list=self.mixed_precision_candidates_list,
+                                                name="mp_bopts_test")
 
     def get_mixed_precision_v2_config(self):
         return MixedPrecisionQuantizationConfigV2(num_of_images=1)

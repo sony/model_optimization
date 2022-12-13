@@ -32,7 +32,7 @@ from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_
 import model_compression_toolkit as mct
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
-from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
+from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
 tp = mct.target_platform
 
@@ -68,10 +68,10 @@ def representative_dataset():
 
 def get_tpc(mixed_precision_candidates_list):
     base_config, _ = get_op_quantization_configs()
-    mp_tp_model = generate_tp_model_with_activation_mp(base_config, mixed_precision_candidates_list)
-    tpc = generate_activation_mp_tpc_keras(tp_model=mp_tp_model)
 
-    return tpc
+    return get_tpc_with_activation_mp_keras(base_config=base_config,
+                                            mp_bitwidth_candidates_list=mixed_precision_candidates_list,
+                                            name="weights_activation_split_test")
 
 
 def test_setup(in_model, keras_impl, mixed_precision_candidates_list):

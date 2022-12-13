@@ -19,9 +19,10 @@ from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_
 import model_compression_toolkit as mct
 import tensorflow as tf
 
-from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
+
+from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
 
 keras = tf.keras
 layers = keras.layers
@@ -35,11 +36,10 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
         base_config, _ = get_op_quantization_configs()
         base_config = base_config.clone_and_edit(weights_n_bits=16,
                                                  activation_n_bits=16)
-        mp_tp_model = generate_mixed_precision_test_tp_model(base_cfg=base_config,
-                                                             mp_bitwidth_candidates_list=[(2, 16), (4, 16), (16, 16)])
-        return generate_keras_tpc(name="reused_layer_mp_test", tp_model=mp_tp_model)
 
-
+        return get_weights_only_mp_tpc_keras(base_config=base_config,
+                                             mp_bitwidth_candidates_list=[(2, 16), (4, 16), (16, 16)],
+                                             name="reused_layer_mp_test")
 
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
