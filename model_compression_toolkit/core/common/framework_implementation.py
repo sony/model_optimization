@@ -489,3 +489,20 @@ class FrameworkImplementation(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s apply_second_moment_correction method.')
+
+    @abstractmethod
+    def sensitivity_eval_inference(self,
+                                   model: Any,
+                                   inputs: Any):
+        """
+        Calls for a model inference for a specific framework during mixed precision sensitivity evaluation.
+
+        Args:
+            model: A model to run inference for.
+            inputs: Input tensors to run inference on.
+
+        Returns:
+            The output of the model inference on the given input.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s sensitivity_eval_inference method.')

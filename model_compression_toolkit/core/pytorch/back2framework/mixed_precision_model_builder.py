@@ -74,8 +74,6 @@ class MixedPrecisionPyTorchModel(PytorchModel):
         """
         if node.is_all_activation_candidates_equal():
             # otherwise, we want to use the float tensor when building the model for MP search
-            if isinstance(input_tensors, list):
-                input_tensors = torch.cat(input_tensors, dim=0)
             input_tensors = node.candidates_quantization_cfg[0].activation_quantization_cfg.quantize_node_output(input_tensors)
         return input_tensors
 

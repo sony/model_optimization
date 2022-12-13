@@ -543,3 +543,20 @@ class PytorchImplementation(FrameworkImplementation):
         graph_after_second_moment_correction = pytorch_apply_second_moment_correction(quantized_model, core_config,
                                                                                       representative_data_gen, graph)
         return graph_after_second_moment_correction
+
+    def sensitivity_eval_inference(self,
+                                   model: Module,
+                                   inputs: Any):
+        """
+        Calls for a Pytorch model inference for a specific framework during mixed precision sensitivity evaluation.
+        In Pytorch, we need to unfold the list of inputs before passing it to the model.
+
+        Args:
+            model: A Pytorch model to run inference for.
+            inputs: Input tensors to run inference on.
+
+        Returns:
+            The output of the model inference on the given input.
+        """
+
+        return model(*inputs)
