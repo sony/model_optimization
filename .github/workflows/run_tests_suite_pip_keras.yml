@@ -42,7 +42,7 @@ jobs:
           echo $whl_file
           pip install $whl_file
           pip list
-          python -c 'import model_compression_toolkit; print(f'MCT version: {model_compression_toolkit.__version__}')'
+          python -c 'import model_compression_toolkit; print(model_compression_toolkit.__version__)'
       - name: Remove MCT code
         run: |
           rm -rf model_compression_toolkit
