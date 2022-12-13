@@ -324,11 +324,10 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
 
         # Verify final KPI
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.activation_memory == quantization_info.final_kpi.total_memory,
+            quantization_info.final_kpi.activation_memory + quantization_info.final_kpi.weights_memory ==
+            quantization_info.final_kpi.total_memory,
             "Running activation mixed-precision with unconstrained weights and total KPI, "
-            "final activation memory and total memory should be equal.")
-        self.unit_test.assertTrue(quantization_info.final_kpi.weights_memory == 17920,
-                                  "Running activation only mixed-precision, final weights memory should be 0.")
+            "final total memory should be equal to the sum of activation and weights memory.")
 
 
 class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBaseTest):
