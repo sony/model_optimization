@@ -167,9 +167,7 @@ class MixedPrecisionBopsMultipleOutEdgesTest(BaseMixedPrecisionBopsTest):
         inputs = Input(shape=self.get_input_shapes()[0][1:])
         x = Conv2D(3, 4)(inputs)
         y = Conv2D(3, 4)(inputs)
-        x_relu = ReLU()(x)
-        y_relu = ReLU()(y)
-        outputs = Add()([x_relu, y_relu])
+        outputs = Add()([x, y])
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def get_kpi(self):
