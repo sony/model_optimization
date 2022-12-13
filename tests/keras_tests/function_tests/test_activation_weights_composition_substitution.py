@@ -231,12 +231,12 @@ class TestActivationWeightsComposition(unittest.TestCase):
         self.assertTrue(len(sorted_v_nodes[1].candidates_quantization_cfg) == 9)
         # Conv2-Activation node
         self.assertTrue(isinstance(sorted_v_nodes[2], VirtualSplitActivationNode))
-        self.assertTrue(len(sorted_v_nodes[2].candidates_quantization_cfg) == 3)
+        self.assertTrue(len(sorted_v_nodes[2].candidates_quantization_cfg) == 1)
         # Relu1-ConvTranspose composed node
         self.assertTrue(len(sorted_v_nodes[3].candidates_quantization_cfg) == 9)
         # ConvTranspose Activation
         self.assertTrue(isinstance(sorted_v_nodes[4], VirtualSplitActivationNode))
-        self.assertTrue(len(sorted_v_nodes[4].candidates_quantization_cfg) == 3)
+        self.assertTrue(len(sorted_v_nodes[4].candidates_quantization_cfg) == 1)
         # Relu2-Depthwise composed node
         self.assertTrue(len(sorted_v_nodes[5].candidates_quantization_cfg) == 9)
         # Depthwise-Dense composed node

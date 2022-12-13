@@ -120,7 +120,9 @@ class TestWeightsActivationSplit(unittest.TestCase):
         keras_impl = KerasImplementation()
 
         graph, split_graph = test_setup(in_model, keras_impl, mixed_precision_candidates_list=_get_base_mp_nbits_candidates())
-        self._verify_single_conv_test(graph, split_graph, num_weights_candidates=3, num_activation_candidates=3)
+        # num_activation_candidates here is 1 because the split Conv has ReLU after it - thenbecause of fusion, the
+        # Conv layer doesn't have activation quantization candidates
+        self._verify_single_conv_test(graph, split_graph, num_weights_candidates=3, num_activation_candidates=1)
 
     def test_single_conv_net_weights_only_split(self):
         in_model = single_conv_model()
@@ -134,7 +136,9 @@ class TestWeightsActivationSplit(unittest.TestCase):
         keras_impl = KerasImplementation()
 
         graph, split_graph = test_setup(in_model, keras_impl, mixed_precision_candidates_list=[(8, 8), (8, 4), (8, 2)])
-        self._verify_single_conv_test(graph, split_graph, num_weights_candidates=1, num_activation_candidates=3)
+        # num_activation_candidates here is 1 because the split Conv has ReLU after it - thenbecause of fusion, the
+        # Conv layer doesn't have activation quantization candidates
+        self._verify_single_conv_test(graph, split_graph, num_weights_candidates=1, num_activation_candidates=1)
 
     def test_all_weights_layers_split(self):
         in_model = multiple_weights_nodes_model()

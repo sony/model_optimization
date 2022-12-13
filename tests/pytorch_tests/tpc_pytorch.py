@@ -30,6 +30,20 @@ from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlac
 tp = mct.target_platform
 
 
+def get_pytorch_test_tpc_dict(tp_model, test_name, ftp_name):
+    return {
+        test_name: generate_pytorch_tpc(name=ftp_name,
+                                        tp_model=tp_model),
+    }
+
+
+def get_mp_activation_pytorch_tpc_dict(tpc_model, test_name, tpc_name):
+    return {
+        test_name: generate_activation_mp_tpc_pytorch(name=tpc_name,
+                                                      tp_model=tpc_model),
+    }
+
+
 def generate_activation_mp_tpc_pytorch(tp_model, name="activation_mp_pytorch_tp"):
     ftp_torch = tp.TargetPlatformCapabilities(tp_model,
                                               name=name)
@@ -70,17 +84,3 @@ def generate_activation_mp_tpc_pytorch(tp_model, name="activation_mp_pytorch_tp"
                                                 DummyPlaceHolder])
 
     return ftp_torch
-
-
-def get_pytorch_test_tpc_dict(tp_model, test_name, ftp_name):
-    return {
-        test_name: generate_pytorch_tpc(name=ftp_name,
-                                        tp_model=tp_model),
-    }
-
-
-def get_mp_activation_pytorch_tpc_dict(tpc_model, test_name, tpc_name):
-    return {
-        test_name: generate_activation_mp_tpc_pytorch(name=tpc_name,
-                                                      tp_model=tpc_model),
-    }
