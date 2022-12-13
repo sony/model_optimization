@@ -16,7 +16,7 @@
 
 import numpy as np
 import tensorflow as tf
-from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
+from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from keras import backend as K
 

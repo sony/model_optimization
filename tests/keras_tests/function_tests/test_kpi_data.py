@@ -26,7 +26,7 @@ from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_
 from model_compression_toolkit.core.keras.constants import DEPTHWISE_KERNEL, KERNEL
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.separableconv_decomposition import \
     POINTWISE_KERNEL
-from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
+from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
 from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
 
 

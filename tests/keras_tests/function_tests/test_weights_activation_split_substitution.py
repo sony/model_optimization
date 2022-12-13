@@ -30,7 +30,7 @@ from model_compression_toolkit.core.common.substitutions.apply_substitutions imp
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
 
 import model_compression_toolkit as mct
-from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
+from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
 

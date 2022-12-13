@@ -27,9 +27,9 @@ def generate_test_tp_model(edit_params_dict, name=""):
     op_cfg_list = [updated_config]
 
     return generate_tp_model(default_config=updated_config,
-                                   base_config=updated_config,
-                                   mixed_precision_cfg_list=op_cfg_list,
-                                   name=name)
+                             base_config=updated_config,
+                             mixed_precision_cfg_list=op_cfg_list,
+                             name=name)
 
 
 def generate_mixed_precision_test_tp_model(base_cfg, mp_bitwidth_candidates_list, name=""):
@@ -43,3 +43,32 @@ def generate_mixed_precision_test_tp_model(base_cfg, mp_bitwidth_candidates_list
                              base_config=base_cfg,
                              mixed_precision_cfg_list=mp_op_cfg_list,
                              name=name)
+
+
+def generate_tp_model_with_activation_mp(base_cfg, mp_bitwidth_candidates_list, name="activation_mp_model"):
+
+    # prepare mp candidates
+    mixed_precision_cfg_list = []
+    for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
+        candidate_cfg = base_cfg.clone_and_edit(weights_n_bits=weights_n_bits,
+                                                activation_n_bits=activation_n_bits)
+        mixed_precision_cfg_list.append(candidate_cfg)
+
+    # set hw model
+    default_configuration_options = tp.QuantizationConfigOptions([base_cfg])
+
+    generated_tp = tp.TargetPlatformModel(default_configuration_options, name=name)
+
+    with generated_tp:
+        tp.OperatorsSet("NoQuantization",
+                         tp.get_default_quantization_config_options().clone_and_edit(
+                             enable_weights_quantization=False,
+                             enable_activation_quantization=False))
+
+        mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,
+                                                                              base_config=base_cfg)
+
+        tp.OperatorsSet("Weights_n_Activation", mixed_precision_configuration_options)
+        tp.OperatorsSet("Activation", mixed_precision_configuration_options)
+
+    return generated_tp
