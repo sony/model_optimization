@@ -13,13 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 import torch.nn
-from model_compression_toolkit import MixedPrecisionQuantizationConfigV2, KPI
+from model_compression_toolkit import MixedPrecisionQuantizationConfigV2, KPI, MixedPrecisionQuantizationConfig
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
-from tests.pytorch_tests.tpc_pytorch import generate_activation_mp_tpc_pytorch
+from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
 
+import model_compression_toolkit as mct
 
 def get_base_mp_nbits_candidates():
     return [(4, 8), (4, 4), (4, 2),
@@ -104,11 +105,25 @@ class BaseMixedPrecisionBopsTest(BasePytorchTest):
 
     def get_tpc(self):
         base_config, _ = get_op_quantization_configs()
-        mp_tp_model = generate_tp_model_with_activation_mp(base_config, self.mixed_precision_candidates_list)
-        return generate_activation_mp_tpc_pytorch(tp_model=mp_tp_model)
+        return get_mp_activation_pytorch_tpc_dict(
+            tpc_model=generate_tp_model_with_activation_mp(
+                base_cfg=base_config,
+                mp_bitwidth_candidates_list=self.mixed_precision_candidates_list),
+            test_name='mixed_precision_bops_model',
+            tpc_name='mixed_precision_bops_pytorch_test')
+
+    def get_quantization_configs(self):
+        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                    mct.QuantizationErrorMethod.MSE,
+                                    weights_bias_correction=True,
+                                    weights_per_channel_threshold=True,
+                                    activation_channel_equalization=False,
+                                    relu_bound_to_power_of_2=False,
+                                    input_scaling=False)
+
+        return {"mixed_precision_bops_model": MixedPrecisionQuantizationConfig(qc, num_of_images=1)}
 
     def get_mixed_precision_v2_config(self):
-        # return {"mixed_precision_v2": MixedPrecisionQuantizationConfigV2(num_of_images=1)}
         return MixedPrecisionQuantizationConfigV2(num_of_images=1)
 
     def get_input_shapes(self):

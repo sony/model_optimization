@@ -17,13 +17,14 @@ import model_compression_toolkit as mct
 import operator
 
 import torch
-from torch import add, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh
-from torch.nn import Conv2d, ConvTranspose2d, Linear, BatchNorm2d
-from torch.nn import Dropout, Flatten, Hardtanh
-from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh
-from torch.nn.functional import relu, relu6, prelu, silu, hardtanh
 
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework import LayerFilterParams
+from torch import add, sub, mul, div, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, chunk, unbind, \
+    permute, transpose, equal, gather, topk
+from torch.nn import Conv2d, Linear, BatchNorm2d, ConvTranspose2d
+from torch.nn import Dropout, Flatten, Hardtanh
+from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, LeakyReLU
+from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, leaky_relu
+
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 
@@ -39,14 +40,15 @@ def get_pytorch_test_tpc_dict(tp_model, test_name, ftp_name):
 
 def get_mp_activation_pytorch_tpc_dict(tpc_model, test_name, tpc_name):
     return {
-        test_name: generate_activation_mp_tpc_pytorch(name=tpc_name,
-                                                      tp_model=tpc_model),
+        test_name: _generate_keras_mp_with_activation_tpc(name=tpc_name,
+                                                          tp_model=tpc_model),
     }
 
 
-def generate_activation_mp_tpc_pytorch(tp_model, name="activation_mp_pytorch_tp"):
+def _generate_keras_mp_with_activation_tpc(tp_model, name="activation_mp_pytorch_tp"):
     ftp_torch = tp.TargetPlatformCapabilities(tp_model,
                                               name=name)
+
     with ftp_torch:
         tp.OperationsSetToLayers("NoQuantization", [Dropout,
                                                     Flatten,
@@ -57,30 +59,35 @@ def generate_activation_mp_tpc_pytorch(tp_model, name="activation_mp_pytorch_tp"
                                                     reshape,
                                                     unsqueeze,
                                                     BatchNorm2d,
+                                                    chunk,
+                                                    unbind,
                                                     torch.Tensor.size,
-                                                    torch.argmax])
+                                                    permute,
+                                                    transpose,
+                                                    equal,
+                                                    gather,
+                                                    topk])
 
-        tp.OperationsSetToLayers("Weights_n_Activation", [Conv2d,
-                                                          Linear,
-                                                          ConvTranspose2d])
+        tp.OperationsSetToLayers("Conv", [Conv2d, ConvTranspose2d])
+        tp.OperationsSetToLayers("FullyConnected", [Linear])
+        tp.OperationsSetToLayers("AnyReLU", [torch.relu,
+                                             ReLU,
+                                             ReLU6,
+                                             LeakyReLU,
+                                             relu,
+                                             relu6,
+                                             leaky_relu,
+                                             tp.LayerFilterParams(Hardtanh, min_val=0),
+                                             tp.LayerFilterParams(hardtanh, min_val=0)])
 
-        tp.OperationsSetToLayers("Activation", [torch.relu,
-                                                ReLU,
-                                                ReLU6,
-                                                relu,
-                                                relu6,
-                                                LayerFilterParams(Hardtanh, min_val=0),
-                                                LayerFilterParams(hardtanh, min_val=0),
-                                                operator.add,
-                                                add,
-                                                PReLU,
-                                                prelu,
-                                                SiLU,
-                                                silu,
-                                                Sigmoid,
-                                                sigmoid,
-                                                Tanh,
-                                                tanh,
-                                                DummyPlaceHolder])
+        tp.OperationsSetToLayers("Add", [operator.add, add])
+        tp.OperationsSetToLayers("Sub", [operator.sub, sub])
+        tp.OperationsSetToLayers("Mul", [operator.mul, mul])
+        tp.OperationsSetToLayers("Div", [operator.truediv, div])
+        tp.OperationsSetToLayers("PReLU", [PReLU, prelu])
+        tp.OperationsSetToLayers("Swish", [SiLU, silu, Hardswish, hardswish])
+        tp.OperationsSetToLayers("Sigmoid", [Sigmoid, sigmoid])
+        tp.OperationsSetToLayers("Tanh", [Tanh, tanh])
+        tp.OperationsSetToLayers("Input", [DummyPlaceHolder])
 
     return ftp_torch
