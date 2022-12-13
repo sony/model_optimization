@@ -28,7 +28,8 @@ if version.parse(tf.__version__) < version.parse("2.6"):
         Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, Permute, LeakyReLU, Subtract, Multiply
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, \
-        Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, Permute, LeakyReLU, Subtract, Multiply
+    Dropout, MaxPooling2D, Activation, ReLU, Add, PReLU, Flatten, Cropping2D, Permute, LeakyReLU, Subtract, Multiply, \
+    Conv2DTranspose
 
 tp = mct.target_platform
 
@@ -116,7 +117,9 @@ def _generate_keras_mp_with_activation_tpc(name: str, tp_model: tp.TargetPlatfor
         tp.OperationsSetToLayers("Conv", [Conv2D,
                                           DepthwiseConv2D,
                                           tf.nn.conv2d,
-                                          tf.nn.depthwise_conv2d])
+                                          tf.nn.depthwise_conv2d,
+                                          Conv2DTranspose,
+                                          tf.nn.conv2d_transpose])
         tp.OperationsSetToLayers("FullyConnected", [Dense])
         tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                              tf.nn.relu6,
