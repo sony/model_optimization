@@ -14,7 +14,6 @@
 # ==============================================================================
 
 import model_compression_toolkit as mct
-from torch.nn import ConvTranspose2d
 
 
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
@@ -34,7 +33,6 @@ def get_pytorch_test_tpc_dict(tp_model, test_name, ftp_name):
 def get_mp_activation_pytorch_tpc_dict(tpc_model, test_name, tpc_name):
     op_sets_to_layer_add = {
         "Input": [DummyPlaceHolder],
-        "Conv": [ConvTranspose2d]
     }
 
     return {

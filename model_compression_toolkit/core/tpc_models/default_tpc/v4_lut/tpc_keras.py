@@ -18,10 +18,12 @@ from model_compression_toolkit.core.tpc_models.default_tpc.v4_lut import __versi
 
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
-        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute
+        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
+        Conv2DTranspose
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
-        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute
+        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
+        Conv2DTranspose
 
 from model_compression_toolkit.core.tpc_models.default_tpc.v4_lut.tp_model import get_tp_model
 import model_compression_toolkit as mct
@@ -77,8 +79,10 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
 
         tp.OperationsSetToLayers("Conv", [Conv2D,
                                           DepthwiseConv2D,
+                                          Conv2DTranspose,
                                           tf.nn.conv2d,
-                                          tf.nn.depthwise_conv2d])
+                                          tf.nn.depthwise_conv2d,
+                                          tf.nn.conv2d_transpose])
         tp.OperationsSetToLayers("FullyConnected", [Dense])
         tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                              tf.nn.relu6,
