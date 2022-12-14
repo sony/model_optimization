@@ -16,7 +16,6 @@
 
 import numpy as np
 import tensorflow as tf
-from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from keras import backend as K
 
@@ -25,8 +24,7 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import 
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.user_info import UserInformation
-from tests.common_tests.helpers.tensors_compare import cosine_similarity
-from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
+from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
 keras = tf.keras
 layers = keras.layers
@@ -67,8 +65,9 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
         # sets all combinations of 2, 4, 8 bits for weights and activations
         mixed_precision_candidates_list = get_base_mp_nbits_candidates()
 
-        tp = generate_tp_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_tp')
-        return generate_activation_mp_tpc_keras(name="mixed_precision_activation_test", tp_model=tp)
+        return get_tpc_with_activation_mp_keras(base_config=eight_bits,
+                                                mp_bitwidth_candidates_list=mixed_precision_candidates_list,
+                                                name="mixed_precision_activation_test")
 
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
@@ -119,7 +118,7 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
 
 class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[1, 3, 7])
+        super().__init__(unit_test, activation_layers_idx=[1, 3, 6])
 
     def get_kpi(self):
         # kpi is infinity -> should give best model - 8bits on all layers for both weights and activations
@@ -140,7 +139,7 @@ class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
 
 class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[3, 5])
+        super().__init__(unit_test, activation_layers_idx=[3, 6])
 
     def get_kpi(self):
         # kpi is for 4 bits on average
@@ -151,8 +150,9 @@ class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBase
         # set only 8 and 4 bit candidates for test, to verify that all layers get exactly 4 bits
         mixed_precision_candidates_list = [(8, 8), (8, 4), (4, 8), (4, 4)]
 
-        tp = generate_tp_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_tp')
-        return generate_activation_mp_tpc_keras(name="mixed_precision_4bit_test", tp_model=tp)
+        return get_tpc_with_activation_mp_keras(base_config=eight_bits,
+                                                mp_bitwidth_candidates_list=mixed_precision_candidates_list,
+                                                name="mixed_precision_4bit_test")
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
@@ -173,7 +173,7 @@ class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBase
 
 class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[3, 5])
+        super().__init__(unit_test, activation_layers_idx=[3, 6])
 
     def get_kpi(self):
         # kpi is for 2 bits on average
@@ -204,7 +204,7 @@ class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBase
 
 class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[1, 5])
+        super().__init__(unit_test, activation_layers_idx=[1, 4])
 
     def get_kpi(self):
         return KPI(np.inf, np.inf)
@@ -237,8 +237,9 @@ class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest
         # set only 8 and 4 bit candidates for test, to verify that all layers get exactly 4 bits
         mixed_precision_candidates_list = [(8, 8), (8, 4), (4, 8), (4, 4)]
 
-        tp = generate_tp_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_tp')
-        return generate_activation_mp_tpc_keras(name="mixed_precision_depthwise_4bit_test", tp_model=tp)
+        return get_tpc_with_activation_mp_keras(base_config=eight_bits,
+                                                mp_bitwidth_candidates_list=mixed_precision_candidates_list,
+                                                name="mixed_precision_depthwise_4bit_test")
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -289,12 +290,13 @@ class MixedPrecisionActivationSplitLayerTest(MixedPrecisionActivationBaseTest):
 
 class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[1, 3, 5])
+        super().__init__(unit_test, activation_layers_idx=[1, 4, 6])
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(32, 4)(inputs)
         x = layers.BatchNormalization()(x)
+        x = layers.ReLU()(x)
         outputs = layers.Conv2D(32, 4)(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
         return model
@@ -303,8 +305,9 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
         eight_bits = get_base_eight_bits_config_op()
         mixed_precision_candidates_list = [(8, 8), (8, 4), (8, 2)]
 
-        tp = generate_tp_model_with_activation_mp(eight_bits, mixed_precision_candidates_list, name='mp_default_tp')
-        return generate_activation_mp_tpc_keras(name="mixed_precision_activation_weights_disabled_test", tp_model=tp)
+        return get_tpc_with_activation_mp_keras(base_config=eight_bits,
+                                                mp_bitwidth_candidates_list=mixed_precision_candidates_list,
+                                                name="mixed_precision_activation_weights_disabled_test")
 
     def get_kpi(self):
         # kpi is infinity -> should give best model - 8bits on all layers for both weights and activations
@@ -348,8 +351,9 @@ class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBa
 
         mixed_precision_candidates_list = [(8, 8), (8, 4), (8, 2)]
 
-        tp = generate_tp_model_with_activation_mp(weights_disabled_config, mixed_precision_candidates_list, name='mp_default_tp')
-        return generate_activation_mp_tpc_keras(name="mixed_precision_activation_weights_disabled_test", tp_model=tp)
+        return get_tpc_with_activation_mp_keras(base_config=weights_disabled_config,
+                                                mp_bitwidth_candidates_list=mixed_precision_candidates_list,
+                                                name="mixed_precision_activation_weights_disabled_test")
 
     def get_kpi(self):
         # kpi is infinity -> should give best model - 8bits on all layers for both weights and activations
@@ -432,7 +436,7 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
 
 class MixedPrecisionTotalKPISearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[3, 5])
+        super().__init__(unit_test, activation_layers_idx=[3, 6])
 
     def get_kpi(self):
         return KPI(np.inf, np.inf, total_memory=(17920 + 5408) * 4 / 8)
@@ -459,7 +463,7 @@ class MixedPrecisionTotalKPISearchTest(MixedPrecisionActivationBaseTest):
 
 class MixedPrecisionMultipleKPIsTightSearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[3, 5])
+        super().__init__(unit_test, activation_layers_idx=[3, 6])
 
     def get_kpi(self):
         weights = 17920 * 4 / 8
@@ -488,7 +492,7 @@ class MixedPrecisionMultipleKPIsTightSearchTest(MixedPrecisionActivationBaseTest
 
 class MixedPrecisionReducedTotalKPISearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[3, 5])
+        super().__init__(unit_test, activation_layers_idx=[3, 6])
 
     def get_kpi(self):
         weights = 17920 * 4 / 8

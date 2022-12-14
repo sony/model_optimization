@@ -27,7 +27,7 @@ from model_compression_toolkit.core.common.similarity_analyzer import compute_ms
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_keras_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
+from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
 
 
 def build_ip_list_for_test(in_model, num_interest_points_factor):
@@ -47,10 +47,11 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
 
     base_config, mixed_precision_cfg_list = get_op_quantization_configs()
     base_config = base_config.clone_and_edit(enable_activation_quantization=False)
-    tp_model = generate_mixed_precision_test_tp_model(
-        base_cfg=base_config,
-        mp_bitwidth_candidates_list=[(c.weights_n_bits, c.activation_n_bits) for c in mixed_precision_cfg_list])
-    tpc = generate_keras_tpc(name="sem_test", tp_model=tp_model)
+
+    tpc = get_weights_only_mp_tpc_keras(base_config=base_config,
+                                        mp_bitwidth_candidates_list=[(c.weights_n_bits, c.activation_n_bits) for c in mixed_precision_cfg_list],
+                                        name="sem_test")
+
     graph.set_tpc(tpc)
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=qc,

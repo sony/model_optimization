@@ -19,7 +19,6 @@ import tensorflow as tf
 from keras.layers import DepthwiseConv2D, ReLU
 
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_keras_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import model_compression_toolkit as mct
@@ -27,7 +26,7 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import 
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.user_info import UserInformation
-from tests.common_tests.helpers.tensors_compare import cosine_similarity
+from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
 
 keras = tf.keras
 layers = keras.layers
@@ -74,9 +73,10 @@ class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
 
     def get_tpc(self):
         base_config, _ = get_op_quantization_configs()
-        mp_tp_model = generate_mixed_precision_test_tp_model(base_cfg=base_config,
-                                                             mp_bitwidth_candidates_list=[(8, 8), (2, 8), (3, 8)])
-        return generate_keras_tpc(name="mp_test", tp_model=mp_tp_model)
+
+        return get_weights_only_mp_tpc_keras(base_config=base_config,
+                                             mp_bitwidth_candidates_list=[(8, 8), (2, 8), (3, 8)],
+                                             name="mp_test")
 
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
@@ -199,10 +199,10 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
         base_config, _ = get_op_quantization_configs()
         base_config = base_config.clone_and_edit(weights_n_bits=16,
                                                  activation_n_bits=16)
-        mp_tp_model = generate_mixed_precision_test_tp_model(base_cfg=base_config,
-                                                             mp_bitwidth_candidates_list=[(8, 16), (2, 16), (4, 16),
-                                                                                          (16, 16)])
-        return generate_keras_tpc(name="mp_dw_test", tp_model=mp_tp_model)
+
+        return get_weights_only_mp_tpc_keras(base_config=base_config,
+                                             mp_bitwidth_candidates_list=[(8, 16), (2, 16), (4, 16), (16, 16)],
+                                             name="mp_dw_test")
 
     def get_quantization_config(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
@@ -235,9 +235,9 @@ class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
         base_config, _ = get_op_quantization_configs()
         activation_disabled_config = base_config.clone_and_edit(enable_activation_quantization=False)
 
-        mp_tp_model = generate_mixed_precision_test_tp_model(base_cfg=activation_disabled_config,
-                                                             mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)])
-        return generate_keras_tpc(name="mp_weights_only_test", tp_model=mp_tp_model)
+        return get_weights_only_mp_tpc_keras(base_config=activation_disabled_config,
+                                             mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)],
+                                             name="mp_weights_only_test")
 
     def get_kpi(self):
         # kpi is infinity -> should give best model - 8bits

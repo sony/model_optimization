@@ -19,7 +19,7 @@ from model_compression_toolkit import MixedPrecisionQuantizationConfig, KPI, Cor
     MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
-from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
+from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
 from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
@@ -85,7 +85,7 @@ class MixedPercisionActivationSearch8Bit(MixedPercisionActivationBaseTest):
 class MixedPercisionActivationSearch2Bit(MixedPercisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [2, 8, 8, 2]
+        self.expected_config = [2, 8, 2, 2]
 
     def get_kpi(self):
         return KPI(96, 768)
@@ -97,7 +97,7 @@ class MixedPercisionActivationSearch2Bit(MixedPercisionActivationBaseTest):
 class MixedPercisionActivationSearch4Bit(MixedPercisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [1, 4, 4, 1]
+        self.expected_config = [1, 4, 1, 1]
 
     def get_kpi(self):
         return KPI(192, 1536)

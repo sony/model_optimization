@@ -26,8 +26,7 @@ from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_
 from model_compression_toolkit.core.keras.constants import DEPTHWISE_KERNEL, KERNEL
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.separableconv_decomposition import \
     POINTWISE_KERNEL
-from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
-from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
+from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
 
 def small_random_datagen():
@@ -84,10 +83,10 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
     base_config, mixed_precision_cfg_list = get_op_quantization_configs()
     base_config = base_config.clone_and_edit(weights_n_bits=mp_bitwidth_candidates_list[0][0],
                                              activation_n_bits=mp_bitwidth_candidates_list[0][1])
-    tp_model = generate_tp_model_with_activation_mp(
-        base_cfg=base_config,
-        mp_bitwidth_candidates_list=mp_bitwidth_candidates_list)
-    tpc = generate_activation_mp_tpc_keras(tp_model=tp_model, name="kpi_data_test")
+
+    tpc = get_tpc_with_activation_mp_keras(base_config=base_config,
+                                           mp_bitwidth_candidates_list=mp_bitwidth_candidates_list,
+                                           name="kpi_data_test")
 
     kpi_data = mct.keras_kpi_data(in_model=model,
                                   representative_data_gen=random_datagen,

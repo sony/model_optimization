@@ -36,8 +36,7 @@ from model_compression_toolkit.core.common.substitutions.apply_substitutions imp
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
 
 import model_compression_toolkit as mct
-from tests.common_tests.helpers.activation_mp_tp_model import generate_tp_model_with_activation_mp
-from tests.keras_tests.tpc_keras import generate_activation_mp_tpc_keras
+from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
 tp = mct.target_platform
 
@@ -93,8 +92,9 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
 
     graph = keras_impl.model_reader(in_model, representative_dataset)  # model reading
 
-    mp_tp_model = generate_tp_model_with_activation_mp(base_config, mixed_precision_candidates_list)
-    tpc = generate_activation_mp_tpc_keras(tp_model=mp_tp_model)
+    tpc = get_tpc_with_activation_mp_keras(base_config=base_config,
+                                           mp_bitwidth_candidates_list=mixed_precision_candidates_list,
+                                           name="activation_weights_composition_test")
 
     graph.set_fw_info(fw_info)
     graph.set_tpc(tpc)
@@ -230,12 +230,12 @@ class TestActivationWeightsComposition(unittest.TestCase):
         self.assertTrue(len(sorted_v_nodes[1].candidates_quantization_cfg) == 9)
         # Conv2-Activation node
         self.assertTrue(isinstance(sorted_v_nodes[2], VirtualSplitActivationNode))
-        self.assertTrue(len(sorted_v_nodes[2].candidates_quantization_cfg) == 3)
+        self.assertTrue(len(sorted_v_nodes[2].candidates_quantization_cfg) == 1)
         # Relu1-ConvTranspose composed node
         self.assertTrue(len(sorted_v_nodes[3].candidates_quantization_cfg) == 9)
         # ConvTranspose Activation
         self.assertTrue(isinstance(sorted_v_nodes[4], VirtualSplitActivationNode))
-        self.assertTrue(len(sorted_v_nodes[4].candidates_quantization_cfg) == 3)
+        self.assertTrue(len(sorted_v_nodes[4].candidates_quantization_cfg) == 1)
         # Relu2-Depthwise composed node
         self.assertTrue(len(sorted_v_nodes[5].candidates_quantization_cfg) == 9)
         # Depthwise-Dense composed node
