@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
+from typing import Dict, List, Any
+
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_tp_model
 import model_compression_toolkit as mct
 
@@ -93,3 +96,35 @@ def generate_tp_model_with_activation_mp(base_cfg, mp_bitwidth_candidates_list, 
         tp.Fusing([any_binary, any_relu])
 
     return generated_tp_model
+
+
+def generate_test_tpc(name: str,
+                      tp_model: tp.TargetPlatformModel,
+                      base_tpc: tp.TargetPlatformCapabilities,
+                      op_sets_to_layer_add: Dict[str, List[Any]] = None,
+                      op_sets_to_layer_drop: Dict[str, List[Any]] = None):
+
+    op_set_to_layers_list = base_tpc.op_sets_to_layers.op_sets_to_layers
+    op_set_to_layers_dict = {op_set.name: op_set.layers for op_set in op_set_to_layers_list}
+
+    merged_dict = copy.deepcopy(op_set_to_layers_dict)
+
+    # Add new keys and update existing keys from op_sets_to_layer_add
+    if op_sets_to_layer_add is not None:
+        for op_set_name, layers in op_sets_to_layer_add.items():
+            merged_dict[op_set_name] = merged_dict.get(op_set_name, []) + layers
+
+    # Remove values from existing key
+    if op_sets_to_layer_drop is not None:
+        merged_dict = {op_set_name: [l for l in layers if l not in op_sets_to_layer_drop.get(op_set_name, [])]
+                       for op_set_name, layers in merged_dict.items()}
+        # Remove empty op sets
+        merged_dict = {op_set_name: layers for op_set_name, layers in merged_dict.items() if len(layers) == 0}
+
+    tpc = tp.TargetPlatformCapabilities(tp_model, name=name)
+
+    with tpc:
+        for op_set_name, layers in merged_dict.items():
+            tp.OperationsSetToLayers(op_set_name, layers)
+
+    return tpc
