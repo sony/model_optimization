@@ -15,6 +15,7 @@
 import copy
 from typing import Dict, List, Any
 
+from model_compression_toolkit.core.common.constants import OPS_SET_LIST
 from model_compression_toolkit.core.common.target_platform import OpQuantizationConfig, QuantizationConfigOptions
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_tp_model
 import model_compression_toolkit as mct
@@ -88,7 +89,7 @@ def generate_custom_test_tp_model(name: str,
             # Add existing OperatorSets from base TP model
             qc_options = op_set.qc_options if \
                 (operator_sets_dict is None or op_set.name not in operator_sets_dict) and \
-                (op_set.get_info().get('ops_set_list') is None) \
+                (op_set.get_info().get(OPS_SET_LIST) is None) \
                 else operator_sets_dict[op_set.name]
 
             tp.OperatorsSet(op_set.name, qc_options)
