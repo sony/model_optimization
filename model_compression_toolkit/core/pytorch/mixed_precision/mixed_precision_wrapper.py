@@ -107,9 +107,13 @@ class PytorchMixedPrecisionWrapper(torch.nn.Module):
         if self.enable_activation_quantization:
             # add fake quant to quantize activations with the active number of bits
             if isinstance(outputs, list):
-                # we assume here that it can't be multiple outputs out of a quantized layer
-                assert len(outputs) == 1, "Activation quantization for node with multiple outputs is not supported."
-                outputs = torch.cat(outputs, dim=0)
+                # we assume here that it can't be multiple outputs out of a quantized layer.
+                # We are not expecting to get here since we call this wrapper layer op only through the
+                # sensitivity evaluation inference pytorch method which unfolds the input list to separate arguments.
+                # But, in order to prevent possible issues (if someone will use this wrapper otherwise,
+                # we keep this line which handles an input as list, and exclude it from the test coverage report.
+                assert len(outputs) == 1, "Activation quantization for node with multiple outputs is not supported."  # pragma: no cover
+                outputs = torch.cat(outputs, dim=0)  # pragma: no cover
 
             outputs = self.activation_quantizers[self.activation_bitwidth_idx](outputs)
 
