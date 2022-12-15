@@ -13,14 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
-import tensorflow as tf
 from keras.engine.input_layer import InputLayer
 import model_compression_toolkit as mct
 
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \
     generate_mixed_precision_test_tp_model, generate_tp_model_with_activation_mp, generate_test_tpc
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
-from keras.layers import Conv2DTranspose
 
 tp = mct.target_platform
 
@@ -74,7 +72,6 @@ def get_tpc_with_activation_mp_keras(base_config, mp_bitwidth_candidates_list, n
 
     op_sets_to_layer_add = {
         "Input": [InputLayer],
-        "Conv": [Conv2DTranspose, tf.nn.conv2d_transpose]
     }
 
     return generate_test_tpc(name=name,
