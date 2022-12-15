@@ -47,6 +47,11 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
 
     # Build a mapping from each layer's index (in the model) to a dictionary that maps the
     # bitwidth index to the observed sensitivity of the model when using that bitwidth for that layer.
+
+    if target_kpi is None or search_manager is None:
+        Logger.critical("Can't run mixed precision search with given target_kpi=None or search_manager=None."
+                        "Please provide a valid target_kpi and check the mixed precision parameters values.")
+
     layer_to_metrics_mapping = _build_layer_to_metrics_mapping(search_manager, target_kpi)
 
     # Init variables to find their values when solving the lp problem.
@@ -166,9 +171,9 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
                                             indicators_matrix=indicators_matrix,
                                             lp_problem=lp_problem,
                                             non_conf_kpi_vector=non_conf_kpi_vector)
-    else:
-        raise Exception("Can't run mixed-precision search with given target_kpi=None."
-                        "Please provide a valid target_kpi.")
+    else:  # pragma: no cover
+        raise Logger.critical("Can't run mixed-precision search with given target_kpi=None."
+                              "Please provide a valid target_kpi.")
     return lp_problem
 
 
@@ -216,7 +221,7 @@ def _add_set_of_kpi_constraints(search_manager: MixedPrecisionSearchManager,
     for v in aggr_kpi:
         if isinstance(v, float):
             if v > target_kpi_value:
-                Logger.critical(f"The model can't be quantized to satisfy target KPI {target.value} with value {target_kpi_value}")
+                Logger.critical(f"The model can't be quantized to satisfy target KPI {target.value} with value {target_kpi_value}")  # pragma: no cover
         else:
             lp_problem += v <= target_kpi_value
 
@@ -288,59 +293,3 @@ def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
                     search_manager.max_kpi_config)
 
     return layer_to_metrics_mapping
-
-
-def _compute_kpis(node_to_bitwidth_indices: Dict[int, List[int]],
-                  compute_kpi_fn: Callable,
-                  min_weights_cfg: List[int],
-                  min_activation_cfg: List[int]) -> Tuple[Dict[int, Dict[int, KPI]], KPI]:
-    """
-    This function computes and returns:
-    1. The minimal possible KPI of the graph.
-    2. A mapping from each node's index to a mapping from a possible bitwidth index to
-    the contribution to the model's minimal KPI, if we were configuring this node with this bitwidth.
-
-    Args:
-        node_to_bitwidth_indices: Possible indices for the different nodes.
-        compute_kpi_fn: Function to compute a mixed-precision model KPI for a given
-        mixed-precision bitwidth configuration.
-        min_weights_cfg: Mixed-Precision configuration for minimal weights precision.
-        min_activation_cfg: Mixed-Precision configuration for minimal activation precision.
-
-    Returns:
-        A tuple containing a mapping from each node's index in a graph, to a dictionary from the
-        bitwidth index (of this node) to the contribution to the minimal KPI of the model.
-        The second element in the tuple is the minimal possible KPI.
-
-    """
-
-    Logger.info('Starting to compute KPIs per node and bitwidth')
-    layer_to_kpi_mapping = {}
-
-    minimal_weights_memory = compute_kpi_fn(min_weights_cfg, compute_activation_kpi=False).weights_memory
-    minimal_activation_memory = compute_kpi_fn(min_activation_cfg, compute_weights_kpi=False).activation_memory
-    minimal_kpi = KPI(minimal_weights_memory, minimal_activation_memory)
-
-    for node_idx, layer_possible_bitwidths_indices in tqdm(node_to_bitwidth_indices.items(),
-                                                           total=len(node_to_bitwidth_indices)):
-        layer_to_kpi_mapping[node_idx] = {}
-        for bitwidth_idx in layer_possible_bitwidths_indices:
-
-            # Change the minimal KPI configuration at one node only and
-            # compute this change's contribution to the model's KPI.
-            weights_mp_model_configuration = min_weights_cfg.copy()
-            activation_mp_model_configuration = min_activation_cfg.copy()
-            weights_mp_model_configuration[node_idx] = bitwidth_idx
-            activation_mp_model_configuration[node_idx] = bitwidth_idx
-
-            weights_mp_model_kpi = compute_kpi_fn(weights_mp_model_configuration, compute_activation_kpi=False)
-            activation_mp_model_kpi = compute_kpi_fn(activation_mp_model_configuration, compute_weights_kpi=False)
-            contribution_to_minimal_model_weights = weights_mp_model_kpi.weights_memory - minimal_kpi.weights_memory
-            contribution_to_minimal_model_activation = activation_mp_model_kpi.activation_memory - minimal_kpi.activation_memory
-
-            layer_to_kpi_mapping[node_idx][bitwidth_idx] = KPI(
-                weights_memory=contribution_to_minimal_model_weights,
-                activation_memory=contribution_to_minimal_model_activation
-            )
-
-    return layer_to_kpi_mapping, minimal_kpi

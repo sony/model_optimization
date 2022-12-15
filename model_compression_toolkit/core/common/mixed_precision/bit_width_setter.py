@@ -31,8 +31,6 @@ def set_bit_widths(mixed_precision_enable: bool,
     Args:
         mixed_precision_enable: Is mixed precision enabled.
         graph_to_set_bit_widths: A prepared for quantization graph to set its bit widths.
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel
-        channels indices, groups of layers by how they should be quantized, etc.)
         bit_widths_config: MP configuration (a list of indices: one for each node's candidate
         quantization configuration).
 
@@ -101,7 +99,9 @@ def _get_node_qc_by_bit_widths(node: BaseNode,
         bit_index_in_cfg = bit_width_cfg[node_index_in_graph]
         qc = node.candidates_quantization_cfg[bit_index_in_cfg]
         return qc
-    return None
+
+    Logger.critical(f'Node {node.name} quantization configuration from configuration file'  # pragma: no cover
+                    f' was not found in candidates configurations.')
 
 
 def _set_node_final_qc(bit_width_cfg: List[int],
@@ -124,7 +124,7 @@ def _set_node_final_qc(bit_width_cfg: List[int],
                                          node_index_in_graph)
 
     if node_qc is None:
-        Logger.critical(f'Node {node.name} quantization configuration from configuration file'
+        Logger.critical(f'Node {node.name} quantization configuration from configuration file'  # pragma: no cover
                         f' was not found in candidates configurations.')
 
     else:

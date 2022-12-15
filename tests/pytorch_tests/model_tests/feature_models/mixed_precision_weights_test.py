@@ -17,6 +17,7 @@ import numpy as np
 from torch.nn import Conv2d
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, KPI
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_last_layer_weights
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_tp_model, get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
@@ -130,6 +131,22 @@ class MixedPercisionActivationDisabledTest(MixedPercisionBaseTest):
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.compare_results(quantization_info, quantized_models, float_model, 0)
+
+
+class MixedPercisionSearchLastLayerDistance(MixedPercisionBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def get_kpi(self):
+        return KPI(192)
+
+    def get_mixed_precision_v2_config(self):
+        return mct.MixedPrecisionQuantizationConfigV2(num_of_images=1,
+                                                      use_grad_based_weights=False,
+                                                      distance_weighting_method=get_last_layer_weights)
+
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        self.compare_results(quantization_info, quantized_models, float_model, 1)
 
 
 class MixedPrecisionNet(torch.nn.Module):

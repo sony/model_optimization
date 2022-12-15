@@ -51,7 +51,8 @@ from tests.pytorch_tests.model_tests.feature_models.layer_name_test import Reuse
 from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTWeightsQuantizerTest, \
     LUTActivationQuantizerTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_weights_test import MixedPercisionSearch8Bit, \
-    MixedPercisionSearch2Bit, MixedPercisionSearch4Bit, MixedPercisionActivationDisabledTest
+    MixedPercisionSearch2Bit, MixedPercisionSearch4Bit, MixedPercisionActivationDisabledTest, \
+    MixedPercisionSearchLastLayerDistance
 from tests.pytorch_tests.model_tests.feature_models.multiple_output_nodes_multiple_tensors_test import \
     MultipleOutputsMultipleTensorsNetTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_outputs_node_test import MultipleOutputsNetTest
@@ -353,6 +354,12 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the Mixed Precision search.
         """
         MixedPercisionSearch4Bit(self).run_test()
+
+    def test_mixed_precision_with_last_layer_distance(self):
+        """
+        This test checks the Mixed Precision search with last layer distance function.
+        """
+        MixedPercisionSearchLastLayerDistance(self).run_test(experimental_facade=True)
 
     def test_mixed_precision_activation_disabled(self):
         """

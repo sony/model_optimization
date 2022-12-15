@@ -54,8 +54,8 @@ def get_base_mp_nbits_candidates():
 
 
 class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
-    def __init__(self, unit_test, activation_layers_idx):
-        super().__init__(unit_test)
+    def __init__(self, unit_test, activation_layers_idx, num_calibration_iter=1):
+        super().__init__(unit_test, num_calibration_iter=num_calibration_iter)
 
         self.activation_layers_idx = activation_layers_idx
 
@@ -401,8 +401,9 @@ class MixedPrecisionActivationAddLayerTest(MixedPrecisionActivationBaseTest):
 
 class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[3, 4, 5, 9, 10, 11])
-        self.num_of_inputs = 3
+        super().__init__(unit_test, num_calibration_iter=3, activation_layers_idx=[4, 5, 6, 7, 12, 13, 14, 15])
+        self.num_of_inputs = 4
+        self.val_batch_size = 2
 
     def get_kpi(self):
         return KPI(np.inf, np.inf)
@@ -410,22 +411,35 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, 3] for _ in range(self.num_of_inputs)]
 
+    def get_quantization_config(self):
+        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                    mct.QuantizationErrorMethod.MSE,
+                                    relu_bound_to_power_of_2=False,
+                                    weights_bias_correction=True,
+                                    weights_per_channel_threshold=True,
+                                    input_scaling=False,
+                                    activation_channel_equalization=False)
+
+        return MixedPrecisionQuantizationConfig(qc, num_of_images=self.num_of_inputs)
+
     def create_networks(self):
         inputs_1 = layers.Input(shape=self.get_input_shapes()[0][1:])
         inputs_2 = layers.Input(shape=self.get_input_shapes()[0][1:])
         inputs_3 = layers.Input(shape=self.get_input_shapes()[0][1:])
+        inputs_4 = layers.Input(shape=self.get_input_shapes()[0][1:])
         x1 = layers.Conv2D(32, 4)(inputs_1)
         x2 = layers.Conv2D(32, 4)(inputs_2)
         x3 = layers.Conv2D(32, 4)(inputs_3)
-        outputs = layers.Concatenate()([x1, x2, x3])
-        model = keras.Model(inputs=[inputs_1, inputs_2, inputs_3], outputs=outputs)
+        x4 = layers.Conv2D(32, 4)(inputs_4)
+        outputs = layers.Concatenate()([x1, x2, x3, x4])
+        model = keras.Model(inputs=[inputs_1, inputs_2, inputs_3, inputs_4], outputs=outputs)
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # kpi is infinity -> should give best model - 8bits
         activation_bits = [quantized_model.layers[i].inbound_nodes[0].call_kwargs.get('num_bits') for i in self.activation_layers_idx]
-        self.unit_test.assertTrue((activation_bits == [8, 8, 8, 8, 8, 8]))
+        self.unit_test.assertTrue((activation_bits == [8, 8, 8, 8, 8, 8, 8, 8]))
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[],
