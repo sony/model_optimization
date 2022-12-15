@@ -119,3 +119,6 @@ GUMBEL_MAX_ITER = 10000
 # Memory graph constants
 DUMMY_NODE = 'dummy_node'
 DUMMY_TENSOR = 'dummy_tensor'
+
+# TP Model constants
+OPS_SET_LIST = 'ops_set_list'

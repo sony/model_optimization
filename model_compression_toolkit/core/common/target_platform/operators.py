@@ -14,6 +14,7 @@
 # ==============================================================================
 from typing import Dict, Any
 
+from model_compression_toolkit.core.common.constants import OPS_SET_LIST
 from model_compression_toolkit.core.common.target_platform.target_platform_model_component import TargetPlatformModelComponent
 from model_compression_toolkit.core.common.target_platform.current_tp_model import _current_tp_model
 from model_compression_toolkit.core.common.target_platform.op_quantization_config import QuantizationConfigOptions
@@ -83,4 +84,4 @@ class OperatorSetConcat(OperatorsSetBase):
 
         """
         return {"name": self.name,
-                "ops_set_list": [s.name for s in self.op_set_list]}
+                OPS_SET_LIST: [s.name for s in self.op_set_list]}

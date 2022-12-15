@@ -15,6 +15,8 @@
 import copy
 from typing import Dict, List, Any
 
+from model_compression_toolkit.core.common.constants import OPS_SET_LIST
+from model_compression_toolkit.core.common.target_platform import OpQuantizationConfig, QuantizationConfigOptions
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_tp_model
 import model_compression_toolkit as mct
 
@@ -49,53 +51,59 @@ def generate_mixed_precision_test_tp_model(base_cfg, mp_bitwidth_candidates_list
 
 
 def generate_tp_model_with_activation_mp(base_cfg, mp_bitwidth_candidates_list, name="activation_mp_model"):
-
-    # Prepare MP Candidates
-    mixed_precision_cfg_list = []
+    mp_op_cfg_list = []
     for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
         candidate_cfg = base_cfg.clone_and_edit(weights_n_bits=weights_n_bits,
                                                 activation_n_bits=activation_n_bits)
-        mixed_precision_cfg_list.append(candidate_cfg)
+        mp_op_cfg_list.append(candidate_cfg)
 
-    # Set TP Model
+    base_tp_model = generate_tp_model(default_config=base_cfg,
+                                      base_config=base_cfg,
+                                      mixed_precision_cfg_list=mp_op_cfg_list,
+                                      name=name)
+
+    mixed_precision_configuration_options = tp.QuantizationConfigOptions(mp_op_cfg_list,
+                                                                         base_config=base_cfg)
+
+    operator_sets_dict = {op_set.name: mixed_precision_configuration_options for op_set in base_tp_model.operator_set
+                          if op_set.name is not "NoQuantization"}
+    operator_sets_dict["Input"] = mixed_precision_configuration_options
+
+    return generate_custom_test_tp_model(name=name,
+                                         base_cfg=base_cfg,
+                                         base_tp_model=base_tp_model,
+                                         operator_sets_dict=operator_sets_dict)
+
+
+def generate_custom_test_tp_model(name: str,
+                                  base_cfg: OpQuantizationConfig,
+                                  base_tp_model: tp.TargetPlatformModel,
+                                  operator_sets_dict: Dict[str, QuantizationConfigOptions] = None):
+
     default_configuration_options = tp.QuantizationConfigOptions([base_cfg])
 
-    generated_tp_model = tp.TargetPlatformModel(default_configuration_options, name=name)
+    custom_tp_model = tp.TargetPlatformModel(default_configuration_options, name=name)
 
-    with generated_tp_model:
-        tp.OperatorsSet("NoQuantization",
-                        tp.get_default_quantization_config_options().clone_and_edit(
-                            enable_weights_quantization=False,
-                            enable_activation_quantization=False))
+    with custom_tp_model:
+        for op_set in base_tp_model.operator_set:
+            # Add existing OperatorSets from base TP model
+            qc_options = op_set.qc_options if \
+                (operator_sets_dict is None or op_set.name not in operator_sets_dict) and \
+                (op_set.get_info().get(OPS_SET_LIST) is None) \
+                else operator_sets_dict[op_set.name]
 
-        mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,
-                                                                             base_config=base_cfg)
+            tp.OperatorsSet(op_set.name, qc_options)
 
-        conv = tp.OperatorsSet("Conv", mixed_precision_configuration_options)
-        fc = tp.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
-        any_relu = tp.OperatorsSet("AnyReLU", mixed_precision_configuration_options)
-        add = tp.OperatorsSet("Add", mixed_precision_configuration_options)
-        sub = tp.OperatorsSet("Sub", mixed_precision_configuration_options)
-        mul = tp.OperatorsSet("Mul", mixed_precision_configuration_options)
-        div = tp.OperatorsSet("Div", mixed_precision_configuration_options)
-        prelu = tp.OperatorsSet("PReLU", mixed_precision_configuration_options)
-        swish = tp.OperatorsSet("Swish", mixed_precision_configuration_options)
-        sigmoid = tp.OperatorsSet("Sigmoid", mixed_precision_configuration_options)
-        tanh = tp.OperatorsSet("Tanh", mixed_precision_configuration_options)
-        tp.OperatorsSet("Input", mixed_precision_configuration_options)
+        existing_op_sets_names = [op_set.name for op_set in base_tp_model.operator_set]
+        for op_set_name, op_set_qc_options in operator_sets_dict.items():
+            # Add new OperatorSets from the given operator_sets_dict
+            if op_set_name not in existing_op_sets_names:
+                tp.OperatorsSet(op_set_name, op_set_qc_options)
 
-        activations_after_conv_to_fuse = tp.OperatorSetConcat(any_relu, swish, prelu, sigmoid, tanh)
-        activations_after_fc_to_fuse = tp.OperatorSetConcat(any_relu, swish, sigmoid)
-        any_binary = tp.OperatorSetConcat(add, sub, mul, div)
+        for fusion in base_tp_model.fusing_patterns:
+            tp.Fusing(fusion.operator_groups_list)
 
-        # Fusions
-        tp.Fusing([conv, activations_after_conv_to_fuse])
-        tp.Fusing([fc, activations_after_fc_to_fuse])
-        tp.Fusing([conv, add, any_relu])
-        tp.Fusing([conv, any_relu, add])
-        tp.Fusing([any_binary, any_relu])
-
-    return generated_tp_model
+    return custom_tp_model
 
 
 def generate_test_tpc(name: str,
