@@ -21,6 +21,11 @@ from model_compression_toolkit.core.common.constants import CLUSTER_CENTERS, MIN
     MULTIPLIER_N_BITS, THRESHOLD
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import \
     max_power_of_two, int_quantization_with_threshold
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import \
+    symmetric_selection_tensor
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import \
+    power_of_two_selection_tensor
+
 from model_compression_toolkit.core.common.logger import Logger
 
 
@@ -31,9 +36,10 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
                       channel_axis: int = 1,
                       n_iter: int = 10,
                       min_threshold: float = MIN_THRESHOLD,
-                      quant_error_method: qc.QuantizationErrorMethod = None) -> dict:
+                      quant_error_method: qc.QuantizationErrorMethod = None,
+                      is_symmetric=False) -> dict:
     """
-    The quantizer first finds the closest power-of-two number to the max value per channel of tensor_data.
+    The quantizer first finds the closest max value per channel of tensor_data.
     Now, we divide tensor_data with the threshold vector per channel. In addition, we scale the result to the range
     [-2^(MULTIPLIER_N_BITS-1), 2^(MULTIPLIER_N_BITS-1)-1].
     Next, we take the scaled tensor_data and perform k-means clustering with 2^nbit clusters.
@@ -47,26 +53,26 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
         n_iter: Number of iterations to search_methods for the optimal threshold.
         min_threshold: Minimal threshold to chose when the computed one is smaller.
         quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
+        is_symmetric (bool): Whether to apply symmetric weight quantization (default is False, meaning power of 2 quantization)
 
     Returns:
         A dictionary containing the cluster assignments according to the k-means algorithm,
         the thresholds per channel and the multiplier num bits.
     """
     if n_bits > MULTIPLIER_N_BITS:
-        Logger.critical(f'Look-Up-Table bit configuration has {n_bits} bits. It must be less or equal to {MULTIPLIER_N_BITS}')
+        Logger.critical(f'Look-Up-Table bit configuration has {n_bits} bits, but must be less or equal to {MULTIPLIER_N_BITS}')
     # TODO: need to set this externally
     if len(np.unique(tensor_data.flatten())) < 2 ** n_bits:
         n_clusters = len(np.unique(tensor_data.flatten()))
     else:
         n_clusters = 2 ** n_bits
     kmeans = KMeans(n_clusters=n_clusters)
-    axis_not_channel = [i for i in range(len(tensor_data.shape))]
-    axis_not_channel.remove(channel_axis)
-    if per_channel:
-        thresholds_per_channel = np.max(np.abs(tensor_data), axis=tuple(axis_not_channel), keepdims=True)
-    else:
-        thresholds_per_channel = np.max(np.abs(tensor_data), keepdims=True)
-    thresholds_per_channel = np.power(2.0, np.ceil(np.log2(thresholds_per_channel)))
+
+    threshold_selection_tensor = symmetric_selection_tensor if is_symmetric else power_of_two_selection_tensor
+    thresholds_per_channel = threshold_selection_tensor(tensor_data, p, n_bits, per_channel,
+                                                        channel_axis, n_iter, min_threshold,
+                                                        qc.QuantizationErrorMethod.NOCLIPPING)[THRESHOLD]
+
     tensor_for_kmeans = int_quantization_with_threshold(tensor_data, thresholds_per_channel, MULTIPLIER_N_BITS)
     kmeans.fit(tensor_for_kmeans.reshape(-1, 1))
 

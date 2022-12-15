@@ -52,8 +52,7 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
         Optimal threshold to quantize the tensor in a symmetric manner.
     """
 
-    unsigned_tensor_data = np.abs(tensor_data)
-    tensor_max = get_tensor_max(unsigned_tensor_data, per_channel, channel_axis)
+    tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis, n_bits)
 
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         threshold = get_init_threshold(min_threshold, tensor_max, per_channel)

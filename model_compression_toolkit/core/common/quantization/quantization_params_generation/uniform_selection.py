@@ -51,7 +51,7 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
         Optimal quantization range to quantize the tensor uniformly.
     """
     tensor_min = get_tensor_min(tensor_data, per_channel, channel_axis)
-    tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis)
+    tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis, n_bits, is_uniform_quantization=True)
 
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         mm = tensor_min, tensor_max

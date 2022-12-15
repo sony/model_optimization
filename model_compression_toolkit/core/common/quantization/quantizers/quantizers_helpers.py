@@ -217,23 +217,33 @@ def get_quantized_tensor(centers: np.ndarray,
 
 def get_tensor_max(tensor_data: np.ndarray,
                    per_channel: bool,
-                   channel_axis: int) -> np.ndarray:
+                   channel_axis: int,
+                   n_bits: int,
+                   is_uniform_quantization=False) -> np.ndarray:
     """
     Returns the maximal value in the given tensor, or in each channel (if per_channel is True).
+    If is_uniform_quantization is False, return the max value of a threshold so it's a no-clipping threshold, to
+    avoid clipping the maximum value is case it is positive, because the maximum value represented is threshold-LSB
+
     Args:
         tensor_data: Tensor values to quantize.
         per_channel: Whether the quantization should be per-channel or not.
         channel_axis: Output channel index.
+        n_bits: number of bits the tensor will be quantized with
+        is_uniform_quantization (bool): Whether the tensor will be quantized with uniform quantization (min-max)
 
     Returns: maximal value (or values).
 
     """
+    expansion_factor = 1.0 if is_uniform_quantization else np.power(2.0, n_bits - 1) / (np.power(2.0, n_bits - 1) - 1)
     if per_channel:
         output_shape = get_output_shape(tensor_data.shape, channel_axis)
-        tensor_data = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
-        tensor_max = np.reshape(np.max(tensor_data, axis=-1), output_shape)
+        reshaped_tensor_data = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
+        tensor_max = np.reshape(np.max(reshaped_tensor_data, axis=-1), output_shape)
+        tensor_min = np.reshape(np.min(reshaped_tensor_data, axis=-1), output_shape)
+        tensor_max = np.maximum(-tensor_min, tensor_max * expansion_factor)
     else:
-        tensor_max = np.max(tensor_data)
+        tensor_max = np.maximum(-np.min(tensor_data), np.max(tensor_data) * expansion_factor)
     return tensor_max
 
 

@@ -39,11 +39,10 @@ class ChannelAxis(Enum):
     NCHW = 1
 
 
-class FrameworkInfo(object):
+class FrameworkInfo:
 
     def __init__(self,
                  activation_quantizer_mapping: Dict[QuantizationMethod, Callable],
-                 weights_quantizer_mapping: Dict[QuantizationMethod, Callable],
                  kernel_channels_mapping: DefaultDict,
                  activation_min_max_mapping: Dict[str, tuple],
                  layer_min_max_mapping: Dict[Any, tuple],
@@ -60,7 +59,6 @@ class FrameworkInfo(object):
 
         Args:
             activation_quantizer_mapping (Dict[QuantizationMethod, Callable]): A dictionary mapping from QuantizationMethod to a quantization function.
-            weights_quantizer_mapping (Dict[QuantizationMethod, Callable]): A dictionary mapping from QuantizationMethod to a quantization function.
             kernel_channels_mapping (DefaultDict): Dictionary from a layer to a tuple of its kernel in/out channels indices.
             activation_min_max_mapping (Dict[str, tuple]): Dictionary from an activation function to its min/max output values.
             layer_min_max_mapping (Dict[Any, tuple]): Dictionary from a layer to its min/max output values.
@@ -92,7 +90,6 @@ class FrameworkInfo(object):
         """
 
         self.activation_quantizer_mapping = activation_quantizer_mapping
-        self.weights_quantizer_mapping = weights_quantizer_mapping
         self.kernel_channels_mapping = kernel_channels_mapping
         self.activation_min_max_mapping = activation_min_max_mapping
         self.layer_min_max_mapping = layer_min_max_mapping

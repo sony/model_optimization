@@ -22,6 +22,8 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
+from model_compression_toolkit.core.common.quantization.quantization_fn_selection import \
+    get_weights_quantization_fn
 
 _EditRule = namedtuple('EditRule', 'filter action')
 
@@ -326,7 +328,7 @@ class ChangeFinalWeightsQuantizationMethod(BaseAction):
 
             node.final_weights_quantization_cfg.set_weights_quantization_params_fn(weights_quantization_params_fn)
 
-            weights_quantization_fn = fw_info.weights_quantizer_mapping.get(self.weights_quantization_method)
+            weights_quantization_fn = get_weights_quantization_fn(self.weights_quantization_method)
 
             if weights_quantization_fn is None:
                 raise Exception('Unknown quantization method for weights')  # pragma: no cover
@@ -370,7 +372,7 @@ class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
 
                 qc.weights_quantization_cfg.set_weights_quantization_params_fn(weights_quantization_params_fn)
 
-                weights_quantization_fn = fw_info.weights_quantizer_mapping.get(self.weights_quantization_method)
+                weights_quantization_fn = get_weights_quantization_fn(self.weights_quantization_method)
 
                 if weights_quantization_fn is None:
                     raise Exception('Unknown quantization method for weights')  # pragma: no cover

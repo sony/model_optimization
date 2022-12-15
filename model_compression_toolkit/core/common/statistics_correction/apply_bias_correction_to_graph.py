@@ -61,7 +61,7 @@ def _apply_bias_correction_to_node(node:BaseNode,
 
     bias = node.get_weights_by_keys(fw_impl.constants.BIAS)  # get original bias from node's weights
 
-    if bias is not None:  # It the layer has bias, we subtract the correction from original bias
+    if bias is not None:  # If the layer has bias, we subtract the correction from original bias
         node.set_weights_by_keys(fw_impl.constants.BIAS, node.get_weights_by_keys(fw_impl.constants.BIAS) - correction)
 
     else:  # It the layer has no bias, we consider it as if it has and its value is 0.
