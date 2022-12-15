@@ -67,8 +67,6 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
     else:
         n_clusters = 2 ** n_bits
     kmeans = KMeans(n_clusters=n_clusters)
-    axis_not_channel = [i for i in range(len(tensor_data.shape))]
-    axis_not_channel.remove(channel_axis)
 
     threshold_selection_tensor = symmetric_selection_tensor if is_symmetric else power_of_two_selection_tensor
     thresholds_per_channel = threshold_selection_tensor(tensor_data, p, n_bits, per_channel,

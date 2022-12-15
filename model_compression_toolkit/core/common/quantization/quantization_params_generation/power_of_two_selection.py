@@ -51,8 +51,7 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
     """
 
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
-        tensor_data = np.abs(tensor_data)
-        tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis)
+        tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis, n_bits)
         threshold = max_power_of_two(tensor_max, min_threshold)
     else:
         signed = True  # weights are always signed

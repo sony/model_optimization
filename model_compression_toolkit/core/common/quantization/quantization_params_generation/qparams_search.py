@@ -63,7 +63,7 @@ def qparams_selection_tensor_search(error_function: Callable,
     output_shape = get_output_shape(tensor_data.shape, channel_axis)
 
     # First threshold to check is the constrained threshold based on the tensor's maximal value.
-    tensor_max = get_tensor_max(np.abs(tensor_data), per_channel, channel_axis)
+    tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis, n_bits)
     threshold = 2 * max_power_of_two(tensor_max, min_threshold)
 
     # If the threshold is computed per-channel, we rearrange the tensor such that each sub-tensor
