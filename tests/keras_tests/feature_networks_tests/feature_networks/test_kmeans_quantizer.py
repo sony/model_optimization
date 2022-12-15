@@ -176,9 +176,6 @@ class RunLutKmeansTestManyClasses(unittest.TestCase):
     def test_pot_kmeans_quantizer(self):
         KmeansQuantizerTestManyClasses(self, target_platform.QuantizationMethod.LUT_POT_QUANTIZER, weights_n_bits=8).run_test()
 
-    def test_sym_kmeans_quantizer(self):
-        KmeansQuantizerTestManyClasses(self, target_platform.QuantizationMethod.LUT_SYM_QUANTIZER, weights_n_bits=8).run_test()
-
 
 # This test checks the case where all the weight values are zero
 class RunKmeansTestZeroWeights(unittest.TestCase):
@@ -190,6 +187,9 @@ class RunKmeansTestZeroWeights(unittest.TestCase):
 class RunLutKmeansTestZeroWeights(unittest.TestCase):
     def test_pot_kmeans_quantizer_zero_weights(self):
         KmeansQuantizerTest(self, target_platform.QuantizationMethod.LUT_POT_QUANTIZER).run_test()
+
+    def test_sym_kmeans_quantizer_zero_weights(self):
+        KmeansQuantizerTest(self, target_platform.QuantizationMethod.LUT_SYM_QUANTIZER).run_test()
 
 
 if __name__ == '__main__':
