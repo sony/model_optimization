@@ -17,7 +17,7 @@ import unittest
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
 from tests.pytorch_tests.model_tests.feature_models.custom_layer_test import ConvCustomLayerNetTest, \
-    ConvBNCustomLayerNetTest, ConvCustomLayer, ConvBNCustomLayer
+    ConvBNCustomLayerNetTest, ConvLayerNetTest, ConvCustomLayer, ConvBNCustomLayer
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
     MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, MixedPrecisionActivationOnlyBopsTest, \
     MixedPrecisionBopsAndWeightsKPITest, MixedPrecisionBopsAndActivationKPITest, MixedPrecisionBopsAndTotalKPITest, \
@@ -151,9 +151,30 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This tests checks that custom layers are passing the quantization procedure.
         """
-        ConvCustomLayerNetTest(self).run_test(experimental_facade=True, model_leafs=[None, [ConvCustomLayer]])
+        # Tests with model without custom layers, using inputs variables to control flow, in the model
+        # Mentioning custom layers without having them in the model should not affect the quantization procedure
+        ConvLayerNetTest(self).run_test(experimental_facade=True, model_leaf_layers=None)
+        ConvLayerNetTest(self).run_test(experimental_facade=True, model_leaf_layers=[ConvCustomLayer])
+        ConvLayerNetTest(self).run_test(experimental_facade=True, model_leaf_layers=[ConvBNCustomLayer])
+        ConvLayerNetTest(self).run_test(experimental_facade=True,
+                                        model_leaf_layers=[ConvCustomLayer, ConvBNCustomLayer])
+
+        # Tests with model with one custom layer, using inputs variables to control flow, in the model
+        # Not mentioning the custom layer in the model should crash the quantization procedure
+        # Mentioning custom layers without having them in the model should not affect the quantization procedure
+        ConvCustomLayerNetTest(self).run_test(experimental_facade=True, model_leaf_layers=None)
+        ConvCustomLayerNetTest(self).run_test(experimental_facade=True, model_leaf_layers=[ConvCustomLayer])
+        ConvCustomLayerNetTest(self).run_test(experimental_facade=True, model_leaf_layers=[ConvBNCustomLayer])
+        ConvCustomLayerNetTest(self).run_test(experimental_facade=True,
+                                              model_leaf_layers=[ConvCustomLayer, ConvBNCustomLayer])
+
+        # Tests with model with some custom layers, using inputs variables to control flow, in the model
+        # Not mentioning all the custom layers in the model should crash the quantization procedure
+        ConvBNCustomLayerNetTest(self).run_test(experimental_facade=True, model_leaf_layers=None)
+        ConvBNCustomLayerNetTest(self).run_test(experimental_facade=True, model_leaf_layers=[ConvCustomLayer])
+        ConvBNCustomLayerNetTest(self).run_test(experimental_facade=True, model_leaf_layers=[ConvBNCustomLayer])
         ConvBNCustomLayerNetTest(self).run_test(experimental_facade=True,
-                                                model_leafs=[None, [ConvCustomLayer, ConvBNCustomLayer]])
+                                                model_leaf_layers=[ConvCustomLayer, ConvBNCustomLayer])
 
     def test_linear_collapsing(self):
         """

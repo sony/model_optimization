@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from typing import List, Any, Tuple, Callable, Type, Dict
+from model_compression_toolkit.core.common import Logger
 
 import numpy as np
 import tensorflow as tf
@@ -115,13 +116,14 @@ class KerasImplementation(FrameworkImplementation):
         Args:
             model: Framework's model.
             representative_data_gen (Callable): Dataset used for calibration.
-            model_leaf_layers (list): For PyTorch only!
-            List of the module's custom layers, these layers shouldn't be divided into
-            their submodules and their quantization will not be optimized.
+            model_leaf_layers (list): For PyTorch only! Should be 'None' for Keras.
 
         Returns:
             Graph representing the input model.
         """
+        if model_leaf_layers is not None:
+            Logger.warning(f'You are using a PyTorch only attribute, please do not pass model_leaf_layers '
+                           f'attribute for a Keras model')
         return model_reader(model)
 
     def to_numpy(self, tensor: tf.Tensor) -> np.ndarray:

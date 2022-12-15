@@ -59,6 +59,7 @@ class FrameworkImplementation(ABC):
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s to_numpy method.')    \
 
+
     @abstractmethod
     def to_tensor(self, tensor: np.ndarray) -> Any:
         """
@@ -84,7 +85,8 @@ class FrameworkImplementation(ABC):
             representative_data_gen (Callable): Dataset used for calibration.
             model_leaf_layers (list): For PyTorch only!
             List of the module's custom layers, these layers shouldn't be divided into
-            their submodules and their quantization will not be optimized.
+            their submodules.
+            Please note that their quantization will not be optimized.
 
         Returns:
             Graph representing the input model.

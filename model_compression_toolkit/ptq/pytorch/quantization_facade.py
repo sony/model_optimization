@@ -66,7 +66,8 @@ if FOUND_TORCH:
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to. `Default PyTorch TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/tpc_models/pytorch_tp_models/pytorch_default.py>`_
             new_experimental_exporter (bool): Whether exporting the quantized model using new exporter or not (in progress. Avoiding it for now is recommended).
             model_leaf_layers (list): List of the module's custom layers, these layers shouldn't be divided into their
-            submodules and their quantization will not be optimized.
+            submodules.
+            Please note that their quantization will not be optimized.
 
         Returns:
             A quantized module and information the user may need to handle the quantized module.

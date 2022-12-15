@@ -17,15 +17,83 @@
 import logging
 from typing import Callable, Dict
 
-import numpy as np
 import torch
-from torch.fx import symbolic_trace, GraphModule
+from torch.fx import GraphModule, Tracer
 from torch.fx.passes.shape_prop import ShapeProp
-from torchvision.models.feature_extraction import NodePathTracer
 
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.pytorch.reader.graph_builders import edges_builder, nodes_builder
 from model_compression_toolkit.core.pytorch.utils import set_model
+
+
+class LeafModulesTracer(Tracer):
+    """
+    LeafModulesTracer overrides is_leaf_module method to make symbolic trace
+    model contains layers, using inputs variables to control flow.
+    """
+
+    def __init__(self, *args, leaf_modules=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if leaf_modules is not None:
+            self.leaf_modules = tuple(leaf_modules)
+        else:
+            self.leaf_modules = ()
+
+    def is_leaf_module(self,
+                       m: torch.nn.Module,
+                       module_qualified_name: str) -> bool:
+        """
+        A method to specify whether a given ``nn.Module`` is a "leaf" module.
+        Leaf modules are the atomic units that appear in
+        the IR, referenced by ``call_module`` calls. By default,
+        Modules in the PyTorch standard library namespace (torch.nn)
+        are leaf modules. All other modules are traced through and
+        their constituent ops are recorded, unless specified otherwise
+        via this parameter.
+
+        We override this method to specify the user's custom layers as "leaf" module.
+
+        Args:
+
+            m (Module): The module being queried about
+            module_qualified_name (str): The path to root of this module. For example,
+                if you have a module hierarchy where submodule ``foo`` contains
+                submodule ``bar``, which contains submodule ``baz``, that module will
+                appear with the qualified name ``foo.bar.baz`` here.
+        """
+        if self.leaf_modules and isinstance(m, self.leaf_modules):
+            return True
+        return m.__module__.startswith('torch.nn') and not isinstance(m, torch.nn.Sequential)
+
+
+def symbolic_trace_leaf_modules_aware(pytorch_model: torch.nn.Module,
+                                      model_leaf_layers: list = None) -> torch.fx.GraphModule:
+    """
+    Symbolic tracing with layers using inputs variables to control flow.
+
+    Given an ``nn.Module`` or function instance ``root``, this function will return a ``GraphModule``
+    constructed by recording operations seen while tracing through ``root``.
+
+    Args:
+        pytorch_model: A dynamic PyTorch model.
+        model_leaf_layers (list): List of the module's custom layers,using inputs variables
+        to control flow, these layers shouldn't be divided into their submodules.
+        Please note that their quantization will not be optimized.
+
+    Returns:
+        fx.GraphModule: a Module created from the recorded operations from ``root``.
+    """
+
+    tracer = LeafModulesTracer(leaf_modules=model_leaf_layers)
+    try:
+        graph = tracer.trace(pytorch_model)
+    except Exception:
+        raise Exception("Float model contains layers that used inputs variables to control flow, please trace these "
+                        "layers and pass them as a list in the model_leaf_layers attribute in the "
+                        "pytorch_post_training_quantization API.\n These layers shouldn't be divided into their "
+                        "submodules.\n Please note that their quantization will not be optimized.")
+    name = pytorch_model.__class__.__name__ if isinstance(pytorch_model, torch.nn.Module) else pytorch_model.__name__
+    return GraphModule(tracer.root, graph, name)
 
 
 def generate_module_dict(model: torch.nn.Module) -> Dict:
@@ -78,24 +146,19 @@ def fx_graph_module_generation(pytorch_model: torch.nn.Module,
     Generates a fx.GraphModule from a torch.nn.Module.
 
     Args:
-        pytorch_model: A dynamic Pytorch model.
+        pytorch_model: A dynamic PyTorch model.
         representative_data_gen (Callable): Representative dataset used for shape inference.
         to_tensor: Function to convert a Numpy array to a framework's tensor.
-        model_leaf_layers (list): List of the module's custom layers, these layers shouldn't be divided into
-        their submodules and their quantization will not be optimized.
+        model_leaf_layers (list): List of the module's custom layers,using inputs variables
+        to control flow, these layers shouldn't be divided into their submodules.
+        Please note that their quantization will not be optimized.
 
     Returns:
-        A fx.GraphModule (static model) representing the Pytorch model.
+        A fx.GraphModule (static model) representing the PyTorch model.
     """
     set_model(pytorch_model)
-    if model_leaf_layers is not None:
-        # Only if user mentioned symbolic traced layers
-        tracer = NodePathTracer(leaf_modules=model_leaf_layers)
-        graph = tracer.trace(pytorch_model)
-        name = pytorch_model.__class__.__name__ if isinstance(pytorch_model, torch.nn.Module) else pytorch_model.__name__
-        symbolic_traced = GraphModule(tracer.root, graph, name)
-    else:
-        symbolic_traced = symbolic_trace(pytorch_model)
+    symbolic_traced = symbolic_trace_leaf_modules_aware(pytorch_model=pytorch_model,
+                                                        model_leaf_layers=model_leaf_layers)
     inputs = next(representative_data_gen())
     input_for_shape_infer = [to_tensor(i) for i in inputs]
     ShapeProp(symbolic_traced).propagate(*input_for_shape_infer)
@@ -152,7 +215,8 @@ def model_reader(model: torch.nn.Module,
         to_numpy: Function to convert framework's tensor to a Numpy array.
         to_tensor: Function to convert a Numpy array to a framework's tensor.
         model_leaf_layers (list): List of the module's custom layers, these layers shouldn't be divided into
-        their submodules and their quantization will not be optimized.
+        their submodules.
+        Please note that their quantization will not be optimized.
 
     Returns:
         Base graph of the Pytorch model.

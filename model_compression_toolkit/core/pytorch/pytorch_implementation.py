@@ -126,7 +126,8 @@ class PytorchImplementation(FrameworkImplementation):
             module: Framework's module.
             representative_data_gen (Callable): Dataset used for calibration.
             model_leaf_layers (list): List of the module's custom layers, these layers shouldn't be divided into
-            their submodules and their quantization will not be optimized.
+            their submodules.
+            Please note that their quantization will not be optimized.
         Returns:
             Graph representing the input module.
         """

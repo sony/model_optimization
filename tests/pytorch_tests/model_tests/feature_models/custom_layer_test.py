@@ -22,7 +22,7 @@ from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_pyt
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
-This tests checks that custom layers are passing the quantization procedure.
+These tests checks that custom layers are passing the quantization procedure.
 """
 
 
@@ -67,6 +67,19 @@ class ConvBNCustomLayer(torch.nn.Module):
         return x
 
 
+class ConvLayerNet(torch.nn.Module):
+    def __init__(self):
+        super(ConvLayerNet, self).__init__()
+        self.conv1 = torch.nn.Conv2d(3, 3, kernel_size=1, stride=1)
+        self.bn1 = torch.nn.BatchNorm2d(3)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = torch.relu(x)
+        return x
+
+
 class ConvCustomLayerNet(torch.nn.Module):
     def __init__(self):
         super(ConvCustomLayerNet, self).__init__()
@@ -98,13 +111,14 @@ class ConvBNCustomLayerNet(torch.nn.Module):
 
 class CustomLayerNetBaseTest(BasePytorchTest):
     """
-    This base test checks that custom layers are passing the quantization procedure.
+    This base test checks that custom layers are passing the quantization procedure
     """
 
-    def __init__(self, unit_test):
+    def __init__(self, unit_test, base_model_leaf_layers=[ConvCustomLayer, ConvBNCustomLayer]):
         super().__init__(unit_test)
+        self.base_model_leaf_layers = base_model_leaf_layers
 
-    def run_test(self, seed=0, experimental_facade=False, model_leafs=None):
+    def run_test(self, seed=0, experimental_facade=False, model_leaf_layers=None):
         np.random.seed(seed)
         random.seed(a=seed)
         torch.random.manual_seed(seed)
@@ -118,33 +132,77 @@ class CustomLayerNetBaseTest(BasePytorchTest):
         model_float = self.create_feature_network(input_shapes)
         core_config = self.get_core_config()
         tpc = get_pytorch_tpc_latest()
-        for model_leaf in model_leafs:
-            try:
-                ptq_model, quantization_info = mct.pytorch_post_training_quantization_experimental(
-                    in_module=model_float,
-                    representative_data_gen=representative_data_gen_experimental,
-                    target_kpi=self.get_kpi(),
-                    core_config=core_config,
-                    target_platform_capabilities=tpc,
-                    new_experimental_exporter=self.experimental_exporter,
-                    model_leaf_layers=model_leaf
-                )
-                self.compare(ptq_model, model_float, model_leaf=model_leaf)
-            except Exception as e:
-                # Should crash if the user didn't mention the Symbolic traced custom layers
-                error_msg = e.message if hasattr(e, 'message') else str(e)
-                self.unit_test.assertTrue(model_leaf is None, error_msg)
+        try:
+            ptq_model, quantization_info = mct.pytorch_post_training_quantization_experimental(
+                in_module=model_float,
+                representative_data_gen=representative_data_gen_experimental,
+                target_kpi=self.get_kpi(),
+                core_config=core_config,
+                target_platform_capabilities=tpc,
+                new_experimental_exporter=self.experimental_exporter,
+                model_leaf_layers=model_leaf_layers
+            )
+            self.compare(ptq_model, model_float, model_leaf_layers=model_leaf_layers)
+        except Exception as e:
+            # The quantization procedure should crash if the model contains custom layer, using inputs variables
+            # to control flow, and the user didn't mention the layers in the pytorch_post_training_quantization API
+            error_msg = e.message if hasattr(e, 'message') else str(e)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None, model_leaf=None):
+            if model_leaf_layers is None:
+                model_leaf_layers = []
+            # All the layers in the model
+            model_layer_class = set([layer.__class__ for layer in model_float.modules()])
+            # All the custom layers in the model
+            custom_layers_in_model = [custom_layer for custom_layer in self.base_model_leaf_layers
+                                      if custom_layer in model_layer_class]
+            # All the unmentioned custom layers
+            unmentioned_custom_layers = list(set(custom_layers_in_model) - set(model_leaf_layers))
 
-        # check that the custom layer in the quantized model's layers
-        for leaf_layer in model_leaf:
-            self.unit_test.assertTrue(leaf_layer in [layer.__class__ for layer in quantized_model.modules()])
+            # If the model contains custom layer, using inputs variables to control flow,
+            # and the user didn't mention the layers
+            self.unit_test.assertTrue(unmentioned_custom_layers, error_msg)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None, model_leaf_layers=None):
+        # The quantization procedure shouldn't crash if the model contains custom layer, using inputs variables
+        # to control flow, and the user mentioned the layers in the pytorch_post_training_quantization API
+        # If the model doesn't contain custom layer, using inputs variables to control flow, and the user
+        # mentioned some layers in the pytorch_post_training_quantization API, the quantization procedure
+        # shouldn't be affected
+
+        if model_leaf_layers is None:
+            model_leaf_layers = []
+
+        # All the layers in the model
+        model_layer_class = set([layer.__class__ for layer in float_model.modules()])
+
+        # All the custom layers in the model
+        custom_layers_in_model = [custom_layer for custom_layer in self.base_model_leaf_layers if
+                                  custom_layer in model_layer_class]
+
+        # All the unmentioned custom layers
+        unmentioned_custom_layers = list(set(custom_layers_in_model) - set(model_leaf_layers))
+
+        # If all the model's custom layers mentioned in the the pytorch_post_training_quantization API,
+        # the quantization procedure should not be affected
+        self.unit_test.assertFalse(unmentioned_custom_layers)
+
+
+class ConvLayerNetTest(CustomLayerNetBaseTest):
+    """
+    This test checks that mentioning custom layers does not affect the quantization procedure model lacking
+    the custom layers.
+    """
+
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def create_feature_network(self, input_shape):
+        return ConvLayerNet()
 
 
 class ConvCustomLayerNetTest(CustomLayerNetBaseTest):
     """
-    This tests checks that custom layer is passing the quantization procedure.
+    This test checks that one custom layer is passing the quantization procedure.
     """
 
     def __init__(self, unit_test):

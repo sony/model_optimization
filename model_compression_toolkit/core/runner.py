@@ -84,8 +84,9 @@ def core_runner(in_model: Any,
                                               the attached framework operator's information.
         target_kpi: KPI to constraint the search of the mixed-precision configuration for the model.
         tb_w: TensorboardWriter object for logging
-        model_leaf_layers (list): List of the module's custom layers, these layers shouldn't be divided into
-        their submodules and their quantization will not be optimized.
+        model_leaf_layers (list): For PyTorch Only.
+        List of the module's custom layers, these layers shouldn't be divided into their submodules.
+        Please note that their quantization will not be optimized.
 
     Returns:
         An internal graph representation of the input model.
@@ -287,14 +288,16 @@ def read_model_to_graph(in_model: Any,
         fw_info: Information needed for quantization about the specific framework (e.g.,
                 kernel channels indices, groups of layers by how they should be quantized, etc.)
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-        model_leaf_layers (list): List of the module's custom layers, these layers shouldn't be divided into
-        their submodules and their quantization will not be optimized.
+        model_leaf_layers (list): For PyTorch Only.
+        List of the module's custom layers, these layers shouldn't be divided into their submodules.
+        Please note that their quantization will not be optimized.
 
     Returns:
         Graph object that represents the model.
     """
     graph = fw_impl.model_reader(in_model,
-                                 representative_data_gen, model_leaf_layers)
+                                 representative_data_gen,
+                                 model_leaf_layers)
     graph.set_fw_info(fw_info)
     graph.set_tpc(tpc)
     return graph
