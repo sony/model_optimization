@@ -99,7 +99,7 @@ class LUTWeightsQuantizerTest(BasePytorchTest):
     def get_network_editor(self):
         return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
                          action=ChangeCandidatesWeightsQuantizationMethod(
-                             weights_quantization_method=tp.QuantizationMethod.LUT_QUANTIZER))]
+                             weights_quantization_method=tp.QuantizationMethod.LUT_POT_QUANTIZER))]
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 16, 16], [self.val_batch_size, 3, 16, 16]]
@@ -129,7 +129,7 @@ class LUTActivationQuantizerTest(BasePytorchTest):
     def get_tpc(self):
         return get_pytorch_test_tpc_dict(
             tp_model=generate_test_tp_model({"activation_n_bits": self.activation_n_bits,
-                                             "activation_quantization_method": tp.QuantizationMethod.LUT_QUANTIZER}),
+                                             "activation_quantization_method": tp.QuantizationMethod.LUT_POT_QUANTIZER}),
             test_name='lut_quantizer_test',
             ftp_name='lut_quantizer_pytorch_test')
 

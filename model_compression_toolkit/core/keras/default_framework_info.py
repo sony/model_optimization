@@ -27,10 +27,6 @@ else:
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo, ChannelAxis
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.core.common.quantization.quantizers.kmeans_quantizer import kmeans_quantizer
-from model_compression_toolkit.core.common.quantization.quantizers.lut_kmeans_quantizer import lut_kmeans_quantizer
-from model_compression_toolkit.core.common.quantization.quantizers.uniform_quantizers import power_of_two_quantizer, \
-    symmetric_quantizer, uniform_quantizer
 from model_compression_toolkit.core.common.constants import SOFTMAX_THRESHOLD
 from model_compression_toolkit.core.keras.constants import SOFTMAX, LINEAR, RELU, SWISH, SIGMOID, IDENTITY, TANH, SELU, \
     KERNEL, DEPTHWISE_KERNEL
@@ -106,20 +102,10 @@ Mapping from a QuantizationMethod to an activation quantizer function.
 ACTIVATION_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quantization,
                                 QuantizationMethod.SYMMETRIC: symmetric_quantization,
                                 QuantizationMethod.UNIFORM: uniform_quantization,
-                                QuantizationMethod.LUT_QUANTIZER: activation_lut_kmean_quantizer}
-
-"""
-Mapping from a QuantizationMethod to an weights quantizer function.
-"""
-WEIGHTS_QUANTIZER_MAPPING = {QuantizationMethod.POWER_OF_TWO: power_of_two_quantizer,
-                             QuantizationMethod.SYMMETRIC: symmetric_quantizer,
-                             QuantizationMethod.UNIFORM: uniform_quantizer,
-                             QuantizationMethod.KMEANS: kmeans_quantizer,
-                             QuantizationMethod.LUT_QUANTIZER: lut_kmeans_quantizer}
+                                QuantizationMethod.LUT_POT_QUANTIZER: activation_lut_kmean_quantizer}
 
 
 DEFAULT_KERAS_INFO = FrameworkInfo(ACTIVATION_QUANTIZER_MAPPING,
-                                   WEIGHTS_QUANTIZER_MAPPING,
                                    DEFAULT_CHANNEL_AXIS_DICT,
                                    ACTIVATION2MINMAX,
                                    LAYER2MINMAX,

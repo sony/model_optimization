@@ -14,6 +14,7 @@
 # ==============================================================================
 
 from collections.abc import Callable
+from functools import partial
 
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.kmeans_params import kmeans_tensor
@@ -25,6 +26,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     uniform_selection_histogram, uniform_selection_tensor
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import \
     power_of_two_selection_tensor, power_of_two_selection_histogram
+
 
 def get_activation_quantization_params_fn(activation_quantization_method: QuantizationMethod) -> Callable:
     """
@@ -42,7 +44,7 @@ def get_activation_quantization_params_fn(activation_quantization_method: Quanti
         params_fn = symmetric_selection_histogram
     elif activation_quantization_method == QuantizationMethod.UNIFORM:
         params_fn = uniform_selection_histogram
-    elif activation_quantization_method == QuantizationMethod.LUT_QUANTIZER:
+    elif activation_quantization_method == QuantizationMethod.LUT_POT_QUANTIZER:
         params_fn = lut_kmeans_histogram
     else:
         raise Exception(
@@ -68,8 +70,10 @@ def get_weights_quantization_params_fn(weights_quantization_method: Quantization
         params_fn = uniform_selection_tensor
     elif weights_quantization_method == QuantizationMethod.KMEANS:
         params_fn = kmeans_tensor
-    elif weights_quantization_method == QuantizationMethod.LUT_QUANTIZER:
-        params_fn = lut_kmeans_tensor
+    elif weights_quantization_method == QuantizationMethod.LUT_POT_QUANTIZER:
+        params_fn = partial(lut_kmeans_tensor, is_symmetric=False)
+    elif weights_quantization_method == QuantizationMethod.LUT_SYM_QUANTIZER:
+        params_fn = partial(lut_kmeans_tensor, is_symmetric=True)
     else:
         raise Exception(
             f'No params function for the configuration of quantization method {weights_quantization_method}')

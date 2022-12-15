@@ -22,7 +22,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     qparams_symmetric_selection_tensor_search, \
     qparams_symmetric_selection_histogram_search, kl_qparams_symmetric_selection_histogram_search
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import \
-    get_tensor_max
+    get_output_shape, reshape_tensor_for_per_channel_search
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 
@@ -52,8 +52,14 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
         Optimal threshold to quantize the tensor in a symmetric manner.
     """
 
-    unsigned_tensor_data = np.abs(tensor_data)
-    tensor_max = get_tensor_max(unsigned_tensor_data, per_channel, channel_axis)
+    if per_channel:
+        output_shape = get_output_shape(tensor_data.shape, channel_axis)
+        reshaped_tensor_data = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
+        tensor_max = np.reshape(np.max(reshaped_tensor_data, axis=-1), output_shape)
+        tensor_min = np.reshape(np.min(reshaped_tensor_data, axis=-1), output_shape)
+        tensor_max = np.maximum(-tensor_min, tensor_max * np.power(2.0, n_bits-1) / (np.power(2.0, n_bits-1) - 1))
+    else:
+        tensor_max = np.max(tensor_data)
 
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         threshold = get_init_threshold(min_threshold, tensor_max, per_channel)

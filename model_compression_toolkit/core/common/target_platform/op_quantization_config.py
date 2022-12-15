@@ -26,18 +26,21 @@ class QuantizationMethod(Enum):
 
     KMEANS - k-means quantization.
 
-    LUT_QUANTIZER - quantization using a look up table.
+    LUT_POT_QUANTIZER - quantization using a lookup table and power of 2 threshold.
 
     SYMMETRIC - Symmetric, uniform, quantization.
 
     UNIFORM - uniform quantization,
 
+    LUT_SYM_QUANTIZER - quantization using a lookup table and symmetric threshold.
+
     """
     POWER_OF_TWO = 0
     KMEANS = 1
-    LUT_QUANTIZER = 2
+    LUT_POT_QUANTIZER = 2
     SYMMETRIC = 3
     UNIFORM = 4
+    LUT_SYM_QUANTIZER = 5
 
 
 class OpQuantizationConfig:

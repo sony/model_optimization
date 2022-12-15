@@ -43,18 +43,20 @@ class LUTWeightsQuantizerTest(BaseKerasFeatureNetworkTest):
     - Check that different quantization methods on the same weights give different results
     '''
 
-    def __init__(self, unit_test, weights_n_bits: int = 3):
+    def __init__(self, unit_test, weights_n_bits: int = 3, is_symmetric=False):
         self.weights_n_bits = weights_n_bits
         self.node_to_change_name = 'change'
         self.num_conv_channels = 4
         self.kernel = 3
         self.conv_w = get_uniform_weights(self.kernel, self.num_conv_channels, self.num_conv_channels)
+        self.is_symmetric = is_symmetric
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
     def get_tpc(self):
+        qmethod = tp.QuantizationMethod.LUT_SYM_QUANTIZER if self.is_symmetric else tp.QuantizationMethod.LUT_POT_QUANTIZER
         qco = tp.QuantizationConfigOptions(
             [tp.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-                                     weights_quantization_method=tp.QuantizationMethod.LUT_QUANTIZER,
+                                     weights_quantization_method=qmethod,
                                      activation_n_bits=8,
                                      weights_n_bits=self.weights_n_bits,
                                      weights_per_channel_threshold=True,
@@ -108,7 +110,7 @@ class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
 
     def get_tpc(self):
         qco = tp.QuantizationConfigOptions(
-            [tp.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.LUT_QUANTIZER,
+            [tp.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.LUT_POT_QUANTIZER,
                                      weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
                                      activation_n_bits=self.activation_n_bits,
                                      weights_n_bits=8,
@@ -156,6 +158,7 @@ class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
 class RunKmeansTest(unittest.TestCase):
     def test_lut_quantizer(self):
         LUTWeightsQuantizerTest(self).run_test()
+        LUTWeightsQuantizerTest(self, is_symmetric=True).run_test()
 
 
 if __name__ == '__main__':

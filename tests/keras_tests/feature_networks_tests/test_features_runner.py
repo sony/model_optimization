@@ -168,8 +168,10 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_lut_quantizer(self):
         LUTWeightsQuantizerTest(self).run_test(experimental_facade=True)
+        LUTWeightsQuantizerTest(self, is_symmetric=True).run_test(experimental_facade=True)
         LUTActivationQuantizerTest(self).run_test(experimental_facade=True)
         LUTWeightsQuantizerTest(self).run_test()
+        LUTWeightsQuantizerTest(self, is_symmetric=True).run_test()
         LUTActivationQuantizerTest(self).run_test()
 
     def test_remove_upper_bound(self):

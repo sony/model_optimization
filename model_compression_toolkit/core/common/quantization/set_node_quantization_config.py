@@ -26,6 +26,8 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
+from model_compression_toolkit.core.common.quantization.quantization_fn_selection import \
+    get_weights_quantization_fn
 from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.target_platform.op_quantization_config import OpQuantizationConfig, \
     QuantizationConfigOptions
@@ -137,7 +139,7 @@ def create_node_qc_candidate(qc: QuantizationConfig,
     """
 
     # get attributes for weights quantization
-    weights_quantization_fn = fw_info.weights_quantizer_mapping.get(op_cfg.weights_quantization_method)
+    weights_quantization_fn = get_weights_quantization_fn(op_cfg.weights_quantization_method)
 
     if weights_quantization_fn is None:
         Logger.critical('Unknown quantization method for weights')

@@ -69,9 +69,9 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     # Creating OpQuantizationConfig list to quantize a model using mixed-precision with non-uniform quantizer
     # for 2 and 4 bit candidates (with Lookup-Table method).
     four_bits_lut = eight_bits.clone_and_edit(weights_n_bits=4,
-                                              weights_quantization_method=QuantizationMethod.LUT_QUANTIZER)
+                                              weights_quantization_method=QuantizationMethod.LUT_POT_QUANTIZER)
     two_bits_lut = eight_bits.clone_and_edit(weights_n_bits=2,
-                                             weights_quantization_method=QuantizationMethod.LUT_QUANTIZER)
+                                             weights_quantization_method=QuantizationMethod.LUT_POT_QUANTIZER)
     mixed_precision_cfg_list = [eight_bits, four_bits_lut, two_bits_lut]
 
     return eight_bits, mixed_precision_cfg_list
