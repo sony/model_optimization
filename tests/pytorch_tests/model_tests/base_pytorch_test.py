@@ -50,37 +50,32 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         return {
             'no_quantization': generate_pytorch_tpc(name="no_quant_pytorch_test",
                                                     tp_model=generate_test_tp_model({'weights_n_bits': 32,
-                                                                                                 'activation_n_bits': 32,
-                                                                                                 'enable_weights_quantization': False,
-                                                                                                 'enable_activation_quantization': False
+                                                                                     'activation_n_bits': 32,
+                                                                                     'enable_weights_quantization': False,
+                                                                                     'enable_activation_quantization': False
                                                                                      })),
             'all_32bit': generate_pytorch_tpc(name="32_quant_pytorch_test",
                                               tp_model=generate_test_tp_model({'weights_n_bits': 32,
-                                                                                           'activation_n_bits': 32,
-                                                                                           'enable_weights_quantization': True,
-                                                                                           'enable_activation_quantization': True
+                                                                               'activation_n_bits': 32,
+                                                                               'enable_weights_quantization': True,
+                                                                               'enable_activation_quantization': True
                                                                                })),
             'all_4bit': generate_pytorch_tpc(name="4_quant_pytorch_test",
                                              tp_model=generate_test_tp_model({'weights_n_bits': 4,
-                                                                                          'activation_n_bits': 4,
-                                                                                          'enable_weights_quantization': True,
-                                                                                          'enable_activation_quantization': True
+                                                                              'activation_n_bits': 4,
+                                                                              'enable_weights_quantization': True,
+                                                                              'enable_activation_quantization': True
                                                                               })),
         }
 
-    # TODO: We can remove this method and refactor Pytorch tests to run only over
-    #  different hw models (as all configs here are identical)
     def get_quantization_configs(self):
+        base_quant_config = mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
+                                                   mct.QuantizationErrorMethod.NOCLIPPING,
+                                                   False, True, True)
         return {
-            'no_quantization': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
-                                                      mct.QuantizationErrorMethod.NOCLIPPING,
-                                                      False, True, True),
-            'all_32bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
-                                                mct.QuantizationErrorMethod.NOCLIPPING,
-                                                False, True, True),
-            'all_4bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
-                                               mct.QuantizationErrorMethod.NOCLIPPING,
-                                               False, False, True),
+            'no_quantization': base_quant_config,
+            'all_32bit': base_quant_config,
+            'all_4bit': base_quant_config,
         }
 
     def create_inputs_shape(self):
@@ -143,15 +138,18 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         ptq_models = {}
         model_float = self.create_feature_network(input_shapes)
         quant_config_dict = self.get_quantization_configs()
-        for model_name in quant_config_dict.keys():
-            quant_config = quant_config_dict[model_name]
+        tpc_dict = self.get_tpc()
+        assert isinstance(tpc_dict, dict), "Pytorch tests get_tpc should return a dictionary " \
+                                           "mapping the test model name to a TPC object."
+        for model_name in tpc_dict.keys():
+            tpc = tpc_dict[model_name]
+            assert isinstance(tpc, TargetPlatformCapabilities)
+
+            quant_config = quant_config_dict.get(model_name)
+            assert quant_config is not None, f"Model name {model_name} does not exists in the test's " \
+                                             f"quantization configs dictionary keys"
             core_config = self.get_core_config()
             core_config.quantization_config = quant_config
-
-            tpc = self.get_tpc()
-            if isinstance(tpc, dict):
-                tpc = tpc[model_name]
-            assert isinstance(tpc, TargetPlatformCapabilities)
 
             if experimental_facade:
                 ptq_model, quantization_info = mct.pytorch_post_training_quantization_experimental(in_module=model_float,
