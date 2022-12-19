@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.quantization.quantizers.quantizers_he
 def _mse_error_histogram(q_bins: np.ndarray,
                          q_count: np.ndarray,
                          bins: np.ndarray,
-                         counts: np.ndarray) -> np.float:
+                         counts: np.ndarray) -> np.float32:
     """
     Compute the error function between a histogram to its quantized version.
     The error is computed based on the mean square error the distributions have.
@@ -67,7 +67,7 @@ def _lp_error_histogram(q_bins: np.ndarray,
                         q_count: np.ndarray,
                         bins: np.ndarray,
                         counts: np.ndarray,
-                        p: int) -> np.float:
+                        p: int) -> np.float32:
     """
     Compute the error function between a histogram to its quantized version.
     The error is computed based on the distance in Lp-norm between the two distributions.
@@ -90,7 +90,7 @@ def _kl_error_function(x: np.ndarray,
                        range_min: float,
                        range_max: float,
                        n_bins: int = 2048,
-                       n_bits: int = 8) -> np.float:
+                       n_bits: int = 8) -> np.float32:
     """
     Compute the error function between a tensor to its quantized version.
     The error is computed based on the KL-divergence the distributions have.
@@ -147,7 +147,7 @@ def _kl_error_histogram(q_bins: np.ndarray,
                         bins: np.ndarray,
                         counts: np.ndarray,
                         range_min: float,
-                        range_max: float) -> np.float:
+                        range_max: float) -> np.float32:
     """
     Compute the error function between a histogram to its quantized version.
     The error is computed based on the KL-divergence the distributions have.
