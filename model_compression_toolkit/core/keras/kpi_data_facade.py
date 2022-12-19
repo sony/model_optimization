@@ -24,12 +24,9 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_data im
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
+from model_compression_toolkit.core.common.constants import FOUND_TF
 
-import importlib
-
-
-if importlib.util.find_spec("tensorflow") is not None\
-        and importlib.util.find_spec("tensorflow_model_optimization") is not None:
+if FOUND_TF:
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -38,6 +35,7 @@ if importlib.util.find_spec("tensorflow") is not None\
     from model_compression_toolkit import get_target_platform_capabilities
 
     KERAS_DEFAULT_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
+
 
     def keras_kpi_data(in_model: Model,
                        representative_data_gen: Callable,

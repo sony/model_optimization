@@ -68,6 +68,7 @@ def get_node_name_from_layer(layer: Layer) -> str:
         name = '_'.join(name.split('_')[3:])
     return name
 
+
 def is_layer_fake_quant(layer: Layer) -> bool:
     """
     Check whether a Keras layer is a fake quantization layer or not.
@@ -81,6 +82,7 @@ def is_layer_fake_quant(layer: Layer) -> bool:
     return (isinstance(layer, TensorFlowOpLayer) and layer.node_def.op == FQ_NODE_OP_V2_3) or (
             isinstance(layer, TFOpLambda) and layer.symbol == FQ_NODE_OP_V2_4)
 
+
 class KerasModelBuilder(BaseModelBuilder):
     """
     Builder for Keras models.
@@ -90,7 +92,8 @@ class KerasModelBuilder(BaseModelBuilder):
                  graph: common.Graph,
                  append2output=None,
                  fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                 return_float_outputs: bool = False):
+                 return_float_outputs: bool = False,
+                 wrapper=None):
         """
 
         Args:
@@ -106,7 +109,7 @@ class KerasModelBuilder(BaseModelBuilder):
                          return_float_outputs)
 
         # Build an OperationHandler to handle conversions from graph nodes to Keras operators.
-        self.oh = OperationHandler(self.graph)
+        self.oh = OperationHandler(self.graph, wrapper)
 
     @abstractmethod
     def _quantize_node_activations(self,
@@ -202,8 +205,6 @@ class KerasModelBuilder(BaseModelBuilder):
         for node, tensors in in_node_to_output_tensors_dict.items():
             node_name_to_outtensors[node.name] = tensors
         return node_name_to_outtensors
-
-
 
     def _build_input_tensors_list(self,
                                   node: BaseNode,

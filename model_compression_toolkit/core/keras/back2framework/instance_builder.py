@@ -15,7 +15,7 @@
 
 
 import copy
-from typing import List, Dict
+from typing import List, Dict, Callable
 
 from networkx.algorithms.dag import topological_sort
 
@@ -26,20 +26,34 @@ from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.keras.constants import LAYER_NAME
 
 
+def identity_wrapper(node, layer):
+    """
+    A function which takes a computational graph node and a keras layer and return an identity wrapping which return the layer itself
+    Args:
+        n: A node of mct graph.
+        layer: A keras layer
+
+    Returns: keras layer
+
+    """
+    return layer
+
+
 class OperationHandler:
     """
     Class to handle conversions from graph nodes to Keras operators and retrieving them.
     """
 
-    def __init__(self, graph: Graph):
+    def __init__(self, graph: Graph, wrapper: Callable = None):
         # hold nodes after sorting them
         self.node_sort = list(topological_sort(graph))
 
         self.layer_to_node_dict = {}
 
         # hold dictionary from node to its equivalent Keras layer
-        self.node_to_fw_op_dict = instance_builder(self.node_sort)
-
+        if wrapper is None:
+            wrapper = identity_wrapper
+        self.node_to_fw_op_dict = instance_builder(self.node_sort, wrapper)
 
     def get_node_op_function(self, n: BaseNode) -> Layer:
         """
@@ -86,12 +100,13 @@ def node_builder(n: common.BaseNode) -> Layer:
     return node_instance
 
 
-def instance_builder(toposort: List[BaseNode]) -> Dict[BaseNode, Layer]:
+def instance_builder(toposort: List[BaseNode], wrapper: Callable) -> Dict[BaseNode, Layer]:
     """
     Build a dictionary of nodes to their corresponding Keras
     layers, given a list of nodes.
 
     Args:
+        wrapper:
         toposort: List of nodes sorted topological to build their layers.
 
     Returns:
@@ -101,6 +116,7 @@ def instance_builder(toposort: List[BaseNode]) -> Dict[BaseNode, Layer]:
     nodes_dict = dict()
     for n in toposort:
         if not n.reuse:  # Hold a single node in dictionary for all reused nodes from the same layer.
-            nodes_dict.update({n: node_builder(n)})
+            keras_node = wrapper(n, node_builder(n))
+            nodes_dict.update({n: keras_node})
 
     return nodes_dict

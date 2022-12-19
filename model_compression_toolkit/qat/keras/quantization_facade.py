@@ -30,17 +30,20 @@ from model_compression_toolkit.ptq.runner import ptq_runner
 if FOUND_TF:
     import tensorflow as tf
     import tensorflow_model_optimization as tfmot
-    from model_compression_toolkit.qat.keras.quantizer.config_factory import WeightQuantizeConfig
+    # from model_compression_toolkit.qat.keras.quantizer.config_factory import WeightQuantizeConfig
+    # from model_compression_toolkit.qat.keras.quantizer.config_factory import QUANTIZATION_CONFIGS_DICT
 
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
-    from model_compression_toolkit.qat.keras.quantizer.config_factory import QUANTIZATION_CONFIGS_DICT
+
     from model_compression_toolkit.qat.keras.qat_model_builder import QATKerasModelBuilder
 
     from model_compression_toolkit import get_target_platform_capabilities
+    from model_compression_toolkit import qunatizers_infrastructure as qi
+
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
@@ -158,7 +161,7 @@ if FOUND_TF:
 
         user_info.mixed_precision_cfg = bit_widths_config
 
-        return qat_model, user_info, QUANTIZATION_CONFIGS_DICT
+        return qat_model, user_info, None
 
 
     def keras_quantization_aware_training_finalize(in_model: Model):
@@ -218,10 +221,11 @@ if FOUND_TF:
          """
 
         def _export(layer):
-            if isinstance(layer, tfmot.quantization.keras.QuantizeWrapper):
-                if not isinstance(layer.quantize_config, tuple(QUANTIZATION_CONFIGS_DICT.values())):
-                    Logger.error(f'Only supported quantization configs are {tuple(QUANTIZATION_CONFIGS_DICT.keys())}')
-                if isinstance(layer.quantize_config, WeightQuantizeConfig):
+            if isinstance(layer, qi.KerasQuantizationWrapper):
+                # if not isinstance(layer.quantize_config, tuple(QUANTIZATION_CONFIGS_DICT.values())):
+                #     Logger.error(f'Only supported quantization configs are {tuple(QUANTIZATION_CONFIGS_DICT.keys())}')
+                # if isinstance(layer.quantize_config, WeightQuantizeConfig):
+                if layer.dispatcher.is_weights_quantization:
                     new_layer = layer.layer.__class__.from_config(layer.layer.get_config())
                     with tf.name_scope(new_layer.name):
                         new_layer.build(layer.input_shape)
@@ -230,10 +234,10 @@ if FOUND_TF:
                         val = None
                         for qw in layer.weights:
                             if w.name in qw.name:
-                                if w.name.split('/')[-1].split(':')[0] in layer.quantize_config.weight_attrs:
-                                    val = layer.quantize_config.get_weights_and_quantizers(layer.layer)[0][1](qw,
-                                                                                                              False,
-                                                                                                              layer.quantize_config.weight_quantizer.quantizer_parameters)
+                                attribute_name = w.name.split('/')[-1].split(':')[0]
+                                if attribute_name in layer.dispatcher.weight_quantizer.keys():
+                                    quantizer = layer.dispatcher.weight_quantizer.get(attribute_name)
+                                    val = quantizer(qw, False)
                                 else:
                                     val = qw
                                 val = val.numpy()
@@ -260,6 +264,7 @@ else:
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                         'when using keras_quantization_aware_training_init. '
                         'Could not find Tensorflow package.')
+
 
     def keras_quantization_aware_training_finalize(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '

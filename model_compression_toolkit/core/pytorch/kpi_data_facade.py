@@ -24,16 +24,16 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_data im
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig, DEFAULT_MIXEDPRECISION_CONFIG, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core.common.constants import FOUND_TORCH
 
-import importlib
-
-if importlib.util.find_spec("torch") is not None:
+if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
     from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
     from torch.nn import Module
 
     from model_compression_toolkit import get_target_platform_capabilities
+
     PYTORCH_DEFAULT_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
 

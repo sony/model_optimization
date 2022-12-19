@@ -1,0 +1,53 @@
+# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+import copy
+from collections import Callable
+
+from model_compression_toolkit import QuantizationConfig
+from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
+    NodeActivationQuantizationConfig
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod, OpQuantizationConfig
+from enum import Enum
+
+IS_WEIGHTS = "is_weights"
+
+
+def transform_enum(v):
+    if isinstance(v, Enum):
+        return v.value
+    return v
+
+
+def config_serialization(quantization_config):
+    config_data = {k: transform_enum(v) for k, v in quantization_config.__dict__.items() if
+                   v is not isinstance(v, Callable)}
+    config_data[IS_WEIGHTS] = isinstance(quantization_config, NodeWeightsQuantizationConfig)
+    return config_data
+
+
+def config_deserialization(in_config):
+    in_config = copy.deepcopy(in_config)
+    qc = QuantizationConfig()
+    op_cfg = OpQuantizationConfig(QuantizationMethod.POWER_OF_TWO, QuantizationMethod.POWER_OF_TWO, 8, 8, True, True,
+                                  True, True, 0, 0, 8)
+    if in_config[IS_WEIGHTS]:
+        nwqc = NodeWeightsQuantizationConfig(qc=qc, op_cfg=op_cfg, weights_quantization_fn=None,
+                                             weights_quantization_params_fn=None, weights_channels_axis=0)
+        in_config["weights_quantization_method"] = QuantizationMethod(in_config["weights_quantization_method"])
+
+        nwqc.__dict__.update(in_config)
+        return nwqc
+    else:
+        raise NotImplemented

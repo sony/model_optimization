@@ -34,10 +34,9 @@ from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
 from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
+from model_compression_toolkit.core.common.constants import FOUND_TORCH
 
-import importlib
-
-if importlib.util.find_spec("torch") is not None:
+if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
     from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL

@@ -35,13 +35,10 @@ from model_compression_toolkit.ptq.runner import ptq_runner
 from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 
-import importlib
-
 from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.core.common.constants import FOUND_TF
 
-
-if importlib.util.find_spec("tensorflow") is not None\
-        and importlib.util.find_spec("tensorflow_model_optimization") is not None:
+if FOUND_TF:
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
@@ -49,6 +46,7 @@ if importlib.util.find_spec("tensorflow") is not None\
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
 
     from model_compression_toolkit import get_target_platform_capabilities
+
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
@@ -60,7 +58,8 @@ if importlib.util.find_spec("tensorflow") is not None\
                                          network_editor: List[EditRule] = [],
                                          gptq_config: GradientPTQConfig = None,
                                          analyze_similarity: bool = False,
-                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
+                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> \
+    Tuple[Model, UserInformation]:
         """
         Quantize a pretrained Keras model using post-training quantization. By default, the model is quantized
         using a symmetric constraint quantization thresholds (power of two) as defined in the default TargetPlatformCapabilities.
@@ -154,7 +153,8 @@ if importlib.util.find_spec("tensorflow") is not None\
                                                          network_editor: List[EditRule] = [],
                                                          gptq_config: GradientPTQConfig = None,
                                                          analyze_similarity: bool = False,
-                                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
+                                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> \
+    Tuple[Model, UserInformation]:
         """
          Quantize a pretrained Keras model using post-training quantization. By default, the model is quantized
          using a symmetric constraint quantization thresholds (power of two) as defined in the default
@@ -282,6 +282,7 @@ else:
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                         'when using keras_post_training_quantization. '
                         'Could not find Tensorflow package.')
+
 
     def keras_post_training_quantization_mixed_precision(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
