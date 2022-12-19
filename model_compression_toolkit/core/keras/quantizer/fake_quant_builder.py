@@ -14,7 +14,6 @@
 # ==============================================================================
 
 
-
 from typing import Tuple, Callable
 
 import tensorflow as tf
@@ -142,8 +141,9 @@ def q(x: TFReference, min_value, max_value, activation_n_bits) -> TFReference:
         The fake-quantized input tensor.
     """
     if x.dtype != tf.float32:
-        Logger.critical(f"Trying to quantize tensor of type {x.dtype} which is not supported, expected type float32")
+        x = tf.cast(x, dtype=tf.float32)
 
+    # fake_quant_with_min_max_vars expects to get x of float32
     return tf.quantization.fake_quant_with_min_max_vars(x,
                                                         min=min_value,
                                                         max=max_value,
