@@ -17,41 +17,49 @@ from typing import Dict, List
 
 from model_compression_toolkit.qunatizers_infrastructure.common.base_quantizer import BaseQuantizer
 
-# TODO: case of non tf
-from keras.utils import serialize_keras_object, deserialize_keras_object
 
-
-class NodeQuantizationDispatcher(object):
+class NodeQuantizationDispatcher:
     def __init__(self,
-                 weight_quantizer: Dict[str, BaseQuantizer] = None,
+                 weight_quantizers: Dict[str, BaseQuantizer] = None,
                  activation_quantizers: List[BaseQuantizer] = None):
-        self.weight_quantizer = weight_quantizer if weight_quantizer is not None else dict()
+        """
+        Node quantization dispatcher collect all the quantizer of a given layer.
+
+        Args:
+            weight_quantizers: A dictionary between weight name to it quantizer .
+            activation_quantizers: A list of activation quantization one for each layer output.
+        """
+        self.weight_quantizers = weight_quantizers if weight_quantizers is not None else dict()
         self.activation_quantizers = activation_quantizers if activation_quantizers is not None else list()
 
-    def add_weight_quantizer(self, param_name, quantizer):
-        self.weight_quantizer.update({param_name: quantizer})
+    def add_weight_quantizer(self, param_name: str, quantizer: BaseQuantizer):
+        """
+        This function add a weight quantizer to existing node dispatcher
+
+        Args:
+            param_name: The name of the parameter to quantize
+            quantizer: A quantizer.
+
+        Returns: None
+
+        """
+        self.weight_quantizers.update({param_name: quantizer})
 
     @property
-    def is_activation_quantization(self):
+    def is_activation_quantization(self) -> bool:
+        """
+        This function check activation quantizer exists in dispatcher.
+        Returns: a boolean if activation quantizer exists
+
+        """
         return len(self.activation_quantizers) > 0
 
     @property
-    def is_weights_quantization(self):
-        return len(self.weight_quantizer) > 0
+    def is_weights_quantization(self) -> bool:
+        """
+        This function check weights quantizer exists in dispatcher.
 
-    def get_config(self) -> dict:
-        return {"activation_quantizers": [serialize_keras_object(act) for act in self.activation_quantizers],
-                "weight_quantizer": {k: serialize_keras_object(v) for k, v in self.weight_quantizer.items()}}
+        Returns: a boolean if weights quantizer exists
 
-    @classmethod
-    def from_config(cls, config):
-        config = config.copy()
-        activation_quantizers = [deserialize_keras_object(act,
-                                                          module_objects=globals(),
-                                                          custom_objects=None) for act in
-                                 config.get("activation_quantizers")]
-        weight_quantizer = {k: deserialize_keras_object(v,
-                                                        module_objects=globals(),
-                                                        custom_objects=None) for k, v in
-                            config.get("weight_quantizer").items()}
-        return cls(weight_quantizer, activation_quantizers)
+        """
+        return len(self.weight_quantizers) > 0

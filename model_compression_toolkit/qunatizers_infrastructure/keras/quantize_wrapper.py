@@ -25,6 +25,11 @@ if FOUND_TF:
     from tensorflow_model_optimization.python.core.keras import utils
     from keras.utils import deserialize_keras_object, serialize_keras_object
 
+    DISPATCHER = "dispatcher"
+    LAYER = "layer"
+    STEPS = "optimizer_step"
+    TRAINING = "training"
+
 
     def _make_quantizer_fn(quantizer, x, training):
         """Use currying to return True/False specialized fns to the cond."""
@@ -64,34 +69,55 @@ if FOUND_TF:
             self.dispatcher = dispatcher
 
         def get_config(self):
+            """
+
+            Returns: Configuration of KerasQuantizationWrapper.
+
+            """
             base_config = super(KerasQuantizationWrapper, self).get_config()
-            config = {'dispatcher': serialize_keras_object(self.dispatcher)}
+            config = {DISPATCHER: serialize_keras_object(self.dispatcher)}
             return dict(list(base_config.items()) + list(config.items()))
 
         @classmethod
         def from_config(cls, config):
+            """
+
+            Args:
+                config(dict): dictonory  of  KerasNodeQuantizationDispatcher Configuration
+
+            Returns: A KerasNodeQuantizationDispatcher
+
+            """
             config = config.copy()
 
             dispatcher = deserialize_keras_object(
-                config.pop('dispatcher'),
+                config.pop(DISPATCHER),
                 module_objects=globals(),
                 custom_objects=None)
 
-            layer = tf.keras.layers.deserialize(config.pop('layer'))
+            layer = tf.keras.layers.deserialize(config.pop(LAYER))
 
             return cls(layer=layer, dispatcher=dispatcher)
 
         def build(self, input_shape):
+            """
+            KerasQuantization Wrapper build function.
+            Args:
+                input_shape: the layer input shape
+
+            Returns: None
+
+            """
             super(KerasQuantizationWrapper, self).build(input_shape)
 
             self.optimizer_step = self.add_weight(
-                'optimizer_step',
+                STEPS,
                 initializer=tf.keras.initializers.Constant(-1),
                 dtype=tf.dtypes.int32,
                 trainable=False)
 
             self._weight_vars = []
-            for name, quantizer in self.dispatcher.weight_quantizer.items():
+            for name, quantizer in self.dispatcher.weight_quantizers.items():
                 weight = getattr(self.layer, name)
                 quantizer.initialize_quantization(weight.shape,
                                                   _weight_name(weight.name), self)
@@ -101,7 +127,7 @@ if FOUND_TF:
                 self._trainable_weights.append(weight)
 
         def set_quantize_weights(self, quantized_weights):
-            for weight_attr in self.dispatcher.weight_quantizer.keys():
+            for weight_attr in self.dispatcher.weight_quantizers.keys():
                 weight = quantized_weights.get(weight_attr)
                 current_weight = getattr(self.layer, weight_attr)
                 if current_weight.shape != weight.shape:
@@ -111,6 +137,16 @@ if FOUND_TF:
                 setattr(self.layer, weight_attr, weight)
 
         def call(self, inputs, training=None, **kwargs):
+            """
+            KerasQuantizationWrapper call functions
+            Args:
+                inputs: Input tensors to specified layer
+                training: a boolean stating if layer is in training mode.
+                **kwargs:
+
+            Returns: tensors that simulate quantized layer.
+
+            """
             if training is None:
                 training = tf.keras.backend.learning_phase()
 
@@ -127,7 +163,7 @@ if FOUND_TF:
             self.set_quantize_weights(quantized_weights)
 
             args = tf_inspect.getfullargspec(self.layer.call).args
-            if 'training' in args:
+            if TRAINING in args:
                 outputs = self.layer.call(inputs, training=training, **kwargs)
             else:
                 outputs = self.layer.call(inputs, **kwargs)
@@ -136,4 +172,13 @@ if FOUND_TF:
 else:
     class KerasQuantizationWrapper(object):
         def __init__(self, layer, dispatcher: NodeQuantizationDispatcher):
-            raise
+            """
+            Keras Quantization Wrapper takes a keras layer and dispatcher and infer a quantized layer.
+
+            Args:
+                layer: A keras layer.
+                dispatcher: A node quantization dispatcher.
+            """
+            Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+                            'when using KerasQuantizationWrapper. '
+                            'Could not find Tensorflow package.')

@@ -27,7 +27,7 @@ class QuantizationPart(Enum):
     Weights = 1
 
 
-class BaseQuantizer(object):
+class BaseQuantizer:
     def __init__(self,
                  qunatization_config: BaseNodeNodeQuantizationConfig,
                  quantization_part: QuantizationPart,
@@ -36,9 +36,9 @@ class BaseQuantizer(object):
         This class is a base quantizer which validate the the provide quantization config and define abstract function which any quantizer need to implment.
 
         Args:
-            qunatization_config:
-            quantization_part:
-            quantization_method:
+            qunatization_config: node quantization config class contins all the information above a quantizer.
+            quantization_part: A enum which decided the qunaizer tensor type activation or weights.
+            quantization_method: A list of enums which represent the quantizer supported methods.
         """
         self.qunatization_config = qunatization_config
         self.quantization_part = quantization_part
@@ -62,20 +62,21 @@ class BaseQuantizer(object):
                                 name: str,
                                 layer):
         """
+        This initilized the quantizer parameters given the parameter name and shape.
 
         Args:
-            tensor_shape:
-            name:
-            layer:
+            tensor_shape:  tensor shape
+            name: tensor name
+            layer: layer to quantized
 
-        Returns:
+        Returns: None
 
         """
         raise NotImplemented
 
     def __call__(self,
                  input2quantize,
-                 training):
+                 training: bool):
         """
         Quantize a tensor.
 
@@ -89,15 +90,34 @@ class BaseQuantizer(object):
         raise NotImplemented
 
     def activation_quantization(self) -> bool:
+        """
+
+        Returns: A boolean stating is this activation quantizer
+
+        """
         return isinstance(self.qunatization_config, NodeActivationQuantizationConfig)
 
     def weights_quantization(self) -> bool:
+        """
+
+        Returns: A boolean stating is this weights quantizer
+
+        """
         return isinstance(self.qunatization_config, NodeWeightsQuantizationConfig)
 
     def validate_weights(self) -> None:
+        """
+        This function valid the quantize config compare with it parameters.
+
+
+        """
         if self.activation_quantization() or not self.weights_quantization():
             common.Logger.error(f'Expect weight quantization got activation')
 
     def validate_activation(self) -> None:
+        """
+        This function valid the quantize config compare with it parameters.
+
+        """
         if not self.activation_quantization() or self.weights_quantization():
             common.Logger.error(f'Expect activation quantization got weight')

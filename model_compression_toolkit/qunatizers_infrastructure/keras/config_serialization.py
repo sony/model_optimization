@@ -13,15 +13,16 @@
 # limitations under the License.
 # ==============================================================================
 import copy
-from collections import Callable
+
+from collections.abc import Callable
 
 from model_compression_toolkit import QuantizationConfig
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
-    NodeActivationQuantizationConfig
+from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod, OpQuantizationConfig
 from enum import Enum
 
 IS_WEIGHTS = "is_weights"
+WEIGHTS_QUANTIZATION_METHOD = "weights_quantization_method"
 
 
 def transform_enum(v):
@@ -40,12 +41,15 @@ def config_serialization(quantization_config):
 def config_deserialization(in_config):
     in_config = copy.deepcopy(in_config)
     qc = QuantizationConfig()
-    op_cfg = OpQuantizationConfig(QuantizationMethod.POWER_OF_TWO, QuantizationMethod.POWER_OF_TWO, 8, 8, True, True,
-                                  True, True, 0, 0, 8)
+    op_cfg = OpQuantizationConfig(QuantizationMethod.POWER_OF_TWO, QuantizationMethod.POWER_OF_TWO,
+                                  8, 8, True, True, True, True, 0, 0, 8)
     if in_config[IS_WEIGHTS]:
-        nwqc = NodeWeightsQuantizationConfig(qc=qc, op_cfg=op_cfg, weights_quantization_fn=None,
-                                             weights_quantization_params_fn=None, weights_channels_axis=0)
-        in_config["weights_quantization_method"] = QuantizationMethod(in_config["weights_quantization_method"])
+        nwqc = NodeWeightsQuantizationConfig(qc=qc,
+                                             op_cfg=op_cfg,
+                                             weights_quantization_fn=None,
+                                             weights_quantization_params_fn=None,
+                                             weights_channels_axis=0)
+        in_config[WEIGHTS_QUANTIZATION_METHOD] = QuantizationMethod(in_config[WEIGHTS_QUANTIZATION_METHOD])
 
         nwqc.__dict__.update(in_config)
         return nwqc

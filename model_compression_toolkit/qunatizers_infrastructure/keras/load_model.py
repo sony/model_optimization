@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
 
 if FOUND_TF:
@@ -23,8 +24,21 @@ if FOUND_TF:
 
 
     def keras_load_quantized_model(filepath, custom_objects=None, compile=True, options=None):
+        """
+        This function wraps the keras load model and MCT quantization custom class to it.
+
+        Args:
+            filepath: the model file path.
+            custom_objects: Additional custom objects
+            compile: Boolean, whether to compile the model after loading.
+            options: Optional `tf.saved_model.LoadOptions` object that specifies options for loading from SavedModel.
+
+        Returns: A keras Model
+
+        """
         qi_custom_objects = {subclass.__name__: subclass for subclass in BaseKerasQuantizer.__subclasses__()}
-        qi_custom_objects.update({qi.KerasQuantizationWrapper.__name__: qi.KerasQuantizationWrapper})
+        qi_custom_objects.update({qi.KerasQuantizationWrapper.__name__: qi.KerasQuantizationWrapper,
+                                  qi.KerasNodeQuantizationDispatcher.__name__: qi.KerasNodeQuantizationDispatcher})
         if custom_objects is not None:
             qi_custom_objects.update(custom_objects)
         return tf.keras.models.load_model(filepath,
@@ -32,4 +46,18 @@ if FOUND_TF:
                                           options=options)
 else:
     def keras_load_quantized_model(filepath, custom_objects=None, compile=True, options=None):
-        raise Exception
+        """
+        This function wraps the keras load model and MCT quantization custom class to it.
+
+        Args:
+            filepath: the model file path.
+            custom_objects: Additional custom objects
+            compile: Boolean, whether to compile the model after loading.
+            options: Optional `tf.saved_model.LoadOptions` object that specifies options for loading from SavedModel.
+
+        Returns: A keras Model
+
+        """
+        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+                        'when using keras_load_quantized_model. '
+                        'Could not find Tensorflow package.')

@@ -40,7 +40,7 @@ class STEWeightQuantizer(qi.BaseKerasQuantizer):
         for the quantization.
 
         Args:
-            qunatization_config: Number of bits to use for the quantization.
+            qunatization_config: node quantization config class
         """
         super().__init__(qunatization_config,
                          qi.QuantizationPart.Weights,

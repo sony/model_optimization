@@ -29,7 +29,7 @@ METHOD2QUANTIZER = {qi.QuantizationMethod.SYMMETRIC: STEWeightQuantizer,
 def quantization_dispatcher_builder(n: common.BaseNode,
                                     fw_info: FrameworkInfo,
                                     method2quantizer: Dict[
-                                        qi.QuantizationMethod, qi.BaseKerasQuantizer] = METHOD2QUANTIZER) -> qi.NodeQuantizationDispatcher:
+                                        qi.QuantizationMethod, qi.BaseKerasQuantizer] = METHOD2QUANTIZER) -> qi.KerasNodeQuantizationDispatcher:
     """
     Build a NodeQuantizationDispatcher for a node according to its quantization configuration and
     a global NoOpQuantizeConfig object.
@@ -43,7 +43,7 @@ def quantization_dispatcher_builder(n: common.BaseNode,
         A QuantizeConfig object with the appropriate quantizers (according to the node's
         quantization configuration).
     """
-    nqd = qi.NodeQuantizationDispatcher()
+    nqd = qi.KerasNodeQuantizationDispatcher()
     if n.is_weights_quantization_enabled():
         attributes = fw_info.get_kernel_op_attributes(n.type)
         for attr in attributes:

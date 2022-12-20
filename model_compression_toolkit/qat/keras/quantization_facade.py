@@ -29,9 +29,6 @@ from model_compression_toolkit.ptq.runner import ptq_runner
 
 if FOUND_TF:
     import tensorflow as tf
-    import tensorflow_model_optimization as tfmot
-    # from model_compression_toolkit.qat.keras.quantizer.config_factory import WeightQuantizeConfig
-    # from model_compression_toolkit.qat.keras.quantizer.config_factory import QUANTIZATION_CONFIGS_DICT
 
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -235,8 +232,8 @@ if FOUND_TF:
                         for qw in layer.weights:
                             if w.name in qw.name:
                                 attribute_name = w.name.split('/')[-1].split(':')[0]
-                                if attribute_name in layer.dispatcher.weight_quantizer.keys():
-                                    quantizer = layer.dispatcher.weight_quantizer.get(attribute_name)
+                                if attribute_name in layer.dispatcher.weight_quantizers.keys():
+                                    quantizer = layer.dispatcher.weight_quantizers.get(attribute_name)
                                     val = quantizer(qw, False)
                                 else:
                                     val = qw
