@@ -27,6 +27,8 @@ from tests.common_tests.function_tests.test_threshold_selection import TestThres
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
+from tests.pytorch_tests.function_tests.test_tensorboard_writer import PytorchTestLogger, \
+    PytorchMultipleOutputsTestLogger, PytorchMixedPrecisionTestLogger
 
 found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
     "tensorflow_model_optimization") is not None
@@ -37,7 +39,8 @@ if found_tf:
     import tensorflow as tf
     from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
     from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
-    from tests.keras_tests.function_tests.test_tensorboard_writer import TestLogger
+    from tests.keras_tests.function_tests.test_tensorboard_writer import TestLogger, MultipleOutputsTestLogger, \
+        MixedPrecisionTestLogger
     from tests.keras_tests.function_tests.test_lut_quanitzer_params import TestLUTQuantizerParams
     from tests.keras_tests.function_tests.test_lp_search_bitwidth import TestLpSearchBitwidth, \
         TestSearchBitwidthConfiguration
@@ -91,6 +94,8 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureNetworkTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLogger))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(MultipleOutputsTestLogger))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(MixedPrecisionTestLogger))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLpSearchBitwidth))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSearchBitwidthConfiguration))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestBNInfoCollection))
@@ -124,6 +129,9 @@ if __name__ == '__main__':
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_resnet18', ModelTest))
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_shufflenet_v2_x1_0', ModelTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchTPModel))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchTestLogger))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchMultipleOutputsTestLogger))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchMixedPrecisionTestLogger))
 
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)
