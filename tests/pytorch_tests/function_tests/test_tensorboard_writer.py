@@ -19,7 +19,6 @@ import os
 import unittest
 
 import numpy as np
-from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.core import common
