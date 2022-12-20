@@ -17,6 +17,7 @@
 import glob
 import os
 import unittest
+from datetime import datetime
 
 import numpy as np
 import tensorflow as tf
@@ -62,7 +63,8 @@ class BaseTestLogger(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        common.Logger.set_log_file('/tmp/')
+        ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S")
+        mct.core.common.Logger.set_log_file(f'/tmp/{ts}/')
 
     def test_tensorboard_log_dir(self):
         self.assertTrue(os.path.exists(os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs')))
