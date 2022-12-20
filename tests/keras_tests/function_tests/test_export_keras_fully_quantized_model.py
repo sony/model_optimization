@@ -13,19 +13,23 @@
 # limitations under the License.
 # ==============================================================================
 import os
-import random
+import tempfile
 import unittest
 
 import keras.models
 import numpy as np
+import tensorflow as tf
 from keras import Input
 from keras.layers import Conv2D, BatchNormalization, ReLU, Dropout, Dense, Activation
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.exporter.model_exporter import keras_export_model, KerasExportMode
+from model_compression_toolkit.exporter.model_exporter import keras_export_model, KerasExportMode, \
+    tflite_export_model, \
+    TFLiteExportMode
 from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_exportable
 
-SAVED_MODEL_PATH = '/tmp/exported_tf_fakelyquant.h5'
+_, SAVED_MODEL_PATH_TF = tempfile.mkstemp('.h5')
+_, SAVED_MODEL_PATH_TFLITE = tempfile.mkstemp('.tflite')
 
 
 def _get_model(input_shape):
@@ -38,28 +42,34 @@ def _get_model(input_shape):
     x = Conv2D(3, 3, padding='same')(x)
     x = ReLU(max_value=6)(x)
     x = Dropout(rate=0.5)(x)
-    outputs = Dense(10)(x)
-    return keras.Model(inputs=inputs, outputs=outputs)
+    x = Dense(10)(x)
+    return keras.Model(inputs=inputs, outputs=x)
 
 
 class TestKerasFakeQuantExporter(unittest.TestCase):
 
     def tearDown(self):
-        os.remove(SAVED_MODEL_PATH)
+        os.remove(SAVED_MODEL_PATH_TF)
+        os.remove(SAVED_MODEL_PATH_TFLITE)
 
     def setUp(self) -> None:
-        input_shape = (32,32,3)
+        input_shape = (32, 32, 3)
         self.model = _get_model(input_shape)
-        self.representative_data_gen = lambda: [np.random.randn(*((1,)+input_shape))]
+        self.representative_data_gen = lambda: [np.random.randn(*((1,) + input_shape))]
         self.exportable_model = self.run_mct(self.model, new_experimental_exporter=True)
-        self.exported_model, self.custom_objects = keras_export_model(model=self.exportable_model,
-                                                                      is_layer_exportable_fn=is_keras_layer_exportable,
-                                                                      mode=KerasExportMode.FAKELY_QUANT,
-                                                                      save_model_path=SAVED_MODEL_PATH)
+        self.exportable_model.trainable = False
+        self.tf_exported_model, self.tf_custom_objects = keras_export_model(model=self.exportable_model,
+                                                                            is_layer_exportable_fn=is_keras_layer_exportable,
+                                                                            mode=KerasExportMode.FAKELY_QUANT,
+                                                                            save_model_path=SAVED_MODEL_PATH_TF)
+        self.tf_exported_model.trainable = False
+        self.tflite_exported_model, self.tflite_custom_objects = tflite_export_model(model=self.exportable_model,
+                                                                                     is_layer_exportable_fn=is_keras_layer_exportable,
+                                                                                     mode=TFLiteExportMode.FAKELY_QUANT,
+                                                                                     save_model_path=SAVED_MODEL_PATH_TFLITE)
 
     def run_mct(self, model, new_experimental_exporter):
         core_config = mct.CoreConfig()
-
         new_export_model, _ = mct.keras_post_training_quantization_experimental(
             in_model=model,
             core_config=core_config,
@@ -72,7 +82,7 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         Test that the exported model and fully quantized model predicting the same results.
         """
         images = self.representative_data_gen()
-        diff = self.exported_model(images) - self.exportable_model(images)
+        diff = self.tf_exported_model(images) - self.exportable_model(images)
         print(f'Max abs error: {np.max(np.abs(diff))}')
         self.assertTrue(np.sum(np.abs(diff)) == 0)
 
@@ -81,8 +91,32 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         Test that the exported model (after loading it from file system) and fully quantized model predicting the
         same results.
         """
-        loaded_model = keras.models.load_model(SAVED_MODEL_PATH, self.custom_objects)
+        loaded_model = keras.models.load_model(SAVED_MODEL_PATH_TF, self.tf_custom_objects)
         images = self.representative_data_gen()
         diff = loaded_model(images) - self.exportable_model(images)
+        print(f'Max abs error: {np.max(np.abs(diff))}')
+        self.assertTrue(np.sum(np.abs(diff)) == 0)
+
+    def test_tflite_fq_export(self):
+        """
+        Test that the tflite exported model can infer and that tf exported model has the same weights
+        as the tflite exported model.
+        """
+        # Test inference of exported model
+        test_image = self.representative_data_gen()[0].astype("float32")
+        interpreter = tf.lite.Interpreter(model_path=SAVED_MODEL_PATH_TFLITE)
+        interpreter.allocate_tensors()
+        input_index = interpreter.get_input_details()[0]["index"]
+        interpreter.set_tensor(input_index, test_image)
+        # Run inference.
+        interpreter.invoke()
+
+        # Test equal weights of the first conv2d layer between exported TFLite and exported TF
+        diff = np.transpose(interpreter.tensor(4)(), (1, 2, 3, 0)) - self.tf_exported_model.layers[2].kernel
+        print(f'Max abs error: {np.max(np.abs(diff))}')
+        self.assertTrue(np.sum(np.abs(diff)) == 0)
+
+        # Make sure the bias is equal
+        diff = interpreter.tensor(1)() - self.tf_exported_model.layers[2].bias
         print(f'Max abs error: {np.max(np.abs(diff))}')
         self.assertTrue(np.sum(np.abs(diff)) == 0)

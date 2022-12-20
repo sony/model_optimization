@@ -14,6 +14,9 @@
 # ==============================================================================
 from typing import Any
 
+from keras.engine.input_layer import InputLayer
+from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapperV2
+
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.exporter.model_wrapper.keras.builder.quantize_config_to_node import \
     SUPPORTED_QUANTIZATION_CONFIG
@@ -30,6 +33,10 @@ def is_keras_layer_exportable(layer: Any) -> bool:
     Returns:
         Check whether a Keras layer is a valid exportable layer or not.
     """
+    # Keras Input layers are not wrapped
+    if isinstance(layer, InputLayer):
+        return True
+
     valid_layer = isinstance(layer, ExtendedQuantizeWrapper)
     if not valid_layer:
         Logger.error(f'Exportable layer must be wrapped using ExtendedQuantizeWrapper, but layer {layer.name} is of type {type(layer)}')
