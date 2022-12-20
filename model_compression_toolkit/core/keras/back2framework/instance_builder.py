@@ -26,11 +26,11 @@ from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.keras.constants import LAYER_NAME
 
 
-def identity_wrapper(node, layer):
+def identity_wrapper(node: BaseNode, layer: Layer):
     """
     A function which takes a computational graph node and a keras layer and return an identity wrapping which return the layer itself
     Args:
-        n: A node of mct graph.
+        node: A node of mct graph.
         layer: A keras layer
 
     Returns: keras layer
@@ -106,7 +106,7 @@ def instance_builder(toposort: List[BaseNode], wrapper: Callable) -> Dict[BaseNo
     layers, given a list of nodes.
 
     Args:
-        wrapper:
+        wrapper: A function wrapper keras Layers.
         toposort: List of nodes sorted topological to build their layers.
 
     Returns:

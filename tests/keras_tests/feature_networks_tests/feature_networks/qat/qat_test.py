@@ -116,12 +116,3 @@ class QuantizationAwareTrainingQuantizersTest(QuantizationAwareTrainingTest):
                 dw_weight = w_select[0]
                 quantized_dw_weight = quantizer(dw_weight, False)
         self.unit_test.assertTrue(np.all(dw_weight == quantized_dw_weight))
-        # dw_weight=getattr(quantized_model.layers[2],name)
-        # print(name)
-        # pass
-        #     dw_weight = quantized_model.layers[2].weights[0].numpy()
-        #     qconfig = \
-        #         quantized_model.layers[2].quantize_config.get_weights_and_quantizers(quantized_model.layers[2].layer)[
-        #             0][1]
-        #     quantized_dw_weight = qconfig(dw_weight, False, qconfig.quantizer_parameters).numpy()
-        # self.unit_test.assertTrue(np.all(dw_weight == quantized_dw_weight))

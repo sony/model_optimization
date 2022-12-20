@@ -40,7 +40,7 @@ if FOUND_TF:
         return quantizer_fn
 
 
-    def _weight_name(name):
+    def _weight_name(name: str) -> str:
         """Extracts the weight name from the full TensorFlow variable name.
 
         For example, returns 'kernel' for 'dense_2/kernel:0'.
@@ -126,7 +126,16 @@ if FOUND_TF:
                 # Needed to ensure unquantized weights get trained as part of the wrapper. ?? Nost sure
                 self._trainable_weights.append(weight)
 
-        def set_quantize_weights(self, quantized_weights):
+        def set_quantize_weights(self, quantized_weights: dict):
+            """
+            This function update layer weights after quantization.
+
+            Args:
+                quantized_weights: a dict of weight to update
+
+            Returns: None
+
+            """
             for weight_attr in self.dispatcher.weight_quantizers.keys():
                 weight = quantized_weights.get(weight_attr)
                 current_weight = getattr(self.layer, weight_attr)

@@ -33,7 +33,7 @@ if FOUND_TF:
                      quantization_part: QuantizationPart,
                      quantization_method: List[QuantizationMethod]):
             """
-            This class is a base quantizer which validate the the provide quantization config and define abstract function which any quantizer need to implment.
+            This class is a base quantizer which validate the provide quantization config and define abstract function which any quantizer need to implment.
             This class add to the base quantizer get_config and from_config function to enable keras load and save model.
             Args:
                 qunatization_config: node quantization config class contins all the information above a quantizer.

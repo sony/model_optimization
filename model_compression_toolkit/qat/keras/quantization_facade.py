@@ -157,8 +157,8 @@ if FOUND_TF:
         qat_model, user_info = QATKerasModelBuilder(graph=tg, fw_info=fw_info).build_model()
 
         user_info.mixed_precision_cfg = bit_widths_config
-
-        return qat_model, user_info, None
+        #TODO: remove the last output after updating documentation.
+        return qat_model, user_info, {}
 
 
     def keras_quantization_aware_training_finalize(in_model: Model):
@@ -219,9 +219,6 @@ if FOUND_TF:
 
         def _export(layer):
             if isinstance(layer, qi.KerasQuantizationWrapper):
-                # if not isinstance(layer.quantize_config, tuple(QUANTIZATION_CONFIGS_DICT.values())):
-                #     Logger.error(f'Only supported quantization configs are {tuple(QUANTIZATION_CONFIGS_DICT.keys())}')
-                # if isinstance(layer.quantize_config, WeightQuantizeConfig):
                 if layer.dispatcher.is_weights_quantization:
                     new_layer = layer.layer.__class__.from_config(layer.layer.get_config())
                     with tf.name_scope(new_layer.name):
