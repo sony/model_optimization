@@ -23,7 +23,7 @@ class NodeQuantizationDispatcher:
                  weight_quantizers: Dict[str, BaseQuantizer] = None,
                  activation_quantizers: List[BaseQuantizer] = None):
         """
-        Node quantization dispatcher collect all the quantizer of a given layer.
+        Node quantization dispatcher collects all the quantizer of a given layer.
 
         Args:
             weight_quantizers: A dictionary between weight name to it quantizer .

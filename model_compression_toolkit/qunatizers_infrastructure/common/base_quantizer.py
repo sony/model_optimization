@@ -18,51 +18,51 @@ from enum import Enum
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
-    NodeActivationQuantizationConfig, BaseNodeNodeQuantizationConfig
+    NodeActivationQuantizationConfig, BaseNodeQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 
-class QuantizationPart(Enum):
+class QuantizationTarget(Enum):
     Activation = 0
     Weights = 1
 
 
 class BaseQuantizer:
     def __init__(self,
-                 qunatization_config: BaseNodeNodeQuantizationConfig,
-                 quantization_part: QuantizationPart,
+                 quantization_config: BaseNodeQuantizationConfig,
+                 quantization_target: QuantizationTarget,
                  quantization_method: List[QuantizationMethod]):
         """
         This class is a base quantizer which validate the the provide quantization config and define abstract function which any quantizer need to implment.
 
         Args:
-            qunatization_config: node quantization config class contins all the information above a quantizer.
-            quantization_part: A enum which decided the qunaizer tensor type activation or weights.
-            quantization_method: A list of enums which represent the quantizer supported methods.
+            quantization_config: node quantization config class contins all the information above a quantizer.
+            quantization_target: A enum which decided the qunaizer tensor type activation or weights.
+            quantization_method: A list of "QuantizationMethod" enums which represent the quantizer supported methods.
         """
-        self.qunatization_config = qunatization_config
-        self.quantization_part = quantization_part
+        self.quantization_config = quantization_config
+        self.quantization_target = quantization_target
         self.quantization_method = quantization_method
-        if self.quantization_part == QuantizationPart.Weights:
+        if self.quantization_target == QuantizationTarget.Weights:
             self.validate_weights()
-            if self.qunatization_config.weights_quantization_method not in quantization_method:
+            if self.quantization_config.weights_quantization_method not in quantization_method:
                 common.Logger.error(
-                    f'Quantization method mismatch expected:{quantization_method} and got  {self.qunatization_config.weights_quantization_method}')
-        elif self.quantization_part == QuantizationPart.Activation:
+                    f'Quantization method mismatch expected:{quantization_method} and got  {self.quantization_config.weights_quantization_method}')
+        elif self.quantization_target == QuantizationTarget.Activation:
             self.validate_activation()
-            if self.qunatization_config.activation_quantization_method not in quantization_method:
+            if self.quantization_config.activation_quantization_method not in quantization_method:
                 common.Logger.error(
-                    f'Quantization method mismatch expected:{quantization_method} and got  {self.qunatization_config.activation_quantization_method}')
+                    f'Quantization method mismatch expected:{quantization_method} and got  {self.quantization_config.activation_quantization_method}')
         else:
             common.Logger.error(
-                f'Unknown Quantization Part:{quantization_part}')
+                f'Unknown Quantization Part:{quantization_target}')
 
     def initialize_quantization(self,
                                 tensor_shape,
                                 name: str,
                                 layer):
         """
-        This initilized the quantizer parameters given the parameter name and shape.
+        This initializes the quantizer parameters given the parameter name and shape.
 
         Args:
             tensor_shape:  tensor shape
@@ -95,7 +95,7 @@ class BaseQuantizer:
         Returns: A boolean stating is this activation quantizer
 
         """
-        return isinstance(self.qunatization_config, NodeActivationQuantizationConfig)
+        return isinstance(self.quantization_config, NodeActivationQuantizationConfig)
 
     def weights_quantization(self) -> bool:
         """
@@ -103,7 +103,7 @@ class BaseQuantizer:
         Returns: A boolean stating is this weights quantizer
 
         """
-        return isinstance(self.qunatization_config, NodeWeightsQuantizationConfig)
+        return isinstance(self.quantization_config, NodeWeightsQuantizationConfig)
 
     def validate_weights(self) -> None:
         """

@@ -44,15 +44,13 @@ class OperationHandler:
     Class to handle conversions from graph nodes to Keras operators and retrieving them.
     """
 
-    def __init__(self, graph: Graph, wrapper: Callable = None):
+    def __init__(self, graph: Graph, wrapper: Callable = identity_wrapper):
         # hold nodes after sorting them
         self.node_sort = list(topological_sort(graph))
 
         self.layer_to_node_dict = {}
 
         # hold dictionary from node to its equivalent Keras layer
-        if wrapper is None:
-            wrapper = identity_wrapper
         self.node_to_fw_op_dict = instance_builder(self.node_sort, wrapper)
 
     def get_node_op_function(self, n: BaseNode) -> Layer:

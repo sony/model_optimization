@@ -1,4 +1,4 @@
-from model_compression_toolkit.qunatizers_infrastructure.common.base_quantizer import QuantizationPart, \
+from model_compression_toolkit.qunatizers_infrastructure.common.base_quantizer import QuantizationTarget, \
     QuantizationMethod
 
 from model_compression_toolkit.qunatizers_infrastructure.keras.quantize_wrapper import KerasQuantizationWrapper

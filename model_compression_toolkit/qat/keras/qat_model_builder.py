@@ -14,6 +14,7 @@
 # ==============================================================================
 
 from typing import List
+from tensorflow.keras.layers import Layer
 from tensorflow.python.util.object_identity import Reference as TFReference
 
 from model_compression_toolkit import get_target_platform_capabilities
@@ -47,7 +48,7 @@ def _is_qat_applicable(node: common.BaseNode,
     return fw_info.is_kernel_op(node.type) and node.is_weights_quantization_enabled()
 
 
-def qat_wrapper(n, layer):
+def qat_wrapper(n: common.BaseNode, layer: Layer):
     """
     A function which takes a computational graph node and a keras layer and perform the quantization wrapping
     Args:

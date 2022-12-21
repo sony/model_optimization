@@ -30,36 +30,36 @@ class STEUniformWeightQuantizer(qi.BaseKerasQuantizer):
     Trainable constrained quantizer to quantize a layer inputs.
     """
 
-    def __init__(self, qunatization_config: NodeWeightsQuantizationConfig):
+    def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
         """
         Initialize a TrainableWeightQuantizer object with parameters to use
         for the quantization.
 
         Args:
-            qunatization_config: a quantization config class with attributes for the quantization.
+            quantization_config: a quantization config class with attributes for the quantization.
 
         """
-        super().__init__(qunatization_config,
-                         qi.QuantizationPart.Weights,
+        super().__init__(quantization_config,
+                         qi.QuantizationTarget.Weights,
                          [qi.QuantizationMethod.UNIFORM])
-        self.max_values = qunatization_config.weights_quantization_params[RANGE_MAX]
-        self.min_values = qunatization_config.weights_quantization_params[RANGE_MIN]
+        self.max_values = quantization_config.weights_quantization_params[RANGE_MAX]
+        self.min_values = quantization_config.weights_quantization_params[RANGE_MIN]
         self.min_max_shape = np.asarray(self.max_values).shape
         self.max = np.reshape(self.max_values,
-                              [-1]) if self.qunatization_config.weights_per_channel_threshold else float(
+                              [-1]) if self.quantization_config.weights_per_channel_threshold else float(
             self.max_values)
         self.min = np.reshape(self.min_values,
-                              [-1]) if self.qunatization_config.weights_per_channel_threshold else float(
+                              [-1]) if self.quantization_config.weights_per_channel_threshold else float(
             self.min_values)
 
-        if self.qunatization_config.weights_per_channel_threshold and self.qunatization_config.weights_channels_axis not in [
+        if self.quantization_config.weights_per_channel_threshold and self.quantization_config.weights_channels_axis not in [
             -1,
             len(self.min_max_shape) - 1]:
             # Tensorflow's fake_quant_with_min_max_vars_per_channel only works on last axis, so
             # need to move the quantization axis to the last axis
             self.perm_vec = list(np.arange(len(self.min_max_shape)))
-            self.perm_vec[self.qunatization_config.weights_channels_axis] = len(self.min_max_shape) - 1
-            self.perm_vec[len(self.min_max_shape) - 1] = self.qunatization_config.weights_channels_axis
+            self.perm_vec[self.quantization_config.weights_channels_axis] = len(self.min_max_shape) - 1
+            self.perm_vec[len(self.min_max_shape) - 1] = self.quantization_config.weights_channels_axis
         else:
             self.perm_vec = None
 
@@ -82,14 +82,14 @@ class STEUniformWeightQuantizer(qi.BaseKerasQuantizer):
         """
         fq_min = layer.add_weight(
             name + FQ_MIN,
-            shape=len(self.min) if self.qunatization_config.weights_per_channel_threshold else (),
+            shape=len(self.min) if self.quantization_config.weights_per_channel_threshold else (),
             initializer=tf.keras.initializers.Constant(-1.0),
             trainable=False)
         fq_min.assign(self.min)
 
         fq_max = layer.add_weight(
             name + FQ_MAX,
-            shape=len(self.max) if self.qunatization_config.weights_per_channel_threshold else (),
+            shape=len(self.max) if self.quantization_config.weights_per_channel_threshold else (),
             initializer=tf.keras.initializers.Constant(1.0),
             trainable=False)
         fq_max.assign(self.max)
@@ -112,15 +112,15 @@ class STEUniformWeightQuantizer(qi.BaseKerasQuantizer):
 
         _min = self.quantizer_parameters[FQ_MIN]
         _max = self.quantizer_parameters[FQ_MAX]
-        if self.qunatization_config.weights_per_channel_threshold:
+        if self.quantization_config.weights_per_channel_threshold:
             if self.perm_vec:
                 inputs = tf.transpose(inputs, perm=self.perm_vec)
             q_tensor = tf.quantization.fake_quant_with_min_max_vars_per_channel(inputs, _min, _max,
-                                                                                num_bits=self.qunatization_config.weights_n_bits)
+                                                                                num_bits=self.quantization_config.weights_n_bits)
             if self.perm_vec:
                 q_tensor = tf.transpose(q_tensor, perm=self.perm_vec)
         else:
             q_tensor = tf.quantization.fake_quant_with_min_max_vars(inputs, _min, _max,
-                                                                    num_bits=self.qunatization_config.weights_n_bits)
+                                                                    num_bits=self.quantization_config.weights_n_bits)
 
         return q_tensor

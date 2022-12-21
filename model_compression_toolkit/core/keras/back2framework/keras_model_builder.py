@@ -33,7 +33,7 @@ else:
     from keras.layers.core import TFOpLambda
     from keras.engine.base_layer import TensorFlowOpLayer, Layer
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Callable
 from tensorflow.python.util.object_identity import Reference as TFReference
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.logger import Logger
@@ -42,7 +42,7 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
-from model_compression_toolkit.core.keras.back2framework.instance_builder import OperationHandler
+from model_compression_toolkit.core.keras.back2framework.instance_builder import OperationHandler, identity_wrapper
 from model_compression_toolkit.core.keras.reader.connectivity_handler import OutTensor
 
 # In tf2.3 fake quant node is implemented as TensorFlowOpLayer, while in tf2.4 as TFOpLambda.
@@ -93,7 +93,7 @@ class KerasModelBuilder(BaseModelBuilder):
                  append2output=None,
                  fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                  return_float_outputs: bool = False,
-                 wrapper=None):
+                 wrapper: Callable = identity_wrapper):
         """
 
         Args:

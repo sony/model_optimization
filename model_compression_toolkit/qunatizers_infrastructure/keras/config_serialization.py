@@ -15,9 +15,11 @@
 import copy
 
 from collections.abc import Callable
+from typing import Any
 
 from model_compression_toolkit import QuantizationConfig
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
+from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
+    BaseNodeQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod, OpQuantizationConfig
 from enum import Enum
 
@@ -25,20 +27,44 @@ IS_WEIGHTS = "is_weights"
 WEIGHTS_QUANTIZATION_METHOD = "weights_quantization_method"
 
 
-def transform_enum(v):
+def transform_enum(v: Any):
+    """
+    If an enum is received it value is return otherwise the input is returned.
+    Args:
+        v: Any type
+
+    Returns: Any
+
+    """
     if isinstance(v, Enum):
         return v.value
     return v
 
 
-def config_serialization(quantization_config):
+def config_serialization(quantization_config: BaseNodeQuantizationConfig):
+    """
+    This function change BaseNodeQuantizationConfig to a dictionary
+    Args:
+        quantization_config: A BaseNodeQuantizationConfig for serialization
+
+    Returns: A config dictionary of BaseNodeQuantizationConfig
+
+    """
     config_data = {k: transform_enum(v) for k, v in quantization_config.__dict__.items() if
                    v is not isinstance(v, Callable)}
     config_data[IS_WEIGHTS] = isinstance(quantization_config, NodeWeightsQuantizationConfig)
     return config_data
 
 
-def config_deserialization(in_config):
+def config_deserialization(in_config: dict) -> BaseNodeQuantizationConfig:
+    """
+    This function change config dictionary to it BaseNodeQuantizationConfig.
+    Args:
+        in_config:  A config dictionary of BaseNodeQuantizationConfig
+
+    Returns: A BaseNodeQuantizationConfig
+
+    """
     in_config = copy.deepcopy(in_config)
     qc = QuantizationConfig()
     op_cfg = OpQuantizationConfig(QuantizationMethod.POWER_OF_TWO, QuantizationMethod.POWER_OF_TWO,
