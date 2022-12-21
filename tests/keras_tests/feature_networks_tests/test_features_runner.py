@@ -521,13 +521,20 @@ class FeatureNetworkTest(unittest.TestCase):
         MultiInputsToNodeTest(self).run_test()
 
     def test_gptq(self, experimental_facade=False, experimental_exporter=False):
-        GradientPTQTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
-        GradientPTQNoTempLearningTest(self, is_gumbel=True).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
-        GradientPTQWeightsUpdateTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
-        GradientPTQLearnRateZeroTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
-        GradientPTQWeightedLossTest(self).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
-        GradientPTQWeightsUpdateTest(self, is_gumbel=True, sam_optimization=True).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
-        GradientPTQLearnRateZeroTest(self, is_gumbel=True).run_test(experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQTest(self).run_test(experimental_facade=experimental_facade,
+                                       experimental_exporter=experimental_exporter)
+        GradientPTQNoTempLearningTest(self, is_gumbel=True).run_test(experimental_facade=experimental_facade,
+                                                                     experimental_exporter=experimental_exporter)
+        GradientPTQWeightsUpdateTest(self).run_test(experimental_facade=experimental_facade,
+                                                    experimental_exporter=experimental_exporter)
+        GradientPTQLearnRateZeroTest(self).run_test(experimental_facade=experimental_facade,
+                                                    experimental_exporter=experimental_exporter)
+        GradientPTQWeightedLossTest(self).run_test(experimental_facade=experimental_facade,
+                                                   experimental_exporter=experimental_exporter)
+        GradientPTQWeightsUpdateTest(self, is_gumbel=True, sam_optimization=True).run_test(
+            experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
+        GradientPTQLearnRateZeroTest(self, is_gumbel=True).run_test(experimental_facade=experimental_facade,
+                                                                    experimental_exporter=experimental_exporter)
 
     # TODO: reuven - new experimental facade needs to be tested regardless the exporter.
     # def test_gptq_new_exporter(self):
@@ -590,14 +597,14 @@ class FeatureNetworkTest(unittest.TestCase):
                                    separate_key_value=separate_key_value, output_dim=14).run_test()
 
     def test_qat(self):
-        QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu')).run_test()
+        QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True).run_test()
         QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu'), finalize=True,
                                       weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
-        QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu'),
+        QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu'), test_loading=True,
                                       weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM).run_test()
         QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu'), finalize=True).run_test()
         QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu'),
-                                      weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM).run_test()
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
         QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), finalize=True).run_test()
         # DW-Conv2D are tested under the tests below because an extra check is needed to verify the
         # quantization per channel of its kernel

@@ -15,7 +15,7 @@
 from model_compression_toolkit.core.common.constants import ACTIVATION_QUANTIZATION_CFG, WEIGHTS_QUANTIZATION_CFG, QC, \
     OP_CFG, ACTIVATION_QUANTIZATION_FN, WEIGHTS_QUANTIZATION_FN, ACTIVATION_QUANT_PARAMS_FN, WEIGHTS_QUANT_PARAMS_FN, \
     WEIGHTS_CHANNELS_AXIS
-from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeNodeQuantizationConfig, \
+from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig, \
     NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
 
 
@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 # configuration for its activation quantization configuration.
 ##########################################
 
-class CandidateNodeQuantizationConfig(BaseNodeNodeQuantizationConfig):
+class CandidateNodeQuantizationConfig(BaseNodeQuantizationConfig):
     """
     Class for representing candidate node configuration, which includes weights and activation configuration combined.
     """

@@ -17,9 +17,11 @@ import importlib
 # Supported frameworks in MCT:
 TENSORFLOW = 'tensorflow'
 PYTORCH = 'pytorch'
-FOUND_TF = importlib.util.find_spec(TENSORFLOW) is not None and importlib.util.find_spec("tensorflow_model_optimization") is not None
+FOUND_TF = importlib.util.find_spec(TENSORFLOW) is not None and importlib.util.find_spec(
+    "tensorflow_model_optimization") is not None
 FOUND_TORCH = importlib.util.find_spec("torch") is not None
 
+WEIGHTS_SIGNED = True
 # Minimal threshold to use for quantization ranges:
 MIN_THRESHOLD = (2 ** -28)
 EPS = 1e-8
@@ -62,7 +64,6 @@ WEIGHTS_NBITS_ATTRIBUTE = 'weights_n_bits'
 CORRECTED_BIAS_ATTRIBUTE = 'corrected_bias'
 ACTIVATION_NBITS_ATTRIBUTE = 'activation_n_bits'
 
-
 # Quantization Parameters Iterative Search Defaults:
 SYMMETRIC_TENSOR_N_ITER = 40
 SYMMETRIC_TENSOR_PER_CHANNEL_N_ITER = 15
@@ -95,7 +96,6 @@ BITS_TO_BYTES = 8.0
 
 # Default threshold for Softmax layer
 SOFTMAX_THRESHOLD = 1
-
 
 # Substitutions node names
 VIRTUAL_WEIGHTS_SUFFIX = '_v_weights'

@@ -32,7 +32,7 @@ from model_compression_toolkit.core.common.target_platform import OpQuantization
 ##########################################
 
 
-class BaseNodeNodeQuantizationConfig(object):
+class BaseNodeQuantizationConfig(object):
     """
     Base class for node quantization configuration
     """
@@ -60,7 +60,7 @@ class BaseNodeNodeQuantizationConfig(object):
         return repr_str
 
 
-class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
+class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
     """
     Attributes for configuring the quantization of the activations of a node.
     """
@@ -225,7 +225,7 @@ class NodeActivationQuantizationConfig(BaseNodeNodeQuantizationConfig):
                      self.shift_negative_threshold_recalculation))
 
 
-class NodeWeightsQuantizationConfig(BaseNodeNodeQuantizationConfig):
+class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
     """
     Attributes for configuring the quantization of the weights of a node.
     """
