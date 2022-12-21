@@ -16,6 +16,7 @@
 
 import glob
 import os
+import shutil
 import unittest
 from datetime import datetime
 
@@ -26,9 +27,16 @@ from tensorboard.compat.proto.graph_pb2 import GraphDef
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
+    DEFAULT_MIXEDPRECISION_CONFIG
+from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
+    ActivationFinalBitwidthConfigVisualizer
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
+from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_set_bit_widths
 
 keras = tf.keras
 layers = keras.layers
@@ -41,6 +49,8 @@ def random_datagen():
 def SingleOutputNet():
     inputs = layers.Input(shape=(224, 224, 3))
     x = layers.Dense(20)(inputs)
+    x = layers.Conv2D(32, 4)(x)
+    x = layers.BatchNormalization()(x)
     x = layers.ReLU(max_value=6.0)(x)
     output = layers.Dense(20)(x)
     return keras.Model(inputs=inputs, outputs=output)
@@ -49,6 +59,8 @@ def SingleOutputNet():
 def MultipleOutputsNet():
     inputs = layers.Input(shape=(224, 224, 3))
     x = layers.Dense(20)(inputs)
+    x = layers.Conv2D(32, 4)(x)
+    x = layers.BatchNormalization()(x)
     x = layers.ReLU(max_value=6.0)(x)
     outputs = layers.Dense(20)(x)
     outputs = tf.split(outputs, num_or_size_splits=20, axis=-1)
@@ -56,7 +68,6 @@ def MultipleOutputsNet():
 
 
 class BaseTestLogger(unittest.TestCase):
-
     """
     This is the base test of Keras Logger.
     """
@@ -64,7 +75,8 @@ class BaseTestLogger(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S")
-        mct.core.common.Logger.set_log_file(f'/tmp/{ts}/')
+        common.Logger.set_log_file(f'/tmp/{ts}/')
+        cls.addClassCleanup(shutil.rmtree, common.Logger.LOG_PATH)
 
     def test_tensorboard_log_dir(self):
         self.assertTrue(os.path.exists(os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs')))
@@ -82,6 +94,21 @@ class BaseTestLogger(unittest.TestCase):
         nodes_in_model = len(self.model.layers)
         nodes_in_graph = len(g.node)
         self.assertTrue(nodes_in_graph == nodes_in_model)
+
+        # check nodes in graph after bn folding = original -1
+        events_files = glob.glob(events_dir + 'pre_statistics_collection_substitutions/*events*')
+        self.assertTrue(len(events_files) == 1)  # Make sure there is only event file in
+        # 'pre_statistics_collection_substitutions' subdir
+
+        event_filepath = events_files[0]
+        efl = event_file_loader.LegacyEventFileLoader(event_filepath).Load()
+        for e in efl:
+            if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
+                g = GraphDef().FromString(e.graph_def)
+        nodes_in_model = len(self.model.layers)
+        nodes_in_graph = len(g.node)
+        # Graph after BN folding
+        self.assertTrue(nodes_in_graph == nodes_in_model - 1)
 
 
 class TestLogger(BaseTestLogger):
@@ -105,16 +132,51 @@ class MixedPrecisionTestLogger(BaseTestLogger):
         kpi = mct.KPI()
         base_config, _ = get_op_quantization_configs()
         tpc_model = generate_tp_model_with_activation_mp(
-                base_cfg=base_config,
-                mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
-                                             (4, 8), (4, 4), (4, 2),
-                                             (2, 8), (2, 4), (2, 2)])
+            base_cfg=base_config,
+            mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
+                                         (4, 8), (4, 4), (4, 2),
+                                         (2, 8), (2, 4), (2, 2)])
         tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
         mct.keras_post_training_quantization_mixed_precision(self.model, random_datagen,
                                                              target_kpi=kpi,
                                                              n_iter=1,
                                                              target_platform_capabilities=tpc,
                                                              analyze_similarity=True)
+
+
+class MixedPrecisionTensorSizesTestLogger(BaseTestLogger):
+    def setUp(self):
+        self.model = SingleOutputNet()
+        base_config, _ = get_op_quantization_configs()
+        tpc_model = generate_tp_model_with_activation_mp(
+            base_cfg=base_config,
+            mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
+                                         (4, 8), (4, 4), (4, 2),
+                                         (2, 8), (2, 4), (2, 2)])
+        self.tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
+
+    def test_plot_tensor_sizes(self):
+        # compare max tensor size with plotted max tensor size
+        tg = prepare_graph_set_bit_widths(in_model=self.model,
+                                          fw_impl=KerasImplementation(),
+                                          fw_info=DEFAULT_KERAS_INFO,
+                                          representative_data_gen=random_datagen,
+                                          tpc=self.tpc,
+                                          network_editor=[],
+                                          quant_config=DEFAULT_MIXEDPRECISION_CONFIG,
+                                          target_kpi=mct.KPI(),
+                                          n_iter=1, analyze_similarity=True)
+        tensors_sizes = [4.0 * n.get_total_output_params() / 1000000.0
+                         for n in tg.get_sorted_activation_configurable_nodes()]  # in MB
+        max_tensor_size = max(tensors_sizes)
+
+        # plot tensor sizes
+        activation_conf_nodes_bitwidth = tg.get_final_activation_config()
+        visual = ActivationFinalBitwidthConfigVisualizer(activation_conf_nodes_bitwidth)
+        fig = visual.plot_tensor_sizes(tg)
+        figure_max_tensor_size = max([rect._height for rect in fig.axes[0].get_children()[:len(
+            activation_conf_nodes_bitwidth)]])
+        self.assertTrue(figure_max_tensor_size == max_tensor_size)
 
 
 if __name__ == '__main__':
