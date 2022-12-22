@@ -68,7 +68,7 @@ def MultipleOutputsNet():
     return keras.Model(inputs=inputs, outputs=[outputs[0], outputs[4], outputs[2]])
 
 
-class TestLogger(unittest.TestCase):
+class BaseTestLogger(unittest.TestCase):
     """
     This is the base test of Keras Logger.
     """
@@ -79,8 +79,8 @@ class TestLogger(unittest.TestCase):
         # common.Logger.set_log_file('/tmp/')
         # cls.addClassCleanup(shutil.rmtree, common.Logger.LOG_PATH)
         mct.core.common.Logger.set_log_file('/tmp/')
-        model = MobileNet()
-        mct.keras_post_training_quantization(model, random_datagen, n_iter=1, analyze_similarity=True)
+        # model = MobileNet()
+        # mct.keras_post_training_quantization(model, random_datagen, n_iter=1, analyze_similarity=True)
 
     def test_tensorboard_log_dir(self):
         self.assertTrue(os.path.exists(os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs')))
@@ -95,7 +95,7 @@ class TestLogger(unittest.TestCase):
         for e in efl:
             if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
                 g = GraphDef().FromString(e.graph_def)
-        nodes_in_model = len(MobileNet().layers)
+        nodes_in_model = len(self.model.layers)
         nodes_in_graph = len(g.node)
         self.assertTrue(nodes_in_graph == nodes_in_model)
 
@@ -115,11 +115,11 @@ class TestLogger(unittest.TestCase):
         # self.assertTrue(nodes_in_graph == nodes_in_model - 1)
 
 
-# class TestLogger(BaseTestLogger):
-#
-#     def setUp(self):
-#         self.model = SingleOutputNet()
-#         mct.keras_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
+class TestLogger(BaseTestLogger):
+
+    def setUp(self):
+        self.model = SingleOutputNet()
+        mct.keras_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
 
 #
 # class MultipleOutputsTestLogger(BaseTestLogger):
