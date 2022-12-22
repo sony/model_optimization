@@ -76,7 +76,7 @@ class BaseTestLogger(unittest.TestCase):
     def setUpClass(cls):
         ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S")
         common.Logger.set_log_file(f'/tmp/{ts}/')
-        cls.addClassCleanup(shutil.rmtree, common.Logger.LOG_PATH)
+        # cls.addClassCleanup(shutil.rmtree, common.Logger.LOG_PATH)
 
     def test_tensorboard_log_dir(self):
         self.assertTrue(os.path.exists(os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs')))
