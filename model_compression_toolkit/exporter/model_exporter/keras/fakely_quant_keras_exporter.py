@@ -49,6 +49,13 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                  model: keras.models.Model,
                  is_layer_exportable_fn: Callable,
                  save_model_path: str):
+        """
+
+        Args:
+            model: Model to export.
+            is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
+            save_model_path: Path to save the exported model.
+        """
 
         super().__init__(model,
                          is_layer_exportable_fn,

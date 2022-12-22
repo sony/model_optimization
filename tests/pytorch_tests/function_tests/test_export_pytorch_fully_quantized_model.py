@@ -45,10 +45,10 @@ if FOUND_ONNX:
             self.exportable_model = self.run_mct(self.model, new_experimental_exporter=True)
             self.exportable_model.eval()
             pytorch_export_model(model=self.exportable_model,
-                                                           is_layer_exportable_fn=lambda x: x,
-                                                           mode=PyTorchExportMode.FAKELY_QUANT_PTH,
-                                                           save_model_path=SAVED_MODEL_PATH_PTH,
-                                                           repr_dataset=self.repr_datagen)
+                                 is_layer_exportable_fn=lambda x: x,
+                                 mode=PyTorchExportMode.FAKELY_QUANT_TORCHSCRIPT,
+                                 save_model_path=SAVED_MODEL_PATH_PTH,
+                                 repr_dataset=self.repr_datagen)
             self.exported_model_pth = torch.load(SAVED_MODEL_PATH_PTH)
             self.exported_model_pth.eval()
             pytorch_export_model(model=self.exportable_model,

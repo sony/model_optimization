@@ -20,18 +20,18 @@ import torch.nn
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import \
     FakelyQuantONNXPyTorchExporter
-from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_pth_pytorch_exporter import \
-    FakelyQuantPTHPyTorchExporter
+from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_torchscript_pytorch_exporter import \
+    FakelyQuantTorchScriptPyTorchExporter
 
 
 class PyTorchExportMode(Enum):
-    FAKELY_QUANT_PTH = 0
+    FAKELY_QUANT_TORCHSCRIPT = 0
     FAKELY_QUANT_ONNX = 1
 
 
 def pytorch_export_model(model: torch.nn.Module,
                          is_layer_exportable_fn: Callable,
-                         mode: PyTorchExportMode = PyTorchExportMode.FAKELY_QUANT_PTH,
+                         mode: PyTorchExportMode = PyTorchExportMode.FAKELY_QUANT_TORCHSCRIPT,
                          save_model_path: str = None,
                          repr_dataset: Callable = None) -> None:
     """
@@ -47,11 +47,11 @@ def pytorch_export_model(model: torch.nn.Module,
 
     """
 
-    if mode == PyTorchExportMode.FAKELY_QUANT_PTH:
-        exporter = FakelyQuantPTHPyTorchExporter(model,
-                                                 is_layer_exportable_fn,
-                                                 save_model_path,
-                                                 repr_dataset)
+    if mode == PyTorchExportMode.FAKELY_QUANT_TORCHSCRIPT:
+        exporter = FakelyQuantTorchScriptPyTorchExporter(model,
+                                                         is_layer_exportable_fn,
+                                                         save_model_path,
+                                                         repr_dataset)
 
     elif mode == PyTorchExportMode.FAKELY_QUANT_ONNX:
         exporter = FakelyQuantONNXPyTorchExporter(model,

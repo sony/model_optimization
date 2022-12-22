@@ -36,6 +36,13 @@ class FakelyQuantTFLiteExporter(FakelyQuantKerasExporter):
                  model: keras.models.Model,
                  is_layer_exportable_fn: Callable,
                  save_model_path: str):
+        """
+
+        Args:
+            model: Model to export.
+            is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
+            save_model_path: Path to save the exported model.
+        """
         super().__init__(model,
                          is_layer_exportable_fn,
                          save_model_path)
@@ -49,6 +56,7 @@ class FakelyQuantTFLiteExporter(FakelyQuantKerasExporter):
 
         """
         # Use Keras exporter to quantize model's weights before converting it to TFLite.
+        # Since exporter saves the model, we use a tmp path for saving, and then we delete it.
         _, tmp_h5_file = tempfile.mkstemp('.h5')
         custom_objects = FakelyQuantKerasExporter(self.model,
                                                   self.is_layer_exportable_fn,

@@ -21,7 +21,7 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import BasePyTorchExporter
 
 
-class FakelyQuantPTHPyTorchExporter(BasePyTorchExporter):
+class FakelyQuantTorchScriptPyTorchExporter(BasePyTorchExporter):
     """
     Exporter for fakely-quant PyTorch models.
     The exporter expects to receive an exportable model (where each layer's full quantization parameters
@@ -34,6 +34,14 @@ class FakelyQuantPTHPyTorchExporter(BasePyTorchExporter):
                  is_layer_exportable_fn: Callable,
                  save_model_path: str,
                  repr_dataset: Callable):
+        """
+
+        Args:
+            model: Model to export.
+            is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
+            save_model_path: Path to save the exported model.
+            repr_dataset: Representative dataset (needed for creating torch script).
+        """
 
         super().__init__(model,
                          is_layer_exportable_fn,
