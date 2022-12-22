@@ -37,7 +37,7 @@ if found_tf:
     import tensorflow as tf
     from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
     from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
-    from tests.keras_tests.function_tests.test_tensorboard_writer import TestLogger
+    from tests.keras_tests.function_tests.test_tensorboard_writer import TestLogger, MultipleOutputsTestLogger
     from tests.keras_tests.function_tests.test_lut_quanitzer_params import TestLUTQuantizerParams
     from tests.keras_tests.function_tests.test_lp_search_bitwidth import TestLpSearchBitwidth, \
         TestSearchBitwidthConfiguration
@@ -91,7 +91,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureNetworkTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLogger))
-        # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(MultipleOutputsTestLogger))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(MultipleOutputsTestLogger))
         # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(MixedPrecisionTestLogger))
         # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(MixedPrecisionTensorSizesTestLogger))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLpSearchBitwidth))

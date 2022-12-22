@@ -121,13 +121,13 @@ class TestLogger(BaseTestLogger):
         self.model = SingleOutputNet()
         mct.keras_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
 
-#
-# class MultipleOutputsTestLogger(BaseTestLogger):
-#
-#     def setUp(self):
-#         self.model = MultipleOutputsNet()
-#         mct.keras_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
-#
+
+class MultipleOutputsTestLogger(BaseTestLogger):
+
+    def setUp(self):
+        self.model = MultipleOutputsNet()
+        mct.keras_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
+
 #
 # class MixedPrecisionTestLogger(BaseTestLogger):
 #
