@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.core.common.constants import FOUND_TF, FOUND_TORCH, FOUND_ONNX
+from model_compression_toolkit.core.common.constants import FOUND_TF, FOUND_TORCH
 
 if FOUND_TF:
     from model_compression_toolkit.exporter.model_exporter.keras.keras_export_facade import \
