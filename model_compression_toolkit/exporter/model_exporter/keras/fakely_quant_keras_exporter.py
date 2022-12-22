@@ -155,4 +155,5 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
         """
         if self.exported_model is None:
             Logger.critical(f'Exporter can not save model as it is not exported')
+        Logger.info(f'Exporting FQ Keras model to: {save_model_path}')
         keras.models.save_model(self.exported_model, save_model_path)
