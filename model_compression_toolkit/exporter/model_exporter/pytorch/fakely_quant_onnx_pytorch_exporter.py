@@ -12,59 +12,62 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import os
-import tempfile
 from typing import Callable
 
-import keras.models
-import tensorflow as tf
-from keras.models import load_model
+import torch.nn
 
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import FakelyQuantKerasExporter
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
+from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import BasePyTorchExporter
 
 
-class FakelyQuantTFLiteExporter(FakelyQuantKerasExporter):
+class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
     """
-    Exporter for fakely-quant TFLite models.
+    Exporter for fakely-quant PyTorch models.
     The exporter expects to receive an exportable model (where each layer's full quantization parameters
     can be retrieved), and convert it into a fakely-quant model (namely, weights that are in fake-quant
     format) and fake-quant layers for the activations.
     """
 
     def __init__(self,
-                 model: keras.models.Model,
+                 model: torch.nn.Module,
                  is_layer_exportable_fn: Callable,
-                 save_model_path: str):
+                 save_model_path: str,
+                 repr_dataset: Callable):
         """
 
         Args:
             model: Model to export.
             is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
             save_model_path: Path to save the exported model.
+            repr_dataset: Representative dataset (needed for creating torch script).
         """
+
         super().__init__(model,
                          is_layer_exportable_fn,
-                         save_model_path)
+                         save_model_path,
+                         repr_dataset)
 
-        self.exported_model = None
 
-    def export(self):
+    def export(self) -> None:
         """
-        Convert an exportable (fully-quantized) Keras model to a fakely-quant TFLite model
+        Convert an exportable (fully-quantized) PyTorch model to a fakely-quant model
         (namely, weights that are in fake-quant format) and fake-quant layers for the activations.
 
+        Returns:
+            Fake-quant PyTorch model.
         """
-        # Use Keras exporter to quantize model's weights before converting it to TFLite.
-        # Since exporter saves the model, we use a tmp path for saving, and then we delete it.
-        _, tmp_h5_file = tempfile.mkstemp('.h5')
-        custom_objects = FakelyQuantKerasExporter(self.model,
-                                                  self.is_layer_exportable_fn,
-                                                  tmp_h5_file).export()
-        model = load_model(tmp_h5_file, custom_objects)
-        os.remove(tmp_h5_file)
+        # assert self.is_layer_exportable_fn(layer), f'Layer {layer.name} is not exportable.'
+        model_input = to_torch_tensor(next(self.repr_dataset())[0])
 
-        self.exported_model = tf.lite.TFLiteConverter.from_keras_model(model).convert()
-        Logger.info(f'Exporting FQ tflite model to: {self.save_model_path}')
-        with open(self.save_model_path, 'wb') as f:
-            f.write(self.exported_model)
+        Logger.info(f"Exporting PyTorch fake quant onnx model: {self.save_model_path}")
+
+        torch.onnx.export(self.model,
+                          model_input,
+                          self.save_model_path,
+                          opset_version=13,
+                          verbose=False,
+                          input_names=['input'],
+                          output_names=['output'],
+                          dynamic_axes={'input': {0: 'batch_size'},
+                                        'output': {0: 'batch_size'}})

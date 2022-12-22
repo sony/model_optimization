@@ -25,14 +25,18 @@ class BaseKerasExporter(Exporter):
 
     def __init__(self,
                  model: keras.models.Model,
-                 is_layer_exportable_fn: Callable):
+                 is_layer_exportable_fn: Callable,
+                 save_model_path: str):
         """
         Args:
             model: Model to export.
             is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
+            save_model_path: Path to save the exported model.
+
         """
         super().__init__(model,
-                         is_layer_exportable_fn)
+                         is_layer_exportable_fn,
+                         save_model_path)
 
     @staticmethod
     def get_custom_objects():

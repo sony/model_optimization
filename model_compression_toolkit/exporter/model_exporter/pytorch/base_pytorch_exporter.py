@@ -12,46 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Callable
+
+import torch.nn
+
+from model_compression_toolkit.exporter.model_exporter.fw_agonstic.exporter import Exporter
 
 
-from abc import abstractmethod
-from typing import Any, Callable
-
-from model_compression_toolkit.core.common import Logger
-
-
-class Exporter:
+class BasePyTorchExporter(Exporter):
     """
-    Base class to define API for an Exporter class that exports and saves models.
-    At initiation, it gets a model to export. This model must be an exportable model.
-    Each exporter needs to implement a method called 'export' which export the model
-    (convert an exportable model to a final model to run on the target platform),
-    and saves the exported model to file-system.
+    Base PyTorch exporter class.
     """
 
     def __init__(self,
-                 model: Any,
+                 model: torch.nn.Module,
                  is_layer_exportable_fn: Callable,
-                 save_model_path: str):
+                 save_model_path: str,
+                 repr_dataset: Callable):
         """
-
         Args:
             model: Model to export.
             is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
             save_model_path: Path to save the exported model.
-
-
-        """
-        self.model = model
-        self.is_layer_exportable_fn = is_layer_exportable_fn
-        self.exported_model = None
-        self.save_model_path = save_model_path
-
-    @abstractmethod
-    def export(self) -> None:
-        """
-
-        Convert model and export it to a given path.
+            repr_dataset: Representative dataset (needed for creating torch script).
 
         """
-        Logger.critical(f'Exporter {self.__class__} have to implement export method')
+        super().__init__(model,
+                         is_layer_exportable_fn,
+                         save_model_path)
+        self.repr_dataset = repr_dataset

@@ -47,18 +47,24 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
 
     def __init__(self,
                  model: keras.models.Model,
-                 is_layer_exportable_fn: Callable):
+                 is_layer_exportable_fn: Callable,
+                 save_model_path: str):
+        """
+
+        Args:
+            model: Model to export.
+            is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
+            save_model_path: Path to save the exported model.
+        """
 
         super().__init__(model,
-                         is_layer_exportable_fn)
+                         is_layer_exportable_fn,
+                         save_model_path)
 
-    def export(self) -> keras.models.Model:
+    def export(self) -> Dict[str, type]:
         """
         Convert an exportable (fully-quantized) Keras model to a fakely-quant model
         (namely, weights that are in fake-quant format) and fake-quant layers for the activations.
-
-        Returns:
-            Fake-quant Keras model.
         """
 
         def _unwrap_quantize_wrapper(layer: Layer):
@@ -130,7 +136,14 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                                                           input_tensors=None,
                                                           clone_function=_unwrap_quantize_wrapper)
 
-        return self.exported_model
+        if self.exported_model is None:
+            Logger.critical(f'Exporter can not save model as it is not exported')
+
+        Logger.info(f'Exporting FQ Keras model to: {self.save_model_path}')
+
+        keras.models.save_model(self.exported_model, self.save_model_path)
+
+        return FakelyQuantKerasExporter.get_custom_objects()
 
     @staticmethod
     def get_custom_objects() -> Dict[str, type]:
@@ -143,17 +156,3 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                 ActivationQuantizeConfig.__name__: ActivationQuantizeConfig,
                 FakeQuantQuantizer.__name__: FakeQuantQuantizer,
                 NoOpQuantizeConfig.__name__: NoOpQuantizeConfig}
-
-    def save_model(self, save_model_path: str) -> None:
-        """
-        Save exported model to a given path.
-        Args:
-            save_model_path: Path to save the model.
-
-        Returns:
-            None.
-        """
-        if self.exported_model is None:
-            Logger.critical(f'Exporter can not save model as it is not exported')
-        Logger.info(f'Exporting FQ Keras model to: {save_model_path}')
-        keras.models.save_model(self.exported_model, save_model_path)
