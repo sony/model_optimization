@@ -68,7 +68,7 @@ def MultipleOutputsNet():
     return keras.Model(inputs=inputs, outputs=[outputs[0], outputs[4], outputs[2]])
 
 
-class BaseTestLogger(unittest.TestCase):
+class TestLogger(unittest.TestCase):
     """
     This is the base test of Keras Logger.
     """
@@ -113,20 +113,49 @@ class BaseTestLogger(unittest.TestCase):
         # nodes_in_graph = len(g.node)
         # # Graph after BN folding
         # self.assertTrue(nodes_in_graph == nodes_in_model - 1)
-
-
-class TestLogger(BaseTestLogger):
-
     def setUp(self):
         self.model = SingleOutputNet()
         mct.keras_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
 
 
-class MultipleOutputsTestLogger(BaseTestLogger):
+# class TestLogger(BaseTestLogger):
+#
+#     def setUp(self):
+#         self.model = SingleOutputNet()
+#         mct.keras_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
+
+
+class MultipleOutputsTestLogger(unittest.TestCase):
 
     def setUp(self):
         self.model = MultipleOutputsNet()
         mct.keras_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
+
+    @classmethod
+    def setUpClass(cls):
+        # ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S")
+        # common.Logger.set_log_file('/tmp/')
+        # cls.addClassCleanup(shutil.rmtree, common.Logger.LOG_PATH)
+        mct.core.common.Logger.set_log_file('/tmp/')
+        # model = MobileNet()
+        # mct.keras_post_training_quantization(model, random_datagen, n_iter=1, analyze_similarity=True)
+
+    def test_tensorboard_log_dir(self):
+        self.assertTrue(os.path.exists(os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs')))
+
+    def test_tensorboard_initial_graph_num_of_nodes(self):
+        events_dir = os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs/')
+        events_files = glob.glob(events_dir + 'initial_graph/*events*')
+        self.assertTrue(len(events_files) == 1)  # Make sure there is only event file in 'initial_graph' subdir
+
+        event_filepath = events_files[0]
+        efl = event_file_loader.LegacyEventFileLoader(event_filepath).Load()
+        for e in efl:
+            if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
+                g = GraphDef().FromString(e.graph_def)
+        nodes_in_model = len(self.model.layers)
+        nodes_in_graph = len(g.node)
+        self.assertTrue(nodes_in_graph == nodes_in_model)
 
 #
 # class MixedPrecisionTestLogger(BaseTestLogger):
