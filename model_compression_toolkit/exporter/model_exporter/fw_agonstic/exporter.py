@@ -26,38 +26,32 @@ class Exporter:
     At initiation, it gets a model to export. This model must be an exportable model.
     Each exporter needs to implement a method called 'export' which export the model
     (convert an exportable model to a final model to run on the target platform),
-    and a method named 'save_model' to allow the saving and serialization of the
-    exported model.
+    and saves the exported model to file-system.
     """
 
-    def __init__(self, model: Any, is_layer_exportable_fn: Callable):
+    def __init__(self,
+                 model: Any,
+                 is_layer_exportable_fn: Callable,
+                 save_model_path: str):
         """
 
         Args:
             model: Model to export.
             is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
+            save_model_path: Path to save the exported model.
+
 
         """
         self.model = model
         self.is_layer_exportable_fn = is_layer_exportable_fn
+        self.exported_model = None
+        self.save_model_path = save_model_path
 
     @abstractmethod
-    def export(self) -> Any:
+    def export(self) -> None:
         """
 
-        Returns: Converted model to export.
+        Convert model and export it to a given path.
 
         """
         Logger.critical(f'Exporter {self.__class__} have to implement export method')
-
-    @abstractmethod
-    def save_model(self, save_model_path: str):
-        """
-        Save exported model in a given path.
-        Args:
-            save_model_path: Path to save the exported model.
-
-        Returns:
-            None.
-        """
-        Logger.critical(f'Exporter {self.__class__} have to implement save_model method')

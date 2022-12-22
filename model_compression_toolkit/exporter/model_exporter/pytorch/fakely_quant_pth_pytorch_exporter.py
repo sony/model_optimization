@@ -1,0 +1,67 @@
+# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+from typing import Callable
+
+import torch.nn
+
+from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
+from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import BasePyTorchExporter
+
+
+class FakelyQuantPTHPyTorchExporter(BasePyTorchExporter):
+    """
+    Exporter for fakely-quant PyTorch models.
+    The exporter expects to receive an exportable model (where each layer's full quantization parameters
+    can be retrieved), and convert it into a fakely-quant model (namely, weights that are in fake-quant
+    format) and fake-quant layers for the activations.
+    """
+
+    def __init__(self,
+                 model: torch.nn.Module,
+                 is_layer_exportable_fn: Callable,
+                 repr_dataset: Callable):
+
+        super().__init__(model,
+                         is_layer_exportable_fn,
+                         repr_dataset)
+
+    def export(self) -> torch.nn.Module:
+        """
+        Convert an exportable (fully-quantized) PyTorch model to a fakely-quant model
+        (namely, weights that are in fake-quant format) and fake-quant layers for the activations.
+
+        Returns:
+            Fake-quant PyTorch model.
+        """
+        # assert self.is_layer_exportable_fn(layer), f'Layer {layer.name} is not exportable.'
+        torch_traced = torch.jit.trace(self.model, to_torch_tensor(next(self.repr_dataset())))
+        self.exported_model = torch.jit.script(torch_traced)
+        return self.exported_model
+
+    def save_model(self, save_model_path: str) -> None:
+        """
+        Save exported model to a given path.
+        Args:
+            save_model_path: Path to save the model.
+
+        Returns:
+            None.
+        """
+        if self.exported_model is None:
+            Logger.critical(f'Exporter can not save model as it is not exported')
+
+        Logger.info(f"Exporting PyTorch torch script Model: {save_model_path}")
+        torch.jit.save(self.exported_model, save_model_path)

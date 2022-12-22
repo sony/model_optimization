@@ -20,6 +20,7 @@ PYTORCH = 'pytorch'
 FOUND_TF = importlib.util.find_spec(TENSORFLOW) is not None and importlib.util.find_spec(
     "tensorflow_model_optimization") is not None
 FOUND_TORCH = importlib.util.find_spec("torch") is not None
+FOUND_ONNX = importlib.util.find_spec("onnx") is not None
 
 WEIGHTS_SIGNED = True
 # Minimal threshold to use for quantization ranges:

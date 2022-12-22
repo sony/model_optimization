@@ -12,16 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Callable
 
-from model_compression_toolkit.core.common.constants import FOUND_TF, FOUND_TORCH, FOUND_ONNX
+import torch.nn
 
-if FOUND_TF:
-    from model_compression_toolkit.exporter.model_exporter.keras.keras_export_facade import \
-        keras_export_model, KerasExportMode
-    from model_compression_toolkit.exporter.model_exporter.tflite.tflite_export_facade import tflite_export_model, \
-        TFLiteExportMode
+from model_compression_toolkit.exporter.model_exporter.fw_agonstic.exporter import Exporter
 
-if FOUND_TORCH:
-    from model_compression_toolkit.exporter.model_exporter.pytorch.pytorch_export_facade import PyTorchExportMode, \
-        pytorch_export_model
 
+class BasePyTorchExporter(Exporter):
+    """
+    Base PyTorch exporter class.
+    """
+
+    def __init__(self,
+                 model: torch.nn.Module,
+                 is_layer_exportable_fn: Callable,
+                 repr_dataset: Callable):
+        """
+        Args:
+            model: Model to export.
+            is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
+        """
+        super().__init__(model,
+                         is_layer_exportable_fn)
+        self.repr_dataset = repr_dataset
