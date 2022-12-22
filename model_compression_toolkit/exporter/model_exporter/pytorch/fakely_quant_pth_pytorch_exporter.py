@@ -32,13 +32,15 @@ class FakelyQuantPTHPyTorchExporter(BasePyTorchExporter):
     def __init__(self,
                  model: torch.nn.Module,
                  is_layer_exportable_fn: Callable,
+                 save_model_path: str,
                  repr_dataset: Callable):
 
         super().__init__(model,
                          is_layer_exportable_fn,
+                         save_model_path,
                          repr_dataset)
 
-    def export(self) -> torch.nn.Module:
+    def export(self) -> None:
         """
         Convert an exportable (fully-quantized) PyTorch model to a fakely-quant model
         (namely, weights that are in fake-quant format) and fake-quant layers for the activations.
@@ -49,19 +51,7 @@ class FakelyQuantPTHPyTorchExporter(BasePyTorchExporter):
         # assert self.is_layer_exportable_fn(layer), f'Layer {layer.name} is not exportable.'
         torch_traced = torch.jit.trace(self.model, to_torch_tensor(next(self.repr_dataset())))
         self.exported_model = torch.jit.script(torch_traced)
-        return self.exported_model
+        Logger.info(f"Exporting PyTorch torch script Model: {self.save_model_path}")
+        torch.jit.save(self.exported_model, self.save_model_path)
 
-    def save_model(self, save_model_path: str) -> None:
-        """
-        Save exported model to a given path.
-        Args:
-            save_model_path: Path to save the model.
 
-        Returns:
-            None.
-        """
-        if self.exported_model is None:
-            Logger.critical(f'Exporter can not save model as it is not exported')
-
-        Logger.info(f"Exporting PyTorch torch script Model: {save_model_path}")
-        torch.jit.save(self.exported_model, save_model_path)

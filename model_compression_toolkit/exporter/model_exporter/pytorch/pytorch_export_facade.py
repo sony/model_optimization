@@ -33,7 +33,7 @@ def pytorch_export_model(model: torch.nn.Module,
                          is_layer_exportable_fn: Callable,
                          mode: PyTorchExportMode = PyTorchExportMode.FAKELY_QUANT_PTH,
                          save_model_path: str = None,
-                         repr_dataset: Callable = None):
+                         repr_dataset: Callable = None) -> None:
     """
     Prepare and return fully quantized model for export. Save exported model to
     a path if passed.
@@ -43,27 +43,24 @@ def pytorch_export_model(model: torch.nn.Module,
         is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
         mode: Mode to export the model according to.
         save_model_path: Path to save the model.
+        repr_dataset: Representative dataset for tracing the pytorch model (mandatory for exporting it).
 
-    Returns:
-        Exported model.
     """
 
     if mode == PyTorchExportMode.FAKELY_QUANT_PTH:
         exporter = FakelyQuantPTHPyTorchExporter(model,
                                                  is_layer_exportable_fn,
+                                                 save_model_path,
                                                  repr_dataset)
 
     elif mode == PyTorchExportMode.FAKELY_QUANT_ONNX:
         exporter = FakelyQuantONNXPyTorchExporter(model,
-                                                 is_layer_exportable_fn,
-                                                 repr_dataset)
+                                                  is_layer_exportable_fn,
+                                                  save_model_path,
+                                                  repr_dataset)
 
     else:
         Logger.critical(
             f'Unsupported mode was used {mode.name} to export PyTorch model. Please see API for supported modes.')
 
-    model = exporter.export()
-    if save_model_path is not None:
-        exporter.save_model(save_model_path)
-
-    return model
+    exporter.export()

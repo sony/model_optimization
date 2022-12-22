@@ -15,9 +15,9 @@
 from enum import Enum
 from typing import Callable
 
-from model_compression_toolkit.core.common import Logger
 import keras
 
+from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.exporter.model_exporter.tflite.fakely_quant_tflite_exporter import \
     FakelyQuantTFLiteExporter
 
@@ -27,9 +27,9 @@ class TFLiteExportMode(Enum):
 
 
 def tflite_export_model(model: keras.models.Model,
-                       is_layer_exportable_fn: Callable,
-                       mode: TFLiteExportMode = TFLiteExportMode.FAKELY_QUANT,
-                       save_model_path: str = None) -> bytes:
+                        is_layer_exportable_fn: Callable,
+                        mode: TFLiteExportMode = TFLiteExportMode.FAKELY_QUANT,
+                        save_model_path: str = None):
     """
     Prepare and return fully quantized model for export. Save exported model to
     a path if passed.
@@ -40,20 +40,16 @@ def tflite_export_model(model: keras.models.Model,
         mode: Mode to export the model according to.
         save_model_path: Path to save the model.
 
-    Returns:
-        Exported model.
     """
 
     if mode == TFLiteExportMode.FAKELY_QUANT:
-        exporter = FakelyQuantTFLiteExporter(model, is_layer_exportable_fn)
+        exporter = FakelyQuantTFLiteExporter(model,
+                                             is_layer_exportable_fn,
+                                             save_model_path)
 
     else:
         Logger.critical(
             f'Unsupported mode was used {mode.name} to export TFLite model.'
             f' Please see API for supported modes.')
 
-    exported_model = exporter.export()
-    if save_model_path is not None:
-        exporter.save_model(save_model_path)
-
-    return exported_model
+    exporter.export()

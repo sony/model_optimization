@@ -10,3 +10,4 @@ PuLP
 matplotlib
 scipy
 protobuf
+onnx

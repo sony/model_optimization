@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import os
+import tempfile
 from typing import Callable
 
 import keras.models
 import tensorflow as tf
+from keras.saving.save import load_model
 
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import BaseKerasExporter
 from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import FakelyQuantKerasExporter
 
 
@@ -32,35 +34,29 @@ class FakelyQuantTFLiteExporter(FakelyQuantKerasExporter):
 
     def __init__(self,
                  model: keras.models.Model,
-                 is_layer_exportable_fn: Callable):
-
+                 is_layer_exportable_fn: Callable,
+                 save_model_path: str):
         super().__init__(model,
-                         is_layer_exportable_fn)
+                         is_layer_exportable_fn,
+                         save_model_path)
+
         self.exported_model = None
 
-    def export(self) -> bytes:
+    def export(self):
         """
         Convert an exportable (fully-quantized) Keras model to a fakely-quant TFLite model
         (namely, weights that are in fake-quant format) and fake-quant layers for the activations.
 
-        Returns:
-            Fake-quant TFLite model.
         """
-        model = super(FakelyQuantTFLiteExporter, self).export()
+        # Use Keras exporter to quantize model's weights before converting it to TFLite.
+        _, tmp_h5_file = tempfile.mkstemp('.h5')
+        custom_objects = FakelyQuantKerasExporter(self.model,
+                                                  self.is_layer_exportable_fn,
+                                                  tmp_h5_file).export()
+        model = load_model(tmp_h5_file, custom_objects)
+        os.remove(tmp_h5_file)
+
         self.exported_model = tf.lite.TFLiteConverter.from_keras_model(model).convert()
-        return self.exported_model
-
-    def save_model(self, save_model_path: str) -> None:
-        """
-        Save exported model to a given path.
-        Args:
-            save_model_path: Path to save the model.
-
-        Returns:
-            None.
-        """
-        if self.exported_model is None:
-            Logger.critical(f'Exporter can not save model as it is not exported')
-        Logger.info(f'Exporting FQ tflite model to: {save_model_path}')
-        with open(save_model_path, 'wb') as f:
+        Logger.info(f'Exporting FQ tflite model to: {self.save_model_path}')
+        with open(self.save_model_path, 'wb') as f:
             f.write(self.exported_model)
