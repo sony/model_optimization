@@ -136,7 +136,7 @@ class MultipleOutputsTestLogger(unittest.TestCase):
         # ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S")
         # common.Logger.set_log_file('/tmp/')
         # cls.addClassCleanup(shutil.rmtree, common.Logger.LOG_PATH)
-        mct.core.common.Logger.set_log_file('/tmp/')
+        mct.core.common.Logger.set_log_file('/tmp1/')
         # model = MobileNet()
         # mct.keras_post_training_quantization(model, random_datagen, n_iter=1, analyze_similarity=True)
 
