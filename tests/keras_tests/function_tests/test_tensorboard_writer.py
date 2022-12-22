@@ -75,7 +75,7 @@ class BaseTestLogger(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S")
-        common.Logger.set_log_file(f'/tmp/{ts}/')
+        common.Logger.set_log_file(f'/tmp/')
         # cls.addClassCleanup(shutil.rmtree, common.Logger.LOG_PATH)
 
     def test_tensorboard_log_dir(self):
