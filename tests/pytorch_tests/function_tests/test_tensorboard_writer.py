@@ -66,112 +66,112 @@ def multiple_random_datagen():
     return [np.random.random((1, 3, 224, 224)), np.random.random((1, 3, 224, 224))]
 
 
-class BasePytorchTestLogger(unittest.TestCase):
-    """
-    This is the base test of PyTorch Logger.
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S")
-        common.Logger.set_log_file(f'/tmp/{ts}/')
-        cls.addClassCleanup(shutil.rmtree, common.Logger.LOG_PATH)
-
-    def test_tensorboard_log_dir(self):
-        self.assertTrue(os.path.exists(os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs')))
-
-    def test_tensorboard_initial_graph(self):
-        events_dir = os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs/')
-        events_files = glob.glob(events_dir + 'initial_graph/*events*')
-        self.assertTrue(len(events_files) == 1)  # Make sure there is only event file in 'initial_graph' subdir
-
-        event_filepath = events_files[0]
-        efl = event_file_loader.LegacyEventFileLoader(event_filepath).Load()
-        for e in efl:
-            if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
-                g = GraphDef().FromString(e.graph_def)
-        nodes_in_initial_graph = len(g.node)
-
-        # check nodes in graph after bn folding = original -1
-        events_files = glob.glob(events_dir + 'pre_statistics_collection_substitutions/*events*')
-        self.assertTrue(len(events_files) == 1)  # Make sure there is only event file in
-        # 'pre_statistics_collection_substitutions' subdir
-
-        event_filepath = events_files[0]
-        efl = event_file_loader.LegacyEventFileLoader(event_filepath).Load()
-        for e in efl:
-            if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
-                g = GraphDef().FromString(e.graph_def)
-        nodes_in_bn_folding_graph = len(g.node)
-        # Graph after BN folding
-        self.assertTrue(nodes_in_bn_folding_graph == nodes_in_initial_graph - 1)
-
-
-class PytorchTestLogger(BasePytorchTestLogger):
-
-    def setUp(self):
-        self.model = MixedPrecisionNet([(1, 3, 224, 224)])
-        mct.pytorch_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
-
-
-class PytorchMultipleOutputsTestLogger(BasePytorchTestLogger):
-
-    def setUp(self):
-        self.model = MultipleOutputsNet()
-        mct.pytorch_post_training_quantization(self.model, multiple_random_datagen, n_iter=1, analyze_similarity=True)
-
-
-class PytorchMixedPrecisionTestLogger(BasePytorchTestLogger):
-
-    def setUp(self):
-        self.model = MixedPrecisionNet([(1, 3, 224, 224)])
-        kpi = mct.KPI()
-        base_config, _ = get_op_quantization_configs()
-        tpc_model = generate_tp_model_with_activation_mp(
-            base_cfg=base_config,
-            mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
-                                         (4, 8), (4, 4), (4, 2),
-                                         (2, 8), (2, 4), (2, 2)])
-        self.tpc = generate_pytorch_tpc(name='mp_pytorch_tpc', tp_model=tpc_model)
-        mct.pytorch_post_training_quantization_mixed_precision(self.model, random_datagen,
-                                                               target_platform_capabilities=self.tpc,
-                                                               target_kpi=kpi,
-                                                               n_iter=1, analyze_similarity=True)
-
-
-class PytorchMixedPrecisionTensorSizesTestLogger(BasePytorchTestLogger):
-    def setUp(self):
-        self.model = MixedPrecisionNet([(1, 3, 224, 224)])
-        base_config, _ = get_op_quantization_configs()
-        tpc_model = generate_tp_model_with_activation_mp(
-            base_cfg=base_config,
-            mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
-                                         (4, 8), (4, 4), (4, 2),
-                                         (2, 8), (2, 4), (2, 2)])
-        self.tpc = generate_pytorch_tpc(name='mp_pytorch_tpc', tp_model=tpc_model)
-
-    def test_plot_tensor_sizes(self):
-        # compare max tensor size with plotted max tensor size
-        tg = prepare_graph_set_bit_widths(in_model=self.model,
-                                          fw_impl=PytorchImplementation(),
-                                          fw_info=DEFAULT_PYTORCH_INFO,
-                                          representative_data_gen=random_datagen,
-                                          tpc=self.tpc,
-                                          network_editor=[],
-                                          quant_config=DEFAULT_MIXEDPRECISION_CONFIG,
-                                          target_kpi=mct.KPI(),
-                                          n_iter=1, analyze_similarity=True)
-        tensors_sizes = [4.0 * n.get_total_output_params() / 1000000.0
-                         for n in tg.get_sorted_activation_configurable_nodes()]  # in MB
-        max_tensor_size = max(tensors_sizes)
-
-        # plot tensor sizes
-        activation_conf_nodes_bitwidth = tg.get_final_activation_config()
-        visual = ActivationFinalBitwidthConfigVisualizer(activation_conf_nodes_bitwidth)
-        fig = visual.plot_tensor_sizes(tg)
-        figure_max_tensor_size = max([rect._height for rect in fig.axes[0].get_children()[:len(
-            activation_conf_nodes_bitwidth)]])
-        self.assertTrue(figure_max_tensor_size == max_tensor_size)
+# class BasePytorchTestLogger(unittest.TestCase):
+#     """
+#     This is the base test of PyTorch Logger.
+#     """
+#
+#     @classmethod
+#     def setUpClass(cls):
+#         ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S")
+#         common.Logger.set_log_file(f'/tmp/{ts}/')
+#         cls.addClassCleanup(shutil.rmtree, common.Logger.LOG_PATH)
+#
+#     def test_tensorboard_log_dir(self):
+#         self.assertTrue(os.path.exists(os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs')))
+#
+#     def test_tensorboard_initial_graph(self):
+#         events_dir = os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs/')
+#         events_files = glob.glob(events_dir + 'initial_graph/*events*')
+#         self.assertTrue(len(events_files) == 1)  # Make sure there is only event file in 'initial_graph' subdir
+#
+#         event_filepath = events_files[0]
+#         efl = event_file_loader.LegacyEventFileLoader(event_filepath).Load()
+#         for e in efl:
+#             if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
+#                 g = GraphDef().FromString(e.graph_def)
+#         nodes_in_initial_graph = len(g.node)
+#
+#         # check nodes in graph after bn folding = original -1
+#         events_files = glob.glob(events_dir + 'pre_statistics_collection_substitutions/*events*')
+#         self.assertTrue(len(events_files) == 1)  # Make sure there is only event file in
+#         # 'pre_statistics_collection_substitutions' subdir
+#
+#         event_filepath = events_files[0]
+#         efl = event_file_loader.LegacyEventFileLoader(event_filepath).Load()
+#         for e in efl:
+#             if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
+#                 g = GraphDef().FromString(e.graph_def)
+#         nodes_in_bn_folding_graph = len(g.node)
+#         # Graph after BN folding
+#         self.assertTrue(nodes_in_bn_folding_graph == nodes_in_initial_graph - 1)
+#
+#
+# class PytorchTestLogger(BasePytorchTestLogger):
+#
+#     def setUp(self):
+#         self.model = MixedPrecisionNet([(1, 3, 224, 224)])
+#         mct.pytorch_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
+#
+#
+# class PytorchMultipleOutputsTestLogger(BasePytorchTestLogger):
+#
+#     def setUp(self):
+#         self.model = MultipleOutputsNet()
+#         mct.pytorch_post_training_quantization(self.model, multiple_random_datagen, n_iter=1, analyze_similarity=True)
+#
+#
+# class PytorchMixedPrecisionTestLogger(BasePytorchTestLogger):
+#
+#     def setUp(self):
+#         self.model = MixedPrecisionNet([(1, 3, 224, 224)])
+#         kpi = mct.KPI()
+#         base_config, _ = get_op_quantization_configs()
+#         tpc_model = generate_tp_model_with_activation_mp(
+#             base_cfg=base_config,
+#             mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
+#                                          (4, 8), (4, 4), (4, 2),
+#                                          (2, 8), (2, 4), (2, 2)])
+#         self.tpc = generate_pytorch_tpc(name='mp_pytorch_tpc', tp_model=tpc_model)
+#         mct.pytorch_post_training_quantization_mixed_precision(self.model, random_datagen,
+#                                                                target_platform_capabilities=self.tpc,
+#                                                                target_kpi=kpi,
+#                                                                n_iter=1, analyze_similarity=True)
+#
+#
+# class PytorchMixedPrecisionTensorSizesTestLogger(BasePytorchTestLogger):
+#     def setUp(self):
+#         self.model = MixedPrecisionNet([(1, 3, 224, 224)])
+#         base_config, _ = get_op_quantization_configs()
+#         tpc_model = generate_tp_model_with_activation_mp(
+#             base_cfg=base_config,
+#             mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
+#                                          (4, 8), (4, 4), (4, 2),
+#                                          (2, 8), (2, 4), (2, 2)])
+#         self.tpc = generate_pytorch_tpc(name='mp_pytorch_tpc', tp_model=tpc_model)
+#
+#     def test_plot_tensor_sizes(self):
+#         # compare max tensor size with plotted max tensor size
+#         tg = prepare_graph_set_bit_widths(in_model=self.model,
+#                                           fw_impl=PytorchImplementation(),
+#                                           fw_info=DEFAULT_PYTORCH_INFO,
+#                                           representative_data_gen=random_datagen,
+#                                           tpc=self.tpc,
+#                                           network_editor=[],
+#                                           quant_config=DEFAULT_MIXEDPRECISION_CONFIG,
+#                                           target_kpi=mct.KPI(),
+#                                           n_iter=1, analyze_similarity=True)
+#         tensors_sizes = [4.0 * n.get_total_output_params() / 1000000.0
+#                          for n in tg.get_sorted_activation_configurable_nodes()]  # in MB
+#         max_tensor_size = max(tensors_sizes)
+#
+#         # plot tensor sizes
+#         activation_conf_nodes_bitwidth = tg.get_final_activation_config()
+#         visual = ActivationFinalBitwidthConfigVisualizer(activation_conf_nodes_bitwidth)
+#         fig = visual.plot_tensor_sizes(tg)
+#         figure_max_tensor_size = max([rect._height for rect in fig.axes[0].get_children()[:len(
+#             activation_conf_nodes_bitwidth)]])
+#         self.assertTrue(figure_max_tensor_size == max_tensor_size)
 
 
 if __name__ == '__main__':

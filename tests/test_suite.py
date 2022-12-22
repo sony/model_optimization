@@ -27,8 +27,6 @@ from tests.common_tests.function_tests.test_threshold_selection import TestThres
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
-from tests.pytorch_tests.function_tests.test_tensorboard_writer import PytorchTestLogger, \
-    PytorchMultipleOutputsTestLogger, PytorchMixedPrecisionTestLogger, PytorchMixedPrecisionTensorSizesTestLogger
 
 found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
     "tensorflow_model_optimization") is not None
@@ -39,8 +37,7 @@ if found_tf:
     import tensorflow as tf
     from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
     from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
-    from tests.keras_tests.function_tests.test_tensorboard_writer import TestLogger, MultipleOutputsTestLogger, \
-    MixedPrecisionTestLogger, MixedPrecisionTensorSizesTestLogger
+    from tests.keras_tests.function_tests.test_tensorboard_writer import TestLogger
     from tests.keras_tests.function_tests.test_lut_quanitzer_params import TestLUTQuantizerParams
     from tests.keras_tests.function_tests.test_lp_search_bitwidth import TestLpSearchBitwidth, \
         TestSearchBitwidthConfiguration
