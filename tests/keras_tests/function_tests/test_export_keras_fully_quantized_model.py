@@ -63,10 +63,10 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
                                                                             mode=KerasExportMode.FAKELY_QUANT,
                                                                             save_model_path=SAVED_MODEL_PATH_TF)
         self.tf_exported_model.trainable = False
-        self.tflite_exported_model, self.tflite_custom_objects = tflite_export_model(model=self.exportable_model,
-                                                                                     is_layer_exportable_fn=is_keras_layer_exportable,
-                                                                                     mode=TFLiteExportMode.FAKELY_QUANT,
-                                                                                     save_model_path=SAVED_MODEL_PATH_TFLITE)
+        self.tflite_exported_model = tflite_export_model(model=self.exportable_model,
+                                                         is_layer_exportable_fn=is_keras_layer_exportable,
+                                                         mode=TFLiteExportMode.FAKELY_QUANT,
+                                                         save_model_path=SAVED_MODEL_PATH_TFLITE)
 
     def run_mct(self, model, new_experimental_exporter):
         core_config = mct.CoreConfig()

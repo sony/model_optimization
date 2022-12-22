@@ -38,13 +38,13 @@ class FakelyQuantTFLiteExporter(FakelyQuantKerasExporter):
                          is_layer_exportable_fn)
         self.exported_model = None
 
-    def export(self) -> keras.models.Model:
+    def export(self) -> bytes:
         """
-        Convert an exportable (fully-quantized) Keras model to a fakely-quant model
+        Convert an exportable (fully-quantized) Keras model to a fakely-quant TFLite model
         (namely, weights that are in fake-quant format) and fake-quant layers for the activations.
 
         Returns:
-            Fake-quant Keras model.
+            Fake-quant TFLite model.
         """
         model = super(FakelyQuantTFLiteExporter, self).export()
         self.exported_model = tf.lite.TFLiteConverter.from_keras_model(model).convert()

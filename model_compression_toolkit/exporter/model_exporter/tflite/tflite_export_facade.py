@@ -29,7 +29,7 @@ class TFLiteExportMode(Enum):
 def tflite_export_model(model: keras.models.Model,
                        is_layer_exportable_fn: Callable,
                        mode: TFLiteExportMode = TFLiteExportMode.FAKELY_QUANT,
-                       save_model_path: str = None):
+                       save_model_path: str = None) -> bytes:
     """
     Prepare and return fully quantized model for export. Save exported model to
     a path if passed.
@@ -52,8 +52,8 @@ def tflite_export_model(model: keras.models.Model,
             f'Unsupported mode was used {mode.name} to export TFLite model.'
             f' Please see API for supported modes.')
 
-    model = exporter.export()
+    exported_model = exporter.export()
     if save_model_path is not None:
         exporter.save_model(save_model_path)
 
-    return model, exporter.get_custom_objects()
+    return exported_model
