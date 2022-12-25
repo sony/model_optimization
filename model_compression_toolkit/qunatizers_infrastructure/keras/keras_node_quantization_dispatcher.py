@@ -9,8 +9,9 @@ from model_compression_toolkit.qunatizers_infrastructure.common.node_quantizatio
 if FOUND_TF:
     ACTIVATION_QUANTIZERS = "activation_quantizers"
     WEIGHT_QUANTIZERS = "weight_quantizer"
+    import tensorflow as tf
 
-    from keras.utils import deserialize_keras_object, serialize_keras_object
+    keras = tf.keras
 
 
     class KerasNodeQuantizationDispatcher(NodeQuantizationDispatcher):
@@ -31,8 +32,10 @@ if FOUND_TF:
             Returns: Configuration of KerasNodeQuantizationDispatcher.
 
             """
-            return {ACTIVATION_QUANTIZERS: [serialize_keras_object(act) for act in self.activation_quantizers],
-                    WEIGHT_QUANTIZERS: {k: serialize_keras_object(v) for k, v in self.weight_quantizers.items()}}
+            return {
+                ACTIVATION_QUANTIZERS: [keras.utils.serialize_keras_object(act) for act in self.activation_quantizers],
+                WEIGHT_QUANTIZERS: {k: keras.utils.serialize_keras_object(v) for k, v in
+                                    self.weight_quantizers.items()}}
 
         @classmethod
         def from_config(cls, config):
@@ -45,13 +48,13 @@ if FOUND_TF:
 
             """
             config = config.copy()
-            activation_quantizers = [deserialize_keras_object(act,
-                                                              module_objects=globals(),
-                                                              custom_objects=None) for act in
+            activation_quantizers = [keras.utils.deserialize_keras_object(act,
+                                                                          module_objects=globals(),
+                                                                          custom_objects=None) for act in
                                      config.get(ACTIVATION_QUANTIZERS)]
-            weight_quantizer = {k: deserialize_keras_object(v,
-                                                            module_objects=globals(),
-                                                            custom_objects=None) for k, v in
+            weight_quantizer = {k: keras.utils.deserialize_keras_object(v,
+                                                                        module_objects=globals(),
+                                                                        custom_objects=None) for k, v in
                                 config.get(WEIGHT_QUANTIZERS).items()}
             return cls(weight_quantizer, activation_quantizers)
 else:

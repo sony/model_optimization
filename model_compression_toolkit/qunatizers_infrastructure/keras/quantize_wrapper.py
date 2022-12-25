@@ -26,7 +26,8 @@ if FOUND_TF:
 
     from tensorflow.python.util import tf_inspect
     from tensorflow_model_optimization.python.core.keras import utils
-    from keras.utils import deserialize_keras_object, serialize_keras_object
+
+    keras = tf.keras
 
     DISPATCHER = "dispatcher"
     LAYER = "layer"
@@ -78,7 +79,7 @@ if FOUND_TF:
 
             """
             base_config = super(KerasQuantizationWrapper, self).get_config()
-            config = {DISPATCHER: serialize_keras_object(self.dispatcher)}
+            config = {DISPATCHER: keras.utils.serialize_keras_object(self.dispatcher)}
             return dict(list(base_config.items()) + list(config.items()))
 
         @classmethod
@@ -93,7 +94,7 @@ if FOUND_TF:
             """
             config = config.copy()
 
-            dispatcher = deserialize_keras_object(
+            dispatcher = keras.utils.deserialize_keras_object(
                 config.pop(DISPATCHER),
                 module_objects=globals(),
                 custom_objects=None)
