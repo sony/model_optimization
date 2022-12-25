@@ -92,7 +92,7 @@ class GradientPTQConfig:
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
                  gumbel_scale: float = GUMBEL_SCALE,
-                 log_norm: bool = False,
+                 log_norm: bool = True,
                  weights_n_iter: int = 50):
         """
         Initialize a GradientPTQConfig.
@@ -180,7 +180,9 @@ class GradientPTQConfigV2(GradientPTQConfig):
                  quantizer_config: GumbelConfig = GumbelConfig(),
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
-                 gumbel_scale: float = GUMBEL_SCALE):
+                 gumbel_scale: float = GUMBEL_SCALE,
+                 log_norm: bool = True,
+                 weights_n_iter: int = 50):
         """
         Initialize a GradientPTQConfigV2.
 
@@ -206,6 +208,8 @@ class GradientPTQConfigV2(GradientPTQConfig):
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
             gumbel_scale (float): A normalization factor for the gumbel tensor values.
+            log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
+            weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
 
         """
 
@@ -227,7 +231,9 @@ class GradientPTQConfigV2(GradientPTQConfig):
                          quantizer_config=quantizer_config,
                          optimizer_quantization_parameter=optimizer_quantization_parameter,
                          optimizer_bias=optimizer_bias,
-                         gumbel_scale=gumbel_scale)
+                         gumbel_scale=gumbel_scale,
+                         log_norm=log_norm,
+                         weights_n_iter=weights_n_iter)
         self.n_epochs = n_epochs
 
     @classmethod
