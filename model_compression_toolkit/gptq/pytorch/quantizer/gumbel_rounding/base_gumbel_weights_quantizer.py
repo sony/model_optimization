@@ -106,6 +106,9 @@ class BaseGumbelWeightQuantizer(BaseWeightQuantizer):
         self.update_gumbel_param = True
         scale = self.cycle_iterations / (-2 * np.log(0.001))
 
+        self.gumbel_scale = gptq_config.quantizer_config.gumbel_scale
+        self.gumbel_scale_per_bitwidth = gptq_config.quantizer_config.gumbel_scale_per_bitwidth
+
         def tau_function(i: int) -> float:
             """
             A function that generates the gumbel temperature.

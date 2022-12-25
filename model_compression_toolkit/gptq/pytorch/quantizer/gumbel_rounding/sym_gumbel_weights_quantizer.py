@@ -124,7 +124,9 @@ class SymmetricGumbelWeightQuantizer(BaseGumbelWeightQuantizer):
         # Gumbel Softmax
         #####################################################
         if training:
-            self.p_t = gumbel_softmax(self.aux_tensor, self.tau, self.g_t, gumbel_scale=self.gumbel_scale)
+            gumbel_scale = self.gumbel_scale if self.gumbel_scale_per_bitwidth is None \
+                else self.gumbel_scale_per_bitwidth.get(self.num_bits, self.gumbel_scale)
+            self.p_t = gumbel_softmax(self.aux_tensor, self.tau, self.g_t, gumbel_scale=gumbel_scale)
         else:
             self.p_t = ste_gumbel(gumbel_softmax(self.aux_tensor, self.minimal_temp, 0))
 
