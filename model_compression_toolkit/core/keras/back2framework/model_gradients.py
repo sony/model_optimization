@@ -17,6 +17,8 @@ import tensorflow as tf
 from packaging import version
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+from tqdm import tqdm
+
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers import Layer
 else:
@@ -139,7 +141,7 @@ def keras_iterative_approx_jacobian_trace(graph_float: common.Graph,
             output = tf.reshape(output, shape=[output.shape[0], -1])
 
             ipts_jac_trace_approx = []
-            for ipt in interest_points_tensors:  # Per Interest point activation tensor
+            for ipt in tqdm(interest_points_tensors):  # Per Interest point activation tensor
                 trace_jv = []
                 for j in range(n_iter):  # Approximation iterations
                     # Getting a random vector with normal distribution
