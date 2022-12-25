@@ -130,6 +130,7 @@ class GPTQTrainer(ABC):
 
             points_apprx_jacobians_weights = []
             for i in range(1, images.shape[0] + 1):
+                Logger.info(f"Computing Jacobian-based weights approximation for image sample {i} out of {images.shape[0]}...")
                 # Note that in GPTQ loss weights computation we assume that there aren't replacement output nodes,
                 # therefore, output_list is just the graph outputs, and we don't need the tuning factor for
                 # defining the output weights (since the output layer is not a compare point).
