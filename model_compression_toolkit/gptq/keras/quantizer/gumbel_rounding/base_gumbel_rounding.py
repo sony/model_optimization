@@ -124,6 +124,9 @@ class GumbelRoundingBase(BaseTrainableQuantizer):
         self.p_t = None
         scale = self.cycle_iterations / (-2 * np.log(0.001))
 
+        self.gumbel_scale = gumbel_config.gumbel_scale
+        self.gumbel_scale_per_bitwidth = gumbel_config.gumbel_scale_per_bitwidth
+
         def tau_function(i):
             """
             A function the generate the gumbel temperature.

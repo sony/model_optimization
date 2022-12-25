@@ -201,6 +201,7 @@ class SensitivityEvaluation:
         for images in self.images_batches:
             batch_ip_gradients = []
             for i in range(1, images[0].shape[0] + 1):
+                Logger.info(f"Computing Jacobian-based weights approximation for image sample {i} out of {images[0].shape[0]}...")
                 image_ip_gradients = self.fw_impl.model_grad(self.graph,
                                                              {inode: images[0][i - 1:i] for inode in
                                                               self.graph.get_inputs()},

@@ -175,7 +175,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
             n_epochs: Number of update iterations of representative dataset.
         """
         for _ in tqdm(range(n_epochs)):
-            for data in data_function():
+            for data in tqdm(data_function()):
                 input_data = [d * self.input_scale for d in data]
                 input_tensor = to_torch_tensor(input_data)
                 y_float = self.float_model(input_tensor)  # running float model

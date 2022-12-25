@@ -99,13 +99,15 @@ class BaseGumbelWeightQuantizer(BaseWeightQuantizer):
         self.temperature_learning = gptq_config.quantizer_config.temperature_learning
         self.cycle_iterations = max(1, int(gptq_config.n_epochs / gptq_config.quantizer_config.n_cycles))
         self.shift_tensor = to_torch_tensor(init_shift_var(self.m))
-        self.gumbel_scale = gptq_config.gumbel_scale
         self.tau = None
         self.g_t = 0
         self.p_t = None
         self.n_iter = 0
         self.update_gumbel_param = True
         scale = self.cycle_iterations / (-2 * np.log(0.001))
+
+        self.gumbel_scale = gptq_config.quantizer_config.gumbel_scale
+        self.gumbel_scale_per_bitwidth = gptq_config.quantizer_config.gumbel_scale_per_bitwidth
 
         def tau_function(i: int) -> float:
             """

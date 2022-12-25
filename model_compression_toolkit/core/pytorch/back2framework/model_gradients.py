@@ -17,6 +17,7 @@ from typing import Any, Dict, List
 import torch
 import torch.autograd as autograd
 from networkx import topological_sort
+from tqdm import tqdm
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
@@ -237,7 +238,7 @@ def pytorch_iterative_approx_jacobian_trace(graph_float: common.Graph,
         output = torch.reshape(output, shape=[output.shape[0], -1])
 
         ipts_jac_trace_approx = []
-        for ipt in model_grads_net.interest_points_tensors:  # Per Interest point activation tensor
+        for ipt in tqdm(model_grads_net.interest_points_tensors):  # Per Interest point activation tensor
             trace_jv = []
             for j in range(n_iter):  # Approximation iterations
                 # Getting a random vector with normal distribution
