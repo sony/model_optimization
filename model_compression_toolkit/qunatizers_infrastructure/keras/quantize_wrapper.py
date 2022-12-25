@@ -21,9 +21,6 @@ from model_compression_toolkit.qunatizers_infrastructure.common.node_quantizatio
 
 if FOUND_TF:
     import tensorflow as tf
-
-    keras = tf.keras
-
     from tensorflow.python.util import tf_inspect
     from tensorflow_model_optimization.python.core.keras import utils
 
