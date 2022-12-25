@@ -134,15 +134,27 @@ class GPTQTrainer(ABC):
                 # therefore, output_list is just the graph outputs, and we don't need the tuning factor for
                 # defining the output weights (since the output layer is not a compare point).
                 image_ip_gradients = self.fw_impl.model_grad(self.graph_float,
-                                                             {inode: self.fw_impl.to_tensor(images[i - 1:i]) for inode in
+                                                             {inode: self.fw_impl.to_tensor(images[i - 1:i]) for inode
+                                                              in
                                                               self.graph_float.get_inputs()},
                                                              self.compare_points,
                                                              output_list=model_output_replacement,
                                                              all_outputs_indices=[],
                                                              alpha=0,
-                                                             norm_weights=self.gptq_config.norm_weights)
+                                                             norm_weights=self.gptq_config.norm_weights,
+                                                             n_iter=self.gptq_config.weights_n_iter)
                 points_apprx_jacobians_weights.append(image_ip_gradients)
-            return np.mean(points_apprx_jacobians_weights, axis=0)
+            if self.gptq_config.log_norm:
+                mean_jacobian_weights = np.mean(points_apprx_jacobians_weights, axis=0)
+                mean_jacobian_weights = np.where(mean_jacobian_weights != 0, mean_jacobian_weights,
+                                                 np.partition(mean_jacobian_weights, 1)[1])
+                log_weights = np.log10(mean_jacobian_weights)
+
+                # To add scaling to the normalized weights replace return statement with the following line:
+                # return log_weights - np.min(log_weights) / (np.max(log_weights) - np.min(log_weights))
+                return log_weights - np.min(log_weights)
+            else:
+                return np.mean(points_apprx_jacobians_weights, axis=0)
         else:
             num_nodes = len(self.compare_points)
             return np.asarray([1 / num_nodes for _ in range(num_nodes)])

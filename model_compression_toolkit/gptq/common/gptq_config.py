@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from enum import Enum
-from typing import Callable, Any
+from typing import Callable, Any, Dict
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core import common
 
@@ -91,7 +91,9 @@ class GradientPTQConfig:
                  quantizer_config: GumbelConfig = GumbelConfig(),
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
-                 gumbel_scale: float = GUMBEL_SCALE):
+                 gumbel_scale: float = GUMBEL_SCALE,
+                 log_norm: bool = False,
+                 weights_n_iter: int = 50):
         """
         Initialize a GradientPTQConfig.
 
@@ -117,6 +119,8 @@ class GradientPTQConfig:
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
             gumbel_scale (float): A normalization factor for the gumbel tensor values.
+            log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
+            weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
 
         """
         self.n_iter = n_iter
@@ -140,6 +144,8 @@ class GradientPTQConfig:
         self.optimizer_quantization_parameter = optimizer_quantization_parameter
         self.optimizer_bias = optimizer_bias
         self.gumbel_scale = gumbel_scale
+        self.log_norm = log_norm
+        self.weights_n_iter = weights_n_iter
 
     @property
     def is_gumbel(self) -> bool:
