@@ -48,7 +48,9 @@ class GumbelConfig(object):
                  n_cycles: int = N_CYCLES,
                  minimal_temp: float = MIM_TEMP,
                  maximal_temp: float = MAX_TEMP,
-                 gumbel_entropy_regularization: float = GAMMA_TEMPERATURE):
+                 gumbel_entropy_regularization: float = GAMMA_TEMPERATURE,
+                 gumbel_scale: float = GUMBEL_SCALE,
+                 gumbel_scale_per_bitwidth: Dict[int, float] = None):
         """
         Initialize a GumbelConfig.
 
@@ -59,12 +61,16 @@ class GumbelConfig(object):
             n_cycles (int): A floating point number that defines the gumbel entropy regularization factor.
             minimal_temp (float): A floating point number that defines the gumbel entropy regularization factor.
             maximal_temp (float): A floating point number that defines the gumbel entropy regularization factor.
+            gumbel_scale (float): A normalization factor for the gumbel tensor values.
+            gumbel_scale_per_bitwidth (dict): An optional mapping between a bit-width and a gumbel scale value for Gumbel Rounding,
         """
         self.gumbel_entropy_regularization = gumbel_entropy_regularization
         self.temperature_learning = temperature_learning
         self.n_cycles = n_cycles
         self.minimal_temp = minimal_temp
         self.maximal_temp = maximal_temp
+        self.gumbel_scale = gumbel_scale
+        self.gumbel_scale_per_bitwidth = gumbel_scale_per_bitwidth
 
 
 class GradientPTQConfig:
@@ -91,7 +97,6 @@ class GradientPTQConfig:
                  quantizer_config: GumbelConfig = GumbelConfig(),
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
-                 gumbel_scale: float = GUMBEL_SCALE,
                  log_norm: bool = True,
                  weights_n_iter: int = 50):
         """
@@ -118,7 +123,6 @@ class GradientPTQConfig:
             quantizer_config (Any): A class the contins the quantizer specific config.
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
-            gumbel_scale (float): A normalization factor for the gumbel tensor values.
             log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
             weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
 
@@ -143,7 +147,6 @@ class GradientPTQConfig:
         self.quantizer_config = quantizer_config
         self.optimizer_quantization_parameter = optimizer_quantization_parameter
         self.optimizer_bias = optimizer_bias
-        self.gumbel_scale = gumbel_scale
         self.log_norm = log_norm
         self.weights_n_iter = weights_n_iter
 
@@ -180,7 +183,6 @@ class GradientPTQConfigV2(GradientPTQConfig):
                  quantizer_config: GumbelConfig = GumbelConfig(),
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
-                 gumbel_scale: float = GUMBEL_SCALE,
                  log_norm: bool = True,
                  weights_n_iter: int = 50):
         """
@@ -207,7 +209,6 @@ class GradientPTQConfigV2(GradientPTQConfig):
             quantizer_config (Any): A class the contins the quantizer specific config.
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
-            gumbel_scale (float): A normalization factor for the gumbel tensor values.
             log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
             weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
 
@@ -231,7 +232,6 @@ class GradientPTQConfigV2(GradientPTQConfig):
                          quantizer_config=quantizer_config,
                          optimizer_quantization_parameter=optimizer_quantization_parameter,
                          optimizer_bias=optimizer_bias,
-                         gumbel_scale=gumbel_scale,
                          log_norm=log_norm,
                          weights_n_iter=weights_n_iter)
         self.n_epochs = n_epochs
