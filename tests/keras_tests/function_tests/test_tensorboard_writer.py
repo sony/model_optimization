@@ -84,10 +84,6 @@ class TestFileLogger(unittest.TestCase):
         self.assertTrue(len(initial_graph_events_files) == num_event_files)  # Make sure there is only 2 event files in
         # 'initial_graph' subdir
 
-        pre_statistics_events_files = glob.glob(events_dir + 'pre_statistics_collection_substitutions/*events*')
-        self.assertTrue(len(pre_statistics_events_files) == num_event_files)  # Make sure there is only 2 event files in
-        # 'pre_statistics_collection_substitutions' subdir
-
         initial_graph_event = initial_graph_events_files[event_to_test]
 
         efl = event_file_loader.LegacyEventFileLoader(initial_graph_event).Load()
@@ -97,16 +93,6 @@ class TestFileLogger(unittest.TestCase):
         nodes_in_model = len(self.model.layers)
         nodes_in_graph = len(g.node)
         self.assertTrue(nodes_in_graph == nodes_in_model)
-
-        # check nodes in graph after bn folding = original -1
-        pre_statistics_event = pre_statistics_events_files[event_to_test]
-        efl2 = event_file_loader.LegacyEventFileLoader(pre_statistics_event).Load()
-        for e in efl2:
-            if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
-                g = GraphDef().FromString(e.graph_def)
-        pre_statistics_nodes_in_graph = len(g.node)
-        # Graph after BN folding
-        self.assertTrue(pre_statistics_nodes_in_graph == nodes_in_model - 1)
 
     def plot_tensor_sizes(self):
         model = SingleOutputNet()

@@ -90,7 +90,6 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityMetricInterestPoints))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureNetworkTest))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFileLogger))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLpSearchBitwidth))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSearchBitwidthConfiguration))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestBNInfoCollection))
@@ -109,6 +108,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityEvalWithOutputReplacementNodes))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasFakeQuantExporter))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKPIData))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFileLogger))
 
         # Keras test layers are supported in TF2.6 or higher versions
         if version.parse(tf.__version__) >= version.parse("2.6"):
