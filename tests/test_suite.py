@@ -28,7 +28,6 @@ from tests.common_tests.function_tests.test_kpi_object import TestKPIObject
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
-from tests.pytorch_tests.function_tests.test_tensorboard_writer import PytorchTestLogger
 
 found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
     "tensorflow_model_optimization") is not None
@@ -71,7 +70,7 @@ if found_pytorch:
     # from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
     from tests.pytorch_tests.test_pytorch_tp_model import TestPytorchTPModel
-
+    from tests.pytorch_tests.function_tests.test_tensorboard_writer import PytorchTestLogger
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases
