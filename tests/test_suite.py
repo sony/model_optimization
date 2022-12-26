@@ -70,7 +70,6 @@ if found_pytorch:
     # from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
     from tests.pytorch_tests.test_pytorch_tp_model import TestPytorchTPModel
-    from tests.pytorch_tests.function_tests.test_tensorboard_writer import PytorchTestLogger
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases
@@ -125,11 +124,6 @@ if __name__ == '__main__':
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_resnet18', ModelTest))
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_shufflenet_v2_x1_0', ModelTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchTPModel))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchTestLogger))
-        # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchMultipleOutputsTestLogger))
-        # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchMixedPrecisionTestLogger))
-        # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchMixedPrecisionTensorSizesTestLogger))
-
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)
     unittest.TextTestRunner(verbosity=0).run(comboSuite)

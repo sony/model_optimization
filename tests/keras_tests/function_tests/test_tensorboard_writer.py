@@ -41,28 +41,28 @@ layers = keras.layers
 
 
 def random_datagen():
-    return [np.random.random((1, 224, 224, 3))]
+    return [np.random.random((1, 8, 8, 3))]
 
 
 def SingleOutputNet():
-    inputs = layers.Input(shape=(224, 224, 3))
-    x = layers.Dense(20)(inputs)
-    x = layers.Conv2D(32, 4)(x)
+    inputs = layers.Input(shape=(8, 8, 3))
+    x = layers.Dense(2)(inputs)
+    x = layers.Conv2D(2, 4)(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU(max_value=6.0)(x)
-    output = layers.Dense(20)(x)
+    output = layers.Dense(2)(x)
     return keras.Model(inputs=inputs, outputs=output)
 
 
 def MultipleOutputsNet():
-    inputs = layers.Input(shape=(224, 224, 3))
-    x = layers.Dense(20)(inputs)
-    x = layers.Conv2D(32, 4)(x)
+    inputs = layers.Input(shape=(8, 8, 3))
+    x = layers.Dense(2)(inputs)
+    x = layers.Conv2D(2, 4)(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU(max_value=6.0)(x)
-    outputs = layers.Dense(20)(x)
-    outputs = tf.split(outputs, num_or_size_splits=20, axis=-1)
-    return keras.Model(inputs=inputs, outputs=[outputs[0], outputs[4], outputs[2]])
+    outputs = layers.Dense(2)(x)
+    outputs = tf.split(outputs, num_or_size_splits=2, axis=-1)
+    return keras.Model(inputs=inputs, outputs=[outputs[0], outputs[1]])
 
 
 class TestFileLogger(unittest.TestCase):
@@ -73,127 +73,90 @@ class TestFileLogger(unittest.TestCase):
 
     def setUp(self):
         common.Logger.set_log_file('/tmp/')
-        self.model = SingleOutputNet()
-        mct.keras_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
 
-    def test_tensorboard_log_dir(self):
+    def tensorboard_log_dir(self):
         self.assertTrue(os.path.exists(os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs')))
-        common.Logger.set_log_file(None)
 
-    def test_tensorboard_initial_graph_num_of_nodes(self):
+    def tensorboard_initial_graph_num_of_nodes(self, num_event_files, event_to_test):
         events_dir = os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs/')
 
         initial_graph_events_files = glob.glob(events_dir + 'initial_graph/*events*')
-        self.assertTrue(len(initial_graph_events_files) == 1)  # Make sure there is only 2 event files in
+        self.assertTrue(len(initial_graph_events_files) == num_event_files)  # Make sure there is only 2 event files in
         # 'initial_graph' subdir
 
         pre_statistics_events_files = glob.glob(events_dir + 'pre_statistics_collection_substitutions/*events*')
-        self.assertTrue(len(pre_statistics_events_files) == 1)  # Make sure there is only 2 event files in
+        self.assertTrue(len(pre_statistics_events_files) == num_event_files)  # Make sure there is only 2 event files in
         # 'pre_statistics_collection_substitutions' subdir
 
-        for initial_graph_event, pre_statistics_event, model in zip(initial_graph_events_files,
-                                                                    pre_statistics_events_files, [self.model]):
-            efl = event_file_loader.LegacyEventFileLoader(initial_graph_event).Load()
-            for e in efl:
-                if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
-                    g = GraphDef().FromString(e.graph_def)
-            nodes_in_model = len(model.layers)
-            nodes_in_graph = len(g.node)
-            self.assertTrue(nodes_in_graph == nodes_in_model)
+        initial_graph_event = initial_graph_events_files[event_to_test]
 
-            # check nodes in graph after bn folding = original -1
-            efl2 = event_file_loader.LegacyEventFileLoader(pre_statistics_event).Load()
-            for e in efl2:
-                if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
-                    g = GraphDef().FromString(e.graph_def)
-            pre_statistics_nodes_in_graph = len(g.node)
-            # Graph after BN folding
-            self.assertTrue(pre_statistics_nodes_in_graph == nodes_in_model - 1)
+        efl = event_file_loader.LegacyEventFileLoader(initial_graph_event).Load()
+        for e in efl:
+            if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
+                g = GraphDef().FromString(e.graph_def)
+        nodes_in_model = len(self.model.layers)
+        nodes_in_graph = len(g.node)
+        self.assertTrue(nodes_in_graph == nodes_in_model)
 
+        # check nodes in graph after bn folding = original -1
+        pre_statistics_event = pre_statistics_events_files[event_to_test]
+        efl2 = event_file_loader.LegacyEventFileLoader(pre_statistics_event).Load()
+        for e in efl2:
+            if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
+                g = GraphDef().FromString(e.graph_def)
+        pre_statistics_nodes_in_graph = len(g.node)
+        # Graph after BN folding
+        self.assertTrue(pre_statistics_nodes_in_graph == nodes_in_model - 1)
 
-# class TestFileLogger(unittest.TestCase):
-#     """
-#     This is the test of Keras Logger.
-#     This test checks logging into file.
-#     """
-#
-#     def setUp(self):
-#         common.Logger.set_log_file('/tmp/')
-#         self.SingleOutputModel = SingleOutputNet()
-#         mct.keras_post_training_quantization(self.SingleOutputModel, random_datagen, n_iter=1, analyze_similarity=True)
-#         self.MultipleOutputModel = MultipleOutputsNet()
-#         mct.keras_post_training_quantization(self.MultipleOutputModel, random_datagen, n_iter=1,
-#                                              analyze_similarity=True)
-#         self.model = [self.SingleOutputModel, self.MultipleOutputModel]
-#
-#     def test_tensorboard_log_dir(self):
-#         self.assertTrue(os.path.exists(os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs')))
-#
-#     def test_tensorboard_initial_graph_num_of_nodes(self):
-#         events_dir = os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs/')
-#
-#         initial_graph_events_files = glob.glob(events_dir + 'initial_graph/*events*')
-#         self.assertTrue(len(initial_graph_events_files) == 2)  # Make sure there is only 2 event files in
-#         # 'initial_graph' subdir
-#
-#         pre_statistics_events_files = glob.glob(events_dir + 'pre_statistics_collection_substitutions/*events*')
-#         self.assertTrue(len(pre_statistics_events_files) == 2)  # Make sure there is only 2 event files in
-#         # 'pre_statistics_collection_substitutions' subdir
-#
-#         for initial_graph_event, pre_statistics_event, model in zip(initial_graph_events_files,
-#                                                                     pre_statistics_events_files, self.model):
-#             efl = event_file_loader.LegacyEventFileLoader(initial_graph_event).Load()
-#             for e in efl:
-#                 if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
-#                     g = GraphDef().FromString(e.graph_def)
-#             nodes_in_model = len(model.layers)
-#             nodes_in_graph = len(g.node)
-#             self.assertTrue(nodes_in_graph == nodes_in_model)
-#
-#             # check nodes in graph after bn folding = original -1
-#             efl2 = event_file_loader.LegacyEventFileLoader(pre_statistics_event).Load()
-#             for e in efl2:
-#                 if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
-#                     g = GraphDef().FromString(e.graph_def)
-#             pre_statistics_nodes_in_graph = len(g.node)
-#             # Graph after BN folding
-#             self.assertTrue(pre_statistics_nodes_in_graph == nodes_in_model - 1)
+    def plot_tensor_sizes(self):
+        model = SingleOutputNet()
+        base_config, _ = get_op_quantization_configs()
+        tpc_model = generate_tp_model_with_activation_mp(
+            base_cfg=base_config,
+            mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
+                                         (4, 8), (4, 4), (4, 2),
+                                         (2, 8), (2, 4), (2, 2)])
+        tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
+        # compare max tensor size with plotted max tensor size
+        tg = prepare_graph_set_bit_widths(in_model=model,
+                                          fw_impl=KerasImplementation(),
+                                          fw_info=DEFAULT_KERAS_INFO,
+                                          representative_data_gen=random_datagen,
+                                          tpc=tpc,
+                                          network_editor=[],
+                                          quant_config=DEFAULT_MIXEDPRECISION_CONFIG,
+                                          target_kpi=mct.KPI(),
+                                          n_iter=1, analyze_similarity=True)
+        tensors_sizes = [4.0 * n.get_total_output_params() / 1000000.0
+                         for n in tg.get_sorted_activation_configurable_nodes()]  # in MB
+        max_tensor_size = max(tensors_sizes)
 
-#
-# class MixedPrecisionTensorSizesTestLogger(unittest.TestCase):
-#     def setUp(self):
-#         self.model = SingleOutputNet()
-#         base_config, _ = get_op_quantization_configs()
-#         tpc_model = generate_tp_model_with_activation_mp(
-#             base_cfg=base_config,
-#             mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
-#                                          (4, 8), (4, 4), (4, 2),
-#                                          (2, 8), (2, 4), (2, 2)])
-#         self.tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
-#
-#     def test_plot_tensor_sizes(self):
-#         # compare max tensor size with plotted max tensor size
-#         tg = prepare_graph_set_bit_widths(in_model=self.model,
-#                                           fw_impl=KerasImplementation(),
-#                                           fw_info=DEFAULT_KERAS_INFO,
-#                                           representative_data_gen=random_datagen,
-#                                           tpc=self.tpc,
-#                                           network_editor=[],
-#                                           quant_config=DEFAULT_MIXEDPRECISION_CONFIG,
-#                                           target_kpi=mct.KPI(),
-#                                           n_iter=1, analyze_similarity=True)
-#         tensors_sizes = [4.0 * n.get_total_output_params() / 1000000.0
-#                          for n in tg.get_sorted_activation_configurable_nodes()]  # in MB
-#         max_tensor_size = max(tensors_sizes)
-#
-#         # plot tensor sizes
-#         activation_conf_nodes_bitwidth = tg.get_final_activation_config()
-#         visual = ActivationFinalBitwidthConfigVisualizer(activation_conf_nodes_bitwidth)
-#         fig = visual.plot_tensor_sizes(tg)
-#         figure_max_tensor_size = max([rect._height for rect in fig.axes[0].get_children()[:len(
-#             activation_conf_nodes_bitwidth)]])
-#         self.assertTrue(figure_max_tensor_size == max_tensor_size)
-#
+        # plot tensor sizes
+        activation_conf_nodes_bitwidth = tg.get_final_activation_config()
+        visual = ActivationFinalBitwidthConfigVisualizer(activation_conf_nodes_bitwidth)
+        fig = visual.plot_tensor_sizes(tg)
+        figure_max_tensor_size = max([rect._height for rect in fig.axes[0].get_children()[:len(
+            activation_conf_nodes_bitwidth)]])
+        self.assertTrue(figure_max_tensor_size == max_tensor_size)
+
+    def test_steps_by_order(self):
+
+        # Test Single Output model Logger
+        self.model = SingleOutputNet()
+        mct.keras_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
+        self.tensorboard_initial_graph_num_of_nodes(num_event_files=1, event_to_test=0)
+
+        # Test Logger file created
+        self.tensorboard_log_dir()
+
+        # Test Multiple Outputs model Logger
+        self.model = MultipleOutputsNet()
+        mct.keras_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
+        self.tensorboard_initial_graph_num_of_nodes(num_event_files=2, event_to_test=1)
+
+        # Test tensor size plotting
+        self.plot_tensor_sizes()
+
 
 if __name__ == '__main__':
     unittest.main()
