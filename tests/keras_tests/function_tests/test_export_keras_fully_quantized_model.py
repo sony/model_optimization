@@ -112,12 +112,28 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         # Run inference.
         interpreter.invoke()
 
+        # TFLite tensor index may change between TF versions:
+        tensor_index = None
+        for tensor_details in interpreter.get_tensor_details():
+            if self.tf_exported_model.layers[2].name in tensor_details['name'] and tensor_details['name'].endswith('Conv2D'):
+                tensor_index = tensor_details['index']
+                break
+        assert tensor_index is not None, f'Could not find kernel tensor details in TFLite file'
+
         # Test equal weights of the first conv2d layer between exported TFLite and exported TF
-        diff = np.transpose(interpreter.tensor(4)(), (1, 2, 3, 0)) - self.tf_exported_model.layers[2].kernel
+        diff = np.transpose(interpreter.tensor(tensor_index)(), (1, 2, 3, 0)) - self.tf_exported_model.layers[2].kernel
         print(f'Max abs error: {np.max(np.abs(diff))}')
         self.assertTrue(np.sum(np.abs(diff)) == 0)
 
+        tensor_index = None
+        for tensor_details in interpreter.get_tensor_details():
+            if self.tf_exported_model.layers[2].name in tensor_details['name'] and tensor_details['name'].endswith(
+                    'BiasAdd/ReadVariableOp/resource'):
+                tensor_index = tensor_details['index']
+                break
+        assert tensor_index is not None, f'Could not find bias tensor details in TFLite file'
+
         # Make sure the bias is equal
-        diff = interpreter.tensor(1)() - self.tf_exported_model.layers[2].bias
+        diff = interpreter.tensor(tensor_index)() - self.tf_exported_model.layers[2].bias
         print(f'Max abs error: {np.max(np.abs(diff))}')
         self.assertTrue(np.sum(np.abs(diff)) == 0)
