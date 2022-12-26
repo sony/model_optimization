@@ -127,9 +127,19 @@ class TestFileLogger(unittest.TestCase):
 
     def test_steps_by_order(self):
 
-        # Test Single Output model Logger
+        # Test Single Output Mixed Precision model Logger
         self.model = SingleOutputNet()
-        mct.keras_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
+        base_config, _ = get_op_quantization_configs()
+        tpc_model = generate_tp_model_with_activation_mp(
+            base_cfg=base_config,
+            mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
+                                         (4, 8), (4, 4), (4, 2),
+                                         (2, 8), (2, 4), (2, 2)])
+        tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
+        mct.keras_post_training_quantization_mixed_precision(in_model=self.model,
+                                                             representative_data_gen=random_datagen,
+                                                             target_kpi=mct.KPI(),
+                                                             target_platform_capabilities=tpc)
         self.tensorboard_initial_graph_num_of_nodes(num_event_files=1, event_to_test=0)
 
         # Test Logger file created
