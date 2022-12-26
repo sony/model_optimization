@@ -143,6 +143,9 @@ class TestFileLogger(unittest.TestCase):
         # Test tensor size plotting
         self.plot_tensor_sizes()
 
+        # Disable Logger
+        common.Logger.LOG_PATH = None
+
 
 if __name__ == '__main__':
     unittest.main()
