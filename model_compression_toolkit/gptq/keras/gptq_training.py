@@ -80,7 +80,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         trainable_weights, bias_weights, trainable_threshold, temperature_weights = get_trainable_parameters(
             self.fxp_model,
             fw_info,
-            add_bias=True,
+            add_bias=gptq_config.train_bias,
             is_gumbel=gptq_config.is_gumbel)
 
         self.flp_weights_list, self.fxp_weights_list = get_weights_for_loss(self.fxp_model)

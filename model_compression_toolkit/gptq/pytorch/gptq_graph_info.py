@@ -17,6 +17,8 @@ import torch.nn as nn
 from typing import List
 from model_compression_toolkit.gptq.pytorch.quantizer.quantizer_wrapper import WeightQuantizerWrapper
 from model_compression_toolkit.gptq.pytorch.quantizer.gumbel_rounding.base_gumbel_weights_quantizer import BaseGumbelWeightQuantizer
+from model_compression_toolkit.core.pytorch.constants import BIAS
+
 
 def get_trainable_parameters(fxp_model: nn.Module,
                              add_bias: bool = False,
@@ -46,8 +48,9 @@ def get_trainable_parameters(fxp_model: nn.Module,
                 trainable_threshold.extend(layer.weight_quantizer.get_quantization_variable())
             if is_gumbel:
                 trainable_temperature.append(layer.weight_quantizer.get_temperature_variable())
-            if add_bias and layer.op.bias is not None:
-                trainable_bias.append(layer.op.bias)
+            if add_bias and hasattr(layer.op, BIAS):
+                bias = getattr(layer.op, BIAS)
+                trainable_bias.append(bias)
 
     return trainable_aux_weights, trainable_bias, trainable_threshold, trainable_temperature
 

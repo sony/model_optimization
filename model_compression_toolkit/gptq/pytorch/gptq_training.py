@@ -213,8 +213,9 @@ class PytorchGPTQTrainer(GPTQTrainer):
                 if self.gptq_config.quantization_parameters_learning:
                     node.final_weights_quantization_cfg.set_weights_quantization_param(layer.weight_quantizer.get_weight_quant_params())
                 # Bias
-                if self.gptq_config.train_bias:
+                if self.gptq_config.train_bias and hasattr(layer.op, BIAS):
                     node.set_weights_by_keys(BIAS, self.fw_impl.to_numpy(getattr(layer.op, BIAS)))
+
 
         return graph_quant
 
@@ -222,17 +223,13 @@ class PytorchGPTQTrainer(GPTQTrainer):
         """
         Set require_grad flag for trainable parameters for GPTQ training
         """
-        # Float and Fxp models: freeze all the parameters in the network
+        # Float model: freeze all the parameters in the network
         for param in self.float_model.parameters():
             param.requires_grad = False
-        for param in self.fxp_model.parameters():
-            param.requires_grad = False
 
-        # Fxp model: unfreeze only trainable parameters
+        # Fxp model: unfreeze bias trainable parameters
         for layer in self.fxp_model.modules():
             if isinstance(layer, WeightQuantizerWrapper):
-                for param in layer.weight_quantizer.get_trainable_params():
-                    param.requires_grad = True
-                if self.gptq_config.train_bias and hasattr(layer.op, BIAS):
+                if hasattr(layer.op, BIAS):
                     bias = getattr(layer.op, BIAS)
-                    bias.requires_grad = True
+                    bias.requires_grad = self.gptq_config.train_bias
