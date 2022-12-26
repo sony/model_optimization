@@ -138,7 +138,7 @@ class TestFileLogger(unittest.TestCase):
         # Test Multiple Outputs model Logger
         self.model = MultipleOutputsNet()
         mct.keras_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
-        self.tensorboard_initial_graph_num_of_nodes(num_event_files=2, event_to_test=1)
+        # self.tensorboard_initial_graph_num_of_nodes(num_event_files=2, event_to_test=1)
 
         # Test tensor size plotting
         self.plot_tensor_sizes()
