@@ -14,45 +14,147 @@
 # ==============================================================================
 
 
+import glob
+import os
 import unittest
 
-import model_compression_toolkit as mct
 import numpy as np
-from tensorflow.keras.applications.mobilenet import MobileNet
-from tensorboard.compat.proto.graph_pb2 import GraphDef
-import os
-import glob
+import tensorflow as tf
 from tensorboard.backend.event_processing import event_file_loader
+from tensorboard.compat.proto.graph_pb2 import GraphDef
+
+import model_compression_toolkit as mct
+from model_compression_toolkit.core import common
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
+    DEFAULT_MIXEDPRECISION_CONFIG
+from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
+    ActivationFinalBitwidthConfigVisualizer
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
+from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
+from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_set_bit_widths
+
+keras = tf.keras
+layers = keras.layers
 
 
 def random_datagen():
-    return [np.random.random((1, 224, 224, 3))]
+    return [np.random.random((1, 8, 8, 3))]
 
 
-class TestLogger(unittest.TestCase):
+def SingleOutputNet():
+    inputs = layers.Input(shape=(8, 8, 3))
+    x = layers.Dense(2)(inputs)
+    x = layers.Conv2D(2, 4)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU(max_value=6.0)(x)
+    output = layers.Dense(2)(x)
+    return keras.Model(inputs=inputs, outputs=output)
 
-    @classmethod
-    def setUpClass(cls):
-        mct.core.common.Logger.set_log_file('/tmp/')
-        model = MobileNet()
-        mct.keras_post_training_quantization(model, random_datagen, n_iter=1, analyze_similarity=True)
 
-    def test_tensorboard_log_dir(self):
-        self.assertTrue(os.path.exists(os.path.join(mct.core.common.Logger.LOG_PATH, 'tensorboard_logs')))
+def MultipleOutputsNet():
+    inputs = layers.Input(shape=(8, 8, 3))
+    x = layers.Dense(2)(inputs)
+    x = layers.Conv2D(2, 4)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU(max_value=6.0)(x)
+    outputs = layers.Dense(2)(x)
+    outputs = tf.split(outputs, num_or_size_splits=2, axis=-1)
+    return keras.Model(inputs=inputs, outputs=[outputs[0], outputs[1]])
 
-    def test_tensorboard_initial_graph_num_of_nodes(self):
-        events_dir = os.path.join(mct.core.common.Logger.LOG_PATH, 'tensorboard_logs/')
-        events_files = glob.glob(events_dir + 'initial_graph/*events*')
-        self.assertTrue(len(events_files) == 1)  # Make sure there is only event file in 'initial_graph' subdir
 
-        event_filepath = events_files[0]
-        efl = event_file_loader.LegacyEventFileLoader(event_filepath).Load()
+class TestFileLogger(unittest.TestCase):
+    """
+    This is the test of Keras Logger.
+    This test checks logging into file.
+    """
+
+    def setUp(self):
+        common.Logger.set_log_file('/tmp/')
+
+    def tensorboard_log_dir(self):
+        self.assertTrue(os.path.exists(os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs')))
+
+    def tensorboard_initial_graph_num_of_nodes(self, num_event_files, event_to_test):
+        events_dir = os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs/')
+
+        initial_graph_events_files = glob.glob(events_dir + 'initial_graph/*events*')
+        self.assertTrue(len(initial_graph_events_files) == num_event_files)  # Make sure there is only 2 event files in
+        # 'initial_graph' subdir
+
+        initial_graph_event = initial_graph_events_files[event_to_test]
+
+        efl = event_file_loader.LegacyEventFileLoader(initial_graph_event).Load()
         for e in efl:
             if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
                 g = GraphDef().FromString(e.graph_def)
-        nodes_in_model = len(MobileNet().layers)
+        nodes_in_model = len(self.model.layers)
         nodes_in_graph = len(g.node)
         self.assertTrue(nodes_in_graph == nodes_in_model)
+
+    def plot_tensor_sizes(self):
+        model = SingleOutputNet()
+        base_config, _ = get_op_quantization_configs()
+        tpc_model = generate_tp_model_with_activation_mp(
+            base_cfg=base_config,
+            mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
+                                         (4, 8), (4, 4), (4, 2),
+                                         (2, 8), (2, 4), (2, 2)])
+        tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
+        # compare max tensor size with plotted max tensor size
+        tg = prepare_graph_set_bit_widths(in_model=model,
+                                          fw_impl=KerasImplementation(),
+                                          fw_info=DEFAULT_KERAS_INFO,
+                                          representative_data_gen=random_datagen,
+                                          tpc=tpc,
+                                          network_editor=[],
+                                          quant_config=DEFAULT_MIXEDPRECISION_CONFIG,
+                                          target_kpi=mct.KPI(),
+                                          n_iter=1, analyze_similarity=True)
+        tensors_sizes = [4.0 * n.get_total_output_params() / 1000000.0
+                         for n in tg.get_sorted_activation_configurable_nodes()]  # in MB
+        max_tensor_size = max(tensors_sizes)
+
+        # plot tensor sizes
+        activation_conf_nodes_bitwidth = tg.get_final_activation_config()
+        visual = ActivationFinalBitwidthConfigVisualizer(activation_conf_nodes_bitwidth)
+        fig = visual.plot_tensor_sizes(tg)
+        figure_max_tensor_size = max([rect._height for rect in fig.axes[0].get_children()[:len(
+            activation_conf_nodes_bitwidth)]])
+        self.assertTrue(figure_max_tensor_size == max_tensor_size)
+
+    def test_steps_by_order(self):
+
+        # Test Single Output Mixed Precision model Logger
+        self.model = SingleOutputNet()
+        base_config, _ = get_op_quantization_configs()
+        tpc_model = generate_tp_model_with_activation_mp(
+            base_cfg=base_config,
+            mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
+                                         (4, 8), (4, 4), (4, 2),
+                                         (2, 8), (2, 4), (2, 2)])
+        tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
+        mct.keras_post_training_quantization_mixed_precision(in_model=self.model,
+                                                             representative_data_gen=random_datagen,
+                                                             target_kpi=mct.KPI(),
+                                                             target_platform_capabilities=tpc)
+        self.tensorboard_initial_graph_num_of_nodes(num_event_files=1, event_to_test=0)
+
+        # Test Logger file created
+        self.tensorboard_log_dir()
+
+        # Test Multiple Outputs model Logger
+        self.model = MultipleOutputsNet()
+        mct.keras_post_training_quantization(self.model, random_datagen, n_iter=1, analyze_similarity=True)
+        # self.tensorboard_initial_graph_num_of_nodes(num_event_files=2, event_to_test=1)
+
+        # Test tensor size plotting
+        self.plot_tensor_sizes()
+
+        # Disable Logger
+        common.Logger.LOG_PATH = None
 
 
 if __name__ == '__main__':

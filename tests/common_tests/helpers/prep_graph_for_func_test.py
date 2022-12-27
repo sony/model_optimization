@@ -14,23 +14,26 @@
 # ==============================================================================
 import numpy as np
 
-from model_compression_toolkit import DEFAULTCONFIG
+from model_compression_toolkit import DEFAULTCONFIG, CoreConfig, DebugConfig
+from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
-from model_compression_toolkit.core.runner import get_finalized_graph, read_model_to_graph
+from model_compression_toolkit.core.runner import get_finalized_graph, read_model_to_graph, _init_tensorboard_writer, \
+    _prepare_model_for_quantization
 
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_tp_model, \
     get_op_quantization_configs
 
 import model_compression_toolkit as mct
+
 tp = mct.target_platform
 
 
 def prepare_graph_with_configs(in_model, fw_impl, fw_info, representative_dataset, get_tpc_func,
                                qc=DEFAULTCONFIG, mixed_precision_enabled=False):
-
     # TPC
     base_config, op_cfg_list = get_op_quantization_configs()
 
@@ -79,3 +82,68 @@ def prepare_graph_with_quantization_parameters(in_model, fw_impl, fw_info, repre
                                   fw_impl=fw_impl)
 
     return graph
+
+
+def prepare_graph_set_bit_widths(in_model,
+                                 fw_impl,
+                                 representative_data_gen,
+                                 target_kpi,
+                                 n_iter,
+                                 quant_config,
+                                 fw_info,
+                                 network_editor,
+                                 analyze_similarity,
+                                 tpc):
+
+    # Config
+    quantization_config, mp_config = quant_config.separate_configs()
+    core_config = CoreConfig(quantization_config=quantization_config,
+                             mixed_precision_config=mp_config,
+                             debug_config=DebugConfig(analyze_similarity=analyze_similarity,
+                                                      network_editor=network_editor))
+
+    tb_w = _init_tensorboard_writer(fw_info)
+
+    # convert old representative dataset generation to a generator
+    def _representative_data_gen():
+        for _ in range(n_iter):
+            yield representative_data_gen()
+
+    graph = read_model_to_graph(in_model,
+                                _representative_data_gen,
+                                tpc,
+                                fw_info,
+                                fw_impl)
+
+    tg = _prepare_model_for_quantization(graph,
+                                         _representative_data_gen,
+                                         tpc,
+                                         core_config,
+                                         fw_info,
+                                         tb_w,
+                                         fw_impl)
+
+    ######################################
+    # Finalize bit widths
+    ######################################
+    if target_kpi is not None:
+        assert core_config.mixed_precision_enable
+        if core_config.mixed_precision_config.configuration_overwrite is None:
+
+            bit_widths_config = search_bit_width(tg,
+                                                 fw_info,
+                                                 fw_impl,
+                                                 target_kpi,
+                                                 core_config.mixed_precision_config,
+                                                 _representative_data_gen)
+        else:
+            bit_widths_config = core_config.mixed_precision_config.configuration_overwrite
+
+    else:
+        bit_widths_config = []
+
+    tg = set_bit_widths(core_config.mixed_precision_enable,
+                        tg,
+                        bit_widths_config)
+
+    return tg
