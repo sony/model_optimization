@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from abc import abstractmethod
-from typing import Tuple, Any, Dict, List, Union
+from typing import Tuple, Any, Dict, List, Union, Callable
 
 import torch
 from networkx import topological_sort
@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.back2framework.base_model_builder imp
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder
+from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder, identity_wrapper
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, BufferHolder
 from model_compression_toolkit.core.pytorch.utils import get_working_device
@@ -142,7 +142,8 @@ class PytorchModel(torch.nn.Module):
                  graph: Graph,
                  append2output: List[Any] = None,
                  fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
-                 return_float_outputs: bool = False):
+                 return_float_outputs: bool = False,
+                 wrapper: Callable = identity_wrapper):
         """
         Construct a Pytorch model.
 
@@ -159,6 +160,7 @@ class PytorchModel(torch.nn.Module):
         self.append2output = append2output
         self.return_float_outputs = return_float_outputs
         self.fw_info = fw_info
+        self.wrapper = wrapper
         self._add_modules()
 
     @abstractmethod
@@ -186,7 +188,7 @@ class PytorchModel(torch.nn.Module):
                     self.get_submodule(n.name). \
                         register_buffer(n.name, torch.Tensor(n.get_weights_by_keys(BUFFER)).to(get_working_device()))
                 else:
-                    self.add_module(n.name, node_builder(n))
+                    self.add_module(n.name, self.wrapper(n, node_builder(n)))
 
     def forward(self,
                 *args: Any) -> Any:

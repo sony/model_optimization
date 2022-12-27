@@ -20,6 +20,7 @@ from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test im
     MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, MixedPrecisionActivationOnlyBopsTest, \
     MixedPrecisionBopsAndWeightsKPITest, MixedPrecisionBopsAndActivationKPITest, MixedPrecisionBopsAndTotalKPITest, \
     MixedPrecisionBopsWeightsActivationKPITest, MixedPrecisionBopsMultipleOutEdgesTest
+from tests.pytorch_tests.model_tests.feature_models.qat_test import QuantizationAwareTrainingTest
 from tests.pytorch_tests.model_tests.feature_models.relu_replacement_test import SingleLayerReplacementTest, \
     ReluReplacementTest, ReluReplacementWithAddBiasTest
 from tests.pytorch_tests.model_tests.feature_models.remove_assert_test import AssertNetTest
@@ -437,6 +438,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
         UniformGumbelAccuracyTest(self).run_test()
         UniformGumbelWeightsUpdateTest(self).run_test()
         GumbelLearnRateZeroNoTempLearnTest(self).run_test()
+
+
+    def test_qat(self):
+        """
+        This test checks the QAT feature.
+        """
+        QuantizationAwareTrainingTest(self).run_test()
 
 
 if __name__ == '__main__':

@@ -36,3 +36,16 @@ def node_builder(n: BaseNode) -> Module:
     node_instance.load_state_dict({k: torch.Tensor(v) for k, v in n.weights.items()}, strict=False)
     set_model(node_instance)
     return node_instance
+
+
+def identity_wrapper(node: BaseNode, module: Module):
+    """
+    A function which takes a computational graph node and a pytorch module and return an identity wrapping which return the layer itself
+    Args:
+        node: A node of mct graph.
+        layer: A pytorch module
+    Returns: pytorch module
+    """
+    return module
+
+
