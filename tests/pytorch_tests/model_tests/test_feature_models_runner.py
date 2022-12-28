@@ -37,6 +37,7 @@ from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUB
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.second_moment_correction_test import ConvSecondMomentNetTest, \
     ConvTSecondMomentNetTest, MultipleInputsConvSecondMomentNetTest, ValueSecondMomentTest
+from tests.pytorch_tests.model_tests.feature_models.symmetric_activation_test import SymmetricActivationTest
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
     SoftmaxFunctionNetTest
 from tests.pytorch_tests.model_tests.feature_models.permute_substitution_test import PermuteSubstitutionTest
@@ -66,6 +67,8 @@ from tests.pytorch_tests.model_tests.feature_models.bn_function_test import BNFN
 from tests.pytorch_tests.model_tests.feature_models.gptq_test import STEAccuracyTest, STEWeightsUpdateTest, STELearnRateZeroTest, GumbelLearnRateZeroNoTempLearnTest
 from tests.pytorch_tests.model_tests.feature_models.gptq_test import SymGumbelAccuracyTest, SymGumbelAccuracyTest2, SymGumbelWeightsUpdateTest
 from tests.pytorch_tests.model_tests.feature_models.gptq_test import UniformGumbelAccuracyTest, UniformGumbelWeightsUpdateTest
+from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
+    UniformActivationTest
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
@@ -328,6 +331,18 @@ class FeatureModelsTestRunner(unittest.TestCase):
         such as torch.Tensor.size and torch.Tensor.view.
         """
         TorchTensorAttrNetTest(self).run_test()
+
+    def test_torch_uniform_activation(self):
+        """
+        This test checks the Uniform activation quantizer.
+        """
+        UniformActivationTest(self).run_test()
+
+    def test_torch_symmetric_activation(self):
+        """
+        This test checks the Symmetric activation quantizer.
+        """
+        SymmetricActivationTest(self).run_test()
 
     def test_mixed_precision_8bit(self):
         """

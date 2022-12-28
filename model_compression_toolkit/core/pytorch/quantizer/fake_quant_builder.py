@@ -62,9 +62,9 @@ def power_of_two_quantization(activation_n_bits: int,
     activation_is_signed = quantization_params.get(SIGNED)
 
     if activation_threshold is None or activation_is_signed is None:
-        return None
+        return None # pragma: no cover
     if not threshold_is_power_of_two(activation_threshold, per_channel=False):
-        return None
+        return None # pragma: no cover
 
     min_value, max_value, scale = get_symmetric_quantization_range_and_scale(activation_is_signed,
                                                                              activation_n_bits,
@@ -90,7 +90,7 @@ def symmetric_quantization(activation_n_bits: int,
     activation_is_signed = quantization_params.get(SIGNED)
 
     if activation_threshold is None or activation_is_signed is None:
-        return None
+        return None # pragma: no cover
 
     min_value, max_value, scale = get_symmetric_quantization_range_and_scale(activation_is_signed,
                                                                              activation_n_bits,
@@ -115,7 +115,7 @@ def uniform_quantization(activation_n_bits: int,
     a, b = quantization_params.get(RANGE_MIN), quantization_params.get(RANGE_MAX)
 
     if a is None or b is None:
-        return None
+        return None # pragma: no cover
 
     # fixing quantization range to include 0
     a = 0 if a > 0 else a
