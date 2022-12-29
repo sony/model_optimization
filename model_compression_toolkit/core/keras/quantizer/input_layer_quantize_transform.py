@@ -55,7 +55,7 @@ class InputLayerWrapperTransform(InputLayerQuantize):
         self.wrapper_class = wrapper_class
 
     def pattern(self):
-        return transforms.LayerPattern('InputLayer', config={'name': self.name})
+        return transforms.LayerPattern('InputLayer', config={'name': self.name + '_base'})
 
     def replacement(self, match_layer):
         layer_wrapper = self.wrapper_class(InputLayer(input_shape=self.input_layer.input_shape),

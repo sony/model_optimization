@@ -16,7 +16,7 @@
 from abc import abstractmethod
 
 import tensorflow as tf
-from keras.models import Model
+from keras.models import Model, clone_model
 from packaging import version
 
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
@@ -42,7 +42,7 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
-from model_compression_toolkit.core.keras.back2framework.instance_builder import OperationHandler, identity_wrapper
+from model_compression_toolkit.core.keras.back2framework.instance_builder import OperationHandler
 from model_compression_toolkit.core.keras.reader.connectivity_handler import OutTensor
 
 # In tf2.3 fake quant node is implemented as TensorFlowOpLayer, while in tf2.4 as TFOpLambda.
@@ -93,7 +93,7 @@ class KerasModelBuilder(BaseModelBuilder):
                  append2output=None,
                  fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                  return_float_outputs: bool = False,
-                 wrapper: Callable = identity_wrapper):
+                 wrapper: Callable = None):
         """
 
         Args:
@@ -109,9 +109,9 @@ class KerasModelBuilder(BaseModelBuilder):
                          return_float_outputs)
 
         # Build an OperationHandler to handle conversions from graph nodes to Keras operators.
-        self.oh = OperationHandler(self.graph, wrapper)
+        self.oh = OperationHandler(self.graph)
+        self.wrapper = wrapper
 
-    @abstractmethod
     def _quantize_node_activations(self,
                                    node: BaseNode,
                                    input_tensors: List[TFReference]) -> List[TFReference]:
@@ -126,7 +126,7 @@ class KerasModelBuilder(BaseModelBuilder):
             Output of the node.
 
         """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement a method for quantization activation nodes.')
+        raise NotImplemented(f'{self.__class__.__name__} did not implement a method for quantizating activation nodes.')
 
     def build_model(self) -> Tuple[Model, UserInformation]:
         """
@@ -149,7 +149,7 @@ class KerasModelBuilder(BaseModelBuilder):
         # Hold a dictionary from an input node to its corresponding input tensor. It is needed for when
         # building the model. Initially input nodes with input tensors are added to the dictionary,
         # as they're not added later.
-        input_nodes_to_input_tensors = {inode: Input(inode.framework_attr[BATCH_INPUT_SHAPE][1:], name=inode.name)
+        input_nodes_to_input_tensors = {inode: Input(inode.framework_attr[BATCH_INPUT_SHAPE][1:], name=inode.name + '_base')
                                         for
                                         inode in self.graph.get_inputs()}
 
@@ -198,6 +198,17 @@ class KerasModelBuilder(BaseModelBuilder):
 
         # Build the model.
         model = tf.keras.Model(inputs=inputs_list, outputs=model_output_tensors)
+
+        if self.wrapper is not None:
+            def _wrap(layer):
+                _nodes = self.graph.find_node_by_name(layer.name)
+                if len(_nodes) == 1:
+                    return self.wrapper(_nodes[0], layer)
+                else:
+                    Logger.error('node mismatch between TF model layers and internal graph nodes')
+
+            model = clone_model(model, clone_function=_wrap)
+
         return model, self.graph.user_info
 
     def _convert_node2name(self, in_node_to_output_tensors_dict):
@@ -246,19 +257,20 @@ class KerasModelBuilder(BaseModelBuilder):
             input_tensors: List of references to Keras tensors that are the layer's inputs.
             op_func: Layer to apply to the input tensors.
             input_nodes_to_input_tensors: A dictionary from a node to its input tensors.
-            mode: model quantization mode from ModelBuilderMode
 
         Returns:
             A list of references to Keras tensors. The layer's output tensors after applying the
             layer to the input tensors.
         """
-
         if len(input_tensors) == 0:  # Placeholder handling
             out_tensors_of_n_float = input_nodes_to_input_tensors[n]
-            out_tensors_of_n = out_tensors_of_n_float
-            if n.is_activation_quantization_enabled():
+            if self.wrapper is not None:
+                # if a wrapper is defined, add an identity layer for cloning
+                out_tensors_of_n = op_func(out_tensors_of_n_float)
+            elif n.is_activation_quantization_enabled():
                 out_tensors_of_n = self._quantize_node_activations(n, out_tensors_of_n_float)
-
+            else:
+                out_tensors_of_n = out_tensors_of_n_float
         else:
             input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
             # Build a functional node using its args
@@ -275,8 +287,8 @@ class KerasModelBuilder(BaseModelBuilder):
                 out_tensors_of_n_float = op_func(input_tensors)
             out_tensors_of_n = out_tensors_of_n_float
 
-            # Add a fake quant node if the node has an activation threshold.
-            if n.is_activation_quantization_enabled():
+            # Add a fake quant node if the node has an activation threshold and a wrapper isn't defined
+            if n.is_activation_quantization_enabled() and self.wrapper is None:
                 out_tensors_of_n = self._quantize_node_activations(n, out_tensors_of_n_float)
 
         # Save a mapping from the layer that created the tensor to the node (as this layer is not the

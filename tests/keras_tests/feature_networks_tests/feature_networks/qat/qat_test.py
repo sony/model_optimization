@@ -28,25 +28,30 @@ layers = keras.layers
 
 class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, layer, weight_bits=2, activation_bits=4, finalize=False,
-                 weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO, test_loading=False):
+                 weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                 activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                 test_loading=False):
         self.layer = layer
         self.weight_bits = weight_bits
         self.activation_bits = activation_bits
+        assert finalize is False, 'MCT QAT Finalize is disabled until exporter is fully supported'
         self.finalize = finalize
         self.weights_quantization_method = weights_quantization_method
+        self.activation_quantization_method = activation_quantization_method
         self.test_loading = test_loading
         super().__init__(unit_test)
 
     def get_tpc(self):
         return get_tpc("QAT_test", weight_bits=self.weight_bits, activation_bits=self.activation_bits,
-                       weights_quantization_method=self.weights_quantization_method)
+                       weights_quantization_method=self.weights_quantization_method,
+                       activation_quantization_method=self.activation_quantization_method)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         outputs = self.layer(inputs)
         return keras.Model(inputs=inputs, outputs=outputs)
 
-    def run_test(self, experimental_facade=False):
+    def run_test(self, experimental_facade=False, **kwargs):
         model_float = self.create_networks()
         ptq_model, quantization_info, custom_objects = mct.keras_quantization_aware_training_init(model_float,
                                                                                                   self.representative_data_gen,

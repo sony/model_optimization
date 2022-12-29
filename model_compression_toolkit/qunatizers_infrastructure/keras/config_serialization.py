@@ -19,12 +19,14 @@ from typing import Any
 
 from model_compression_toolkit import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
-    BaseNodeQuantizationConfig
+    BaseNodeQuantizationConfig, NodeActivationQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod, OpQuantizationConfig
 from enum import Enum
 
 IS_WEIGHTS = "is_weights"
+IS_ACTIVATIONS = "is_activations"
 WEIGHTS_QUANTIZATION_METHOD = "weights_quantization_method"
+ACTIVATIONS_QUANTIZATION_METHOD = "activation_quantization_method"
 
 
 def transform_enum(v: Any):
@@ -53,6 +55,7 @@ def config_serialization(quantization_config: BaseNodeQuantizationConfig):
     config_data = {k: transform_enum(v) for k, v in quantization_config.__dict__.items() if
                    v is not isinstance(v, Callable)}
     config_data[IS_WEIGHTS] = isinstance(quantization_config, NodeWeightsQuantizationConfig)
+    config_data[IS_ACTIVATIONS] = isinstance(quantization_config, NodeActivationQuantizationConfig)
     return config_data
 
 
@@ -79,5 +82,14 @@ def config_deserialization(in_config: dict) -> BaseNodeQuantizationConfig:
 
         nwqc.__dict__.update(in_config)
         return nwqc
+    elif in_config[IS_ACTIVATIONS]:
+        naqc = NodeActivationQuantizationConfig(qc=qc,
+                                                op_cfg=op_cfg,
+                                                activation_quantization_fn=None,
+                                                activation_quantization_params_fn=None)
+        in_config[ACTIVATIONS_QUANTIZATION_METHOD] = QuantizationMethod(in_config[ACTIVATIONS_QUANTIZATION_METHOD])
+
+        naqc.__dict__.update(in_config)
+        return naqc
     else:
         raise NotImplemented

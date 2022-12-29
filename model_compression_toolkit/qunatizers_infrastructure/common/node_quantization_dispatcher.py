@@ -34,7 +34,7 @@ class NodeQuantizationDispatcher:
 
     def add_weight_quantizer(self, param_name: str, quantizer: BaseQuantizer):
         """
-        This function add a weight quantizer to existing node dispatcher
+        This function adds a weight quantizer to existing node dispatcher
 
         Args:
             param_name: The name of the parameter to quantize
@@ -63,3 +63,9 @@ class NodeQuantizationDispatcher:
 
         """
         return len(self.weight_quantizers) > 0
+
+    @property
+    def num_act_quantizers(self):
+        return len(self.activation_quantizers)
+
+

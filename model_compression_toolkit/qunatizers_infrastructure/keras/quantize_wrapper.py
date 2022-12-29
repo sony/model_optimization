@@ -58,7 +58,8 @@ if FOUND_TF:
     class KerasQuantizationWrapper(tf.keras.layers.Wrapper):
         def __init__(self,
                      layer,
-                     dispatcher: NodeQuantizationDispatcher):
+                     dispatcher: NodeQuantizationDispatcher,
+                     **kwargs):
             """
             Keras Quantization Wrapper takes a keras layer and dispatcher and infer a quantized layer.
 
@@ -66,7 +67,8 @@ if FOUND_TF:
                 layer: A keras layer.
                 dispatcher: A node quantization dispatcher.
             """
-            super(KerasQuantizationWrapper, self).__init__(layer)
+            super(KerasQuantizationWrapper, self).__init__(layer, **kwargs)
+            self._track_trackable(layer, name='layer')
             self.dispatcher = dispatcher
 
         def get_config(self):
@@ -84,7 +86,7 @@ if FOUND_TF:
             """
 
             Args:
-                config(dict): dictonory  of  KerasNodeQuantizationDispatcher Configuration
+                config(dict): dictionary  of  KerasNodeQuantizationDispatcher Configuration
 
             Returns: A KerasNodeQuantizationDispatcher
 
@@ -98,7 +100,7 @@ if FOUND_TF:
 
             layer = tf.keras.layers.deserialize(config.pop(LAYER))
 
-            return cls(layer=layer, dispatcher=dispatcher)
+            return cls(layer=layer, dispatcher=dispatcher, **config)
 
         def build(self, input_shape):
             """
@@ -124,8 +126,13 @@ if FOUND_TF:
                                                   _weight_name(weight.name), self)
 
                 self._weight_vars.append((name, weight, quantizer))
-                # Needed to ensure unquantized weights get trained as part of the wrapper. ?? Nost sure
+                # Needed to ensure unquantized weights get trained as part of the wrapper. ?? Not sure
                 self._trainable_weights.append(weight)
+
+            self._act_weight_vars = []
+            for i, quantizer in enumerate(self.dispatcher.activation_quantizers):
+                quantizer.initialize_quantization(None,
+                                                  self.layer.name + f'/out{i}', self)
 
         def set_quantize_weights(self, quantized_weights: dict):
             """
@@ -154,7 +161,7 @@ if FOUND_TF:
                 training: a boolean stating if layer is in training mode.
                 **kwargs:
 
-            Returns: tensors that simulate quantized layer.
+            Returns: tensors that simulate a quantized layer.
 
             """
             if training is None:
@@ -172,11 +179,28 @@ if FOUND_TF:
 
             self.set_quantize_weights(quantized_weights)
 
-            args = tf_inspect.getfullargspec(self.layer.call).args
-            if TRAINING in args:
+            args_spec = tf_inspect.getfullargspec(self.layer.call).args
+            if TRAINING in args_spec:
                 outputs = self.layer.call(inputs, training=training, **kwargs)
             else:
                 outputs = self.layer.call(inputs, **kwargs)
+            if self.dispatcher.num_act_quantizers > 0:
+                num_outputs = len(outputs) if isinstance(outputs, (list, tuple)) else 1
+                if self.dispatcher.num_act_quantizers != num_outputs:
+                    Logger.error('Quantization wrapper output quantization error: '
+                                 f'number of outputs and quantizers mismatch ({num_outputs}!={self.dispatcher.num_act_quantizers}')
+                if num_outputs == 1:
+                    outputs = [outputs]
+
+                _outputs = []
+                for _output, act_quant in zip(outputs, self.dispatcher.activation_quantizers):
+                    _outputs.append(utils.smart_cond(
+                        training,
+                        _make_quantizer_fn(act_quant, _output, True),
+                        _make_quantizer_fn(act_quant, _output, False)))
+
+                outputs = _outputs[0] if num_outputs == 1 else _outputs
+
             return outputs
 
 else:

@@ -14,7 +14,7 @@
 # ==============================================================================
 
 from typing import List
-from tensorflow.keras.layers import Layer
+from tensorflow.keras.layers import Layer, InputLayer
 from tensorflow.python.util.object_identity import Reference as TFReference
 
 from model_compression_toolkit import get_target_platform_capabilities
@@ -45,7 +45,9 @@ def _is_qat_applicable(node: common.BaseNode,
         A boolean whether the layer is to be wrapped with a QuantizeWrapper
     """
 
-    return fw_info.is_kernel_op(node.type) and node.is_weights_quantization_enabled()
+    is_weight_quantization = fw_info.is_kernel_op(node.type) and node.is_weights_quantization_enabled()
+    is_activation_quantization = node.is_activation_quantization_enabled()
+    return is_weight_quantization or is_activation_quantization
 
 
 def qat_wrapper(n: common.BaseNode, layer: Layer):
@@ -62,44 +64,3 @@ def qat_wrapper(n: common.BaseNode, layer: Layer):
         return qi.KerasQuantizationWrapper(layer, quantization_dispatcher_builder(n, DEFAULT_KERAS_INFO))
     else:
         return layer
-
-
-class QATKerasModelBuilder(KerasModelBuilder):
-    """
-    Builder of QAT Keras models.
-    """
-
-    def __init__(self,
-                 graph: common.Graph,
-                 append2output=None,
-                 fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                 return_float_outputs: bool = False):
-        """
-
-        Args:
-            graph: Graph to build the model from.
-            append2output: Nodes to append to model's output.
-            fw_info: Information about the specific framework of the model that is built.
-            return_float_outputs: Whether the model returns float tensors or not.
-        """
-        super().__init__(graph,
-                         append2output,
-                         fw_info,
-                         return_float_outputs,
-                         wrapper=qat_wrapper)
-
-    def _quantize_node_activations(self,
-                                   node: BaseNode,
-                                   input_tensors: List[TFReference]) -> List[TFReference]:
-        """
-        Quantize node's activation given input tensors.
-
-        Args:
-            node: Node to quantize its outputs.
-            input_tensors: Input tensors of the node.
-
-        Returns:
-            Output of the node.
-
-        """
-        return node.final_activation_quantization_cfg.quantize_node_output(input_tensors)
