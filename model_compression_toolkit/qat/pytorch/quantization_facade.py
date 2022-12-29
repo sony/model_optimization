@@ -197,3 +197,8 @@ else:
         Logger.critical('Installing Pytorch is mandatory '
                         'when using pytorch_quantization_aware_training_init. '
                         'Could not find the torch package.')
+
+    def pytorch_quantization_aware_training_finalize(*args, **kwargs):
+        Logger.critical('Installing Pytorch is mandatory '
+                        'when using pytorch_quantization_aware_training_init. '
+                        'Could not find the torch package.')
