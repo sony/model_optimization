@@ -15,7 +15,6 @@
 import copy
 from typing import Callable
 
-from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH, PYTORCH
 
@@ -35,6 +34,7 @@ if FOUND_TORCH:
     from torch.nn import Module
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
     from model_compression_toolkit.qat.pytorch.qat_model_builder import QATPytorchModelBuilder
     from model_compression_toolkit.core.pytorch.constants import KERNEL
     from model_compression_toolkit.qunatizers_infrastructure import PytorchQuantizationWrapper

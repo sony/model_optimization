@@ -1,7 +1,6 @@
 from typing import Dict, List
 
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.qunatizers_infrastructure.common.base_quantizer import BaseQuantizer
 from model_compression_toolkit.qunatizers_infrastructure.common.node_quantization_dispatcher import \
     NodeQuantizationDispatcher
