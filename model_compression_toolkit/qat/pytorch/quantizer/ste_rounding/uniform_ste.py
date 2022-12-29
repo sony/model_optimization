@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit import qunatizers_infrastructure as qi
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-from model_compression_toolkit.gptq.pytorch.quantizer.quant_utils import ste_round, ste_clip, fix_range_to_include_zero
+from model_compression_toolkit.qunatizers_infrastructure.pytorch.quantizer_utils import uniform_quantizer
 
 
 class STEUniformWeightQuantizer(qi.BasePytorchQuantizer):
@@ -86,7 +86,7 @@ class STEUniformWeightQuantizer(qi.BasePytorchQuantizer):
 
         return self.quantizer_parameters
 
-    def forward(self,
+    def __call__(self,
                  inputs: nn.Parameter,
                  training: bool) -> nn.Parameter:
         """
@@ -97,21 +97,4 @@ class STEUniformWeightQuantizer(qi.BasePytorchQuantizer):
         Returns:
             quantized tensor
         """
-        max_range_tensor = self.max_values
-        min_range_tensor = self.min_values
-
-        # adjusts the quantization rage so the quantization grid include zero.
-        a, b = fix_range_to_include_zero(min_range_tensor, max_range_tensor, self.num_bits)
-
-        # Compute the step size of quantized values.
-        delta_tensor = (b - a) / (2 ** self.num_bits - 1)
-
-        # Apply rounding
-        w0 = ste_round((inputs - a) / delta_tensor)  # Apply rounding
-
-        # Clip data in range
-        w1 = ste_clip(w0, min_val=self.min_int, max_val=self.max_int)
-
-        # Quantize the data between min/max of quantization range.
-        w_q = delta_tensor * w1 + a
-        return w_q
+        return uniform_quantizer(inputs, self.min_values, self.max_values, self.num_bit)

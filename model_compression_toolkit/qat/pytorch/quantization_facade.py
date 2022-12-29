@@ -29,15 +29,15 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quant
 from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
 from model_compression_toolkit.ptq.runner import ptq_runner
-from model_compression_toolkit.qat.pytorch.qat_model_builder import QATPytorchModelBuilder
-from model_compression_toolkit.core.pytorch.constants import KERNEL
-from model_compression_toolkit.qunatizers_infrastructure import PytorchQuantizationWrapper
+
 
 if FOUND_TORCH:
+    from torch.nn import Module
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
-    from torch.nn import Module
-    from torch import nn
+    from model_compression_toolkit.qat.pytorch.qat_model_builder import QATPytorchModelBuilder
+    from model_compression_toolkit.core.pytorch.constants import KERNEL
+    from model_compression_toolkit.qunatizers_infrastructure import PytorchQuantizationWrapper
 
     from model_compression_toolkit import get_target_platform_capabilities
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)

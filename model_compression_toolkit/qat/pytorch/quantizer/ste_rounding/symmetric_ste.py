@@ -26,7 +26,7 @@ from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit import qunatizers_infrastructure as qi
 from model_compression_toolkit.core.common import constants as C
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-from model_compression_toolkit.gptq.pytorch.quantizer.quant_utils import ste_round, ste_clip
+from model_compression_toolkit.qunatizers_infrastructure.pytorch.quantizer_utils import ste_round, ste_clip
 
 
 class STEWeightQuantizer(qi.BasePytorchQuantizer):
@@ -94,7 +94,7 @@ class STEWeightQuantizer(qi.BasePytorchQuantizer):
                                      FQ_MIN: self.fq_min, FQ_MAX: self.fq_max}
         return self.quantizer_parameters
 
-    def forward(self,
+    def __call__(self,
                  inputs: nn.Parameter,
                  training: bool) -> nn.Parameter:
         """

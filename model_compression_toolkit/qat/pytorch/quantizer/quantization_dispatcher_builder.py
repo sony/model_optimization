@@ -29,7 +29,7 @@ METHOD2QUANTIZER = {qi.QuantizationMethod.SYMMETRIC: STEWeightQuantizer,
 def quantization_dispatcher_builder(n: common.BaseNode,
                                     fw_info: FrameworkInfo,
                                     method2quantizer: Dict[
-                                        qi.QuantizationMethod, qi.BasePytorchQuantizer] = METHOD2QUANTIZER) -> qi.PytorchNodeQuantizationDispatcher:
+                                        qi.QuantizationMethod, qi.BasePytorchQuantizer] = None) -> qi.PytorchNodeQuantizationDispatcher:
     """
     Build a NodeQuantizationDispatcher for a node according to its quantization configuration and
     a global NoOpQuantizeConfig object.
@@ -43,6 +43,9 @@ def quantization_dispatcher_builder(n: common.BaseNode,
         A QuantizeConfig object with the appropriate quantizers (according to the node's
         quantization configuration).
     """
+    if method2quantizer is None:
+        method2quantizer = METHOD2QUANTIZER
+
     nqd = qi.PytorchNodeQuantizationDispatcher()
     if n.is_weights_quantization_enabled():
         attributes = fw_info.get_kernel_op_attributes(n.type)
@@ -51,8 +54,5 @@ def quantization_dispatcher_builder(n: common.BaseNode,
             if qunatizer_class is None:
                 common.Logger.error(
                     f'Unknown Quantiztion method: {n.final_weights_quantization_cfg.weights_quantization_method}')
-            # nqd.add_weight_quantizer(attr, qunatizer_class(n.final_weights_quantization_cfg, n.weights[attr]))
             nqd.add_weight_quantizer(attr, qunatizer_class(n.final_weights_quantization_cfg))
     return nqd
-
-    # return qunatizer_class

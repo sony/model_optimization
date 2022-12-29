@@ -29,20 +29,6 @@ if FOUND_TORCH:
     TRAINING = "training"
 
 
-    def _weight_name(name: str) -> str:
-        """Extracts the weight name from the full TensorFlow variable name.
-
-        For example, returns 'kernel' for 'dense_2/kernel:0'.
-
-        Args:
-          name: TensorFlow variable name.
-
-        Returns:
-          Extracted weight name.
-        """
-        return name.split(':')[0].split('/')[-1]
-
-
     class PytorchQuantizationWrapper(nn.Module):
         def __init__(self,
                      module: nn.Module,
@@ -51,7 +37,7 @@ if FOUND_TORCH:
             Pytorch Quantization Wrapper takes a pytorch module and dispatcher and infer a quantized module.
 
             Args:
-                layer: A pytorch module.
+                module: A pytorch module.
                 dispatcher: A node quantization dispatcher.
             """
             super().__init__()
@@ -61,14 +47,13 @@ if FOUND_TORCH:
             for name, quantizer in self.dispatcher.weight_quantizers.items():
                 weight = getattr(self.layer, name)
                 quantizer.initialize_quantization(weight.shape,
-                                                  name+'_quant', self)
+                                                  name, self)
 
                 self._weight_vars.append((name, weight, quantizer))
 
-
         def set_quantize_weights(self, quantized_weights: dict):
             """
-            This function update layer weights after quantization.
+            This function updates layer weights after quantization.
 
             Args:
                 quantized_weights: a dict of weight to update
@@ -89,11 +74,9 @@ if FOUND_TORCH:
             """
             PytorchQuantizationWrapper forward functions
             Args:
-                inputs: Input tensors to specified layer
-                training: a boolean stating if layer is in training mode.
-                **kwargs:
+                inputs: layer's inputs
 
-            Returns: tensors that simulate quantized layer.
+            Returns: tensor that simulates quantized layer.
 
             """
 
@@ -101,7 +84,7 @@ if FOUND_TORCH:
 
             quantized_weights = {}
             for name, unquantized_weight, quantizer in self._weight_vars:
-                quantized_weight = quantizer.forward(unquantized_weight, self.training)
+                quantized_weight = quantizer(unquantized_weight, self.training)
                 quantized_weights.update({name: quantized_weight})
 
             self.set_quantize_weights(quantized_weights)
@@ -118,6 +101,6 @@ else:
                 layer: A pytorch module.
                 dispatcher: A node quantization dispatcher.
             """
-            Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+            Logger.critical('Installing Pytorch is mandatory '
                             'when using PytorchQuantizationWrapper. '
-                            'Could not find Tensorflow package.')
+                            'Could not find torch package.')
