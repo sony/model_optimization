@@ -107,7 +107,7 @@ class BaseQuantizer:
 
     def validate_weights(self) -> None:
         """
-        This function valid the quantize config compare with it parameters.
+        This function validates the quantization config compared with its parameters.
 
 
         """
@@ -116,7 +116,7 @@ class BaseQuantizer:
 
     def validate_activation(self) -> None:
         """
-        This function valid the quantize config compare with it parameters.
+        This function validates the quantization config compared with its parameters.
 
         """
         if not self.activation_quantization() or self.weights_quantization():

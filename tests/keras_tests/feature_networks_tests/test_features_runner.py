@@ -597,19 +597,20 @@ class FeatureNetworkTest(unittest.TestCase):
                                    separate_key_value=separate_key_value, output_dim=14).run_test()
 
     def test_qat(self):
+        _finalize = False
         QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True).run_test()
-        QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu'), finalize=True,
+        QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu'), finalize=_finalize,
                                       weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
         QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu'), test_loading=True,
                                       weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM).run_test()
-        QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu'), finalize=True).run_test()
+        QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu'), finalize=_finalize).run_test()
         QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu'),
                                       weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
-        QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), finalize=True).run_test()
+        QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), finalize=_finalize).run_test()
         # DW-Conv2D are tested under the tests below because an extra check is needed to verify the
         # quantization per channel of its kernel
         QuantizationAwareTrainingQuantizersTest(self).run_test()
-        QuantizationAwareTrainingQuantizersTest(self, finalize=True).run_test()
+        QuantizationAwareTrainingQuantizersTest(self, finalize=_finalize).run_test()
 
 
 if __name__ == '__main__':

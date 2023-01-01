@@ -20,23 +20,10 @@ from typing import List, Dict, Callable
 from networkx.algorithms.dag import topological_sort
 
 import tensorflow as tf
-from tensorflow.keras.layers import Layer
+from tensorflow.keras.layers import Layer, InputLayer
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.keras.constants import LAYER_NAME
-
-
-def identity_wrapper(node: BaseNode, layer: Layer):
-    """
-    A function which takes a computational graph node and a keras layer and return an identity wrapping which return the layer itself
-    Args:
-        node: A node of mct graph.
-        layer: A keras layer
-
-    Returns: keras layer
-
-    """
-    return layer
 
 
 class OperationHandler:
@@ -44,14 +31,14 @@ class OperationHandler:
     Class to handle conversions from graph nodes to Keras operators and retrieving them.
     """
 
-    def __init__(self, graph: Graph, wrapper: Callable = identity_wrapper):
+    def __init__(self, graph: Graph):
         # hold nodes after sorting them
         self.node_sort = list(topological_sort(graph))
 
         self.layer_to_node_dict = {}
 
         # hold dictionary from node to its equivalent Keras layer
-        self.node_to_fw_op_dict = instance_builder(self.node_sort, wrapper)
+        self.node_to_fw_op_dict = instance_builder(self.node_sort)
 
     def get_node_op_function(self, n: BaseNode) -> Layer:
         """
@@ -86,10 +73,15 @@ def node_builder(n: common.BaseNode) -> Layer:
     Returns:
         Keras layer that was built from the node.
     """
-
     framework_attr = copy.copy(n.framework_attr)
+    if n.layer_class is InputLayer:
+        # replace input node with identity, so can wrap it with QuantizationWrapper
+        _layer_class = Layer  # Identity
+        framework_attr = {}
+    else:
+        _layer_class = n.layer_class
     framework_attr[LAYER_NAME] = n.name  # Overwrite framework name to identical graph node name
-    node_instance = n.layer_class.from_config(framework_attr)  # Build layer from node's configuration.
+    node_instance = _layer_class.from_config(framework_attr)  # Build layer from node's configuration.
     with tf.name_scope(n.name):
         # Add layer name to default weight name to avoid name duplications
         node_instance.build(n.input_shape)
@@ -98,13 +90,12 @@ def node_builder(n: common.BaseNode) -> Layer:
     return node_instance
 
 
-def instance_builder(toposort: List[BaseNode], wrapper: Callable) -> Dict[BaseNode, Layer]:
+def instance_builder(toposort: List[BaseNode]) -> Dict[BaseNode, Layer]:
     """
     Build a dictionary of nodes to their corresponding Keras
     layers, given a list of nodes.
 
     Args:
-        wrapper: A function wrapper keras Layers.
         toposort: List of nodes sorted topological to build their layers.
 
     Returns:
@@ -114,7 +105,7 @@ def instance_builder(toposort: List[BaseNode], wrapper: Callable) -> Dict[BaseNo
     nodes_dict = dict()
     for n in toposort:
         if not n.reuse:  # Hold a single node in dictionary for all reused nodes from the same layer.
-            keras_node = wrapper(n, node_builder(n))
+            keras_node = node_builder(n)
             nodes_dict.update({n: keras_node})
 
     return nodes_dict

@@ -36,7 +36,8 @@ if FOUND_TF:
     from tensorflow.keras.models import Model
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
 
-    from model_compression_toolkit.qat.keras.qat_model_builder import QATKerasModelBuilder
+    from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
+    from model_compression_toolkit.qat.keras.qat_model_builder import qat_wrapper
 
     from model_compression_toolkit import get_target_platform_capabilities
     from model_compression_toolkit import qunatizers_infrastructure as qi
@@ -154,7 +155,7 @@ if FOUND_TF:
 
         tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
 
-        qat_model, user_info = QATKerasModelBuilder(graph=tg, fw_info=fw_info).build_model()
+        qat_model, user_info = KerasModelBuilder(graph=tg, fw_info=fw_info, wrapper=qat_wrapper).build_model()
 
         user_info.mixed_precision_cfg = bit_widths_config
         #TODO: remove the last output after updating documentation.
