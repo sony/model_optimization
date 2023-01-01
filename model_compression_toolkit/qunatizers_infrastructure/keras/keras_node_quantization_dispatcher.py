@@ -21,8 +21,8 @@ if FOUND_TF:
             Keras Node quantization dispatcher collect all the quantizer of a given layer.
             Add to functions get_config and from_config to enable saving and loading of keras models.
             Args:
-                weight_quantizers: A dictionary between weight name to it quantizer .
-                activation_quantizers: A list of activation quantization one for each layer output.
+                weight_quantizers: A dictionary between a weight's name to its quantizer.
+                activation_quantizers: A list of activations quantization, one for each layer output.
             """
             super().__init__(weight_quantizers, activation_quantizers)
 
@@ -42,7 +42,7 @@ if FOUND_TF:
             """
 
             Args:
-                config(dict): dictonory  of  KerasNodeQuantizationDispatcher Configuration
+                config(dict): dictionary  of  KerasNodeQuantizationDispatcher Configuration
 
             Returns: A KerasNodeQuantizationDispatcher
 
@@ -65,8 +65,8 @@ else:
             Keras Node quantization dispatcher collect all the quantizer of a given layer.
             Add to functions get_config and from_config to enable saving and loading of keras models.
             Args:
-                weight_quantizers: A dictionary between weight name to it quantizer .
-                activation_quantizers: A list of activation quantization one for each layer output.
+                weight_quantizers: A dictionary between a weight's name to its quantizer.
+                activation_quantizers: A list of activations quantization, one for each layer output.
             """
             super().__init__(weight_quantizer, activation_quantizers)
             Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '

@@ -52,7 +52,7 @@ class NodeQuantizationDispatcher:
         Returns: a boolean if activation quantizer exists
 
         """
-        return len(self.activation_quantizers) > 0
+        return self.num_act_quantizers > 0
 
     @property
     def is_weights_quantization(self) -> bool:
@@ -62,7 +62,11 @@ class NodeQuantizationDispatcher:
         Returns: a boolean if weights quantizer exists
 
         """
-        return len(self.weight_quantizers) > 0
+        return self.num_weight_quantizers > 0
+
+    @property
+    def num_weight_quantizers(self):
+        return len(self.weight_quantizers)
 
     @property
     def num_act_quantizers(self):

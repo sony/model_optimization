@@ -126,7 +126,6 @@ if FOUND_TF:
                                                   _weight_name(weight.name), self)
 
                 self._weight_vars.append((name, weight, quantizer))
-                # Needed to ensure unquantized weights get trained as part of the wrapper. ?? Not sure
                 self._trainable_weights.append(weight)
 
             self._act_weight_vars = []
@@ -168,7 +167,6 @@ if FOUND_TF:
                 training = tf.keras.backend.learning_phase()
 
             # Quantize all weights, and replace them in the underlying layer.
-
             quantized_weights = {}
             for name, unquantized_weight, quantizer in self._weight_vars:
                 quantized_weight = utils.smart_cond(
@@ -184,7 +182,9 @@ if FOUND_TF:
                 outputs = self.layer.call(inputs, training=training, **kwargs)
             else:
                 outputs = self.layer.call(inputs, **kwargs)
-            if self.dispatcher.num_act_quantizers > 0:
+
+            # Quantize all activations if quantizers exist.
+            if self.dispatcher.is_activation_quantization:
                 num_outputs = len(outputs) if isinstance(outputs, (list, tuple)) else 1
                 if self.dispatcher.num_act_quantizers != num_outputs:
                     Logger.error('Quantization wrapper output quantization error: '
