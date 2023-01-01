@@ -33,12 +33,12 @@ class BaseQuantizer:
                  quantization_target: QuantizationTarget,
                  quantization_method: List[QuantizationMethod]):
         """
-        This class is a base quantizer which validate the the provide quantization config and define abstract function which any quantizer need to implment.
+        This class is a base quantizer which validates the provided quantization config and defines an abstract function which any quantizer needs to implment.
 
         Args:
-            quantization_config: node quantization config class contins all the information above a quantizer.
-            quantization_target: A enum which decided the qunaizer tensor type activation or weights.
-            quantization_method: A list of "QuantizationMethod" enums which represent the quantizer supported methods.
+            quantization_config: node quantization config class contains all the information about the quantizer.
+            quantization_target: A enum which selects the quantizer tensor type: activation or weights.
+            quantization_method: A list of enums which represent the supported methods for the quantizer.
         """
         self.quantization_config = quantization_config
         self.quantization_target = quantization_target
