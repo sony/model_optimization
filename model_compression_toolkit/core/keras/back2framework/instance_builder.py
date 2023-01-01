@@ -96,7 +96,6 @@ def instance_builder(toposort: List[BaseNode]) -> Dict[BaseNode, Layer]:
     layers, given a list of nodes.
 
     Args:
-        wrapper: A function wrapper keras Layers.
         toposort: List of nodes sorted topological to build their layers.
 
     Returns:

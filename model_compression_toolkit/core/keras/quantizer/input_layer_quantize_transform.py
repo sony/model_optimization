@@ -23,6 +23,7 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_confi
 
 
 from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.core.common.constants import INPUT_BASE_NAME
 
 
 class InputLayerWrapperTransform(InputLayerQuantize):
@@ -55,7 +56,7 @@ class InputLayerWrapperTransform(InputLayerQuantize):
         self.wrapper_class = wrapper_class
 
     def pattern(self):
-        return transforms.LayerPattern('InputLayer', config={'name': self.name + '_base'})
+        return transforms.LayerPattern('InputLayer', config={'name': f'{self.name}_{INPUT_BASE_NAME}'})
 
     def replacement(self, match_layer):
         layer_wrapper = self.wrapper_class(InputLayer(input_shape=self.input_layer.input_shape),

@@ -21,6 +21,7 @@ from packaging import version
 
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
 from model_compression_toolkit.core.common.user_info import UserInformation
+from model_compression_toolkit.core.common.constants import INPUT_BASE_NAME
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 if version.parse(tf.__version__) < version.parse("2.6"):
@@ -101,6 +102,7 @@ class KerasModelBuilder(BaseModelBuilder):
             append2output: Nodes to append to model's output.
             fw_info: Information about the specific framework of the model that is built.
             return_float_outputs: Whether the model returns float tensors or not.
+            wrapper: A function wrapper keras Layers.
         """
 
         super().__init__(graph,
@@ -149,7 +151,8 @@ class KerasModelBuilder(BaseModelBuilder):
         # Hold a dictionary from an input node to its corresponding input tensor. It is needed for when
         # building the model. Initially input nodes with input tensors are added to the dictionary,
         # as they're not added later.
-        input_nodes_to_input_tensors = {inode: Input(inode.framework_attr[BATCH_INPUT_SHAPE][1:], name=inode.name + '_base')
+        input_nodes_to_input_tensors = {inode: Input(inode.framework_attr[BATCH_INPUT_SHAPE][1:],
+                                                     name=f'{inode.name}_{INPUT_BASE_NAME}')
                                         for
                                         inode in self.graph.get_inputs()}
 
@@ -265,7 +268,7 @@ class KerasModelBuilder(BaseModelBuilder):
         if len(input_tensors) == 0:  # Placeholder handling
             out_tensors_of_n_float = input_nodes_to_input_tensors[n]
             if self.wrapper is not None:
-                # if a wrapper is defined, add an identity layer for cloning
+                # if a wrapper is defined, add an identity layer for cloning. The Identity will be warpped
                 out_tensors_of_n = op_func(out_tensors_of_n_float)
             elif n.is_activation_quantization_enabled():
                 out_tensors_of_n = self._quantize_node_activations(n, out_tensors_of_n_float)

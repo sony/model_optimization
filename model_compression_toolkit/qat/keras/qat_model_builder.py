@@ -23,7 +23,6 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 
-from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
 from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.qat.keras.quantizer.quantization_dispatcher_builder import \
@@ -45,9 +44,9 @@ def _is_qat_applicable(node: common.BaseNode,
         A boolean whether the layer is to be wrapped with a QuantizeWrapper
     """
 
-    is_weight_quantization = fw_info.is_kernel_op(node.type) and node.is_weights_quantization_enabled()
-    is_activation_quantization = node.is_activation_quantization_enabled()
-    return is_weight_quantization or is_activation_quantization
+    if node.is_weights_quantization_enabled() and not fw_info.is_kernel_op(node.type):
+        common.Logger.error("QAT Error: Quantizing a node without a kernel isn't supported")
+    return node.is_weights_quantization_enabled() or node.is_activation_quantization_enabled()
 
 
 def qat_wrapper(n: common.BaseNode, layer: Layer):
