@@ -76,7 +76,7 @@ if FOUND_TORCH:
             Args:
                 inputs: layer's inputs
 
-            Returns: tensor that simulates quantized layer.
+            Returns: a tensor that simulates a quantized layer.
 
             """
 
