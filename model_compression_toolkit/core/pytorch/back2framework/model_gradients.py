@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
-from model_compression_toolkit.core.common.constants import EPS
+from model_compression_toolkit.core.common.constants import EPS, MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder
@@ -260,6 +260,15 @@ def pytorch_iterative_approx_jacobian_trace(graph_float: common.Graph,
                     break
                 jac_v = torch.reshape(jac_v, [jac_v.shape[0], -1])
                 jac_trace_approx = torch.mean(torch.sum(torch.pow(jac_v, 2.0)))
+
+                # If the change to the mean Jacobian approximation is insignificant we stop the calculation
+                if j > MIN_JACOBIANS_ITER:
+                    delta = torch.mean(torch.stack([jac_trace_approx, *trace_jv])) - torch.mean(
+                        torch.stack(trace_jv))
+                    if torch.abs(delta) / (torch.abs(torch.mean(torch.stack(trace_jv))) + 1e-6) < JACOBIANS_COMP_TOLERANCE:
+                        trace_jv.append(jac_trace_approx)
+                        break
+
                 trace_jv.append(jac_trace_approx)
             ipts_jac_trace_approx.append(2*torch.mean(torch.stack(trace_jv))/output.shape[-1])  # Get averaged jacobian trace approximation
         outputs_jacobians_approx.append(ipts_jac_trace_approx)

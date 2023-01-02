@@ -126,3 +126,7 @@ OPS_SET_LIST = 'ops_set_list'
 
 # TF Input node base name
 INPUT_BASE_NAME = 'base_input'
+
+# Jacobian-weights constants
+MIN_JACOBIANS_ITER = 10
+JACOBIANS_COMP_TOLERANCE = 1e-3

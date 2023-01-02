@@ -26,7 +26,7 @@ else:
 
 from typing import Any, Dict, List, Tuple
 from tensorflow.python.util.object_identity import Reference as TFReference
-from model_compression_toolkit.core.common.constants import EPS
+from model_compression_toolkit.core.common.constants import EPS, MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
@@ -153,6 +153,14 @@ def keras_iterative_approx_jacobian_trace(graph_float: common.Graph,
                         jac_v = g.gradient(f_v, ipt, unconnected_gradients=tf.UnconnectedGradients.ZERO)
                         jac_v = tf.reshape(jac_v, [jac_v.shape[0], -1])
                         jac_trace_approx = tf.reduce_mean(tf.reduce_sum(tf.pow(jac_v, 2.0)))
+
+                        # If the change to the mean Jacobian approximation is insignificant we stop the calculation
+                        if j > MIN_JACOBIANS_ITER:
+                            delta = np.mean([jac_trace_approx, *trace_jv]) - np.mean(trace_jv)
+                            if np.abs(delta) / (np.abs(np.mean(trace_jv)) + 1e-6) < JACOBIANS_COMP_TOLERANCE:
+                                trace_jv.append(jac_trace_approx)
+                                break
+
                         trace_jv.append(jac_trace_approx)
                 ipts_jac_trace_approx.append(2 * tf.reduce_mean(trace_jv) / output.shape[-1])  # Get averaged squared jacobian trace approximation
             outputs_jacobians_approx.append(ipts_jac_trace_approx)
