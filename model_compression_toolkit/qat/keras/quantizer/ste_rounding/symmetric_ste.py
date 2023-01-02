@@ -21,6 +21,7 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapp
 from tensorflow.python.framework.tensor_shape import TensorShape
 
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
+from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeActivationQuantizationConfig
 
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
@@ -141,5 +142,99 @@ class STEWeightQuantizer(qi.BaseKerasQuantizer):
         else:
             q_tensor = tf.quantization.fake_quant_with_min_max_vars(inputs, _min, _max,
                                                                     num_bits=self.quantization_config.weights_n_bits)
+
+        return q_tensor
+
+
+class STEActivationQuantizer(qi.BaseKerasQuantizer):
+    """
+    Trainable constrained quantizer to quantize a layer outputs.
+    """
+
+    def __init__(self, quantization_config: NodeActivationQuantizationConfig):
+        """
+        Initialize a STEActivationQuantizer object with parameters to use
+        for the quantization.
+
+        Args:
+            quantization_config: node quantization config class
+        """
+        super().__init__(quantization_config,
+                         qi.QuantizationTarget.Activation,
+                         [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
+        self.power_of_two = quantization_config.activation_quantization_method == QuantizationMethod.POWER_OF_TWO
+        self.threshold_values = quantization_config.activation_quantization_params[C.THRESHOLD]
+        self.threshold_shape = np.asarray(self.threshold_values).shape
+        self.np_threshold_values = float(self.threshold_values)
+
+        if self.power_of_two:
+            self.np_threshold_values = np.power(2.0,
+                                                np.ceil(np.log2(np.maximum(self.np_threshold_values, C.MIN_THRESHOLD))))
+        num_bits = quantization_config.activation_n_bits
+        delta = self.np_threshold_values / np.power(2.0, num_bits - int(C.WEIGHTS_SIGNED))
+        min_int = -int(C.WEIGHTS_SIGNED) * (2 ** (num_bits - int(C.WEIGHTS_SIGNED)))
+        max_int = (2 ** (num_bits - int(C.WEIGHTS_SIGNED))) - 1
+        self.min = delta * min_int
+        self.max = delta * max_int
+        self.quantizer_parameters = {}
+
+    def initialize_quantization(self,
+                                tensor_shape: TensorShape,
+                                name: str,
+                                layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
+        """
+        Add min and max variables to layer.
+        Args:
+            tensor_shape: Tensor shape the quantizer quantize.
+            name: Prefix of variables names.
+            layer: Layer to add the variables to. The variables are saved
+            in the layer's scope.
+
+        Returns:
+            Dictionary of new variables.
+        """
+        ptq_threshold_tensor = layer.add_weight(
+            name + THRESHOLD_TENSOR,
+            shape=(),
+            initializer=tf.keras.initializers.Constant(1.0),
+            trainable=False)
+        ptq_threshold_tensor.assign(self.np_threshold_values)
+
+        fq_min = layer.add_weight(
+            name + FQ_MIN,
+            shape=(),
+            initializer=tf.keras.initializers.Constant(-1.0),
+            trainable=False)
+        fq_min.assign(self.min)
+
+        fq_max = layer.add_weight(
+            name + FQ_MAX,
+            shape=(),
+            initializer=tf.keras.initializers.Constant(1.0),
+            trainable=False)
+        fq_max.assign(self.max)
+
+        # save the quantizer added parameters for later calculations
+        self.quantizer_parameters = {THRESHOLD_TENSOR: ptq_threshold_tensor,
+                                     FQ_MIN: fq_min, FQ_MAX: fq_max}
+        return self.quantizer_parameters
+
+    def __call__(self,
+                 inputs: tf.Tensor,
+                 training: bool):
+        """
+        Quantize a tensor.
+        Args:
+            inputs: Input tensor to quantize.
+            training: Whether the graph is in training mode.
+
+        Returns:
+            The quantized tensor.
+        """
+
+        _min = self.quantizer_parameters[FQ_MIN]
+        _max = self.quantizer_parameters[FQ_MAX]
+        q_tensor = tf.quantization.fake_quant_with_min_max_vars(inputs, _min, _max,
+                                                                num_bits=self.quantization_config.activation_n_bits)
 
         return q_tensor
