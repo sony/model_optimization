@@ -23,6 +23,7 @@ from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorc
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit import qunatizers_infrastructure as qi
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 
 
 class TestModel(nn.Module):
@@ -88,3 +89,99 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         for layer in loaded_model.named_children():
             if not layer[0] == 'inp' and not 'activation' in layer[0]:
                 self.unit_test.assertTrue(isinstance(layer[1], qi.PytorchQuantizationWrapper))
+
+
+class QATSymmetricActivationTest(BasePytorchFeatureNetworkTest):
+    def __init__(self, unit_test, weight_bits=8, activation_bits=8, finalize=False,
+                 activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC):
+
+        self.weight_bits = weight_bits
+        self.activation_bits = activation_bits
+        self.finalize = finalize
+        self.activation_quantization_method = activation_quantization_method
+        super().__init__(unit_test)
+
+    def get_tpc(self):
+        return generate_pytorch_tpc(
+            name="qat_activation_test",
+            tp_model=generate_test_tp_model({"activation_quantization_method": self.activation_quantization_method}))
+
+    def create_networks(self):
+        return TestModel()
+
+    def run_test(self, experimental_facade=False):
+        float_model = self.create_networks()
+        qat_model, quantization_info = mct.pytorch_quantization_aware_training_init(float_model,
+                                                                                    self.representative_data_gen_experimental,
+                                                                                    fw_info=self.get_fw_info(),
+                                                                                    target_platform_capabilities=self.get_tpc())
+
+        # ----------- #
+        #  QAT stage  #
+        # ----------- #
+        x = to_torch_tensor(np.random.random((4, 3, 224, 224)))
+        qat_model(x)
+        # -----------#
+
+        exported_model = qat_model
+        if self.finalize:
+            exported_model = mct.pytorch_quantization_aware_training_finalize(qat_model)
+
+        self.compare(qat_model,
+                     float_model,
+                     exported_model,
+                     input_x=self.representative_data_gen(),
+                     quantization_info=quantization_info)
+
+    def compare(self, quantized_model, float_model, exported_model, input_x=None, quantization_info=None):
+        # Check that all layers are wrapped with PytorchQuantizationWrapper
+        for name, layer in exported_model.named_children():
+            self.unit_test.assertTrue(isinstance(layer, qi.PytorchQuantizationWrapper))
+
+
+class QATUniformActivationTest(BasePytorchFeatureNetworkTest):
+    def __init__(self, unit_test, weight_bits=8, activation_bits=8, finalize=False,
+                 activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM):
+
+        self.weight_bits = weight_bits
+        self.activation_bits = activation_bits
+        self.finalize = finalize
+        self.activation_quantization_method = activation_quantization_method
+        super().__init__(unit_test)
+
+    def get_tpc(self):
+        return generate_pytorch_tpc(
+            name="qat_activation_test",
+            tp_model=generate_test_tp_model({"activation_quantization_method": self.activation_quantization_method}))
+
+    def create_networks(self):
+        return TestModel()
+
+    def run_test(self, experimental_facade=False):
+        float_model = self.create_networks()
+        qat_model, quantization_info = mct.pytorch_quantization_aware_training_init(float_model,
+                                                                                    self.representative_data_gen_experimental,
+                                                                                    fw_info=self.get_fw_info(),
+                                                                                    target_platform_capabilities=self.get_tpc())
+
+        # ----------- #
+        #  QAT stage  #
+        # ----------- #
+        x = to_torch_tensor(np.random.random((4, 3, 224, 224)))
+        qat_model(x)
+        # -----------#
+
+        exported_model = qat_model
+        if self.finalize:
+            exported_model = mct.pytorch_quantization_aware_training_finalize(qat_model)
+
+        self.compare(qat_model,
+                     float_model,
+                     exported_model,
+                     input_x=self.representative_data_gen(),
+                     quantization_info=quantization_info)
+
+    def compare(self, quantized_model, float_model, exported_model, input_x=None, quantization_info=None):
+        # Check that all layers are wrapped with PytorchQuantizationWrapper
+        for name, layer in exported_model.named_children():
+            self.unit_test.assertTrue(isinstance(layer, qi.PytorchQuantizationWrapper))

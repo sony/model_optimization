@@ -36,7 +36,7 @@ def _is_qat_applicable(node: common.BaseNode,
         A boolean whether the layer is to be wrapped with a QuantizeWrapper
     """
 
-    return fw_info.is_kernel_op(node.type) and node.is_weights_quantization_enabled()
+    return (fw_info.is_kernel_op(node.type) and node.is_weights_quantization_enabled()) or node.is_activation_quantization_enabled()
 
 
 def qat_wrapper(n: common.BaseNode, module: torch.nn.Module):

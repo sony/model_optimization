@@ -40,6 +40,14 @@ if FOUND_TORCH:
             super().__init__(quantization_config, quantization_target, quantization_method)
 
 
+        def initialize(self):
+            """
+            This initializes the quantizer parameters
+            Returns: None
+            """
+            raise NotImplemented
+
+
 else:
     class BasePytorchQuantizer(BaseQuantizer):
         def __init__(self, quantization_config: BaseNodeQuantizationConfig, quantization_target: QuantizationTarget,
