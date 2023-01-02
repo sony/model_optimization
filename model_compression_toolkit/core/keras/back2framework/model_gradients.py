@@ -141,7 +141,7 @@ def keras_iterative_approx_jacobian_trace(graph_float: common.Graph,
             output = tf.reshape(output, shape=[output.shape[0], -1])
 
             ipts_jac_trace_approx = []
-            for i, ipt in enumerate(tqdm(interest_points_tensors)):  # Per Interest point activation tensor
+            for ipt in tqdm(interest_points_tensors):  # Per Interest point activation tensor
                 trace_jv = []
                 for j in range(n_iter):  # Approximation iterations
                     # Getting a random vector with normal distribution
