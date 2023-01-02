@@ -52,7 +52,6 @@ class UniformActivationTest(BasePytorchTest):
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info: UserInformation = None):
         for model_name, quantized_model in quantized_models.items():
-            quantized_model_fx = symbolic_trace(quantized_model)
             # check the activations values changed due to the number of bits
             output = quantized_model(input_x).cpu().detach().numpy()
             self.unit_test.assertTrue(len(np.unique(output)) == 4)

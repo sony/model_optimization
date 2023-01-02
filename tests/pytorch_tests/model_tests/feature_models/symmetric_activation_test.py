@@ -18,6 +18,7 @@ import torch
 from torch.fx import symbolic_trace
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.core.common.constants import THRESHOLD
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
@@ -52,11 +53,16 @@ class SymmetricActivationTest(BasePytorchTest):
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info: UserInformation = None):
         for model_name, quantized_model in quantized_models.items():
-            quantized_model_fx = symbolic_trace(quantized_model)
-
             # check the activations values changed due to the number of bits
             output = quantized_model(input_x).cpu().detach().numpy()
             self.unit_test.assertTrue(len(np.unique(output)) == 4)
+
+            output_layer_threshold = quantized_model.node_sort[
+                -1].final_activation_quantization_cfg.activation_quantization_params[THRESHOLD]
+            output_layer_threshold_log = np.log2(output_layer_threshold)
+            self.unit_test.assertFalse(
+                np.array_equal(output_layer_threshold_log, output_layer_threshold_log.astype(int)),
+                msg=f"Output threshold {output_layer_threshold} is a power of 2")
 
 
 class SymmetricActivationNet(torch.nn.Module):
