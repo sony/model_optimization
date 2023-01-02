@@ -123,3 +123,7 @@ DUMMY_TENSOR = 'dummy_tensor'
 
 # TP Model constants
 OPS_SET_LIST = 'ops_set_list'
+
+# Jacobian-weights constants
+MIN_JACOBIANS_ITER = 10
+JACOBIANS_COMP_TOLERANCE = 1e-3
