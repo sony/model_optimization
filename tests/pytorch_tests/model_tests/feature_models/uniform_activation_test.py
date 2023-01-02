@@ -15,7 +15,6 @@
 
 import numpy as np
 import torch
-from torch.fx import symbolic_trace
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
