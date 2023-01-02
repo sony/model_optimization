@@ -95,8 +95,8 @@ class SymmetricActivationTest(BasePytorchTest):
             # In symmetric quantization max value is activation_threshold * (1 - 1 / (2 ** (activation_n_bits - 1))
             max_output = output.max()
             activation_n_bits = quantized_model.node_sort[-1].final_activation_quantization_cfg.activation_n_bits
-            max_output_diff_from_symmetric_threshold = output_layer_threshold / 2 ** (activation_n_bits - 1)
-            self.unit_test.assertTrue(max_output + max_output_diff_from_symmetric_threshold == output_layer_threshold)
+            delta = output_layer_threshold / 2 ** (activation_n_bits - 1)
+            self.unit_test.assertTrue(max_output == output_layer_threshold - delta)
 
             # check the activations is bounded by the threshold
             min_output = output.min()
