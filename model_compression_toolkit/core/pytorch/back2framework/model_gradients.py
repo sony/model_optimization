@@ -97,8 +97,11 @@ def generate_outputs(
     output = []
     for n in out_nodes:
         out_tensors_of_n = node_to_output_tensors_dict.get(n)
-        if len(out_tensors_of_n) > 1:
-            output.append(out_tensors_of_n)
+        if len(out_tensors_of_n) > 1 or isinstance(out_tensors_of_n[0], tuple):
+            if isinstance(out_tensors_of_n[0], tuple):
+                out_tensors_of_n = out_tensors_of_n[0]
+            out_tensors_of_n = [torch.cat(out_tensors_of_n)]
+            output.append(torch.concat(out_tensors_of_n))
         else:
             output += out_tensors_of_n
     return output
