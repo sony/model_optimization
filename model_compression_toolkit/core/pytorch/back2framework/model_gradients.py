@@ -167,12 +167,15 @@ class PytorchModelGradients(torch.nn.Module):
                             self.interest_points_tensors.append(t)
                         else:
                             # We get here in case we have an output node, which is an interest point,
-                            # but it is not differentiable. We need to add this dummy tensor to in order to include this
-                            # node in the coming weights computation.
-                            self.interest_points_tensors.append(torch.tensor([0.0],
+                            # but it is not differentiable. We need to add this dummy tensor in order to include this
+                            # node in the future weights computation.
+                            # Note that this call is excluded from tests coverage,
+                            # since we do not suppose to get here - there is no valid operation that is both
+                            # non-differentiable and return output as a list or a tuple
+                            self.interest_points_tensors.append(torch.tensor([0.0],  # pragma: no cover
                                                                              requires_grad=True,
                                                                              device=t.device))
-                            break
+                            break  # pragma: no cover
                     output_t.append(t)
                 if isinstance(out_tensors_of_n, tuple):
                     # If the node's output is a Tuple, then we want to keep it as a Tuple
