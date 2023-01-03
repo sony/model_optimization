@@ -18,6 +18,7 @@ import torch
 import torch.autograd as autograd
 from networkx import topological_sort
 from tqdm import tqdm
+import numpy as np
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
@@ -27,6 +28,7 @@ from model_compression_toolkit.core.common.graph.functional_node import Function
 from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
+from model_compression_toolkit.core.common.logger import Logger
 
 
 def build_input_tensors_list(node: BaseNode,
@@ -153,7 +155,7 @@ class PytorchModelGradients(torch.nn.Module):
                                              input_tensors,
                                              op_func=op_func)
 
-            if isinstance(out_tensors_of_n, list):
+            if isinstance(out_tensors_of_n, list) or isinstance(out_tensors_of_n, tuple):
                 output_t = []
                 for t in out_tensors_of_n:
                     if n in self.interest_points:
@@ -169,6 +171,9 @@ class PytorchModelGradients(torch.nn.Module):
                                                                              device=t.device))
                             break
                     output_t.append(t)
+                if isinstance(out_tensors_of_n, tuple):
+                    # If the node's output is a Tuple, then we want to keep it as a Tuple
+                    output_t = [tuple(output_t)]
                 node_to_output_tensors_dict.update({n: output_t})
             else:
                 assert isinstance(out_tensors_of_n, torch.Tensor)
@@ -233,54 +238,61 @@ def pytorch_iterative_approx_jacobian_trace(graph_float: common.Graph,
     output_tensors = model_grads_net(model_input_tensors)
     device = output_tensors[0].device
 
-    outputs_jacobians_approx = []
-    for output in output_tensors:  # Per model's output tensor
-        output = torch.reshape(output, shape=[output.shape[0], -1])
 
-        ipts_jac_trace_approx = []
-        for ipt in tqdm(model_grads_net.interest_points_tensors):  # Per Interest point activation tensor
-            trace_jv = []
-            for j in range(n_iter):  # Approximation iterations
-                # Getting a random vector with normal distribution
-                v = torch.randn(output.shape, device=device)
-                f_v = torch.sum(v * output)
+    # Concat outputs
+    r_outputs = [torch.reshape(output, shape=[output.shape[0], -1]) for output in output_tensors]
 
-                # Computing the jacobian approximation by getting the gradient of (output * v)
-                jac_v = autograd.grad(outputs=f_v,
-                                      inputs=ipt,
-                                      retain_graph=True,
-                                      allow_unused=True)[0]
-                if jac_v is None:
-                    # In case we have an output node, which is an interest point, but it is not differentiable,
-                    # we still want to set some weight for it. For this, we need to add this dummy tensor to the ipt
-                    # jacobian traces list.
-                    trace_jv.append(torch.tensor([0.0],
-                                                 requires_grad=True,
-                                                 device=device))
+    concat_axis_dim = [o.shape[0] for o in r_outputs]
+    if not all(d == concat_axis_dim[0] for d in concat_axis_dim):
+        Logger.critical("Can't concat model's outputs for gradients calculation since the shape of the first axis "
+                        "is not equal in all outputs.")
+
+    output = torch.concat(r_outputs, dim=1)
+
+    ipts_jac_trace_approx = []
+    for ipt in tqdm(model_grads_net.interest_points_tensors):  # Per Interest point activation tensor
+        trace_jv = []
+        for j in range(n_iter):  # Approximation iterations
+            # Getting a random vector with normal distribution
+            v = torch.randn(output.shape, device=device)
+            f_v = torch.sum(v * output)
+
+            # Computing the jacobian approximation by getting the gradient of (output * v)
+            jac_v = autograd.grad(outputs=f_v,
+                                  inputs=ipt,
+                                  retain_graph=True,
+                                  allow_unused=True)[0]
+            if jac_v is None:
+                # In case we have an output node, which is an interest point, but it is not differentiable,
+                # we still want to set some weight for it. For this, we need to add this dummy tensor to the ipt
+                # jacobian traces list.
+                trace_jv.append(torch.tensor([0.0],
+                                             requires_grad=True,
+                                             device=device))
+                break
+            jac_v = torch.reshape(jac_v, [jac_v.shape[0], -1])
+            jac_trace_approx = torch.mean(torch.sum(torch.pow(jac_v, 2.0)))
+
+            # If the change to the mean Jacobian approximation is insignificant we stop the calculation
+            if j > MIN_JACOBIANS_ITER:
+                delta = torch.mean(torch.stack([jac_trace_approx, *trace_jv])) - torch.mean(
+                    torch.stack(trace_jv))
+                if torch.abs(delta) / (torch.abs(torch.mean(torch.stack(trace_jv))) + 1e-6) < JACOBIANS_COMP_TOLERANCE:
+                    trace_jv.append(jac_trace_approx)
                     break
-                jac_v = torch.reshape(jac_v, [jac_v.shape[0], -1])
-                jac_trace_approx = torch.mean(torch.sum(torch.pow(jac_v, 2.0)))
 
-                # If the change to the mean Jacobian approximation is insignificant we stop the calculation
-                if j > MIN_JACOBIANS_ITER:
-                    delta = torch.mean(torch.stack([jac_trace_approx, *trace_jv])) - torch.mean(
-                        torch.stack(trace_jv))
-                    if torch.abs(delta) / (torch.abs(torch.mean(torch.stack(trace_jv))) + 1e-6) < JACOBIANS_COMP_TOLERANCE:
-                        trace_jv.append(jac_trace_approx)
-                        break
+            trace_jv.append(jac_trace_approx)
+        ipts_jac_trace_approx.append(2*torch.mean(torch.stack(trace_jv))/output.shape[-1])  # Get averaged jacobian trace approximation
 
-                trace_jv.append(jac_trace_approx)
-            ipts_jac_trace_approx.append(2*torch.mean(torch.stack(trace_jv))/output.shape[-1])  # Get averaged jacobian trace approximation
-        outputs_jacobians_approx.append(ipts_jac_trace_approx)
+    ipts_jac_trace_approx = torch_tensor_to_numpy(torch.Tensor(ipts_jac_trace_approx))  # Just to get one tensor instead of list of tensors with single element
 
-    mean_per_point = torch_tensor_to_numpy(torch.mean(torch.Tensor(outputs_jacobians_approx), dim=0))  # Get mean of jacobians of all model's outputs
     if norm_weights:
-        return _normalize_weights(mean_per_point, all_outputs_indices, alpha)
+        return _normalize_weights(ipts_jac_trace_approx, all_outputs_indices, alpha)
     else:
-        return mean_per_point
+        return ipts_jac_trace_approx
 
 
-def _normalize_weights(jacobians_traces: torch.Tensor,
+def _normalize_weights(jacobians_traces: np.ndarray,
                        all_outputs_indices: List[int],
                        alpha: float) -> List[float]:
     """

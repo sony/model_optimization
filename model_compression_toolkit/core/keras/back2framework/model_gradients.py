@@ -136,40 +136,47 @@ def keras_iterative_approx_jacobian_trace(graph_float: common.Graph,
                                                                       interest_points,
                                                                       output_list,
                                                                       gradient_tape=g)
-        outputs_jacobians_approx = []
-        for output in outputs:  # Per model's output tensor
-            output = tf.reshape(output, shape=[output.shape[0], -1])
 
-            ipts_jac_trace_approx = []
-            for ipt in tqdm(interest_points_tensors):  # Per Interest point activation tensor
-                trace_jv = []
-                for j in range(n_iter):  # Approximation iterations
-                    # Getting a random vector with normal distribution
-                    v = tf.random.normal(shape=output.shape)
-                    f_v = tf.reduce_sum(v * output)
+        # Concat outputs
+        r_outputs = [tf.reshape(output, shape=[output.shape[0], -1]) for output in outputs]
 
-                    with g.stop_recording():
-                        # Computing the jacobian approximation by getting the gradient of (output * v)
-                        jac_v = g.gradient(f_v, ipt, unconnected_gradients=tf.UnconnectedGradients.ZERO)
-                        jac_v = tf.reshape(jac_v, [jac_v.shape[0], -1])
-                        jac_trace_approx = tf.reduce_mean(tf.reduce_sum(tf.pow(jac_v, 2.0)))
+        concat_axis_dim = [o.shape[0] for o in r_outputs]
+        if not all(d == concat_axis_dim[0] for d in concat_axis_dim):
+            Logger.critical("Can't concat model's outputs for gradients calculation since the shape of the first axis "
+                            "is not equal in all outputs.")
 
-                        # If the change to the mean Jacobian approximation is insignificant we stop the calculation
-                        if j > MIN_JACOBIANS_ITER:
-                            delta = np.mean([jac_trace_approx, *trace_jv]) - np.mean(trace_jv)
-                            if np.abs(delta) / (np.abs(np.mean(trace_jv)) + 1e-6) < JACOBIANS_COMP_TOLERANCE:
-                                trace_jv.append(jac_trace_approx)
-                                break
+        output = tf.concat(r_outputs, axis=1)
 
-                        trace_jv.append(jac_trace_approx)
-                ipts_jac_trace_approx.append(2 * tf.reduce_mean(trace_jv) / output.shape[-1])  # Get averaged squared jacobian trace approximation
-            outputs_jacobians_approx.append(ipts_jac_trace_approx)
+        ipts_jac_trace_approx = []
+        for ipt in tqdm(interest_points_tensors):  # Per Interest point activation tensor
+            trace_jv = []
+            for j in range(n_iter):  # Approximation iterations
+                # Getting a random vector with normal distribution
+                v = tf.random.normal(shape=output.shape)
+                f_v = tf.reduce_sum(v * output)
 
-        mean_per_point = tf.reduce_mean(outputs_jacobians_approx, axis=0)  # Get mean of jacobian approx of all model outputs
+                with g.stop_recording():
+                    # Computing the jacobian approximation by getting the gradient of (output * v)
+                    jac_v = g.gradient(f_v, ipt, unconnected_gradients=tf.UnconnectedGradients.ZERO)
+                    jac_v = tf.reshape(jac_v, [jac_v.shape[0], -1])
+                    jac_trace_approx = tf.reduce_mean(tf.reduce_sum(tf.pow(jac_v, 2.0)))
+
+                    # If the change to the mean Jacobian approximation is insignificant we stop the calculation
+                    if j > MIN_JACOBIANS_ITER:
+                        delta = np.mean([jac_trace_approx, *trace_jv]) - np.mean(trace_jv)
+                        if np.abs(delta) / (np.abs(np.mean(trace_jv)) + 1e-6) < JACOBIANS_COMP_TOLERANCE:
+                            trace_jv.append(jac_trace_approx)
+                            break
+
+                    trace_jv.append(jac_trace_approx)
+            ipts_jac_trace_approx.append(2 * tf.reduce_mean(trace_jv) / output.shape[-1])  # Get averaged squared jacobian trace approximation
+
+        ipts_jac_trace_approx = tf.reduce_mean([ipts_jac_trace_approx], axis=0)  # Just to get one tensor instead of list of tensors with single element
+
         if norm_weights:
-            return _normalize_weights(mean_per_point, all_outputs_indices, alpha)
+            return _normalize_weights(ipts_jac_trace_approx, all_outputs_indices, alpha)
         else:
-            return mean_per_point
+            return ipts_jac_trace_approx
 
 
 def _model_outputs_computation(graph_float: common.Graph,
