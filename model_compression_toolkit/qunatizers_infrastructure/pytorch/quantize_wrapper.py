@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================f
-from typing import List
+from typing import List, Union
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.qunatizers_infrastructure.common.node_quantization_dispatcher import \
@@ -52,8 +52,8 @@ if FOUND_TORCH:
 
             # Init activations quantizers
             self._activation_vars = []
-            for quantizer in self.dispatcher.activation_quantizers:
-                quantizer.initialize()
+            for i,quantizer in enumerate(self.dispatcher.activation_quantizers):
+                quantizer.initialize_quantization(None, "out"+str(i), self.layer)
                 self._activation_vars.append(quantizer)
 
 
@@ -76,7 +76,7 @@ if FOUND_TORCH:
 
                 setattr(self.layer, weight_attr, torch.nn.Parameter(weight))
 
-        def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
+        def forward(self, x: torch.Tensor) -> Union[torch.Tensor, List[torch.Tensor]]:
             """
             PytorchQuantizationWrapper forward functions
             Args:

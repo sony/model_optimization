@@ -124,16 +124,19 @@ class STEUniformActivationQuantizer(qi.BasePytorchQuantizer):
         self.num_bits = quantization_config.activation_n_bits
         self.quantizer_parameters = {}
 
-    def initialize(self):
+    def initialize_quantization(self,
+                                tensor_shape: torch.Size,
+                                name: str,
+                                layer: nn.Module) -> Dict[str, nn.Parameter]:
         """
         Add min and max variables to layer.
         """
-        fq_min = nn.Parameter(to_torch_tensor(self.min_range_tensor), requires_grad=True)
-        fq_max = nn.Parameter(to_torch_tensor(self.max_range_tensor), requires_grad=True)
+        layer.register_parameter(name+"_min", nn.Parameter(to_torch_tensor(self.min_range_tensor), requires_grad=True))
+        layer.register_parameter(name+"_max", nn.Parameter(to_torch_tensor(self.max_range_tensor), requires_grad=True))
 
         # Save the quantizer parameters for later calculations
-        self.quantizer_parameters = {FQ_MIN: fq_min, FQ_MAX: fq_max}
-
+        self.quantizer_parameters = {FQ_MIN: layer.get_parameter(name+"_min"), FQ_MAX: layer.get_parameter(name+"_max")}
+        return self.quantizer_parameters
 
     def __call__(self,
                  inputs: torch.Tensor,

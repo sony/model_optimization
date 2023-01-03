@@ -133,15 +133,18 @@ class STEActivationQuantizer(qi.BasePytorchQuantizer):
         self.num_bits = quantization_config.activation_n_bits
         self.quantizer_parameters = {}
 
-    def initialize(self):
+    def initialize_quantization(self,
+                                tensor_shape: torch.Size,
+                                name: str,
+                                layer: nn.Module) -> Dict[str, nn.Parameter]:
         """
         Add threshold variables to layer.
         """
-        ptq_threshold_tensor = nn.Parameter(self.threshold_tensor, requires_grad=True)
+        layer.register_parameter(name, nn.Parameter(to_torch_tensor(self.threshold_tensor), requires_grad=True))
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {THRESHOLD_TENSOR: ptq_threshold_tensor}
-
+        self.quantizer_parameters = {THRESHOLD_TENSOR: layer.get_parameter(name)}
+        return self.quantizer_parameters
 
     def __call__(self,
                  inputs: torch.Tensor,

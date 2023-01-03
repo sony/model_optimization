@@ -35,8 +35,9 @@ if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-    from model_compression_toolkit.qat.pytorch.qat_model_builder import QATPytorchModelBuilder
     from model_compression_toolkit.core.pytorch.constants import KERNEL
+    from model_compression_toolkit.qat.pytorch.qat_model_builder import qat_wrapper
+    from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
     from model_compression_toolkit.qunatizers_infrastructure import PytorchQuantizationWrapper
 
     from model_compression_toolkit import get_target_platform_capabilities
@@ -133,7 +134,7 @@ if FOUND_TORCH:
 
         tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
 
-        qat_model, user_info = QATPytorchModelBuilder(graph=tg).build_model()
+        qat_model, user_info = PyTorchModelBuilder(graph=tg, fw_info=fw_info, wrapper=qat_wrapper).build_model()
 
         user_info.mixed_precision_cfg = bit_widths_config
 

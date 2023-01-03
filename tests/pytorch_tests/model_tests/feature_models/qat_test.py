@@ -15,7 +15,6 @@
 
 
 import numpy as np
-import torch
 import torch.nn as nn
 
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model

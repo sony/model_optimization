@@ -74,7 +74,7 @@ def symmetric_quantizer(tensor_data: torch.Tensor,
                         n_bits: int,
                         sign: bool = False) -> torch.Tensor:
     """
-    Quantize a tensor according to given range (min, max) and number of bits.
+    Quantize a tensor according to the number of bits and threshold.
     Symmetric quantization.
     Args:
         tensor_data: Tensor values to quantize.
@@ -88,7 +88,7 @@ def symmetric_quantizer(tensor_data: torch.Tensor,
     # Compute the step size of quantized values.
     delta_tensor = threshold / (2 ** n_bits - int(sign))
 
-    # Compute min/mac int value
+    # Compute min/max int value
     min_val = -int(sign) * (2 ** (n_bits - int(sign)))
     max_val = (2 ** (n_bits - int(sign))) - 1
 

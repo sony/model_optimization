@@ -65,7 +65,8 @@ def _build_input_tensors_list(node: BaseNode,
 def _run_operation(n: BaseNode,
                    input_tensors: List,
                    op_func: Any,
-                   quantize_node_activation_fn) -> Tuple[Union[List,torch.Tensor], Union[List,torch.Tensor]]:
+                   quantize_node_activation_fn,
+                   wrapped: bool) -> Tuple[Union[List,torch.Tensor], Union[List,torch.Tensor]]:
     """
     Applying the layer (op_func) to the input tensors (input_tensors).
     If quantized is set to True, and the layer's corresponding node (n) has quantization
@@ -76,6 +77,7 @@ def _run_operation(n: BaseNode,
         input_tensors: List of Pytorch tensors that are the layer's inputs.
         op_func: Module/functional to apply to the input tensors.
         quantize_node_activation_fn: quantization function
+        wrapped: Flag to indicate if layer is already quantization wrapped so no activation is needed
     Returns:
         A tuple of Pytorch tensors. The Module/functional output tensors after applying the
         Module/functional to the input tensors.
@@ -90,7 +92,7 @@ def _run_operation(n: BaseNode,
 
     # Add a fake quant node if the node has an activation threshold.
     out_tensors_of_n = out_tensors_of_n_float
-    if n.is_activation_quantization_enabled():
+    if n.is_activation_quantization_enabled() and not wrapped:
         if isinstance(out_tensors_of_n_float, list):
             out_tensors_of_n_float = torch.cat(out_tensors_of_n_float, dim=0)
         out_tensors_of_n = quantize_node_activation_fn(n, out_tensors_of_n_float)
@@ -152,6 +154,7 @@ class PytorchModel(torch.nn.Module):
             append2output: List of nodes or OutTensor objects.
             fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
             return_float_outputs: Whether the model returns float tensors or not.
+            wrapper: A function wrapper Pytorch Layers.
         """
         super(PytorchModel, self).__init__()
         self.graph = graph
@@ -213,7 +216,8 @@ class PytorchModel(torch.nn.Module):
             out_tensors_of_n, out_tensors_of_n_float = _run_operation(n,
                                                                       input_tensors,
                                                                       op_func=op_func,
-                                                                      quantize_node_activation_fn=self._quantize_node_activations)
+                                                                      quantize_node_activation_fn=self._quantize_node_activations,
+                                                                      wrapped=self.wrapper is not identity_wrapper)
 
             if isinstance(out_tensors_of_n, list):
                 node_to_output_tensors_dict.update({n: out_tensors_of_n})
@@ -258,7 +262,8 @@ class PyTorchModelBuilder(BaseModelBuilder):
                  graph: common.Graph,
                  append2output=None,
                  fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
-                 return_float_outputs: bool = False):
+                 return_float_outputs: bool = False,
+                 wrapper: Callable = identity_wrapper):
         """
 
         Args:
@@ -266,12 +271,15 @@ class PyTorchModelBuilder(BaseModelBuilder):
             append2output: Nodes to append to model's output.
             fw_info: Information about the specific framework of the model that is built.
             return_float_outputs: Whether the model returns float tensors or not.
+            wrapper: A function wrapper Pytorch Layers.
         """
 
         super().__init__(graph,
                          append2output,
                          fw_info,
                          return_float_outputs)
+
+        self.wrapper = wrapper
 
     def build_model(self) -> Tuple[PytorchModel, UserInformation]:
         """
@@ -281,4 +289,5 @@ class PyTorchModelBuilder(BaseModelBuilder):
         """
         return PytorchModel(self.graph,
                             self.append2output,
-                            return_float_outputs=self.return_float_outputs), self.graph.user_info
+                            return_float_outputs=self.return_float_outputs,
+                            wrapper=self.wrapper), self.graph.user_info
