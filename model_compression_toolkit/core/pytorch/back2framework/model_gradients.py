@@ -186,8 +186,8 @@ class PytorchModelGradients(torch.nn.Module):
                         self.interest_points_tensors.append(out_tensors_of_n)
                     else:
                         # We get here in case we have an output node, which is an interest point,
-                        # but it is not differentiable. We need to add this dummy tensor to in order to include this
-                        # node in the coming weights computation.
+                        # but it is not differentiable. We need to add this dummy tensor in order to include this
+                        # node in the future weights computation.
                         self.interest_points_tensors.append(torch.tensor([0.0],
                                                                          requires_grad=True,
                                                                          device=out_tensors_of_n.device))
@@ -247,7 +247,7 @@ def pytorch_iterative_approx_jacobian_trace(graph_float: common.Graph,
 
     concat_axis_dim = [o.shape[0] for o in r_outputs]
     if not all(d == concat_axis_dim[0] for d in concat_axis_dim):
-        Logger.critical("Can't concat model's outputs for gradients calculation since the shape of the first axis "
+        Logger.critical("Can't concat model's outputs for gradients calculation since the shape of the first axis "  # pragma: no cover
                         "is not equal in all outputs.")
 
     output = torch.concat(r_outputs, dim=1)

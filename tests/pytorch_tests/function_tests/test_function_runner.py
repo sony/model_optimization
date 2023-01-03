@@ -23,7 +23,7 @@ from tests.pytorch_tests.function_tests.layer_fusing_test import LayerFusingTest
     LayerFusingTest4
 from tests.pytorch_tests.function_tests.model_gradients_test import ModelGradientsBasicModelTest, \
     ModelGradientsCalculationTest, ModelGradientsAdvancedModelTest, ModelGradientsOutputReplacementTest, \
-    ModelGradientsMultipleOutputsModelTest
+    ModelGradientsMultipleOutputsModelTest, ModelGradientsNonDifferentiableNodeModelTest
 from tests.pytorch_tests.function_tests.set_layer_to_bitwidth_test import TestSetSingleAttrToBitwidth, TestSetLayerToBitwidth
 from tests.pytorch_tests.function_tests.test_sensitivity_eval_output_replacement import \
     TestSensitivityEvalWithArgmaxOutputReplacementNodes, TestSensitivityEvalWithSoftmaxOutputReplacementNodes
@@ -103,6 +103,7 @@ class FunctionTestRunner(unittest.TestCase):
         ModelGradientsAdvancedModelTest(self).run_test()
         ModelGradientsOutputReplacementTest(self).run_test()
         ModelGradientsMultipleOutputsModelTest(self).run_test()
+        ModelGradientsNonDifferentiableNodeModelTest(self).run_test()
 
     def test_layer_fusing(self):
         """
