@@ -20,7 +20,7 @@ from packaging import version
 from tqdm import tqdm
 
 if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.python.keras.layers import Layer
+    from tensorflow.python.keras.layers import Layer  # pragma: no cover
 else:
     from keras.engine.base_layer import Layer
 
@@ -128,7 +128,7 @@ def keras_iterative_approx_jacobian_trace(graph_float: common.Graph,
     """
 
     if not all([images.shape[0] == 1 for node, images in model_input_tensors.items()]):
-        Logger.critical("Iterative jacobian trace computation is only supported on a single image sample")
+        Logger.critical("Iterative jacobian trace computation is only supported on a single image sample")  # pragma: no cover
 
     with tf.GradientTape(persistent=True, watch_accessed_variables=False) as g:
         outputs, interest_points_tensors = _model_outputs_computation(graph_float,
@@ -142,7 +142,7 @@ def keras_iterative_approx_jacobian_trace(graph_float: common.Graph,
 
         concat_axis_dim = [o.shape[0] for o in r_outputs]
         if not all(d == concat_axis_dim[0] for d in concat_axis_dim):
-            Logger.critical("Can't concat model's outputs for gradients calculation since the shape of the first axis "
+            Logger.critical("Can't concat model's outputs for gradients calculation since the shape of the first axis "  # pragma: no cover
                             "is not equal in all outputs.")
 
         output = tf.concat(r_outputs, axis=1)

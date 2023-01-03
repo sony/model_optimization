@@ -54,6 +54,16 @@ def advenced_model(input_shape):
     return keras.Model(inputs=inputs, outputs=outputs)
 
 
+def inputs_as_list_model(input_shape):
+    input1 = Input(shape=input_shape)
+    input2 = Input(shape=input_shape)
+    x_stack = tf.stack([input1, input2])
+    x_conv = Conv2D(2, 3, padding='same', name="conv2d")(x_stack)
+    x_bn = BatchNormalization()(x_conv)
+    outputs = ReLU()(x_bn)
+    return keras.Model(inputs=[input1, input2], outputs=outputs)
+
+
 def model_with_output_replacements(input_shape):
     random_uniform = initializers.random_uniform(0, 1)
     inputs = Input(shape=input_shape)
@@ -176,3 +186,11 @@ class TestModelGradients(unittest.TestCase):
         # Checking that the weights where computed and normalized correctly
         zero_count = len(list(filter(lambda v: v == np.float32(0), y)))
         self.assertTrue(zero_count == 2)
+
+    def test_inputs_as_list_model_grad(self):
+        input_shape = (8, 8, 3)
+        in_model = inputs_as_list_model(input_shape)
+        keras_impl = KerasImplementation()
+        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
+
+        self._run_model_grad_test(graph, keras_impl)
