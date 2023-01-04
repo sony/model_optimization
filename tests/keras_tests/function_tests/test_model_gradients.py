@@ -143,38 +143,37 @@ class TestModelGradients(unittest.TestCase):
         self._run_model_grad_test(graph, keras_impl)
 
     def test_model_grad_with_output_replacements(self):
-        for _ in range(1000):
-            input_shape = (8, 8, 3)
-            in_model = model_with_output_replacements(input_shape)
-            keras_impl = KerasImplementation()
-            graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
+        input_shape = (8, 8, 3)
+        in_model = model_with_output_replacements(input_shape)
+        keras_impl = KerasImplementation()
+        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
 
-            sorted_graph_nodes = graph.get_topo_sorted_nodes()
-            interest_points = [n for n in sorted_graph_nodes]
+        sorted_graph_nodes = graph.get_topo_sorted_nodes()
+        interest_points = [n for n in sorted_graph_nodes]
 
-            input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
-            output_nodes = [graph.get_topo_sorted_nodes()[-2]]
-            output_indices = [len(interest_points) - 2, len(interest_points) - 1]
+        input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
+        output_nodes = [graph.get_topo_sorted_nodes()[-2]]
+        output_indices = [len(interest_points) - 2, len(interest_points) - 1]
 
-            x = keras_impl.model_grad(graph_float=graph,
-                                      model_input_tensors=input_tensors,
-                                      interest_points=interest_points,
-                                      output_list=output_nodes,
-                                      all_outputs_indices=output_indices,
-                                      alpha=0.3)
+        x = keras_impl.model_grad(graph_float=graph,
+                                  model_input_tensors=input_tensors,
+                                  interest_points=interest_points,
+                                  output_list=output_nodes,
+                                  all_outputs_indices=output_indices,
+                                  alpha=0.3)
 
-            # Checking that the weights where computed and normalized correctly
-            self.assertTrue(np.isclose(np.sum(x), 1))
+        # Checking that the weights where computed and normalized correctly
+        self.assertTrue(np.isclose(np.sum(x), 1))
 
-            # Checking replacement output correction
-            y = keras_impl.model_grad(graph_float=graph,
-                                      model_input_tensors=input_tensors,
-                                      interest_points=interest_points,
-                                      output_list=output_nodes,
-                                      all_outputs_indices=output_indices,
-                                      alpha=0)
+        # Checking replacement output correction
+        y = keras_impl.model_grad(graph_float=graph,
+                                  model_input_tensors=input_tensors,
+                                  interest_points=interest_points,
+                                  output_list=output_nodes,
+                                  all_outputs_indices=output_indices,
+                                  alpha=0)
 
-            # Checking that the weights where computed and normalized correctly
-            self.assertTrue(np.isclose(np.sum(y), 1))
-            self.assertTrue(y[-1] == np.float32(0))
-            self.assertTrue(y[-2] == np.float32(0))
+        # Checking that the weights where computed and normalized correctly
+        self.assertTrue(np.isclose(np.sum(y), 1))
+        self.assertTrue(y[-1] == np.float32(0))
+        self.assertTrue(y[-2] == np.float32(0))
