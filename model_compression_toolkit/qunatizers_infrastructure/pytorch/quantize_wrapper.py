@@ -53,7 +53,7 @@ if FOUND_TORCH:
             # Init activations quantizers
             self._activation_vars = []
             for i,quantizer in enumerate(self.dispatcher.activation_quantizers):
-                quantizer.initialize_quantization(None, "out"+str(i), self.layer)
+                quantizer.initialize_quantization(None, "tensor"+str(i), self.layer)
                 self._activation_vars.append(quantizer)
 
 

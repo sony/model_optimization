@@ -66,7 +66,7 @@ def _run_operation(n: BaseNode,
                    input_tensors: List,
                    op_func: Any,
                    quantize_node_activation_fn,
-                   wrapped: bool) -> Tuple[Union[List,torch.Tensor], Union[List,torch.Tensor]]:
+                   is_wrapped: bool) -> Tuple[Union[List,torch.Tensor], Union[List,torch.Tensor]]:
     """
     Applying the layer (op_func) to the input tensors (input_tensors).
     If quantized is set to True, and the layer's corresponding node (n) has quantization
@@ -77,7 +77,7 @@ def _run_operation(n: BaseNode,
         input_tensors: List of Pytorch tensors that are the layer's inputs.
         op_func: Module/functional to apply to the input tensors.
         quantize_node_activation_fn: quantization function
-        wrapped: Flag to indicate if layer is already quantization wrapped so no activation is needed
+        is_wrapped : Flag to indicate if layer is already quantization wrapped so no activation is needed
     Returns:
         A tuple of Pytorch tensors. The Module/functional output tensors after applying the
         Module/functional to the input tensors.
@@ -92,7 +92,7 @@ def _run_operation(n: BaseNode,
 
     # Add a fake quant node if the node has an activation threshold.
     out_tensors_of_n = out_tensors_of_n_float
-    if n.is_activation_quantization_enabled() and not wrapped:
+    if n.is_activation_quantization_enabled() and not is_wrapped:
         if isinstance(out_tensors_of_n_float, list):
             out_tensors_of_n_float = torch.cat(out_tensors_of_n_float, dim=0)
         out_tensors_of_n = quantize_node_activation_fn(n, out_tensors_of_n_float)
@@ -217,7 +217,7 @@ class PytorchModel(torch.nn.Module):
                                                                       input_tensors,
                                                                       op_func=op_func,
                                                                       quantize_node_activation_fn=self._quantize_node_activations,
-                                                                      wrapped=self.wrapper is not identity_wrapper)
+                                                                      is_wrapped=self.wrapper is not identity_wrapper)
 
             if isinstance(out_tensors_of_n, list):
                 node_to_output_tensors_dict.update({n: out_tensors_of_n})
