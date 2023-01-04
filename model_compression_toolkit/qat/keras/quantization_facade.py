@@ -205,7 +205,7 @@ if FOUND_TF:
         tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
 
         _qat_wrapper = partial(qat_wrapper, qat_config=qat_config)
-        qat_model, user_info = KerasModelBuilder(graph=tg, fw_info=fw_info, wrapper=qat_wrapper).build_model()
+        qat_model, user_info = KerasModelBuilder(graph=tg, fw_info=fw_info, wrapper=_qat_wrapper).build_model()
 
         user_info.mixed_precision_cfg = bit_widths_config
         #TODO: remove the last output after updating documentation.
