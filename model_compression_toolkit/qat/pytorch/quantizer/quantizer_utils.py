@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Union, Tuple
+from typing import Tuple
 import torch
 
 
@@ -69,12 +69,47 @@ def fix_range_to_include_zero(range_min: torch.Tensor,
     return min_range_adj, max_range_adj
 
 
+def symmetric_quantizer(tensor_data: torch.Tensor,
+                        threshold: torch.Tensor,
+                        n_bits: int,
+                        sign: bool = False) -> torch.Tensor:
+    """
+    Quantize a tensor according to the number of bits and threshold.
+    Symmetric quantization.
+    Args:
+        tensor_data: Tensor values to quantize.
+        threshold: threshold for quantization.
+        n_bits: Number of bits to quantize the tensor.
+        sign: sign of tensor_data
+    Returns:
+        Quantized data.
+    """
+
+    # Compute the step size of quantized values.
+    delta_tensor = threshold / (2 ** n_bits - int(sign))
+
+    # Compute min/max int value
+    min_val = -int(sign) * (2 ** (n_bits - int(sign)))
+    max_val = (2 ** (n_bits - int(sign))) - 1
+
+    # Apply rounding
+    input_tensor_int = ste_round(tensor_data / delta_tensor)
+
+    # Clip data in range
+    clipped_tensor = ste_clip(input_tensor_int, min_val=min_val, max_val=max_val)
+
+    # Quantize the data between -threshold/threshold
+    q = delta_tensor * clipped_tensor
+    return q
+
+
 def uniform_quantizer(tensor_data: torch.Tensor,
-                       range_min: torch.Tensor,
-                       range_max: torch.Tensor,
-                       n_bits: int) -> torch.Tensor:
+                      range_min: torch.Tensor,
+                      range_max: torch.Tensor,
+                      n_bits: int) -> torch.Tensor:
     """
     Quantize a tensor according to given range (min, max) and number of bits.
+    Uniform quantization.
     Args:
         tensor_data: Tensor values to quantize.
         range_min: minimum bound of the range for quantization (or array of min values per channel).

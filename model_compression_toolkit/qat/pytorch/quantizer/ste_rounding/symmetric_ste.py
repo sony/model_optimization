@@ -12,26 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
 from typing import Dict
 
 import numpy as np
 import torch
 import torch.nn as nn
 
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
+from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit import qunatizers_infrastructure as qi
 from model_compression_toolkit.core.common import constants as C
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-from model_compression_toolkit.qunatizers_infrastructure.pytorch.quantizer_utils import ste_round, ste_clip
+from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import ste_round, ste_clip, symmetric_quantizer
 
 
 class STEWeightQuantizer(qi.BasePytorchQuantizer):
     """
-    Trainable constrained quantizer to quantize a layer inputs.
+    Trainable constrained quantizer to quantize a layer weights.
     """
 
     def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
@@ -109,3 +108,57 @@ class STEWeightQuantizer(qi.BasePytorchQuantizer):
         w1 = ste_clip(w0, min_val=self.min_int, max_val=self.max_int)
         w_q = self.delta_tensor * w1
         return w_q
+
+
+class STEActivationQuantizer(qi.BasePytorchQuantizer):
+    """
+    Trainable constrained quantizer to quantize a layer activations.
+    """
+
+    def __init__(self, quantization_config: NodeActivationQuantizationConfig):
+        """
+        Initialize a STEActivationQuantizer object with parameters to use
+        for symmetric or power of two quantization.
+
+        Args:
+            quantization_config: node quantization config class
+        """
+        super().__init__(quantization_config,
+                         qi.QuantizationTarget.Activation,
+                         [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
+        self.power_of_two = quantization_config.activation_quantization_method == QuantizationMethod.POWER_OF_TWO
+        self.sign = quantization_config.activation_quantization_params['is_signed']
+        np_threshold_values = quantization_config.activation_quantization_params[C.THRESHOLD]
+        self.threshold_tensor = torch.Tensor([np_threshold_values])
+        self.num_bits = quantization_config.activation_n_bits
+        self.quantizer_parameters = {}
+
+    def initialize_quantization(self,
+                                tensor_shape: torch.Size,
+                                name: str,
+                                layer: nn.Module) -> Dict[str, nn.Parameter]:
+        """
+        Add threshold variables to layer.
+        """
+        layer.register_parameter(name, nn.Parameter(to_torch_tensor(self.threshold_tensor), requires_grad=True))
+
+        # save the quantizer added parameters for later calculations
+        self.quantizer_parameters = {THRESHOLD_TENSOR: layer.get_parameter(name)}
+        return self.quantizer_parameters
+
+    def __call__(self,
+                 inputs: torch.Tensor,
+                 training: bool = True) -> torch.Tensor:
+        """
+        Quantize a tensor.
+        Args:
+            inputs: Input tensor to quantize.
+            training: Whether the graph is in training mode.
+
+        Returns:
+            The quantized tensor.
+        """
+
+        _t = self.quantizer_parameters[THRESHOLD_TENSOR]
+        q_tensor = symmetric_quantizer(inputs, _t, self.num_bits, sign=self.sign)
+        return q_tensor

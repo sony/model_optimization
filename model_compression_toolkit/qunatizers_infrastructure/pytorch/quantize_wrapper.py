@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================f
-
-
+from typing import List, Union
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.qunatizers_infrastructure.common.node_quantization_dispatcher import \
@@ -44,12 +43,19 @@ if FOUND_TORCH:
             self.dispatcher = dispatcher
             self.add_module('layer', module)
             self._weight_vars = []
+
+            # Init weights quantizers
             for name, quantizer in self.dispatcher.weight_quantizers.items():
                 weight = getattr(self.layer, name)
-                quantizer.initialize_quantization(weight.shape,
-                                                  name, self)
-
+                quantizer.initialize_quantization(weight.shape, name, self)
                 self._weight_vars.append((name, weight, quantizer))
+
+            # Init activations quantizers
+            self._activation_vars = []
+            for i,quantizer in enumerate(self.dispatcher.activation_quantizers):
+                quantizer.initialize_quantization(None, "tensor"+str(i), self.layer)
+                self._activation_vars.append(quantizer)
+
 
         def set_quantize_weights(self, quantized_weights: dict):
             """
@@ -70,18 +76,19 @@ if FOUND_TORCH:
 
                 setattr(self.layer, weight_attr, torch.nn.Parameter(weight))
 
-        def forward(self, x: torch.Tensor) -> torch.Tensor:
+        def forward(self, x: torch.Tensor) -> Union[torch.Tensor, List[torch.Tensor]]:
             """
             PytorchQuantizationWrapper forward functions
             Args:
-                inputs: layer's inputs
+                x: layer's inputs
 
             Returns: a tensor that simulates a quantized layer.
 
             """
 
+            # ----------------------------------
             # Quantize all weights, and replace them in the underlying layer.
-
+            # ----------------------------------
             quantized_weights = {}
             for name, unquantized_weight, quantizer in self._weight_vars:
                 quantized_weight = quantizer(unquantized_weight, self.training)
@@ -89,7 +96,30 @@ if FOUND_TORCH:
 
             self.set_quantize_weights(quantized_weights)
 
-            return self.layer(x)
+            # ----------------------------------
+            # Layer operation
+            # ----------------------------------
+            outputs = self.layer(x)
+
+            # ----------------------------------
+            # Quantize all activations
+            # ----------------------------------
+            if self.dispatcher.is_activation_quantization:
+
+                if not isinstance(outputs, list):
+                    outputs = [outputs]
+
+                if len(outputs) != self.dispatcher.num_act_quantizers:
+                    Logger.error(f"Number of outputs {len(outputs)} is incompatible number of activation quantizers {self.dispatcher.num_act_quantizers}")  # pragma: no cover
+
+                # Quantize all activations tensors
+                outputs_quantized = []
+                for quantizer,output in zip(self._activation_vars,outputs):
+                    outputs_quantized.append(quantizer(output))
+
+                outputs = outputs_quantized[0] if len(outputs_quantized) == 1 else outputs_quantized
+
+            return outputs
 
 else:
     class PytorchQuantizationWrapper(object):
