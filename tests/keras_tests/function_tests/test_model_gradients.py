@@ -184,8 +184,9 @@ class TestModelGradients(unittest.TestCase):
                                   alpha=0)
 
         # Checking that the weights where computed and normalized correctly
-        zero_count = len(list(filter(lambda v: v == np.float32(0), y)))
-        self.assertTrue(zero_count == 2)
+        self.assertTrue(np.isclose(np.sum(y), 1))
+        self.assertTrue(y[-1] == np.float32(0))
+        self.assertTrue(y[-2] == np.float32(0))
 
     def test_inputs_as_list_model_grad(self):
         input_shape = (8, 8, 3)

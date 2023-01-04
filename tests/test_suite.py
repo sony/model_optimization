@@ -53,7 +53,7 @@ if found_tf:
         TestSymmetricThresholdSelectionWeights
     from tests.keras_tests.function_tests.test_uniform_quantize_tensor import TestUniformQuantizeTensor
     from tests.keras_tests.function_tests.test_uniform_range_selection_weights import TestUniformRangeSelectionWeights
-    from tests.keras_tests.test_keras_tp_model import TestKerasTPModel
+    from tests.keras_tests.function_tests.test_keras_tp_model import TestKerasTPModel
     from tests.keras_tests.function_tests.test_sensitivity_metric_interest_points import \
         TestSensitivityMetricInterestPoints
     from tests.keras_tests.function_tests.test_weights_activation_split_substitution import TestWeightsActivationSplit
@@ -72,7 +72,7 @@ if found_pytorch:
     from tests.pytorch_tests.model_tests.test_feature_models_runner import FeatureModelsTestRunner
     # from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
-    from tests.pytorch_tests.test_pytorch_tp_model import TestPytorchTPModel
+    from tests.pytorch_tests.function_tests.test_pytorch_tp_model import TestPytorchTPModel
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases
