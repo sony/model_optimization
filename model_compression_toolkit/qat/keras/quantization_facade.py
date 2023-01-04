@@ -14,6 +14,7 @@
 # ==============================================================================
 
 from typing import Callable
+from functools import partial
 
 from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core import common
@@ -29,26 +30,73 @@ from model_compression_toolkit.ptq.runner import ptq_runner
 
 if FOUND_TF:
     import tensorflow as tf
+    from tensorflow.keras.layers import Layer
+    from tensorflow.keras.models import Model
 
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
-    from tensorflow.keras.models import Model
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
 
     from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
-    from model_compression_toolkit.qat.keras.qat_model_builder import qat_wrapper
 
     from model_compression_toolkit import get_target_platform_capabilities
     from model_compression_toolkit import qunatizers_infrastructure as qi
 
+    from model_compression_toolkit import get_target_platform_capabilities
+    from model_compression_toolkit.core import common
+    from model_compression_toolkit.core.common import BaseNode
+    from model_compression_toolkit.core.common.constants import TENSORFLOW
+    from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+
+    from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+    from model_compression_toolkit.qat.keras.quantizer.quantization_dispatcher_builder import \
+        quantization_dispatcher_builder
+    from model_compression_toolkit.qat.common.qat_config import QatConfig
+    from model_compression_toolkit import qunatizers_infrastructure as qi
+
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
+
+
+    def _is_qat_applicable(node: common.BaseNode,
+                           fw_info: FrameworkInfo) -> bool:
+        """
+        A function for deciding if a layer should be fine-tuned during QAT
+        Args:
+            node (BaseNode): Node for quantization decision
+            fw_info (FrameworkInfo): Keras quantization information
+
+        Returns:
+            A boolean whether the layer is to be wrapped with a QuantizeWrapper
+        """
+
+        if node.is_weights_quantization_enabled() and not fw_info.is_kernel_op(node.type):
+            common.Logger.error("QAT Error: Quantizing a node without a kernel isn't supported")
+        return node.is_weights_quantization_enabled() or node.is_activation_quantization_enabled()
+
+
+    def qat_wrapper(n: common.BaseNode, layer: Layer, qat_config):
+        """
+        A function which takes a computational graph node and a keras layer and perform the quantization wrapping
+        Args:
+            n: A node of mct graph.
+            layer: A keras layer
+
+        Returns: Wrapped layer
+
+        """
+        if _is_qat_applicable(n, DEFAULT_KERAS_INFO):
+            return qi.KerasQuantizationWrapper(layer, quantization_dispatcher_builder(n, qat_config, DEFAULT_KERAS_INFO))
+        else:
+            return layer
 
 
     def keras_quantization_aware_training_init(in_model: Model,
                                                representative_data_gen: Callable,
                                                target_kpi: KPI = None,
                                                core_config: CoreConfig = CoreConfig(),
+                                               qat_config: QatConfig = QatConfig(),
                                                fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                                                target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
@@ -71,6 +119,7 @@ if FOUND_TF:
              representative_data_gen (Callable): Dataset used for initial calibration.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
+             qat_config (QatConfig): QAT configuration
              fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).  `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
              target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
@@ -155,6 +204,7 @@ if FOUND_TF:
 
         tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
 
+        _qat_wrapper = partial(qat_wrapper, qat_config=qat_config)
         qat_model, user_info = KerasModelBuilder(graph=tg, fw_info=fw_info, wrapper=qat_wrapper).build_model()
 
         user_info.mixed_precision_cfg = bit_widths_config
