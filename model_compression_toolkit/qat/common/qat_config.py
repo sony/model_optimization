@@ -20,7 +20,7 @@ class TrainingMethod(Enum):
     STE = 0
 
 
-class QatConfig:
+class QATConfig:
     """
     QAT configuration class.
     """
