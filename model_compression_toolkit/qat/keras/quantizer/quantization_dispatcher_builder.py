@@ -20,7 +20,7 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit import qunatizers_infrastructure as qi
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste import STEWeightQuantizer, STEActivationQuantizer
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste import STEUniformWeightQuantizer
-from model_compression_toolkit.qat.common.qat_config import QatConfig, TrainingMethod
+from model_compression_toolkit.qat.common.qat_config import QATConfig, TrainingMethod
 
 METHOD2WEIGHTQUANTIZER = {TrainingMethod.STE: {qi.QuantizationMethod.SYMMETRIC: STEWeightQuantizer,
                                                qi.QuantizationMethod.POWER_OF_TWO: STEWeightQuantizer,
@@ -32,7 +32,7 @@ METHOD2ACTQUANTIZER = {TrainingMethod.STE: {qi.QuantizationMethod.SYMMETRIC: STE
 
 
 def quantization_dispatcher_builder(n: common.BaseNode,
-                                    qat_config: QatConfig,
+                                    qat_config: QATConfig,
                                     fw_info: FrameworkInfo,
                                     method2weightquantizer: Dict[
                                         qi.QuantizationMethod, qi.BaseKerasQuantizer] = None,
@@ -45,7 +45,7 @@ def quantization_dispatcher_builder(n: common.BaseNode,
 
     Args:
         n: Node to build its QuantizeConfig.
-        qat_config (QatConfig): QAT configuration
+        qat_config (QATConfig): QAT configuration
         fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
         method2weightquantizer: A mapping between quantization method to weight quantizer.
         method2actquantizer: A mapping between quantization method to activation quantizer.

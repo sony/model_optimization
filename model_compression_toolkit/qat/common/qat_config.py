@@ -27,8 +27,8 @@ class QATConfig:
 
     def __init__(self, weight_training_method=TrainingMethod.STE,
                  activation_training_method=TrainingMethod.STE,
-                 weight_quantizer_params = None,
-                 activation_quantizer_params = None,
+                 weight_quantizer_params=None,
+                 activation_quantizer_params=None,
                  ):
         """
 

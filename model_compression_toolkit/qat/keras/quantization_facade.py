@@ -53,7 +53,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.qat.keras.quantizer.quantization_dispatcher_builder import \
         quantization_dispatcher_builder
-    from model_compression_toolkit.qat.common.qat_config import QatConfig
+    from model_compression_toolkit.qat.common.qat_config import QATConfig
     from model_compression_toolkit import qunatizers_infrastructure as qi
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
@@ -96,7 +96,7 @@ if FOUND_TF:
                                                representative_data_gen: Callable,
                                                target_kpi: KPI = None,
                                                core_config: CoreConfig = CoreConfig(),
-                                               qat_config: QatConfig = QatConfig(),
+                                               qat_config: QATConfig = QATConfig(),
                                                fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                                                target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
@@ -119,7 +119,7 @@ if FOUND_TF:
              representative_data_gen (Callable): Dataset used for initial calibration.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
-             qat_config (QatConfig): QAT configuration
+             qat_config (QATConfig): QAT configuration
              fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).  `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
              target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
