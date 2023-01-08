@@ -35,14 +35,12 @@ import model_compression_toolkit as mct
 
 def argument_handler():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--representative_dataset_dir', type=str, default=None,
+    parser.add_argument('--representative_dataset_dir', type=str, required=True, default=None,
                         help='folder path for the representative dataset.')
-    parser.add_argument('--batch_size', type=int, default=50,
+    parser.add_argument('--batch_size', type=int, default=64,
                         help='batch size for the representative data.')
     parser.add_argument('--num_calibration_iterations', type=int, default=10,
                         help='number of iterations for calibration.')
-    parser.add_argument('--z_threshold', type=int, default=16,
-                        help='set z threshold for outlier removal algorithm.')
     return parser.parse_args()
 
 
@@ -113,13 +111,13 @@ if __name__ == '__main__':
             100. * correct / len(test_loader.dataset)))
 
     # set some training parameters
-    batch_size = 64
+    batch_size = args.batch_size
     test_batch_size = 1000
     random_seed = 1
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.backends.cudnn.enabled = False
     torch.manual_seed(random_seed)
-    dataset_folder = '/Vols/vol_design/tools/swat/users/idanb/repository/git3/model_optimization/mnist/images'
+    dataset_folder = args.representative_dataset_dir
     epochs = 1
     gamma = 0.1
     lr = 1.0
