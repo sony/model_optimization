@@ -34,10 +34,11 @@ METHOD2ACTQUANTIZER = {qi.QuantizationMethod.SYMMETRIC: STEActivationQuantizer,
 def quantization_dispatcher_builder(n: common.BaseNode,
                                     fw_info: FrameworkInfo,
                                     method2weightquantizer: Dict[
-                                        qi.QuantizationMethod, qi.BaseKerasQuantizer] = None,
+                                        qi.QuantizationMethod, qi.BaseKerasTrainableQuantizer] = None,
                                     method2actquantizer: Dict[
-                                        qi.QuantizationMethod, qi.BaseKerasQuantizer] = None
+                                        qi.QuantizationMethod, qi.BaseKerasTrainableQuantizer] = None
                                     ) -> qi.KerasNodeQuantizationDispatcher:
+
     """
     Build a NodeQuantizationDispatcher for a node according to its quantization configuration and
     a global NoOpQuantizeConfig object.

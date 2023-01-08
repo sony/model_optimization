@@ -148,7 +148,8 @@ if FOUND_TF:
                 current_weight = getattr(self.layer, weight_attr)
                 if current_weight.shape != weight.shape:
                     Logger.error(
-                        f"Existing layer weight shape {current_weight.shape} is incompatible with provided weight shape {weight.shape}")  # pragma: no cover
+                        f"Existing layer weight shape {current_weight.shape} is incompatible with provided weight "
+                        f"shape {weight.shape}")  # pragma: no cover
 
                 setattr(self.layer, weight_attr, weight)
 
@@ -188,7 +189,8 @@ if FOUND_TF:
                 num_outputs = len(outputs) if isinstance(outputs, (list, tuple)) else 1
                 if self.dispatcher.num_act_quantizers != num_outputs:
                     Logger.error('Quantization wrapper output quantization error: '
-                                 f'number of outputs and quantizers mismatch ({num_outputs}!={self.dispatcher.num_act_quantizers}')
+                                 f'number of outputs and quantizers mismatch ({num_outputs}!='
+                                 f'{self.dispatcher.num_act_quantizers}')
                 if num_outputs == 1:
                     outputs = [outputs]
 

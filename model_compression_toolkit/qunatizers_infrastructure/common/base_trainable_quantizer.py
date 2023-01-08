@@ -14,20 +14,17 @@
 # ==============================================================================
 
 from typing import List
-from enum import Enum
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
     NodeActivationQuantizationConfig, BaseNodeQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
-
-class QuantizationTarget(Enum):
-    Activation = 0
-    Weights = 1
+from model_compression_toolkit.qunatizers_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer, \
+    QuantizationTarget
 
 
-class BaseQuantizer:
+class BaseTrainableQuantizer(BaseInferableQuantizer):
     def __init__(self,
                  quantization_config: BaseNodeQuantizationConfig,
                  quantization_target: QuantizationTarget,
@@ -40,8 +37,8 @@ class BaseQuantizer:
             quantization_target: A enum which selects the quantizer tensor type: activation or weights.
             quantization_method: A list of enums which represent the supported methods for the quantizer.
         """
+        super(BaseTrainableQuantizer, self).__init__(quantization_target=quantization_target)
         self.quantization_config = quantization_config
-        self.quantization_target = quantization_target
         self.quantization_method = quantization_method
         if self.quantization_target == QuantizationTarget.Weights:
             self.validate_weights()
