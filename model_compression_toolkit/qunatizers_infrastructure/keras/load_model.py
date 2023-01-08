@@ -12,16 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Set
+
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
+
+
+
+def _get_all_subclasses(cls: type) -> Set[type]:
+    # This function returns a list of all subclasses of the given class,
+    # including all subclasses of those subclasses, and so on.
+    # Recursively get all subclasses of the subclass and add them to the list of all subclasses.
+    return set(cls.__subclasses__()).union(
+        [s for c in cls.__subclasses__() for s in _get_all_subclasses(c)])
 
 if FOUND_TF:
     import tensorflow as tf
     from model_compression_toolkit import qunatizers_infrastructure as qi
-    from model_compression_toolkit.qunatizers_infrastructure.keras.base_keras_quantizer import BaseKerasQuantizer
-
+    from model_compression_toolkit.qunatizers_infrastructure import BaseKerasTrainableQuantizer
+    from model_compression_toolkit.qunatizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
+        import \
+        BaseKerasInferableQuantizer
     keras = tf.keras
-
 
     def keras_load_quantized_model(filepath, custom_objects=None, compile=True, options=None):
         """
@@ -36,7 +48,14 @@ if FOUND_TF:
         Returns: A keras Model
 
         """
-        qi_custom_objects = {subclass.__name__: subclass for subclass in BaseKerasQuantizer.__subclasses__()}
+        qi_inferable_custom_objects = {subclass.__name__: subclass for subclass in _get_all_subclasses(BaseKerasInferableQuantizer)}
+        qi_trainable_custom_objects = {subclass.__name__: subclass for subclass in
+                                       _get_all_subclasses(BaseKerasTrainableQuantizer)}
+
+        # Merge dictionaries into one dict
+        qi_custom_objects = {**qi_inferable_custom_objects, **qi_trainable_custom_objects}
+
+        # Add non-quantizers custom objects
         qi_custom_objects.update({qi.KerasQuantizationWrapper.__name__: qi.KerasQuantizationWrapper,
                                   qi.KerasNodeQuantizationDispatcher.__name__: qi.KerasNodeQuantizationDispatcher})
         if custom_objects is not None:

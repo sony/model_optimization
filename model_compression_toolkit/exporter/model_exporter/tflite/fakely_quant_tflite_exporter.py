@@ -18,8 +18,8 @@ from typing import Callable
 
 import keras.models
 import tensorflow as tf
-from keras.models import load_model
 
+from model_compression_toolkit import keras_load_quantized_model
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import FakelyQuantKerasExporter
 
@@ -61,7 +61,8 @@ class FakelyQuantTFLiteExporter(FakelyQuantKerasExporter):
         custom_objects = FakelyQuantKerasExporter(self.model,
                                                   self.is_layer_exportable_fn,
                                                   tmp_h5_file).export()
-        model = load_model(tmp_h5_file, custom_objects)
+
+        model = keras_load_quantized_model(tmp_h5_file)
         os.remove(tmp_h5_file)
 
         self.exported_model = tf.lite.TFLiteConverter.from_keras_model(model).convert()

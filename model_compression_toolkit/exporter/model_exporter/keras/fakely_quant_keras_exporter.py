@@ -18,23 +18,13 @@ import keras.models
 import keras.models
 import tensorflow as tf
 from keras.engine.base_layer import Layer
-from tensorflow_model_optimization.python.core.quantization.keras.default_8bit.default_8bit_quantize_configs import \
-    NoOpQuantizeConfig
 
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import \
     BaseKerasExporter
-from model_compression_toolkit.exporter.model_wrapper.keras.builder.quantize_config_to_node import \
-    SUPPORTED_QUANTIZATION_CONFIG
-from model_compression_toolkit.exporter.model_wrapper.keras.extended_quantize_wrapper import ExtendedQuantizeWrapper
-from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.activation_quantize_config import \
-    ActivationQuantizeConfig
-from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.weights_activation_quantize_config \
-    import \
-    WeightsActivationQuantizeConfig
-from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.weights_quantize_config import \
-    WeightsQuantizeConfig
-from model_compression_toolkit.exporter.model_wrapper.keras.quantizers.fq_quantizer import FakeQuantQuantizer
+from model_compression_toolkit.qunatizers_infrastructure import KerasQuantizationWrapper, \
+    KerasNodeQuantizationDispatcher
+
 
 
 class FakelyQuantKerasExporter(BaseKerasExporter):
@@ -83,7 +73,7 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
             assert self.is_layer_exportable_fn(layer), f'Layer {layer.name} is not exportable.'
 
             # If weights are quantized, use the quantized weight for the new built layer.
-            if type(layer.quantize_config) in [WeightsQuantizeConfig, WeightsActivationQuantizeConfig]:
+            if layer.dispatcher.is_weights_quantization:
                 new_layer = layer.layer.__class__.from_config(layer.layer.get_config())
                 with tf.name_scope(new_layer.name):
                     new_layer.build(layer.input_shape)
@@ -100,8 +90,10 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                             # that should be quantized. First, extract 'kernel' from variable name, check if the
                             # quantize config contains this as an attribute for quantization. If so -
                             # Take the quantized weight from the quantize_config and set it to the new layer.
-                            if w.name.split('/')[-1].split(':')[0] in layer.quantize_config.get_config()['weight_attrs']:
-                                val = layer.quantize_config.get_weights_and_quantizers(layer.layer)[0][1].weight
+                            attribute_name = w.name.split('/')[-1].split(':')[0]
+                            if attribute_name in layer.dispatcher.weight_quantizers.keys():
+                                quantizer = layer.dispatcher.weight_quantizers.get(attribute_name)
+                                val = quantizer(qw, False)
                             else:
                                 val = qw
                     if val is None:
@@ -113,23 +105,18 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
 
                 # If activations are also quantized, wrap the layer back using ActivationQuantizeConfig
                 # from original wrapper (weights wrapping is no longer needed).
-                if isinstance(layer.quantize_config, WeightsActivationQuantizeConfig):
-                    new_layer = ExtendedQuantizeWrapper(new_layer, layer.quantize_config.act_config)
+                if layer.dispatcher.is_activation_quantization:
+                    activation_dispatcher = KerasNodeQuantizationDispatcher(weight_quantizers={},
+                                                                       activation_quantizers=layer.dispatcher.activation_quantizers)
+                    new_layer = KerasQuantizationWrapper(layer=new_layer,
+                                                         dispatcher=activation_dispatcher)
 
                 return new_layer
 
             # If this is a layer with activation quantization only, just return it
             # as activation quantization in the fake-quant case uses the wrapper for quantization.
-            elif type(layer.quantize_config) in [ActivationQuantizeConfig]:
-                return layer
+            return layer
 
-            # Ideally we want in the case of no quantization to simply use the inner layer.
-            # But for some reason when using SNC we are having issues to use the inner layer.
-            # The clone_model method tries to reconstruct a model from the unwrapped configuration,
-            # but when we have two TFOpLambda (like in the case of SNC: add and pad) one after another,
-            # the output shape of the first one is in correct (it adds a new axis
-            elif isinstance(layer.quantize_config, NoOpQuantizeConfig):
-                return layer
 
         # clone each layer in the model and apply _unwrap_quantize_wrapper to layers wrapped with a QuantizeWrapper.
         self.exported_model = tf.keras.models.clone_model(self.model,
@@ -145,14 +132,3 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
 
         return FakelyQuantKerasExporter.get_custom_objects()
 
-    @staticmethod
-    def get_custom_objects() -> Dict[str, type]:
-        """
-
-        Returns: A dictionary with objects for loading the exported model.
-
-        """
-        return {ExtendedQuantizeWrapper.__name__: ExtendedQuantizeWrapper,
-                ActivationQuantizeConfig.__name__: ActivationQuantizeConfig,
-                FakeQuantQuantizer.__name__: FakeQuantQuantizer,
-                NoOpQuantizeConfig.__name__: NoOpQuantizeConfig}

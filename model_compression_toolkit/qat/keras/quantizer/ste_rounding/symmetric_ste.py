@@ -30,7 +30,7 @@ from model_compression_toolkit import qunatizers_infrastructure as qi
 from model_compression_toolkit.core.common import constants as C
 
 
-class STEWeightQuantizer(qi.BaseKerasQuantizer):
+class STEWeightQuantizer(qi.BaseKerasTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer inputs.
     """
@@ -146,7 +146,7 @@ class STEWeightQuantizer(qi.BaseKerasQuantizer):
         return q_tensor
 
 
-class STEActivationQuantizer(qi.BaseKerasQuantizer):
+class STEActivationQuantizer(qi.BaseKerasTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer outputs.
     """

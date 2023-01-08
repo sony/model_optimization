@@ -27,7 +27,7 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import uniform_quantizer
 
 
-class STEUniformWeightQuantizer(qi.BasePytorchQuantizer):
+class STEUniformWeightQuantizer(qi.BasePytorchTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer inputs.
     """
@@ -100,7 +100,7 @@ class STEUniformWeightQuantizer(qi.BasePytorchQuantizer):
         return uniform_quantizer(inputs, self.min_values, self.max_values, self.num_bit)
 
 
-class STEUniformActivationQuantizer(qi.BasePytorchQuantizer):
+class STEUniformActivationQuantizer(qi.BasePytorchTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer activations.
     """
