@@ -185,8 +185,7 @@ if FOUND_TORCH:
         exported_model = copy.deepcopy(in_model)
         for layer in exported_model.named_children():
             if isinstance(layer[1], PytorchQuantizationWrapper):
-                setattr(layer[1].op, KERNEL, layer[1].weight_quantizer(layer[1].float_weight))
-                setattr(exported_model, layer[0], layer[1].op)
+                setattr(exported_model, layer[0], layer[1].layer)
 
         return exported_model
 

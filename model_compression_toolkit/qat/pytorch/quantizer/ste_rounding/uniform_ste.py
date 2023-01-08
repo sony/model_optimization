@@ -73,16 +73,13 @@ class STEUniformWeightQuantizer(qi.BasePytorchTrainableQuantizer):
         Returns:
             Dictionary of new variables.
         """
-        _shape = len(self.min) if self.quantization_config.weights_channels_axis else ()
-        _val = torch.ones(_shape) * self.min
-        self.fq_min = nn.Parameter(to_torch_tensor(_val), requires_grad=False)
 
-        _shape = len(self.max) if self.quantization_config.weights_channels_axis else ()
-        _val = torch.ones(_shape) * self.max
-        self.fq_max = nn.Parameter(to_torch_tensor(_val), requires_grad=False)
+        # Add min and max variables to layer.
+        layer.register_parameter(name+"_"+FQ_MIN, nn.Parameter(to_torch_tensor(self.min_values), requires_grad=False))
+        layer.register_parameter(name+"_"+FQ_MAX, nn.Parameter(to_torch_tensor(self.max_values), requires_grad=False))
 
-        # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {FQ_MIN: self.fq_min, FQ_MAX: self.fq_max}
+        # Save the quantizer parameters for later calculations
+        self.quantizer_parameters = {FQ_MIN: layer.get_parameter(name+"_"+FQ_MIN), FQ_MAX: layer.get_parameter(name+"_"+FQ_MAX)}
 
         return self.quantizer_parameters
 
@@ -131,8 +128,8 @@ class STEUniformActivationQuantizer(qi.BasePytorchTrainableQuantizer):
         """
         Add min and max variables to layer.
         """
-        layer.register_parameter(name+"_"+FQ_MIN, nn.Parameter(to_torch_tensor(self.min_range_tensor), requires_grad=True))
-        layer.register_parameter(name+"_"+FQ_MAX, nn.Parameter(to_torch_tensor(self.max_range_tensor), requires_grad=True))
+        layer.register_parameter(name+"_"+FQ_MIN, nn.Parameter(to_torch_tensor(self.min_range_tensor), requires_grad=False))
+        layer.register_parameter(name+"_"+FQ_MAX, nn.Parameter(to_torch_tensor(self.max_range_tensor), requires_grad=False))
 
         # Save the quantizer parameters for later calculations
         self.quantizer_parameters = {FQ_MIN: layer.get_parameter(name+"_"+FQ_MIN), FQ_MAX: layer.get_parameter(name+"_"+FQ_MAX)}
