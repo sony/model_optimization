@@ -27,7 +27,9 @@ from model_compression_toolkit.exporter.model_exporter import keras_export_model
     tflite_export_model, \
     TFLiteExportMode
 from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_exportable
+from model_compression_toolkit import keras_load_quantized_model
 
+_, SAVED_EXPORTABLE_MODEL_PATH_TF = tempfile.mkstemp('.h5')
 _, SAVED_MODEL_PATH_TF = tempfile.mkstemp('.h5')
 _, SAVED_MODEL_PATH_TFLITE = tempfile.mkstemp('.tflite')
 
@@ -51,24 +53,19 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
     def tearDown(self):
         os.remove(SAVED_MODEL_PATH_TF)
         os.remove(SAVED_MODEL_PATH_TFLITE)
+        os.remove(SAVED_EXPORTABLE_MODEL_PATH_TF)
 
-    def setUp(self) -> None:
+    def test_export_tf_phases(self) -> None:
         input_shape = (32, 32, 3)
         self.model = _get_model(input_shape)
         self.representative_data_gen = lambda: [np.random.randn(*((1,) + input_shape))]
         self.exportable_model = self.run_mct(self.model, new_experimental_exporter=True)
         self.exportable_model.trainable = False
-        self.tf_custom_objects = keras_export_model(model=self.exportable_model,
-                                                    is_layer_exportable_fn=is_keras_layer_exportable,
-                                                    mode=KerasExportMode.FAKELY_QUANT,
-                                                    save_model_path=SAVED_MODEL_PATH_TF)
-
-        self.tf_exported_model = keras.models.load_model(SAVED_MODEL_PATH_TF, self.tf_custom_objects)
-        self.tf_exported_model.trainable = False
-        tflite_export_model(model=self.exportable_model,
-                            is_layer_exportable_fn=is_keras_layer_exportable,
-                            mode=TFLiteExportMode.FAKELY_QUANT,
-                            save_model_path=SAVED_MODEL_PATH_TFLITE)
+        self.save_and_load_exportable_model()
+        self.save_and_load_exported_tf_fakequant_model()
+        self.save_and_load_exported_tflite_fakequant_model()
+        self.equal_predictions_between_exportable_and_tf_fq_exported()
+        self.tflite_fq_exported_weights()
 
     def run_mct(self, model, new_experimental_exporter):
         core_config = mct.CoreConfig()
@@ -79,30 +76,40 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
             new_experimental_exporter=new_experimental_exporter)
         return new_export_model
 
-    def test_sanity(self):
+    def save_and_load_exportable_model(self):
+        self.exportable_model.save(SAVED_EXPORTABLE_MODEL_PATH_TF)
+        keras_load_quantized_model(SAVED_EXPORTABLE_MODEL_PATH_TF)
+
+    def save_and_load_exported_tf_fakequant_model(self):
+        keras_export_model(model=self.exportable_model,
+                           is_layer_exportable_fn=is_keras_layer_exportable,
+                           mode=KerasExportMode.FAKELY_QUANT,
+                           save_model_path=SAVED_MODEL_PATH_TF)
+        keras_load_quantized_model(SAVED_MODEL_PATH_TF)
+
+    def save_and_load_exported_tflite_fakequant_model(self):
+        tflite_export_model(model=self.exportable_model,
+                            is_layer_exportable_fn=is_keras_layer_exportable,
+                            mode=TFLiteExportMode.FAKELY_QUANT,
+                            save_model_path=SAVED_MODEL_PATH_TFLITE)
+        interpreter = tf.lite.Interpreter(model_path=SAVED_MODEL_PATH_TFLITE)
+        interpreter.allocate_tensors()
+
+    def equal_predictions_between_exportable_and_tf_fq_exported(self):
         """
         Test that the exported model and fully quantized model predicting the same results.
         """
         images = self.representative_data_gen()
-        diff = self.tf_exported_model(images) - self.exportable_model(images)
-        print(f'Max abs error: {np.max(np.abs(diff))}')
+        diff = keras_load_quantized_model(SAVED_MODEL_PATH_TF)(images) - self.exportable_model(images)
         self.assertTrue(np.sum(np.abs(diff)) == 0)
 
-    def test_load_model(self):
-        """
-        Test that the exported model (after loading it from file system) and fully quantized model predicting the
-        same results.
-        """
-        images = self.representative_data_gen()
-        diff = self.tf_exported_model(images) - self.exportable_model(images)
-        print(f'Max abs error: {np.max(np.abs(diff))}')
-        self.assertTrue(np.sum(np.abs(diff)) == 0)
-
-    def test_tflite_fq_export(self):
+    def tflite_fq_exported_weights(self):
         """
         Test that the tflite exported model can infer and that tf exported model has the same weights
         as the tflite exported model.
         """
+        tf_exported_model = keras_load_quantized_model(SAVED_MODEL_PATH_TF)
+
         # Test inference of exported model
         test_image = self.representative_data_gen()[0].astype("float32")
         interpreter = tf.lite.Interpreter(model_path=SAVED_MODEL_PATH_TFLITE)
@@ -115,25 +122,23 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         # TFLite tensor index may change between TF versions:
         tensor_index = None
         for tensor_details in interpreter.get_tensor_details():
-            if self.tf_exported_model.layers[2].name in tensor_details['name'] and tensor_details['name'].endswith('Conv2D'):
+            if tf_exported_model.layers[2].name in tensor_details['name'] and tensor_details['name'].endswith('Conv2D'):
                 tensor_index = tensor_details['index']
                 break
         assert tensor_index is not None, f'Could not find kernel tensor details in TFLite file'
 
         # Test equal weights of the first conv2d layer between exported TFLite and exported TF
-        diff = np.transpose(interpreter.tensor(tensor_index)(), (1, 2, 3, 0)) - self.tf_exported_model.layers[2].kernel
-        print(f'Max abs error: {np.max(np.abs(diff))}')
+        diff = np.transpose(interpreter.tensor(tensor_index)(), (1, 2, 3, 0)) - tf_exported_model.layers[2].kernel
         self.assertTrue(np.sum(np.abs(diff)) == 0)
 
         tensor_index = None
         for tensor_details in interpreter.get_tensor_details():
-            if self.tf_exported_model.layers[2].name in tensor_details['name'] and tensor_details['name'].endswith(
-                    'BiasAdd/ReadVariableOp/resource'):
+            if tf_exported_model.layers[2].name in tensor_details['name'] and tensor_details['name'].endswith(
+                    'BiasAdd/ReadVariableOp'):
                 tensor_index = tensor_details['index']
                 break
         assert tensor_index is not None, f'Could not find bias tensor details in TFLite file'
 
         # Make sure the bias is equal
-        diff = interpreter.tensor(tensor_index)() - self.tf_exported_model.layers[2].bias
-        print(f'Max abs error: {np.max(np.abs(diff))}')
+        diff = interpreter.tensor(tensor_index)() - tf_exported_model.layers[2].bias
         self.assertTrue(np.sum(np.abs(diff)) == 0)

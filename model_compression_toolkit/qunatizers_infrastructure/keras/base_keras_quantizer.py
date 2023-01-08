@@ -19,15 +19,16 @@ from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
-from model_compression_toolkit.qunatizers_infrastructure.common.base_quantizer import BaseQuantizer, QuantizationTarget
+from model_compression_toolkit.qunatizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
+from model_compression_toolkit.qunatizers_infrastructure import QuantizationTarget
 
 if FOUND_TF:
-    QUANTIZATION_CONFIG = 'qunatization_config'
+    QUANTIZATION_CONFIG = 'quantization_config'
     from model_compression_toolkit.qunatizers_infrastructure.keras.config_serialization import config_serialization, \
         config_deserialization
 
 
-    class BaseKerasQuantizer(BaseQuantizer):
+    class BaseKerasTrainableQuantizer(BaseTrainableQuantizer):
         def __init__(self,
                      quantization_config: BaseNodeQuantizationConfig,
                      quantization_target: QuantizationTarget,
@@ -40,7 +41,9 @@ if FOUND_TF:
                 quantization_target: A enum which decided the qunaizer tensor type activation or weights.
                 quantization_method: A list of enums which represent the quantizer supported methods.
             """
-            super().__init__(quantization_config, quantization_target, quantization_method)
+            super().__init__(quantization_config,
+                             quantization_target,
+                             quantization_method)
 
         def get_config(self) -> Dict[str, Any]:
             """
@@ -66,9 +69,12 @@ if FOUND_TF:
             return cls(quantization_config=quantization_config)
 
 else:
-    class BaseKerasQuantizer(BaseQuantizer):
-        def __init__(self, quantization_config: BaseNodeQuantizationConfig, quantization_target: QuantizationTarget,
+    class BaseKerasTrainableQuantizer(BaseTrainableQuantizer):
+        def __init__(self,
+                     quantization_config: BaseNodeQuantizationConfig,
+                     quantization_target: QuantizationTarget,
                      quantization_method: List[QuantizationMethod]):
+
             super().__init__(quantization_config, quantization_target, quantization_method)
             Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using BaseKerasQuantizer. '

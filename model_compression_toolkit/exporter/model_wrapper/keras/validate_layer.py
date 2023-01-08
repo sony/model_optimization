@@ -15,12 +15,11 @@
 from typing import Any
 
 from keras.engine.input_layer import InputLayer
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapperV2
 
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.exporter.model_wrapper.keras.builder.quantize_config_to_node import \
-    SUPPORTED_QUANTIZATION_CONFIG
-from model_compression_toolkit.exporter.model_wrapper.keras.extended_quantize_wrapper import ExtendedQuantizeWrapper
+from model_compression_toolkit.qunatizers_infrastructure import KerasQuantizationWrapper, \
+    KerasNodeQuantizationDispatcher
+from model_compression_toolkit.qunatizers_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer
 
 
 def is_keras_layer_exportable(layer: Any) -> bool:
@@ -37,12 +36,21 @@ def is_keras_layer_exportable(layer: Any) -> bool:
     if isinstance(layer, InputLayer):
         return True
 
-    valid_layer = isinstance(layer, ExtendedQuantizeWrapper)
+    valid_layer = isinstance(layer, KerasQuantizationWrapper)
     if not valid_layer:
-        Logger.error(f'Exportable layer must be wrapped using ExtendedQuantizeWrapper, but layer {layer.name} is of type {type(layer)}')
+        Logger.error(
+            f'Exportable layer must be wrapped using KerasQuantizationWrapper, but layer {layer.name} is of type '
+            f'{type(layer)}')
 
-    valid_quantize_config = type(layer.quantize_config) in SUPPORTED_QUANTIZATION_CONFIG
-    if not valid_quantize_config:
-        Logger.error(f'QuantizeConfig of layer is not supported. Type: {type(layer.quantize_config)}. Supported configs: {SUPPORTED_QUANTIZATION_CONFIG}.')
+    valid_dispatcher = isinstance(layer.dispatcher, KerasNodeQuantizationDispatcher)
+    if not valid_dispatcher:
+        Logger.error(
+            f'KerasQuantizationWrapper must have a dispatcher of type KerasNodeQuantizationDispatcher but has a '
+            f'{type(layer.dispatcher)} object as a dispatcher')
+
+    dispatcher_quantizers = layer.dispatcher.activation_quantizers + list(layer.dispatcher.weight_quantizers.values())
+    inferable_quantizers = all([isinstance(x, BaseInferableQuantizer) for x in dispatcher_quantizers])
+    if not inferable_quantizers:
+        Logger.error(f'Found a quantizer in the dispatcher that is not of type BaseInferableQuantizer')
 
     return True

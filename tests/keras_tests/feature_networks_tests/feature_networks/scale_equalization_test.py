@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-
+import copy
 import numpy as np
 import tensorflow as tf
 
@@ -64,9 +64,32 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
         if self.zero_pad:
             x = layers.ZeroPadding2D()(x)
         outputs = self.second_op2d(x)
-        return keras.Model(inputs=inputs, outputs=outputs)
+        model = keras.Model(inputs=inputs, outputs=outputs)
+
+        def _set_new_weights(model):
+            # Patch to change the kernel weights since there is a bug with initializer
+            # in DepthwiseConv2D (it ignores the min and max values, and set 0 for some of them
+            # even though the test requires the weights to be positive.
+            weights = copy.deepcopy(model.weights)
+            attr = 'depthwise_kernel' if isinstance(self.first_op2d, layers.DepthwiseConv2D) else 'kernel'
+            a = 5 if self.zero_pad else 4
+            attr2 = 'depthwise_kernel' if isinstance(self.second_op2d, layers.DepthwiseConv2D) else 'kernel'
+            new_w = []
+            for w in weights:
+                if w.name.startswith(model.layers[1].name + '/' + attr):
+                    new_w.append(tf.Variable(w + 10.0, name=w.name.replace(':0', "")))
+                elif w.name.startswith(model.layers[a].name + '/' + attr2):
+                    new_w.append(tf.Variable(w + 10.0, name=w.name.replace(':0', "")))
+                else:
+                    new_w.append(w)
+            model.set_weights(new_w)
+
+        _set_new_weights(model)
+
+        return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+
         q_first_linear_op_index = 2
         q_second_linear_op_index = 5 + int(self.zero_pad) + int(
             isinstance(self.first_op2d, layers.Dense))
@@ -75,6 +98,7 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
 
         quantized_model_layer1_weight = quantized_model.layers[q_first_linear_op_index].weights[0]
         quantized_model_layer2_weight = quantized_model.layers[q_second_linear_op_index].weights[0]
+
         float_model_layer1_weight = float_model.layers[f_first_linear_op_index].weights[0]
         float_model_layer2_weight = float_model.layers[f_second_linear_op_index].weights[0]
 

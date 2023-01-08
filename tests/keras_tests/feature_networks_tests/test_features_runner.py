@@ -35,7 +35,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.conv_bn_relu_resi
 from tests.keras_tests.feature_networks_tests.feature_networks.decompose_separable_conv_test import \
     DecomposeSeparableConvTest
 from tests.keras_tests.feature_networks_tests.feature_networks.experimental_exporter_test import \
-    ExperimentalExporterTest
+    ExportableModelTest
 from tests.keras_tests.feature_networks_tests.feature_networks.gptq.gptq_conv import \
     GradientPTQLearnRateZeroConvGroupDilationTest, GradientPTQWeightsUpdateConvGroupDilationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.gptq.gptq_test import GradientPTQTest, \
@@ -449,8 +449,8 @@ class FeatureNetworkTest(unittest.TestCase):
         ActivationDecompositionTest(self, activation_function='softmax').run_test()
 
     def test_experimental_exporter(self):
-        ExperimentalExporterTest(self).run_test(experimental_exporter=True,
-                                                experimental_facade=True)
+        ExportableModelTest(self).run_test(experimental_exporter=True,
+                                           experimental_facade=True)
 
     def test_conv2d_bn_concant(self):
         Conv2DBNConcatnFoldingTest(self).run_test()

@@ -28,7 +28,7 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import ste_round, ste_clip, symmetric_quantizer
 
 
-class STEWeightQuantizer(qi.BasePytorchQuantizer):
+class STEWeightQuantizer(qi.BasePytorchTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer weights.
     """
@@ -110,7 +110,7 @@ class STEWeightQuantizer(qi.BasePytorchQuantizer):
         return w_q
 
 
-class STEActivationQuantizer(qi.BasePytorchQuantizer):
+class STEActivationQuantizer(qi.BasePytorchTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer activations.
     """

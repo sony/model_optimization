@@ -15,23 +15,17 @@
 
 
 import tensorflow as tf
+from keras.engine.base_layer import Layer
 from keras.engine.input_layer import InputLayer
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 
-from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.activation_quantize_config import \
-    ActivationQuantizeConfig
-from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.weights_activation_quantize_config \
-    import \
-    WeightsActivationQuantizeConfig
-from model_compression_toolkit.exporter.model_wrapper.keras.quantize_configs.weights_quantize_config import \
-    WeightsQuantizeConfig
+from model_compression_toolkit.core.keras.constants import KERNEL
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
 layers = keras.layers
+from model_compression_toolkit import qunatizers_infrastructure as qi
 
-
-class ExperimentalExporterTest(BaseKerasFeatureNetworkTest):
+class ExportableModelTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -44,21 +38,30 @@ class ExperimentalExporterTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(isinstance(quantized_model.layers[0], InputLayer))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[1], QuantizeWrapper))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[1].layer, InputLayer))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[1].quantize_config, ActivationQuantizeConfig))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[1], qi.KerasQuantizationWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[1].layer, Layer))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[1].dispatcher, qi.KerasNodeQuantizationDispatcher))
+        self.unit_test.assertTrue(len(quantized_model.layers[1].dispatcher.activation_quantizers) == 1)
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[1].dispatcher.activation_quantizers[0], qi.BaseInferableQuantizer))
 
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], QuantizeWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], qi.KerasQuantizationWrapper))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].quantize_config, WeightsActivationQuantizeConfig))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].dispatcher, qi.KerasNodeQuantizationDispatcher))
+        self.unit_test.assertTrue(len(quantized_model.layers[2].dispatcher.activation_quantizers) == 1)
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].dispatcher.activation_quantizers[0], qi.BaseInferableQuantizer))
+        self.unit_test.assertTrue(len(quantized_model.layers[2].dispatcher.weight_quantizers) == 1)
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].dispatcher.weight_quantizers[KERNEL], qi.BaseInferableQuantizer))
 
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[3], QuantizeWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3], qi.KerasQuantizationWrapper))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.Conv2D))
-        self.unit_test.assertTrue(
-            isinstance(quantized_model.layers[3].quantize_config, WeightsQuantizeConfig))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].dispatcher, qi.KerasNodeQuantizationDispatcher))
+        self.unit_test.assertTrue(len(quantized_model.layers[3].dispatcher.activation_quantizers) == 0)
+        self.unit_test.assertTrue(len(quantized_model.layers[3].dispatcher.weight_quantizers) == 1)
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].dispatcher.weight_quantizers[KERNEL], qi.BaseInferableQuantizer))
 
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[4], QuantizeWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[4], qi.KerasQuantizationWrapper))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[4].layer, layers.ReLU))
-        self.unit_test.assertTrue(
-            isinstance(quantized_model.layers[4].quantize_config, ActivationQuantizeConfig))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[4].dispatcher, qi.KerasNodeQuantizationDispatcher))
+        self.unit_test.assertTrue(len(quantized_model.layers[4].dispatcher.activation_quantizers) == 1)
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[4].dispatcher.activation_quantizers[0], qi.BaseInferableQuantizer))
 
