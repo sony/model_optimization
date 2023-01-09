@@ -24,10 +24,10 @@ jobs:
           pip install tensorflow==${{ inputs.tf-version }}
       - name: Run unittests
         run: |
-          python -m unittest discover tests/feature_networks_tests -v
-          python -m unittest discover tests/function_tests -v
-          python -m unittest discover tests/graph_tests -v
-          python -m unittest discover tests/layer_tests -v
+          python -m unittest discover tests/keras_tests/feature_networks_tests -v
+          python -m unittest discover tests/keras_tests/function_tests -v
+          python -m unittest discover tests/keras_tests/graph_tests -v
+          python -m unittest discover tests/keras_tests/layer_tests -v
 
 
 
