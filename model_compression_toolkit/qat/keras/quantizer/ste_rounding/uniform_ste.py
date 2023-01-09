@@ -19,13 +19,14 @@ import numpy as np
 import tensorflow as tf
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape
+
 from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
-from model_compression_toolkit import qunatizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
 
 
-class STEUniformWeightQuantizer(qi.BaseKerasQuantizer):
+class STEUniformWeightQuantizer(qi.BaseKerasTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer inputs.
     """

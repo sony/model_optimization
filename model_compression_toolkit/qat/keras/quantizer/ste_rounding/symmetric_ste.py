@@ -26,11 +26,11 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
-from model_compression_toolkit import qunatizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common import constants as C
 
 
-class STEWeightQuantizer(qi.BaseKerasQuantizer):
+class STEWeightQuantizer(qi.BaseKerasTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer inputs.
     """
@@ -146,7 +146,7 @@ class STEWeightQuantizer(qi.BaseKerasQuantizer):
         return q_tensor
 
 
-class STEActivationQuantizer(qi.BaseKerasQuantizer):
+class STEActivationQuantizer(qi.BaseKerasTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer outputs.
     """

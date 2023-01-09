@@ -52,6 +52,6 @@ from model_compression_toolkit.gptq.pytorch.quantization_facade import get_pytor
 from model_compression_toolkit.core.keras.kpi_data_facade import keras_kpi_data, keras_kpi_data_experimental
 from model_compression_toolkit.core.pytorch.kpi_data_facade import pytorch_kpi_data, pytorch_kpi_data_experimental
 
-from model_compression_toolkit.qunatizers_infrastructure.keras.load_model import keras_load_quantized_model
+from model_compression_toolkit.quantizers_infrastructure.keras.load_model import keras_load_quantized_model
 
 __version__ = "1.7.1"

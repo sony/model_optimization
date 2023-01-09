@@ -2,8 +2,9 @@ from typing import Dict, List
 
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.qunatizers_infrastructure.common.base_quantizer import BaseQuantizer
-from model_compression_toolkit.qunatizers_infrastructure.common.node_quantization_dispatcher import \
+from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.common.node_quantization_dispatcher import \
     NodeQuantizationDispatcher
 
 if FOUND_TF:
@@ -15,8 +16,9 @@ if FOUND_TF:
 
 
     class KerasNodeQuantizationDispatcher(NodeQuantizationDispatcher):
-        def __init__(self, weight_quantizers: Dict[str, BaseQuantizer] = None,
-                     activation_quantizers: List[BaseQuantizer] = None):
+        def __init__(self,
+                     weight_quantizers: Dict[str, BaseInferableQuantizer] = None,
+                     activation_quantizers: List[BaseInferableQuantizer] = None):
             """
             Keras Node quantization dispatcher collect all the quantizer of a given layer.
             Add to functions get_config and from_config to enable saving and loading of keras models.
@@ -24,7 +26,8 @@ if FOUND_TF:
                 weight_quantizers: A dictionary between a weight's name to its quantizer.
                 activation_quantizers: A list of activations quantization, one for each layer output.
             """
-            super().__init__(weight_quantizers, activation_quantizers)
+            super().__init__(weight_quantizers,
+                             activation_quantizers)
 
         def get_config(self) -> dict:
             """
@@ -59,8 +62,9 @@ if FOUND_TF:
             return cls(weight_quantizer, activation_quantizers)
 else:
     class KerasNodeQuantizationDispatcher(NodeQuantizationDispatcher):
-        def __init__(self, weight_quantizer: Dict[str, BaseQuantizer] = None,
-                     activation_quantizers: List[BaseQuantizer] = None):
+        def __init__(self,
+                     weight_quantizers: Dict[str, BaseInferableQuantizer] = None,
+                     activation_quantizers: List[BaseInferableQuantizer] = None):
             """
             Keras Node quantization dispatcher collect all the quantizer of a given layer.
             Add to functions get_config and from_config to enable saving and loading of keras models.
@@ -68,7 +72,7 @@ else:
                 weight_quantizers: A dictionary between a weight's name to its quantizer.
                 activation_quantizers: A list of activations quantization, one for each layer output.
             """
-            super().__init__(weight_quantizer, activation_quantizers)
+            super().__init__(weight_quantizers, activation_quantizers)
             Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using KerasNodeQuantizationDispatcher. '
                             'Could not find Tensorflow package.')

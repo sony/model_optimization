@@ -19,11 +19,12 @@ from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
-from model_compression_toolkit.qunatizers_infrastructure.common.base_quantizer import BaseQuantizer, QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 
 if FOUND_TORCH:
 
-    class BasePytorchQuantizer(BaseQuantizer):
+    class BasePytorchTrainableQuantizer(BaseTrainableQuantizer):
         def __init__(self,
                      quantization_config: BaseNodeQuantizationConfig,
                      quantization_target: QuantizationTarget,
@@ -40,7 +41,7 @@ if FOUND_TORCH:
             super().__init__(quantization_config, quantization_target, quantization_method)
 
 else:
-    class BasePytorchQuantizer(BaseQuantizer):
+    class BasePytorchTrainableQuantizer(BaseTrainableQuantizer):
         def __init__(self, quantization_config: BaseNodeQuantizationConfig, quantization_target: QuantizationTarget,
                      quantization_method: List[QuantizationMethod]):
             super().__init__(quantization_config, quantization_target, quantization_method)

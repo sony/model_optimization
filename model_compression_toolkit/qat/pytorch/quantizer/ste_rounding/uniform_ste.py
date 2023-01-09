@@ -22,12 +22,12 @@ from model_compression_toolkit.core.common.constants import RANGE_MAX, RANGE_MIN
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit.core.common import constants as C
-from model_compression_toolkit import qunatizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import uniform_quantizer
 
 
-class STEUniformWeightQuantizer(qi.BasePytorchQuantizer):
+class STEUniformWeightQuantizer(qi.BasePytorchTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer inputs.
     """
@@ -100,7 +100,7 @@ class STEUniformWeightQuantizer(qi.BasePytorchQuantizer):
         return uniform_quantizer(inputs, self.min_values, self.max_values, self.num_bit)
 
 
-class STEUniformActivationQuantizer(qi.BasePytorchQuantizer):
+class STEUniformActivationQuantizer(qi.BasePytorchTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer activations.
     """

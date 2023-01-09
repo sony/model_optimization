@@ -15,13 +15,13 @@
 
 from typing import Dict, List
 
-from model_compression_toolkit.qunatizers_infrastructure.common.base_quantizer import BaseQuantizer
+from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
 
 
 class NodeQuantizationDispatcher:
     def __init__(self,
-                 weight_quantizers: Dict[str, BaseQuantizer] = None,
-                 activation_quantizers: List[BaseQuantizer] = None):
+                 weight_quantizers: Dict[str, BaseInferableQuantizer] = None,
+                 activation_quantizers: List[BaseInferableQuantizer] = None):
         """
         Node quantization dispatcher collects all the quantizer of a given layer.
 
@@ -32,7 +32,7 @@ class NodeQuantizationDispatcher:
         self.weight_quantizers = weight_quantizers if weight_quantizers is not None else dict()
         self.activation_quantizers = activation_quantizers if activation_quantizers is not None else list()
 
-    def add_weight_quantizer(self, param_name: str, quantizer: BaseQuantizer):
+    def add_weight_quantizer(self, param_name: str, quantizer: BaseInferableQuantizer):
         """
         This function adds a weight quantizer to existing node dispatcher
 
@@ -68,8 +68,8 @@ class NodeQuantizationDispatcher:
     def num_weight_quantizers(self):
         return len(self.weight_quantizers)
 
+
     @property
     def num_act_quantizers(self):
         return len(self.activation_quantizers)
-
 

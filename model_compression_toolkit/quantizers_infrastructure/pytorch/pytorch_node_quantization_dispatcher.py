@@ -1,8 +1,9 @@
 from typing import Dict, List
 
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.qunatizers_infrastructure.common.base_quantizer import BaseQuantizer
-from model_compression_toolkit.qunatizers_infrastructure.common.node_quantization_dispatcher import \
+from model_compression_toolkit.quantizers_infrastructure import BasePytorchTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.common.node_quantization_dispatcher import \
     NodeQuantizationDispatcher
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 
@@ -12,8 +13,8 @@ if FOUND_TORCH:
 
 
     class PytorchNodeQuantizationDispatcher(NodeQuantizationDispatcher):
-        def __init__(self, weight_quantizers: Dict[str, BaseQuantizer] = None,
-                     activation_quantizers: List[BaseQuantizer] = None):
+        def __init__(self, weight_quantizers: Dict[str, BasePytorchTrainableQuantizer] = None,
+                     activation_quantizers: List[BasePytorchTrainableQuantizer] = None):
             """
             Pytorch Node quantization dispatcher collect all the quantizer of a given layer.
 
@@ -26,8 +27,8 @@ if FOUND_TORCH:
 
 else:
     class PytorchNodeQuantizationDispatcher(NodeQuantizationDispatcher):
-        def __init__(self, weight_quantizer: Dict[str, BaseQuantizer] = None,
-                     activation_quantizers: List[BaseQuantizer] = None):
+        def __init__(self, weight_quantizer: Dict[str, BasePytorchTrainableQuantizer] = None,
+                     activation_quantizers: List[BasePytorchTrainableQuantizer] = None):
             """
             Pytorch Node quantization dispatcher collect all the quantizer of a given layer.
 

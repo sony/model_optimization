@@ -22,13 +22,13 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
-from model_compression_toolkit import qunatizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common import constants as C
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import ste_round, ste_clip, symmetric_quantizer
 
 
-class STEWeightQuantizer(qi.BasePytorchQuantizer):
+class STEWeightQuantizer(qi.BasePytorchTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer weights.
     """
@@ -110,7 +110,7 @@ class STEWeightQuantizer(qi.BasePytorchQuantizer):
         return w_q
 
 
-class STEActivationQuantizer(qi.BasePytorchQuantizer):
+class STEActivationQuantizer(qi.BasePytorchTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer activations.
     """
