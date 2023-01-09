@@ -21,6 +21,7 @@ from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste import STEWeightQuantizer, STEActivationQuantizer
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste import STEUniformWeightQuantizer
 from model_compression_toolkit.qat.common.qat_config import QATConfig, TrainingMethod
+from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste import STEUniformWeightQuantizer, STEUniformActivationQuantizer
 
 METHOD2WEIGHTQUANTIZER = {TrainingMethod.STE: {qi.QuantizationMethod.SYMMETRIC: STEWeightQuantizer,
                                                qi.QuantizationMethod.POWER_OF_TWO: STEWeightQuantizer,
@@ -28,7 +29,8 @@ METHOD2WEIGHTQUANTIZER = {TrainingMethod.STE: {qi.QuantizationMethod.SYMMETRIC: 
 
 
 METHOD2ACTQUANTIZER = {TrainingMethod.STE: {qi.QuantizationMethod.SYMMETRIC: STEActivationQuantizer,
-                                            qi.QuantizationMethod.POWER_OF_TWO: STEActivationQuantizer}}  # TODO: Add uniform quantization
+                                            qi.QuantizationMethod.POWER_OF_TWO: STEActivationQuantizer,
+                                            qi.QuantizationMethod.UNIFORM: STEUniformActivationQuantizer}}
 
 
 def quantization_dispatcher_builder(n: common.BaseNode,

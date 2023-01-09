@@ -86,7 +86,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.ed
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.node_filter_test import NameFilterTest, \
     ScopeFilterTest, TypeFilterTest
 from tests.keras_tests.feature_networks_tests.feature_networks.output_in_middle_test import OutputInMiddleTest
-from tests.keras_tests.feature_networks_tests.feature_networks.qat.qat_test import QuantizationAwareTrainingTest, \
+from tests.keras_tests.feature_networks_tests.feature_networks.qat.qat_test import QATWrappersTest, \
     QuantizationAwareTrainingQuantizersTest
 from tests.keras_tests.feature_networks_tests.feature_networks.relu_replacement_test import ReluReplacementTest, \
     SingleReluReplacementTest, ReluReplacementWithAddBiasTest
@@ -597,20 +597,21 @@ class FeatureNetworkTest(unittest.TestCase):
                                    separate_key_value=separate_key_value, output_dim=14).run_test()
 
     def test_qat(self):
-        _finalize = False
-        QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True).run_test()
-        QuantizationAwareTrainingTest(self, layers.Conv2D(3, 4, activation='relu'), finalize=_finalize,
-                                      weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
-        QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu'), test_loading=True,
-                                      weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM).run_test()
-        QuantizationAwareTrainingTest(self, layers.Dense(3, activation='relu'), finalize=_finalize).run_test()
-        QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu'),
-                                      weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
-        QuantizationAwareTrainingTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), finalize=_finalize).run_test()
+        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True).run_test()
+        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
+                        weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
+                        activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
+        QATWrappersTest(self, layers.Dense(3, activation='relu'), test_loading=True,
+                        weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
+                        activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM).run_test()
+        QATWrappersTest(self, layers.Dense(3, activation='relu')).run_test()
+        QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), test_loading=True,
+                        weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
+                        activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
+        QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu')).run_test()
         # DW-Conv2D are tested under the tests below because an extra check is needed to verify the
-        # quantization per channel of its kernel
+        # quantization per channel of its kernel TODO: should be part of the quantizers tests
         QuantizationAwareTrainingQuantizersTest(self).run_test()
-        QuantizationAwareTrainingQuantizersTest(self, finalize=_finalize).run_test()
 
 
 if __name__ == '__main__':

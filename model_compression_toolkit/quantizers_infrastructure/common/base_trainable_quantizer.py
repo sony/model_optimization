@@ -132,3 +132,12 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         """
         if not self.activation_quantization() or self.weights_quantization():
             common.Logger.error(f'Expect activation quantization got weight')
+
+    def convert2inferable(self) -> BaseInferableQuantizer:
+        """
+        Convert quantizer to inferable quantizer.
+
+        Returns:
+            BaseInferableQuantizer object.
+        """
+        raise NotImplemented

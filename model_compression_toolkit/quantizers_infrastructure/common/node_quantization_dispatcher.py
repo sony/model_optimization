@@ -32,6 +32,29 @@ class NodeQuantizationDispatcher:
         self.weight_quantizers = weight_quantizers if weight_quantizers is not None else dict()
         self.activation_quantizers = activation_quantizers if activation_quantizers is not None else list()
 
+
+    def set_weight_quantizers(self, weight_quantizers):
+        """
+        This function sets weight quantizers to existing node dispatcher
+
+        Args:
+            weight_quantizers: weight quantizers
+
+        Returns: None
+        """
+        self.weight_quantizers = weight_quantizers
+
+    def set_activation_quantizers(self, activation_quantizers):
+        """
+        This function sets activation quantizers to existing node dispatcher
+
+        Args:
+            activation_quantizers: activation quantizers
+
+        Returns: None
+        """
+        self.activation_quantizers = activation_quantizers
+
     def add_weight_quantizer(self, param_name: str, quantizer: BaseInferableQuantizer):
         """
         This function adds a weight quantizer to existing node dispatcher
