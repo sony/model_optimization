@@ -16,19 +16,15 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.qunatizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
 if FOUND_TF:
     import tensorflow as tf
+    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_pot_inferable_quantizer import BasePOTInferableQuantizer
 
-    from model_compression_toolkit.qunatizers_infrastructure.keras.inferable_quantizers \
-        .base_symmetric_inferable_quantizer import \
-        BaseSymmetricInferableQuantizer
-
-
-    class ActivationSymmetricInferableQuantizer(BaseSymmetricInferableQuantizer):
+    class ActivationPOTInferableQuantizer(BasePOTInferableQuantizer):
         """
-        Class for quantizing activations using a symmetric quantizer
+        Class for quantizing activations using power-of-two quantizer
         """
 
         def __init__(self,
@@ -45,21 +41,10 @@ if FOUND_TF:
             """
             # Call the superclass constructor with the given parameters, along with the target of Activation
             # quantization
-            super(ActivationSymmetricInferableQuantizer, self).__init__(num_bits=num_bits,
-                                                                        threshold=threshold,
-                                                                        signed=signed,
-                                                                        quantization_target=QuantizationTarget.Activation)
-
-        def get_config(self):
-            """
-            Return a dictionary with the configuration of the quantizer.
-
-            Returns:
-                Dictionary with the following keys: 'num_bits', 'signed', 'threshold'
-            """
-            return {'num_bits': self.num_bits,
-                    'signed': self.signed,
-                    'threshold': self.threshold}
+            super(ActivationPOTInferableQuantizer, self).__init__(num_bits=num_bits,
+                                                                  threshold=threshold,
+                                                                  signed=signed,
+                                                                  quantization_target=QuantizationTarget.Activation)
 
         def __call__(self, inputs, training=False):
             """
@@ -77,9 +62,20 @@ if FOUND_TF:
                                                                 max=self.max_range,
                                                                 num_bits=self.num_bits)
 
+        def get_config(self):
+            """
+            Return a dictionary with the configuration of the quantizer.
+
+            Returns:
+                Dictionary with the following keys: 'num_bits', 'signed', 'threshold'
+            """
+            return {'num_bits': self.num_bits,
+                    'signed': self.signed,
+                    'threshold': self.threshold}
+
 else:
-    class ActivationSymmetricInferableQuantizer:
+    class ActivationPOTInferableQuantizer:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
-                            'when using ActivationSymmetricInferableQuantizer. '
+                            'when using ActivationPOTInferableQuantizer. '
                             'Could not find Tensorflow package.')

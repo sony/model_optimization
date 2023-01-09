@@ -16,59 +16,53 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
-from model_compression_toolkit.qunatizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
 if FOUND_TF:
     import tensorflow as tf
-    from model_compression_toolkit.qunatizers_infrastructure.keras.inferable_quantizers\
-        .base_uniform_inferable_quantizer import \
-        BaseUniformInferableQuantizer
+    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_pot_inferable_quantizer import BasePOTInferableQuantizer
 
+    class WeightsPOTInferableQuantizer(BasePOTInferableQuantizer):
+        """
+        Class for quantizing weights using power-of-two quantizer
+        """
 
-    class WeightsUniformInferableQuantizer(BaseUniformInferableQuantizer):
-        """
-        Class for quantizing weights using a uniform quantizer
-        """
         def __init__(self,
                      num_bits: int,
-                     min_range: np.ndarray,
-                     max_range: np.ndarray,
+                     threshold: np.ndarray,
+                     signed: bool,
                      per_channel: bool,
-                     channel_axis: int
-                     ):
+                     channel_axis: int):
             """
             Initialize the quantizer with the specified parameters.
 
             Args:
                 num_bits: number of bits to use for quantization
-                min_range: min quantization range for quantizing weights
-                max_range: max quantization range for quantizing weights
+                threshold: threshold for quantizing activations
+                signed: whether or not to use signed quantization
                 per_channel: whether to use per-channel quantization
                 channel_axis: axis along which to apply per-channel quantization
             """
-            super(WeightsUniformInferableQuantizer, self).__init__(num_bits,
-                                                                   min_range,
-                                                                   max_range,
-                                                                   QuantizationTarget.Weights)
+            # Call the superclass constructor with the given parameters, along with the target of Weights quantization
+            super(WeightsPOTInferableQuantizer, self).__init__(num_bits=num_bits,
+                                                               threshold=threshold,
+                                                               signed=signed,
+                                                               quantization_target=QuantizationTarget.Weights)
 
             self.per_channel = per_channel
             self.channel_axis = channel_axis
-            self.min_range, self.max_range = fix_range_to_include_zero(np.array(self.min_range),
-                                                                       np.array(self.max_range),
-                                                                       self.num_bits)
 
-            # Get the shape of the range array
-            self.range_shape = np.asarray(min_range).shape
+            # Get the shape of the threshold array
+            self.threshold_shape = np.asarray(threshold).shape
 
             # Tensorflow's fake_quant_with_min_max_vars_per_channel only works on last axis, so
             # need to move the quantization axis to the last axis
-            if per_channel and channel_axis not in [-1, len(self.range_shape) - 1]:
+            if per_channel and channel_axis not in [-1, len(self.threshold_shape) - 1]:
                 # If per-channel quantization is being used and the channel axis is not the last axis,
                 # create a permutation vector to move the channel axis to the last position
-                self.perm_vec = list(np.arange(len(self.range_shape)))
-                self.perm_vec[channel_axis] = len(self.range_shape) - 1
-                self.perm_vec[len(self.range_shape) - 1] = channel_axis
+                self.perm_vec = list(np.arange(len(self.threshold_shape)))
+                self.perm_vec[channel_axis] = len(self.threshold_shape) - 1
+                self.perm_vec[len(self.threshold_shape) - 1] = channel_axis
             else:
                 # If per-channel quantization is not being used or the channel axis is already the last axis,
                 # set the permutation vector to None
@@ -110,24 +104,22 @@ if FOUND_TF:
                                                                     max=self.max_range,
                                                                     num_bits=self.num_bits)
 
+        def get_config(self):
+            """
+            Return a dictionary with the configuration of the quantizer.
 
-    def get_config(self):
-        """
-        Return a dictionary with the configuration of the quantizer.
-
-        Returns:
-            Dictionary with the following keys: 'num_bits', 'min_range', 'max_range', 'per_channel', 'channel_axis'
-        """
-        return {'per_channel': self.per_channel,
-                'num_bits': self.num_bits,
-                'max_range': self.max_range,
-                'min_range': self.min_range,
-                'channel_axis': self.channel_axis}
-
+            Returns:
+                Dictionary with the following keys: 'num_bits', 'signed', 'threshold', 'per_channel', 'channel_axis'
+            """
+            return {'num_bits': self.num_bits,
+                    'signed': self.signed,
+                    'threshold': self.threshold,
+                    'per_channel': self.per_channel,
+                    'channel_axis': self.channel_axis}
 
 else:
-    class WeightsUniformInferableQuantizer:
+    class WeightsPOTInferableQuantizer:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
-                            'when using WeightsUniformInferableQuantizer. '
+                            'when using WeightsPOTInferableQuantizer. '
                             'Could not find Tensorflow package.')

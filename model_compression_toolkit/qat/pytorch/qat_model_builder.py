@@ -16,7 +16,7 @@ import torch
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import BaseNode
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-import model_compression_toolkit.qunatizers_infrastructure.pytorch.quantize_wrapper as qi
+import model_compression_toolkit.quantizers_infrastructure.pytorch.quantize_wrapper as qi
 from model_compression_toolkit.qat.pytorch.quantizer.quantization_dispatcher_builder import quantization_dispatcher_builder
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 

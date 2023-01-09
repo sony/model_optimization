@@ -21,7 +21,7 @@ from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_m
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
-from model_compression_toolkit import qunatizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 
 

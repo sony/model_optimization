@@ -38,7 +38,7 @@ if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.constants import KERNEL
     from model_compression_toolkit.qat.pytorch.qat_model_builder import qat_wrapper
     from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
-    from model_compression_toolkit.qunatizers_infrastructure import PytorchQuantizationWrapper
+    from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
 
     from model_compression_toolkit import get_target_platform_capabilities
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)

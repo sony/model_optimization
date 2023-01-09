@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit import qunatizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \

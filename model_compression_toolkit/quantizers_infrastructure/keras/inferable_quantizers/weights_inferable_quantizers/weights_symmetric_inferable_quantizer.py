@@ -16,17 +16,18 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.qunatizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
 if FOUND_TF:
     import tensorflow as tf
-    from model_compression_toolkit.qunatizers_infrastructure.keras.inferable_quantizers.base_pot_inferable_quantizer import BasePOTInferableQuantizer
+    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers\
+        .base_symmetric_inferable_quantizer import \
+        BaseSymmetricInferableQuantizer
 
-    class WeightsPOTInferableQuantizer(BasePOTInferableQuantizer):
+    class WeightsSymmetricInferableQuantizer(BaseSymmetricInferableQuantizer):
         """
-        Class for quantizing weights using power-of-two quantizer
+        Class for quantizing weights using a symmetric quantizer
         """
-
         def __init__(self,
                      num_bits: int,
                      threshold: np.ndarray,
@@ -38,16 +39,16 @@ if FOUND_TF:
 
             Args:
                 num_bits: number of bits to use for quantization
-                threshold: threshold for quantizing activations
+                threshold: threshold for quantizing weights
                 signed: whether or not to use signed quantization
                 per_channel: whether to use per-channel quantization
                 channel_axis: axis along which to apply per-channel quantization
             """
-            # Call the superclass constructor with the given parameters, along with the target of Weights quantization
-            super(WeightsPOTInferableQuantizer, self).__init__(num_bits=num_bits,
-                                                               threshold=threshold,
-                                                               signed=signed,
-                                                               quantization_target=QuantizationTarget.Weights)
+
+            super(WeightsSymmetricInferableQuantizer, self).__init__(num_bits=num_bits,
+                                                                     threshold=threshold,
+                                                                     signed=signed,
+                                                                     quantization_target=QuantizationTarget.Weights)
 
             self.per_channel = per_channel
             self.channel_axis = channel_axis
@@ -103,7 +104,6 @@ if FOUND_TF:
                                                                     min=self.min_range,
                                                                     max=self.max_range,
                                                                     num_bits=self.num_bits)
-
         def get_config(self):
             """
             Return a dictionary with the configuration of the quantizer.
@@ -118,7 +118,7 @@ if FOUND_TF:
                     'channel_axis': self.channel_axis}
 
 else:
-    class WeightsPOTInferableQuantizer:
+    class WeightsSymmetricInferableQuantizer:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using WeightsPOTInferableQuantizer. '

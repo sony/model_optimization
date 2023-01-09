@@ -40,7 +40,7 @@ if FOUND_TF:
     from model_compression_toolkit.qat.keras.qat_model_builder import qat_wrapper
 
     from model_compression_toolkit import get_target_platform_capabilities
-    from model_compression_toolkit import qunatizers_infrastructure as qi
+    from model_compression_toolkit import quantizers_infrastructure as qi
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
