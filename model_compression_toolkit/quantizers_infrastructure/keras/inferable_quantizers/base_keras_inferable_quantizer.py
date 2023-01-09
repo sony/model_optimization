@@ -13,37 +13,21 @@
 # limitations under the License.
 # ==============================================================================
 from abc import abstractmethod
+from enum import Enum
 
-import numpy as np
-
-from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
-from model_compression_toolkit.qunatizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
-from model_compression_toolkit.qunatizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
-    import \
-    BaseKerasInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer, QuantizationTarget
 
 
-class BaseUniformInferableQuantizer(BaseKerasInferableQuantizer):
-
+class BaseKerasInferableQuantizer(BaseInferableQuantizer):
     def __init__(self,
-                 num_bits: int,
-                 min_range: np.ndarray,
-                 max_range: np.ndarray,
-                 quantization_target: QuantizationTarget
-                 ):
+                 quantization_target: QuantizationTarget):
         """
-        Initialize the quantizer with the specified parameters.
+        This class is a base quantizer for Keras quantizers for inference only.
 
         Args:
-            num_bits: number of bits to use for quantization
-            min_range: min quantization range
-            max_range: max quantization range
             quantization_target: An enum which selects the quantizer tensor type: activation or weights.
         """
-        super(BaseUniformInferableQuantizer, self).__init__(quantization_target=quantization_target)
-        self.num_bits = num_bits
-        self.max_range = max_range
-        self.min_range = min_range
+        super(BaseKerasInferableQuantizer, self).__init__(quantization_target=quantization_target)
 
     @abstractmethod
     def get_config(self):
@@ -51,3 +35,5 @@ class BaseUniformInferableQuantizer(BaseKerasInferableQuantizer):
         Return a dictionary with the configuration of the quantizer.
         """
         raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')
+
+

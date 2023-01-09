@@ -16,7 +16,7 @@
 
 from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.core.common.logger import Logger
-from model_compression_toolkit.qunatizers_infrastructure.common.node_quantization_dispatcher import \
+from model_compression_toolkit.quantizers_infrastructure.common.node_quantization_dispatcher import \
     NodeQuantizationDispatcher
 
 if FOUND_TF:
