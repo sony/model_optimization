@@ -20,6 +20,7 @@ import tensorflow as tf
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
 import model_compression_toolkit as mct
+from tests.keras_tests.tpc_keras import get_weights_quantization_disabled_keras_tpc
 
 tp = mct.target_platform
 
@@ -40,17 +41,25 @@ class TestFullyQuantizedExporter(unittest.TestCase):
             yield [np.random.randn(1, 224, 224, 3)]
         seed = np.random.randint(0, 100, size=1)[0]
 
+        # Old exporter used Numpy to quantize the weights of the model,
+        # while the new exporter uses TF fake quant method. For this reason
+        # the weights are not identical (but almost identical), and we do not
+        # test it here.
+        tpc = get_weights_quantization_disabled_keras_tpc('test_fully_quantized')
+
         self.set_seed(seed)
         core_config = mct.CoreConfig()
         old_export_model, _ = mct.keras_post_training_quantization_experimental(in_model=MobileNetV2(),
                                                                                 representative_data_gen=repr_dataset,
-                                                                                core_config=core_config)
+                                                                                core_config=core_config,
+                                                                                target_platform_capabilities=tpc)
 
         self.set_seed(seed)
         core_config = mct.CoreConfig()
         new_export_model, _ = mct.keras_post_training_quantization_experimental(in_model=MobileNetV2(),
                                                                                 core_config=core_config,
                                                                                 representative_data_gen=repr_dataset,
+                                                                                target_platform_capabilities=tpc,
                                                                                 new_experimental_exporter=True)
 
         images = next(repr_dataset())
