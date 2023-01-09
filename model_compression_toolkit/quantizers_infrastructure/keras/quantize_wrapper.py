@@ -191,7 +191,7 @@ if FOUND_TF:
                 if self.dispatcher.num_act_quantizers != num_outputs:
                     Logger.error('Quantization wrapper output quantization error: '
                                  f'number of outputs and quantizers mismatch ({num_outputs}!='
-                                 f'{self.dispatcher.num_act_quantizers}')
+                                 f'{self.dispatcher.num_act_quantizers}')  # pragma: no cover
                 if num_outputs == 1:
                     outputs = [outputs]
 
@@ -218,4 +218,4 @@ else:
             """
             Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using KerasQuantizationWrapper. '
-                            'Could not find Tensorflow package.')
+                            'Could not find Tensorflow package.')  # pragma: no cover
