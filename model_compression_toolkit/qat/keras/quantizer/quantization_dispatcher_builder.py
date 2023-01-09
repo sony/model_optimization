@@ -73,7 +73,7 @@ def quantization_dispatcher_builder(n: common.BaseNode,
         attributes = fw_info.get_kernel_op_attributes(n.type)
         for attr in attributes:
             nqd.add_weight_quantizer(attr, qunatizer_class(n.final_weights_quantization_cfg,
-                                                           **qat_config.weight_quantizer_params))
+                                                           **qat_config.weight_quantizer_params_override))
 
     if n.is_activation_quantization_enabled():
         _quant_method = n.final_activation_quantization_cfg.activation_quantization_method
@@ -88,6 +88,6 @@ def quantization_dispatcher_builder(n: common.BaseNode,
                 f'Unknown activation quantization method: {_quant_method}')
         qunatizer_class = method2actquantizer[qat_config.activation_training_method][_quant_method]
         nqd.activation_quantizers = [qunatizer_class(n.final_activation_quantization_cfg,
-                                                     **qat_config.activation_quantizer_params)] * len(output_shapes)
+                                                     **qat_config.activation_quantizer_params_override)] * len(output_shapes)
 
     return nqd

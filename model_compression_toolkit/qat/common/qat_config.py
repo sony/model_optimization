@@ -27,18 +27,18 @@ class QATConfig:
 
     def __init__(self, weight_training_method=TrainingMethod.STE,
                  activation_training_method=TrainingMethod.STE,
-                 weight_quantizer_params=None,
-                 activation_quantizer_params=None,
+                 weight_quantizer_params_override=None,
+                 activation_quantizer_params_override=None,
                  ):
         """
 
         Args:
             weight_training_method (TrainingMethod): Training method for weight quantizers
             activation_training_method (TrainingMethod): Training method for activation quantizers:
-            weight_quantizer_params: A dictionary with quantizer parameters. Defaults to None (no parameters)
-            activation_quantizer_params: A dictionary with quantizer parameters. Defaults to None (no parameters)
+            weight_quantizer_params_override: A dictionary of parameters to override in weight quantization quantizer instantiation. Defaults to None (no parameters)
+            activation_quantizer_params_override: A dictionary of parameters to override in activation quantization quantizer instantiation. Defaults to None (no parameters)
         """
         self.weight_training_method = weight_training_method
         self.activation_training_method = activation_training_method
-        self.weight_quantizer_params = {} if weight_quantizer_params is None else weight_quantizer_params
-        self.activation_quantizer_params = {} if activation_quantizer_params is None else activation_quantizer_params
+        self.weight_quantizer_params_override = {} if weight_quantizer_params_override is None else weight_quantizer_params_override
+        self.activation_quantizer_params_override = {} if activation_quantizer_params_override is None else activation_quantizer_params_override
