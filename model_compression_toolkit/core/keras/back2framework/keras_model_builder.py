@@ -16,6 +16,7 @@
 from abc import abstractmethod
 
 import tensorflow as tf
+from keras.engine.input_layer import InputLayer
 from keras.models import Model, clone_model
 from packaging import version
 
@@ -156,6 +157,12 @@ class KerasModelBuilder(BaseModelBuilder):
                                         for
                                         inode in self.graph.get_inputs()}
 
+        # Support adding Layer after input layers require us to store it in layer_to_node_dict
+        # dict offline (unlike other layers which stored during running).
+        for node, layer in self.oh.node_to_fw_op_dict.items():
+            if node.type == InputLayer:
+                self.oh.layer_to_node_dict[layer] = node
+
         # Build a list of the model's input tensors. Switching from a dictionary to a list
         # to keep the tensors input order, since inputs in Graph are ordered by their indices.
         inputs_list = []
@@ -204,11 +211,14 @@ class KerasModelBuilder(BaseModelBuilder):
 
         if self.wrapper is not None:
             def _wrap(layer):
-                _nodes = self.graph.find_node_by_name(layer.name)
-                if len(_nodes) == 1:
-                    return self.wrapper(_nodes[0], layer)
-                else:
-                    Logger.error('node mismatch between TF model layers and internal graph nodes')
+                _node = self.oh.layer_to_node_dict.get(layer)
+                if _node is not None:
+                    return self.wrapper(_node, layer)
+                elif is_layer_fake_quant(layer):
+                    return layer
+                raise Exception(  # pragma: no cover
+                    f'Mismatch between keras model and graph cant find node named: '
+                    f'{get_node_name_from_layer(layer)}')
 
             model = clone_model(model, clone_function=_wrap)
 
