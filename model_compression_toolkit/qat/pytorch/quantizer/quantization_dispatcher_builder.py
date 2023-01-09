@@ -15,7 +15,7 @@
 from typing import Dict
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit import qunatizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste import STEWeightQuantizer, STEActivationQuantizer
 from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.uniform_ste import STEUniformWeightQuantizer, STEUniformActivationQuantizer
 
@@ -61,18 +61,18 @@ def quantization_dispatcher_builder(n: common.BaseNode,
     if n.is_weights_quantization_enabled():
         attributes = fw_info.get_kernel_op_attributes(n.type)
         for attr in attributes:
-            qunatizer_class = method2weightquantizer.get(n.final_weights_quantization_cfg.weights_quantization_method)
-            if qunatizer_class is None:
+            quantizer_class = method2weightquantizer.get(n.final_weights_quantization_cfg.weights_quantization_method)
+            if quantizer_class is None:
                 common.Logger.error(
                     f'Unknown Quantiztion method for weights: {n.final_weights_quantization_cfg.weights_quantization_method}')
-            nqd.add_weight_quantizer(attr, qunatizer_class(n.final_weights_quantization_cfg))
+            nqd.add_weight_quantizer(attr, quantizer_class(n.final_weights_quantization_cfg))
 
     if n.is_activation_quantization_enabled():
-        qunatizer_class = method2actquantizer.get(
+        quantizer_class = method2actquantizer.get(
             n.final_activation_quantization_cfg.activation_quantization_method)
-        if qunatizer_class is None:
+        if quantizer_class is None:
             common.Logger.error(
                 f'Unknown Quantization method for activations: {n.final_activation_quantization_cfg.activation_quantization_method}')
-        nqd.activation_quantizers = [qunatizer_class(n.final_activation_quantization_cfg)]
+        nqd.activation_quantizers = [quantizer_class(n.final_activation_quantization_cfg)]
 
     return nqd

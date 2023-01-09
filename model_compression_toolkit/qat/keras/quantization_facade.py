@@ -41,7 +41,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
 
     from model_compression_toolkit import get_target_platform_capabilities
-    from model_compression_toolkit import qunatizers_infrastructure as qi
+    from model_compression_toolkit import quantizers_infrastructure as qi
 
     from model_compression_toolkit import get_target_platform_capabilities
     from model_compression_toolkit.core import common

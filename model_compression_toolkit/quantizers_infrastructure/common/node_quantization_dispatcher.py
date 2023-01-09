@@ -15,7 +15,7 @@
 
 from typing import Dict, List
 
-from model_compression_toolkit.qunatizers_infrastructure import BaseInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
 
 
 class NodeQuantizationDispatcher:

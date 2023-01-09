@@ -16,36 +16,50 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.qunatizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
 if FOUND_TF:
     import tensorflow as tf
-    from model_compression_toolkit.qunatizers_infrastructure.keras.inferable_quantizers.base_uniform_inferable_quantizer import BaseUniformInferableQuantizer
 
-    class ActivationUniformInferableQuantizer(BaseUniformInferableQuantizer):
+    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers \
+        .base_symmetric_inferable_quantizer import \
+        BaseSymmetricInferableQuantizer
+
+
+    class ActivationSymmetricInferableQuantizer(BaseSymmetricInferableQuantizer):
         """
-        Class for quantizing activations using an uniform quantizer
+        Class for quantizing activations using a symmetric quantizer
         """
 
         def __init__(self,
                      num_bits: int,
-                     min_range: np.ndarray,
-                     max_range: np.ndarray,
-                     ):
+                     threshold: np.ndarray,
+                     signed: bool):
             """
             Initialize the quantizer with the specified parameters.
 
             Args:
                 num_bits: number of bits to use for quantization
-                min_range: min range for quantizing activations
-                max_range: max range for quantizing activations
+                threshold: threshold for quantizing activations
+                signed: whether or not to use signed quantization
             """
             # Call the superclass constructor with the given parameters, along with the target of Activation
             # quantization
-            super(ActivationUniformInferableQuantizer, self).__init__(num_bits,
-                                                                      min_range,
-                                                                      max_range,
-                                                                      QuantizationTarget.Activation)
+            super(ActivationSymmetricInferableQuantizer, self).__init__(num_bits=num_bits,
+                                                                        threshold=threshold,
+                                                                        signed=signed,
+                                                                        quantization_target=QuantizationTarget.Activation)
+
+        def get_config(self):
+            """
+            Return a dictionary with the configuration of the quantizer.
+
+            Returns:
+                Dictionary with the following keys: 'num_bits', 'signed', 'threshold'
+            """
+            return {'num_bits': self.num_bits,
+                    'signed': self.signed,
+                    'threshold': self.threshold}
 
         def __call__(self, inputs, training=False):
             """
@@ -63,20 +77,9 @@ if FOUND_TF:
                                                                 max=self.max_range,
                                                                 num_bits=self.num_bits)
 
-        def get_config(self):
-            """
-            Return a dictionary with the configuration of the quantizer.
-
-            Returns:
-                Dictionary with the following keys: 'num_bits', 'min_range', 'max_range'
-            """
-            return {'num_bits': self.num_bits,
-                    'min_range': self.min_range,
-                    'max_range': self.max_range}
-
 else:
-    class ActivationUniformInferableQuantizer:
+    class ActivationSymmetricInferableQuantizer:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
-                            'when using ActivationUniformInferableQuantizer. '
+                            'when using ActivationSymmetricInferableQuantizer. '
                             'Could not find Tensorflow package.')

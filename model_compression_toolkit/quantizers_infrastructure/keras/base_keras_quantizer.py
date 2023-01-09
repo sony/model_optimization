@@ -19,12 +19,12 @@ from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
-from model_compression_toolkit.qunatizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
-from model_compression_toolkit.qunatizers_infrastructure import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 
 if FOUND_TF:
     QUANTIZATION_CONFIG = 'quantization_config'
-    from model_compression_toolkit.qunatizers_infrastructure.keras.config_serialization import config_serialization, \
+    from model_compression_toolkit.quantizers_infrastructure.keras.config_serialization import config_serialization, \
         config_deserialization
 
 

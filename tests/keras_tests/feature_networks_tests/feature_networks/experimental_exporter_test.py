@@ -23,7 +23,7 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 
 keras = tf.keras
 layers = keras.layers
-from model_compression_toolkit import qunatizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi
 
 class ExportableModelTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):

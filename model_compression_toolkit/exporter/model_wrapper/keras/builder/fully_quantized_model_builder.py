@@ -16,7 +16,7 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Layer
 
-from model_compression_toolkit import qunatizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder

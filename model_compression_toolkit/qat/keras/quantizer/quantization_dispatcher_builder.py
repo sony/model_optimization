@@ -17,7 +17,7 @@
 from typing import Dict
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit import qunatizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste import STEWeightQuantizer, STEActivationQuantizer
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste import STEUniformWeightQuantizer
 from model_compression_toolkit.qat.common.qat_config import QATConfig, TrainingMethod
@@ -69,10 +69,10 @@ def quantization_dispatcher_builder(n: common.BaseNode,
         if _quant_method not in method2weightquantizer[qat_config.weight_training_method]:
             common.Logger.error(
                 f'Unknown weight quantization method: {_quant_method}')
-        qunatizer_class = method2weightquantizer[qat_config.weight_training_method][_quant_method]
+        quantizer_class = method2weightquantizer[qat_config.weight_training_method][_quant_method]
         attributes = fw_info.get_kernel_op_attributes(n.type)
         for attr in attributes:
-            nqd.add_weight_quantizer(attr, qunatizer_class(n.final_weights_quantization_cfg,
+            nqd.add_weight_quantizer(attr, quantizer_class(n.final_weights_quantization_cfg,
                                                            **qat_config.weight_quantizer_params_override))
 
     if n.is_activation_quantization_enabled():
@@ -86,8 +86,8 @@ def quantization_dispatcher_builder(n: common.BaseNode,
         if _quant_method not in method2actquantizer[qat_config.activation_training_method]:
             common.Logger.error(
                 f'Unknown activation quantization method: {_quant_method}')
-        qunatizer_class = method2actquantizer[qat_config.activation_training_method][_quant_method]
-        nqd.activation_quantizers = [qunatizer_class(n.final_activation_quantization_cfg,
+        quantizer_class = method2actquantizer[qat_config.activation_training_method][_quant_method]
+        nqd.activation_quantizers = [quantizer_class(n.final_activation_quantization_cfg,
                                                      **qat_config.activation_quantizer_params_override)] * len(output_shapes)
 
     return nqd

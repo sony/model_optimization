@@ -17,9 +17,9 @@ from typing import Dict, Any
 from model_compression_toolkit.core.common import BaseNode, Logger
 from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MIN, RANGE_MAX, SIGNED
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.qunatizers_infrastructure import keras_inferable_quantizers
-from model_compression_toolkit.qunatizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
-from model_compression_toolkit.qunatizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
+from model_compression_toolkit.quantizers_infrastructure import keras_inferable_quantizers
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
     import \
     BaseKerasInferableQuantizer
 

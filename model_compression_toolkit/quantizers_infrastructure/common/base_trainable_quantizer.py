@@ -21,7 +21,7 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
     NodeActivationQuantizationConfig, BaseNodeQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
-from model_compression_toolkit.qunatizers_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer, \
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer, \
     QuantizationTarget
 
 

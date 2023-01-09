@@ -15,7 +15,7 @@
 from typing import List, Union
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.logger import Logger
-from model_compression_toolkit.qunatizers_infrastructure.common.node_quantization_dispatcher import \
+from model_compression_toolkit.quantizers_infrastructure.common.node_quantization_dispatcher import \
     NodeQuantizationDispatcher
 
 if FOUND_TORCH:

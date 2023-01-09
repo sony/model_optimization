@@ -16,35 +16,36 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.qunatizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
 if FOUND_TF:
     import tensorflow as tf
-    from model_compression_toolkit.qunatizers_infrastructure.keras.inferable_quantizers.base_pot_inferable_quantizer import BasePOTInferableQuantizer
+    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_uniform_inferable_quantizer import BaseUniformInferableQuantizer
 
-    class ActivationPOTInferableQuantizer(BasePOTInferableQuantizer):
+    class ActivationUniformInferableQuantizer(BaseUniformInferableQuantizer):
         """
-        Class for quantizing activations using power-of-two quantizer
+        Class for quantizing activations using an uniform quantizer
         """
 
         def __init__(self,
                      num_bits: int,
-                     threshold: np.ndarray,
-                     signed: bool):
+                     min_range: np.ndarray,
+                     max_range: np.ndarray,
+                     ):
             """
             Initialize the quantizer with the specified parameters.
 
             Args:
                 num_bits: number of bits to use for quantization
-                threshold: threshold for quantizing activations
-                signed: whether or not to use signed quantization
+                min_range: min range for quantizing activations
+                max_range: max range for quantizing activations
             """
             # Call the superclass constructor with the given parameters, along with the target of Activation
             # quantization
-            super(ActivationPOTInferableQuantizer, self).__init__(num_bits=num_bits,
-                                                                  threshold=threshold,
-                                                                  signed=signed,
-                                                                  quantization_target=QuantizationTarget.Activation)
+            super(ActivationUniformInferableQuantizer, self).__init__(num_bits,
+                                                                      min_range,
+                                                                      max_range,
+                                                                      QuantizationTarget.Activation)
 
         def __call__(self, inputs, training=False):
             """
@@ -67,15 +68,15 @@ if FOUND_TF:
             Return a dictionary with the configuration of the quantizer.
 
             Returns:
-                Dictionary with the following keys: 'num_bits', 'signed', 'threshold'
+                Dictionary with the following keys: 'num_bits', 'min_range', 'max_range'
             """
             return {'num_bits': self.num_bits,
-                    'signed': self.signed,
-                    'threshold': self.threshold}
+                    'min_range': self.min_range,
+                    'max_range': self.max_range}
 
 else:
-    class ActivationPOTInferableQuantizer:
+    class ActivationUniformInferableQuantizer:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
-                            'when using ActivationPOTInferableQuantizer. '
+                            'when using ActivationUniformInferableQuantizer. '
                             'Could not find Tensorflow package.')
