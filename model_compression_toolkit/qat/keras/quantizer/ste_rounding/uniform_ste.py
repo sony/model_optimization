@@ -24,9 +24,9 @@ from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common import constants as C
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
-from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.activation_inferable_quantizers.activation_uniform_inferable_quantizer import ActivationUniformInferableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.weights_inferable_quantizers.weights_uniform_inferable_quantizer import WeightsUniformInferableQuantizer
+from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
+    NodeActivationQuantizationConfig
+import model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers as iq
 
 
 class STEUniformWeightQuantizer(qi.BaseKerasTrainableQuantizer):
@@ -52,10 +52,10 @@ class STEUniformWeightQuantizer(qi.BaseKerasTrainableQuantizer):
         self.per_channel = self.quantization_config.weights_per_channel_threshold
         self.channel_axis = self.quantization_config.weights_channels_axis
         self.min_max_shape = np.asarray(self.max_values).shape
-        self.max = np.reshape(self.max_values,[-1]) if self.per_channel else float(self.max_values)
-        self.min = np.reshape(self.min_values,[-1]) if self.per_channel else float(self.min_values)
+        self.max = np.reshape(self.max_values, [-1]) if self.per_channel else float(self.max_values)
+        self.min = np.reshape(self.min_values, [-1]) if self.per_channel else float(self.min_values)
 
-        if self.per_channel and self.channel_axis not in [-1,len(self.min_max_shape) - 1]:
+        if self.per_channel and self.channel_axis not in [-1, len(self.min_max_shape) - 1]:
             # Tensorflow's fake_quant_with_min_max_vars_per_channel only works on last axis, so
             # need to move the quantization axis to the last axis
             self.perm_vec = list(np.arange(len(self.min_max_shape)))
@@ -134,11 +134,13 @@ class STEUniformWeightQuantizer(qi.BaseKerasTrainableQuantizer):
         Returns:
             BaseKerasInferableQuantizer object.
         """
-        return WeightsUniformInferableQuantizer(num_bits=self.num_bits,
-                                                min_range=np.reshape(self.quantizer_parameters[FQ_MIN], self.min_max_shape),
-                                                max_range=np.reshape(self.quantizer_parameters[FQ_MAX], self.min_max_shape),
-                                                per_channel=self.per_channel,
-                                                channel_axis=self.channel_axis)
+        return iq.WeightsUniformInferableQuantizer(num_bits=self.num_bits,
+                                                   min_range=np.reshape(self.quantizer_parameters[FQ_MIN],
+                                                                        self.min_max_shape),
+                                                   max_range=np.reshape(self.quantizer_parameters[FQ_MAX],
+                                                                        self.min_max_shape),
+                                                   per_channel=self.per_channel,
+                                                   channel_axis=self.channel_axis)
 
 
 class STEUniformActivationQuantizer(qi.BaseKerasTrainableQuantizer):
@@ -216,7 +218,6 @@ class STEUniformActivationQuantizer(qi.BaseKerasTrainableQuantizer):
 
         return q_tensor
 
-
     def convert2inferable(self) -> qi.BaseKerasInferableQuantizer:
         """
         Convert quantizer to inferable quantizer.
@@ -225,6 +226,6 @@ class STEUniformActivationQuantizer(qi.BaseKerasTrainableQuantizer):
             BaseKerasInferableQuantizer object.
         """
 
-        return ActivationUniformInferableQuantizer(num_bits=self.num_bits,
-                                                   min_range=self.quantizer_parameters[FQ_MIN],
-                                                   max_range=self.quantizer_parameters[FQ_MAX])
+        return iq.ActivationUniformInferableQuantizer(num_bits=self.num_bits,
+                                                      min_range=self.quantizer_parameters[FQ_MIN],
+                                                      max_range=self.quantizer_parameters[FQ_MAX])

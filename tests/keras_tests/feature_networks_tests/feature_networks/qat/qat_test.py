@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import copy
+import os
 
 import tensorflow as tf
 import numpy as np
@@ -152,6 +153,12 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         if self.test_loading:
             qat_model.save('qat2model.h5')
             qat_model = mct.keras_load_quantized_model('qat2model.h5')
+            os.remove('qat2model.h5')
+
+        # -------QAT training------ #
+        x = np.random.randn(1,*qat_model.input_shape[1:])
+        qat_model(x)
+        # ------------------------- #
 
         self.compare(qat_model,
                      finalize=False,
