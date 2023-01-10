@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,10 @@ import torch.nn as nn
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
     NodeActivationQuantizationConfig
 from model_compression_toolkit import qunatizers_infrastructure as qi, QuantizationConfig
-from model_compression_toolkit.core.common.target_platform import OpQuantizationConfig, QuantizationMethod
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
+from tests.qunatizers_infrastructure_tests.pytorch_tests.base_pytorch_infrastructure_test import \
+    BasePytorchInfrastructureTest
 
 
 class ZeroWeightsQuantizer(qi.BasePytorchQuantizer):
@@ -89,58 +92,42 @@ def dummy_fn():
     return
 
 
-op_cfg = OpQuantizationConfig(QuantizationMethod.POWER_OF_TWO,
-                              QuantizationMethod.POWER_OF_TWO,
-                              8,
-                              8,
-                              True,
-                              True,
-                              True,
-                              True,
-                              1,
-                              0,
-                              32)
+op_cfg, _ = get_op_quantization_configs()
 qc = QuantizationConfig()
 weight_quantization_config = NodeWeightsQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn, -1)
 activations_quantization_config = NodeActivationQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn)
 
-op_cfg_uniform = OpQuantizationConfig(QuantizationMethod.UNIFORM,
-                                        QuantizationMethod.UNIFORM,
-                                        8,
-                                        8,
-                                        True,
-                                        True,
-                                        True,
-                                        True,
-                                        1,
-                                        0,
-                                        32)
+op_cfg_uniform = op_cfg.clone_and_edit(activation_quantization_method=QuantizationMethod.UNIFORM,
+                                       weights_quantization_method=QuantizationMethod.UNIFORM)
 weight_quantization_config_uniform = NodeWeightsQuantizationConfig(qc, op_cfg_uniform, dummy_fn, dummy_fn, -1)
 activations_quantization_config_uniform = NodeActivationQuantizationConfig(qc, op_cfg_uniform, dummy_fn, dummy_fn)
 
 
-class TestPytorchNodeQuantizationDispatcher(unittest.TestCase):
+class TestPytorchBaseQuantizer(BasePytorchInfrastructureTest):
 
-    def test_pytorch_base_quantizer(self):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
 
-        with self.assertRaises(Exception) as e:
+    def run_test(self):
+
+        with self.unit_test.assertRaises(Exception) as e:
             ZeroWeightsQuantizer(weight_quantization_config_uniform)
-        self.assertEqual(f'Quantization method mismatch expected:[<QuantizationMethod.POWER_OF_TWO: 0>, <QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM', str(e.exception))
+        self.unit_test.assertEqual(f'Quantization method mismatch expected:[<QuantizationMethod.POWER_OF_TWO: 0>, <QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM', str(e.exception))
 
-        with self.assertRaises(Exception) as e:
+        with self.unit_test.assertRaises(Exception) as e:
             ZeroActivationsQuantizer(activations_quantization_config_uniform)
-        self.assertEqual(f'Quantization method mismatch expected:[<QuantizationMethod.POWER_OF_TWO: 0>, <QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM', str(e.exception))
+        self.unit_test.assertEqual(f'Quantization method mismatch expected:[<QuantizationMethod.POWER_OF_TWO: 0>, <QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM', str(e.exception))
 
-        with self.assertRaises(Exception) as e:
+        with self.unit_test.assertRaises(Exception) as e:
             ZeroWeightsQuantizer(activations_quantization_config_uniform)
-        self.assertEqual(f'Expect weight quantization got activation', str(e.exception))
+        self.unit_test.assertEqual(f'Expect weight quantization got activation', str(e.exception))
 
-        with self.assertRaises(Exception) as e:
+        with self.unit_test.assertRaises(Exception) as e:
             ZeroActivationsQuantizer(weight_quantization_config_uniform)
-        self.assertEqual(f'Expect activation quantization got weight', str(e.exception))
+        self.unit_test.assertEqual(f'Expect activation quantization got weight', str(e.exception))
 
         quantizer = ZeroWeightsQuantizer(weight_quantization_config)
-        self.assertTrue(quantizer.quantization_config == weight_quantization_config)
+        self.unit_test.assertTrue(quantizer.quantization_config == weight_quantization_config)
 
         quantizer = ZeroActivationsQuantizer(activations_quantization_config)
-        self.assertTrue(quantizer.quantization_config == activations_quantization_config)
+        self.unit_test.assertTrue(quantizer.quantization_config == activations_quantization_config)
