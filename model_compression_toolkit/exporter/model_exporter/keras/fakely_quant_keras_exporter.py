@@ -107,7 +107,7 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                 # from original wrapper (weights wrapping is no longer needed).
                 if layer.dispatcher.is_activation_quantization:
                     activation_dispatcher = KerasNodeQuantizationDispatcher(weight_quantizers={},
-                                                                       activation_quantizers=layer.dispatcher.activation_quantizers)
+                                                                            activation_quantizers=layer.dispatcher.activation_quantizers)
                     new_layer = KerasQuantizationWrapper(layer=new_layer,
                                                          dispatcher=activation_dispatcher)
 

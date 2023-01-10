@@ -14,6 +14,7 @@
 # ==============================================================================
 
 from typing import List
+from inspect import signature
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
@@ -37,6 +38,15 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
             quantization_target: A enum which selects the quantizer tensor type: activation or weights.
             quantization_method: A list of enums which represent the supported methods for the quantizer.
         """
+
+        # verify the quantizer class that inherits this class only has a config argument and key-word arguments
+        for i, (k, v) in enumerate(self.get_sig().parameters.items()):
+            if i == 0:
+                if not issubclass(v.annotation, BaseNodeQuantizationConfig):
+                    common.Logger.error(f"First parameter must inherit from BaseNodeQuantizationConfig")
+            elif v.default is v.empty:
+                common.Logger.error(f"Parameter {k} doesn't have a default value")
+
         super(BaseTrainableQuantizer, self).__init__(quantization_target=quantization_target)
         self.quantization_config = quantization_config
         self.quantization_method = quantization_method
@@ -44,15 +54,19 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
             self.validate_weights()
             if self.quantization_config.weights_quantization_method not in quantization_method:
                 common.Logger.error(
-                    f'Quantization method mismatch expected:{quantization_method} and got  {self.quantization_config.weights_quantization_method}')
+                    f'Quantization method mismatch expected: {quantization_method} and got  {self.quantization_config.weights_quantization_method}')
         elif self.quantization_target == QuantizationTarget.Activation:
             self.validate_activation()
             if self.quantization_config.activation_quantization_method not in quantization_method:
                 common.Logger.error(
-                    f'Quantization method mismatch expected:{quantization_method} and got  {self.quantization_config.activation_quantization_method}')
+                    f'Quantization method mismatch expected: {quantization_method} and got  {self.quantization_config.activation_quantization_method}')
         else:
             common.Logger.error(
                 f'Unknown Quantization Part:{quantization_target}')
+
+    @classmethod
+    def get_sig(cls):
+        return signature(cls)
 
     def initialize_quantization(self,
                                 tensor_shape,

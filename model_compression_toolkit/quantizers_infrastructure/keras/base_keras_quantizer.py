@@ -34,11 +34,11 @@ if FOUND_TF:
                      quantization_target: QuantizationTarget,
                      quantization_method: List[QuantizationMethod]):
             """
-            This class is a base quantizer which validate the provide quantization config and define abstract function which any quantizer need to implment.
-            This class add to the base quantizer get_config and from_config function to enable keras load and save model.
+            This class is a base quantizer which validates provided quantization config and defines an abstract function which any quantizer needs to implement.
+            This class adds to the base quantizer a get_config and from_config functions to enable loading and saving the keras model.
             Args:
-                quantization_config: node quantization config class contins all the information above a quantizer.
-                quantization_target: A enum which decided the qunaizer tensor type activation or weights.
+                quantization_config: node quantization config class contains all the information about a quantizer.
+                quantization_target: An enum which decides the qunaizer tensor type activation or weights.
                 quantization_method: A list of enums which represent the quantizer supported methods.
             """
             super().__init__(quantization_config,
