@@ -267,3 +267,14 @@ class Eq(AttributeFilter):
         super().__init__(attr=attr, value=value, op=operator.eq)
 
     def op_as_str(self): return "="
+
+
+class Contains(AttributeFilter):
+    """
+    Filter configurations such that it matches configurations that have an attribute with a value that contains the value that Contains holds.
+    """
+
+    def __init__(self, attr: str, value: Any):
+        super().__init__(attr=attr, value=value, op=operator.contains)
+
+    def op_as_str(self): return " in "
