@@ -15,20 +15,69 @@
 import math
 import unittest
 
-from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
-from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
-    ChangeCandidatesWeightsQuantizationMethod
+import numpy as np
+import tensorflow as tf
 
 import model_compression_toolkit as cmo
-import tensorflow as tf
-import numpy as np
-
+from model_compression_toolkit.core.common.constants import EPS, \
+    MULTIPLIER_N_BITS
+from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
+    ChangeCandidatesWeightsQuantizationMethod
+from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import LUTFakeQuant
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
 layers = keras.layers
 tp = cmo.target_platform
+
+
+def lut_fake_quant_op(input_data,
+                      activation_is_signed,
+                      cluster_centers,
+                      threshold):
+    if activation_is_signed is None or cluster_centers is None or threshold is None:
+        return None
+
+    _quant_output = lut_kmeans_quantizer(input_data,
+                                         activation_is_signed,
+                                         cluster_centers,
+                                         threshold)
+    return _quant_output
+
+
+def lut_kmeans_quantizer(tensor_data,
+                         activation_is_signed,
+                         cluster_centers,
+                         threshold):
+    tensor = int_quantization_with_threshold(tensor_data, MULTIPLIER_N_BITS,
+                                             activation_is_signed,
+                                             threshold)
+    tensor = tf.expand_dims(tensor, -1)
+
+    expanded_cluster_centers = cluster_centers.reshape([*[1 for _ in range(len(tensor.shape) - 1)], -1])
+    cluster_assignments = tf.argmin(tf.abs(tensor - expanded_cluster_centers), axis=-1)
+    centers = tf.gather(cluster_centers.flatten(), cluster_assignments)
+
+    quant_tensor = (centers / (2 ** (MULTIPLIER_N_BITS - int(activation_is_signed)))) * threshold
+
+    return quant_tensor
+
+
+def int_quantization_with_threshold(data,
+                                    n_bits,
+                                    activation_is_signed,
+                                    threshold,
+                                    eps=EPS):
+    if activation_is_signed:
+        clip_max = 2 ** (n_bits - 1) - 1
+        clip_min = -2 ** (n_bits - 1)
+    else:
+        clip_max = 2 ** n_bits - 1
+        clip_min = 0
+
+    return tf.clip_by_value((data / (threshold + eps)) * (2 ** (n_bits - int(activation_is_signed))),
+                            clip_value_max=clip_max, clip_value_min=clip_min)
 
 
 def get_uniform_weights(kernel, in_channels, out_channels):
@@ -153,6 +202,14 @@ class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
             # Check layers number of clusters and clusters values
             self.unit_test.assertTrue(ll.cluster_centers.shape[0] <= 2 ** self.activation_n_bits)
             self.unit_test.assertTrue(np.all(np.mod(ll.cluster_centers, 1) == 0))
+
+            # Check the output of each LUT Fake Quant is as expected
+            ll_output = ll(input_x[0])
+            expected_output = lut_fake_quant_op(input_x[0],
+                                                ll.activation_is_signed,
+                                                ll.cluster_centers,
+                                                ll.threshold)
+            self.unit_test.assertTrue(np.all(ll_output == expected_output))
 
 
 class RunKmeansTest(unittest.TestCase):
