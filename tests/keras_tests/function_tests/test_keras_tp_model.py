@@ -32,7 +32,7 @@ from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.target_platform.targetplatform2framework import LayerFilterParams
 from model_compression_toolkit.core.common.target_platform.targetplatform2framework.attribute_filter import Greater, \
-    Smaller, GreaterEq, Eq, SmallerEq
+    Smaller, GreaterEq, Eq, SmallerEq, Contains
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
 from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL, QNNPACK_TP_MODEL, TFLITE_TP_MODEL
@@ -83,6 +83,15 @@ class TestKerasTPModel(unittest.TestCase):
 
         lrelu_with_params = LayerFilterParams(tf.nn.leaky_relu)
         self.assertTrue(lrelu_with_params.match(get_node(partial(tf.nn.leaky_relu, alpha=0.4))))
+
+        conv_filter_contains = LayerFilterParams(Conv2D, Contains("name", "conv"))
+        conv = Conv2D(filters=3, kernel_size=(3, 4), name="conv")
+        self.assertTrue(conv_filter_contains.match(get_node(conv)))
+        conv = Conv2D(filters=3, kernel_size=(3, 4), name="layer_conv_0")
+        self.assertTrue(conv_filter_contains.match(get_node(conv)))
+        conv = Conv2D(filters=2, kernel_size=(3, 4), name="CONVOLUTION")
+        self.assertFalse(conv_with_params.match(get_node(conv)))
+
 
     def test_get_layers_by_op(self):
         hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
