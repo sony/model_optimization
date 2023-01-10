@@ -26,6 +26,7 @@ from model_compression_toolkit.core.tpc_models.get_target_platform_capabilities 
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.qat.common.qat_config import QATConfig, TrainingMethod
 from model_compression_toolkit.core.common.logger import set_log_folder
 from model_compression_toolkit.core.common.data_loader import FolderImageLoader
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo, ChannelAxis

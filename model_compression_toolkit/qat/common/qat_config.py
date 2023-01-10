@@ -13,10 +13,16 @@
 # limitations under the License.
 # ==============================================================================
 
+from typing import Dict
 from enum import Enum
 
 
 class TrainingMethod(Enum):
+    """
+    An enum for selecting a QAT training method
+
+    STE - Standard straight-through estimator. Includes PowerOfTwo, symmetric & uniform quantizers
+    """
     STE = 0
 
 
@@ -25,10 +31,10 @@ class QATConfig:
     QAT configuration class.
     """
 
-    def __init__(self, weight_training_method=TrainingMethod.STE,
-                 activation_training_method=TrainingMethod.STE,
-                 weight_quantizer_params_override=None,
-                 activation_quantizer_params_override=None,
+    def __init__(self, weight_training_method: TrainingMethod = TrainingMethod.STE,
+                 activation_training_method: TrainingMethod = TrainingMethod.STE,
+                 weight_quantizer_params_override: Dict = None,
+                 activation_quantizer_params_override: Dict = None,
                  ):
         """
 
