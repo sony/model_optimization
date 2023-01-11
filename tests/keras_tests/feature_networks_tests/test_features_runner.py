@@ -641,5 +641,6 @@ class FeatureNetworkTest(unittest.TestCase):
         # quantization per channel of its kernel TODO: should be part of the quantizers tests
         QuantizationAwareTrainingQuantizersTest(self).run_test()
 
-    if __name__ == '__main__':
-        unittest.main()
+
+if __name__ == '__main__':
+    unittest.main()
