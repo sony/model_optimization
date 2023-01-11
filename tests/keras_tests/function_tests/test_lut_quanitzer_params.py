@@ -42,6 +42,7 @@ class TestLUTQuantizerParams(unittest.TestCase):
         self.assertTrue(np.all([math.log2(n).is_integer() for n in list(scales_per_channel.flatten())]))
         self.assertTrue(len(np.unique(cluster_centers.flatten())) <= len(np.unique(tensor_data.flatten())))
 
+    def test_properties_with_fewer_data(self):
         # check when the number of values of the tensor_data is lower than 2**n_bits
         channel_axis = random.choice([0, 1, 2])
         tensor_data = np.random.randn(3, 4, 5)

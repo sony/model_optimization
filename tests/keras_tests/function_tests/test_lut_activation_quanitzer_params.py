@@ -82,7 +82,7 @@ class TestLUTQuantizerParams(unittest.TestCase):
         # check clusters are rounded
         self.assertTrue(np.all(np.mod(cluster_centers, 1) == 0), "Cluster points are supposed to be rounded")
 
-    def test_lut_activation_quantization_params(self):
+    def test_lut_activation_quantization_params_with_fewer_data(self):
         # check when the number of values of the data is lower than 2**n_bits
         data = np.random.randn(3, 4, 5)
         counts, bins = np.histogram(data, bins=20)
