@@ -14,11 +14,10 @@
 # ==============================================================================
 
 from tests.quantizers_infrastructure_tests.pytorch_tests.base_pytorch_infrastructure_test import \
-    BasePytorchInfrastructureTest, ZeroWeightsQuantizer, weight_quantization_config, ZeroActivationsQuantizer, \
-    activations_quantization_config
+    BasePytorchInfrastructureTest, ZeroWeightsQuantizer, ZeroActivationsQuantizer
 
 
-class TestPytorchNodeQuantizationDispatcher(BasePytorchInfrastructureTest):
+class TestPytorchNodeWeightsQuantizationDispatcher(BasePytorchInfrastructureTest):
 
     def __init__(self, unit_test):
         super().__init__(unit_test)
@@ -26,12 +25,18 @@ class TestPytorchNodeQuantizationDispatcher(BasePytorchInfrastructureTest):
     def run_test(self):
         nqd = self.get_dispatcher()
         self.unit_test.assertFalse(nqd.is_weights_quantization)
-        nqd.add_weight_quantizer('weight', ZeroWeightsQuantizer(weight_quantization_config))
+        nqd.add_weight_quantizer('weight', ZeroWeightsQuantizer(self.get_weights_quantization_config()))
         self.unit_test.assertTrue(nqd.is_weights_quantization)
         self.unit_test.assertFalse(nqd.is_activation_quantization)
         self.unit_test.assertTrue(isinstance(nqd.weight_quantizers.get('weight'), ZeroWeightsQuantizer))
 
-        nqd = self.get_dispatcher(activation_quantizers=[ZeroActivationsQuantizer(activations_quantization_config)])
-        self.unit_test.assertFalse(nqd.is_weights_quantization)
-        self.unit_test.assertTrue(nqd.is_activation_quantization)
-        self.unit_test.assertTrue(isinstance(nqd.activation_quantizers[0], ZeroActivationsQuantizer))
+class TestPytorchNodeActivationQuantizationDispatcher(BasePytorchInfrastructureTest):
+
+        def __init__(self, unit_test):
+            super().__init__(unit_test)
+
+        def run_test(self):
+            nqd = self.get_dispatcher(activation_quantizers=[ZeroActivationsQuantizer(self.get_activation_quantization_config())])
+            self.unit_test.assertFalse(nqd.is_weights_quantization)
+            self.unit_test.assertTrue(nqd.is_activation_quantization)
+            self.unit_test.assertTrue(isinstance(nqd.activation_quantizers[0], ZeroActivationsQuantizer))

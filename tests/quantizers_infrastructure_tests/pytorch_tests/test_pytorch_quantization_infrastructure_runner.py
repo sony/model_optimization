@@ -16,23 +16,27 @@
 
 import unittest
 
-from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_base_quantizer import TestPytorchBaseQuantizer
+from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_base_quantizer import \
+    TestPytorchBaseWeightsQuantizer, TestPytorchBaseActivationQuantizer
 from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_node_quantization_dispatcher import \
-    TestPytorchNodeQuantizationDispatcher
+    TestPytorchNodeActivationQuantizationDispatcher, TestPytorchNodeWeightsQuantizationDispatcher
 from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_quantization_wrapper import \
-    TestPytorchQuantizationWrapper
+    TestPytorchWeightsQuantizationWrapper, TestPytorchActivationQuantizationWrapper
 
 
 class PytorchInfrastructureTest(unittest.TestCase):
 
     def test_layer_pytorch_infrastructre(self):
-        TestPytorchQuantizationWrapper(self).run_test()
+        TestPytorchWeightsQuantizationWrapper(self).run_test()
+        TestPytorchActivationQuantizationWrapper(self).run_test()
 
     def test_pytorch_node_quantization_dispatcher(self):
-        TestPytorchNodeQuantizationDispatcher(self).run_test()
+        TestPytorchNodeWeightsQuantizationDispatcher(self).run_test()
+        TestPytorchNodeActivationQuantizationDispatcher(self).run_test()
 
     def test_pytorch_base_quantizer(self):
-        TestPytorchBaseQuantizer(self).run_test()
+        TestPytorchBaseWeightsQuantizer(self).run_test()
+        TestPytorchBaseActivationQuantizer(self).run_test()
 
 if __name__ == '__main__':
     unittest.main()

@@ -91,15 +91,15 @@ def dummy_fn():
     return
 
 
-op_cfg, _ = get_op_quantization_configs()
-qc = QuantizationConfig()
-weight_quantization_config = NodeWeightsQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn, -1)
-activations_quantization_config = NodeActivationQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn)
+# op_cfg, _ = get_op_quantization_configs()
+# qc = QuantizationConfig()
+# weight_quantization_config = NodeWeightsQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn, -1)
+# activations_quantization_config = NodeActivationQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn)
 
-op_cfg_uniform = op_cfg.clone_and_edit(activation_quantization_method=QuantizationMethod.UNIFORM,
-                                       weights_quantization_method=QuantizationMethod.UNIFORM)
-weight_quantization_config_uniform = NodeWeightsQuantizationConfig(qc, op_cfg_uniform, dummy_fn, dummy_fn, -1)
-activations_quantization_config_uniform = NodeActivationQuantizationConfig(qc, op_cfg_uniform, dummy_fn, dummy_fn)
+# op_cfg_uniform = op_cfg.clone_and_edit(activation_quantization_method=QuantizationMethod.UNIFORM,
+#                                        weights_quantization_method=QuantizationMethod.UNIFORM)
+# weight_quantization_config_uniform = NodeWeightsQuantizationConfig(qc, op_cfg_uniform, dummy_fn, dummy_fn, -1)
+# activations_quantization_config_uniform = NodeActivationQuantizationConfig(qc, op_cfg_uniform, dummy_fn, dummy_fn)
 
 
 class BasePytorchInfrastructureTest:
@@ -127,3 +127,13 @@ class BasePytorchInfrastructureTest:
 
     def get_wrapper(self, layer, dispatcher):
         return qi.PytorchQuantizationWrapper(layer, dispatcher)
+
+    def get_weights_quantization_config(self):
+        op_cfg, _ = get_op_quantization_configs()
+        qc = QuantizationConfig()
+        return NodeWeightsQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn, -1)
+
+    def get_activation_quantization_config(self):
+        op_cfg, _ = get_op_quantization_configs()
+        qc = QuantizationConfig()
+        return NodeActivationQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn)

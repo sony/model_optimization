@@ -18,12 +18,12 @@ import torch.nn as nn
 
 from model_compression_toolkit import quantizers_infrastructure as qi
 from tests.quantizers_infrastructure_tests.pytorch_tests.base_pytorch_infrastructure_test import \
-    ZeroWeightsQuantizer, weight_quantization_config, ZeroActivationsQuantizer, activations_quantization_config
+    ZeroWeightsQuantizer, ZeroActivationsQuantizer
 from tests.quantizers_infrastructure_tests.pytorch_tests.base_pytorch_infrastructure_test import \
     BasePytorchInfrastructureTest
 
 
-class TestPytorchQuantizationWrapper(BasePytorchInfrastructureTest):
+class TestPytorchWeightsQuantizationWrapper(BasePytorchInfrastructureTest):
 
     def __init__(self, unit_test):
         super().__init__(unit_test)
@@ -32,9 +32,8 @@ class TestPytorchQuantizationWrapper(BasePytorchInfrastructureTest):
         return nn.Conv2d(3,20,3)
 
     def run_test(self):
-        # weights quantization
         nqd = self.get_dispatcher()
-        nqd.add_weight_quantizer('weight', ZeroWeightsQuantizer(weight_quantization_config))
+        nqd.add_weight_quantizer('weight', ZeroWeightsQuantizer(self.get_weights_quantization_config()))
         wrapper = self.get_wrapper(self.create_layer(), nqd)
         (name, weight, quantizer) = wrapper._weight_vars[0]
         self.unit_test.assertTrue(isinstance(wrapper, qi.PytorchQuantizationWrapper))
@@ -46,8 +45,14 @@ class TestPytorchQuantizationWrapper(BasePytorchInfrastructureTest):
         self.unit_test.assertTrue((0 == getattr(wrapper.layer, 'weight')).any()) # check the weight are now quantized
         self.unit_test.assertTrue((y[0,:,0,0] == getattr(wrapper.layer, 'bias')).any()) # check the wrapper's outputs are equal to biases
 
-        # activations quantization
-        nqd = self.get_dispatcher(activation_quantizers=[ZeroActivationsQuantizer(activations_quantization_config)])
+
+class TestPytorchActivationQuantizationWrapper(TestPytorchWeightsQuantizationWrapper):
+
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def run_test(self):
+        nqd = self.get_dispatcher(activation_quantizers=[ZeroActivationsQuantizer(self.get_activation_quantization_config())])
         wrapper = qi.PytorchQuantizationWrapper(self.create_layer(), nqd)
         (quantizer) = wrapper._activation_vars[0]
         self.unit_test.assertTrue(isinstance(quantizer, ZeroActivationsQuantizer))
