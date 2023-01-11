@@ -212,17 +212,15 @@ if FOUND_TF:
         return qat_model, user_info, {}
 
 
-    def keras_quantization_aware_training_finalize(in_model: Model):
+    def keras_quantization_aware_training_finalize(in_model: Model) -> Model:
         """
-         Convert a model fine-tuned by the user to a network without QuantizeWrappers. The exported
-         model contains float (fake-quantized) parameters and fake-quantiztion layers for quantizing
-         the activations
+         Convert a model fine-tuned by the user (Trainable quantizers) to a model with Inferable quantizers.
 
          Args:
-             in_model (Model): Keras model to remove QuantizeWrappers.
+             in_model (Model): Keras model to replace TrainableQuantizer with InferableQuantizer
 
          Returns:
-             A quantized model without QuantizeWrappers.
+             A quantized model with Inferable quantizers
 
          Examples:
 
@@ -267,37 +265,27 @@ if FOUND_TF:
              >>> quantized_model = mct.keras_quantization_aware_training_finalize(quantized_model)
 
          """
-
         def _export(layer):
             if isinstance(layer, qi.KerasQuantizationWrapper):
-                if layer.dispatcher.is_weights_quantization:
-                    new_layer = layer.layer.__class__.from_config(layer.layer.get_config())
-                    with tf.name_scope(new_layer.name):
-                        new_layer.build(layer.input_shape)
-                    weights_list = []
-                    for w in new_layer.weights:
-                        val = None
-                        for qw in layer.weights:
-                            if w.name in qw.name:
-                                attribute_name = w.name.split('/')[-1].split(':')[0]
-                                if attribute_name in layer.dispatcher.weight_quantizers.keys():
-                                    quantizer = layer.dispatcher.weight_quantizers.get(attribute_name)
-                                    val = quantizer(qw, False)
-                                else:
-                                    val = qw
-                                val = val.numpy()
-                        if val is None:
-                            Logger.error(f'Could not match weight name: {w.name}')
-                        weights_list.append(val)
-                    new_layer.set_weights(weights_list)
-                    new_layer.trainable = False
-                    return new_layer
-                else:
-                    Logger.error(f'Undefined quantize_config')
-            else:
-                return layer
+                # Activation quantizers
+                inferable_activation_quantizers = []
+                if layer.dispatcher.is_activation_quantization:
+                    for quantizer in layer.dispatcher.activation_quantizers:
+                        if isinstance(quantizer, qi.BaseKerasTrainableQuantizer):
+                            inferable_activation_quantizers.append(quantizer.convert2inferable())
+                    layer.dispatcher.set_activation_quantizers(inferable_activation_quantizers)
 
-        # clone each layer in the model and apply _export to layers wrapped with a QuantizeWrapper.
+                # Weight quantizers
+                inferable_weight_quantizers = {}
+                if layer.dispatcher.is_weights_quantization:
+                    for name, quantizer in layer.dispatcher.weight_quantizers.items():
+                        if isinstance(quantizer, qi.BaseKerasTrainableQuantizer):
+                            inferable_weight_quantizers.update({name: quantizer.convert2inferable()})
+                    layer.dispatcher.set_weight_quantizers(inferable_weight_quantizers)
+
+            return layer
+
+        # clone each layer in the model and apply _export to layers with TrainableQuantizeWrappers
         exported_model = tf.keras.models.clone_model(in_model, input_tensors=None, clone_function=_export)
 
         return exported_model

@@ -16,7 +16,7 @@
 from typing import Dict, List
 
 from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
-
+from model_compression_toolkit.core.common.logger import Logger
 
 class NodeQuantizationDispatcher:
     def __init__(self,
@@ -31,6 +31,36 @@ class NodeQuantizationDispatcher:
         """
         self.weight_quantizers = weight_quantizers if weight_quantizers is not None else dict()
         self.activation_quantizers = activation_quantizers if activation_quantizers is not None else list()
+
+
+    def set_weight_quantizers(self, weight_quantizers: Dict[str, BaseInferableQuantizer]):
+        """
+        This function sets weight quantizers to existing node dispatcher
+
+        Args:
+            weight_quantizers: weight quantizers
+
+        Returns: None
+        """
+        for name,quantizer in weight_quantizers.items():
+            if not isinstance(quantizer, BaseInferableQuantizer):
+                Logger.error(f"quantizer is supposed to be BaseInferableQuantizer but it's not!")  # pragma: no cover
+        self.weight_quantizers = weight_quantizers
+
+    def set_activation_quantizers(self, activation_quantizers: List[BaseInferableQuantizer]):
+        """
+        This function sets activation quantizers to existing node dispatcher
+
+        Args:
+            activation_quantizers: activation quantizers
+
+        Returns: None
+        """
+        for quantizer in activation_quantizers:
+            if not isinstance(quantizer, BaseInferableQuantizer):
+                Logger.error(f"quantizer is supposed to be BaseInferableQuantizer but it's not!")  # pragma: no cover
+        self.activation_quantizers = activation_quantizers
+
 
     def add_weight_quantizer(self, param_name: str, quantizer: BaseInferableQuantizer):
         """
