@@ -30,13 +30,14 @@ class TestPytorchNodeWeightsQuantizationDispatcher(BasePytorchInfrastructureTest
         self.unit_test.assertFalse(nqd.is_activation_quantization)
         self.unit_test.assertTrue(isinstance(nqd.weight_quantizers.get('weight'), ZeroWeightsQuantizer))
 
+
 class TestPytorchNodeActivationQuantizationDispatcher(BasePytorchInfrastructureTest):
 
-        def __init__(self, unit_test):
-            super().__init__(unit_test)
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
 
-        def run_test(self):
-            nqd = self.get_dispatcher(activation_quantizers=[ZeroActivationsQuantizer(self.get_activation_quantization_config())])
-            self.unit_test.assertFalse(nqd.is_weights_quantization)
-            self.unit_test.assertTrue(nqd.is_activation_quantization)
-            self.unit_test.assertTrue(isinstance(nqd.activation_quantizers[0], ZeroActivationsQuantizer))
+    def run_test(self):
+        nqd = self.get_dispatcher(activation_quantizers=[ZeroActivationsQuantizer(self.get_activation_quantization_config())])
+        self.unit_test.assertFalse(nqd.is_weights_quantization)
+        self.unit_test.assertTrue(nqd.is_activation_quantization)
+        self.unit_test.assertTrue(isinstance(nqd.activation_quantizers[0], ZeroActivationsQuantizer))
