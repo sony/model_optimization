@@ -16,10 +16,10 @@
 
 import unittest
 
-from tests.qunatizers_infrastructure_tests.pytorch_tests.test_pytorch_base_quantizer import TestPytorchBaseQuantizer
-from tests.qunatizers_infrastructure_tests.pytorch_tests.test_pytorch_node_quantization_dispatcher import \
+from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_base_quantizer import TestPytorchBaseQuantizer
+from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_node_quantization_dispatcher import \
     TestPytorchNodeQuantizationDispatcher
-from tests.qunatizers_infrastructure_tests.pytorch_tests.test_pytorch_quantization_wrapper import \
+from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_quantization_wrapper import \
     TestPytorchQuantizationWrapper
 
 

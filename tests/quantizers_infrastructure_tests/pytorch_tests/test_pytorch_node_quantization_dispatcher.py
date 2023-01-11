@@ -12,13 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import unittest
 
-
-from model_compression_toolkit import qunatizers_infrastructure as qi
-from test_pytorch_base_quantizer import ZeroWeightsQuantizer, weight_quantization_config, ZeroActivationsQuantizer, activations_quantization_config
-from tests.qunatizers_infrastructure_tests.pytorch_tests.base_pytorch_infrastructure_test import \
-    BasePytorchInfrastructureTest
+from tests.quantizers_infrastructure_tests.pytorch_tests.base_pytorch_infrastructure_test import \
+    BasePytorchInfrastructureTest, ZeroWeightsQuantizer, weight_quantization_config, ZeroActivationsQuantizer, \
+    activations_quantization_config
 
 
 class TestPytorchNodeQuantizationDispatcher(BasePytorchInfrastructureTest):

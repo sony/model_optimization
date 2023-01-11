@@ -12,95 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import unittest
 
-from typing import Dict
-
-import torch
-import torch.nn as nn
-
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
-    NodeActivationQuantizationConfig
-from model_compression_toolkit import qunatizers_infrastructure as qi, QuantizationConfig
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
-from tests.qunatizers_infrastructure_tests.pytorch_tests.base_pytorch_infrastructure_test import \
-    BasePytorchInfrastructureTest
-
-
-class ZeroWeightsQuantizer(qi.BasePytorchQuantizer):
-    """
-    Trainable constrained quantizer to quantize a layer inputs.
-    """
-
-    def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
-        """
-        Initialize a TrainableWeightQuantizer object with parameters to use
-        for the quantization.
-
-        Args:
-            quantization_config: node quantization config class
-        """
-        super().__init__(quantization_config,
-                         qi.QuantizationTarget.Weights,
-                         [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
-
-    def initialize_quantization(self,
-                                tensor_shape: torch.Size,
-                                name: str,
-                                layer: nn.Module) -> Dict[str, nn.Parameter]:
-        return
-
-    def __call__(self,
-                 inputs: nn.Parameter,
-                 training: bool) -> nn.Parameter:
-
-        return inputs * 0
-
-
-class ZeroActivationsQuantizer(qi.BasePytorchQuantizer):
-    """
-    Trainable constrained quantizer to quantize a layer inputs.
-    """
-
-    def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
-        """
-        Initialize a TrainableWeightQuantizer object with parameters to use
-        for the quantization.
-
-        Args:
-            quantization_config: node quantization config class
-        """
-        super().__init__(quantization_config,
-                         qi.QuantizationTarget.Activation,
-                         [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
-
-    def initialize_quantization(self,
-                                tensor_shape: torch.Size,
-                                name: str,
-                                layer: nn.Module) -> Dict[str, nn.Parameter]:
-        return
-
-    def __call__(self,
-                 inputs: nn.Parameter,
-                 training: bool = True) -> nn.Parameter:
-
-        return inputs * 0
-
-
-def dummy_fn():
-    return
-
-
-op_cfg, _ = get_op_quantization_configs()
-qc = QuantizationConfig()
-weight_quantization_config = NodeWeightsQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn, -1)
-activations_quantization_config = NodeActivationQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn)
-
-op_cfg_uniform = op_cfg.clone_and_edit(activation_quantization_method=QuantizationMethod.UNIFORM,
-                                       weights_quantization_method=QuantizationMethod.UNIFORM)
-weight_quantization_config_uniform = NodeWeightsQuantizationConfig(qc, op_cfg_uniform, dummy_fn, dummy_fn, -1)
-activations_quantization_config_uniform = NodeActivationQuantizationConfig(qc, op_cfg_uniform, dummy_fn, dummy_fn)
+from tests.quantizers_infrastructure_tests.pytorch_tests.base_pytorch_infrastructure_test import \
+    BasePytorchInfrastructureTest, ZeroWeightsQuantizer, weight_quantization_config_uniform, ZeroActivationsQuantizer, \
+    activations_quantization_config_uniform, weight_quantization_config, activations_quantization_config
 
 
 class TestPytorchBaseQuantizer(BasePytorchInfrastructureTest):
@@ -112,11 +27,11 @@ class TestPytorchBaseQuantizer(BasePytorchInfrastructureTest):
 
         with self.unit_test.assertRaises(Exception) as e:
             ZeroWeightsQuantizer(weight_quantization_config_uniform)
-        self.unit_test.assertEqual(f'Quantization method mismatch expected:[<QuantizationMethod.POWER_OF_TWO: 0>, <QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM', str(e.exception))
+        self.unit_test.assertEqual(f'Quantization method mismatch expected: [<QuantizationMethod.POWER_OF_TWO: 0>, <QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM', str(e.exception))
 
         with self.unit_test.assertRaises(Exception) as e:
             ZeroActivationsQuantizer(activations_quantization_config_uniform)
-        self.unit_test.assertEqual(f'Quantization method mismatch expected:[<QuantizationMethod.POWER_OF_TWO: 0>, <QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM', str(e.exception))
+        self.unit_test.assertEqual(f'Quantization method mismatch expected: [<QuantizationMethod.POWER_OF_TWO: 0>, <QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM', str(e.exception))
 
         with self.unit_test.assertRaises(Exception) as e:
             ZeroWeightsQuantizer(activations_quantization_config_uniform)

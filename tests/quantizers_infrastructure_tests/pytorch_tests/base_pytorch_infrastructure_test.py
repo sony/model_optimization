@@ -22,9 +22,84 @@ import torch.nn as nn
 
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
     NodeActivationQuantizationConfig
-from model_compression_toolkit import qunatizers_infrastructure as qi, QuantizationConfig
+from model_compression_toolkit import quantizers_infrastructure as qi, QuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
+
+
+class ZeroWeightsQuantizer(qi.BasePytorchTrainableQuantizer):
+    """
+    Trainable constrained quantizer to quantize a layer inputs.
+    """
+
+    def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
+        """
+        Initialize a TrainableWeightQuantizer object with parameters to use
+        for the quantization.
+
+        Args:
+            quantization_config: node quantization config class
+        """
+        super().__init__(quantization_config,
+                         qi.QuantizationTarget.Weights,
+                         [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
+
+    def initialize_quantization(self,
+                                tensor_shape: torch.Size,
+                                name: str,
+                                layer: nn.Module) -> Dict[str, nn.Parameter]:
+        return
+
+    def __call__(self,
+                 inputs: nn.Parameter,
+                 training: bool) -> nn.Parameter:
+
+        return inputs * 0
+
+
+class ZeroActivationsQuantizer(qi.BasePytorchTrainableQuantizer):
+    """
+    Trainable constrained quantizer to quantize a layer inputs.
+    """
+
+    def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
+        """
+        Initialize a TrainableWeightQuantizer object with parameters to use
+        for the quantization.
+
+        Args:
+            quantization_config: node quantization config class
+        """
+        super().__init__(quantization_config,
+                         qi.QuantizationTarget.Activation,
+                         [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
+
+    def initialize_quantization(self,
+                                tensor_shape: torch.Size,
+                                name: str,
+                                layer: nn.Module) -> Dict[str, nn.Parameter]:
+        return
+
+    def __call__(self,
+                 inputs: nn.Parameter,
+                 training: bool = True) -> nn.Parameter:
+
+        return inputs * 0
+
+
+def dummy_fn():
+    return
+
+
+op_cfg, _ = get_op_quantization_configs()
+qc = QuantizationConfig()
+weight_quantization_config = NodeWeightsQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn, -1)
+activations_quantization_config = NodeActivationQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn)
+
+op_cfg_uniform = op_cfg.clone_and_edit(activation_quantization_method=QuantizationMethod.UNIFORM,
+                                       weights_quantization_method=QuantizationMethod.UNIFORM)
+weight_quantization_config_uniform = NodeWeightsQuantizationConfig(qc, op_cfg_uniform, dummy_fn, dummy_fn, -1)
+activations_quantization_config_uniform = NodeActivationQuantizationConfig(qc, op_cfg_uniform, dummy_fn, dummy_fn)
 
 
 class BasePytorchInfrastructureTest:
