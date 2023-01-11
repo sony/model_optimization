@@ -42,6 +42,24 @@ class TestLUTQuantizerParams(unittest.TestCase):
         self.assertTrue(np.all([math.log2(n).is_integer() for n in list(scales_per_channel.flatten())]))
         self.assertTrue(len(np.unique(cluster_centers.flatten())) <= len(np.unique(tensor_data.flatten())))
 
+        # check when the number of values of the tensor_data is lower than 2**n_bits
+        channel_axis = random.choice([0, 1, 2])
+        tensor_data = np.random.randn(3, 4, 5)
+        quantization_params = lut_kmeans_tensor(tensor_data=tensor_data,
+                                                p=2,
+                                                n_bits=8,
+                                                per_channel=True,
+                                                channel_axis=channel_axis)
+        cluster_centers = quantization_params[CLUSTER_CENTERS]
+        scales_per_channel = quantization_params[SCALE_PER_CHANNEL]
+        # check size of scales
+        self.assertTrue(scales_per_channel.shape[channel_axis] == tensor_data.shape[channel_axis])
+        self.assertTrue(len(scales_per_channel.shape) == len(tensor_data.shape))
+        # check that all scales are power of 2
+        self.assertTrue(np.all([math.log2(n).is_integer() for n in list(scales_per_channel.flatten())]))
+        # len(unique(tensor_data)) < 2 ** n_bits then cluster_centers = len(unique(tensor_data))
+        self.assertTrue(len(cluster_centers.flatten()) <= len(np.unique(tensor_data.flatten())))
+
 
 if __name__ == '__main__':
     unittest.main()

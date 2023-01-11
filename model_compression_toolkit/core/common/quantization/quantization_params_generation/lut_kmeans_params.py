@@ -60,7 +60,8 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
         the thresholds per channel and the multiplier num bits.
     """
     if n_bits > MULTIPLIER_N_BITS:
-        Logger.critical(f'Look-Up-Table bit configuration has {n_bits} bits, but must be less or equal to {MULTIPLIER_N_BITS}')
+        Logger.critical(f'Look-Up-Table bit configuration has {n_bits} bits, but must be less or equal to '
+                        f'{MULTIPLIER_N_BITS}')  # pragma: no cover
     # TODO: need to set this externally
     if len(np.unique(tensor_data.flatten())) < 2 ** n_bits:
         n_clusters = len(np.unique(tensor_data.flatten()))
@@ -115,7 +116,8 @@ def lut_kmeans_histogram(bins: np.ndarray,
     """
 
     if n_bits >= MULTIPLIER_N_BITS:
-        Logger.critical(f'Look-Up-Table bit configuration has {n_bits} bits. It must be less then {MULTIPLIER_N_BITS}')
+        Logger.critical(f'Look-Up-Table bit configuration has {n_bits} bits. It must be less then '
+                        f'{MULTIPLIER_N_BITS}')  # pragma: no cover
 
     bins_with_values = np.abs(bins)[1:][counts > 0]
     if len(np.unique(bins_with_values.flatten())) < 2 ** n_bits:
