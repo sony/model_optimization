@@ -43,6 +43,7 @@ if found_tf:
     from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
     from tests.keras_tests.function_tests.test_tensorboard_writer import TestFileLogger
     from tests.keras_tests.function_tests.test_lut_quanitzer_params import TestLUTQuantizerParams
+    from tests.keras_tests.function_tests.test_lut_activation_quanitzer_params import TestLUTActivationsQuantizerParams
     from tests.keras_tests.function_tests.test_lut_activation_quanitzer_fake_quant import TestLUTQuantizerFakeQuant
     from tests.keras_tests.function_tests.test_lp_search_bitwidth import TestLpSearchBitwidth, \
         TestSearchBitwidthConfiguration
@@ -98,6 +99,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSearchBitwidthConfiguration))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestBNInfoCollection))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLUTQuantizerParams))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLUTActivationsQuantizerParams))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLUTQuantizerFakeQuant))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphReading))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestTFLiteExport))
