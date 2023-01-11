@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     lut_kmeans_histogram
 
 
-class TestLUTQuantizerParams(unittest.TestCase):
+class TestLUTActivationsQuantizerParams(unittest.TestCase):
 
     def test_signed_lut_activation_quantization_params(self):
         data = np.random.randn(3, 4, 5, 6)
@@ -79,6 +79,35 @@ class TestLUTQuantizerParams(unittest.TestCase):
         # check number of clusters
         self.assertTrue(cluster_centers.shape[0] <= 2 ** n_bits,
                         f"Number of clusters is {cluster_centers.shape[0]} but should not exceed {2 ** n_bits}"),
+        # check clusters are rounded
+        self.assertTrue(np.all(np.mod(cluster_centers, 1) == 0), "Cluster points are supposed to be rounded")
+
+    def test_lut_activation_quantization_params_with_fewer_data(self):
+        # check when the number of values of the data is lower than 2**n_bits
+        data = np.random.randn(3, 4, 5)
+        counts, bins = np.histogram(data, bins=20)
+        n_bits = 7
+
+        quantization_params = lut_kmeans_histogram(bins=bins,
+                                                   counts=counts,
+                                                   p=2,  # dummy
+                                                   n_bits=n_bits,
+                                                   min_value=1,  # dummy
+                                                   max_value=1,  # dummy
+                                                   constrained=True,  # dummy
+                                                   n_iter=20,  # dummy
+                                                   min_threshold=MIN_THRESHOLD,
+                                                   quant_error_method=QuantizationErrorMethod.MSE  # dummy
+                                                   )
+
+        cluster_centers = quantization_params[CLUSTER_CENTERS]
+        threshold = quantization_params[THRESHOLD]
+        # check threshold is power-of-two
+        self.assertTrue(math.log2(threshold).is_integer(), "LUT quantization threshold must be a power of two")
+
+        # check number of clusters
+        self.assertTrue(cluster_centers.shape[0] <= bins.shape[0],
+                        f"Number of clusters is {cluster_centers.shape[0]} but should not exceed {bins.shape[0]}"),
         # check clusters are rounded
         self.assertTrue(np.all(np.mod(cluster_centers, 1) == 0), "Cluster points are supposed to be rounded")
 

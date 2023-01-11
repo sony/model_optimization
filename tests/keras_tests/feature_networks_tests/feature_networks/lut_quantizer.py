@@ -15,14 +15,13 @@
 import math
 import unittest
 
-from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
-from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
-    ChangeCandidatesWeightsQuantizationMethod
+import numpy as np
+import tensorflow as tf
 
 import model_compression_toolkit as cmo
-import tensorflow as tf
-import numpy as np
-
+from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
+    ChangeCandidatesWeightsQuantizationMethod
+from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import LUTFakeQuant
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
@@ -153,12 +152,6 @@ class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
             # Check layers number of clusters and clusters values
             self.unit_test.assertTrue(ll.cluster_centers.shape[0] <= 2 ** self.activation_n_bits)
             self.unit_test.assertTrue(np.all(np.mod(ll.cluster_centers, 1) == 0))
-
-
-class RunKmeansTest(unittest.TestCase):
-    def test_lut_quantizer(self):
-        LUTWeightsQuantizerTest(self).run_test()
-        LUTWeightsQuantizerTest(self, is_symmetric=True).run_test()
 
 
 if __name__ == '__main__':

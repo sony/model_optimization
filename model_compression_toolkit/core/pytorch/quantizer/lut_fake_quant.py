@@ -57,7 +57,7 @@ class PytorchLUTFakeQuant(torch.nn.Module):
             Quantized torch Tensor.
         """
         if self.activation_is_signed is None or self.cluster_centers is None or self.threshold is None:
-            return None
+            return None   # pragma: no cover
 
         _quant_output = self.lut_kmeans_quantizer(x)
         return _quant_output
