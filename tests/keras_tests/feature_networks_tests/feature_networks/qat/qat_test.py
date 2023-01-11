@@ -21,7 +21,7 @@ import numpy as np
 from tests.keras_tests.tpc_keras import get_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as mct
-from model_compression_toolkit import qunatizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi
 import os
 
 keras = tf.keras

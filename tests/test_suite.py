@@ -75,7 +75,7 @@ if found_pytorch:
     # from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
     from tests.pytorch_tests.function_tests.test_pytorch_tp_model import TestPytorchTPModel
-    from tests.qunatizers_infrastructure_tests.pytorch_tests.test_pytorch_quantization_infrastructure_runner import \
+    from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_quantization_infrastructure_runner import \
         PytorchInfrastructureTest
 
 if __name__ == '__main__':
