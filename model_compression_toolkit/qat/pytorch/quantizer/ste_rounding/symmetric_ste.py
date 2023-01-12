@@ -76,21 +76,13 @@ class STEWeightQuantizer(qi.BasePytorchTrainableQuantizer):
         Returns:
             Dictionary of new variables.
         """
-        _shape = len(self.np_threshold_values) if self.quantization_config.weights_channels_axis else ()
-        _val = torch.ones(_shape)
-        self.ptq_threshold_tensor = nn.Parameter(to_torch_tensor(_val), requires_grad=False)
 
-        _shape = len(self.min) if self.quantization_config.weights_channels_axis else ()
-        _val = torch.full(_shape,-1.0)
-        self.fq_min = nn.Parameter(to_torch_tensor(_val), requires_grad=False)
-
-        _shape = len(self.max) if self.quantization_config.weights_channels_axis else ()
-        _val = torch.full(_shape,1.0)
-        self.fq_max = nn.Parameter(to_torch_tensor(_val), requires_grad=False)
+        # Add threshold variables to layer.
+        layer.register_parameter(name + "_" + THRESHOLD_TENSOR, nn.Parameter(to_torch_tensor(self.np_threshold_values), requires_grad=False))
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {THRESHOLD_TENSOR: self.ptq_threshold_tensor,
-                                     FQ_MIN: self.fq_min, FQ_MAX: self.fq_max}
+        self.quantizer_parameters = {THRESHOLD_TENSOR: layer.get_parameter(name + "_" + THRESHOLD_TENSOR)}
+
         return self.quantizer_parameters
 
     def __call__(self,

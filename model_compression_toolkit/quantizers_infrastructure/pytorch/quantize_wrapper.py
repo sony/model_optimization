@@ -47,7 +47,7 @@ if FOUND_TORCH:
             # Init weights quantizers
             for name, quantizer in self.dispatcher.weight_quantizers.items():
                 weight = getattr(self.layer, name)
-                quantizer.initialize_quantization(weight.shape, name, self)
+                quantizer.initialize_quantization(weight.shape, name, self.layer)
                 self._weight_vars.append((name, weight, quantizer))
 
             # Init activations quantizers

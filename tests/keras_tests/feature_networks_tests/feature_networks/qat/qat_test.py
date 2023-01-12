@@ -22,6 +22,7 @@ from tests.keras_tests.tpc_keras import get_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as mct
 from model_compression_toolkit import quantizers_infrastructure as qi
+import os
 
 keras = tf.keras
 layers = keras.layers
@@ -58,6 +59,7 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
         if self.test_loading:
             ptq_model.save('qat2model.h5')
             ptq_model2 = mct.keras_load_quantized_model('qat2model.h5')
+            os.remove('qat2model.h5')
 
         if self.finalize:
             ptq_model = mct.keras_quantization_aware_training_finalize(ptq_model)

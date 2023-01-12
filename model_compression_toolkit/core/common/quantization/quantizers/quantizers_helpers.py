@@ -18,7 +18,7 @@ from typing import Tuple, List
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import MIN_THRESHOLD, EPS
-
+from model_compression_toolkit.core import common
 
 def max_power_of_two(x: np.ndarray,
                      min_threshold: float = MIN_THRESHOLD) -> np.ndarray:
@@ -235,7 +235,14 @@ def get_tensor_max(tensor_data: np.ndarray,
     Returns: maximal value (or values).
 
     """
-    expansion_factor = 1.0 if is_uniform_quantization else np.power(2.0, n_bits - 1) / (np.power(2.0, n_bits - 1) - 1)
+    if n_bits < 1:
+        common.Logger.error("n_bits must be positive")
+    if is_uniform_quantization:
+        expansion_factor = 1.0
+    elif n_bits == 1:
+        expansion_factor = 0.0
+    else:
+        expansion_factor = np.power(2.0, n_bits - 1) / (np.power(2.0, n_bits - 1) - 1)
     if per_channel:
         output_shape = get_output_shape(tensor_data.shape, channel_axis)
         reshaped_tensor_data = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
