@@ -29,17 +29,10 @@ from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_
 
 class ZeroWeightsQuantizer(qi.BasePytorchTrainableQuantizer):
     """
-    Trainable constrained quantizer to quantize a layer inputs.
+    A dummy quantizer for test usage - "quantize" the layer's weights to 0
     """
 
     def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
-        """
-        Initialize a TrainableWeightQuantizer object with parameters to use
-        for the quantization.
-
-        Args:
-            quantization_config: node quantization config class
-        """
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Weights,
                          [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
@@ -48,7 +41,7 @@ class ZeroWeightsQuantizer(qi.BasePytorchTrainableQuantizer):
                                 tensor_shape: torch.Size,
                                 name: str,
                                 layer: nn.Module) -> Dict[str, nn.Parameter]:
-        return
+        return {}
 
     def __call__(self,
                  inputs: nn.Parameter,
@@ -59,17 +52,10 @@ class ZeroWeightsQuantizer(qi.BasePytorchTrainableQuantizer):
 
 class ZeroActivationsQuantizer(qi.BasePytorchTrainableQuantizer):
     """
-    Trainable constrained quantizer to quantize a layer inputs.
+    A dummy quantizer for test usage - "quantize" the layer's activation to 0
     """
 
     def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
-        """
-        Initialize a TrainableWeightQuantizer object with parameters to use
-        for the quantization.
-
-        Args:
-            quantization_config: node quantization config class
-        """
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Activation,
                          [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
@@ -78,7 +64,7 @@ class ZeroActivationsQuantizer(qi.BasePytorchTrainableQuantizer):
                                 tensor_shape: torch.Size,
                                 name: str,
                                 layer: nn.Module) -> Dict[str, nn.Parameter]:
-        return
+        return {}
 
     def __call__(self,
                  inputs: nn.Parameter,
@@ -120,9 +106,16 @@ class BasePytorchInfrastructureTest:
     def get_weights_quantization_config(self):
         op_cfg, _ = get_op_quantization_configs()
         qc = QuantizationConfig()
-        return NodeWeightsQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn, -1)
+        return NodeWeightsQuantizationConfig(qc=qc,
+                                             op_cfg=op_cfg,
+                                             weights_quantization_fn=dummy_fn,
+                                             weights_quantization_params_fn=dummy_fn,
+                                             weights_channels_axis=-1)
 
     def get_activation_quantization_config(self):
         op_cfg, _ = get_op_quantization_configs()
         qc = QuantizationConfig()
-        return NodeActivationQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn)
+        return NodeActivationQuantizationConfig(qc=qc,
+                                                op_cfg=op_cfg,
+                                                activation_quantization_fn=dummy_fn,
+                                                activation_quantization_params_fn=dummy_fn)

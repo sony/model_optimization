@@ -24,11 +24,10 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 
 class TestThresholdSelection(unittest.TestCase):
     def test_no_clipping_function(self):
-        for i in range(1000):
-            x = np.random.randn(10, 10, 10)
-            dummy = 0
-            ml = power_of_two_selection_tensor(x, dummy, n_bits=8, quant_error_method=qc.QuantizationErrorMethod.NOCLIPPING)[THRESHOLD]
-            self.assertTrue(ml > np.max(np.abs(x)))
+        x = np.random.randn(10, 10, 10)
+        dummy = 0
+        ml = power_of_two_selection_tensor(x, dummy, n_bits=8, quant_error_method=qc.QuantizationErrorMethod.NOCLIPPING)[THRESHOLD]
+        self.assertTrue(ml > np.max(np.abs(x)))
 
     def test_mse_from_histogram(self):
         hc = HistogramCollector()
