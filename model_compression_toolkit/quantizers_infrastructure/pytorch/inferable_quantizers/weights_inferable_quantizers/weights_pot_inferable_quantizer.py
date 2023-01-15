@@ -19,7 +19,7 @@ from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
 if FOUND_TORCH:
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers import \
+    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.weights_inferable_quantizers.weights_symmetric_inferable_quantizer import \
         WeightsSymmetricInferableQuantizer
 
     class WeightsPOTInferableQuantizer(WeightsSymmetricInferableQuantizer):
@@ -46,9 +46,8 @@ if FOUND_TORCH:
             super(WeightsPOTInferableQuantizer, self).__init__(num_bits=num_bits,
                                                                threshold=threshold,
                                                                signed=signed,
-                                                               quantization_target=QuantizationTarget.Weights)
+                                                               per_channel=per_channel)
 
-            self.per_channel = per_channel
             is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in self.threshold.flatten()])
             assert is_threshold_pot, f'Expected threshold to be power of 2 but is {self.threshold}'
 

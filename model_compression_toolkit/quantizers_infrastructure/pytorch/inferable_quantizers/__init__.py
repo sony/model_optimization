@@ -33,3 +33,4 @@ from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quant
 from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.weights_inferable_quantizers \
     .weights_uniform_inferable_quantizer import \
     WeightsUniformInferableQuantizer
+

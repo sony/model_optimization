@@ -20,10 +20,7 @@ from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_q
 
 
 if FOUND_TORCH:
-    import torch
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.quantizer_utils import \
-        get_activation_symmetric_quantization_range_and_scale
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers import \
+    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.activation_inferable_quantizers.activation_symmetric_inferable_quantizer import \
         ActivationSymmetricInferableQuantizer
 
     class ActivationPOTInferableQuantizer(ActivationSymmetricInferableQuantizer):
@@ -46,8 +43,7 @@ if FOUND_TORCH:
             # target of Activation quantization
             super(ActivationPOTInferableQuantizer, self).__init__(num_bits=num_bits,
                                                                   signed=signed,
-                                                                  threshold=threshold,
-                                                                  quantization_target=QuantizationTarget.Activation)
+                                                                  threshold=threshold)
 
             is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in self.threshold.flatten()])
             assert is_threshold_pot, f'Expected threshold to be power of 2 but is {self.threshold}'
