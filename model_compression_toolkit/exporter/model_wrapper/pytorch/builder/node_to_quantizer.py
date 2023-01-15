@@ -23,7 +23,9 @@ from model_compression_toolkit.core.common.target_platform import QuantizationMe
 from model_compression_toolkit import quantizers_infrastructure as qi
 import torch
 from model_compression_toolkit.quantizers_infrastructure import pytorch_inferable_quantizers
-
+from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers\
+    .base_pytorch_inferable_quantizer import \
+    NUM_BITS, SIGNED, THRESHOLD, MAX_RANGE, MIN_RANGE, PER_CHANNEL
 
 QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER = {
     QuantizationMethod.POWER_OF_TWO: pytorch_inferable_quantizers.WeightsPOTInferableQuantizer,
@@ -64,17 +66,17 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
         # Return the appropriate quantization parameters based on the quantization method
         if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                    QuantizationMethod.SYMMETRIC]:
-            return {'num_bits': node_w_qc.weights_n_bits,
-                    'threshold': node_w_qc.weights_quantization_params.get(THRESHOLD),
-                    'signed': True,
-                    'per_channel': node_w_qc.weights_per_channel_threshold,
+            return {NUM_BITS: node_w_qc.weights_n_bits,
+                    THRESHOLD: node_w_qc.weights_quantization_params.get(THRESHOLD),
+                    SIGNED: True,
+                    PER_CHANNEL: node_w_qc.weights_per_channel_threshold,
                     }
 
         elif quantization_method in [QuantizationMethod.UNIFORM]:
-            return {'num_bits': node_w_qc.weights_n_bits,
-                    'per_channel': node_w_qc.weights_per_channel_threshold,
-                    'min_range': node_w_qc.weights_quantization_params.get(RANGE_MIN),
-                    'max_range': node_w_qc.weights_quantization_params.get(RANGE_MAX)}
+            return {NUM_BITS: node_w_qc.weights_n_bits,
+                    PER_CHANNEL: node_w_qc.weights_per_channel_threshold,
+                    MIN_RANGE: node_w_qc.weights_quantization_params.get(RANGE_MIN),
+                    MAX_RANGE: node_w_qc.weights_quantization_params.get(RANGE_MAX)}
         else:
             Logger.critical(f'Not supported quantization method for inferable quantizers.')
 
@@ -93,14 +95,14 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
         # Return the appropriate quantization parameters based on the quantization method
         if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                    QuantizationMethod.SYMMETRIC]:
-            return {'num_bits': node_qc.activation_n_bits,
-                    'threshold': node_qc.activation_quantization_params.get(THRESHOLD),
-                    'signed': node_qc.activation_quantization_params.get(SIGNED)}
+            return {NUM_BITS: node_qc.activation_n_bits,
+                    THRESHOLD: node_qc.activation_quantization_params.get(THRESHOLD),
+                    SIGNED: node_qc.activation_quantization_params.get(SIGNED)}
 
         elif quantization_method in [QuantizationMethod.UNIFORM]:
-            return {'num_bits': node_qc.activation_n_bits,
-                    'min_range': node_qc.activation_quantization_params.get(RANGE_MIN),
-                    'max_range': node_qc.activation_quantization_params.get(RANGE_MAX)}
+            return {NUM_BITS: node_qc.activation_n_bits,
+                    MIN_RANGE: node_qc.activation_quantization_params.get(RANGE_MIN),
+                    MAX_RANGE: node_qc.activation_quantization_params.get(RANGE_MAX)}
         else:
             Logger.critical(f'Not supported quantization method for inferable quantizers.')
     else:

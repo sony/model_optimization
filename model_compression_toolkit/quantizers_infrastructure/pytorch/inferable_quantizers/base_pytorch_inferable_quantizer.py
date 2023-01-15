@@ -16,6 +16,14 @@ from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer, QuantizationTarget
 
 if FOUND_TORCH:
+    # Inferable pytorch quantizer signature parameters:
+    NUM_BITS = 'num_bits'
+    SIGNED = 'signed'
+    THRESHOLD = 'threshold'
+    PER_CHANNEL = 'per_channel'
+    MIN_RANGE = 'min_range'
+    MAX_RANGE = 'min_range'
+
     class BasePyTorchInferableQuantizer(BaseInferableQuantizer):
         def __init__(self,
                      quantization_target: QuantizationTarget):
