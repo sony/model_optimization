@@ -15,6 +15,24 @@
 
 from typing import Dict
 from enum import Enum
+from model_compression_toolkit.core import common
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+
+def _is_qat_applicable(node: common.BaseNode,
+                       fw_info: FrameworkInfo) -> bool:
+    """
+    A function for deciding if a layer should be fine-tuned during QAT
+    Args:
+        node (BaseNode): Node for quantization decision
+        fw_info (FrameworkInfo): Pytorch quantization information
+
+    Returns:
+        A boolean whether the layer is to be wrapped with a QuantizeWrapper
+    """
+
+    if node.is_weights_quantization_enabled() and not fw_info.is_kernel_op(node.type):
+        common.Logger.error("QAT Error: Quantizing a node without a kernel isn't supported")
+    return node.is_weights_quantization_enabled() or node.is_activation_quantization_enabled()
 
 
 class TrainingMethod(Enum):

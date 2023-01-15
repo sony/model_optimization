@@ -14,7 +14,7 @@
 # ==============================================================================
 import copy
 from typing import Callable
-
+from functools import partial
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH, PYTORCH
 
@@ -31,22 +31,42 @@ from model_compression_toolkit.ptq.runner import ptq_runner
 
 
 if FOUND_TORCH:
+    import torch.nn as nn
     from torch.nn import Module
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-    from model_compression_toolkit.core.pytorch.constants import KERNEL
-    from model_compression_toolkit.qat.pytorch.qat_model_builder import qat_wrapper
+    from model_compression_toolkit.qat.common.qat_config import _is_qat_applicable
     from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
     from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
-
+    from model_compression_toolkit import quantizers_infrastructure as qi
     from model_compression_toolkit import get_target_platform_capabilities
+    from model_compression_toolkit.qat.common.qat_config import QATConfig
+    from model_compression_toolkit.qat.pytorch.quantizer.quantization_dispatcher_builder import quantization_dispatcher_builder
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
+
+
+    def qat_wrapper(n: common.BaseNode, module: nn.Module, qat_config: QATConfig):
+        """
+        A function which takes a computational graph node and a pytorch module and perform the quantization wrapping
+        Args:
+            n: A node of mct graph.
+            module: A Pytorch module
+            qat_config (QATConfig): QAT configuration
+        Returns: Wrapped layer
+
+        """
+        if _is_qat_applicable(n, DEFAULT_PYTORCH_INFO):
+            return qi.PytorchQuantizationWrapper(module, quantization_dispatcher_builder(n, qat_config, DEFAULT_PYTORCH_INFO))
+        else:
+            return module
+
 
     def pytorch_quantization_aware_training_init(in_model: Module,
                                                  representative_data_gen: Callable,
                                                  target_kpi: KPI = None,
                                                  core_config: CoreConfig = CoreConfig(),
+                                                 qat_config: QATConfig = QATConfig(),
                                                  fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                                                  target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
@@ -69,6 +89,7 @@ if FOUND_TORCH:
              representative_data_gen (Callable): Dataset used for initial calibration.
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
+             qat_config (QATConfig): QAT configuration
              fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).  `Default Pytorch info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/pytorch/default_framework_info.py>`_
              target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Pytorch model according to.
 
@@ -134,7 +155,9 @@ if FOUND_TORCH:
 
         tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
 
-        qat_model, user_info = PyTorchModelBuilder(graph=tg, fw_info=fw_info, wrapper=qat_wrapper).build_model()
+        _qat_wrapper = partial(qat_wrapper, qat_config=qat_config)
+
+        qat_model, user_info = PyTorchModelBuilder(graph=tg, fw_info=fw_info, wrapper=_qat_wrapper).build_model()
 
         user_info.mixed_precision_cfg = bit_widths_config
 
