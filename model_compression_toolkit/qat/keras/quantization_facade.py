@@ -48,7 +48,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.common import BaseNode
     from model_compression_toolkit.core.common.constants import TENSORFLOW
     from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-
+    from model_compression_toolkit.qat.common.qat_config import _is_qat_applicable
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.qat.keras.quantizer.quantization_dispatcher_builder import \
@@ -57,23 +57,6 @@ if FOUND_TF:
     from model_compression_toolkit import quantizers_infrastructure as qi
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
-
-
-    def _is_qat_applicable(node: common.BaseNode,
-                           fw_info: FrameworkInfo) -> bool:
-        """
-        A function for deciding if a layer should be fine-tuned during QAT
-        Args:
-            node (BaseNode): Node for quantization decision
-            fw_info (FrameworkInfo): Keras quantization information
-
-        Returns:
-            A boolean whether the layer is to be wrapped with a QuantizeWrapper
-        """
-
-        if node.is_weights_quantization_enabled() and not fw_info.is_kernel_op(node.type):
-            common.Logger.error("QAT Error: Quantizing a node without a kernel isn't supported")
-        return node.is_weights_quantization_enabled() or node.is_activation_quantization_enabled()
 
 
     def qat_wrapper(n: common.BaseNode, layer: Layer, qat_config):
