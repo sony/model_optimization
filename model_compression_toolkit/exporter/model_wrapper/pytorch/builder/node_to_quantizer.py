@@ -14,29 +14,101 @@
 # ==============================================================================
 import numpy as np
 
-from typing import List, Callable
+from typing import List, Callable, Dict, Any
 
 from model_compression_toolkit.core.common import BaseNode, Logger
 from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import calculate_delta
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-
-# Supporting other quantizer types in the future
-from model_compression_toolkit.exporter.model_wrapper.pytorch.quantizers.fq_quantizer import FakeQuantQuantizer
-from model_compression_toolkit.exporter.model_wrapper.pytorch.quantizers.uniform_weights_quantizer import \
-    UniformWeightsQuantizer
+from model_compression_toolkit import quantizers_infrastructure as qi
 import torch
-
-SUPPORTED_WEIGHT_QUANTIZER_TYPES = [QuantizationMethod.POWER_OF_TWO,
-                                    QuantizationMethod.SYMMETRIC,
-                                    QuantizationMethod.UNIFORM]
-
-SUPPORTED_ACTIVATION_QUANTIZER_TYPES = [QuantizationMethod.POWER_OF_TWO,
-                                        QuantizationMethod.SYMMETRIC,
-                                        QuantizationMethod.UNIFORM]
+from model_compression_toolkit.quantizers_infrastructure import pytorch_inferable_quantizers
 
 
-def get_weights_quantizer_for_node(node: BaseNode) -> List[Callable]:
+QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER = {
+    QuantizationMethod.POWER_OF_TWO: pytorch_inferable_quantizers.WeightsPOTInferableQuantizer,
+    QuantizationMethod.SYMMETRIC: pytorch_inferable_quantizers.WeightsSymmetricInferableQuantizer,
+    QuantizationMethod.UNIFORM: pytorch_inferable_quantizers.WeightsUniformInferableQuantizer
+}
+
+QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER = {
+    QuantizationMethod.POWER_OF_TWO: pytorch_inferable_quantizers.ActivationPOTInferableQuantizer,
+    QuantizationMethod.SYMMETRIC: pytorch_inferable_quantizers.ActivationSymmetricInferableQuantizer,
+    QuantizationMethod.UNIFORM: pytorch_inferable_quantizers.ActivationUniformInferableQuantizer
+}
+
+
+def get_inferable_quantizer_kwargs(node: BaseNode,
+                                   quantization_target: qi.QuantizationTarget) -> Dict[str, Any]:
+    """
+    Get the quantization parameters for an inferable quantizer.
+    Args:
+        node: The node for which the quantizer is being created.
+        quantization_target: The target of the quantization (weights or activations).
+
+    Returns:
+        The quantization parameters as a dictionary.
+
+    """
+
+    if quantization_target == qi.QuantizationTarget.Weights:
+        # Get the weights quantization configuration for the node
+        node_w_qc = node.final_weights_quantization_cfg
+        quantization_method = node_w_qc.weights_quantization_method
+
+        # Check if the quantization method is supported for inferable quantizers
+        assert quantization_method in QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER, f'{quantization_method} for weights ' \
+                                                                               f'not in supported quantization ' \
+                                                                               f'methods for inferable quantizers'
+
+        # Return the appropriate quantization parameters based on the quantization method
+        if quantization_method in [QuantizationMethod.POWER_OF_TWO,
+                                   QuantizationMethod.SYMMETRIC]:
+            return {'num_bits': node_w_qc.weights_n_bits,
+                    'threshold': node_w_qc.weights_quantization_params.get(THRESHOLD),
+                    'signed': True,
+                    'per_channel': node_w_qc.weights_per_channel_threshold,
+                    }
+
+        elif quantization_method in [QuantizationMethod.UNIFORM]:
+            return {'num_bits': node_w_qc.weights_n_bits,
+                    'per_channel': node_w_qc.weights_per_channel_threshold,
+                    'min_range': node_w_qc.weights_quantization_params.get(RANGE_MIN),
+                    'max_range': node_w_qc.weights_quantization_params.get(RANGE_MAX)}
+        else:
+            Logger.critical(f'Not supported quantization method for inferable quantizers.')
+
+    elif quantization_target == qi.QuantizationTarget.Activation:
+        # Get the activation quantization configuration for the node
+        node_qc = node.final_activation_quantization_cfg
+        quantization_method = node_qc.activation_quantization_method
+
+        # Check if the quantization method is supported for inferable quantizers
+        assert quantization_method in QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER, f'{quantization_method} for weights ' \
+                                                                                  f'not in ' \
+                                                                                  f'supported quantization methods ' \
+                                                                                  f'for inferable' \
+                                                                                  f' quantizers'
+
+        # Return the appropriate quantization parameters based on the quantization method
+        if quantization_method in [QuantizationMethod.POWER_OF_TWO,
+                                   QuantizationMethod.SYMMETRIC]:
+            return {'num_bits': node_qc.activation_n_bits,
+                    'threshold': node_qc.activation_quantization_params.get(THRESHOLD),
+                    'signed': node_qc.activation_quantization_params.get(SIGNED)}
+
+        elif quantization_method in [QuantizationMethod.UNIFORM]:
+            return {'num_bits': node_qc.activation_n_bits,
+                    'min_range': node_qc.activation_quantization_params.get(RANGE_MIN),
+                    'max_range': node_qc.activation_quantization_params.get(RANGE_MAX)}
+        else:
+            Logger.critical(f'Not supported quantization method for inferable quantizers.')
+    else:
+        Logger.critical(f'{quantization_target} is not supported')
+
+
+
+def get_weights_quantizer_for_node(node: BaseNode) -> pytorch_inferable_quantizers.BasePyTorchInferableQuantizer:
     """
     Get weights quantizer for a node.
 
@@ -49,40 +121,13 @@ def get_weights_quantizer_for_node(node: BaseNode) -> List[Callable]:
     """
     if node.final_weights_quantization_cfg is None:
         Logger.critical(f'Can not set quantizer for a node with no final weights quantization configuration')
-
     node_w_qc = node.final_weights_quantization_cfg
     weights_quantization_method = node_w_qc.weights_quantization_method
-
-    if weights_quantization_method not in SUPPORTED_WEIGHT_QUANTIZER_TYPES:
-        Logger.error(f'Fully quantized models are now supported for {SUPPORTED_WEIGHT_QUANTIZER_TYPES} quantization methods, but node has {weights_quantization_method} quantization method')
-
-    # Compute quantizer params based on node's quantization params
-    if weights_quantization_method in [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC]:
-        weight_thresholds = node_w_qc.weights_quantization_params.get(THRESHOLD)
-        assert weight_thresholds is not None
-        if weights_quantization_method == QuantizationMethod.POWER_OF_TWO:
-            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in weight_thresholds.flatten()])
-            if not is_threshold_pot:
-                Logger.error(f'Expected threshold to be power of 2 but is {weight_thresholds}')
-
-        min_range = -weight_thresholds
-        max_range = weight_thresholds - calculate_delta(weight_thresholds,
-                                                        n_bits=node_w_qc.weights_n_bits,
-                                                        signed=True)
-
-    else:
-        Logger.error(f'For now fully quantized models support only {SUPPORTED_WEIGHT_QUANTIZER_TYPES} for weights quantization, but found {weights_quantization_method}')
-
-    return [UniformWeightsQuantizer(num_bits=node_w_qc.weights_n_bits,
-                                    max_range=max_range,
-                                    min_range=min_range,
-                                    quantization_method=node_w_qc.weights_quantization_method,
-                                    per_channel=node_w_qc.weights_per_channel_threshold,
-                                    output_channels_axis=node_w_qc.weights_channels_axis
-                                    )]
+    kwargs = get_inferable_quantizer_kwargs(node, qi.QuantizationTarget.Weights)
+    return QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER.get(weights_quantization_method)(**kwargs)
 
 
-def get_activations_quantizer_for_node(node: BaseNode) -> List[Callable]:
+def get_activations_quantizer_for_node(node: BaseNode) -> pytorch_inferable_quantizers.BasePyTorchInferableQuantizer:
     """
     Get activation quantizer for a node.
 
@@ -93,43 +138,10 @@ def get_activations_quantizer_for_node(node: BaseNode) -> List[Callable]:
         Quantizer for the node's activations.
 
     """
-
     if node.final_activation_quantization_cfg is None:
         Logger.critical(f'Can not set quantizer for a node with no final activation quantization configuration')
-
     node_act_qc = node.final_activation_quantization_cfg
     activation_quantization_method = node_act_qc.activation_quantization_method
+    kwargs = get_inferable_quantizer_kwargs(node, qi.QuantizationTarget.Activation)
+    return QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER.get(activation_quantization_method)(**kwargs)
 
-    if activation_quantization_method not in SUPPORTED_ACTIVATION_QUANTIZER_TYPES:
-        Logger.error(
-            f'Fully quantized models are now supported for {SUPPORTED_ACTIVATION_QUANTIZER_TYPES} quantization methods, '
-            f'but node has {activation_quantization_method} quantization method')
-
-    activation_thresholds = node_act_qc.activation_quantization_params.get(THRESHOLD)
-
-    if activation_quantization_method in [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC]:
-        if activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
-            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in activation_thresholds.flatten()])
-            if not is_threshold_pot:
-                Logger.error(f'Expected threshold to be power of 2 but is {node_act_qc.activation_quantization_params.get(THRESHOLD)}')
-
-        min_range = 0
-        if node_act_qc.activation_quantization_params.get(SIGNED):
-            min_range = -activation_thresholds
-
-        max_range = activation_thresholds - calculate_delta(
-            activation_thresholds,
-            n_bits=node_act_qc.activation_n_bits,
-            signed=node_act_qc.activation_quantization_params.get(SIGNED))
-
-    elif activation_quantization_method in [QuantizationMethod.UNIFORM]:
-        min_range = node_act_qc.activation_quantization_params.get(RANGE_MIN)
-        max_range = node_act_qc.activation_quantization_params.get(RANGE_MAX)
-
-    else:
-        Logger.error(f'For now fully quantized models support only {SUPPORTED_ACTIVATION_QUANTIZER_TYPES} for activation quantization, but found {activation_quantization_method}')
-
-    return [FakeQuantQuantizer(nbits=node_act_qc.activation_n_bits,
-                              min_range=min_range,
-                              max_range=max_range,
-                              quantization_method=activation_quantization_method)]
