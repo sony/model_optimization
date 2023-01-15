@@ -17,14 +17,14 @@ import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.base_pot_inferable_quantizer \
-    import \
-    BasePOTInferableQuantizer
+
 
 if FOUND_TORCH:
     import torch
     from model_compression_toolkit.quantizers_infrastructure.pytorch.quantizer_utils import to_torch_tensor
-
+    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.base_pot_inferable_quantizer \
+        import \
+        BasePOTInferableQuantizer
 
     class WeightsPOTInferableQuantizer(BasePOTInferableQuantizer):
         """
