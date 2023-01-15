@@ -23,11 +23,10 @@ if FOUND_TORCH:
     import torch
     from model_compression_toolkit.quantizers_infrastructure.pytorch.quantizer_utils import \
         get_activation_symmetric_quantization_range_and_scale
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.base_pot_inferable_quantizer \
-        import \
-        BasePOTInferableQuantizer
+    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers import \
+        ActivationSymmetricInferableQuantizer
 
-    class ActivationPOTInferableQuantizer(BasePOTInferableQuantizer):
+    class ActivationPOTInferableQuantizer(ActivationSymmetricInferableQuantizer):
         """
         Class for quantizing activations using power-of-two quantizer
         """
@@ -50,28 +49,12 @@ if FOUND_TORCH:
                                                                   threshold=threshold,
                                                                   quantization_target=QuantizationTarget.Activation)
 
-            self.min_range, self.max_range, self.scale = get_activation_symmetric_quantization_range_and_scale(
-                activation_is_signed=signed,
-                activation_n_bits=num_bits,
-                activation_threshold=threshold)
-            self.zero_point = 0
+            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in self.threshold.flatten()])
+            assert is_threshold_pot, f'Expected threshold to be power of 2 but is {self.threshold}'
 
-        def __call__(self, inputs, training=False):
-            """
-            Quantize the given inputs using the quantizer parameters.
 
-            Args:
-                inputs: input tensor to quantize
-                training: whether or not the quantizer is being used in training mode (unused here)
 
-            Returns:
-                quantized tensor.
-            """
-            return torch.fake_quantize_per_tensor_affine(inputs,
-                                                         scale=self.scale,
-                                                         zero_point=self.zero_point,
-                                                         quant_min=self.min_range,
-                                                         quant_max=self.max_range)
+
 
 else:
     class ActivationPOTInferableQuantizer:

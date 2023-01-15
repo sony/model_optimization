@@ -18,15 +18,11 @@ import numpy as np
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
-
 if FOUND_TORCH:
-    import torch
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.quantizer_utils import to_torch_tensor
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.base_pot_inferable_quantizer \
-        import \
-        BasePOTInferableQuantizer
+    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers import \
+        WeightsSymmetricInferableQuantizer
 
-    class WeightsPOTInferableQuantizer(BasePOTInferableQuantizer):
+    class WeightsPOTInferableQuantizer(WeightsSymmetricInferableQuantizer):
         """
         Class for quantizing weights using power-of-two quantizer
         """
@@ -53,31 +49,10 @@ if FOUND_TORCH:
                                                                quantization_target=QuantizationTarget.Weights)
 
             self.per_channel = per_channel
+            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in self.threshold.flatten()])
+            assert is_threshold_pot, f'Expected threshold to be power of 2 but is {self.threshold}'
 
-            delta = self.threshold / np.power(2.0, num_bits - int(signed))
-            self.delta_tensor = to_torch_tensor(delta)
 
-            self.min_int = -int(self.signed) * (2 ** (num_bits - int(self.signed)))
-            self.max_int = (2 ** (num_bits - int(self.signed))) - 1
-
-        def __call__(self,
-                     inputs: torch.nn.Parameter,
-                     training: bool = False):
-            """
-            Quantize the given inputs using the quantizer parameters.
-
-            Args:
-                inputs: input tensor to quantize
-                training: whether or not the quantizer is being used in training mode (unused here)
-
-            Returns:
-                quantized tensor.
-            """
-            inputs.requires_grad = False
-            w0 = torch.round(torch.div(inputs, self.delta_tensor))
-            w1 = torch.clip(w0, min=self.min_int, max=self.max_int)
-            w_q = self.delta_tensor * w1
-            return w_q
 
 
 else:
