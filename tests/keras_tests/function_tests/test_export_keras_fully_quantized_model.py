@@ -21,17 +21,20 @@ import numpy as np
 import tensorflow as tf
 from keras import Input
 from keras.layers import Conv2D, BatchNormalization, ReLU, Dropout, Dense, Activation
+from packaging import version
 
 import model_compression_toolkit as mct
+from model_compression_toolkit import keras_load_quantized_model
 from model_compression_toolkit.exporter.model_exporter import keras_export_model, KerasExportMode, \
     tflite_export_model, \
     TFLiteExportMode
 from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_exportable
-from model_compression_toolkit import keras_load_quantized_model
 
 _, SAVED_EXPORTABLE_MODEL_PATH_TF = tempfile.mkstemp('.h5')
 _, SAVED_MODEL_PATH_TF = tempfile.mkstemp('.h5')
 _, SAVED_MODEL_PATH_TFLITE = tempfile.mkstemp('.tflite')
+
+
 
 
 def _get_model(input_shape):
@@ -121,10 +124,13 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
 
         # TFLite tensor index may change between TF versions:
         tensor_index = None
+
+        tensor_name = "model_2/conv2d_bn/Conv2D"
         for tensor_details in interpreter.get_tensor_details():
-            if tf_exported_model.layers[2].name in tensor_details['name'] and tensor_details['name'].endswith('Conv2D'):
+            if tensor_name == tensor_details['name']:
                 tensor_index = tensor_details['index']
                 break
+
         assert tensor_index is not None, f'Could not find kernel tensor details in TFLite file'
 
         # Test equal weights of the first conv2d layer between exported TFLite and exported TF
@@ -132,11 +138,22 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         self.assertTrue(np.sum(np.abs(diff)) == 0)
 
         tensor_index = None
+
+        # TFLite name the bias tensor differently between different versions
+        def _get_bias_name_by_tf_version():
+            if version.parse(tf.__version__).__str__().startswith('2.10'):
+                return "model_2/conv2d_bn/BiasAdd/ReadVariableOp"
+            elif version.parse(tf.__version__).__str__().startswith('2.9'):
+                return "model_2/conv2d_bn/BiasAdd/ReadVariableOp"
+            elif version.parse(tf.__version__).__str__().startswith('2.8'):
+                return "conv2d_bn/bias"
+
+        bias_tensor_name = _get_bias_name_by_tf_version()
         for tensor_details in interpreter.get_tensor_details():
-            if tf_exported_model.layers[2].name in tensor_details['name'] and tensor_details['name'].endswith(
-                    'BiasAdd/ReadVariableOp'):
+            if bias_tensor_name == tensor_details['name']:
                 tensor_index = tensor_details['index']
                 break
+
         assert tensor_index is not None, f'Could not find bias tensor details in TFLite file'
 
         # Make sure the bias is equal
