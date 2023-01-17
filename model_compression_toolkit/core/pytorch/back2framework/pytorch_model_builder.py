@@ -185,13 +185,18 @@ class PytorchModel(torch.nn.Module):
 
     def _add_modules(self):
         for n in self.node_sort:
-            if not isinstance(n, FunctionalNode):
+            if isinstance(n, FunctionalNode):
+                # for functional layers
+                setattr(self, n.name, self.wrapper(n, n.type))
+            else:
                 if n.type == BufferHolder:
                     self.add_module(n.name, node_builder(n))
                     self.get_submodule(n.name). \
                         register_buffer(n.name, torch.Tensor(n.get_weights_by_keys(BUFFER)).to(get_working_device()))
                 else:
                     self.add_module(n.name, self.wrapper(n, node_builder(n)))
+
+
 
     def forward(self,
                 *args: Any) -> Any:
@@ -250,7 +255,7 @@ class PytorchModel(torch.nn.Module):
         Returns: Module/functional to apply to the input tensors.
 
         """
-        return node.type if isinstance(node, FunctionalNode) else getattr(self, node.name)
+        return getattr(self, node.name)
 
 
 class PyTorchModelBuilder(BaseModelBuilder):

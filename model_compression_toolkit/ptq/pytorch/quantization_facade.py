@@ -33,7 +33,7 @@ if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
     from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
     from torch.nn import Module
-    from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_fully_quantized_pytorch_model
+    from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_exportable_pytorch_model
     from model_compression_toolkit import get_target_platform_capabilities
 
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
@@ -127,7 +127,7 @@ if FOUND_TORCH:
             Logger.warning('Using new experimental exported models. '
                            'Please do not use unless you are familiar with what you are doing')
 
-            return get_fully_quantized_pytorch_model(tg)
+            return get_exportable_pytorch_model(tg)
 
         quantized_model, user_info = export_model(tg,
                                                   DEFAULT_PYTORCH_INFO,

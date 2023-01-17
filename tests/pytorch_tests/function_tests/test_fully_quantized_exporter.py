@@ -19,38 +19,19 @@ import numpy as np
 import random
 import unittest
 
-import torchvision
 from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.pytorch.back2framework.quantization_wrapper.quantized_layer_wrapper import \
-    QuantizedLayerWrapper
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 
-from model_compression_toolkit.exporter.model_wrapper.pytorch.quantizers.fq_quantizer import FakeQuantQuantizer
-from model_compression_toolkit.exporter.model_wrapper.pytorch.quantizers.uniform_weights_quantizer import \
-    UniformWeightsQuantizer
-from model_compression_toolkit.exporter.model_wrapper.pytorch.wrappers_quantize_configs.activation_quantize_config \
-    import \
-    ActivationQuantizeConfig
-from model_compression_toolkit.exporter.model_wrapper.pytorch.wrappers_quantize_configs\
-    .no_quantization_quantize_config import \
-    NoQuantizationQuantizeConfig
-from model_compression_toolkit.exporter.model_wrapper.pytorch.wrappers_quantize_configs\
-    .weights_activation_quantize_config import \
-    WeightsActivationQuantizeConfig
-from model_compression_toolkit.exporter.model_wrapper.pytorch.wrappers_quantize_configs.weights_quantize_config \
-    import \
-    WeightsQuantizeConfig
-
+from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper, \
+    PytorchNodeQuantizationDispatcher
+from model_compression_toolkit import quantizers_infrastructure as qi
 tp = mct.target_platform
 
 import torch
 
-
-
 class TestFullyQuantizedExporter(unittest.TestCase):
-
 
     def setUp(self) -> None:
         self.mbv2 = mobilenet_v2(pretrained=True)
@@ -81,7 +62,6 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         old exported model.
         """
         model = mobilenet_v2(pretrained=True)
-
         def repr_dataset(n_iters=1):
             for _ in range(n_iters):
                 yield to_torch_tensor([torch.ones(1, 3, 224, 224)])
@@ -93,8 +73,7 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         old_export_model, _ = mct.pytorch_post_training_quantization_experimental(
             in_module=model,
             representative_data_gen=repr_dataset,
-            core_config=core_config
-        )
+            core_config=core_config)
 
         self.set_seed(seed)
         core_config = mct.CoreConfig()
@@ -118,47 +97,55 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         return t.cpu().detach().numpy()
 
     def test_layers_wrapper(self):
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn, QuantizedLayerWrapper))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn, PytorchQuantizationWrapper))
         self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.layer, torch.nn.Conv2d))
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.quantization_config, WeightsQuantizeConfig))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.dispatcher, PytorchNodeQuantizationDispatcher))
+        self.assertTrue(self.fully_quantized_mbv2.features_0_0_bn.dispatcher.is_weights_quantization)
+        self.assertFalse(self.fully_quantized_mbv2.features_0_0_bn.dispatcher.is_activation_quantization)
 
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_2, QuantizedLayerWrapper))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_2, PytorchQuantizationWrapper))
         self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_2.layer, torch.nn.ReLU6))
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_2.quantization_config, ActivationQuantizeConfig))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_2.dispatcher, PytorchNodeQuantizationDispatcher))
+        self.assertFalse(self.fully_quantized_mbv2.features_0_2.dispatcher.is_weights_quantization)
+        self.assertTrue(self.fully_quantized_mbv2.features_0_2.dispatcher.is_activation_quantization)
 
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_0, QuantizedLayerWrapper))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_0, PytorchQuantizationWrapper))
         self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_0.layer, torch.nn.Dropout))
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_0.quantization_config, NoQuantizationQuantizeConfig))
+        self.assertTrue(
+            isinstance(self.fully_quantized_mbv2.classifier_0.dispatcher, PytorchNodeQuantizationDispatcher))
+        self.assertFalse(self.fully_quantized_mbv2.classifier_0.dispatcher.is_weights_quantization)
+        self.assertFalse(self.fully_quantized_mbv2.classifier_0.dispatcher.is_activation_quantization)
 
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1, QuantizedLayerWrapper))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1, PytorchQuantizationWrapper))
         self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.layer, torch.nn.Linear))
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.quantization_config, WeightsActivationQuantizeConfig))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.dispatcher, PytorchNodeQuantizationDispatcher))
+        self.assertTrue(self.fully_quantized_mbv2.classifier_1.dispatcher.is_weights_quantization)
+        self.assertTrue(self.fully_quantized_mbv2.classifier_1.dispatcher.is_activation_quantization)
 
     def test_weights_qc(self):
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.quantization_config, WeightsQuantizeConfig))
-        self.assertTrue(len(self.fully_quantized_mbv2.features_0_0_bn.quantization_config.get_weight_quantizers())==1)
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.quantization_config.get_weight_quantizers()[0], UniformWeightsQuantizer))
-        self.assertTrue(len(self.fully_quantized_mbv2.features_0_0_bn.quantization_config.get_activation_quantizer())==0)
+        self.assertTrue(len(self.fully_quantized_mbv2.features_0_0_bn.dispatcher.weight_quantizers)==1)
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.dispatcher.weight_quantizers['weight'], qi.pytorch_inferable_quantizers.WeightsPOTInferableQuantizer))
+
 
     def test_weights_activation_qc(self):
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.quantization_config, WeightsActivationQuantizeConfig))
-        self.assertTrue(len(self.fully_quantized_mbv2.classifier_1.quantization_config.get_weight_quantizers())==1)
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.quantization_config.get_weight_quantizers()[0], UniformWeightsQuantizer))
-        self.assertTrue(len(self.fully_quantized_mbv2.classifier_1.quantization_config.get_activation_quantizers())==1)
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.quantization_config.get_activation_quantizers()[0],FakeQuantQuantizer))
+        self.assertTrue(len(self.fully_quantized_mbv2.classifier_1.dispatcher.weight_quantizers) == 1)
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.dispatcher.weight_quantizers['weight'],
+                                   qi.pytorch_inferable_quantizers.WeightsPOTInferableQuantizer))
+        self.assertTrue(len(self.fully_quantized_mbv2.classifier_1.dispatcher.activation_quantizers) == 1)
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.dispatcher.activation_quantizers[0], qi.pytorch_inferable_quantizers.ActivationPOTInferableQuantizer))
 
 
     def test_activation_qc(self):
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_2.quantization_config, ActivationQuantizeConfig))
-        self.assertTrue(len(self.fully_quantized_mbv2.features_0_2.quantization_config.get_weight_quantizers())==0)
-        self.assertTrue(len(self.fully_quantized_mbv2.features_0_2.quantization_config.get_activation_quantizers())==1)
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_2.quantization_config.get_activation_quantizers()[0],FakeQuantQuantizer))
+        self.assertTrue(len(self.fully_quantized_mbv2.features_0_2.dispatcher.weight_quantizers) == 0)
+        self.assertTrue(len(self.fully_quantized_mbv2.features_0_2.dispatcher.activation_quantizers) == 1)
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_2.dispatcher.activation_quantizers[0],
+                                   qi.pytorch_inferable_quantizers.ActivationPOTInferableQuantizer))
 
 
     def test_no_quantization_qc(self):
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_0.quantization_config, NoQuantizationQuantizeConfig))
-        self.assertTrue(len(self.fully_quantized_mbv2.classifier_0.quantization_config.get_weight_quantizers())==0)
-        self.assertTrue(len(self.fully_quantized_mbv2.classifier_0.quantization_config.get_activation_quantizers())==0)
+        self.assertTrue(len(self.fully_quantized_mbv2.classifier_0.dispatcher.activation_quantizers) == 0)
+        self.assertTrue(len(self.fully_quantized_mbv2.classifier_0.dispatcher.weight_quantizers) == 0)
+
 
 
 

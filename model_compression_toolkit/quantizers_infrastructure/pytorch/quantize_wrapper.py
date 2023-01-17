@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================f
-from typing import List, Union
+from typing import List, Union, Any, Dict
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.quantizers_infrastructure.common.node_quantization_dispatcher import \
@@ -41,14 +41,23 @@ if FOUND_TORCH:
             """
             super().__init__()
             self.dispatcher = dispatcher
-            self.add_module('layer', module)
+            if isinstance(module, nn.Module):
+                self.add_module(LAYER, module)
+            else:
+                # Functional layers
+                setattr(self, LAYER, module)
+
             self._weight_vars = []
 
             # Init weights quantizers
             for name, quantizer in self.dispatcher.weight_quantizers.items():
                 weight = getattr(self.layer, name)
+                weight = weight.detach()
+                delattr(self.layer, name)
+                setattr(self.layer, name, weight)
+                self.register_parameter(name, torch.nn.Parameter(weight, requires_grad=True))
                 quantizer.initialize_quantization(weight.shape, name, self.layer)
-                self._weight_vars.append((name, weight, quantizer))
+                self._weight_vars.append((name, getattr(self.layer, name), quantizer))
 
             # Init activations quantizers
             self._activation_vars = []
@@ -69,18 +78,18 @@ if FOUND_TORCH:
             """
             for weight_attr in self.dispatcher.weight_quantizers.keys():
                 weight = quantized_weights.get(weight_attr)
-                current_weight = getattr(self.layer, weight_attr)
-                if current_weight.shape != weight.shape:
-                    Logger.error(
-                        f"Existing layer weight shape {current_weight.shape} is incompatible with provided weight shape {weight.shape}")  # pragma: no cover
+                setattr(self.layer, weight_attr, weight)
 
-                setattr(self.layer, weight_attr, torch.nn.Parameter(weight))
-
-        def forward(self, x: torch.Tensor) -> Union[torch.Tensor, List[torch.Tensor]]:
+        def forward(self,
+                    x: torch.Tensor,
+                    *args: List[Any],
+                    **kwargs: Dict[str, Any]) -> Union[torch.Tensor, List[torch.Tensor]]:
             """
             PytorchQuantizationWrapper forward functions
             Args:
                 x: layer's inputs
+                args: arguments to pass to internal layer.
+                kwargs: key-word dictionary to pass to the internal layer.
 
             Returns: a tensor that simulates a quantized layer.
 
@@ -89,17 +98,19 @@ if FOUND_TORCH:
             # ----------------------------------
             # Quantize all weights, and replace them in the underlying layer.
             # ----------------------------------
-            quantized_weights = {}
-            for name, unquantized_weight, quantizer in self._weight_vars:
-                quantized_weight = quantizer(unquantized_weight, self.training)
-                quantized_weights.update({name: quantized_weight})
+            if self.dispatcher.is_weights_quantization:
 
-            self.set_quantize_weights(quantized_weights)
+                quantized_weights = {}
+                for name, unquantized_weight, quantizer in self._weight_vars:
+                    quantized_weight = quantizer(unquantized_weight, self.training)
+                    quantized_weights.update({name: quantized_weight})
+
+                self.set_quantize_weights(quantized_weights)
 
             # ----------------------------------
             # Layer operation
             # ----------------------------------
-            outputs = self.layer(x)
+            outputs = self.layer(x, *args, **kwargs)
 
             # ----------------------------------
             # Quantize all activations
