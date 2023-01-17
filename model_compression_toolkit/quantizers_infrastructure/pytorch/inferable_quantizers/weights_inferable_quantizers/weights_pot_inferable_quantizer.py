@@ -42,14 +42,16 @@ if FOUND_TORCH:
                 signed: whether or not to use signed quantization
                 per_channel: whether to use per-channel quantization
             """
+
+            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in threshold.flatten()])
+            assert is_threshold_pot, f'Expected threshold to be power of 2 but is {threshold}'
+
             # target of Weights quantization
             super(WeightsPOTInferableQuantizer, self).__init__(num_bits=num_bits,
                                                                threshold=threshold,
                                                                signed=signed,
                                                                per_channel=per_channel)
 
-            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in self.threshold.flatten()])
-            assert is_threshold_pot, f'Expected threshold to be power of 2 but is {self.threshold}'
 
 
 
