@@ -20,7 +20,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt          
-          pip install torch==${{ inputs.torch-version }} torchvision
+          pip install torch==${{ inputs.torch-version }} torchvision onnx onnxruntime
       - name: Run unittests
         run: python -m unittest discover tests/pytorch_tests -v
 
