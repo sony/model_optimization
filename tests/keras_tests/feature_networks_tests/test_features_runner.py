@@ -533,8 +533,10 @@ class FeatureNetworkTest(unittest.TestCase):
                                                    experimental_exporter=experimental_exporter)
         GradientPTQWeightsUpdateTest(self, is_gumbel=True, sam_optimization=True).run_test(
             experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
-        GradientPTQLearnRateZeroTest(self, is_gumbel=True).run_test(experimental_facade=experimental_facade,
-                                                                    experimental_exporter=experimental_exporter)
+        GradientPTQLearnRateZeroTest(self, is_gumbel=True,
+                                     quant_method=mct.target_platform.QuantizationMethod.UNIFORM).run_test(
+            experimental_facade=experimental_facade,
+            experimental_exporter=experimental_exporter)
 
     # TODO: reuven - new experimental facade needs to be tested regardless the exporter.
     # def test_gptq_new_exporter(self):

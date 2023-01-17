@@ -86,6 +86,7 @@ def mse_loss_per_tensor(y: tf.Tensor,
     _loss = tf.reduce_mean(tf.pow(tf.abs(y - x), p))
     return _loss / tf.reduce_mean(tf.pow(tf.abs(x), p)) if normalized else _loss
 
+
 def activation_mse(flp_act_list,
                    fxp_act_list,
                    p_vector=None,
@@ -114,7 +115,6 @@ def activation_mse(flp_act_list,
                tf.reduce_mean(tf.stack(bias_loss_list))
     else:
         return tf.reduce_mean(tf.stack(loss_values_list)), tf.reduce_mean(tf.stack(bias_loss_list))
-
 
 
 class GPTQMultipleTensorsLoss:
