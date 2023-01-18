@@ -17,7 +17,6 @@ from typing import Dict
 
 import numpy as np
 import tensorflow as tf
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.core.common.constants import SIGNED
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
@@ -77,7 +76,7 @@ class STEWeightQuantizer(qi.BaseKerasTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
+                                layer: qi.KerasQuantizationWrapper) -> Dict[str, tf.Variable]:
         """
         Add min and max variables to layer.
         Args:
@@ -204,7 +203,7 @@ class STEActivationQuantizer(qi.BaseKerasTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
+                                layer: qi.KerasQuantizationWrapper) -> Dict[str, tf.Variable]:
         """
         Add min and max variables to layer.
         Args:
