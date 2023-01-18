@@ -56,15 +56,14 @@ if FOUND_TORCH:
                 delattr(self.layer, name)
                 setattr(self.layer, name, weight)
                 self.register_parameter(name, torch.nn.Parameter(weight, requires_grad=True))
-                quantizer.initialize_quantization(weight.shape, name, self.layer)
+                quantizer.initialize_quantization(weight.shape, name, self)
                 self._weight_vars.append((name, getattr(self.layer, name), quantizer))
 
             # Init activations quantizers
             self._activation_vars = []
-            for i,quantizer in enumerate(self.dispatcher.activation_quantizers):
-                quantizer.initialize_quantization(None, "tensor"+str(i), self.layer)
+            for i, quantizer in enumerate(self.dispatcher.activation_quantizers):
+                quantizer.initialize_quantization(None, f"tensor{i}", self)
                 self._activation_vars.append(quantizer)
-
 
         def set_quantize_weights(self, quantized_weights: dict):
             """
@@ -125,7 +124,7 @@ if FOUND_TORCH:
 
                 # Quantize all activations tensors
                 outputs_quantized = []
-                for quantizer,output in zip(self._activation_vars,outputs):
+                for quantizer, output in zip(self._activation_vars, outputs):
                     outputs_quantized.append(quantizer(output))
 
                 outputs = outputs_quantized[0] if len(outputs_quantized) == 1 else outputs_quantized
