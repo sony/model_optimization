@@ -21,6 +21,7 @@ from tensorflow.keras.layers import PReLU, ELU
 
 import model_compression_toolkit as mct
 from model_compression_toolkit import QuantizationErrorMethod
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
     ActivationDecompositionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_bound_to_power_of_2_test import \
@@ -110,6 +111,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.symmetric_thresho
     SymmetricThresholdSelectionActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
     DwConv2dReplacementTest
+from tests.keras_tests.feature_networks_tests.feature_networks.test_kmeans_quantizer import KmeansQuantizerTest, \
+    KmeansQuantizerTestManyClasses, KmeansQuantizerNotPerChannelTest
 from tests.keras_tests.feature_networks_tests.feature_networks.uniform_range_selection_activation_test import \
     UniformRangeSelectionActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import \
@@ -178,6 +181,24 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_remove_upper_bound(self):
         RemoveUpperBoundTest(self).run_test()
+
+    def test_kmeans_quantizer(self):
+        # This test checks that the Kmeans quantization has a different result than symmetric uniform quantization
+        KmeansQuantizerTest(self, QuantizationMethod.KMEANS).run_test()
+        KmeansQuantizerNotPerChannelTest(self, QuantizationMethod.KMEANS).run_test()
+
+        # This test checks that the LUT- Kmeans quantization has a different result than symmetric uniform quantization
+        KmeansQuantizerTest(self, QuantizationMethod.LUT_POT_QUANTIZER).run_test()
+        KmeansQuantizerNotPerChannelTest(self, QuantizationMethod.LUT_POT_QUANTIZER).run_test()
+        KmeansQuantizerTest(self, QuantizationMethod.LUT_SYM_QUANTIZER).run_test()
+        KmeansQuantizerNotPerChannelTest(self, QuantizationMethod.LUT_SYM_QUANTIZER).run_test()
+
+        # In this test we have weights with less unique values than the number of clusters
+        KmeansQuantizerTestManyClasses(self, QuantizationMethod.KMEANS, weights_n_bits=8).run_test()
+
+        # In this test we have weights with less unique values than the number of clusters
+        KmeansQuantizerTestManyClasses(self, QuantizationMethod.LUT_POT_QUANTIZER,
+                                       weights_n_bits=8).run_test()
 
     def test_reused_separable_mixed_precision(self):
         ReusedSeparableMixedPrecisionTest(self).run_test(experimental_facade=True)

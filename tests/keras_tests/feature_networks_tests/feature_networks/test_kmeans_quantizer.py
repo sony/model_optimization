@@ -117,6 +117,32 @@ class KmeansQuantizerTest(KmeansQuantizerTestBase):
             np.abs(quantized_model.layers[2].weights[0].numpy() - quantized_model.layers[4].weights[0].numpy())) > 0)
 
 
+class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
+    """
+    This test checks the chosen quantization method is different that symmetric uniform when weights are not
+    been quantized per channel
+    """
+
+    def __init__(self,
+                 unit_test,
+                 quantization_method: target_platform.QuantizationMethod.KMEANS,
+                 weights_n_bits: int = 3):
+        super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
+
+    def get_quantization_config(self):
+        return cmo.QuantizationConfig(activation_error_method=cmo.QuantizationErrorMethod.MSE,
+                                      weights_error_method=cmo.QuantizationErrorMethod.MSE,
+                                      relu_bound_to_power_of_2=False,
+                                      weights_bias_correction=False,
+                                      weights_per_channel_threshold=False)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        # check that the two conv's weights have different values since they where quantized
+        # using different methods (but started as the same value)
+        self.unit_test.assertTrue(np.sum(
+            np.abs(quantized_model.layers[2].weights[0].numpy() - quantized_model.layers[4].weights[0].numpy())) > 0)
+
+
 class KmeansQuantizerTestManyClasses(KmeansQuantizerTestBase):
     '''
     This test checks the chosen quantization method is different that symmetric uniform
@@ -148,48 +174,6 @@ class KmeansQuantizerTestZeroWeights(KmeansQuantizerTestBase):
         self.unit_test.assertTrue(np.sum(np.abs(quantized_model.layers[2].weights[0].numpy())) == 0)
         self.unit_test.assertTrue(np.sum(np.abs(quantized_model.layers[4].weights[0].numpy())) == 0)
         self.unit_test.assertTrue(np.sum(np.abs(quantized_model.layers[6].weights[0].numpy())) == 0)
-
-
-# This test checks that the Kmeans quantization has a different result than symmetric uniform quantization
-class RunKmeansTest(unittest.TestCase):
-    def test_kmeans_quantizer(self):
-        KmeansQuantizerTest(self, target_platform.QuantizationMethod.KMEANS).run_test()
-
-
-# This test checks that the LUT- Kmeans quantization has a different result than symmetric uniform quantization
-class RunLutKmeansTest(unittest.TestCase):
-    def test_pot_kmeans_quantizer(self):
-        KmeansQuantizerTest(self, target_platform.QuantizationMethod.LUT_POT_QUANTIZER).run_test()
-
-    def test_sym_kmeans_quantizer(self):
-        KmeansQuantizerTest(self, target_platform.QuantizationMethod.LUT_SYM_QUANTIZER).run_test()
-
-
-# In this test we have weights with less unique values than the number of clusters
-class RunKmeansTestManyClasses(unittest.TestCase):
-    def test_kmeans_quantizer(self):
-        KmeansQuantizerTestManyClasses(self, target_platform.QuantizationMethod.KMEANS, weights_n_bits=8).run_test()
-
-
-# In this test we have weights with less unique values than the number of clusters
-class RunLutKmeansTestManyClasses(unittest.TestCase):
-    def test_pot_kmeans_quantizer(self):
-        KmeansQuantizerTestManyClasses(self, target_platform.QuantizationMethod.LUT_POT_QUANTIZER, weights_n_bits=8).run_test()
-
-
-# This test checks the case where all the weight values are zero
-class RunKmeansTestZeroWeights(unittest.TestCase):
-    def test_kmeans_quantizer_zero_weights(self):
-        KmeansQuantizerTest(self, target_platform.QuantizationMethod.KMEANS).run_test()
-
-
-# This test checks the case where all the weight values are zero
-class RunLutKmeansTestZeroWeights(unittest.TestCase):
-    def test_pot_kmeans_quantizer_zero_weights(self):
-        KmeansQuantizerTest(self, target_platform.QuantizationMethod.LUT_POT_QUANTIZER).run_test()
-
-    def test_sym_kmeans_quantizer_zero_weights(self):
-        KmeansQuantizerTest(self, target_platform.QuantizationMethod.LUT_SYM_QUANTIZER).run_test()
 
 
 if __name__ == '__main__':
