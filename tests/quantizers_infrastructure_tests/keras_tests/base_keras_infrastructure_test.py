@@ -22,16 +22,13 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapp
 from model_compression_toolkit import quantizers_infrastructure as qi, QuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
     NodeActivationQuantizationConfig
-from model_compression_toolkit.core.common.target_platform import OpQuantizationConfig, QuantizationMethod
-
-keras = tf.keras
-layers = keras.layers
-
-DISPATCHER = "dispatcher"
-CLASS_NAME = "class_name"
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
 
 
-class IdentityQuantizer(qi.BaseKerasTrainableQuantizer):
+class IdentityWeightsQuantizer(qi.BaseKerasTrainableQuantizer):
+    """
+    A dummy quantizer for test usage - "quantize" the layer's weights to the original weights
+    """
     def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Weights,
@@ -41,7 +38,7 @@ class IdentityQuantizer(qi.BaseKerasTrainableQuantizer):
                                 tensor_shape: TensorShape,
                                 name: str,
                                 layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
-        return
+        return {}
 
     def __call__(self,
                  inputs: tf.Tensor,
@@ -49,7 +46,31 @@ class IdentityQuantizer(qi.BaseKerasTrainableQuantizer):
         return inputs
 
 
+class ZeroWeightsQuantizer(qi.BaseKerasTrainableQuantizer):
+    """
+    A dummy quantizer for test usage - "quantize" the layer's weights to 0
+    """
+    def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
+        super().__init__(quantization_config,
+                         qi.QuantizationTarget.Weights,
+                         [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
+
+    def initialize_quantization(self,
+                                tensor_shape: TensorShape,
+                                name: str,
+                                layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
+        return {}
+
+    def __call__(self,
+                 inputs: tf.Tensor,
+                 training: bool):
+        return inputs * 0
+
+
 class ZeroActivationsQuantizer(qi.BaseKerasTrainableQuantizer):
+    """
+    A dummy quantizer for test usage - "quantize" the layer's activation to 0
+    """
     def __init__(self, quantization_config: NodeActivationQuantizationConfig):
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Activation,
@@ -59,7 +80,7 @@ class ZeroActivationsQuantizer(qi.BaseKerasTrainableQuantizer):
                                 tensor_shape: TensorShape,
                                 name: str,
                                 layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
-        return
+        return {}
 
     def __call__(self,
                  inputs: tf.Tensor,
@@ -69,22 +90,6 @@ class ZeroActivationsQuantizer(qi.BaseKerasTrainableQuantizer):
 
 def dummy_fn():
     return
-
-
-op_cfg = OpQuantizationConfig(QuantizationMethod.POWER_OF_TWO,
-                              QuantizationMethod.POWER_OF_TWO,
-                              8,
-                              8,
-                              True,
-                              True,
-                              True,
-                              True,
-                              1,
-                              0,
-                              32)
-qc = QuantizationConfig()
-weight_quantization_config = NodeWeightsQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn, -1)
-activation_quantization_config = NodeActivationQuantizationConfig(qc, op_cfg, dummy_fn, dummy_fn)
 
 
 class BaseKerasInfrastructureTest:
@@ -111,3 +116,20 @@ class BaseKerasInfrastructureTest:
 
     def get_wrapper(self, layer, dispatcher):
         return qi.KerasQuantizationWrapper(layer, dispatcher)
+
+    def get_weights_quantization_config(self):
+        op_cfg, _ = get_op_quantization_configs()
+        qc = QuantizationConfig()
+        return NodeWeightsQuantizationConfig(qc=qc,
+                                             op_cfg=op_cfg,
+                                             weights_quantization_fn=dummy_fn,
+                                             weights_quantization_params_fn=dummy_fn,
+                                             weights_channels_axis=-1)
+
+    def get_activation_quantization_config(self):
+        op_cfg, _ = get_op_quantization_configs()
+        qc = QuantizationConfig()
+        return NodeActivationQuantizationConfig(qc=qc,
+                                                op_cfg=op_cfg,
+                                                activation_quantization_fn=dummy_fn,
+                                                activation_quantization_params_fn=dummy_fn)

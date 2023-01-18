@@ -15,28 +15,33 @@
 
 import tensorflow as tf
 
-from tests.keras_tests.infrastructure_tests.base_keras_infrastructure_test import BaseKerasInfrastructureTest, \
-    IdentityQuantizer, weight_quantization_config, ZeroActivationsQuantizer, \
-    activation_quantization_config
+from tests.quantizers_infrastructure_tests.keras_tests.base_keras_infrastructure_test import BaseKerasInfrastructureTest, \
+    IdentityWeightsQuantizer, ZeroActivationsQuantizer
 
 keras = tf.keras
 layers = keras.layers
 
 
-class TestKerasNodeQuantizationDispatcher(BaseKerasInfrastructureTest):
+class TestKerasNodeWeightsQuantizationDispatcher(BaseKerasInfrastructureTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
     def run_test(self):
-
         nqd = self.get_dispatcher()
         self.unit_test.assertFalse(nqd.is_weights_quantization)
-        nqd.add_weight_quantizer('weight', IdentityQuantizer(weight_quantization_config))
+        nqd.add_weight_quantizer('weight', IdentityWeightsQuantizer(self.get_weights_quantization_config()))
         self.unit_test.assertTrue(nqd.is_weights_quantization)
         self.unit_test.assertFalse(nqd.is_activation_quantization)
-        self.unit_test.assertTrue(isinstance(nqd.weight_quantizers.get('weight'), IdentityQuantizer))
+        self.unit_test.assertTrue(isinstance(nqd.weight_quantizers.get('weight'), IdentityWeightsQuantizer))
 
-        nqd = self.get_dispatcher(activation_quantizers=[ZeroActivationsQuantizer(activation_quantization_config)])
+
+class TestKerasNodeActivationsQuantizationDispatcher(BaseKerasInfrastructureTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def run_test(self):
+        nqd = self.get_dispatcher(activation_quantizers=[ZeroActivationsQuantizer(
+            self.get_activation_quantization_config())])
         self.unit_test.assertFalse(nqd.is_weights_quantization)
         self.unit_test.assertTrue(nqd.is_activation_quantization)
         self.unit_test.assertTrue(isinstance(nqd.activation_quantizers[0], ZeroActivationsQuantizer))

@@ -68,7 +68,8 @@ if found_tf:
     from tests.keras_tests.function_tests.test_set_layer_to_bitwidth import TestKerasSetLayerToBitwidth
     from tests.keras_tests.function_tests.test_export_keras_fully_quantized_model import TestKerasFakeQuantExporter
     from tests.keras_tests.function_tests.test_kpi_data import TestKPIData
-    from tests.keras_tests.infrastructure_tests.test_keras_quantization_infrastructure import KerasInfrastructureTest
+    from tests.quantizers_infrastructure_tests.keras_tests.test_keras_quantization_infrastructure_runner import \
+        KerasInfrastructureTest
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest

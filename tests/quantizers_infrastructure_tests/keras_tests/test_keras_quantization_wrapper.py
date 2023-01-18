@@ -17,15 +17,20 @@ import tensorflow as tf
 
 from model_compression_toolkit.quantizers_infrastructure import KerasNodeQuantizationDispatcher, \
     KerasQuantizationWrapper
-from tests.keras_tests.infrastructure_tests.base_keras_infrastructure_test import BaseKerasInfrastructureTest, \
-    IdentityQuantizer, weight_quantization_config, DISPATCHER, CLASS_NAME, ZeroActivationsQuantizer, \
-    activation_quantization_config
+from tests.quantizers_infrastructure_tests.keras_tests.base_keras_infrastructure_test import \
+    BaseKerasInfrastructureTest, \
+    IdentityWeightsQuantizer, ZeroActivationsQuantizer
 
 keras = tf.keras
 layers = keras.layers
 
+WEIGHT = 'kernel'
+DISPATCHER = 'dispatcher'
+CLASS_NAME = 'class_name'
 
-class ConvLayerKerasInfrastructureTest(BaseKerasInfrastructureTest):
+
+class TestKerasWeightsQuantizationWrapper(BaseKerasInfrastructureTest):
+
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -34,14 +39,13 @@ class ConvLayerKerasInfrastructureTest(BaseKerasInfrastructureTest):
         x = layers.Conv2D(6, 7, use_bias=False)(inputs)
         return keras.Model(inputs=inputs, outputs=x)
 
-    def run_test(self, weight_str):
-        # Check weights wrapper
+    def run_test(self):
         model = self.create_networks()
         conv_layer = model.layers[1]
         inputs = self.generate_inputs()[0]
 
         nqd = self.get_dispatcher()
-        nqd.add_weight_quantizer(weight_str, IdentityQuantizer(weight_quantization_config))
+        nqd.add_weight_quantizer(WEIGHT, IdentityWeightsQuantizer(self.get_weights_quantization_config()))
         wrapper = self.get_wrapper(conv_layer, nqd)
 
         # get config
@@ -54,22 +58,34 @@ class ConvLayerKerasInfrastructureTest(BaseKerasInfrastructureTest):
         (name, weight, quantizer) = wrapper._weight_vars[0]
         self.unit_test.assertTrue(isinstance(wrapper, KerasQuantizationWrapper))
         self.unit_test.assertTrue(isinstance(wrapper.layer, layers.Conv2D))
-        self.unit_test.assertTrue(name == weight_str)
-        self.unit_test.assertTrue((weight == getattr(wrapper.layer, weight_str)).numpy().all())
-        self.unit_test.assertTrue(isinstance(quantizer, IdentityQuantizer))
+        self.unit_test.assertTrue(name == WEIGHT)
+        self.unit_test.assertTrue((weight == getattr(wrapper.layer, WEIGHT)).numpy().all())
+        self.unit_test.assertTrue(isinstance(quantizer, IdentityWeightsQuantizer))
 
         # call
         outputs = wrapper.call(inputs.astype('float32'))
         self.unit_test.assertTrue((outputs == conv_layer(inputs)).numpy().all())
 
-        # Check activations wrapper
-        nqd = self.get_dispatcher(activation_quantizers=
-                                  [ZeroActivationsQuantizer(activation_quantization_config)])
+
+class TestKerasActivationsQuantizationWrapper(TestKerasWeightsQuantizationWrapper):
+
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def run_test(self):
+        model = self.create_networks()
+        conv_layer = model.layers[1]
+        inputs = self.generate_inputs()[0]
+
+        nqd = self.get_dispatcher(activation_quantizers=[ZeroActivationsQuantizer(
+            self.get_activation_quantization_config())])
         wrapper = self.get_wrapper(conv_layer, nqd)
+
         # build
         wrapper.build(self.get_input_shapes())
         (act_quantizer) = wrapper._activation_vars[0]
         self.unit_test.assertTrue(isinstance(act_quantizer, ZeroActivationsQuantizer))
+
+        # apply the wrapper on inputs
         outputs = wrapper.call(inputs.astype('float32'))
         self.unit_test.assertTrue((outputs == 0).numpy().all())
-
