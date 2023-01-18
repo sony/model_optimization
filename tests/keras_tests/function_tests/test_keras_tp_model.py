@@ -21,6 +21,7 @@ import tensorflow as tf
 from packaging import version
 
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.keras.layers import Conv2D, Conv2DTranspose, ReLU, Activation, Input
 else:
@@ -35,11 +36,13 @@ from model_compression_toolkit.core.common.target_platform.targetplatform2framew
     Smaller, GreaterEq, Eq, SmallerEq, Contains
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
-from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL, QNNPACK_TP_MODEL, TFLITE_TP_MODEL
+from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, QNNPACK_TP_MODEL, \
+    TFLITE_TP_MODEL
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.test_tp_model import TEST_QCO, TEST_QC
 
 tp = mct.target_platform
+
 
 def get_node(layer):
     i = Input(shape=(3, 16, 16))
@@ -91,7 +94,6 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertTrue(conv_filter_contains.match(get_node(conv)))
         conv = Conv2D(filters=2, kernel_size=(3, 4), name="CONVOLUTION")
         self.assertFalse(conv_with_params.match(get_node(conv)))
-
 
     def test_get_layers_by_op(self):
         hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
@@ -152,11 +154,11 @@ class TestKerasTPModel(unittest.TestCase):
         hm = tp.TargetPlatformModel(default_qco, name='test')
         with hm:
             mixed_precision_configuration_options = tp.QuantizationConfigOptions([TEST_QC,
-                                                                                   TEST_QC.clone_and_edit(
-                                                                                       weights_n_bits=4),
-                                                                                   TEST_QC.clone_and_edit(
-                                                                                       weights_n_bits=2)],
-                                                                                  base_config=TEST_QC)
+                                                                                  TEST_QC.clone_and_edit(
+                                                                                      weights_n_bits=4),
+                                                                                  TEST_QC.clone_and_edit(
+                                                                                      weights_n_bits=2)],
+                                                                                 base_config=TEST_QC)
 
             tp.OperatorsSet("conv", mixed_precision_configuration_options)
             sevenbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=7)
@@ -245,7 +247,7 @@ class TestGetKerasTPC(unittest.TestCase):
                                                                                   target_platform_capabilities=tpc)
 
     def test_get_keras_supported_version(self):
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL) # Latest
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)  # Latest
         self.assertTrue(tpc.version == 'v4')
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v4')
         self.assertTrue(tpc.version == 'v4')
@@ -258,12 +260,14 @@ class TestGetKerasTPC(unittest.TestCase):
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v1')
         self.assertTrue(tpc.version == 'v1')
 
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1")
+        self.assertTrue(tpc.version == 'v1')
+
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, TFLITE_TP_MODEL, "v1")
         self.assertTrue(tpc.version == 'v1')
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, QNNPACK_TP_MODEL, "v1")
         self.assertTrue(tpc.version == 'v1')
-
 
     def test_get_keras_not_supported_platform(self):
         with self.assertRaises(Exception) as e:
@@ -279,4 +283,3 @@ class TestGetKerasTPC(unittest.TestCase):
         with self.assertRaises(Exception) as e:
             mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, "v0")
         self.assertTrue(e.exception)
-

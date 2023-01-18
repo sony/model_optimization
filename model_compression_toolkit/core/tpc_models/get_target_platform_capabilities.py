@@ -17,14 +17,18 @@ from model_compression_toolkit.core.common.target_platform import TargetPlatform
 
 from model_compression_toolkit.core.tpc_models.default_tpc.target_platform_capabilities import \
     tpc_dict as default_tpc_dict
+from model_compression_toolkit.core.tpc_models.imx500_tpc.target_platform_capabilities import \
+    tpc_dict as imx500_tpc_dict
 from model_compression_toolkit.core.tpc_models.tflite_tpc.target_platform_capabilities import \
     tpc_dict as tflite_tpc_dict
 from model_compression_toolkit.core.tpc_models.qnnpack_tpc.target_platform_capabilities import \
     tpc_dict as qnnpack_tpc_dict
-from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL
+from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, TFLITE_TP_MODEL, \
+    QNNPACK_TP_MODEL
 from model_compression_toolkit.core.common.constants import LATEST
 
 tpc_dict = {DEFAULT_TP_MODEL: default_tpc_dict,
+            IMX500_TP_MODEL: imx500_tpc_dict,
             TFLITE_TP_MODEL: tflite_tpc_dict,
             QNNPACK_TP_MODEL: qnnpack_tpc_dict}
 
@@ -35,7 +39,7 @@ def get_target_platform_capabilities(fw_name: str,
     """
     Get a TargetPlatformCapabilities by the target platform model name and the framework name.
     For now, it supports frameworks 'tensorflow' and 'pytorch'. For both of them
-    the target platform model can be 'default','tflite', or 'qnnpack'.
+    the target platform model can be 'default', 'imx500', 'tflite', or 'qnnpack'.
 
     Args:
         fw_name: Framework name of the TargetPlatformCapabilities.
