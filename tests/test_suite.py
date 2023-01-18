@@ -55,17 +55,17 @@ if found_tf:
     #     TestSymmetricThresholdSelectionWeights
     # from tests.keras_tests.function_tests.test_uniform_quantize_tensor import TestUniformQuantizeTensor
     # from tests.keras_tests.function_tests.test_uniform_range_selection_weights import TestUniformRangeSelectionWeights
-    # from tests.keras_tests.function_tests.test_keras_tp_model import TestKerasTPModel
-    # from tests.keras_tests.function_tests.test_sensitivity_metric_interest_points import \
-    #     TestSensitivityMetricInterestPoints
-    # from tests.keras_tests.function_tests.test_weights_activation_split_substitution import TestWeightsActivationSplit
-    # from tests.keras_tests.function_tests.test_activation_weights_composition_substitution import \
-    #     TestActivationWeightsComposition
-    # from tests.keras_tests.function_tests.test_graph_max_cut import TestGraphMaxCut
-    # from tests.keras_tests.function_tests.test_model_gradients import TestModelGradients
-    # from tests.keras_tests.function_tests.test_sensitivity_eval_output_replacement import \
-    #     TestSensitivityEvalWithOutputReplacementNodes
-    # from tests.keras_tests.function_tests.test_set_layer_to_bitwidth import TestKerasSetLayerToBitwidth
+    from tests.keras_tests.function_tests.test_keras_tp_model import TestKerasTPModel
+    from tests.keras_tests.function_tests.test_sensitivity_metric_interest_points import \
+        TestSensitivityMetricInterestPoints
+    from tests.keras_tests.function_tests.test_weights_activation_split_substitution import TestWeightsActivationSplit
+    from tests.keras_tests.function_tests.test_activation_weights_composition_substitution import \
+        TestActivationWeightsComposition
+    from tests.keras_tests.function_tests.test_graph_max_cut import TestGraphMaxCut
+    from tests.keras_tests.function_tests.test_model_gradients import TestModelGradients
+    from tests.keras_tests.function_tests.test_sensitivity_eval_output_replacement import \
+        TestSensitivityEvalWithOutputReplacementNodes
+    from tests.keras_tests.function_tests.test_set_layer_to_bitwidth import TestKerasSetLayerToBitwidth
     from tests.keras_tests.function_tests.test_export_keras_fully_quantized_model import TestKerasFakeQuantExporter
     # from tests.keras_tests.function_tests.test_kpi_data import TestKPIData
     # from tests.quantizers_infrastructure_tests.keras_tests.test_keras_quantization_infrastructure_runner import \
@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
-        # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityMetricInterestPoints))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityMetricInterestPoints))
         # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
         # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureNetworkTest))
         # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLpSearchBitwidth))
@@ -110,13 +110,13 @@ if __name__ == '__main__':
         # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSymmetricThresholdSelectionWeights))
         # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformQuantizeTensor))
         # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformRangeSelectionWeights))
-        # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasTPModel))
-        # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestWeightsActivationSplit))
-        # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationWeightsComposition))
-        # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestModelGradients))
-        # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphMaxCut))
-        # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasSetLayerToBitwidth))
-        # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityEvalWithOutputReplacementNodes))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasTPModel))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestWeightsActivationSplit))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationWeightsComposition))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestModelGradients))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphMaxCut))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasSetLayerToBitwidth))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityEvalWithOutputReplacementNodes))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasFakeQuantExporter))
         # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKPIData))
         # suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFileLogger))
