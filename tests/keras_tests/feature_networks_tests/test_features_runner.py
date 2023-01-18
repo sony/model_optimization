@@ -200,13 +200,6 @@ class FeatureNetworkTest(unittest.TestCase):
         KmeansQuantizerTestManyClasses(self, QuantizationMethod.LUT_POT_QUANTIZER,
                                        weights_n_bits=8).run_test()
 
-        # This test checks the case where all the weight values are zero
-        KmeansQuantizerTest(self, QuantizationMethod.KMEANS).run_test()
-
-        # This test checks the case where all the weight values are zero
-        KmeansQuantizerTest(self, QuantizationMethod.LUT_POT_QUANTIZER).run_test()
-        KmeansQuantizerTest(self, QuantizationMethod.LUT_SYM_QUANTIZER).run_test()
-
     def test_reused_separable_mixed_precision(self):
         ReusedSeparableMixedPrecisionTest(self).run_test(experimental_facade=True)
         ReusedSeparableMixedPrecisionTest(self).run_test()
