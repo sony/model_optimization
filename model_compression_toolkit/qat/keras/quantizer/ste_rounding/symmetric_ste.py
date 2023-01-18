@@ -76,7 +76,7 @@ class STEWeightQuantizer(qi.BaseKerasTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: qi.BaseKerasTrainableQuantizer) -> Dict[str, tf.Variable]:
+                                layer: qi.KerasQuantizationWrapper) -> Dict[str, tf.Variable]:
         """
         Add min and max variables to layer.
         Args:
@@ -203,7 +203,7 @@ class STEActivationQuantizer(qi.BaseKerasTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: qi.BaseKerasTrainableQuantizer) -> Dict[str, tf.Variable]:
+                                layer: qi.KerasQuantizationWrapper) -> Dict[str, tf.Variable]:
         """
         Add min and max variables to layer.
         Args:

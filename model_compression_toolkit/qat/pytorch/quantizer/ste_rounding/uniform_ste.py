@@ -61,7 +61,7 @@ class STEUniformWeightQuantizer(qi.BasePytorchTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: nn.Module) -> Dict[str, nn.Parameter]:
+                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, nn.Parameter]:
         """
         Add min and max variables to layer.
         Args:
@@ -124,7 +124,7 @@ class STEUniformActivationQuantizer(qi.BasePytorchTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: nn.Module) -> Dict[str, nn.Parameter]:
+                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, nn.Parameter]:
         """
         Add min and max variables to layer.
         """

@@ -17,7 +17,6 @@ from typing import Dict, Any, List
 
 import numpy as np
 import tensorflow as tf
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape
 
 from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX
@@ -69,7 +68,7 @@ class STEUniformWeightQuantizer(qi.BaseKerasTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
+                                layer: qi.KerasQuantizationWrapper) -> Dict[str, tf.Variable]:
         """
         Add min and max variables to layer.
         Args:
@@ -168,7 +167,7 @@ class STEUniformActivationQuantizer(qi.BaseKerasTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
+                                layer: qi.KerasQuantizationWrapper) -> Dict[str, tf.Variable]:
         """
         Add min and max variables to layer.
         Args:
