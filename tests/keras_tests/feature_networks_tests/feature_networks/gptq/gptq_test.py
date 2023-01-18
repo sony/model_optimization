@@ -53,14 +53,15 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
 
 
 class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
-    def __init__(self, unit_test, is_gumbel=False, sam_optimization=False):
+    def __init__(self, unit_test, is_gumbel=False, sam_optimization=False, quant_method=QuantizationMethod.SYMMETRIC):
         super().__init__(unit_test,
                          input_shape=(1, 16, 16, 3))
         self.is_gumbel = is_gumbel
         self.sam_optimization = sam_optimization
+        self.quant_method = quant_method
 
     def get_tpc(self):
-        return get_tpc("gptq_test", 16, 16, QuantizationMethod.SYMMETRIC)
+        return get_tpc("gptq_test", 16, 16, self.quant_method)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
