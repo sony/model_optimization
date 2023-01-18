@@ -128,10 +128,11 @@ if FOUND_TF:
                 self._weight_vars.append((name, weight, quantizer))
                 self._trainable_weights.append(weight)
 
-            self._act_weight_vars = []
+            self._activation_vars = []
             for i, quantizer in enumerate(self.dispatcher.activation_quantizers):
                 quantizer.initialize_quantization(None,
                                                   self.layer.name + f'/out{i}', self)
+                self._activation_vars.append(quantizer)
 
         def set_quantize_weights(self, quantized_weights: dict):
             """
