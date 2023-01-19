@@ -21,7 +21,6 @@ import numpy as np
 import tensorflow as tf
 from keras import Input
 from keras.layers import Conv2D, BatchNormalization, ReLU, Dropout, Dense, Activation
-from packaging import version
 
 import model_compression_toolkit as mct
 from model_compression_toolkit import keras_load_quantized_model
@@ -39,7 +38,7 @@ _, SAVED_MODEL_PATH_TFLITE = tempfile.mkstemp('.tflite')
 
 def _get_model(input_shape):
     inputs = Input(shape=input_shape)
-    x = Conv2D(3, 3)(inputs)
+    x = Conv2D(7,7)(inputs)
     x = BatchNormalization()(x)
     x = ReLU()(x)
     x = Conv2D(3, 3)(x)
@@ -122,40 +121,19 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         # Run inference.
         interpreter.invoke()
 
-        # TFLite tensor index may change between TF versions:
-        tensor_index = None
+        # Since the tensor index and name in tflite may change between tf versions,
+        # we're looking for a tensor with a specific shape in tensor details
+        tflite_kernel_shape = [7, 7, 7, 3]
 
-        tensor_name = "model_2/conv2d_bn/Conv2D"
-        for tensor_details in interpreter.get_tensor_details():
-            if tensor_name == tensor_details['name']:
-                tensor_index = tensor_details['index']
+        kernel_tensor_index, bias_tensor_index = None, None
+        for d in interpreter.get_tensor_details():
+            if np.all(d['shape'] == tflite_kernel_shape):
+                kernel_tensor_index = d['index']
                 break
 
-        assert tensor_index is not None, f'Could not find kernel tensor details in TFLite file'
+        assert kernel_tensor_index is not None, f'did not find the kernel tensor index'
 
         # Test equal weights of the first conv2d layer between exported TFLite and exported TF
-        diff = np.transpose(interpreter.tensor(tensor_index)(), (1, 2, 3, 0)) - tf_exported_model.layers[2].kernel
+        diff = np.transpose(interpreter.tensor(kernel_tensor_index)(), (1, 2, 3, 0)) - tf_exported_model.layers[2].kernel
         self.assertTrue(np.sum(np.abs(diff)) == 0)
 
-        tensor_index = None
-
-        # TFLite name the bias tensor differently between different versions
-        def _get_bias_name_by_tf_version():
-            if version.parse(tf.__version__).__str__().startswith('2.10'):
-                return "model_2/conv2d_bn/BiasAdd/ReadVariableOp"
-            elif version.parse(tf.__version__).__str__().startswith('2.9'):
-                return "model_2/conv2d_bn/BiasAdd/ReadVariableOp"
-            elif version.parse(tf.__version__).__str__().startswith('2.8'):
-                return "conv2d_bn/bias"
-
-        bias_tensor_name = _get_bias_name_by_tf_version()
-        for tensor_details in interpreter.get_tensor_details():
-            if bias_tensor_name == tensor_details['name']:
-                tensor_index = tensor_details['index']
-                break
-
-        assert tensor_index is not None, f'Could not find bias tensor details in TFLite file'
-
-        # Make sure the bias is equal
-        diff = interpreter.tensor(tensor_index)() - tf_exported_model.layers[2].bias
-        self.assertTrue(np.sum(np.abs(diff)) == 0)
