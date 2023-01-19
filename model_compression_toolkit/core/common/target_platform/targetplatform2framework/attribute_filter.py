@@ -31,7 +31,7 @@ class Filter:
         Returns:
             Whether the passed configuration matches the filter or not.
         """
-        raise Exception('Filter did not implement match')
+        raise Exception('Filter did not implement match')  # pragma: no cover
 
 
 class AttributeFilter(Filter):
@@ -85,7 +85,7 @@ class AttributeFilter(Filter):
         """
 
         if not isinstance(other, AttributeFilter):
-            raise Exception("Not an attribute filter. Can not run an OR operation.")
+            raise Exception("Not an attribute filter. Can not run an OR operation.")  # pragma: no cover
         return OrAttributeFilter(self, other)
 
     def __and__(self, other: Any):
@@ -99,7 +99,7 @@ class AttributeFilter(Filter):
             AndAttributeFilter that filters with AND between the current AttributeFilter and the passed AttributeFilter.
         """
         if not isinstance(other, AttributeFilter):
-            raise Exception("Not an attribute filter. Can not run an AND operation.")
+            raise Exception("Not an attribute filter. Can not run an AND operation.")  # pragma: no cover
         return AndAttributeFilter(self, other)
 
     def match(self,
@@ -123,7 +123,7 @@ class AttributeFilter(Filter):
         Returns: A string representation for the filter.
 
         """
-        raise Exception("Filter must implement op_as_str ")
+        raise Exception("Filter must implement op_as_str ")  # pragma: no cover
 
     def __repr__(self):
         return f'{self.attr} {self.op_as_str()} {self.value}'

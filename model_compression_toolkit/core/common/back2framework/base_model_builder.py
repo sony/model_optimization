@@ -51,4 +51,4 @@ class BaseModelBuilder(ABC):
         Returns: A framework's model built from its graph.
 
         """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement build_model method.')
+        raise NotImplemented(f'{self.__class__.__name__} have to implement build_model method.')  # pragma: no cover

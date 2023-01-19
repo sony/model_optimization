@@ -75,7 +75,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
 
     # target_kpi have to be passed. If it was not passed, the facade is not supposed to get here by now.
     if target_kpi is None:
-        Logger.critical('Target KPI have to be passed for search_methods bit-width configuration')
+        Logger.critical('Target KPI have to be passed for search_methods bit-width configuration')  # pragma: no cover
 
     # Set graph for MP search
     graph = copy.deepcopy(graph_to_search_cfg)  # Copy graph before searching
@@ -114,7 +114,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
     if search_method in search_methods:  # Get a specific search function
         search_method_fn = search_methods.get(search_method)
     else:
-        raise NotImplemented
+        raise NotImplemented  # pragma: no cover
 
     # Search for the desired mixed-precision configuration
     result_bit_cfg = search_method_fn(search_manager,

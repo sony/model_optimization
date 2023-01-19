@@ -62,5 +62,5 @@ class BaseSymmetricInferableQuantizer(BaseUniformInferableQuantizer):
         """
         Return a dictionary with the configuration of the quantizer.
         """
-        raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')
+        raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')  # pragma: no cover
 

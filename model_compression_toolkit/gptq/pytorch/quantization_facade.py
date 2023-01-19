@@ -159,8 +159,8 @@ if FOUND_TORCH:
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
                 common.Logger.error("Given quantization config to mixed-precision facade is not of type "
-                                    "MixedPrecisionQuantizationConfigV2. Please use keras_post_training_quantization API,"
-                                    "or pass a valid mixed precision configuration.")
+                                    "MixedPrecisionQuantizationConfigV2. Please use keras_post_training_quantization "
+                                    "API, or pass a valid mixed precision configuration.")  # pragma: no cover
 
             common.Logger.info("Using experimental mixed-precision quantization. "
                                "If you encounter an issue please file a bug.")
@@ -212,10 +212,10 @@ else:
     def get_pytorch_gptq_config(*args, **kwargs):
         Logger.critical('Installing Pytorch is mandatory '
                         'when using pytorch_gradient_post_training_quantization_experimental. '
-                        'Could not find torch package.')
+                        'Could not find torch package.')  # pragma: no cover
 
 
     def pytorch_gradient_post_training_quantization_experimental(*args, **kwargs):
         Logger.critical('Installing Pytorch is mandatory '
                         'when using pytorch_gradient_post_training_quantization_experimental. '
-                        'Could not find the torch package.')
+                        'Could not find the torch package.')  # pragma: no cover

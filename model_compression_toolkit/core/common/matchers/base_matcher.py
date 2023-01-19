@@ -41,19 +41,19 @@ class BaseMatcher(object):
         """
         Return a matcher to check the logic AND of two BaseMatchers on an object.
         """
-        raise NotImplemented
+        raise NotImplemented  # pragma: no cover
 
     def __or__(self, other: Any):
         """
         Return a matcher to check the logic OR of BaseMatchers on an object.
         """
-        raise NotImplemented
+        raise NotImplemented  # pragma: no cover
 
     def logic_not(self):
         """
         Return a matcher to check the logic NOT of the BaseMatcher on an object.
         """
-        raise NotImplemented
+        raise NotImplemented  # pragma: no cover
 
     def logic_and(self, other: Any):
         """

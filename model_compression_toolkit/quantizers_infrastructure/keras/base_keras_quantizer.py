@@ -78,4 +78,4 @@ else:
             super().__init__(quantization_config, quantization_target, quantization_method)
             Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using BaseKerasQuantizer. '
-                            'Could not find Tensorflow package.')
+                            'Could not find Tensorflow package.')  # pragma: no cover

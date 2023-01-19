@@ -181,7 +181,9 @@ class PytorchModel(torch.nn.Module):
             Output of the node.
 
         """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement a method for quantization activation nodes.')
+        raise NotImplemented(
+            f'{self.__class__.__name__} have to implement a method for quantization activation nodes.')  # pragma: no
+        # cover
 
     def _add_modules(self):
         for n in self.node_sort:

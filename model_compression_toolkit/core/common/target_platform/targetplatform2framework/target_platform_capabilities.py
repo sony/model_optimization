@@ -131,7 +131,8 @@ class TargetPlatformCapabilities(ImmutableClass):
         if isinstance(tpc_component, OperationsSetToLayers):
             self.op_sets_to_layers += tpc_component
         else:
-            raise Exception(f'Trying to append an unfamiliar TargetPlatformCapabilitiesComponent of type: {type(tpc_component)}')
+            raise Exception(f'Trying to append an unfamiliar TargetPlatformCapabilitiesComponent of type: '
+                            f'{type(tpc_component)}')  # pragma: no cover
 
     def __enter__(self):
         """
@@ -175,7 +176,7 @@ class TargetPlatformCapabilities(ImmutableClass):
             QuantizationConfigOptions of the node.
         """
         if node is None:
-            raise Exception(f'Can not retrieve QC options for None node')
+            raise Exception(f'Can not retrieve QC options for None node')  # pragma: no cover
         for fl, qco in self.filterlayer2qco.items():
             if fl.match(node):
                 return qco

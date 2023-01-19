@@ -69,9 +69,9 @@ def power_of_two_quantization(activation_n_bits: int,
     activation_is_signed = quantization_params.get(SIGNED)
 
     if activation_threshold is None or activation_is_signed is None:
-        return None
+        return None  # pragma: no cover
     if not threshold_is_power_of_two(activation_threshold, per_channel=False):
-        return None
+        return None  # pragma: no cover
 
     min_value, max_value = quantizer_min_max_calculator(activation_threshold,
                                                         activation_n_bits,
@@ -97,7 +97,7 @@ def symmetric_quantization(activation_n_bits: int,
     activation_is_signed = quantization_params.get(SIGNED)
 
     if activation_threshold is None or activation_is_signed is None:
-        return None
+        return None  # pragma: no cover
 
     min_value, max_value = quantizer_min_max_calculator(activation_threshold,
                                                         activation_n_bits,
@@ -122,7 +122,7 @@ def uniform_quantization(activation_n_bits: int,
     min_value, max_value = quantization_params.get(RANGE_MIN), quantization_params.get(RANGE_MAX)
 
     if min_value is None or max_value is None:
-        return None
+        return None  # pragma: no cover
 
     return lambda x: q(x, min_value, max_value, activation_n_bits)
 
@@ -141,7 +141,7 @@ def q(x: TFReference, min_value, max_value, activation_n_bits) -> TFReference:
         The fake-quantized input tensor.
     """
     if x.dtype != tf.float32:
-        x = tf.cast(x, dtype=tf.float32)
+        x = tf.cast(x, dtype=tf.float32)  # pragma: no cover
 
     # fake_quant_with_min_max_vars expects to get x of float32
     return tf.quantization.fake_quant_with_min_max_vars(x,

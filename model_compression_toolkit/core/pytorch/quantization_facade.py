@@ -269,9 +269,9 @@ else:
     def pytorch_post_training_quantization(*args, **kwargs):
         Logger.critical('Installing Pytorch is mandatory '
                         'when using pytorch_post_training_quantization. '
-                        'Could not find the torch package.')
+                        'Could not find the torch package.')  # pragma: no cover
 
     def pytorch_post_training_quantization_mixed_precision(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                         'when using pytorch_post_training_quantization_mixed_precision. '
-                        'Could not find Tensorflow package.')
+                        'Could not find Tensorflow package.')  # pragma: no cover

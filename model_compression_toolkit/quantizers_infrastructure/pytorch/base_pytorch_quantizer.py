@@ -47,4 +47,4 @@ else:
             super().__init__(quantization_config, quantization_target, quantization_method)
             Logger.critical('Installing Pytorch is mandatory '
                             'when using BasePytorchQuantizer. '
-                            'Could not find torch package.')
+                            'Could not find torch package.')  # pragma: no cover

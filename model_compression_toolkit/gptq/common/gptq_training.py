@@ -204,7 +204,7 @@ class GPTQTrainer(ABC):
             Quantized graph for GPTQ fine-tuning, GPTQ graph user info
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s GPTQ model builder method.')
+                             f'framework\'s GPTQ model builder method.')  # pragma: no cover
 
     @abstractmethod
     def train(self, representative_data_gen: Callable):
@@ -214,7 +214,7 @@ class GPTQTrainer(ABC):
             representative_data_gen: Dataset to use for inputs of the models.
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s train method.')
+                             f'framework\'s train method.')  # pragma: no cover
 
     @abstractmethod
     def update_graph(self) -> Graph:
@@ -225,7 +225,7 @@ class GPTQTrainer(ABC):
             Updated graph after GPTQ.
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s update_graph method.')
+                             f'framework\'s update_graph method.')  # pragma: no cover
 
     def _get_model_output_replacement(self) -> List[BaseNode]:
         """

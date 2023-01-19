@@ -75,4 +75,4 @@ else:
             super().__init__(weight_quantizers, activation_quantizers)
             Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using KerasNodeQuantizationDispatcher. '
-                            'Could not find Tensorflow package.')
+                            'Could not find Tensorflow package.')  # pragma: no cover

@@ -83,7 +83,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         Returns: None
 
         """
-        raise NotImplemented
+        raise NotImplemented  # pragma: no cover
 
     def __call__(self,
                  input2quantize,
@@ -98,7 +98,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         Returns:
             The quantized tensor.
         """
-        raise NotImplemented
+        raise NotImplemented  # pragma: no cover
 
     def activation_quantization(self) -> bool:
         """
@@ -140,4 +140,4 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         Returns:
             BaseInferableQuantizer object.
         """
-        raise NotImplemented
+        raise NotImplemented  # pragma: no cover

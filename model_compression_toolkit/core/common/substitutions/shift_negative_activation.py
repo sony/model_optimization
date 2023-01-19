@@ -78,7 +78,7 @@ def op2d_bias_correction(op2d_node: BaseNode,
         bias_correction = shift_to_correct * np.sum(kernel, axis=tuple(axis_not_output_channel))
         op2d_node.set_weights_by_keys(bias_str, bias - bias_correction.flatten())
     else:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 def insert_node_between_two_nodes(graph: Graph,
