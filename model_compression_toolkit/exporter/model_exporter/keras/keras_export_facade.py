@@ -51,8 +51,8 @@ def keras_export_model(model: keras.models.Model,
 
     else:
         Logger.critical(
-            f'Unsupported mode was used {mode.name} to export Keras model. Please see API for supported modes.')  #
-        # pragma: no cover
+            f'Unsupported mode was used {mode.name} to '
+            f'export Keras model. Please see API for supported modes.')  # pragma: no cover
 
     exporter.export()
 

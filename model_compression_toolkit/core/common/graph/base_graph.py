@@ -75,7 +75,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         self.fused_nodes = []
 
     def set_fw_info(self,
-                   fw_info: FrameworkInfo):
+                    fw_info: FrameworkInfo):
         """
         Set the graph's framework info.
         Args:
@@ -92,7 +92,6 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             tpc: TargetPlatformCapabilities object.
         """
         self.tpc = tpc
-
 
     def get_topo_sorted_nodes(self):
         """
@@ -421,14 +420,14 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         output_nodes = [ot.node for ot in self.get_outputs()]  # get output nodes from namedtuples
         if node_to_remove in output_nodes:  # If node is in the graph's outputs, the outputs should be updated
             if new_graph_outputs is None:
-                Logger.critical(f'{node_to_remove.name} is in graph outputs, but new outputs were not given.')  #
-                # pragma: no cover
+                Logger.critical(
+                    f'{node_to_remove.name} is in graph outputs, but new outputs were not given.')  # pragma: no cover
             self.set_outputs(new_graph_outputs)
 
         if node_to_remove in self.get_inputs():  # If node is in the graph's inputs, the inputs should be updated
             if new_graph_inputs is None:
-                Logger.critical(f'{node_to_remove.name} is in graph inputs, but new inputs were not given.')  #
-                # pragma: no cover
+                Logger.critical(
+                    f'{node_to_remove.name} is in graph inputs, but new inputs were not given.')  # pragma: no cover
             self.set_inputs(new_graph_inputs)
 
         # Make sure there are no connected edges left to the node before removing it.

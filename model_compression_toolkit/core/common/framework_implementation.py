@@ -269,8 +269,8 @@ class FrameworkImplementation(ABC):
         """
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s get_substitutions_virtual_weights_activation_coupling method.')  # pragma
-        # : no cover
+                             f'framework\'s get_substitutions_virtual_weights_activation_coupling '
+                             f'method.')  # pragma: no cover
 
     @abstractmethod
     def get_substitutions_after_second_moment_correction(self, quant_config: QuantizationConfig) \
@@ -285,8 +285,8 @@ class FrameworkImplementation(ABC):
             A list of the framework substitutions used after we apply second moment statistics.
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s get_substitutions_after_second_moment_correction method.')  # pragma: no
-        # cover
+                             f'framework\'s get_substitutions_after_second_moment_correction '
+                             f'method.')  # pragma: no cover
 
     @abstractmethod
     def get_gptq_trainer_obj(self):
