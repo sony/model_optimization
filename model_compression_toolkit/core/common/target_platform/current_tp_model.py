@@ -38,7 +38,7 @@ class CurrentTPModel:
 
         """
         if self.tp_model is None:
-            raise Exception('Target platform model is not initialized.')
+            raise Exception('Target platform model is not initialized.')  # pragma: no cover
         return self.tp_model
 
     def reset(self):

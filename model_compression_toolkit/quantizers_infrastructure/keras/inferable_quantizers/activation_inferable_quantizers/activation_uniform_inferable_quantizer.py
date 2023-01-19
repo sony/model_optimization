@@ -78,4 +78,4 @@ else:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using ActivationUniformInferableQuantizer. '
-                            'Could not find Tensorflow package.')
+                            'Could not find Tensorflow package.')  # pragma: no cover

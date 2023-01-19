@@ -48,7 +48,8 @@ def get_activation_quantization_params_fn(activation_quantization_method: Quanti
         params_fn = lut_kmeans_histogram
     else:
         raise Exception(
-            f'No params function for the configuration of quantization method {activation_quantization_method}')
+            f'No params function for the configuration of '
+            f'quantization method {activation_quantization_method}')  # pragma: no cover
     return params_fn
 
 
@@ -76,5 +77,6 @@ def get_weights_quantization_params_fn(weights_quantization_method: Quantization
         params_fn = partial(lut_kmeans_tensor, is_symmetric=True)
     else:
         raise Exception(
-            f'No params function for the configuration of quantization method {weights_quantization_method}')
+            f'No params function for the configuration of '
+            f'quantization method {weights_quantization_method}')  # pragma: no cover
     return params_fn

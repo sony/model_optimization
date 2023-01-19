@@ -46,19 +46,19 @@ class MHAParams:
         # Only batch first network is supported
         if BATCH_FIRST in mha_node.framework_attr.keys():
             if mha_node.framework_attr[BATCH_FIRST] is not True:
-                raise Exception('Only batch first network is supported')
+                raise Exception('Only batch first network is supported')  # pragma: no cover
         else:
-            raise Exception('Only batch first network is supported')
+            raise Exception('Only batch first network is supported')  # pragma: no cover
 
         # Add Zero Attn feature is Not Implemented
         if ADD_ZERO_ATTN in mha_node.framework_attr.keys():
             if mha_node.framework_attr[ADD_ZERO_ATTN] is not False:
-                raise Exception('Add Zero Attn feature is Not Implemented')
+                raise Exception('Add Zero Attn feature is Not Implemented')  # pragma: no cover
 
         # Check if Add Bias KV feature is Active
         if BIAS_K and BIAS_V in mha_node.weights.keys():
             if mha_node.weights[BIAS_K] and mha_node.weights[BIAS_V] is not None:
-                raise Exception('Add BIAS_KV feature is Not Implemented')
+                raise Exception('Add BIAS_KV feature is Not Implemented')  # pragma: no cover
 
         self.embed_dim = mha_node.framework_attr[EMBED_DIM]
         self.num_heads = mha_node.framework_attr[NUM_HEADS]

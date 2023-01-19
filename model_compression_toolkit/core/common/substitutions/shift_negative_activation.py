@@ -123,7 +123,7 @@ def insert_node_after_node(graph: Graph,
 
     last_nodes = graph.get_next_nodes(first_node)
     if len(last_nodes) != 1:
-        raise Exception('Can only insert if there is only one input')
+        raise Exception('Can only insert if there is only one input')  # pragma: no cover
     last_node = last_nodes[0]
     insert_node_between_two_nodes(graph, node_to_insert, first_node, last_node)
 
@@ -145,7 +145,7 @@ def insert_node_before_node(graph: Graph,
     """
     first_nodes = graph.get_prev_nodes(last_node)
     if len(first_nodes) != 1:
-        raise Exception('Can only insert if there is only one input')
+        raise Exception('Can only insert if there is only one input')  # pragma: no cover
     first_node = first_nodes[0]
     insert_node_between_two_nodes(graph, node_to_insert, first_node, last_node)
 
@@ -223,7 +223,7 @@ def shift_negative_function(graph: Graph,
 
     if not non_linear_node.is_all_activation_candidates_equal():
         raise Exception("Shift negative correction is not supported for more than one activation quantization "
-                        "configuration candidate")
+                        "configuration candidate")  # pragma: no cover
 
     # all candidates have same activation config, so taking the first candidate for calculations
     non_linear_node_cfg_candidate = non_linear_node.candidates_quantization_cfg[0].activation_quantization_cfg

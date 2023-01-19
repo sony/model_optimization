@@ -111,7 +111,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
                                                      self.activation_quantization_params)
 
         if fake_quant is None:
-            raise Exception('Layer is meant to be quantized but fake_quant function is None')
+            raise Exception('Layer is meant to be quantized but fake_quant function is None')  # pragma: no cover
         return fake_quant(tensors)
 
     @property

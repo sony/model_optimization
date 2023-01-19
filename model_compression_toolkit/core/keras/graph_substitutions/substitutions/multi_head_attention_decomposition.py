@@ -448,7 +448,7 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
         """
 
         if mha_node.reuse:
-            raise Exception("MCT doesn't support reuse of MultiHeadAttention layer")
+            raise Exception("MCT doesn't support reuse of MultiHeadAttention layer")  # pragma: no cover
         params = MHAParams(mha_node)
 
         mha_in_edges = graph.in_edges(mha_node)
