@@ -103,10 +103,10 @@ Currently, MCT is being tested on various Python versions:
 
 | Python Version                                                                                                                                                                                                                                                            |
 |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [![Run Tests - Python 3.10](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks_python310.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python310.yml) |
-| [![Run Tests - Python 3.9](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks_python39.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python39.yml)   |
-| [![Run Tests - Python 3.8](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks_python38.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python38.yml)   |
-| [![Run Tests - Python 3.7](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_all_latest_frameworks_python37.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python37.yml)   |
+| [![Run Tests - Python 3.10](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python310.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python310.yml) |
+| [![Run Tests - Python 3.9](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python39.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python39.yml)   |
+| [![Run Tests - Python 3.8](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python38.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python38.yml)   |
+| [![Run Tests - Python 3.7](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python37.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python37.yml)   |
 
 
 ### Supported NN-Frameworks Versions
