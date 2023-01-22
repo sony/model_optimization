@@ -15,25 +15,48 @@
 from abc import abstractmethod
 from enum import Enum
 
+from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer, QuantizationTarget
 
+if FOUND_TF:
+    import tensorflow as tf
 
-class BaseKerasInferableQuantizer(BaseInferableQuantizer):
-    def __init__(self,
-                 quantization_target: QuantizationTarget):
-        """
-        This class is a base quantizer for Keras quantizers for inference only.
+    class BaseKerasInferableQuantizer(BaseInferableQuantizer):
+        def __init__(self,
+                     quantization_target: QuantizationTarget):
+            """
+            This class is a base quantizer for Keras quantizers for inference only.
 
-        Args:
-            quantization_target: An enum which selects the quantizer tensor type: activation or weights.
-        """
-        super(BaseKerasInferableQuantizer, self).__init__(quantization_target=quantization_target)
+            Args:
+                quantization_target: An enum which selects the quantizer tensor type: activation or weights.
+            """
+            super(BaseKerasInferableQuantizer, self).__init__(quantization_target=quantization_target)
 
-    @abstractmethod
-    def get_config(self):
-        """
-        Return a dictionary with the configuration of the quantizer.
-        """
-        raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')
+        @abstractmethod
+        def get_config(self):
+            """
+            Return a dictionary with the configuration of the quantizer.
+            """
+            raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')
+
+        @abstractmethod
+        def __call__(self, inputs: tf.Tensor):
+            """
+            Quantize the given inputs using the quantizer parameters.
+
+            Args:
+                inputs: input tensor to quantize
+
+            Returns:
+                quantized tensor.
+            """
+            raise NotImplemented(f'{self.__class__.__name__} did not implement __call__')
+else:
+    class BaseKerasInferableQuantizer:
+        def __init__(self, *args, **kwargs):
+            raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
+                            'when using BaseKerasInferableQuantizer. '
+                            'Could not find Tensorflow package.')
+
 
 
