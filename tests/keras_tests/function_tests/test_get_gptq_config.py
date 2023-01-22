@@ -77,9 +77,10 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                  loss=multiple_tensors_mse_loss,
                                                  rounding_type=RoundingType.GumbelRounding, quantizer_config=gc),
                                ]
-        gptqv2_configurations = [get_keras_gptq_config(n_epochs=1),
-                                 get_keras_gptq_config(n_epochs=1),
-                                 get_keras_gptq_config(n_epochs=1, optimizer=tf.keras.optimizers.Adam())]
+        gptqv2_configurations = [get_keras_gptq_config(n_epochs=1,optimizer=tf.keras.optimizers.Adam()),
+                                 get_keras_gptq_config(n_epochs=1,optimizer=tf.keras.optimizers.Adam()),
+                                 get_keras_gptq_config(n_epochs=1,optimizer=tf.keras.optimizers.Adam())]
+
 
         for i, gptq_config in enumerate(gptq_configurations):
             keras_post_training_quantization(in_model=build_model(SHAPE[1:]),
@@ -87,6 +88,7 @@ class TestGetGPTQConfig(unittest.TestCase):
                                              n_iter=1,
                                              quant_config=qc,
                                              gptq_config=gptq_config)
+
         for i, gptq_config in enumerate(gptqv2_configurations):
             keras_gradient_post_training_quantization_experimental(in_model=build_model(SHAPE[1:]),
                                                                    representative_data_gen=random_datagen_experimental,
