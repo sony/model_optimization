@@ -20,6 +20,7 @@ from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import BasePyTorchExporter
 
+OPSET_VERSION = 16
 
 class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
     """
@@ -65,7 +66,7 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
         torch.onnx.export(self.model,
                           model_input,
                           self.save_model_path,
-                          opset_version=13,
+                          opset_version=OPSET_VERSION,
                           verbose=False,
                           input_names=['input'],
                           output_names=['output'],
