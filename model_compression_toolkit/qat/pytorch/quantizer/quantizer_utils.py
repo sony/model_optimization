@@ -86,11 +86,12 @@ def symmetric_quantizer(tensor_data: torch.Tensor,
     """
 
     # Compute the step size of quantized values.
-    delta_tensor = threshold / (2 ** n_bits - int(sign))
+    n_pos = 2 ** (n_bits - int(sign))
+    delta_tensor = threshold / n_pos
 
     # Compute min/max int value
-    min_val = -int(sign) * (2 ** (n_bits - int(sign)))
-    max_val = (2 ** (n_bits - int(sign))) - 1
+    min_val = -int(sign) * n_pos
+    max_val = n_pos - 1
 
     # Apply rounding
     input_tensor_int = ste_round(tensor_data / delta_tensor)
