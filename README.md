@@ -116,9 +116,9 @@ is tested on various versions:
 
 | TensorFlow Version                                                                                   | PyTorch Version                                                                                          |
 |------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
-| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf210.yml/badge.svg) | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_13.yml/badge.svg) |
-| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf29.yml/badge.svg)  | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_12.yml/badge.svg) |
-| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf28.yml/badge.svg)  | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_11.yml/badge.svg) |
+| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf211.yml/badge.svg) | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_13.yml/badge.svg) |
+| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf210.yml/badge.svg) | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_12.yml/badge.svg) |
+| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf29.yml/badge.svg)  | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_11.yml/badge.svg) |
 
 
 ### Usage Example 
