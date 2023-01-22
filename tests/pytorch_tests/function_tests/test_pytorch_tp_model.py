@@ -30,7 +30,8 @@ from model_compression_toolkit.core.common.target_platform.targetplatform2framew
     Smaller, Eq
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
-from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL
+from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, TFLITE_TP_MODEL, \
+    QNNPACK_TP_MODEL
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from tests.common_tests.test_tp_model import TEST_QC, TEST_QCO
 from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import LayerTestModel
@@ -248,6 +249,9 @@ class TestGetPytorchTPC(unittest.TestCase):
         tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v2')
         self.assertTrue(tpc.version == 'v2')
         tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v1')
+        self.assertTrue(tpc.version == 'v1')
+
+        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v1")
         self.assertTrue(tpc.version == 'v1')
 
         tpc = mct.get_target_platform_capabilities(PYTORCH, TFLITE_TP_MODEL, "v1")
