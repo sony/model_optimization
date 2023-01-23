@@ -22,27 +22,33 @@ The method returns the quantized tensor.
 
 You must implement the abstract method `__call__` in your subclass which inherits BaseKerasInferableQuantizer
 
+Another abstract method that should be implemented is `get_config` which returns a dictionary of the arguments that should be passed to the quantizer `__init__` method.
+
+For example:
 
 ```python
-import torch
+import tensorflow as tf
 from model_compression_toolkit import quantizers_infrastructure as qi
 
-# Inherit and implement __call__ of BaseKerasInferableQuantizer
+
 class MyQuantizer(qi.BaseKerasInferableQuantizer):
     def __init__(self,
                  quantization_target: qi.QuantizationTarget):
         super(MyQuantizer, self).__init__(quantization_target=quantization_target)
 
-    def __call__(self, inputs: torch.Tensor):
-        quantized = inputs.round()
-        return quantized
+    def get_config(self):
+        return {'quantization_target': self.quantization_target}
+
+    def __call__(self, inputs: tf.Tensor):
+        # Your quantization logic here
+        return tf.round(inputs)
 
 
-# Instantiate an activation Keras inferable quantizer and use it to quantize a random input.
-quantizer = MyQuantizer(qi.QuantizationTarget.Activation)
-inputs = torch.randn((3,3))
-outputs = quantizer(inputs)
-print(outputs)
+quantization_target = qi.QuantizationTarget.Activation
+quantizer = MyQuantizer(quantization_target=quantization_target)
+input_tensor = tf.random.normal(shape=(1, 10))
+quantized_tensor = quantizer(input_tensor)
+print(quantized_tensor)
 ```
 
 ## Note

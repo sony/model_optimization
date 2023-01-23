@@ -22,6 +22,7 @@ The method returns the quantized tensor.
 
 You must implement the abstract method `__call__` in your subclass which inherits BasePyTorchInferableQuantizer
 
+For example:
 
 ```python
 import torch
