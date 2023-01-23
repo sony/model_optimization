@@ -93,7 +93,7 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                             attribute_name = w.name.split('/')[-1].split(':')[0]
                             if attribute_name in layer.dispatcher.weight_quantizers.keys():
                                 quantizer = layer.dispatcher.weight_quantizers.get(attribute_name)
-                                val = quantizer(qw, False)
+                                val = quantizer(qw)
                             else:
                                 val = qw
                     if val is None:

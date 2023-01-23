@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from abc import abstractmethod
+
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer, QuantizationTarget
 
 if FOUND_TORCH:
+    import torch
     class BasePyTorchInferableQuantizer(BaseInferableQuantizer):
         def __init__(self,
                      quantization_target: QuantizationTarget):
@@ -26,6 +29,19 @@ if FOUND_TORCH:
                 quantization_target: An enum which selects the quantizer tensor type: activation or weights.
             """
             super(BasePyTorchInferableQuantizer, self).__init__(quantization_target=quantization_target)
+
+        @abstractmethod
+        def __call__(self, inputs: torch.Tensor):
+            """
+            Quantize the given inputs using the quantizer parameters.
+
+            Args:
+                inputs: input tensor to quantize
+
+            Returns:
+                quantized tensor.
+            """
+            raise NotImplemented(f'{self.__class__.__name__} did not implement __call__')
 else:
     class BasePyTorchInferableQuantizer:
         def __init__(self, *args, **kwargs):

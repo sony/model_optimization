@@ -63,13 +63,12 @@ if FOUND_TORCH:
                                                                    QuantizationTarget.Weights)
 
         def __call__(self,
-                     inputs: torch.Tensor,
-                     training: bool = True) -> torch.Tensor:
+                     inputs: torch.Tensor) -> torch.Tensor:
             """
             Weight fake quantizer
             Args:
                 inputs: weights to quantize.
-                training: whether in training mode or not
+
             Returns:
                 quantized weights
             """

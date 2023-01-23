@@ -61,13 +61,12 @@ if FOUND_TF:
                     'signed': self.signed,
                     'threshold': self.threshold}
 
-        def __call__(self, inputs, training=False):
+        def __call__(self, inputs: tf.Tensor):
             """
             Quantize the given inputs using the quantizer parameters.
 
             Args:
                 inputs: input tensor to quantize
-                training: whether or not the quantizer is being used in training mode (unused here)
 
             Returns:
                 quantized tensor.

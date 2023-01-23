@@ -171,11 +171,21 @@ if FOUND_TF:
             # Quantize all weights, and replace them in the underlying layer.
             quantized_weights = {}
             for name, unquantized_weight, quantizer in self._weight_vars:
-                quantized_weight = utils.smart_cond(
-                    training,
-                    _make_quantizer_fn(quantizer, unquantized_weight, True),
-                    _make_quantizer_fn(quantizer, unquantized_weight, False))
-                quantized_weights.update({name: quantized_weight})
+
+                weights_quantizer_args_spec = tf_inspect.getfullargspec(quantizer.__call__).args
+                if TRAINING in weights_quantizer_args_spec:
+                    quantized_weight = utils.smart_cond(
+                        training,
+                        _make_quantizer_fn(quantizer, unquantized_weight, True),
+                        _make_quantizer_fn(quantizer, unquantized_weight, False))
+                    quantized_weights.update({name: quantized_weight})
+                else:
+                    # Keras weights inferable quantizer
+                    quantized_weight = quantizer(unquantized_weight)
+                    quantized_weights.update({name: quantized_weight})
+
+
+
 
             self.set_quantize_weights(quantized_weights)
 
@@ -197,11 +207,15 @@ if FOUND_TF:
 
                 _outputs = []
                 for _output, act_quant in zip(outputs, self.dispatcher.activation_quantizers):
-                    _outputs.append(utils.smart_cond(
-                        training,
-                        _make_quantizer_fn(act_quant, _output, True),
-                        _make_quantizer_fn(act_quant, _output, False)))
-
+                    activation_quantizer_args_spec = tf_inspect.getfullargspec(act_quant.__call__).args
+                    if TRAINING in activation_quantizer_args_spec:
+                        _outputs.append(utils.smart_cond(
+                            training,
+                            _make_quantizer_fn(act_quant, _output, True),
+                            _make_quantizer_fn(act_quant, _output, False)))
+                    else:
+                        # Keras activation inferable quantizer.
+                        _outputs.append(act_quant(_output))
                 outputs = _outputs[0] if num_outputs == 1 else _outputs
 
             return outputs

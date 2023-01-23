@@ -17,6 +17,7 @@ from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.quantizers_infrastructure.common.node_quantization_dispatcher import \
     NodeQuantizationDispatcher
+import inspect
 
 if FOUND_TORCH:
     import torch
@@ -101,7 +102,12 @@ if FOUND_TORCH:
 
                 quantized_weights = {}
                 for name, unquantized_weight, quantizer in self._weight_vars:
-                    quantized_weight = quantizer(unquantized_weight, self.training)
+                    s = inspect.signature(quantizer.__call__)
+                    if TRAINING in s.parameters.keys():
+                        quantized_weight = quantizer(unquantized_weight, self.training)
+                    else:
+                        quantized_weight = quantizer(unquantized_weight)
+
                     quantized_weights.update({name: quantized_weight})
 
                 self.set_quantize_weights(quantized_weights)
