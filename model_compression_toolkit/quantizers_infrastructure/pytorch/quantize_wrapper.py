@@ -58,7 +58,7 @@ if FOUND_TORCH:
                 setattr(self.layer, name, weight)
                 self.register_parameter(name, torch.nn.Parameter(weight, requires_grad=True))
                 quantizer.initialize_quantization(weight.shape, name, self)
-                self._weight_vars.append((name, getattr(self.layer, name), quantizer))
+                self._weight_vars.append((name, getattr(self, name), quantizer))
 
             # Init activations quantizers
             self._activation_vars = []
