@@ -6,7 +6,7 @@ The `BasePyTorchInferableQuantizer` class is a base class for PyTorch quantizers
 
 To use the `BasePyTorchInferableQuantizer` class, you will need to have PyTorch installed. If PyTorch is not installed, an exception will be raised.
 
-Once you have PyTorch installed, you can use the `BasePyTorchInferableQuantizer` class by importing it from the package where it is located.
+Once you have PyTorch installed, you can use the `BasePyTorchInferableQuantizer` class by importing it and implementing a quantizer.
 
 ## Usage
 
@@ -14,33 +14,35 @@ The `BasePyTorchInferableQuantizer` class takes one argument during initializati
 
 - `quantization_target`: An enum which selects the quantizer tensor type: activation or weights.
 
-Once you have instantiated the class, you can use the `__call__` method to quantize the given inputs using the quantizer parameters. The method takes one argument:
+Once you have instantiated your PyTorch inferable quantizer, you can use the `__call__` method to quantize the given inputs using the quantizer parameters. The method takes one argument:
 
 - `inputs`: input tensor to quantize
 
 The method returns the quantized tensor.
 
-```python
-from torch_quantizer import BasePyTorchInferableQuantizer
+You must implement the abstract method `__call__` in your subclass which inherits BasePyTorchInferableQuantizer
 
-quantizer = BasePyTorchInferableQuantizer(quantization_target='weights')
-inputs = torch.randn((3,3))
-outputs = quantizer(inputs)
-print(outputs)
-```
-
-You must also implement the abstract method __call__ in your subclass which inherits BasePyTorchInferableQuantizer
 
 ```python
-class MyQuantizer(BasePyTorchInferableQuantizer):
+import torch
+from model_compression_toolkit import quantizers_infrastructure as qi
+
+# Inherit and implement __call__ of BasePyTorchInferableQuantizer
+class MyQuantizer(qi.BasePyTorchInferableQuantizer):
     def __init__(self,
-                 quantization_target: QuantizationTarget):
+                 quantization_target: qi.QuantizationTarget):
         super(MyQuantizer, self).__init__(quantization_target=quantization_target)
 
     def __call__(self, inputs: torch.Tensor):
         quantized = inputs.round()
         return quantized
 
+
+# Instantiate an activation Pytorch inferable quantizer and use it to quantize a random input.
+quantizer = MyQuantizer(qi.QuantizationTarget.Activation)
+inputs = torch.randn((3,3))
+outputs = quantizer(inputs)
+print(outputs)
 ```
 
 ##Note
