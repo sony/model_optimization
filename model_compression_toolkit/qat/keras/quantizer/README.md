@@ -4,7 +4,7 @@ The `BaseKerasTrainableQuantizer` class is a base class for Keras quantizers tha
 
 ## Installation
 
-To use the `BaseKerasTrainableQuantizer` class, you will need to have Tensorflow installed. If Tensorflow is not installed, an exception will be raised.
+To use the `BaseKerasTrainableQuantizer` class, you will need to have Tensorflow and tensorflow_model_optimization installed, otherwise an exception will be raised.
 
 Once you have Tensorflow installed, you can use the `BaseKerasTrainableQuantizer` class by importing it from the package where it is located.
 
@@ -17,7 +17,7 @@ The `BaseKerasTrainableQuantizer` class takes single argument during initializat
 Once you have instantiated the class, you can use the `__call__` method to quantize the given inputs while training using the quantizer parameters. 
 The method returns the quantized tensor. You must implement the abstract method `__call__` in your subclass which inherits `BaseKerasTrainableQuantizer`.
 
-In order to export the quantizer for deployment you also must to implement `convert2inferable` method. For that you need to create your Inferable Quantizer.
+In order to export the quantizer for deployment you also must to implement `convert2inferable` method. For that you need to create your Inferable Quantizer (see [InferableQuantizers](https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/quantizers_infrastructure/keras/inferable_quantizers/README.md))
 
 Example for custom symmetric weights training quantizer.
 First, add enum to `TrainingMethod` in `qat/common/qat_config.py` your custom training method and set your custom quantizer to `quantization_dispatcher_builder.py` dictionary.

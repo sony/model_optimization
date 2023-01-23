@@ -17,7 +17,7 @@ The `BasePytorchTrainableQuantizer` class takes single argument during initializ
 Once you have instantiated the class, you can use the `__call__` method to quantize the given inputs while training using the quantizer parameters. 
 The method returns the quantized tensor. You must implement the abstract method `__call__` in your subclass which inherits `BasePytorchTrainableQuantizer`.
 
-In order to export the quantizer for deployment you also must to implement `convert2inferable` method. For that you need to create your Inferable Quantizer.
+In order to export the quantizer for deployment you also must to implement `convert2inferable` method. For that you need to create your Inferable Quantizer (see [InferableQuantizers](https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/quantizers_infrastructure/pytorch/inferable_quantizers/README.md))
 
 Example for custom symmetric weights training quantizer.
 First, add enum to `TrainingMethod` in `qat/common/qat_config.py` your custom training method and set your custom quantizer to `quantization_dispatcher_builder.py` dictionary.
