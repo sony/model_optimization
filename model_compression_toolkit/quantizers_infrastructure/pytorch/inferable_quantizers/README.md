@@ -45,7 +45,7 @@ outputs = quantizer(inputs)
 print(outputs)
 ```
 
-##Note
+## Note
 
 Keep in mind that BasePyTorchInferableQuantizer is an abstract class, it should not be instantiated directly. You should create a new class that inherits from it and implements the required methods.
 
