@@ -20,16 +20,16 @@ from tensorflow import TensorShape
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 
 from model_compression_toolkit import quantizers_infrastructure as qi, QuantizationConfig
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
-    NodeActivationQuantizationConfig
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+    BaseQuantizerConfig, TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 
 class IdentityWeightsQuantizer(qi.BaseKerasTrainableQuantizer):
     """
     A dummy quantizer for test usage - "quantize" the layer's weights to the original weights
     """
-    def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
+    def __init__(self, quantization_config: BaseQuantizerConfig):
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Weights,
                          [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
@@ -50,7 +50,7 @@ class ZeroWeightsQuantizer(qi.BaseKerasTrainableQuantizer):
     """
     A dummy quantizer for test usage - "quantize" the layer's weights to 0
     """
-    def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
+    def __init__(self, quantization_config: BaseQuantizerConfig):
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Weights,
                          [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
@@ -71,7 +71,7 @@ class ZeroActivationsQuantizer(qi.BaseKerasTrainableQuantizer):
     """
     A dummy quantizer for test usage - "quantize" the layer's activation to 0
     """
-    def __init__(self, quantization_config: NodeActivationQuantizationConfig):
+    def __init__(self, quantization_config: BaseQuantizerConfig):
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Activation,
                          [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
@@ -86,10 +86,6 @@ class ZeroActivationsQuantizer(qi.BaseKerasTrainableQuantizer):
                  inputs: tf.Tensor,
                  training: bool = True) -> tf.Tensor:
         return inputs * 0
-
-
-def dummy_fn():
-    return
 
 
 class BaseKerasInfrastructureTest:
@@ -118,18 +114,17 @@ class BaseKerasInfrastructureTest:
         return qi.KerasQuantizationWrapper(layer, dispatcher)
 
     def get_weights_quantization_config(self):
-        op_cfg, _ = get_op_quantization_configs()
-        qc = QuantizationConfig()
-        return NodeWeightsQuantizationConfig(qc=qc,
-                                             op_cfg=op_cfg,
-                                             weights_quantization_fn=dummy_fn,
-                                             weights_quantization_params_fn=dummy_fn,
-                                             weights_channels_axis=-1)
+        return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                                               weights_n_bits=9,
+                                               weights_quantization_params={},
+                                               enable_weights_quantization=True,
+                                               weights_channels_axis=-1,
+                                               weights_per_channel_threshold=True,
+                                               min_threshold=0)
 
     def get_activation_quantization_config(self):
-        op_cfg, _ = get_op_quantization_configs()
-        qc = QuantizationConfig()
-        return NodeActivationQuantizationConfig(qc=qc,
-                                                op_cfg=op_cfg,
-                                                activation_quantization_fn=dummy_fn,
-                                                activation_quantization_params_fn=dummy_fn)
+        return TrainableQuantizerActivationConfig(activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                                                  activation_n_bits=8,
+                                                  activation_quantization_params={},
+                                                  enable_activation_quantization=True,
+                                                  min_threshold=0)

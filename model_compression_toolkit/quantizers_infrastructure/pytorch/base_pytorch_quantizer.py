@@ -14,19 +14,19 @@
 # ==============================================================================
 from typing import Dict, Any, List
 
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
-from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import BaseQuantizerConfig
 
 if FOUND_TORCH:
 
     class BasePytorchTrainableQuantizer(BaseTrainableQuantizer):
         def __init__(self,
-                     quantization_config: BaseNodeQuantizationConfig,
+                     quantization_config: BaseQuantizerConfig,
                      quantization_target: QuantizationTarget,
                      quantization_method: List[QuantizationMethod]):
             """
@@ -34,7 +34,7 @@ if FOUND_TORCH:
             abstract function which any quantizer needs to implement.
 
             Args:
-                quantization_config: node quantization config class contains all the information about the quantizer.
+                quantization_config: quantizer config class contains all the information about the quantizer configuration.
                 quantization_target: A enum which selects the quantizer tensor type: activation or weights.
                 quantization_method: A list of enums which represent the supported methods for the quantizer.
             """
@@ -42,7 +42,7 @@ if FOUND_TORCH:
 
 else:
     class BasePytorchTrainableQuantizer(BaseTrainableQuantizer):
-        def __init__(self, quantization_config: BaseNodeQuantizationConfig, quantization_target: QuantizationTarget,
+        def __init__(self, quantization_config: BaseQuantizerConfig, quantization_target: QuantizationTarget,
                      quantization_method: List[QuantizationMethod]):
             super().__init__(quantization_config, quantization_target, quantization_method)
             Logger.critical('Installing Pytorch is mandatory '

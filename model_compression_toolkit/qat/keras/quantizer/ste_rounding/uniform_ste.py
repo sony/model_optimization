@@ -26,6 +26,8 @@ from model_compression_toolkit.core.common import constants as C
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
     NodeActivationQuantizationConfig
 import model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers as iq
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+    TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 
 class STEUniformWeightQuantizer(qi.BaseKerasTrainableQuantizer):
@@ -33,13 +35,13 @@ class STEUniformWeightQuantizer(qi.BaseKerasTrainableQuantizer):
     Trainable constrained quantizer to quantize a layer inputs.
     """
 
-    def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
+    def __init__(self, quantization_config: TrainableQuantizerWeightsConfig):
         """
         Initialize a TrainableWeightQuantizer object with parameters to use
         for the quantization.
 
         Args:
-            quantization_config: a quantization config class with attributes for the quantization.
+            quantization_config: a trainable quantizer config class with attributes for the quantization.
 
         """
         super().__init__(quantization_config,
@@ -147,13 +149,13 @@ class STEUniformActivationQuantizer(qi.BaseKerasTrainableQuantizer):
     Trainable constrained quantizer to quantize a layer outputs.
     """
 
-    def __init__(self, quantization_config: NodeActivationQuantizationConfig):
+    def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         """
         Initialize a STEUniformActivationQuantizer object with parameters to use
         for the quantization.
 
         Args:
-            quantization_config: node quantization config class
+            quantization_config: trainable quantizer config class
         """
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Activation,

@@ -19,6 +19,8 @@ from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste import STEWeightQuantizer, STEActivationQuantizer
 from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.uniform_ste import STEUniformWeightQuantizer, STEUniformActivationQuantizer
 from model_compression_toolkit.qat.common.qat_config import QATConfig, TrainingMethod
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+    TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 METHOD2WEIGHTQUANTIZER = {TrainingMethod.STE:{qi.QuantizationMethod.SYMMETRIC: STEWeightQuantizer,
                                               qi.QuantizationMethod.POWER_OF_TWO: STEWeightQuantizer,
@@ -28,6 +30,42 @@ METHOD2WEIGHTQUANTIZER = {TrainingMethod.STE:{qi.QuantizationMethod.SYMMETRIC: S
 METHOD2ACTQUANTIZER = {TrainingMethod.STE:{qi.QuantizationMethod.SYMMETRIC: STEActivationQuantizer,
                                            qi.QuantizationMethod.POWER_OF_TWO: STEActivationQuantizer,
                                            qi.QuantizationMethod.UNIFORM: STEUniformActivationQuantizer}}
+
+
+def get_trainable_quantizer_weights_config(n: common.BaseNode):
+    """
+    Returns the relevant configurations for weights trainable quantizer
+
+    Args: None
+
+    Returns: TrainableQuantizerWeightsConfig object.
+
+    """
+    config = n.final_weights_quantization_cfg
+    return TrainableQuantizerWeightsConfig(config.weights_quantization_method,
+                                           config.weights_n_bits,
+                                           config.weights_quantization_params,
+                                           config.enable_weights_quantization,
+                                           config.weights_channels_axis,
+                                           config.weights_per_channel_threshold,
+                                           config.min_threshold)
+
+
+def get_trainable_quantizer_activation_config(n: common.BaseNode):
+    """
+    Returns configurations for activation trainable quantizer
+
+    Args: None
+
+    Returns: TrainableQuantizerActivationConfig object.
+
+    """
+    config = n.final_activation_quantization_cfg
+    return TrainableQuantizerActivationConfig(config.activation_quantization_method,
+                                              config.activation_n_bits,
+                                              config.activation_quantization_params,
+                                              config.enable_activation_quantization,
+                                              config.min_threshold)
 
 
 def quantization_dispatcher_builder(n: common.BaseNode,
@@ -69,7 +107,7 @@ def quantization_dispatcher_builder(n: common.BaseNode,
         quantizer_class = method2weightquantizer[qat_config.weight_training_method][_quant_method]
         attributes = fw_info.get_kernel_op_attributes(n.type)
         for attr in attributes:
-            nqd.add_weight_quantizer(attr, quantizer_class(n.final_weights_quantization_cfg, **qat_config.weight_quantizer_params_override))
+            nqd.add_weight_quantizer(attr, quantizer_class(get_trainable_quantizer_weights_config(n), **qat_config.weight_quantizer_params_override))
 
     if n.is_activation_quantization_enabled():
         _quant_method = n.final_activation_quantization_cfg.activation_quantization_method
@@ -78,6 +116,6 @@ def quantization_dispatcher_builder(n: common.BaseNode,
         if _quant_method not in method2actquantizer[qat_config.activation_training_method]:
             common.Logger.error(f'Unknown activation quantization method: {_quant_method}')
         quantizer_class = method2actquantizer[qat_config.activation_training_method][_quant_method]
-        nqd.activation_quantizers = [quantizer_class(n.final_activation_quantization_cfg, **qat_config.activation_quantizer_params_override)]
+        nqd.activation_quantizers = [quantizer_class(get_trainable_quantizer_activation_config(n), **qat_config.activation_quantizer_params_override)]
 
     return nqd

@@ -16,11 +16,11 @@ from typing import Dict, Any, List
 
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import BaseQuantizerConfig
 
 if FOUND_TF:
     QUANTIZATION_CONFIG = 'quantization_config'
@@ -30,14 +30,14 @@ if FOUND_TF:
 
     class BaseKerasTrainableQuantizer(BaseTrainableQuantizer):
         def __init__(self,
-                     quantization_config: BaseNodeQuantizationConfig,
+                     quantization_config: BaseQuantizerConfig,
                      quantization_target: QuantizationTarget,
                      quantization_method: List[QuantizationMethod]):
             """
             This class is a base quantizer which validates provided quantization config and defines an abstract function which any quantizer needs to implement.
             This class adds to the base quantizer a get_config and from_config functions to enable loading and saving the keras model.
             Args:
-                quantization_config: node quantization config class contains all the information about a quantizer.
+                quantization_config: quantizer config class contains all the information about a quantizer configuration.
                 quantization_target: An enum which decides the qunaizer tensor type activation or weights.
                 quantization_method: A list of enums which represent the quantizer supported methods.
             """
@@ -71,7 +71,7 @@ if FOUND_TF:
 else:
     class BaseKerasTrainableQuantizer(BaseTrainableQuantizer):
         def __init__(self,
-                     quantization_config: BaseNodeQuantizationConfig,
+                     quantization_config: BaseQuantizerConfig,
                      quantization_target: QuantizationTarget,
                      quantization_method: List[QuantizationMethod]):
 

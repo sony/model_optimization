@@ -25,6 +25,8 @@ from model_compression_toolkit.core.common import constants as C
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import uniform_quantizer
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+    TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 
 class STEUniformWeightQuantizer(qi.BasePytorchTrainableQuantizer):
@@ -32,13 +34,13 @@ class STEUniformWeightQuantizer(qi.BasePytorchTrainableQuantizer):
     Trainable constrained quantizer to quantize a layer inputs.
     """
 
-    def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
+    def __init__(self, quantization_config: TrainableQuantizerWeightsConfig):
         """
         Initialize a TrainableWeightQuantizer object with parameters to use
         for the quantization.
 
         Args:
-            quantization_config: node quantization config class
+            quantization_config: trainable quantizer config class
         """
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Weights,
@@ -102,13 +104,13 @@ class STEUniformActivationQuantizer(qi.BasePytorchTrainableQuantizer):
     Trainable constrained quantizer to quantize a layer activations.
     """
 
-    def __init__(self, quantization_config: NodeActivationQuantizationConfig):
+    def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         """
         Initialize a STEUniformActivationQuantizer object with parameters to use
         for uniform quantization.
 
         Args:
-            quantization_config: node quantization config class
+            quantization_config: trainable quantizer config class
         """
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Activation,
