@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
+from model_compression_toolkit.core.common.logger import Logger
+
 def get_current_tp_model():
     """
 
@@ -38,7 +40,7 @@ class CurrentTPModel:
 
         """
         if self.tp_model is None:
-            raise Exception('Target platform model is not initialized.')  # pragma: no cover
+            Logger.error('Target platform model is not initialized.')  # pragma: no cover
         return self.tp_model
 
     def reset(self):

@@ -29,6 +29,7 @@ else:
     from keras.engine.functional import Functional
     from keras.engine.sequential import Sequential
 
+from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 
 
@@ -46,7 +47,7 @@ def is_node_an_input_layer(node: BaseNode) -> bool:
     elif isinstance(node, KerasNode):
         return isinstance(node.layer, InputLayer)
     else:
-        raise Exception('Node to check has to be either a graph node or a keras node')  # pragma: no cover
+        Logger.error('Node to check has to be either a graph node or a keras node')  # pragma: no cover
 
 
 def is_node_a_model(node: BaseNode) -> bool:
@@ -63,5 +64,5 @@ def is_node_a_model(node: BaseNode) -> bool:
     elif isinstance(node, KerasNode):
         return isinstance(node.layer, Functional) or isinstance(node.layer, Sequential)
     else:
-        raise Exception('Node to check has to be either a graph node or a keras node')  # pragma: no cover
+        Logger.error('Node to check has to be either a graph node or a keras node')  # pragma: no cover
 

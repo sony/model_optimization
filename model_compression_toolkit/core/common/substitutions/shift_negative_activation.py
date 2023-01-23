@@ -16,6 +16,7 @@ import copy
 import numpy as np
 from typing import List, Tuple, Any, Callable
 
+from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common import FrameworkInfo, Graph, BaseNode
 from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
@@ -25,7 +26,8 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import _mse_error_histogram
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import \
+    _mse_error_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation import z_score_filter
 
 """
@@ -73,7 +75,7 @@ def op2d_bias_correction(op2d_node: BaseNode,
 
         # special case of depthwise_conv2d in tensorflow, where we have a depth multiplier for the filters
         if output_channel_index == input_channel_index:
-            axis_not_output_channel.remove(3) # 3 is the depth multiplier index
+            axis_not_output_channel.remove(3)  # 3 is the depth multiplier index
 
         bias_correction = shift_to_correct * np.sum(kernel, axis=tuple(axis_not_output_channel))
         op2d_node.set_weights_by_keys(bias_str, bias - bias_correction.flatten())
@@ -123,7 +125,7 @@ def insert_node_after_node(graph: Graph,
 
     last_nodes = graph.get_next_nodes(first_node)
     if len(last_nodes) != 1:
-        raise Exception('Can only insert if there is only one input')  # pragma: no cover
+        Logger.error('Can only insert if there is only one input')  # pragma: no cover
     last_node = last_nodes[0]
     insert_node_between_two_nodes(graph, node_to_insert, first_node, last_node)
 
@@ -145,7 +147,7 @@ def insert_node_before_node(graph: Graph,
     """
     first_nodes = graph.get_prev_nodes(last_node)
     if len(first_nodes) != 1:
-        raise Exception('Can only insert if there is only one input')  # pragma: no cover
+        Logger.error('Can only insert if there is only one input')  # pragma: no cover
     first_node = first_nodes[0]
     insert_node_between_two_nodes(graph, node_to_insert, first_node, last_node)
 
@@ -222,8 +224,8 @@ def shift_negative_function(graph: Graph,
     min_to_correct, max_value2compare = graph.get_out_stats_collector(non_linear_node).get_min_max_values()
 
     if not non_linear_node.is_all_activation_candidates_equal():
-        raise Exception("Shift negative correction is not supported for more than one activation quantization "
-                        "configuration candidate")  # pragma: no cover
+        Logger.error("Shift negative correction is not supported for more than one activation quantization "
+                     "configuration candidate")  # pragma: no cover
 
     # all candidates have same activation config, so taking the first candidate for calculations
     non_linear_node_cfg_candidate = non_linear_node.candidates_quantization_cfg[0].activation_quantization_cfg
@@ -241,7 +243,8 @@ def shift_negative_function(graph: Graph,
     # taking the minimal quantized point that is still positive.
     num_q_points = 2 ** non_linear_node_cfg_candidate.activation_n_bits
     lsb = activation_threshold / num_q_points
-    q_points = np.linspace(0, activation_threshold - lsb, num_q_points).astype('float32')  # Change to type float32 to support tensorflow dtypes
+    q_points = np.linspace(0, activation_threshold - lsb, num_q_points).astype(
+        'float32')  # Change to type float32 to support tensorflow dtypes
 
     delta = q_points + min_to_correct
     delta[delta < 0] = np.inf
@@ -253,14 +256,16 @@ def shift_negative_function(graph: Graph,
                                     hist_bins, hist_count)
 
         min_mse, _th, _shift = np.inf, None, None
-        for _activation_threshold in [activation_threshold, 2*activation_threshold]:
+        for _activation_threshold in [activation_threshold, 2 * activation_threshold]:
             qparams = {THRESHOLD: _activation_threshold, SIGNED: False}
             _lsb = _activation_threshold / num_q_points
-            _q_points = np.linspace(0, _activation_threshold - _lsb, num_q_points).astype('float32')  # Change to type float32 to support tensorflow dtypes
+            _q_points = np.linspace(0, _activation_threshold - _lsb, num_q_points).astype(
+                'float32')  # Change to type float32 to support tensorflow dtypes
             for _shift_value in _q_points:
                 _hist_bins = hist_bins.astype(np.float32) + _shift_value
-                q_bins = non_linear_node_cfg_candidate.activation_quantization_fn(non_linear_node_cfg_candidate.activation_n_bits,
-                                                                                  qparams)(_hist_bins)
+                q_bins = non_linear_node_cfg_candidate.activation_quantization_fn(
+                    non_linear_node_cfg_candidate.activation_n_bits,
+                    qparams)(_hist_bins)
                 mse = _mse_error_histogram(q_bins, None, _hist_bins, hist_count)
                 if mse < min_mse:
                     min_mse = mse

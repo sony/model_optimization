@@ -16,6 +16,7 @@
 from collections.abc import Callable
 from functools import partial
 
+from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.kmeans_params import kmeans_tensor
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import \
@@ -47,7 +48,7 @@ def get_activation_quantization_params_fn(activation_quantization_method: Quanti
     elif activation_quantization_method == QuantizationMethod.LUT_POT_QUANTIZER:
         params_fn = lut_kmeans_histogram
     else:
-        raise Exception(
+        Logger.error(
             f'No params function for the configuration of '
             f'quantization method {activation_quantization_method}')  # pragma: no cover
     return params_fn
@@ -76,7 +77,7 @@ def get_weights_quantization_params_fn(weights_quantization_method: Quantization
     elif weights_quantization_method == QuantizationMethod.LUT_SYM_QUANTIZER:
         params_fn = partial(lut_kmeans_tensor, is_symmetric=True)
     else:
-        raise Exception(
+        Logger.error(
             f'No params function for the configuration of '
             f'quantization method {weights_quantization_method}')  # pragma: no cover
     return params_fn

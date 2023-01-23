@@ -37,7 +37,7 @@ class BaseStatsCollector(object):
         Returns whether this tensor requires statistics collection or not.
         Should be implemented in extending classes.
         """
-        raise Exception(f'require_collection is not implemented in {self.__class__.__name__}')  # pragma: no cover
+        raise NotImplemented(f'require_collection is not implemented in {self.__class__.__name__}')  # pragma: no cover
 
     def update_statistics(self,
                           x: Any):
@@ -47,7 +47,7 @@ class BaseStatsCollector(object):
         Args:
             x: Tensor.
         """
-        raise Exception(f'update_statistics is not implemented in {self.__class__.__name__}')  # pragma: no cover
+        raise NotImplemented(f'update_statistics is not implemented in {self.__class__.__name__}')  # pragma: no cover
 
 
 class StatsCollector(BaseStatsCollector):

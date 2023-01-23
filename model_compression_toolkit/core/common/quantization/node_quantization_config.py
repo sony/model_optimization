@@ -17,6 +17,8 @@
 from typing import Callable, Any
 
 import numpy as np
+
+from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
 
@@ -111,7 +113,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
                                                      self.activation_quantization_params)
 
         if fake_quant is None:
-            raise Exception('Layer is meant to be quantized but fake_quant function is None')  # pragma: no cover
+            Logger.error('Layer is meant to be quantized but fake_quant function is None')  # pragma: no cover
         return fake_quant(tensors)
 
     @property

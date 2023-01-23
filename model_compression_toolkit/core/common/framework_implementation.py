@@ -44,7 +44,7 @@ class FrameworkImplementation(ABC):
         Returns: Module of the framework constants.
 
         """
-        raise Exception(f'{self.__class__.__name__} did not supply a constants module.')  # pragma: no cover
+        raise NotImplemented(f'{self.__class__.__name__} did not supply a constants module.')  # pragma: no cover
 
     @abstractmethod
     def to_numpy(self, tensor: Any) -> np.ndarray:

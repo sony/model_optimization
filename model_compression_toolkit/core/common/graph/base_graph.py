@@ -215,7 +215,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         sc = self.node_to_in_stats_collector.get(n)
         if sc is None:
-            raise Exception()  # pragma: no cover
+            Logger.error(f'Input statistics collector of node {n.name} is None')  # pragma: no cover
         return sc
 
     def scale_stats_collector(self,
@@ -349,8 +349,8 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             input_nodes_output_index = [0] * len(input_nodes)
 
         if len(input_nodes_output_index) != len(input_nodes):
-            raise Exception('Graph.add_node_with_in_edges: input_nodes & input_nodes_output_index must be the same '
-                            'length')  # pragma: no cover
+            Logger.error('Graph.add_node_with_in_edges: input_nodes & input_nodes_output_index must be the same '
+                         'length')  # pragma: no cover
 
         self.add_node(new_node)
         for sink_index, (in_node, source_index) in enumerate(zip(input_nodes, input_nodes_output_index)):

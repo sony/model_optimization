@@ -23,6 +23,7 @@ else:
     from keras.layers.core import TFOpLambda
     from keras.layers import MultiHeadAttention, Conv2D, Softmax, Concatenate, Reshape, Permute
 
+from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import Graph, BaseNode, OutTensor
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
@@ -448,7 +449,7 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
         """
 
         if mha_node.reuse:
-            raise Exception("MCT doesn't support reuse of MultiHeadAttention layer")  # pragma: no cover
+            Logger.error("MCT doesn't support reuse of MultiHeadAttention layer")  # pragma: no cover
         params = MHAParams(mha_node)
 
         mha_in_edges = graph.in_edges(mha_node)
