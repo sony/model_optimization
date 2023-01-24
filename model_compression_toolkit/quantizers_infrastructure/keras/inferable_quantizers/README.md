@@ -6,19 +6,19 @@ The quantization of the tensor can be done by calling the quantizer while passin
 ## Implemented Keras Inferable Quantizers
 
 Several Keras inferable quantizers were implemented for activation quantization:
-```markdown
-[ActivationPOTInferableQuantizer](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/quantizers_infrastructure/keras/inferable_quantizers/activation_inferable_quantizers/activation_pot_inferable_quantizer.py)
-ActivationSymmetricInferableQuantizer
-ActivationUniformInferableQuantizer
-```
+
+[ActivationPOTInferableQuantizer](activation_inferable_quantizers/activation_pot_inferable_quantizer.py)
+[ActivationSymmetricInferableQuantizer](activation_inferable_quantizers/activation_symmetric_inferable_quantizer.py)
+[ActivationUniformInferableQuantizer](activation_inferable_quantizers/activation_uniform_inferable_quantizer.py)
+
 Each of them should be used according to the quantization method of the quantizer (power-of-two, symmetric and uniform quantization respectively).
 
 Similarly, several Keras inferable quantizers were implemented for weights quantization:
-```markdown
-WeightsPOTInferableQuantizer
-WeightsSymmetricInferableQuantizer
-WeightsUniformInferableQuantizer
-```
+
+[WeightsPOTInferableQuantizer](weights_inferable_quantizers/weights_pot_inferable_quantizer.py)
+[WeightsSymmetricInferableQuantizer](weights_inferable_quantizers/weights_symmetric_inferable_quantizer.py)
+[WeightsUniformInferableQuantizer](weights_inferable_quantizers/weights_uniform_inferable_quantizer.py)
+
 Each of them should be used according to the quantization method of the quantizer (power-of-two, symmetric and uniform quantization respectively).
 
 ## Usage Example
