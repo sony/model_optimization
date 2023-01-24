@@ -18,21 +18,24 @@ from model_compression_toolkit.core.common.target_platform import QuantizationMe
 
 
 class BaseQuantizerConfig(object):
+    """
+    Base class for quantizer configuration
+    """
     def __init__(self):
         return
 
 
 class TrainableQuantizerActivationConfig(BaseQuantizerConfig):
+
     def __init__(self,
                  activation_quantization_method: QuantizationMethod,
                  activation_n_bits: int,
                  activation_quantization_params: Dict,
                  enable_activation_quantization: bool,
                  min_threshold: float,
-                 # error method?
                  ):
         """
-        This class is used to hold the configurations of trainable quantizer.
+        Attributes for configuring activations trainable quantizer.
 
         Args:
             activation_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for activation quantization.
@@ -50,10 +53,10 @@ class TrainableQuantizerActivationConfig(BaseQuantizerConfig):
     def set_activation_quantization_param(self,
                                           activation_params: dict):
         """
-         Set a quantization parameter for the node's activation.
+         Set a quantization parameter for the activation quantizer.
 
         Args:
-            activation_params: Dictionary that contains weight quantization params.
+            activation_params: Dictionary that contains activation quantization params.
 
         """
         assert self.enable_activation_quantization
@@ -63,7 +66,7 @@ class TrainableQuantizerActivationConfig(BaseQuantizerConfig):
     def has_activation_quantization_params(self) -> bool:
         """
 
-        Returns: Whether ActivationTrainableQuantizerConfig has a activation quantization params or not.
+        Returns: Whether ActivationTrainableQuantizerConfig has activation quantization params or not.
 
         """
         return len(self.activation_quantization_params) > 0
@@ -78,10 +81,9 @@ class TrainableQuantizerWeightsConfig(BaseQuantizerConfig):
                  weights_channels_axis: int,
                  weights_per_channel_threshold: bool,
                  min_threshold: float,
-                 # error method?
                  ):
         """
-        This class is used to hold the configurations of trainable quantizer.
+        Attributes for configuring weights trainable quantizer.
 
         Args:
             weights_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for weights quantization.
@@ -103,7 +105,7 @@ class TrainableQuantizerWeightsConfig(BaseQuantizerConfig):
     def set_weights_quantization_param(self,
                                        weights_params: dict):
         """
-         Set a quantization parameter for the node's weights.
+         Set a quantization parameter for the weights quantizer.
 
         Args:
             weights_params: Dictionary that contains weight quantization params.
