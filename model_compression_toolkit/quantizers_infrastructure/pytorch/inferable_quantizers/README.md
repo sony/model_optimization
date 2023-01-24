@@ -8,7 +8,9 @@ The quantization of the tensor can be done by calling the quantizer while passin
 Several PyTorch inferable quantizers were implemented for activation quantization:
 
 [ActivationPOTInferableQuantizer](activation_inferable_quantizers/activation_pot_inferable_quantizer.py)
+
 [ActivationSymmetricInferableQuantizer](activation_inferable_quantizers/activation_symmetric_inferable_quantizer.py)
+
 [ActivationUniformInferableQuantizer](activation_inferable_quantizers/activation_uniform_inferable_quantizer.py)
 
 Each of them should be used according to the quantization method of the quantizer (power-of-two, symmetric and uniform quantization respectively).
@@ -16,7 +18,9 @@ Each of them should be used according to the quantization method of the quantize
 Similarly, several PyTorch inferable quantizers were implemented for weights quantization:
 
 [WeightsPOTInferableQuantizer](weights_inferable_quantizers/weights_pot_inferable_quantizer.py)
+
 [WeightsSymmetricInferableQuantizer](weights_inferable_quantizers/weights_symmetric_inferable_quantizer.py)
+
 [WeightsUniformInferableQuantizer](weights_inferable_quantizers/weights_uniform_inferable_quantizer.py)
 
 Each of them should be used according to the quantization method of the quantizer (power-of-two, symmetric and uniform quantization respectively).
