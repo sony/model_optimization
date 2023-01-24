@@ -1,58 +1,63 @@
 ## Introduction
 
-The `BaseKerasInferableQuantizer` class is a base class for Keras quantizers that are used for inference only. It is a subclass of `BaseInferableQuantizer` and is designed to be used as a base class for creating custom quantization methods for Keras models.
+Keras inferable quantizers are used for inference only. The inferable quantizer should contain all quantization information needed for quantizing a TensorFlow tensor.
+The quantization of the tensor can be done by calling the quantizer while passing the unquantized tensor.
 
-## Installation
+## Implemented Keras Inferable Quantizers
 
-To use the `BaseKerasInferableQuantizer` class, you will need to have `tensorflow`  and `tensorflow_model_optimization` installed. If one of them is not installed, an exception will be raised.
+Several Keras inferable quantizers were implemented for activation quantization:
 
-Once you have `tensorflow`  and `tensorflow_model_optimization` installed, you can use the `BaseKerasInferableQuantizer` class by importing it and implementing a quantizer.
+[ActivationPOTInferableQuantizer](activation_inferable_quantizers/activation_pot_inferable_quantizer.py)
 
-## Usage
+[ActivationSymmetricInferableQuantizer](activation_inferable_quantizers/activation_symmetric_inferable_quantizer.py)
 
-The `BaseKerasInferableQuantizer` class takes one argument during initialization:
+[ActivationUniformInferableQuantizer](activation_inferable_quantizers/activation_uniform_inferable_quantizer.py)
 
-- `quantization_target`: An enum which selects the quantizer tensor type: activation or weights.
+Each of them should be used according to the quantization method of the quantizer (power-of-two, symmetric and uniform quantization respectively).
 
-Once you have instantiated your Keras inferable quantizer, you can use the `__call__` method to quantize the given inputs using the quantizer parameters. The method takes one argument:
+Similarly, several Keras inferable quantizers were implemented for weights quantization:
 
-- `inputs`: input tensor to quantize
+[WeightsPOTInferableQuantizer](weights_inferable_quantizers/weights_pot_inferable_quantizer.py)
 
-The method returns the quantized tensor.
+[WeightsSymmetricInferableQuantizer](weights_inferable_quantizers/weights_symmetric_inferable_quantizer.py)
 
-You must implement the abstract method `__call__` in your subclass which inherits BaseKerasInferableQuantizer
+[WeightsUniformInferableQuantizer](weights_inferable_quantizers/weights_uniform_inferable_quantizer.py)
 
-Another abstract method that should be implemented is `get_config` which returns a dictionary of the arguments that should be passed to the quantizer `__init__` method.
+Each of them should be used according to the quantization method of the quantizer (power-of-two, symmetric and uniform quantization respectively).
 
-For example:
+## Usage Example
 
 ```python
+# Import TensorFlow and quantizers_infrastructure
 import tensorflow as tf
+
 from model_compression_toolkit import quantizers_infrastructure as qi
 
+# Create a weights symmetric quantizer for quantizing a kernel. The quantizer
+# has the following properties:
+# * It uses 8 bits for quantization.
+# * It quantizes the tensor per-channel.
+# Since it is a symmetric quantizer it needs to have the thresholds and whether it is signed or not.
+# Thus, the quantizer also:
+# * Uses three thresholds (since it has 3 output channels and the quantization is per-channel): 1, 2 and 4.
+# * Quantizes the tensor using signed quantization range.
+quantizer = qi.keras_inferable_quantizers.WeightsSymmetricInferableQuantizer(num_bits=8,
+                                                                             threshold=[2, 4, 1],
+                                                                             per_channel=True,
+                                                                             channel_axis=-1,
+                                                                             signed=True)
 
-class MyQuantizer(qi.BaseKerasInferableQuantizer):
-    def __init__(self,
-                 quantization_target: qi.QuantizationTarget):
-        super(MyQuantizer, self).__init__(quantization_target=quantization_target)
-
-    def get_config(self):
-        return {'quantization_target': self.quantization_target}
-
-    def __call__(self, inputs: tf.Tensor):
-        # Your quantization logic here
-        return tf.round(inputs)
-
-
-quantization_target = qi.QuantizationTarget.Activation
-quantizer = MyQuantizer(quantization_target=quantization_target)
-input_tensor = tf.random.normal(shape=(1, 10))
+# Initialize a random input qo quantize
+input_tensor = tf.random.uniform(shape=(1, 3, 3, 3), minval=-100, maxval=100)
+# Quantize tensor
 quantized_tensor = quantizer(input_tensor)
 print(quantized_tensor)
+
+# The maximal threshold is 4 using a signed quantization, so we expect all values to be in this range
+assert tf.reduce_max(quantized_tensor) < 4, f'Quantized values should not contain values greater than maximal threshold'
+assert tf.reduce_min(quantized_tensor) >= -4, f'Quantized values should not contain values lower than minimal threshold'
+
+
 ```
 
-## Note
-
-Keep in mind that BaseKerasInferableQuantizer is an abstract class, it should not be instantiated directly. You should create a new class that inherits from it and implements the required methods.
-
-If you have any questions or issues using the BaseKerasInferableQuantizer class, please open an issue on the GitHub repository or reach out to the maintainers for assistance.
+If you have any questions or issues using the Keras inferable quantizers, please open an issue on the GitHub.
