@@ -7,7 +7,7 @@ The quantization of the tensor can be done by calling the quantizer while passin
 
 Several Keras inferable quantizers were implemented for activation quantization:
 ```markdown
-[ActivationPOTInferableQuantizer](activation_inferable_quantizers/activation_pot_inferable_quantizer.py)
+[ActivationPOTInferableQuantizer](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/quantizers_infrastructure/keras/inferable_quantizers/activation_inferable_quantizers/activation_pot_inferable_quantizer.py)
 ActivationSymmetricInferableQuantizer
 ActivationUniformInferableQuantizer
 ```
