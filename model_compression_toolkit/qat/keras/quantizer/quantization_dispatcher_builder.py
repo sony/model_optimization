@@ -34,11 +34,13 @@ METHOD2ACTQUANTIZER = {TrainingMethod.STE: {qi.QuantizationMethod.SYMMETRIC: STE
                                             qi.QuantizationMethod.POWER_OF_TWO: STEActivationQuantizer,
                                             qi.QuantizationMethod.UNIFORM: STEUniformActivationQuantizer}}
 
-def get_trainable_quantizer_weights_config(n: common.BaseNode):
+
+# TODO: move the following "get...config" functions to be members of BaseNode
+def get_trainable_quantizer_weights_config(n: common.BaseNode) -> TrainableQuantizerWeightsConfig:
     """
     Returns the relevant configurations for weights trainable quantizer
 
-    Args: None
+    Args: BaseNode
 
     Returns: TrainableQuantizerWeightsConfig object.
 
@@ -53,11 +55,11 @@ def get_trainable_quantizer_weights_config(n: common.BaseNode):
                                            config.min_threshold)
 
 
-def get_trainable_quantizer_activation_config(n: common.BaseNode):
+def get_trainable_quantizer_activation_config(n: common.BaseNode) -> TrainableQuantizerActivationConfig:
     """
     Returns configurations for activation trainable quantizer
 
-    Args: None
+    Args: BaseNode
 
     Returns: TrainableQuantizerActivationConfig object.
 
@@ -68,6 +70,7 @@ def get_trainable_quantizer_activation_config(n: common.BaseNode):
                                               config.activation_quantization_params,
                                               config.enable_activation_quantization,
                                               config.min_threshold)
+
 
 def quantization_dispatcher_builder(n: common.BaseNode,
                                     qat_config: QATConfig,

@@ -12,17 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-from typing import List, Dict
+from abc import ABC
+from typing import Dict
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 
-class BaseQuantizerConfig(object):
+class BaseQuantizerConfig(ABC):
     """
-    Base class for quantizer configuration
+    An abstract class that should be implemented when supporting a new quantizer configuration
     """
-    def __init__(self):
-        return
 
 
 class TrainableQuantizerActivationConfig(BaseQuantizerConfig):
@@ -49,27 +47,6 @@ class TrainableQuantizerActivationConfig(BaseQuantizerConfig):
         self.activation_quantization_params = activation_quantization_params
         self.enable_activation_quantization = enable_activation_quantization
         self.min_threshold = min_threshold
-
-    def set_activation_quantization_param(self,
-                                          activation_params: dict):
-        """
-         Set a quantization parameter for the activation quantizer.
-
-        Args:
-            activation_params: Dictionary that contains activation quantization params.
-
-        """
-        assert self.enable_activation_quantization
-        for param_name, param_value in activation_params.items():
-            self.activation_quantization_params[param_name] = param_value
-
-    def has_activation_quantization_params(self) -> bool:
-        """
-
-        Returns: Whether ActivationTrainableQuantizerConfig has activation quantization params or not.
-
-        """
-        return len(self.activation_quantization_params) > 0
 
 
 class TrainableQuantizerWeightsConfig(BaseQuantizerConfig):
@@ -101,25 +78,3 @@ class TrainableQuantizerWeightsConfig(BaseQuantizerConfig):
         self.weights_channels_axis = weights_channels_axis
         self.weights_per_channel_threshold = weights_per_channel_threshold
         self.min_threshold = min_threshold
-
-    def set_weights_quantization_param(self,
-                                       weights_params: dict):
-        """
-         Set a quantization parameter for the weights quantizer.
-
-        Args:
-            weights_params: Dictionary that contains weight quantization params.
-
-        """
-        assert self.enable_weights_quantization
-        for param_name, param_value in weights_params.items():
-            self.weights_quantization_params[param_name] = param_value
-
-    def has_weights_quantization_params(self) -> bool:
-        """
-
-        Returns: Whether WeightsTrainableQuantizerConfig has weights quantization params or not.
-
-        """
-        return len(self.weights_quantization_params) > 0
-

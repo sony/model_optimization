@@ -20,9 +20,10 @@ from enum import Enum
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import BaseQuantizerConfig, \
     TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig
-
-IS_WEIGHTS = "is_weights"
-IS_ACTIVATIONS = "is_activations"
+from model_compression_toolkit.quantizers_infrastructure.common.constants import IS_WEIGHTS, IS_ACTIVATIONS, \
+    WEIGHTS_QUANTIZATION_METHOD, WEIGHTS_N_BITS, ENABLE_WEIGHTS_QUANTIZATION, WEIGHTS_QUANTIZATION_PARAMS, \
+    WEIGHTS_CHANNELS_AXIS, WEIGHTS_PER_CHANNEL_THRESHOLD, MIN_THRESHOLD, ACTIVATION_QUANTIZATION_METHOD, \
+    ACTIVATION_N_BITS, ACTIVATION_QUANTIZATION_PARAMS, ENABLE_ACTIVATION_QUANTIZATION
 
 
 def transform_enum(v: Any):
@@ -37,6 +38,7 @@ def transform_enum(v: Any):
     if isinstance(v, Enum):
         return v.value
     return v
+
 
 def config_serialization(quantization_config: BaseQuantizerConfig):
     """
@@ -64,18 +66,18 @@ def config_deserialization(in_config: dict) -> BaseQuantizerConfig:
     """
     in_config = copy.deepcopy(in_config)
     if in_config[IS_WEIGHTS]:
-        return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod(in_config['weights_quantization_method']),
-                                               weights_n_bits=in_config['weights_n_bits'],
-                                               weights_quantization_params=in_config['weights_quantization_params'],
-                                               enable_weights_quantization=in_config['enable_weights_quantization'],
-                                               weights_channels_axis=in_config['weights_channels_axis'],
-                                               weights_per_channel_threshold=in_config['weights_per_channel_threshold'],
-                                               min_threshold=in_config['min_threshold'])
+        return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod(in_config[WEIGHTS_QUANTIZATION_METHOD]),
+                                               weights_n_bits=in_config[WEIGHTS_N_BITS],
+                                               weights_quantization_params=in_config[WEIGHTS_QUANTIZATION_PARAMS],
+                                               enable_weights_quantization=in_config[ENABLE_WEIGHTS_QUANTIZATION],
+                                               weights_channels_axis=in_config[WEIGHTS_CHANNELS_AXIS],
+                                               weights_per_channel_threshold=in_config[WEIGHTS_PER_CHANNEL_THRESHOLD],
+                                               min_threshold=in_config[MIN_THRESHOLD])
     elif in_config[IS_ACTIVATIONS]:
-        return TrainableQuantizerActivationConfig(activation_quantization_method=QuantizationMethod(in_config['activation_quantization_method']),
-                                                  activation_n_bits=in_config['activation_n_bits'],
-                                                  activation_quantization_params=in_config['activation_quantization_params'],
-                                                  enable_activation_quantization=in_config['enable_activation_quantization'],
-                                                  min_threshold=in_config['min_threshold'])
+        return TrainableQuantizerActivationConfig(activation_quantization_method=QuantizationMethod(in_config[ACTIVATION_QUANTIZATION_METHOD]),
+                                                  activation_n_bits=in_config[ACTIVATION_N_BITS],
+                                                  activation_quantization_params=in_config[ACTIVATION_QUANTIZATION_PARAMS],
+                                                  enable_activation_quantization=in_config[ENABLE_ACTIVATION_QUANTIZATION],
+                                                  min_threshold=in_config[MIN_THRESHOLD])
     else:
         raise NotImplemented
