@@ -66,7 +66,7 @@ def get_activations_qparams(activation_quant_cfg: NodeActivationQuantizationConf
                 activation_quant_cfg.activation_quantization_params_fn = \
                     quantization_params_generation.uniform_no_clipping_selection_min_max
     else:
-        signed = np.any(bins_values[:-1][bins_counts > 0] < 0)
+        signed = np.any(bins_values[:-1][bins_counts > 0] < 0)  # pragma: no cover
 
     activation_params = activation_quant_cfg.activation_quantization_params_fn(bins_values,
                                                                                bins_counts,

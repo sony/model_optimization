@@ -64,3 +64,30 @@ class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(add_layer_min <= 0.0 <= add_layer_max,
                                   msg=f"0.0 is not within the quantization range ({add_layer_min}, {add_layer_max}) "
                                       f"for Relu layer.")
+
+
+class UniformRangeSelectionBoundedActivationTest(UniformRangeSelectionActivationTest):
+    def __init__(self, unit_test, activation_threshold_method):
+        super().__init__(unit_test, activation_threshold_method)
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Softmax()(inputs)
+        outputs = tf.add(x, 1)
+        return keras.Model(inputs=inputs, outputs=outputs)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        fake_layer_input_args = quantized_model.layers[1].inbound_nodes[0].call_kwargs
+        fake_layer_softmax_args = quantized_model.layers[3].inbound_nodes[0].call_kwargs
+
+        input_layer_min, input_layer_max = fake_layer_input_args['min'], fake_layer_input_args['max']
+        softmax_layer_min, softmax_layer_max = fake_layer_softmax_args['min'], fake_layer_softmax_args['max']
+
+        # Verify quantization range contains zero
+        self.unit_test.assertTrue(input_layer_min <= 0.0 <= input_layer_max,
+                                  msg=f"0.0 is not within the quantization range ({input_layer_min}, {input_layer_max})"
+                                      f"for Input layer.")
+
+        # Check range_min, range_max == softmax_layer's bound
+        self.unit_test.assertTrue(softmax_layer_min == 0.0)
+        self.unit_test.assertTrue(softmax_layer_max == 1.0)

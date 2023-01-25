@@ -73,9 +73,45 @@ class SymmetricThresholdSelectionActivationTest(BaseKerasFeatureNetworkTest):
         fake_layer_add_args = quantized_model.layers[5].inbound_nodes[0].call_kwargs
 
         threshold_add = fake_layer_add_args['max'] / (2 ** fake_layer_add_args['num_bits'] - 1) \
-                         + fake_layer_add_args['max']
+                        + fake_layer_add_args['max']
         self.unit_test.assertFalse(
             np.log2(threshold_input).is_integer(), msg=f"Add layer threshold {threshold_add} is a power of 2")
         self.unit_test.assertTrue(fake_layer_add_args['min'] < 0,
                                   msg=f"Lower bound of Add layer signed symmetric range "
                                       f"{fake_layer_add_args['min']} is not negative")
+
+
+class SymmetricThresholdSelectionBoundedActivationTest(SymmetricThresholdSelectionActivationTest):
+    def __init__(self, unit_test, activation_threshold_method):
+        super().__init__(unit_test, activation_threshold_method)
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Softmax()(inputs)
+        outputs = tf.add(x, 1)
+        return keras.Model(inputs=inputs, outputs=outputs)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        fake_layer_input_args = quantized_model.layers[1].inbound_nodes[0].call_kwargs
+        fake_layer_softmax_args = quantized_model.layers[3].inbound_nodes[0].call_kwargs
+
+        threshold_input = ((2 ** fake_layer_input_args['num_bits'] - 1) *
+                           fake_layer_input_args['max']) / ((2 ** fake_layer_input_args['num_bits']) - 2)
+        threshold_softmax = ((2 ** fake_layer_softmax_args['num_bits']) *
+                             fake_layer_softmax_args['max']) / ((2 ** fake_layer_softmax_args['num_bits']) - 1)
+
+        # Verify threshold not power of 2
+        self.unit_test.assertFalse(
+            np.log2(threshold_input).is_integer(), msg=f"Input layer threshold {threshold_input} is a power of 2")
+
+        # Verify threshold is 1
+        self.unit_test.assertTrue(threshold_softmax == 1.0,
+                                  msg=f"Threshold of Softmax layer is {threshold_softmax} (expected: 1)")
+
+        # Verify min/max is bounded by 0 and 1
+        self.unit_test.assertTrue(fake_layer_softmax_args['min'] == 0,
+                                  msg=f"Lower bound of Softmax layer unsigned symmetric range is "
+                                      f"{fake_layer_softmax_args['min']} (expected: 0)")
+        self.unit_test.assertTrue(fake_layer_softmax_args['max'] == 1.0 - 1/(2 ** fake_layer_softmax_args['num_bits']),
+                                  msg=f"Upper bound of Softmax layer is {fake_layer_softmax_args['max']} "
+                                      f"(expected: 1 - delta)")
