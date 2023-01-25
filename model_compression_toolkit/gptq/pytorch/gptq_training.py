@@ -79,8 +79,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
         self.optimizer_with_param = self.get_optimizer_with_param(trainable_weights,
                                                                   trainable_bias,
-                                                                  trainable_threshold,
-                                                                  trainable_temperature)
+                                                                  trainable_threshold)
 
         self.weights_for_average_loss = to_torch_tensor(self.compute_jacobian_based_weights(representative_data_gen))
 
