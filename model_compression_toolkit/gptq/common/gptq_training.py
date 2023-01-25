@@ -69,15 +69,13 @@ class GPTQTrainer(ABC):
     def get_optimizer_with_param(self,
                                  flattened_trainable_weights: List[Any],
                                  flattened_bias_weights: List[Any],
-                                 trainable_quantization_parameters: List[Any],
-                                 temperature_weights: List[Any]) -> List[Any]:
+                                 trainable_quantization_parameters: List[Any]) -> List[Any]:
         """
         Create Optimizers with their trainable parameters
         Args:
             flattened_trainable_weights: list of trainable weights parameters (flattened)
             flattened_bias_weights: list of trainable bias parameters (flattened)
             trainable_quantization_parameters: list of trainable quantization parameters
-            temperature_weights: list of temperature weights variables
         Returns:
             List of Optimizer objects with parameters
         """

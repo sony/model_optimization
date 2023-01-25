@@ -38,7 +38,6 @@ import numpy as np
 import copy
 from model_compression_toolkit.core.keras.constants import BIAS, USE_BIAS
 from model_compression_toolkit.gptq.keras.quantizer import WeightQuantizeConfig
-from model_compression_toolkit.gptq.keras.optimizers.sam_optimizer import SAM
 
 
 class KerasGPTQTrainer(GPTQTrainer):
@@ -164,9 +163,6 @@ class KerasGPTQTrainer(GPTQTrainer):
             representative_data_gen: Dataset to use for inputs of the models.
         """
         compute_gradients = self.compute_gradients
-        if self.gptq_config.sam_optimization:
-            sam = SAM(self.fxp_model, self.compute_gradients, self.optimizer_with_param, self.gptq_config.rho)
-            compute_gradients = sam.compute_gradients
 
         # ----------------------------------------------
         # Training loop

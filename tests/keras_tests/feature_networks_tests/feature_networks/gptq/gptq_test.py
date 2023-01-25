@@ -53,10 +53,10 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
 
 
 class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
-    def __init__(self, unit_test, sam_optimization=False, quant_method=QuantizationMethod.SYMMETRIC):
+    def __init__(self, unit_test, quant_method=QuantizationMethod.SYMMETRIC):
         super().__init__(unit_test,
                          input_shape=(1, 16, 16, 3))
-        self.sam_optimization = sam_optimization
+
         self.quant_method = quant_method
 
     def get_tpc(self):
@@ -72,7 +72,6 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                                      learning_rate=0.0001),
                                  optimizer_rest=tf.keras.optimizers.Adam(
                                      learning_rate=0.0001),
-                                 sam_optimization=self.sam_optimization,
                                  loss=multiple_tensors_mse_loss,
                                  rounding_type=RoundingType.STE,
                                  train_bias=True)
@@ -149,7 +148,6 @@ class GradientPTQNoTempLearningTest(GradientPTQBaseTest):
                                      learning_rate=0.0001),
                                  optimizer_rest=tf.keras.optimizers.Adam(
                                      learning_rate=0.0001),
-                                 sam_optimization=self.sam_optimization,
                                  loss=multiple_tensors_mse_loss,
                                  rounding_type=RoundingType.STE,
                                  train_bias=True)
@@ -170,7 +168,6 @@ class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
                                  optimizer_rest=tf.keras.optimizers.Adam(
                                      learning_rate=1e-1),
                                  train_bias=True,
-                                 sam_optimization=self.sam_optimization,
                                  loss=multiple_tensors_mse_loss)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
@@ -195,7 +192,6 @@ class GradientPTQLearnRateZeroTest(GradientPTQBaseTest):
                                  optimizer_rest=tf.keras.optimizers.SGD(
                                      learning_rate=0.0),
                                  train_bias=True,
-                                 sam_optimization=self.sam_optimization,
                                  loss=multiple_tensors_mse_loss)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):

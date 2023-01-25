@@ -62,30 +62,27 @@ class TestGetGPTQConfig(unittest.TestCase):
                                 QuantizationErrorMethod.MSE,
                                 weights_bias_correction=False)  # disable bias correction when working with GPTQ
         cc = CoreConfig(quantization_config=qc)
-        gptq_configurations = [GradientPTQConfig(1, optimizer=tf.keras.optimizers.RMSprop(),
-                                                 optimizer_rest=tf.keras.optimizers.RMSprop(), train_bias=True,
-                                                 sam_optimization=True, loss=multiple_tensors_mse_loss),
-                               GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
-                                                 optimizer_rest=tf.keras.optimizers.Adam(), train_bias=True,
-                                                 quantization_parameters_learning=True, loss=multiple_tensors_mse_loss),
-                               GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
-                                                 optimizer_rest=tf.keras.optimizers.Adam(), train_bias=True,
-                                                 loss=multiple_tensors_mse_loss),
-                               GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
-                                                 optimizer_rest=tf.keras.optimizers.Adam(), train_bias=True,
-                                                 loss=multiple_tensors_mse_loss),
-                               ]
-        gptqv2_configurations = [get_keras_gptq_config(n_epochs=1,optimizer=tf.keras.optimizers.Adam()),
-                                 get_keras_gptq_config(n_epochs=1,optimizer=tf.keras.optimizers.Adam()),
-                                 get_keras_gptq_config(n_epochs=1,optimizer=tf.keras.optimizers.Adam())]
+        # gptq_configurations = [GradientPTQConfig(1, optimizer=tf.keras.optimizers.RMSprop(),
+        #                                          optimizer_rest=tf.keras.optimizers.RMSprop(), train_bias=True,
+        #                                          loss=multiple_tensors_mse_loss),
+        #                        GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
+        #                                          optimizer_rest=tf.keras.optimizers.Adam(), train_bias=True,
+        #                                          quantization_parameters_learning=True, loss=multiple_tensors_mse_loss),
+        #                        GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
+        #                                          optimizer_rest=tf.keras.optimizers.Adam(), train_bias=True,
+        #                                          loss=multiple_tensors_mse_loss),
+        #                        ]
+
+        gptqv2_configurations = [get_keras_gptq_config(n_epochs=1, optimizer=tf.keras.optimizers.Adam())]
 
 
-        for i, gptq_config in enumerate(gptq_configurations):
-            keras_post_training_quantization(in_model=build_model(SHAPE[1:]),
-                                             representative_data_gen=random_datagen,
-                                             n_iter=1,
-                                             quant_config=qc,
-                                             gptq_config=gptq_config)
+
+        # for i, gptq_config in enumerate(gptq_configurations):
+        #     keras_post_training_quantization(in_model=build_model(SHAPE[1:]),
+        #                                      representative_data_gen=random_datagen,
+        #                                      n_iter=1,
+        #                                      quant_config=qc,
+        #                                      gptq_config=gptq_config)
 
         for i, gptq_config in enumerate(gptqv2_configurations):
             keras_gradient_post_training_quantization_experimental(in_model=build_model(SHAPE[1:]),

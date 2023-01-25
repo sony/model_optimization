@@ -17,10 +17,6 @@ from typing import Callable, Any, Dict
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core import common
 
-MAX_LSBS_CHANGE_MAP = {8: 2,
-                       4: 1,
-                       2: 1}
-
 N_CYCLES = 4
 MIM_TEMP = 0.5
 MAX_TEMP = 1.0
@@ -48,10 +44,9 @@ class GradientPTQConfig:
                  log_function: Callable = None,
                  train_bias: bool = True,
                  quantization_parameters_learning: bool = False,
-                 sam_optimization: bool = False,
                  rounding_type: RoundingType = RoundingType.STE,
                  rho: float = 0.01,
-                 lsb_change_per_bit_width: dict = DefaultDict(MAX_LSBS_CHANGE_MAP, lambda: 1),
+                 lsb_change_per_bit_width: dict = DefaultDict({}, lambda: 1),
                  eps: float = 1e-6,
                  use_jac_based_weights: bool = True,
                  num_samples_for_loss: int = 16,
@@ -73,9 +68,7 @@ class GradientPTQConfig:
             log_function (Callable): Function to log information about the GPTQ process.
             train_bias (bool): Whether to update the bias during the training or not.
             quantization_parameters_learning (bool): Whether to update the quantization param during the training or not.
-            sam_optimization (bool): Whether to use sam optimization.
             rounding_type (RoundingType): An enum that defines the rounding type.
-            rho (rho): A floating point number that defines the sam optimization lookahead.
             lsb_change_per_bit_width (dict): Whether to update the bias during the training or not.
             eps (float): A floating point value for numeric stability.
             use_jac_based_weights (bool): Whether to use jacobian-based weights for weighted average loss.
@@ -95,8 +88,6 @@ class GradientPTQConfig:
         self.train_bias = train_bias
         self.quantization_parameters_learning = quantization_parameters_learning
         self.rounding_type = rounding_type
-        self.sam_optimization = sam_optimization
-        self.rho = rho
         self.lsb_change_per_bit_width = lsb_change_per_bit_width
         self.eps = eps
         self.use_jac_based_weights = use_jac_based_weights
@@ -120,10 +111,8 @@ class GradientPTQConfigV2(GradientPTQConfig):
                  log_function: Callable = None,
                  train_bias: bool = True,
                  quantization_parameters_learning: bool = False,
-                 sam_optimization: bool = False,
                  rounding_type: RoundingType = RoundingType.STE,
-                 rho: float = 0.01,
-                 lsb_change_per_bit_width: dict = DefaultDict(MAX_LSBS_CHANGE_MAP, lambda: 1),
+                 lsb_change_per_bit_width: dict = DefaultDict({}, lambda: 1),
                  eps: float = 1e-6,
                  use_jac_based_weights: bool = True,
                  num_samples_for_loss: int = 16,
@@ -145,9 +134,7 @@ class GradientPTQConfigV2(GradientPTQConfig):
             log_function (Callable): Function to log information about the GPTQ process.
             train_bias (bool): Whether to update the bias during the training or not.
             quantization_parameters_learning (bool): Whether to update the quantization param during the training or not.
-            sam_optimization (bool): Whether to use sam optimization.
             rounding_type (RoundingType): An enum that defines the rounding type.
-            rho (rho): A floating point number that defines the sam optimization lookahead.
             lsb_change_per_bit_width (dict): Whether to update the bias during the training or not.
             eps (float): A floating point value for numeric stability.
             use_jac_based_weights (bool): Whether to use jacobian-based weights for weighted average loss.
@@ -167,9 +154,7 @@ class GradientPTQConfigV2(GradientPTQConfig):
                          log_function=log_function,
                          train_bias=train_bias,
                          quantization_parameters_learning=quantization_parameters_learning,
-                         sam_optimization=sam_optimization,
                          rounding_type=rounding_type,
-                         rho=rho,
                          lsb_change_per_bit_width=lsb_change_per_bit_width,
                          eps=eps,
                          use_jac_based_weights=use_jac_based_weights,
