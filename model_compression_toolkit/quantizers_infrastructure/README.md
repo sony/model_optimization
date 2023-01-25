@@ -2,7 +2,7 @@
 
 Quantizers infrastructure is a library that provides quantization modules for hardware-oriented model optimization tools.
 
-The quantization modules (quantizers) can be used for emulating inference-time qunatization (inferable-quantizers) and for optimization of model quantization during training (trainable-quantizers).
+The quantization modules (quantizers) can be used for emulating inference-time quantization (inferable-quantizers) and for optimization of model quantization during training (trainable quantizers).
 
 ## Library structure
 
@@ -11,18 +11,18 @@ The quantization modules (quantizers) can be used for emulating inference-time q
 Quantizer instance implements the quantization function: conversion of floating point values to quantized values represented in floating point (fake-quantization).
 Quantizer instance should be defined per layer, separately for weights quantization and activations quantization.
 
-The quntizers are divided into two main types:
+The quantizers are divided into two main types:
 
-`BaseInferableQuantizer` - Type of quantizers that use for emulating inference-time quantization   
+`BaseInferableQuantizer` - A type of quantizer that uses for emulating inference-time quantization   
 
-`BaseTrainableQuantizer` - Type of quantizers that use for quantization optimization during training. This type of quntizers contains learnable parameters
+`BaseTrainableQuantizer` - A type of quantizer that uses for quantization optimization during training. This type of quantizer contains learnable parameters
 
 Usage example:
 
 ```python
 from model_compression_toolkit import quantizers_infrastructure as qi
 
-# generate signed 8-bits symmetric quantizer for numbers in the interval [-2,2) 
+# generate a signed 8-bits symmetric quantizer for numbers in the interval [-2,2) 
 w_quantizer = qi.WeightsSymmetricInferableQuantizer(num_bits=8,
                                                     threshold=2,
                                                     signed=True,
@@ -42,7 +42,7 @@ dispatcher = qi.KerasNodeQuantizationDispatcher(w_quantizer)
 ```
 ### Quantization Wrapper
 
-Quantization wrapper instance is used as a layer's replacement which emulates the layer's operation only with quantization.
+A quantization wrapper instance is used as a layer's replacement which emulates the layer's operation only with quantization.
 The quantization wrapper receives the layer to wrap, and a dispatcher for mapping the relevant quantizer per attribute. 
 
 `KerasQuantizationWrapper` - used to wrap Keras layer
@@ -54,7 +54,7 @@ Usage example:
 ```python
 from tensorflow import keras
 
-# generate example of Keras model
+# generate an example of Keras model
 inputs = keras.layers.Input(shape=(32,32,3))
 x = keras.layers.Conv2D(6, 7, use_bias=False)(inputs)
 model = keras.Model(inputs=inputs, outputs=x)
@@ -65,15 +65,15 @@ qi.KerasQuantizationWrapper(layer=model.layers[1], dispatcher)
 
 ### Quantization configuration
 
-Quantizer configuration or quantizer parameters can be stored in `BaseQuantizerConfig` object. 
+Quantizer configuration or quantizer parameters can be stored in the `BaseQuantizerConfig` object. 
 
 For trainable quantizer we use:
 
-`TrainableQuantizerWeightsConfig` - contain the configuration of weight quantization for trainable quantizer.
+`TrainableQuantizerWeightsConfig` - contains the configuration of weight quantization for the trainable quantizer.
 
-`TrainableQuantizerActivationConfig` - contain the configuration of activation quantization for trainable quantizer
+`TrainableQuantizerActivationConfig` - contains the configuration of activation quantization for trainable quantizer
 
-For inferable quantizers we don't use the `BaseQuantizerConfig` object, instead we use explicit parameters per quantizer  
+For inferable quantizers we don't use the `BaseQuantizerConfig` object, instead, we use explicit parameters per quantizer  
 
 Usage example:
 ```python
