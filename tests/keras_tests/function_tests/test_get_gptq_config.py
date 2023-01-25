@@ -62,7 +62,6 @@ class TestGetGPTQConfig(unittest.TestCase):
                                 QuantizationErrorMethod.MSE,
                                 weights_bias_correction=False)  # disable bias correction when working with GPTQ
         cc = CoreConfig(quantization_config=qc)
-        gc = mct.GumbelConfig(temperature_learning=True)
         gptq_configurations = [GradientPTQConfig(1, optimizer=tf.keras.optimizers.RMSprop(),
                                                  optimizer_rest=tf.keras.optimizers.RMSprop(), train_bias=True,
                                                  sam_optimization=True, loss=multiple_tensors_mse_loss),
@@ -71,11 +70,10 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                  quantization_parameters_learning=True, loss=multiple_tensors_mse_loss),
                                GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
                                                  optimizer_rest=tf.keras.optimizers.Adam(), train_bias=True,
-                                                 loss=multiple_tensors_mse_loss, quantizer_config=gc),
+                                                 loss=multiple_tensors_mse_loss),
                                GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
                                                  optimizer_rest=tf.keras.optimizers.Adam(), train_bias=True,
-                                                 loss=multiple_tensors_mse_loss,
-                                                 rounding_type=RoundingType.GumbelRounding, quantizer_config=gc),
+                                                 loss=multiple_tensors_mse_loss),
                                ]
         gptqv2_configurations = [get_keras_gptq_config(n_epochs=1,optimizer=tf.keras.optimizers.Adam()),
                                  get_keras_gptq_config(n_epochs=1,optimizer=tf.keras.optimizers.Adam()),

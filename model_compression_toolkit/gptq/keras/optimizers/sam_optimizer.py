@@ -51,7 +51,7 @@ class SAM:
 
     def _enable_update_step_param(self):
         """
-        This function enables the parameter update (update iteration index and gumbel random variable)
+        This function enables the parameter update (update iteration index and quantizer variables)
         Returns: None
 
         """
@@ -62,7 +62,7 @@ class SAM:
 
     def _disable_update_step_param(self):
         """
-        This function disables the parameter update (update iteration index and gumbel random variable)
+        This function disables the parameter update (update iteration index and quantizer variable)
         Returns: None
 
         """

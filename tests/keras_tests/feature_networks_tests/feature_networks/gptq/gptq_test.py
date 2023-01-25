@@ -18,7 +18,7 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GumbelConfig, RoundingType
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -53,10 +53,9 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
 
 
 class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
-    def __init__(self, unit_test, is_gumbel=False, sam_optimization=False, quant_method=QuantizationMethod.SYMMETRIC):
+    def __init__(self, unit_test, sam_optimization=False, quant_method=QuantizationMethod.SYMMETRIC):
         super().__init__(unit_test,
                          input_shape=(1, 16, 16, 3))
-        self.is_gumbel = is_gumbel
         self.sam_optimization = sam_optimization
         self.quant_method = quant_method
 
@@ -75,7 +74,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                                      learning_rate=0.0001),
                                  sam_optimization=self.sam_optimization,
                                  loss=multiple_tensors_mse_loss,
-                                 rounding_type=RoundingType.GumbelRounding if self.is_gumbel else RoundingType.STE,
+                                 rounding_type=RoundingType.STE,
                                  train_bias=True)
 
     def create_networks(self):
@@ -152,8 +151,7 @@ class GradientPTQNoTempLearningTest(GradientPTQBaseTest):
                                      learning_rate=0.0001),
                                  sam_optimization=self.sam_optimization,
                                  loss=multiple_tensors_mse_loss,
-                                 quantizer_config=GumbelConfig(temperature_learning=False),
-                                 rounding_type=RoundingType.GumbelRounding if self.is_gumbel else RoundingType.STE,
+                                 rounding_type=RoundingType.STE,
                                  train_bias=True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):

@@ -83,9 +83,6 @@ class GPTQTrainer(ABC):
         """
 
         w2train = [*flattened_trainable_weights]
-        if self.gptq_config.is_gumbel:
-            if self.gptq_config.quantizer_config.temperature_learning:
-                w2train.extend(temperature_weights)
 
         optimizer_with_param = [(self.gptq_config.optimizer, w2train)]
         if self.gptq_config.train_bias or self.gptq_config.quantization_parameters_learning:

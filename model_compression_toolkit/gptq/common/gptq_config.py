@@ -25,52 +25,14 @@ N_CYCLES = 4
 MIM_TEMP = 0.5
 MAX_TEMP = 1.0
 GAMMA_TEMPERATURE = 0.1
-GUMBEL_SCALE = 0.5
 
 
 class RoundingType(Enum):
     """
     An enum for choosing the GPTQ rounding methods
     0. STRAIGHT-THROUGH ESTIMATOR
-    1. Gumbel Rounding
     """
     STE = 0
-    GumbelRounding = 1
-
-
-class GumbelConfig(object):
-    """
-    Configuration to use for quantization with Gumbel Rounding.
-    """
-
-    def __init__(self,
-                 temperature_learning: bool = True,
-                 n_cycles: int = N_CYCLES,
-                 minimal_temp: float = MIM_TEMP,
-                 maximal_temp: float = MAX_TEMP,
-                 gumbel_entropy_regularization: float = GAMMA_TEMPERATURE,
-                 gumbel_scale: float = GUMBEL_SCALE,
-                 gumbel_scale_per_bitwidth: Dict[int, float] = None):
-        """
-        Initialize a GumbelConfig.
-
-
-        Args:
-            temperature_learning (bool): Whether to update the temperature during the training or not.
-            gumbel_entropy_regularization (float): A floating point number that defines the gumbel entropy regularization factor.
-            n_cycles (int): A floating point number that defines the gumbel entropy regularization factor.
-            minimal_temp (float): A floating point number that defines the gumbel entropy regularization factor.
-            maximal_temp (float): A floating point number that defines the gumbel entropy regularization factor.
-            gumbel_scale (float): A normalization factor for the gumbel tensor values.
-            gumbel_scale_per_bitwidth (dict): An optional mapping between a bit-width and a gumbel scale value for Gumbel Rounding,
-        """
-        self.gumbel_entropy_regularization = gumbel_entropy_regularization
-        self.temperature_learning = temperature_learning
-        self.n_cycles = n_cycles
-        self.minimal_temp = minimal_temp
-        self.maximal_temp = maximal_temp
-        self.gumbel_scale = gumbel_scale
-        self.gumbel_scale_per_bitwidth = gumbel_scale_per_bitwidth
 
 
 class GradientPTQConfig:
@@ -87,14 +49,13 @@ class GradientPTQConfig:
                  train_bias: bool = True,
                  quantization_parameters_learning: bool = False,
                  sam_optimization: bool = False,
-                 rounding_type: RoundingType = RoundingType.GumbelRounding,
+                 rounding_type: RoundingType = RoundingType.STE,
                  rho: float = 0.01,
                  lsb_change_per_bit_width: dict = DefaultDict(MAX_LSBS_CHANGE_MAP, lambda: 1),
                  eps: float = 1e-6,
                  use_jac_based_weights: bool = True,
                  num_samples_for_loss: int = 16,
                  norm_weights: bool = False,
-                 quantizer_config: GumbelConfig = GumbelConfig(),
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
                  log_norm: bool = True,
@@ -113,14 +74,13 @@ class GradientPTQConfig:
             train_bias (bool): Whether to update the bias during the training or not.
             quantization_parameters_learning (bool): Whether to update the quantization param during the training or not.
             sam_optimization (bool): Whether to use sam optimization.
-            rounding_type (RoundingType): An enum that defines the rounding type (STE or GumbelRoudning).
+            rounding_type (RoundingType): An enum that defines the rounding type.
             rho (rho): A floating point number that defines the sam optimization lookahead.
             lsb_change_per_bit_width (dict): Whether to update the bias during the training or not.
             eps (float): A floating point value for numeric stability.
             use_jac_based_weights (bool): Whether to use jacobian-based weights for weighted average loss.
             num_samples_for_loss (int): Number of samples to use for computing the jacobian-based weights.
             norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
-            quantizer_config (Any): A class the contins the quantizer specific config.
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
             log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
@@ -142,22 +102,10 @@ class GradientPTQConfig:
         self.use_jac_based_weights = use_jac_based_weights
         self.num_samples_for_loss = num_samples_for_loss
         self.norm_weights = norm_weights
-        if not isinstance(quantizer_config, GumbelConfig) and self.is_gumbel:
-            common.Logger.error("Please use GumbelConfig as quantizer config when using Gumbel Rounding")
-        self.quantizer_config = quantizer_config
         self.optimizer_quantization_parameter = optimizer_quantization_parameter
         self.optimizer_bias = optimizer_bias
         self.log_norm = log_norm
         self.weights_n_iter = weights_n_iter
-
-    @property
-    def is_gumbel(self) -> bool:
-        """
-        This function state if Gumbel Rounding is in use.
-        Returns: boolean
-
-        """
-        return self.rounding_type == RoundingType.GumbelRounding
 
 
 class GradientPTQConfigV2(GradientPTQConfig):
@@ -173,14 +121,13 @@ class GradientPTQConfigV2(GradientPTQConfig):
                  train_bias: bool = True,
                  quantization_parameters_learning: bool = False,
                  sam_optimization: bool = False,
-                 rounding_type: RoundingType = RoundingType.GumbelRounding,
+                 rounding_type: RoundingType = RoundingType.STE,
                  rho: float = 0.01,
                  lsb_change_per_bit_width: dict = DefaultDict(MAX_LSBS_CHANGE_MAP, lambda: 1),
                  eps: float = 1e-6,
                  use_jac_based_weights: bool = True,
                  num_samples_for_loss: int = 16,
                  norm_weights: bool = False,
-                 quantizer_config: GumbelConfig = GumbelConfig(),
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
                  log_norm: bool = True,
@@ -199,14 +146,13 @@ class GradientPTQConfigV2(GradientPTQConfig):
             train_bias (bool): Whether to update the bias during the training or not.
             quantization_parameters_learning (bool): Whether to update the quantization param during the training or not.
             sam_optimization (bool): Whether to use sam optimization.
-            rounding_type (RoundingType): An enum that defines the rounding type (STE or GumbelRoudning).
+            rounding_type (RoundingType): An enum that defines the rounding type.
             rho (rho): A floating point number that defines the sam optimization lookahead.
             lsb_change_per_bit_width (dict): Whether to update the bias during the training or not.
             eps (float): A floating point value for numeric stability.
             use_jac_based_weights (bool): Whether to use jacobian-based weights for weighted average loss.
             num_samples_for_loss (int): Number of samples to use for computing the jacobian-based weights.
             norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
-            quantizer_config (Any): A class the contins the quantizer specific config.
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
             log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
@@ -229,7 +175,6 @@ class GradientPTQConfigV2(GradientPTQConfig):
                          use_jac_based_weights=use_jac_based_weights,
                          num_samples_for_loss=num_samples_for_loss,
                          norm_weights=norm_weights,
-                         quantizer_config=quantizer_config,
                          optimizer_quantization_parameter=optimizer_quantization_parameter,
                          optimizer_bias=optimizer_bias,
                          log_norm=log_norm,

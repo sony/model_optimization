@@ -66,67 +66,6 @@ def ste_clip(x: torch.Tensor, min_val=-1.0, max_val=1.0) -> torch.Tensor:
     return (torch.clip(x, min=min_val, max=max_val) - x).detach() + x
 
 
-def gumbel_softmax(x: torch.Tensor, tau: Union[torch.Tensor,float], gumbel_tensor: Union[torch.Tensor,float], eps: float = 1e-6, axis=0,
-                   gumbel_scale: float = 1.0) -> torch.Tensor:
-    """
-    A gumbel softmax function.
-    Args:
-        x: A tensor of log probability.
-        tau: A temperature tensor.
-        gumbel_tensor: A tensor of gumbel random variable.
-        eps: A small number for numeric stability.
-        axis: A integer representing the axis of which the gumbel softmax applyed on.
-        gumbel_scale: A normalization factor for the gumbel tensor values
-
-    Returns: A gumbel softmax probability tensor.
-
-    """
-    return softmax((log_softmax(x, dim=axis) + gumbel_tensor * gumbel_scale) / (tau + eps), dim=axis)
-
-
-def select_gumbel(prob: torch.Tensor) -> torch.Tensor:
-    """
-    This function apply ste on the output of the gumbel softmax.
-    Args:
-        prob: A tensor of probability.
-
-    Returns: A Tensor of ohe hot vector
-
-    """
-    max_index = torch.argmax(prob, dim=0)
-    axis_list = [i for i in range(len(max_index.shape))]
-    axis_list.insert(0, len(max_index.shape))
-    one_hot_prob = torch.permute(one_hot(max_index, num_classes=prob.shape[0]), axis_list)
-    return one_hot_prob + 0*prob
-
-
-def ste_gumbel(prob: torch.Tensor) -> torch.Tensor:
-    """
-    This function apply ste on the output of the gumbel softmax.
-    Args:
-        prob:A tensor of probability
-
-    Returns: A Tensor of ohe hot vector with STE.
-
-    """
-    delta = (select_gumbel(prob) - prob).detach()
-    return prob + delta
-
-
-def sample_gumbel(shape, eps=1e-6) -> torch.Tensor:
-    """
-    A function that sample a tensor of i.i.d gumbel random variable.
-    Args:
-        shape: The tensor output shape
-        eps: A small number for numeric stability.
-
-    Returns: A tensor of i.i.d gumbel random variable.
-
-    """
-    u = to_torch_tensor(torch.rand(shape))
-    return -torch.log(-torch.log(u + eps) + eps)
-
-
 def symmetric_quantizer(input_tensor: torch.Tensor,
                         max_tensor: torch.Tensor,
                         num_bits: int,

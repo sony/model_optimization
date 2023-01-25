@@ -29,7 +29,6 @@ from model_compression_toolkit.gptq.pytorch.gptq_model_builder import GPTQPytorc
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_model, torch_tensor_to_numpy
 from model_compression_toolkit.gptq.pytorch.gptq_graph_info import get_trainable_parameters, get_weights_for_loss
 from model_compression_toolkit.gptq.pytorch.quantizer.quantizer_wrapper import WeightQuantizerWrapper
-from model_compression_toolkit.gptq.pytorch.gptq_graph_info import get_gumbel_probability
 
 
 class PytorchGPTQTrainer(GPTQTrainer):
@@ -69,8 +68,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         trainable_weights, trainable_bias, trainable_threshold, trainable_temperature = get_trainable_parameters(
             self.fxp_model,
             add_bias=self.gptq_config.train_bias,
-            quantization_parameters_learning=self.gptq_config.quantization_parameters_learning,
-            is_gumbel=self.gptq_config.is_gumbel)
+            quantization_parameters_learning=self.gptq_config.quantization_parameters_learning)
 
         self.flp_weights_list, self.fxp_weights_list = get_weights_for_loss(self.fxp_model)
         if not (len(self.compare_points) == len(trainable_weights) == len(self.flp_weights_list) == len(
@@ -144,15 +142,6 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                            self.compare_points_mean,
                                            self.compare_points_std,
                                            self.weights_for_average_loss)
-
-        if self.gptq_config.is_gumbel and self.gptq_config.quantizer_config.temperature_learning:
-            gumbel_prob = get_gumbel_probability(self.fxp_model)
-            gumbel_reg = 0
-            for p in gumbel_prob:
-                entropy = -torch.mean(torch.sum(p * torch.log(torch.maximum(p, self.gptq_config.eps*torch.ones_like(p))),dim=0))
-                gumbel_reg += entropy
-            gumbel_reg = 0 if gumbel_reg == 0 else gumbel_reg/len(gumbel_prob)
-            loss_value += self.gptq_config.quantizer_config.gumbel_entropy_regularization * gumbel_reg
 
         # Back-pass
         loss_value.backward()

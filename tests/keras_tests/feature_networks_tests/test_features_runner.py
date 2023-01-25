@@ -544,20 +544,12 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_gptq(self, experimental_facade=False, experimental_exporter=False):
         GradientPTQTest(self).run_test(experimental_facade=experimental_facade,
                                        experimental_exporter=experimental_exporter)
-        GradientPTQNoTempLearningTest(self, is_gumbel=True).run_test(experimental_facade=experimental_facade,
-                                                                     experimental_exporter=experimental_exporter)
         GradientPTQWeightsUpdateTest(self).run_test(experimental_facade=experimental_facade,
                                                     experimental_exporter=experimental_exporter)
         GradientPTQLearnRateZeroTest(self).run_test(experimental_facade=experimental_facade,
                                                     experimental_exporter=experimental_exporter)
         GradientPTQWeightedLossTest(self).run_test(experimental_facade=experimental_facade,
                                                    experimental_exporter=experimental_exporter)
-        GradientPTQWeightsUpdateTest(self, is_gumbel=True, sam_optimization=True).run_test(
-            experimental_facade=experimental_facade, experimental_exporter=experimental_exporter)
-        GradientPTQLearnRateZeroTest(self, is_gumbel=True,
-                                     quant_method=mct.target_platform.QuantizationMethod.UNIFORM).run_test(
-            experimental_facade=experimental_facade,
-            experimental_exporter=experimental_exporter)
 
     # TODO: reuven - new experimental facade needs to be tested regardless the exporter.
     # def test_gptq_new_exporter(self):
@@ -568,14 +560,11 @@ class FeatureNetworkTest(unittest.TestCase):
     # def test_gptq_conv_group(self):
     #     GradientPTQLearnRateZeroConvGroupTest(self).run_test()
     #     GradientPTQWeightsUpdateConvGroupTest(self).run_test()
-    #     GradientPTQLearnRateZeroConvGroupTest(self, is_gumbel=True).run_test()
-    #     GradientPTQWeightsUpdateConvGroupTest(self, is_gumbel=True, sam_optimization=True).run_test()
+
 
     def test_gptq_conv_group_dilation(self):
         GradientPTQLearnRateZeroConvGroupDilationTest(self).run_test()
         GradientPTQWeightsUpdateConvGroupDilationTest(self).run_test()
-        GradientPTQLearnRateZeroConvGroupDilationTest(self, is_gumbel=True, sam_optimization=True).run_test()
-        GradientPTQWeightsUpdateConvGroupDilationTest(self, is_gumbel=True).run_test()
 
     def test_split_conv_bug(self):
         SplitConvBugTest(self).run_test()

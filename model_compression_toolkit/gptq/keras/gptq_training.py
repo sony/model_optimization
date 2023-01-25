@@ -31,8 +31,7 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.gptq.keras.graph_info import get_trainable_parameters, get_weights_for_loss, \
-    get_gumbel_probability
+from model_compression_toolkit.gptq.keras.graph_info import get_trainable_parameters, get_weights_for_loss
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 import numpy as np
@@ -80,8 +79,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         trainable_weights, bias_weights, trainable_threshold, temperature_weights = get_trainable_parameters(
             self.fxp_model,
             fw_info,
-            add_bias=gptq_config.train_bias,
-            is_gumbel=gptq_config.is_gumbel)
+            add_bias=gptq_config.train_bias)
 
         self.flp_weights_list, self.fxp_weights_list = get_weights_for_loss(self.fxp_model)
 
@@ -148,19 +146,6 @@ class KerasGPTQTrainer(GPTQTrainer):
                                                self.compare_points_mean,
                                                self.compare_points_std,
                                                self.weights_for_average_loss)
-
-            if self.gptq_config.is_gumbel and self.gptq_config.quantizer_config.temperature_learning:
-                gumbel_prob = get_gumbel_probability(self.fxp_model)
-                gumbel_reg = 0
-                for p in gumbel_prob:
-                    entropy = -tf.reduce_mean(
-                        tf.reduce_sum(p * tf.math.log(tf.maximum(p,
-                                                                 self.gptq_config.eps)),
-                                      axis=0))
-
-                    gumbel_reg += entropy
-                gumbel_reg /= len(gumbel_prob)
-                loss_value += self.gptq_config.quantizer_config.gumbel_entropy_regularization * gumbel_reg
 
         # Use the gradient tape to automatically retrieve
         # the gradients of the trainable variables with respect to the loss.

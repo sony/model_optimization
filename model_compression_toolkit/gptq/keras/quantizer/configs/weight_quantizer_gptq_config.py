@@ -34,8 +34,6 @@ from model_compression_toolkit.gptq.keras.quantizer.configs.base_quantizer_gptq_
 from model_compression_toolkit.core.keras.constants import KERNEL
 
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2, RoundingType
-from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.symmetric_gumbel import SymmetricGumbelRounding
-from model_compression_toolkit.gptq.keras.quantizer.gumbel_rounding.uniform_gumbel import UniformGumbelRounding
 from model_compression_toolkit.gptq.keras.quantizer.ste_rounding.symmetric_ste import STEWeightQuantizer
 from model_compression_toolkit.core.common.target_platform.op_quantization_config import QuantizationMethod
 from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MAX, RANGE_MIN
@@ -80,57 +78,10 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
                                                            power_of_two=is_power_of_two,
                                                            quantization_axis=weight_channel_axis,
                                                            max_lsbs_change_map=max_lsbs_change_map)
-            elif gptq_config.rounding_type == RoundingType.GumbelRounding:
-                self.weight_quantizer = SymmetricGumbelRounding(num_bits=num_bits,
-                                                                per_axis=len(
-                                                                    threshold_values.flatten()) > 1,
-                                                                threshold_values=threshold_values,
-                                                                signed=True,
-                                                                power_of_two=is_power_of_two,
-                                                                quantization_parameter_learning=gptq_config.quantization_parameters_learning,
-                                                                quantization_axis=weight_channel_axis,
-                                                                max_lsbs_change_map=max_lsbs_change_map,
-                                                                max_iteration=gptq_config.n_epochs,
-                                                                gumbel_config=gptq_config.quantizer_config)
             else:
                 common.Logger.error(
-                    f"For quantization method {final_weights_quantization_cfg.weights_quantization_method}, GPTQ Rounding type {gptq_config.rounding_type} is not supported")
-        elif final_weights_quantization_cfg.weights_quantization_method == QuantizationMethod.UNIFORM:
-            if not gptq_config.rounding_type == RoundingType.GumbelRounding:
-                common.Logger.error(
-                    f"For quantization method {final_weights_quantization_cfg.weights_quantization_method}, GPTQ Rounding type {gptq_config.rounding_type} is not supported")
-            range_max = final_weights_quantization_cfg.weights_quantization_params.get(RANGE_MAX)
-            range_min = final_weights_quantization_cfg.weights_quantization_params.get(RANGE_MIN)
-            self.weight_quantizer = UniformGumbelRounding(num_bits=num_bits,
-                                                          per_axis=len(
-                                                              range_max.flatten()) > 1,
-                                                          min_range=range_min,
-                                                          max_range=range_max,
-                                                          signed=True,
-                                                          quantization_parameter_learning=gptq_config.quantization_parameters_learning,
-                                                          quantization_axis=weight_channel_axis,
-                                                          max_lsbs_change_map=max_lsbs_change_map,
-                                                          max_iteration=gptq_config.n_epochs,
-                                                          gumbel_config=gptq_config.quantizer_config)
-
-    def enable_update(self):
-        """
-        This function enable the parameter update (update iteration index and gumbel random variable)
-        Returns: None
-
-        """
-        if self.gptq_config.is_gumbel:
-            return self.weight_quantizer.enable_update()
-
-    def disable_update(self):
-        """
-
-        This function disable the parameter update (update iteration index and gumbel random variable)
-        Returns: None
-
-        """
-        if self.gptq_config.is_gumbel:
-            return self.weight_quantizer.disable_update()
+                    f"For quantization method {final_weights_quantization_cfg.weights_quantization_method}, "
+                    f"GPTQ Rounding type {gptq_config.rounding_type} is not supported")
 
     def get_weights_and_quantizers(self, layer: Layer) -> List[Tuple[Tensor, Quantizer]]:
         """
@@ -238,18 +189,6 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
 
     def get_quantization_variable(self) -> List[tf.Tensor]:
         return self.weight_quantizer.get_quantization_variable()
-
-    def get_temperature_variable(self) -> tf.Tensor:
-        if self.gptq_config.is_gumbel:
-            return self.weight_quantizer.get_temperature_variable()
-        else:
-            common.logger.Logger.error("Temperature variable only exist when using Gumbel Rounding Quantizer")
-
-    def get_gumbel_probability(self) -> tf.Tensor:
-        if self.gptq_config.is_gumbel:
-            return self.weight_quantizer.get_gumbel_probability()
-        else:
-            common.logger.Logger.error("Probability variable only exist when using Gumbel Rounding Quantizer")
 
     def __eq__(self, other: Any) -> bool:
         """
