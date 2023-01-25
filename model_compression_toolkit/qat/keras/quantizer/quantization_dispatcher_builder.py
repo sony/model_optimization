@@ -40,9 +40,11 @@ def get_trainable_quantizer_weights_config(n: common.BaseNode) -> TrainableQuant
     """
     Returns the relevant configurations for weights trainable quantizer
 
-    Args: BaseNode
+    Args:
+        n: BaseNode
 
-    Returns: TrainableQuantizerWeightsConfig object.
+    Returns:
+         TrainableQuantizerWeightsConfig - an object that contains the quantizer configuration
 
     """
     config = n.final_weights_quantization_cfg
@@ -59,9 +61,11 @@ def get_trainable_quantizer_activation_config(n: common.BaseNode) -> TrainableQu
     """
     Returns configurations for activation trainable quantizer
 
-    Args: BaseNode
+    Args:
+        n: BaseNode
 
-    Returns: TrainableQuantizerActivationConfig object.
+    Returns:
+         TrainableQuantizerActivationConfig - an object that contains the quantizer configuration
 
     """
     config = n.final_activation_quantization_cfg
