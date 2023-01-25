@@ -93,8 +93,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         trainable_quantization_parameters = trainable_threshold
         self.optimizer_with_param = self.get_optimizer_with_param(flattened_trainable_weights,
                                                                   flattened_bias_weights,
-                                                                  trainable_quantization_parameters,
-                                                                  temperature_weights)
+                                                                  trainable_quantization_parameters)
         self.has_params_to_train = np.sum([len(optimizer_params_tuple[1]) for optimizer_params_tuple in self.optimizer_with_param])>0
 
         if self.float_user_info.input_scale != self.gptq_user_info.input_scale:

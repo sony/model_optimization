@@ -86,6 +86,10 @@ class GradientPTQConfig:
         self.loss = loss
         self.log_function = log_function
         self.train_bias = train_bias
+
+        if quantization_parameters_learning and rounding_type == RoundingType.STE:
+            common.Logger.error("Quantization parameters learning is not supported with STE rounding.")
+
         self.quantization_parameters_learning = quantization_parameters_learning
         self.rounding_type = rounding_type
         self.lsb_change_per_bit_width = lsb_change_per_bit_width
