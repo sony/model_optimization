@@ -61,6 +61,7 @@ def pytorch_export_model(model: torch.nn.Module,
 
     else:
         Logger.critical(
-            f'Unsupported mode was used {mode.name} to export PyTorch model. Please see API for supported modes.')
+            f'Unsupported mode was used {mode.name} to export PyTorch model. '
+            f'Please see API for supported modes.')  # pragma: no cover
 
     exporter.export()

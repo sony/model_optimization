@@ -108,7 +108,7 @@ def create_node_activation_qc(qc: QuantizationConfig,
 
     activation_quantization_fn = fw_info.activation_quantizer_mapping.get(op_cfg.activation_quantization_method)
     if activation_quantization_fn is None:
-        Logger.critical('Unknown quantization method for activations')
+        Logger.critical('Unknown quantization method for activations')  # pragma: no cover
 
     activation_quantization_params_fn = get_activation_quantization_params_fn(op_cfg.activation_quantization_method)
 
@@ -142,14 +142,14 @@ def create_node_qc_candidate(qc: QuantizationConfig,
     weights_quantization_fn = get_weights_quantization_fn(op_cfg.weights_quantization_method)
 
     if weights_quantization_fn is None:
-        Logger.critical('Unknown quantization method for weights')
+        Logger.critical('Unknown quantization method for weights')  # pragma: no cover
 
     weights_quantization_params_fn = get_weights_quantization_params_fn(op_cfg.weights_quantization_method)
 
     # get attributes for activation quantization
     activation_quantization_fn = fw_info.activation_quantizer_mapping.get(op_cfg.activation_quantization_method)
     if activation_quantization_fn is None:
-        Logger.critical('Unknown quantization method for activations')
+        Logger.critical('Unknown quantization method for activations')  # pragma: no cover
 
     activation_quantization_params_fn = get_activation_quantization_params_fn(op_cfg.activation_quantization_method)
 

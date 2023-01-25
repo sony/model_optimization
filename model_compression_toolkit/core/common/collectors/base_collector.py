@@ -14,6 +14,7 @@
 # ==============================================================================
 
 import numpy as np
+from model_compression_toolkit.core.common.logger import Logger
 
 
 class BaseCollector(object):
@@ -33,7 +34,8 @@ class BaseCollector(object):
 
         """
 
-        raise Exception(f'{self.__class__.__name__} needs to implement scale operation for its state.')
+        raise NotImplemented(
+            f'{self.__class__.__name__} needs to implement scale operation for its state.')  # pragma: no cover
 
     def shift(self, shift_value: np.ndarray):
         """
@@ -43,7 +45,8 @@ class BaseCollector(object):
 
         """
 
-        raise Exception(f'{self.__class__.__name__} needs to implement shift operation for its state.')
+        raise NotImplemented(
+            f'{self.__class__.__name__} needs to implement shift operation for its state.')  # pragma: no cover
 
     def update_legal_status(self, is_illegal: bool):
         """
@@ -63,5 +66,5 @@ class BaseCollector(object):
         """
 
         if not self.is_legal:
-            raise Exception(f'{self.__class__.__name__} was manipulated per-channel,'
-                            'but collected per-tensor. Data is invalid.')
+            Logger.exception(f'{self.__class__.__name__} was manipulated per-channel,'
+                             'but collected per-tensor. Data is invalid.')  # pragma: no cover

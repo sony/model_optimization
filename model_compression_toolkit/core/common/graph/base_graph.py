@@ -75,7 +75,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         self.fused_nodes = []
 
     def set_fw_info(self,
-                   fw_info: FrameworkInfo):
+                    fw_info: FrameworkInfo):
         """
         Set the graph's framework info.
         Args:
@@ -92,7 +92,6 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             tpc: TargetPlatformCapabilities object.
         """
         self.tpc = tpc
-
 
     def get_topo_sorted_nodes(self):
         """
@@ -216,7 +215,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         sc = self.node_to_in_stats_collector.get(n)
         if sc is None:
-            raise Exception()
+            Logger.error(f'Input statistics collector of node {n.name} is None')  # pragma: no cover
         return sc
 
     def scale_stats_collector(self,
@@ -350,7 +349,8 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             input_nodes_output_index = [0] * len(input_nodes)
 
         if len(input_nodes_output_index) != len(input_nodes):
-            raise Exception('Graph.add_node_with_in_edges: input_nodes & input_nodes_output_index must be the same length')
+            Logger.error('Graph.add_node_with_in_edges: input_nodes & input_nodes_output_index must be the same '
+                         'length')  # pragma: no cover
 
         self.add_node(new_node)
         for sink_index, (in_node, source_index) in enumerate(zip(input_nodes, input_nodes_output_index)):
@@ -420,12 +420,14 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         output_nodes = [ot.node for ot in self.get_outputs()]  # get output nodes from namedtuples
         if node_to_remove in output_nodes:  # If node is in the graph's outputs, the outputs should be updated
             if new_graph_outputs is None:
-                Logger.critical(f'{node_to_remove.name} is in graph outputs, but new outputs were not given.')
+                Logger.critical(
+                    f'{node_to_remove.name} is in graph outputs, but new outputs were not given.')  # pragma: no cover
             self.set_outputs(new_graph_outputs)
 
         if node_to_remove in self.get_inputs():  # If node is in the graph's inputs, the inputs should be updated
             if new_graph_inputs is None:
-                Logger.critical(f'{node_to_remove.name} is in graph inputs, but new inputs were not given.')
+                Logger.critical(
+                    f'{node_to_remove.name} is in graph inputs, but new inputs were not given.')  # pragma: no cover
             self.set_inputs(new_graph_inputs)
 
         # Make sure there are no connected edges left to the node before removing it.

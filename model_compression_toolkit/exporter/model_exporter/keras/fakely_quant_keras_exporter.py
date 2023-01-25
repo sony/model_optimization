@@ -124,7 +124,7 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                                                           clone_function=_unwrap_quantize_wrapper)
 
         if self.exported_model is None:
-            Logger.critical(f'Exporter can not save model as it is not exported')
+            Logger.critical(f'Exporter can not save model as it is not exported')  # pragma: no cover
 
         Logger.info(f'Exporting FQ Keras model to: {self.save_model_path}')
 

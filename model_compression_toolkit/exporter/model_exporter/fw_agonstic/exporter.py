@@ -54,4 +54,4 @@ class Exporter:
         Convert model and export it to a given path.
 
         """
-        Logger.critical(f'Exporter {self.__class__} have to implement export method')
+        Logger.critical(f'Exporter {self.__class__} have to implement export method')  # pragma: no cover

@@ -92,4 +92,4 @@ def config_deserialization(in_config: dict) -> BaseNodeQuantizationConfig:
         naqc.__dict__.update(in_config)
         return naqc
     else:
-        raise NotImplemented
+        raise NotImplemented  # pragma: no cover

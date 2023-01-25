@@ -34,4 +34,4 @@ else:
             """
             Logger.critical('Installing torch is mandatory '
                             'when using PytorchNodeQuantizationDispatcher. '
-                            'Could not find torch package.')
+                            'Could not find torch package.')  # pragma: no cover

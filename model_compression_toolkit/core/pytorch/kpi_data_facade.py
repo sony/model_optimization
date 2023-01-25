@@ -154,9 +154,9 @@ else:
     # we raise an exception when trying to use this function.
     def pytorch_kpi_data(*args, **kwargs):
         Logger.critical('Installing torch is mandatory when using pytorch_kpi_data. '
-                        'Could not find Tensorflow package.')
+                        'Could not find Tensorflow package.')  # pragma: no cover
 
 
     def pytorch_kpi_data_experimental(*args, **kwargs):
         Logger.critical('Installing torch is mandatory when using pytorch_kpi_data. '
-                        'Could not find Tensorflow package.')
+                        'Could not find Tensorflow package.')  # pragma: no cover

@@ -15,6 +15,7 @@
 
 import numpy as np
 
+from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
@@ -86,10 +87,9 @@ if FOUND_TORCH:
             return q
 
 
-
 else:
     class WeightsUniformInferableQuantizer:
         def __init__(self, *args, **kwargs):
-            raise Exception('Installing torch is mandatory '
-                            'when using WeightsUniformInferableQuantizer. '
-                            'Could not find torch package.')
+            Logger.error('Installing torch is mandatory '
+                         'when using WeightsUniformInferableQuantizer. '
+                         'Could not find torch package.')  # pragma: no cover

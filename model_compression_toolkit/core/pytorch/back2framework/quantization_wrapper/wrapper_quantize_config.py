@@ -38,8 +38,7 @@ class WrapperQuantizeConfig:
         Returns: A List of quantizers for weights quantization.
 
         """
-        raise NotImplemented
-
+        raise NotImplemented  # pragma: no cover
 
     def get_activation_quantizers(self) -> list:
         """
@@ -47,7 +46,7 @@ class WrapperQuantizeConfig:
         Returns: A List of quantizers for activation quantization.
 
         """
-        raise NotImplemented
+        raise NotImplemented  # pragma: no cover
 
 
 

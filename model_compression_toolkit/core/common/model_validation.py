@@ -30,7 +30,8 @@ class ModelValidation:
         If the model has layers with different output channels index, it should throw an exception.
 
         """
-        raise NotImplemented(f'Framework validation class did not implement validate_output_channel_consistency')
+        raise NotImplemented(
+            f'Framework validation class did not implement validate_output_channel_consistency')  # pragma: no cover
 
     def validate(self):
         """

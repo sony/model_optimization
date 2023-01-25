@@ -57,7 +57,7 @@ def get_weights_inferable_quantizer_kwargs(node: BaseNode) -> Dict[str, Any]:
                 qi_inferable_quantizers_constants.MIN_RANGE: node_w_qc.weights_quantization_params.get(RANGE_MIN),
                 qi_inferable_quantizers_constants.MAX_RANGE: node_w_qc.weights_quantization_params.get(RANGE_MAX)}
     else:
-        Logger.critical(f'Not supported quantization method for weights inferable quantizers.')
+        Logger.critical(f'Not supported quantization method for weights inferable quantizers.')  # pragma: no cover
 
 
 def get_activation_inferable_quantizer_kwargs(node: BaseNode) -> Dict[str, Any]:
@@ -84,7 +84,7 @@ def get_activation_inferable_quantizer_kwargs(node: BaseNode) -> Dict[str, Any]:
                 qi_inferable_quantizers_constants.MIN_RANGE: node_qc.activation_quantization_params.get(RANGE_MIN),
                 qi_inferable_quantizers_constants.MAX_RANGE: node_qc.activation_quantization_params.get(RANGE_MAX)}
     else:
-        Logger.critical(f'Not supported quantization method for inferable quantizers.')
+        Logger.critical(f'Not supported quantization method for inferable quantizers.')  # pragma: no cover
 
 
 def get_weights_quantizer_for_node(node: BaseNode) -> pytorch_inferable_quantizers.BasePyTorchInferableQuantizer:
@@ -99,7 +99,8 @@ def get_weights_quantizer_for_node(node: BaseNode) -> pytorch_inferable_quantize
 
     """
     if node.final_weights_quantization_cfg is None:
-        Logger.critical(f'Can not set quantizer for a node with no final weights quantization configuration')
+        Logger.critical(f'Can not set quantizer for a node with no final weights quantization configuration')  # pragma:
+        # no cover
     node_w_qc = node.final_weights_quantization_cfg
     weights_quantization_method = node_w_qc.weights_quantization_method
     kwargs = get_weights_inferable_quantizer_kwargs(node)
@@ -118,7 +119,8 @@ def get_activations_quantizer_for_node(node: BaseNode) -> pytorch_inferable_quan
 
     """
     if node.final_activation_quantization_cfg is None:
-        Logger.critical(f'Can not set quantizer for a node with no final activation quantization configuration')
+        Logger.critical(f'Can not set quantizer for a node with no final activation quantization configuration')  #
+        # pragma: no cover
     node_act_qc = node.final_activation_quantization_cfg
     activation_quantization_method = node_act_qc.activation_quantization_method
     kwargs = get_activation_inferable_quantizer_kwargs(node)

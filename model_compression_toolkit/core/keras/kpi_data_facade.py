@@ -156,10 +156,10 @@ else:
     def keras_kpi_data(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                         'when using keras_kpi_data. '
-                        'Could not find Tensorflow package.')
+                        'Could not find Tensorflow package.')  # pragma: no cover
 
 
     def keras_kpi_data_experimental(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                         'when using keras_kpi_data. '
-                        'Could not find Tensorflow package.')
+                        'Could not find Tensorflow package.')  # pragma: no cover

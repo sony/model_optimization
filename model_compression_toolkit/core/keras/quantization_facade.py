@@ -281,10 +281,10 @@ else:
     def keras_post_training_quantization(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                         'when using keras_post_training_quantization. '
-                        'Could not find Tensorflow package.')
+                        'Could not find Tensorflow package.')  # pragma: no cover
 
 
     def keras_post_training_quantization_mixed_precision(*args, **kwargs):
         Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                         'when using keras_post_training_quantization_mixed_precision. '
-                        'Could not find Tensorflow package.')
+                        'Could not find Tensorflow package.')  # pragma: no cover

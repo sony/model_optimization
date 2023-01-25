@@ -350,8 +350,8 @@ class ConfigReconstructionHelper:
 
         if changed_virtual_nodes_idx is not None:
             if original_base_config is None:
-                Logger.critical("Must provide a base original config in order to run config reconstruction for partial"  # pragma: no cover
-                                "set of nodes.")
+                Logger.critical("Must provide a base original config in order to run config reconstruction for partial"
+                                "set of nodes.")  # pragma: no cover
 
             updated_virtual_nodes = \
                 [(idx, self.virtual_graph.get_configurable_sorted_nodes()[idx]) for idx in changed_virtual_nodes_idx]

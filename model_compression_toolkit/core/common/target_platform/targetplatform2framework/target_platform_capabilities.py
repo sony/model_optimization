@@ -131,7 +131,8 @@ class TargetPlatformCapabilities(ImmutableClass):
         if isinstance(tpc_component, OperationsSetToLayers):
             self.op_sets_to_layers += tpc_component
         else:
-            raise Exception(f'Trying to append an unfamiliar TargetPlatformCapabilitiesComponent of type: {type(tpc_component)}')
+            Logger.error(f'Trying to append an unfamiliar TargetPlatformCapabilitiesComponent of type: '
+                         f'{type(tpc_component)}')  # pragma: no cover
 
     def __enter__(self):
         """
@@ -175,7 +176,7 @@ class TargetPlatformCapabilities(ImmutableClass):
             QuantizationConfigOptions of the node.
         """
         if node is None:
-            raise Exception(f'Can not retrieve QC options for None node')
+            Logger.error(f'Can not retrieve QC options for None node')  # pragma: no cover
         for fl, qco in self.filterlayer2qco.items():
             if fl.match(node):
                 return qco
@@ -204,7 +205,6 @@ class TargetPlatformCapabilities(ImmutableClass):
                 else:
                     layer2qco.update({l: qco})
         return layer2qco, filterlayer2qco
-
 
     def remove_fusing_names_from_not_used_list(self):
         """
@@ -235,5 +235,3 @@ class TargetPlatformCapabilities(ImmutableClass):
         """
         for op in self.__tp_model_opsets_not_used:
             Logger.warning(f'{op} is defined in TargetPlatformModel, but is not used in TargetPlatformCapabilities.')
-
-

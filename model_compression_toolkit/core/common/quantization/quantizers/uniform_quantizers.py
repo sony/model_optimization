@@ -15,6 +15,7 @@
 
 import numpy as np
 
+from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX, THRESHOLD
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import uniform_quantize_tensor, \
     quantize_tensor
@@ -51,9 +52,9 @@ def power_of_two_quantizer(tensor_data: np.ndarray,
     """
     threshold = quantization_params.get(THRESHOLD)
     if threshold is None:
-        raise Exception(f"{THRESHOLD} parameter must be defined in 'quantization_params'")
+        Logger.error(f"{THRESHOLD} parameter must be defined in 'quantization_params'")  # pragma: no cover
     if not threshold_is_power_of_two(threshold, per_channel):
-        raise Exception(f"Expects {THRESHOLD} parameter to be a power of two, but got {threshold}")
+        Logger.error(f"Expects {THRESHOLD} parameter to be a power of two, but got {threshold}")  # pragma: no cover
 
     return quantize_tensor(tensor_data,
                            threshold,
@@ -84,7 +85,7 @@ def symmetric_quantizer(tensor_data: np.ndarray,
     """
     threshold = quantization_params.get(THRESHOLD)
     if threshold is None:
-        raise Exception(f"{THRESHOLD} parameter must be defined in 'quantization_params'")
+        Logger.error(f"{THRESHOLD} parameter must be defined in 'quantization_params'")  # pragma: no cover
 
     return quantize_tensor(tensor_data,
                            threshold,
@@ -115,6 +116,6 @@ def uniform_quantizer(tensor_data: np.ndarray,
     range_min = quantization_params.get(RANGE_MIN)
     range_max = quantization_params.get(RANGE_MAX)
     if range_min is None or range_max is None:
-        raise Exception("'quantization range' parameters must be defined in 'quantization_params'")
+        Logger.error("'quantization range' parameters must be defined in 'quantization_params'")  # pragma: no cover
 
     return uniform_quantize_tensor(tensor_data, range_min, range_max, n_bits)

@@ -50,6 +50,6 @@ def tflite_export_model(model: keras.models.Model,
     else:
         Logger.critical(
             f'Unsupported mode was used {mode.name} to export TFLite model.'
-            f' Please see API for supported modes.')
+            f' Please see API for supported modes.')  # pragma: no cover
 
     exporter.export()

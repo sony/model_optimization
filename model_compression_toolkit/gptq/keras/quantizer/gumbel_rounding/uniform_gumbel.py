@@ -215,7 +215,7 @@ class UniformGumbelRounding(GumbelRoundingBase):
                                                          self.num_bits)
             return q_tensor
         else:
-            raise NotImplemented
+            raise NotImplemented  # pragma: no cover
             return gumbel_rounding_uniform_quantizer(inputs, auxvar_hat,
                                                      ptq_max_range,
                                                      ptq_min_range,

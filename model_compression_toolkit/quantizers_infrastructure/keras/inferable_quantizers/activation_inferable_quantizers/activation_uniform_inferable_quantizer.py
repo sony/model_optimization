@@ -15,6 +15,7 @@
 
 import numpy as np
 
+from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
@@ -76,6 +77,6 @@ if FOUND_TF:
 else:
     class ActivationUniformInferableQuantizer:
         def __init__(self, *args, **kwargs):
-            raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
-                            'when using ActivationUniformInferableQuantizer. '
-                            'Could not find Tensorflow package.')
+            Logger.error('Installing tensorflow and tensorflow_model_optimization is mandatory '
+                         'when using ActivationUniformInferableQuantizer. '
+                         'Could not find Tensorflow package.')  # pragma: no cover

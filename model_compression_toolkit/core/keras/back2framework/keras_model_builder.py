@@ -129,7 +129,8 @@ class KerasModelBuilder(BaseModelBuilder):
             Output of the node.
 
         """
-        raise NotImplemented(f'{self.__class__.__name__} did not implement a method for quantizating activation nodes.')
+        raise NotImplemented(f'{self.__class__.__name__} did not implement a method for quantizating '
+                             f'activation nodes.')  # pragma: no cover
 
     def build_model(self) -> Tuple[Model, UserInformation]:
         """
