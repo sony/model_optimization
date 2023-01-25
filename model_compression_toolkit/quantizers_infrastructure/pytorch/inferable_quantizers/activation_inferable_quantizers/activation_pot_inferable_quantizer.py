@@ -16,7 +16,6 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
 
 if FOUND_TORCH:
@@ -40,14 +39,15 @@ if FOUND_TORCH:
                 threshold: threshold for quantizing activations
                 signed: whether or not to use signed quantization
             """
-
-            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in threshold.flatten()])
-            assert is_threshold_pot, f'Expected threshold to be power of 2 but is {threshold}'
-
             # target of Activation quantization
             super(ActivationPOTInferableQuantizer, self).__init__(num_bits=num_bits,
                                                                   signed=signed,
                                                                   threshold=threshold)
+
+            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in threshold.flatten()])
+            assert is_threshold_pot, f'Expected threshold to be power of 2 but is {threshold}'
+
+
 
 
 

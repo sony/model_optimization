@@ -16,7 +16,6 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
 if FOUND_TORCH:
     from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.weights_inferable_quantizers.weights_symmetric_inferable_quantizer import \
@@ -30,8 +29,8 @@ if FOUND_TORCH:
         def __init__(self,
                      num_bits: int,
                      threshold: np.ndarray,
-                     signed: bool,
                      per_channel: bool,
+                     channel_axis: int = None
                      ):
             """
             Initialize the quantizer with the specified parameters.
@@ -39,7 +38,6 @@ if FOUND_TORCH:
             Args:
                 num_bits: number of bits to use for quantization
                 threshold: threshold for quantizing activations
-                signed: whether or not to use signed quantization
                 per_channel: whether to use per-channel quantization
             """
 
@@ -49,8 +47,8 @@ if FOUND_TORCH:
             # target of Weights quantization
             super(WeightsPOTInferableQuantizer, self).__init__(num_bits=num_bits,
                                                                threshold=threshold,
-                                                               signed=signed,
-                                                               per_channel=per_channel)
+                                                               per_channel=per_channel,
+                                                               channel_axis=channel_axis)
 
 
 

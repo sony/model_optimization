@@ -16,26 +16,25 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 
 if FOUND_TORCH:
     import torch
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.quantizer_utils import to_torch_tensor
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers \
-        .base_symmetric_inferable_quantizer import \
-        BaseSymmetricInferableQuantizer
+    from model_compression_toolkit.quantizers_infrastructure.pytorch.quantizer_utils import to_torch_tensor, \
+    get_working_device
+    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers import BasePyTorchInferableQuantizer
 
 
-    class WeightsSymmetricInferableQuantizer(BaseSymmetricInferableQuantizer):
+
+    class WeightsSymmetricInferableQuantizer(BasePyTorchInferableQuantizer):
         """
         Class for quantizing weights using a symmetric quantizer
         """
-
         def __init__(self,
                      num_bits: int,
-                     threshold: torch.Tensor,
-                     signed: bool,
+                     threshold: np.ndarray,
                      per_channel: bool,
+                     channel_axis: int = None
                      ):
             """
             Initialize the quantizer with the specified parameters.
@@ -47,20 +46,39 @@ if FOUND_TORCH:
                 per_channel: whether to use per-channel quantization
             """
 
-            super(WeightsSymmetricInferableQuantizer, self).__init__(num_bits=num_bits,
-                                                                     threshold=threshold,
-                                                                     signed=signed,
-                                                                     quantization_target=QuantizationTarget.Weights)
+            super(WeightsSymmetricInferableQuantizer, self).__init__(quantization_target=QuantizationTarget.Weights)
 
+            assert isinstance(threshold,
+                              np.ndarray), f'Threshold is expected to be numpy array, but is of type {type(threshold)}'
+            assert threshold.ndim == 1, f'Threshold is expected to be flatten, but of shape {threshold.shape}'
+
+            if per_channel:
+                assert channel_axis is not None, f'Channel axis is missing in per channel ' \
+                                                 f'quantization '
+                assert len(
+                    threshold) >= 1, f'In per-channel quantization threshold should ' \
+                                     f'be of length >= 1 but is {len(threshold)}'
+            else:
+                assert len(threshold) == 1, f'In per-tensor quantization threshold should ' \
+                                     f'be of length 1 but is {len(threshold)}'
+
+            # TODO: assert that channel axis is in valid range
+            self.num_bits = num_bits
+            self.threshold = threshold
             self.per_channel = per_channel
+            self.channel_axis = channel_axis
 
-            delta = self.threshold / np.power(2.0, num_bits - int(signed))
-            self.delta_tensor = to_torch_tensor(delta)
 
-            self.min_int = -int(self.signed) * (2 ** (num_bits - int(self.signed)))
-            self.max_int = (2 ** (num_bits - int(self.signed))) - 1
+            scales = self.threshold / np.power(2.0, num_bits - 1)
 
-        def __call__(self, inputs: torch.Tensor):
+            self.scales = to_torch_tensor(scales).to(get_working_device())
+            self.zero_points = torch.zeros(len(threshold), dtype=torch.int32).to(get_working_device())
+
+            # Integers. Min and max quantiation domain - here, we always use signed quantization
+            self.min_quantized_domain = -2 ** (self.num_bits - 1)
+            self.max_quantized_domain = 2 ** (self.num_bits - 1) - 1
+
+        def __call__(self, inputs: torch.Tensor) -> torch.Tensor:
             """
             Quantize the given inputs using the quantizer parameters.
 
@@ -71,10 +89,33 @@ if FOUND_TORCH:
                 quantized tensor.
             """
             inputs.requires_grad = False
-            w0 = torch.round(torch.div(inputs, self.delta_tensor))
-            w1 = torch.clip(w0, min=self.min_int, max=self.max_int)
-            w_q = self.delta_tensor * w1
-            return w_q
+            if self.per_channel:
+                return torch.fake_quantize_per_channel_affine(inputs,
+                                                              self.scales,
+                                                              self.zero_points,
+                                                              axis=self.channel_axis,
+                                                              quant_min=self.min_quantized_domain,
+                                                              quant_max=self.max_quantized_domain)
+            return torch.fake_quantize_per_tensor_affine(inputs,
+                                                          self.scales,
+                                                          self.zero_points,
+                                                          quant_min=self.min_quantized_domain,
+                                                          quant_max=self.max_quantized_domain)
+                # return torch.quantize_per_channel(inputs,
+                #                                   self.scales,
+                #                                   self.zero_points,
+                #                                   axis=self.channel_axis,
+                #                                   dtype=self.quantization_dtype)
+            # return torch.quantize_per_tensor(inputs,
+            #                                  self.scales,
+            #                                  self.zero_points,
+            #                                  self.quantization_dtype)
+
+
+            # w0 = torch.round(torch.div(inputs, self.delta_tensor))
+            # w1 = torch.clip(w0, min=self.min_int, max=self.max_int)
+            # w_q = self.delta_tensor * w1
+            # return w_q
 
 
 

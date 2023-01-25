@@ -12,28 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 
 if FOUND_TORCH:
     import torch
     from model_compression_toolkit.quantizers_infrastructure.pytorch.quantizer_utils import \
-        get_activation_symmetric_quantization_range_and_scale
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers \
-        .base_symmetric_inferable_quantizer import \
-        BaseSymmetricInferableQuantizer
+    get_activation_symmetric_quantization_range_and_scale, to_torch_tensor
+    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers import BasePyTorchInferableQuantizer
 
 
-    class ActivationSymmetricInferableQuantizer(BaseSymmetricInferableQuantizer):
+    class ActivationSymmetricInferableQuantizer(BasePyTorchInferableQuantizer):
         """
         Class for quantizing activations using a symmetric quantizer
         """
 
         def __init__(self,
                      num_bits: int,
-                     threshold: float,
+                     threshold: np.ndarray,
                      signed: bool):
             """
             Initialize the quantizer with the specified parameters.
@@ -44,17 +42,22 @@ if FOUND_TORCH:
                 signed: whether or not to use signed quantization
             """
 
-            super(ActivationSymmetricInferableQuantizer, self).__init__(num_bits=num_bits,
-                                                                        threshold=threshold,
-                                                                        signed=signed,
-                                                                        quantization_target=QuantizationTarget.Activation)
+            super(ActivationSymmetricInferableQuantizer, self).__init__(quantization_target=QuantizationTarget.Activation)
+            assert isinstance(threshold,
+                              np.ndarray), f'Threshold is expected to be numpy array, but is of type {type(threshold)}'
+            assert threshold.ndim == 1, f'Threshold is expected to be flatten, but of shape {threshold.shape}'
 
-            self.min_range, self.max_range, self.scale = get_activation_symmetric_quantization_range_and_scale(
+            assert len(threshold)==1, f'For activation, quantization per channel is not supported and threshold should be of length 1 but is {len(threshold)}'
+            threshold = threshold[0]
+
+            self.min_quantized_domain, self.max_quantized_domain, self.scales = get_activation_symmetric_quantization_range_and_scale(
                 activation_is_signed=signed,
                 activation_n_bits=num_bits,
                 activation_threshold=threshold)
 
-            self.zero_point = 0
+            # self.scales = to_torch_tensor(self.scales)
+            # assert self.scales.dim()==1
+            self.zero_points = 0 #torch.Tensor([0]).int()
 
         def __call__(self, inputs: torch.Tensor):
             """
@@ -66,11 +69,17 @@ if FOUND_TORCH:
             Returns:
                 quantized tensor.
             """
+
+            # self.scales = self.scales.to(inputs.device)
+            # self.zero_points = self.zero_points.to(inputs.device)
+            # print('inputs.device : ', inputs.device)
+            # print('scales.device : ', self.scales.device)
+            # print('zero_points.device : ', self.zero_points.device)
             return torch.fake_quantize_per_tensor_affine(inputs,
-                                                         scale=self.scale,
-                                                         zero_point=self.zero_point,
-                                                         quant_min=self.min_range,
-                                                         quant_max=self.max_range)
+                                                         scale=self.scales,
+                                                         zero_point=self.zero_points,
+                                                         quant_min=self.min_quantized_domain,
+                                                         quant_max=self.max_quantized_domain)
 
 else:
     class ActivationSymmetricInferableQuantizer:
