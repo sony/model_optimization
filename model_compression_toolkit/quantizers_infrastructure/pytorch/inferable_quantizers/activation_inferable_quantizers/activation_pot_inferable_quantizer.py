@@ -17,10 +17,11 @@ import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 
-
 if FOUND_TORCH:
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.activation_inferable_quantizers.activation_symmetric_inferable_quantizer import \
+    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers\
+        .activation_inferable_quantizers.activation_symmetric_inferable_quantizer import \
         ActivationSymmetricInferableQuantizer
+
 
     class ActivationPOTInferableQuantizer(ActivationSymmetricInferableQuantizer):
         """
@@ -46,12 +47,6 @@ if FOUND_TORCH:
 
             is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in threshold.flatten()])
             assert is_threshold_pot, f'Expected threshold to be power of 2 but is {threshold}'
-
-
-
-
-
-
 
 
 else:

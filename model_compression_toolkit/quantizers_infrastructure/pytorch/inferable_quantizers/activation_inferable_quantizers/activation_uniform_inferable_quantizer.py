@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers \
+    .base_uniform_inferable_quantizer import \
+    BaseUniformInferableQuantizer
 
 if FOUND_TORCH:
     import torch
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers\
-        .base_uniform_inferable_quantizer import \
-        BaseUniformInferableQuantizer
 
 
     class ActivationUniformInferableQuantizer(BaseUniformInferableQuantizer):
@@ -30,8 +31,8 @@ if FOUND_TORCH:
 
         def __init__(self,
                      num_bits: int,
-                     min_range: torch.Tensor,
-                     max_range: torch.Tensor,
+                     min_range: np.ndarray,
+                     max_range: np.ndarray,
                      ):
             """
             Initialize the quantizer with the specified parameters.
@@ -41,17 +42,32 @@ if FOUND_TORCH:
                 min_range: min range for quantizing activations
                 max_range: max range for quantizing activations
             """
-            super(ActivationUniformInferableQuantizer, self).__init__(num_bits,
-                                                                      min_range,
-                                                                      max_range,
-                                                                      QuantizationTarget.Activation)
+            super(ActivationUniformInferableQuantizer, self).__init__(quantization_target=QuantizationTarget.Activation,
+                                                                      num_bits=num_bits,
+                                                                      min_range=min_range,
+                                                                      max_range=max_range)
+
+            assert isinstance(min_range,
+                              np.ndarray), f'min_range is expected to be numpy array, but is of type {type(min_range)}'
+            assert isinstance(max_range,
+                              np.ndarray), f'max_range is expected to be numpy array, but is of type {type(max_range)}'
+            assert min_range.ndim == 1, f'min_range is expected to be flatten, but of shape {min_range.shape}'
+            assert max_range.ndim == 1, f'max_range is expected to be flatten, but of shape {min_range.shape}'
+
+            assert len(
+                min_range) == 1, f'For activation, quantization per channel is not supported and min_range should be ' \
+                                 f'of length 1 but is {len(min_range)}'
+            assert len(
+                max_range) == 1, f'For activation, quantization per channel is not supported and max_range should be ' \
+                                 f'of length 1 but is {len(max_range)}'
+
+            # Activation is per-tensor thus we expect only a single min/max values
+            min_range = min_range[0]
+            max_range = max_range[0]
 
             # fixing quantization range to include 0
             a = 0 if min_range > 0 else min_range
             b = 0 if max_range < 0 else max_range
-
-            self.min_range = 0
-            self.max_range = 2 ** num_bits - 1
 
             self.scale = (b - a) / ((2 ** num_bits) - 1)
             self.zero_point = -int(a / self.scale)  # zp has to be positive, and a <=0, so we multiply by -1
@@ -69,8 +85,8 @@ if FOUND_TORCH:
             return torch.fake_quantize_per_tensor_affine(inputs,
                                                          scale=self.scale,
                                                          zero_point=self.zero_point,
-                                                         quant_min=self.min_range,
-                                                         quant_max=self.max_range)
+                                                         quant_min=self.min_quantized_domain,
+                                                         quant_max=self.max_quantized_domain)
 
 
 else:

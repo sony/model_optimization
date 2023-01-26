@@ -18,8 +18,10 @@ import numpy as np
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 
 if FOUND_TORCH:
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.weights_inferable_quantizers.weights_symmetric_inferable_quantizer import \
+    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers\
+        .weights_inferable_quantizers.weights_symmetric_inferable_quantizer import \
         WeightsSymmetricInferableQuantizer
+
 
     class WeightsPOTInferableQuantizer(WeightsSymmetricInferableQuantizer):
         """
@@ -39,16 +41,17 @@ if FOUND_TORCH:
                 num_bits: number of bits to use for quantization
                 threshold: threshold for quantizing activations
                 per_channel: whether to use per-channel quantization
+                channel_axis: Axis of input to apply per-channel quantization on.
             """
-
-            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in threshold.flatten()])
-            assert is_threshold_pot, f'Expected threshold to be power of 2 but is {threshold}'
-
             # target of Weights quantization
             super(WeightsPOTInferableQuantizer, self).__init__(num_bits=num_bits,
                                                                threshold=threshold,
                                                                per_channel=per_channel,
                                                                channel_axis=channel_axis)
+
+            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in threshold.flatten()])
+            assert is_threshold_pot, f'Expected threshold to be power of 2 but is {threshold}'
+
 
 
 

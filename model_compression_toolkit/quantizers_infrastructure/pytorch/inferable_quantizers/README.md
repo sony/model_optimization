@@ -1,7 +1,8 @@
 ## Introduction
 
-PyTorch inferable quantizers are used for inference only. The inferable quantizer should contain all quantization information needed for quantizing a PyTorch tensor.
-The quantization of the tensor can be done by calling the quantizer while passing the unquantized tensor.
+PyTorch inferable quantizers are used for inference only. The inferable quantizer should contain all quantization
+information needed for quantizing a PyTorch tensor. The quantization of the tensor can be done by calling the quantizer
+while passing the unquantized tensor.
 
 ## Implemented PyTorch Inferable Quantizers
 
@@ -13,7 +14,8 @@ Several PyTorch inferable quantizers were implemented for activation quantizatio
 
 [ActivationUniformInferableQuantizer](activation_inferable_quantizers/activation_uniform_inferable_quantizer.py)
 
-Each of them should be used according to the quantization method of the quantizer (power-of-two, symmetric and uniform quantization respectively).
+Each of them should be used according to the quantization method of the quantizer (power-of-two, symmetric and uniform
+quantization respectively).
 
 Similarly, several PyTorch inferable quantizers were implemented for weights quantization:
 
@@ -23,7 +25,8 @@ Similarly, several PyTorch inferable quantizers were implemented for weights qua
 
 [WeightsUniformInferableQuantizer](weights_inferable_quantizers/weights_uniform_inferable_quantizer.py)
 
-Each of them should be used according to the quantization method of the quantizer (power-of-two, symmetric and uniform quantization respectively).
+Each of them should be used according to the quantization method of the quantizer (power-of-two, symmetric and uniform
+quantization respectively).
 
 ## Usage Example
 

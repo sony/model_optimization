@@ -12,28 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers \
-    .base_pytorch_inferable_quantizer import \
-    BasePyTorchInferableQuantizer
-
 from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.activation_inferable_quantizers \
     .activation_pot_inferable_quantizer import \
     ActivationPOTInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.activation_inferable_quantizers \
     .activation_symmetric_inferable_quantizer import \
     ActivationSymmetricInferableQuantizer
-# from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.activation_inferable_quantizers \
-#     .activation_uniform_inferable_quantizer import \
-#     ActivationUniformInferableQuantizer
-
-
+from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.activation_inferable_quantizers \
+    .activation_uniform_inferable_quantizer import \
+    ActivationUniformInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers \
+    .base_pytorch_inferable_quantizer import \
+    BasePyTorchInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.weights_inferable_quantizers \
     .weights_pot_inferable_quantizer import \
     WeightsPOTInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.weights_inferable_quantizers \
     .weights_symmetric_inferable_quantizer import \
     WeightsSymmetricInferableQuantizer
-# from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.weights_inferable_quantizers \
-#     .weights_uniform_inferable_quantizer import \
-#     WeightsUniformInferableQuantizer
-
+from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.weights_inferable_quantizers \
+    .weights_uniform_inferable_quantizer import \
+    WeightsUniformInferableQuantizer
