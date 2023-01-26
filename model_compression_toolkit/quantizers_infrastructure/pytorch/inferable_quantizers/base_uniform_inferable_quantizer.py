@@ -35,6 +35,8 @@ if FOUND_TORCH:
 
             Args:
                 num_bits: number of bits to use for quantization
+                min_range: min quantization range for quantizing
+                max_range: max quantization range for quantizing
                 quantization_target: An enum which selects the quantizer tensor type: activation or weights.
             """
 
@@ -46,11 +48,9 @@ if FOUND_TORCH:
             self.max_quantized_domain = 2 ** num_bits - 1
 
 
-
-
 else:
-    class BaseSymmetricInferableQuantizer:
+    class BaseUniformInferableQuantizer:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing torch is mandatory '
-                            'when using BaseSymmetricInferableQuantizer. '
+                            'when using BaseUniformInferableQuantizer. '
                             'Could not find torch package.')
