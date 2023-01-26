@@ -67,9 +67,6 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                  loss=multiple_tensors_mse_loss),
                                GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
                                                  optimizer_rest=tf.keras.optimizers.Adam(), train_bias=True,
-                                                 quantization_parameters_learning=True, loss=multiple_tensors_mse_loss),
-                               GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
-                                                 optimizer_rest=tf.keras.optimizers.Adam(), train_bias=True,
                                                  loss=multiple_tensors_mse_loss),
                                ]
 
@@ -89,6 +86,17 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                                    representative_data_gen=random_datagen_experimental,
                                                                    core_config=cc,
                                                                    gptq_config=gptq_config)
+
+    def test_get_keras_unsupported_configs_raises(self):
+
+        with self.assertRaises(Exception) as e:
+            GradientPTQConfig(1,
+                              optimizer=tf.keras.optimizers.Adam(),
+                              optimizer_rest=tf.keras.optimizers.Adam(),
+                              train_bias=True,
+                              quantization_parameters_learning=True,
+                              loss=multiple_tensors_mse_loss)
+        self.assertEqual('Quantization parameters learning is not supported with STE rounding.', str(e.exception))
 
 
 if __name__ == '__main__':
