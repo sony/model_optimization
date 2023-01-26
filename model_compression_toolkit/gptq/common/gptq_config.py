@@ -16,11 +16,7 @@ from enum import Enum
 from typing import Callable, Any, Dict
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core import common
-
-N_CYCLES = 4
-MIM_TEMP = 0.5
-MAX_TEMP = 1.0
-GAMMA_TEMPERATURE = 0.1
+from model_compression_toolkit.gptq.common.gptq_quantizer_config import GPTQQuantizerConfig, SoftQuantizerConfig
 
 
 class RoundingType(Enum):
@@ -29,6 +25,7 @@ class RoundingType(Enum):
     0. STRAIGHT-THROUGH ESTIMATOR
     """
     STE = 0
+    SoftQuantizer = 1
 
 
 class GradientPTQConfig:
@@ -44,8 +41,7 @@ class GradientPTQConfig:
                  log_function: Callable = None,
                  train_bias: bool = True,
                  quantization_parameters_learning: bool = False,
-                 rounding_type: RoundingType = RoundingType.STE,
-                 rho: float = 0.01,
+                 rounding_type: RoundingType = RoundingType.SoftQuantizer,
                  lsb_change_per_bit_width: dict = DefaultDict({}, lambda: 1),
                  eps: float = 1e-6,
                  use_jac_based_weights: bool = True,
@@ -54,7 +50,8 @@ class GradientPTQConfig:
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
                  log_norm: bool = True,
-                 weights_n_iter: int = 50):
+                 weights_n_iter: int = 50,
+                 quantizer_config: GPTQQuantizerConfig = SoftQuantizerConfig()):
         """
         Initialize a GradientPTQConfig.
 
@@ -78,6 +75,7 @@ class GradientPTQConfig:
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
             log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
             weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
+            quantizer_config (GPTQQuantizerConfig): A class the contains the quantizer specific config.
 
         """
         self.n_iter = n_iter
@@ -102,6 +100,30 @@ class GradientPTQConfig:
         self.log_norm = log_norm
         self.weights_n_iter = weights_n_iter
 
+        if self._verify_quantizer_config(quantizer_config, rounding_type):
+            self.quantizer_config = quantizer_config
+        else:
+            common.Logger.error(f"Quantizer config of type {type(quantizer_config)} "
+                                f"is not suitable for rounding type {rounding_type}")
+
+
+    def _verify_quantizer_config(self, quantizer_config, rounding_type) -> bool:
+        """
+        Verifies that the given quantizer config is matching to the given rounding type.
+
+        Args:
+            quantizer_config: A quantizer config.
+            rounding_type: A RoundingType.
+
+        Returns: True if the quantizer config matches the rounding type, False otherwise.
+
+        """
+        if rounding_type == RoundingType.SoftQuantizer:
+            return isinstance(quantizer_config, SoftQuantizerConfig)
+
+        return True
+
+
 
 class GradientPTQConfigV2(GradientPTQConfig):
     """
@@ -124,7 +146,8 @@ class GradientPTQConfigV2(GradientPTQConfig):
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
                  log_norm: bool = True,
-                 weights_n_iter: int = 50):
+                 weights_n_iter: int = 50,
+                 quantizer_config: GPTQQuantizerConfig = SoftQuantizerConfig()):
         """
         Initialize a GradientPTQConfigV2.
 
@@ -148,6 +171,7 @@ class GradientPTQConfigV2(GradientPTQConfig):
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
             log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
             weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
+            quantizer_config (Any): A class the contains the quantizer specific config.
 
         """
 
@@ -167,7 +191,8 @@ class GradientPTQConfigV2(GradientPTQConfig):
                          optimizer_quantization_parameter=optimizer_quantization_parameter,
                          optimizer_bias=optimizer_bias,
                          log_norm=log_norm,
-                         weights_n_iter=weights_n_iter)
+                         weights_n_iter=weights_n_iter,
+                         quantizer_config=quantizer_config)
         self.n_epochs = n_epochs
 
     @classmethod
