@@ -57,12 +57,9 @@ class FakelyQuantTorchScriptPyTorchExporter(BasePyTorchExporter):
             Fake-quant PyTorch model.
         """
         # assert self.is_layer_exportable_fn(layer), f'Layer {layer.name} is not exportable.'
-        try:
-            torch_traced = torch.jit.trace(self.model,
-                                           to_torch_tensor(next(self.repr_dataset())),
-                                           check_trace=True)
-        except Exception as e:
-            print(e)
+        torch_traced = torch.jit.trace(self.model,
+                                       to_torch_tensor(next(self.repr_dataset())),
+                                       check_trace=True)
         self.exported_model = torch.jit.script(torch_traced)
         Logger.info(f"Exporting PyTorch torch script Model: {self.save_model_path}")
         torch.jit.save(self.exported_model, self.save_model_path)
