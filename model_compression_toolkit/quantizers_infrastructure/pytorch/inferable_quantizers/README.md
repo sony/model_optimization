@@ -31,7 +31,8 @@ quantization respectively).
 ## Usage Example
 
 ```python
-# Import PyTorch and quantizers_infrastructure
+# Import PyTorch, Numpy and quantizers_infrastructure
+import numpy as np
 import torch
 
 from model_compression_toolkit import quantizers_infrastructure as qi
@@ -40,14 +41,14 @@ from model_compression_toolkit import quantizers_infrastructure as qi
 # has the following properties:
 # * It uses 8 bits for quantization.
 # * It quantizes the tensor per-channel.
-# Since it is a symmetric quantizer it needs to have the thresholds and whether it is signed or not.
+# Since it is a symmetric quantizer it needs to have the thresholds.
 # Thus, the quantizer also:
 # * Uses three thresholds (since it has 3 output channels and the quantization is per-channel): 1, 2 and 4.
-# * Quantizes the tensor using signed quantization range. 
+# Notice that for weights we always use signed quantization.
 quantizer = qi.pytorch_inferable_quantizers.WeightsSymmetricInferableQuantizer(num_bits=8,
                                                                                per_channel=True,
-                                                                               threshold=torch.Tensor([2, 4, 1]),
-                                                                               signed=True)
+                                                                               threshold=np.asarray([2, 4, 1]),
+                                                                               channel_axis=3)
 
 # Get working device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
