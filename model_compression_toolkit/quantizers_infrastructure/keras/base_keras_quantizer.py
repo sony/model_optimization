@@ -71,7 +71,7 @@ if FOUND_TF:
 else:
     class BaseKerasTrainableQuantizer(BaseTrainableQuantizer):
         def __init__(self,
-                     quantization_config: BaseQuantizerConfig,
+                     quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig],
                      quantization_target: QuantizationTarget,
                      quantization_method: List[QuantizationMethod]):
 

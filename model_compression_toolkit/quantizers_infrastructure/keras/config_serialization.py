@@ -39,11 +39,11 @@ def transform_enum(v: Any):
 
 def config_serialization(quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
     """
-    This function change BaseQuantizerConfig to a dictionary
+    This function change trainable quantizer config to a dictionary
     Args:
-        quantization_config: A BaseQuantizerConfig for serialization
+        quantization_config: A TrainableQuantizerWeightsConfig or TrainableQuantizerActivationConfig for serialization
 
-    Returns: A config dictionary of BaseQuantizerConfig
+    Returns: A config dictionary of quantizer config
 
     """
     config_data = {k: transform_enum(v) for k, v in quantization_config.__dict__.items()}
@@ -54,11 +54,11 @@ def config_serialization(quantization_config: Union[TrainableQuantizerWeightsCon
 
 def config_deserialization(in_config: dict) -> Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]:
     """
-    This function change config dictionary to it BaseQuantizerConfig.
+    This function change config dictionary to trainable quantizer config.
     Args:
-        in_config:  A config dictionary of BaseQuantizerConfig
+        in_config:  A config dictionary of trainable quantizer config.
 
-    Returns: A BaseQuantizerConfig
+    Returns: Trainable quantizer configuration object - TrainableQuantizerWeightsConfig or TrainableQuantizerActivationConfig
 
     """
     in_config = copy.deepcopy(in_config)
