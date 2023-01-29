@@ -1,10 +1,16 @@
 # Quantizers Infrastructure (QI)
 
-Quantizers infrastructure is a library that provides quantization modules for hardware-oriented model optimization tools.
+Quantizers infrastructure is a module containing quantization abstraction and quantizers for hardware-oriented model optimization tools.
 
-The quantization modules (quantizers) can be used for emulating inference-time quantization (inferable-quantizers) and for optimization of model quantization during training (trainable quantizers).
+It provides the required abstraction for emulating inference-time quantization and optimization methods such as quantization aware training. 
 
-## Library structure
+## Module structure
+
+<img src="../../docsrc/images/quantization_infra.png" width="700">
+
+To create quantization abstraction in a model,
+we replace each layer with a `quantization wrapper` - a more complex layer, which includes the original layer, weights quantizer block, and activations quantizer block. A quantization dispatcher is attached to each  `quantization wrapper` to set the quantizer types.
+
 
 ### Quantizer
 
