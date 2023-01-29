@@ -55,20 +55,24 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
 
 class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, quant_method=QuantizationMethod.SYMMETRIC, rounding_type=RoundingType.STE,
-                 quantizer_config=GPTQQuantizerConfig()):
+                 quantizer_config=GPTQQuantizerConfig(), per_channel=True):
         super().__init__(unit_test,
                          input_shape=(1, 16, 16, 3))
 
         self.quant_method = quant_method
         self.rounding_type = rounding_type
         self.quantizer_config = quantizer_config
+        self.per_channel = per_channel
 
     def get_tpc(self):
         return get_tpc("gptq_test", 16, 16, self.quant_method)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
-                                      True, False, True)
+        return mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
+                                      weights_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
+                                      relu_bound_to_power_of_2=True,
+                                      weights_bias_correction=False,
+                                      weights_per_channel_threshold=self.per_channel)
 
     def get_gptq_config(self):
         return GradientPTQConfig(5,

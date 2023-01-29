@@ -99,7 +99,7 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
         self.quantization_parameter_learning = quantization_parameter_learning
         self.quantization_axis = quantization_axis
         self.threshold_shape = np.asarray(threshold_values).shape
-        self.threshold_values = np.reshape(np.asarray(threshold_values), [-1]) if self.per_axis else float(
+        self.threshold_values = np.reshape(np.asarray(threshold_values), [-1]) if self.per_axis else np.asarray(
             threshold_values)
         self.k_threshold = len(self.threshold_values) if self.per_axis else 1
 

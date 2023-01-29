@@ -553,6 +553,12 @@ class FeatureNetworkTest(unittest.TestCase):
                                                     experimental_exporter=experimental_exporter)
         GradientPTQWeightedLossTest(self).run_test(experimental_facade=experimental_facade,
                                                    experimental_exporter=experimental_exporter)
+        GradientPTQTest(self,
+                        rounding_type=RoundingType.SoftQuantizer,
+                        quantizer_config=SoftQuantizerConfig(),
+                        per_channel=False) \
+            .run_test(experimental_facade=experimental_facade,
+                      experimental_exporter=experimental_exporter)
         GradientPTQNoTempLearningTest(self,
                                       rounding_type=RoundingType.SoftQuantizer,
                                       quantizer_config=SoftQuantizerConfig())\
