@@ -12,12 +12,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-# Inferable pytorch quantizer signature parameters:
-NUM_BITS = 'num_bits'
-SIGNED = 'signed'
-THRESHOLD = 'threshold'
-PER_CHANNEL = 'per_channel'
-MIN_RANGE = 'min_range'
-MAX_RANGE = 'max_range'
-CHANNEL_AXIS = 'channel_axis'
