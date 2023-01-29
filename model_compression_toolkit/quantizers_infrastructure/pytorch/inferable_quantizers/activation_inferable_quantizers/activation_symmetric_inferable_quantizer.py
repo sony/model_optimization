@@ -48,7 +48,7 @@ if FOUND_TORCH:
                 threshold=threshold,
                 signed=signed)
 
-            # Activation support only per-tensor quantization
+            # Activation supports only per-tensor quantization
             assert len(
                 self.scales) == 1, f'For activation, quantization per channel is not supported and threshold should ' \
                                    f'be of length 1 but is {len(threshold)}'

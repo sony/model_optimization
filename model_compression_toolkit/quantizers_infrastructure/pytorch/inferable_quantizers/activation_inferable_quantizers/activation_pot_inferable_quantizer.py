@@ -45,7 +45,7 @@ if FOUND_TORCH:
                                                                   signed=signed,
                                                                   threshold=threshold)
 
-            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in threshold.flatten()])
+            is_threshold_pot = np.all(np.round(np.log2(threshold.flatten()))==np.log2(threshold.flatten()))
             assert is_threshold_pot, f'Expected threshold to be power of 2 but is {threshold}'
 
 

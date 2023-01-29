@@ -23,7 +23,7 @@ from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_q
 if FOUND_TORCH:
     import torch
     from model_compression_toolkit.quantizers_infrastructure.pytorch.quantizer_utils import get_working_device, \
-        fix_range_to_include_zero
+    fix_range_to_include_zero, to_torch_tensor
     from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers \
         .base_uniform_inferable_quantizer import \
         BaseUniformInferableQuantizer
@@ -56,11 +56,15 @@ if FOUND_TORCH:
                                                                    min_range=min_range,
                                                                    max_range=max_range)
 
+            # Align mix/max numpy arrays so they are torch Tensors on the working device
+            min_range = to_torch_tensor(min_range).to(get_working_device())
+            max_range = to_torch_tensor(max_range).to(get_working_device())
+
             self.per_channel = per_channel
             self.channel_axis = channel_axis
 
-            min_range, max_range = fix_range_to_include_zero(torch.Tensor(min_range),
-                                                             torch.Tensor(max_range),
+            min_range, max_range = fix_range_to_include_zero(min_range,
+                                                             max_range,
                                                              num_bits)
             # Compute the step size of quantized values.
             self.scales = (max_range - min_range) / (2 ** num_bits - 1)

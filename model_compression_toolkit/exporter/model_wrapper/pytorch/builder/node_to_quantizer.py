@@ -48,15 +48,15 @@ def get_weights_inferable_quantizer_kwargs(node: BaseNode) -> Dict[str, Any]:
     if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                QuantizationMethod.SYMMETRIC]:
         return {qi_inferable_quantizers_constants.NUM_BITS: node_w_qc.weights_n_bits,
-                qi_inferable_quantizers_constants.THRESHOLD: node_w_qc.weights_quantization_params.get(THRESHOLD).flatten(),
+                qi_inferable_quantizers_constants.THRESHOLD: node_w_qc.weights_quantization_params[THRESHOLD].flatten(),
                 qi_inferable_quantizers_constants.PER_CHANNEL: node_w_qc.weights_per_channel_threshold,
                 qi_inferable_quantizers_constants.CHANNEL_AXIS: node_w_qc.weights_channels_axis}
 
     elif quantization_method in [QuantizationMethod.UNIFORM]:
         return {qi_inferable_quantizers_constants.NUM_BITS: node_w_qc.weights_n_bits,
                 qi_inferable_quantizers_constants.PER_CHANNEL: node_w_qc.weights_per_channel_threshold,
-                qi_inferable_quantizers_constants.MIN_RANGE: node_w_qc.weights_quantization_params.get(RANGE_MIN).flatten(),
-                qi_inferable_quantizers_constants.MAX_RANGE: node_w_qc.weights_quantization_params.get(RANGE_MAX).flatten(),
+                qi_inferable_quantizers_constants.MIN_RANGE: node_w_qc.weights_quantization_params[RANGE_MIN].flatten(),
+                qi_inferable_quantizers_constants.MAX_RANGE: node_w_qc.weights_quantization_params[RANGE_MAX].flatten(),
                 qi_inferable_quantizers_constants.CHANNEL_AXIS: node_w_qc.weights_channels_axis}
     else:
         Logger.critical(f'Not supported quantization method for weights inferable quantizers.')  # pragma: no cover
@@ -78,13 +78,13 @@ def get_activation_inferable_quantizer_kwargs(node: BaseNode) -> Dict[str, Any]:
     if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                QuantizationMethod.SYMMETRIC]:
         return {qi_inferable_quantizers_constants.NUM_BITS: node_qc.activation_n_bits,
-                qi_inferable_quantizers_constants.THRESHOLD: np.asarray([node_qc.activation_quantization_params.get(THRESHOLD)]),
+                qi_inferable_quantizers_constants.THRESHOLD: np.asarray([node_qc.activation_quantization_params[THRESHOLD]]),
                 qi_inferable_quantizers_constants.SIGNED: node_qc.activation_quantization_params.get(SIGNED)}
 
     elif quantization_method in [QuantizationMethod.UNIFORM]:
         return {qi_inferable_quantizers_constants.NUM_BITS: node_qc.activation_n_bits,
-                qi_inferable_quantizers_constants.MIN_RANGE: np.asarray([node_qc.activation_quantization_params.get(RANGE_MIN)]),
-                qi_inferable_quantizers_constants.MAX_RANGE: np.asarray([node_qc.activation_quantization_params.get(RANGE_MAX)])}
+                qi_inferable_quantizers_constants.MIN_RANGE: np.asarray([node_qc.activation_quantization_params[RANGE_MIN]]),
+                qi_inferable_quantizers_constants.MAX_RANGE: np.asarray([node_qc.activation_quantization_params[RANGE_MAX]])}
     else:
         Logger.critical(f'Not supported quantization method for inferable quantizers.')  # pragma: no cover
 
