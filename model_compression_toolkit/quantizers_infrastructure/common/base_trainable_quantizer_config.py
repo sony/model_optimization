@@ -17,13 +17,7 @@ from typing import Dict
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 
-class BaseQuantizerConfig(ABC):
-    """
-    An abstract class that should be implemented when supporting a new quantizer configuration
-    """
-
-
-class TrainableQuantizerActivationConfig(BaseQuantizerConfig):
+class TrainableQuantizerActivationConfig:
 
     def __init__(self,
                  activation_quantization_method: QuantizationMethod,
@@ -39,7 +33,7 @@ class TrainableQuantizerActivationConfig(BaseQuantizerConfig):
             activation_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for activation quantization.
             activation_n_bits (int): Number of bits to quantize the activations.
             activation_quantization_params (Dict): Dictionary that contains activation quantization params.
-            enable_activation_quantization (bool): Whether to quantize the model activations or not.
+            enable_activation_quantization (bool): Whether to quantize the layer's activations or not.
             min_threshold (float): Minimum threshold to use during thresholds selection.
         """
         self.activation_quantization_method = activation_quantization_method
@@ -49,7 +43,7 @@ class TrainableQuantizerActivationConfig(BaseQuantizerConfig):
         self.min_threshold = min_threshold
 
 
-class TrainableQuantizerWeightsConfig(BaseQuantizerConfig):
+class TrainableQuantizerWeightsConfig:
     def __init__(self,
                  weights_quantization_method: QuantizationMethod,
                  weights_n_bits: int,
@@ -66,7 +60,7 @@ class TrainableQuantizerWeightsConfig(BaseQuantizerConfig):
             weights_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for weights quantization.
             weights_n_bits (int): Number of bits to quantize the coefficients.
             weights_quantization_params (Dict): Dictionary that contains weights quantization params.
-            enable_weights_quantization (bool): Whether to quantize the model weights or not.
+            enable_weights_quantization (bool): Whether to quantize the layer's weights or not.
             weights_channels_axis (int): Axis to quantize a node's kernel when quantizing per-channel.
             weights_per_channel_threshold (bool): Whether to quantize the weights per-channel or not (per-tensor).
             min_threshold (float): Minimum threshold to use during thresholds selection.

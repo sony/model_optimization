@@ -118,7 +118,7 @@ class BaseKerasInfrastructureTest:
                                                weights_n_bits=9,
                                                weights_quantization_params={},
                                                enable_weights_quantization=True,
-                                               weights_channels_axis=-1,
+                                               weights_channels_axis=3,
                                                weights_per_channel_threshold=True,
                                                min_threshold=0)
 

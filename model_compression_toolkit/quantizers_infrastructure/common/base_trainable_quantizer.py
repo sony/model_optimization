@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import List
+from typing import List, Union
 from inspect import signature
 
 from model_compression_toolkit.core import common
@@ -21,13 +21,13 @@ from model_compression_toolkit.core.common.target_platform import QuantizationMe
 
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer, \
     QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import BaseQuantizerConfig, \
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
     TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig
 
 
 class BaseTrainableQuantizer(BaseInferableQuantizer):
     def __init__(self,
-                 quantization_config: BaseQuantizerConfig,
+                 quantization_config: Union[TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig],
                  quantization_target: QuantizationTarget,
                  quantization_method: List[QuantizationMethod]):
         """
@@ -42,8 +42,8 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         # verify the quantizer class that inherits this class only has a config argument and key-word arguments
         for i, (k, v) in enumerate(self.get_sig().parameters.items()):
             if i == 0:
-                if not issubclass(v.annotation, BaseQuantizerConfig):
-                    common.Logger.error(f"First parameter must inherit from BaseQuantizerConfig")
+                if not issubclass(v.annotation, (TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig)):
+                    common.Logger.error(f"First parameter must be instance of TrainableQuantizerWeightsConfig or TrainableQuantizerActivationConfig")
             elif v.default is v.empty:
                 common.Logger.error(f"Parameter {k} doesn't have a default value")
 

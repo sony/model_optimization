@@ -14,16 +14,13 @@
 # ==============================================================================
 import copy
 
-from typing import Any
+from typing import Any, Union
 from enum import Enum
 
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import BaseQuantizerConfig, \
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
     TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig
-from model_compression_toolkit.quantizers_infrastructure.common.constants import IS_WEIGHTS, IS_ACTIVATIONS, \
-    WEIGHTS_QUANTIZATION_METHOD, WEIGHTS_N_BITS, ENABLE_WEIGHTS_QUANTIZATION, WEIGHTS_QUANTIZATION_PARAMS, \
-    WEIGHTS_CHANNELS_AXIS, WEIGHTS_PER_CHANNEL_THRESHOLD, MIN_THRESHOLD, ACTIVATION_QUANTIZATION_METHOD, \
-    ACTIVATION_N_BITS, ACTIVATION_QUANTIZATION_PARAMS, ENABLE_ACTIVATION_QUANTIZATION
+from model_compression_toolkit.quantizers_infrastructure.common import constants as C
 
 
 def transform_enum(v: Any):
@@ -40,7 +37,7 @@ def transform_enum(v: Any):
     return v
 
 
-def config_serialization(quantization_config: BaseQuantizerConfig):
+def config_serialization(quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
     """
     This function change BaseQuantizerConfig to a dictionary
     Args:
@@ -50,12 +47,12 @@ def config_serialization(quantization_config: BaseQuantizerConfig):
 
     """
     config_data = {k: transform_enum(v) for k, v in quantization_config.__dict__.items()}
-    config_data[IS_WEIGHTS] = isinstance(quantization_config, TrainableQuantizerWeightsConfig)
-    config_data[IS_ACTIVATIONS] = isinstance(quantization_config, TrainableQuantizerActivationConfig)
+    config_data[C.IS_WEIGHTS] = isinstance(quantization_config, TrainableQuantizerWeightsConfig)
+    config_data[C.IS_ACTIVATIONS] = isinstance(quantization_config, TrainableQuantizerActivationConfig)
     return config_data
 
 
-def config_deserialization(in_config: dict) -> BaseQuantizerConfig:
+def config_deserialization(in_config: dict) -> Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]:
     """
     This function change config dictionary to it BaseQuantizerConfig.
     Args:
@@ -65,19 +62,19 @@ def config_deserialization(in_config: dict) -> BaseQuantizerConfig:
 
     """
     in_config = copy.deepcopy(in_config)
-    if in_config[IS_WEIGHTS]:
-        return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod(in_config[WEIGHTS_QUANTIZATION_METHOD]),
-                                               weights_n_bits=in_config[WEIGHTS_N_BITS],
-                                               weights_quantization_params=in_config[WEIGHTS_QUANTIZATION_PARAMS],
-                                               enable_weights_quantization=in_config[ENABLE_WEIGHTS_QUANTIZATION],
-                                               weights_channels_axis=in_config[WEIGHTS_CHANNELS_AXIS],
-                                               weights_per_channel_threshold=in_config[WEIGHTS_PER_CHANNEL_THRESHOLD],
-                                               min_threshold=in_config[MIN_THRESHOLD])
-    elif in_config[IS_ACTIVATIONS]:
-        return TrainableQuantizerActivationConfig(activation_quantization_method=QuantizationMethod(in_config[ACTIVATION_QUANTIZATION_METHOD]),
-                                                  activation_n_bits=in_config[ACTIVATION_N_BITS],
-                                                  activation_quantization_params=in_config[ACTIVATION_QUANTIZATION_PARAMS],
-                                                  enable_activation_quantization=in_config[ENABLE_ACTIVATION_QUANTIZATION],
-                                                  min_threshold=in_config[MIN_THRESHOLD])
+    if in_config[C.IS_WEIGHTS]:
+        return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod(in_config[C.WEIGHTS_QUANTIZATION_METHOD]),
+                                               weights_n_bits=in_config[C.WEIGHTS_N_BITS],
+                                               weights_quantization_params=in_config[C.WEIGHTS_QUANTIZATION_PARAMS],
+                                               enable_weights_quantization=in_config[C.ENABLE_WEIGHTS_QUANTIZATION],
+                                               weights_channels_axis=in_config[C.WEIGHTS_CHANNELS_AXIS],
+                                               weights_per_channel_threshold=in_config[C.WEIGHTS_PER_CHANNEL_THRESHOLD],
+                                               min_threshold=in_config[C.MIN_THRESHOLD])
+    elif in_config[C.IS_ACTIVATIONS]:
+        return TrainableQuantizerActivationConfig(activation_quantization_method=QuantizationMethod(in_config[C.ACTIVATION_QUANTIZATION_METHOD]),
+                                                  activation_n_bits=in_config[C.ACTIVATION_N_BITS],
+                                                  activation_quantization_params=in_config[C.ACTIVATION_QUANTIZATION_PARAMS],
+                                                  enable_activation_quantization=in_config[C.ENABLE_ACTIVATION_QUANTIZATION],
+                                                  min_threshold=in_config[C.MIN_THRESHOLD])
     else:
         raise NotImplemented

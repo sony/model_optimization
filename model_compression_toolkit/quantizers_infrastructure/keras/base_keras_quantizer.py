@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union
 
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import BaseQuantizerConfig
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, TrainableQuantizerWeightsConfig, \
+    TrainableQuantizerActivationConfig
 
 if FOUND_TF:
     QUANTIZATION_CONFIG = 'quantization_config'
@@ -30,7 +30,7 @@ if FOUND_TF:
 
     class BaseKerasTrainableQuantizer(BaseTrainableQuantizer):
         def __init__(self,
-                     quantization_config: BaseQuantizerConfig,
+                     quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig],
                      quantization_target: QuantizationTarget,
                      quantization_method: List[QuantizationMethod]):
             """

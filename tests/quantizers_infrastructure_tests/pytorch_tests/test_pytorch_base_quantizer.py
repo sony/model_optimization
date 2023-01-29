@@ -33,7 +33,7 @@ class TestPytorchBaseWeightsQuantizer(BasePytorchInfrastructureTest):
                                                weights_n_bits=8,
                                                weights_quantization_params={},
                                                enable_weights_quantization=True,
-                                               weights_channels_axis=-1,
+                                               weights_channels_axis=0,
                                                weights_per_channel_threshold=True,
                                                min_threshold=0)
 

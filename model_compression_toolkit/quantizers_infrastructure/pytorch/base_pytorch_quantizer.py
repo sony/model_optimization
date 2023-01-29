@@ -12,21 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict, Any, List
+from typing import Union, List
 
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import BaseQuantizerConfig
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, TrainableQuantizerWeightsConfig, \
+    TrainableQuantizerActivationConfig
 
 if FOUND_TORCH:
 
     class BasePytorchTrainableQuantizer(BaseTrainableQuantizer):
         def __init__(self,
-                     quantization_config: BaseQuantizerConfig,
+                     quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig],
                      quantization_target: QuantizationTarget,
                      quantization_method: List[QuantizationMethod]):
             """
@@ -42,7 +42,9 @@ if FOUND_TORCH:
 
 else:
     class BasePytorchTrainableQuantizer(BaseTrainableQuantizer):
-        def __init__(self, quantization_config: BaseQuantizerConfig, quantization_target: QuantizationTarget,
+        def __init__(self,
+                     quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig],
+                     quantization_target: QuantizationTarget,
                      quantization_method: List[QuantizationMethod]):
             super().__init__(quantization_config, quantization_target, quantization_method)
             Logger.critical('Installing Pytorch is mandatory '
