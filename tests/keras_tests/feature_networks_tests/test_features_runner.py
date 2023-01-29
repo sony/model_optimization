@@ -542,6 +542,9 @@ class FeatureNetworkTest(unittest.TestCase):
         MultiInputsToNodeTest(self).run_test()
 
     def test_gptq(self, experimental_facade=False, experimental_exporter=False):
+        # This call removes the effect of @tf.function decoration and executes the decorated function eagerly, which
+        # enabled tracing for code coverage.
+        tf.config.run_functions_eagerly(True)
         GradientPTQTest(self).run_test(experimental_facade=experimental_facade,
                                        experimental_exporter=experimental_exporter)
         GradientPTQWeightsUpdateTest(self).run_test(experimental_facade=experimental_facade,
@@ -556,8 +559,8 @@ class FeatureNetworkTest(unittest.TestCase):
             .run_test(experimental_facade=experimental_facade,
                       experimental_exporter=experimental_exporter)
         GradientPTQWeightsUpdateTest(self,
-                                      rounding_type=RoundingType.SoftQuantizer,
-                                      quantizer_config=SoftQuantizerConfig()) \
+                                     rounding_type=RoundingType.SoftQuantizer,
+                                     quantizer_config=SoftQuantizerConfig()) \
             .run_test(experimental_facade=experimental_facade,
                       experimental_exporter=experimental_exporter)
         GradientPTQLearnRateZeroTest(self,
@@ -565,6 +568,7 @@ class FeatureNetworkTest(unittest.TestCase):
                                      quantizer_config=SoftQuantizerConfig()) \
             .run_test(experimental_facade=experimental_facade,
                       experimental_exporter=experimental_exporter)
+        tf.config.run_functions_eagerly(False)
 
     # TODO: reuven - new experimental facade needs to be tested regardless the exporter.
     # def test_gptq_new_exporter(self):

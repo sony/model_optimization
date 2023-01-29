@@ -284,7 +284,7 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
             aux_var = self.get_soft_targets()
 
             #####################################################
-            # Gumbel Softmax
+            # Soft Rounding
             #####################################################
             if training:
                 self.ar_iter.assign_add(1.0)

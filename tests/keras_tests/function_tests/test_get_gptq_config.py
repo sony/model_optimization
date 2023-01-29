@@ -62,6 +62,10 @@ def random_datagen_experimental():
 class TestGetGPTQConfig(unittest.TestCase):
 
     def test_get_keras_gptq_config(self):
+        # This call removes the effect of @tf.function decoration and executes the decorated function eagerly, which
+        # enabled tracing for code coverage.
+        tf.config.run_functions_eagerly(True)
+
         qc = QuantizationConfig(QuantizationErrorMethod.MSE,
                                 QuantizationErrorMethod.MSE,
                                 weights_bias_correction=False)  # disable bias correction when working with GPTQ
@@ -126,6 +130,8 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                                    core_config=cc,
                                                                    gptq_config=gptq_config,
                                                                    target_platform_capabilities=symmetric_weights_tpc)
+
+        tf.config.run_functions_eagerly(False)
 
     def test_get_keras_unsupported_configs_raises(self):
 
