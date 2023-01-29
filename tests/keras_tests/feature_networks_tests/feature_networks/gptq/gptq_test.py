@@ -22,6 +22,7 @@ from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig,
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.gptq.common.gptq_quantizer_config import GPTQQuantizerConfig
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -53,11 +54,14 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
 
 
 class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
-    def __init__(self, unit_test, quant_method=QuantizationMethod.SYMMETRIC):
+    def __init__(self, unit_test, quant_method=QuantizationMethod.SYMMETRIC, rounding_type=RoundingType.STE,
+                 quantizer_config=GPTQQuantizerConfig()):
         super().__init__(unit_test,
                          input_shape=(1, 16, 16, 3))
 
         self.quant_method = quant_method
+        self.rounding_type = rounding_type
+        self.quantizer_config = quantizer_config
 
     def get_tpc(self):
         return get_tpc("gptq_test", 16, 16, self.quant_method)
@@ -73,8 +77,9 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                                  optimizer_rest=tf.keras.optimizers.Adam(
                                      learning_rate=0.0001),
                                  loss=multiple_tensors_mse_loss,
-                                 rounding_type=RoundingType.STE,
-                                 train_bias=True)
+                                 rounding_type=self.rounding_type,
+                                 train_bias=True,
+                                 quantizer_config=self.quantizer_config)
 
     def create_networks(self):
         in_shape = self.get_input_shapes()[0][1:]
@@ -149,8 +154,9 @@ class GradientPTQNoTempLearningTest(GradientPTQBaseTest):
                                  optimizer_rest=tf.keras.optimizers.Adam(
                                      learning_rate=0.0001),
                                  loss=multiple_tensors_mse_loss,
-                                 rounding_type=RoundingType.STE,
-                                 train_bias=True)
+                                 rounding_type=self.rounding_type,
+                                 train_bias=True,
+                                 quantizer_config=self.quantizer_config)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         y = float_model(input_x)
@@ -168,7 +174,9 @@ class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
                                  optimizer_rest=tf.keras.optimizers.Adam(
                                      learning_rate=1e-1),
                                  train_bias=True,
-                                 loss=multiple_tensors_mse_loss)
+                                 loss=multiple_tensors_mse_loss,
+                                 rounding_type=self.rounding_type,
+                                 quantizer_config=self.quantizer_config)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.weights) == len(quantized_gptq_model.weights),
@@ -192,7 +200,9 @@ class GradientPTQLearnRateZeroTest(GradientPTQBaseTest):
                                  optimizer_rest=tf.keras.optimizers.SGD(
                                      learning_rate=0.0),
                                  train_bias=True,
-                                 loss=multiple_tensors_mse_loss)
+                                 loss=multiple_tensors_mse_loss,
+                                 rounding_type=self.rounding_type,
+                                 quantizer_config=self.quantizer_config)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.weights) == len(quantized_gptq_model.weights),
@@ -218,7 +228,9 @@ class GradientPTQWeightedLossTest(GradientPTQBaseTest):
                                  train_bias=True,
                                  use_jac_based_weights=True,
                                  num_samples_for_loss=16,
-                                 norm_weights=False)
+                                 norm_weights=False,
+                                 rounding_type=self.rounding_type,
+                                 quantizer_config=self.quantizer_config)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         y = float_model.predict(input_x)

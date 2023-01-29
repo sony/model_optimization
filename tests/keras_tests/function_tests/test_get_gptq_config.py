@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import copy
 import unittest
 from typing import List
 
@@ -25,8 +24,7 @@ import tensorflow as tf
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_quantizer_config import GPTQQuantizerConfig
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_keras_tpc
-import model_compression_toolkit as mct
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 layers = tf.keras.layers
