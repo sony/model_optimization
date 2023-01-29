@@ -42,8 +42,8 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         # verify the quantizer class that inherits this class only has a config argument and key-word arguments
         for i, (k, v) in enumerate(self.get_sig().parameters.items()):
             if i == 0:
-                if not issubclass(v.annotation, (TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig)):
-                    common.Logger.error(f"First parameter must be instance of TrainableQuantizerWeightsConfig or TrainableQuantizerActivationConfig")
+                if v.annotation not in [TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]:
+                    common.Logger.error(f"First parameter must be either TrainableQuantizerWeightsConfig or TrainableQuantizerActivationConfig")
             elif v.default is v.empty:
                 common.Logger.error(f"Parameter {k} doesn't have a default value")
 
