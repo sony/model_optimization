@@ -17,6 +17,7 @@ import unittest
 from tests.pytorch_tests.function_tests.bn_info_collection_test import BNInfoCollectionTest, \
     Conv2D2BNInfoCollectionTest, Conv2DBNChainInfoCollectionTest, BNChainInfoCollectionTest, \
     BNLayerInfoCollectionTest, INP2BNInfoCollectionTest
+from tests.pytorch_tests.function_tests.get_gptq_config_test import TestGetGPTQConfig
 from tests.pytorch_tests.function_tests.kpi_data_test import TestKPIDataBasicAllBitwidth, \
     TestKPIDataBasicPartialBitwidth, TestKPIDataComplexPartialBitwidth, TestKPIDataComplesAllBitwidth
 from tests.pytorch_tests.function_tests.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, \
@@ -128,6 +129,12 @@ class FunctionTestRunner(unittest.TestCase):
         """
         TestSensitivityEvalWithArgmaxOutputReplacementNodes(self).run_test()
         TestSensitivityEvalWithSoftmaxOutputReplacementNodes(self).run_test()
+
+    def test_get_gptq_config(self):
+        """
+        This test checks the GPTQ config.
+        """
+        TestGetGPTQConfig(self).run_test()
 
 
 if __name__ == '__main__':
