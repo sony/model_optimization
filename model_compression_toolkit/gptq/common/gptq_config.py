@@ -119,9 +119,10 @@ class GradientPTQConfig:
 
         """
         if rounding_type == RoundingType.SoftQuantizer:
-            return isinstance(quantizer_config, SoftQuantizerConfig)
+            return type(quantizer_config) == SoftQuantizerConfig
 
-        return True
+        # Here, we compare type() and not isinstance to exclude instance equality because of inheritance
+        return type(quantizer_config) == GPTQQuantizerConfig
 
 
 
@@ -137,7 +138,7 @@ class GradientPTQConfigV2(GradientPTQConfig):
                  log_function: Callable = None,
                  train_bias: bool = True,
                  quantization_parameters_learning: bool = False,
-                 rounding_type: RoundingType = RoundingType.STE,
+                 rounding_type: RoundingType = RoundingType.SoftQuantizer,
                  lsb_change_per_bit_width: dict = DefaultDict({}, lambda: 1),
                  eps: float = 1e-6,
                  use_jac_based_weights: bool = True,
