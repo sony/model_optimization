@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+    TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 from tests.quantizers_infrastructure_tests.pytorch_tests.base_pytorch_infrastructure_test import \
-    BasePytorchInfrastructureTest, ZeroWeightsQuantizer, ZeroActivationsQuantizer, dummy_fn
+    BasePytorchInfrastructureTest, ZeroWeightsQuantizer, ZeroActivationsQuantizer
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
 from model_compression_toolkit import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
@@ -28,12 +29,13 @@ class TestPytorchBaseWeightsQuantizer(BasePytorchInfrastructureTest):
         super().__init__(unit_test)
 
     def get_weights_quantization_config(self):
-        op_cfg, _ = get_op_quantization_configs()
-        qc = QuantizationConfig()
-        op_cfg_uniform = op_cfg.clone_and_edit(activation_quantization_method=QuantizationMethod.UNIFORM,
-                                               weights_quantization_method=QuantizationMethod.UNIFORM)
-        return NodeWeightsQuantizationConfig(qc, op_cfg_uniform, dummy_fn, dummy_fn, -1)
-
+        return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod.UNIFORM,
+                                               weights_n_bits=8,
+                                               weights_quantization_params={},
+                                               enable_weights_quantization=True,
+                                               weights_channels_axis=0,
+                                               weights_per_channel_threshold=True,
+                                               min_threshold=0)
 
     def run_test(self):
 
@@ -56,11 +58,11 @@ class TestPytorchBaseActivationQuantizer(BasePytorchInfrastructureTest):
         super().__init__(unit_test)
 
     def get_activation_quantization_config(self):
-        op_cfg, _ = get_op_quantization_configs()
-        qc = QuantizationConfig()
-        op_cfg_uniform = op_cfg.clone_and_edit(activation_quantization_method=QuantizationMethod.UNIFORM,
-                                               weights_quantization_method=QuantizationMethod.UNIFORM)
-        return NodeActivationQuantizationConfig(qc, op_cfg_uniform, dummy_fn, dummy_fn)
+        return TrainableQuantizerActivationConfig(activation_quantization_method=QuantizationMethod.UNIFORM,
+                                                  activation_n_bits=8,
+                                                  activation_quantization_params={},
+                                                  enable_activation_quantization=True,
+                                                  min_threshold=0)
 
     def run_test(self):
 

@@ -18,14 +18,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
-from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common import constants as C
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import ste_round, ste_clip, symmetric_quantizer
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+    TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 
 class STEWeightQuantizer(qi.BasePytorchTrainableQuantizer):
@@ -33,13 +33,13 @@ class STEWeightQuantizer(qi.BasePytorchTrainableQuantizer):
     Trainable constrained quantizer to quantize a layer weights.
     """
 
-    def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
+    def __init__(self, quantization_config: TrainableQuantizerWeightsConfig):
         """
         Initialize a TrainableWeightQuantizer object with parameters to use
         for the quantization.
 
         Args:
-            quantization_config: node quantization config class
+            quantization_config: trainable quantizer config class
         """
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Weights,
@@ -107,13 +107,13 @@ class STEActivationQuantizer(qi.BasePytorchTrainableQuantizer):
     Trainable constrained quantizer to quantize a layer activations.
     """
 
-    def __init__(self, quantization_config: NodeActivationQuantizationConfig):
+    def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         """
         Initialize a STEActivationQuantizer object with parameters to use
         for symmetric or power of two quantization.
 
         Args:
-            quantization_config: node quantization config class
+            quantization_config: trainable quantizer config class
         """
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Activation,

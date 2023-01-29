@@ -14,19 +14,13 @@
 # ==============================================================================
 import copy
 
-from collections.abc import Callable
-from typing import Any
-
-from model_compression_toolkit import QuantizationConfig
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
-    BaseNodeQuantizationConfig, NodeActivationQuantizationConfig
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod, OpQuantizationConfig
+from typing import Any, Union
 from enum import Enum
 
-IS_WEIGHTS = "is_weights"
-IS_ACTIVATIONS = "is_activations"
-WEIGHTS_QUANTIZATION_METHOD = "weights_quantization_method"
-ACTIVATIONS_QUANTIZATION_METHOD = "activation_quantization_method"
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+    TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig
+from model_compression_toolkit.quantizers_infrastructure.common import constants as C
 
 
 def transform_enum(v: Any):
@@ -43,53 +37,44 @@ def transform_enum(v: Any):
     return v
 
 
-def config_serialization(quantization_config: BaseNodeQuantizationConfig):
+def config_serialization(quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
     """
-    This function change BaseNodeQuantizationConfig to a dictionary
+    This function change trainable quantizer config to a dictionary
     Args:
-        quantization_config: A BaseNodeQuantizationConfig for serialization
+        quantization_config: A TrainableQuantizerWeightsConfig or TrainableQuantizerActivationConfig for serialization
 
-    Returns: A config dictionary of BaseNodeQuantizationConfig
+    Returns: A config dictionary of quantizer config
 
     """
-    config_data = {k: transform_enum(v) for k, v in quantization_config.__dict__.items() if
-                   v is not isinstance(v, Callable)}
-    config_data[IS_WEIGHTS] = isinstance(quantization_config, NodeWeightsQuantizationConfig)
-    config_data[IS_ACTIVATIONS] = isinstance(quantization_config, NodeActivationQuantizationConfig)
+    config_data = {k: transform_enum(v) for k, v in quantization_config.__dict__.items()}
+    config_data[C.IS_WEIGHTS] = isinstance(quantization_config, TrainableQuantizerWeightsConfig)
+    config_data[C.IS_ACTIVATIONS] = isinstance(quantization_config, TrainableQuantizerActivationConfig)
     return config_data
 
 
-def config_deserialization(in_config: dict) -> BaseNodeQuantizationConfig:
+def config_deserialization(in_config: dict) -> Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]:
     """
-    This function change config dictionary to it BaseNodeQuantizationConfig.
+    This function change config dictionary to trainable quantizer config.
     Args:
-        in_config:  A config dictionary of BaseNodeQuantizationConfig
+        in_config:  A config dictionary of trainable quantizer config.
 
-    Returns: A BaseNodeQuantizationConfig
+    Returns: Trainable quantizer configuration object - TrainableQuantizerWeightsConfig or TrainableQuantizerActivationConfig
 
     """
     in_config = copy.deepcopy(in_config)
-    qc = QuantizationConfig()
-    op_cfg = OpQuantizationConfig(QuantizationMethod.POWER_OF_TWO, QuantizationMethod.POWER_OF_TWO,
-                                  8, 8, True, True, True, True, 0, 0, 8)
-    if in_config[IS_WEIGHTS]:
-        nwqc = NodeWeightsQuantizationConfig(qc=qc,
-                                             op_cfg=op_cfg,
-                                             weights_quantization_fn=None,
-                                             weights_quantization_params_fn=None,
-                                             weights_channels_axis=0)
-        in_config[WEIGHTS_QUANTIZATION_METHOD] = QuantizationMethod(in_config[WEIGHTS_QUANTIZATION_METHOD])
-
-        nwqc.__dict__.update(in_config)
-        return nwqc
-    elif in_config[IS_ACTIVATIONS]:
-        naqc = NodeActivationQuantizationConfig(qc=qc,
-                                                op_cfg=op_cfg,
-                                                activation_quantization_fn=None,
-                                                activation_quantization_params_fn=None)
-        in_config[ACTIVATIONS_QUANTIZATION_METHOD] = QuantizationMethod(in_config[ACTIVATIONS_QUANTIZATION_METHOD])
-
-        naqc.__dict__.update(in_config)
-        return naqc
+    if in_config[C.IS_WEIGHTS]:
+        return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod(in_config[C.WEIGHTS_QUANTIZATION_METHOD]),
+                                               weights_n_bits=in_config[C.WEIGHTS_N_BITS],
+                                               weights_quantization_params=in_config[C.WEIGHTS_QUANTIZATION_PARAMS],
+                                               enable_weights_quantization=in_config[C.ENABLE_WEIGHTS_QUANTIZATION],
+                                               weights_channels_axis=in_config[C.WEIGHTS_CHANNELS_AXIS],
+                                               weights_per_channel_threshold=in_config[C.WEIGHTS_PER_CHANNEL_THRESHOLD],
+                                               min_threshold=in_config[C.MIN_THRESHOLD])
+    elif in_config[C.IS_ACTIVATIONS]:
+        return TrainableQuantizerActivationConfig(activation_quantization_method=QuantizationMethod(in_config[C.ACTIVATION_QUANTIZATION_METHOD]),
+                                                  activation_n_bits=in_config[C.ACTIVATION_N_BITS],
+                                                  activation_quantization_params=in_config[C.ACTIVATION_QUANTIZATION_PARAMS],
+                                                  enable_activation_quantization=in_config[C.ENABLE_ACTIVATION_QUANTIZATION],
+                                                  min_threshold=in_config[C.MIN_THRESHOLD])
     else:
         raise NotImplemented  # pragma: no cover

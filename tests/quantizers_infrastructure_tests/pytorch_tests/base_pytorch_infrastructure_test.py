@@ -20,11 +20,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
-    NodeActivationQuantizationConfig
-from model_compression_toolkit import quantizers_infrastructure as qi, QuantizationConfig
+from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+    TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 
 class ZeroWeightsQuantizer(qi.BasePytorchTrainableQuantizer):
@@ -32,7 +31,7 @@ class ZeroWeightsQuantizer(qi.BasePytorchTrainableQuantizer):
     A dummy quantizer for test usage - "quantize" the layer's weights to 0
     """
 
-    def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
+    def __init__(self, quantization_config: TrainableQuantizerWeightsConfig):
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Weights,
                          [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
@@ -55,7 +54,7 @@ class ZeroActivationsQuantizer(qi.BasePytorchTrainableQuantizer):
     A dummy quantizer for test usage - "quantize" the layer's activation to 0
     """
 
-    def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
+    def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Activation,
                          [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
@@ -71,10 +70,6 @@ class ZeroActivationsQuantizer(qi.BasePytorchTrainableQuantizer):
                  training: bool = True) -> nn.Parameter:
 
         return inputs * 0
-
-
-def dummy_fn():
-    return
 
 
 class BasePytorchInfrastructureTest:
@@ -104,18 +99,17 @@ class BasePytorchInfrastructureTest:
         return qi.PytorchQuantizationWrapper(layer, dispatcher)
 
     def get_weights_quantization_config(self):
-        op_cfg, _ = get_op_quantization_configs()
-        qc = QuantizationConfig()
-        return NodeWeightsQuantizationConfig(qc=qc,
-                                             op_cfg=op_cfg,
-                                             weights_quantization_fn=dummy_fn,
-                                             weights_quantization_params_fn=dummy_fn,
-                                             weights_channels_axis=-1)
+        return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                                               weights_n_bits=9,
+                                               weights_quantization_params={},
+                                               enable_weights_quantization=True,
+                                               weights_channels_axis=0,
+                                               weights_per_channel_threshold=True,
+                                               min_threshold=0)
 
     def get_activation_quantization_config(self):
-        op_cfg, _ = get_op_quantization_configs()
-        qc = QuantizationConfig()
-        return NodeActivationQuantizationConfig(qc=qc,
-                                                op_cfg=op_cfg,
-                                                activation_quantization_fn=dummy_fn,
-                                                activation_quantization_params_fn=dummy_fn)
+        return TrainableQuantizerActivationConfig(activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                                                  activation_n_bits=8,
+                                                  activation_quantization_params={},
+                                                  enable_activation_quantization=True,
+                                                  min_threshold=0)

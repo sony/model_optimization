@@ -13,28 +13,28 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import List
+from typing import List, Union
 from inspect import signature
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
-    NodeActivationQuantizationConfig, BaseNodeQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer, \
     QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+    TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig
 
 
 class BaseTrainableQuantizer(BaseInferableQuantizer):
     def __init__(self,
-                 quantization_config: BaseNodeQuantizationConfig,
+                 quantization_config: Union[TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig],
                  quantization_target: QuantizationTarget,
                  quantization_method: List[QuantizationMethod]):
         """
         This class is a base quantizer which validates the provided quantization config and defines an abstract function which any quantizer needs to implment.
 
         Args:
-            quantization_config: node quantization config class contains all the information about the quantizer.
+            quantization_config: quantizer config class contains all the information about the quantizer configuration.
             quantization_target: A enum which selects the quantizer tensor type: activation or weights.
             quantization_method: A list of enums which represent the supported methods for the quantizer.
         """
@@ -42,8 +42,8 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         # verify the quantizer class that inherits this class only has a config argument and key-word arguments
         for i, (k, v) in enumerate(self.get_sig().parameters.items()):
             if i == 0:
-                if not issubclass(v.annotation, BaseNodeQuantizationConfig):
-                    common.Logger.error(f"First parameter must inherit from BaseNodeQuantizationConfig")
+                if v.annotation not in [TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]:
+                    common.Logger.error(f"First parameter must be either TrainableQuantizerWeightsConfig or TrainableQuantizerActivationConfig")
             elif v.default is v.empty:
                 common.Logger.error(f"Parameter {k} doesn't have a default value")
 
@@ -106,7 +106,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         Returns: A boolean stating is this activation quantizer
 
         """
-        return isinstance(self.quantization_config, NodeActivationQuantizationConfig)
+        return isinstance(self.quantization_config, TrainableQuantizerActivationConfig)
 
     def weights_quantization(self) -> bool:
         """
@@ -114,7 +114,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         Returns: A boolean stating is this weights quantizer
 
         """
-        return isinstance(self.quantization_config, NodeWeightsQuantizationConfig)
+        return isinstance(self.quantization_config, TrainableQuantizerWeightsConfig)
 
     def validate_weights(self) -> None:
         """
