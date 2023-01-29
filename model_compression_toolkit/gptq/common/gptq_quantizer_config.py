@@ -68,10 +68,10 @@ class SoftQuantizerConfig(GPTQQuantizerConfig):
         soft_rounding_reg_func = kwargs.get(REGULARIZATION_FUNCTION)
 
         if soft_rounding_reg_func is None:
-            Logger.error("No regularization function has been given for computing the regularization "
+            Logger.error("No regularization function has been given for computing the regularization "  # pragma: no cover
                          "of the soft quantizer.")
         if not isinstance(soft_rounding_reg_func, Callable):
-            Logger.error("The provided regularization function of the soft quantizer is not compatible.")
+            Logger.error("The provided regularization function of the soft quantizer is not compatible.")  # pragma: no cover
 
         soft_quant_list = soft_rounding_reg_func(fxp_model)
         reg = 0
