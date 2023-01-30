@@ -2,7 +2,7 @@
 
 Quantizers infrastructure is a module containing quantization abstraction and quantizers for hardware-oriented model optimization tools such as the Model Compression Toolkit ([MCT](https://github.com/sony/model_optimization)).
 
-It provides the required abstraction for emulating inference-time quantization and optimization methods such as quantization aware training. 
+It provides the required abstraction for emulating inference-time quantization and trainable quantization methods such as quantization-aware training.
 
 ## High level description
 
@@ -13,6 +13,8 @@ we replace each layer with a "Quantization Wrapper" - a more complex layer, whic
 
 The quantizers in this module are divided into two main types:
 "Inferable Quantizer", is used for emulating inference-time quantization, and "Trainable Quantizer", contains learnable quantization parameters that can be optimized during training.
+
+## Details and Examples
 
 More details and "how to" examples for Tensorflow can be found in:
 
