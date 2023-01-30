@@ -208,7 +208,7 @@ class GradientPTQConfigV2(GradientPTQConfig):
         """
         n_epochs = int(round(config_v1.n_iter) / n_ptq_iter)
         v1_params = config_v1.__dict__
-        v1_params.pop('n_iter')
+        v1_params = {k: v for k, v in v1_params.items() if k != 'n_iter'}
         return cls(n_epochs, **v1_params)
 
 

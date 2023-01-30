@@ -123,8 +123,8 @@ class TestGetGPTQConfig(unittest.TestCase):
         tpcs = [pot_weights_tpc, symmetric_weights_tpc]
 
         for tpc in tpcs:
-            configs = copy.deepcopy(gptq_configurations)
-            for i, gptq_config in enumerate(configs):
+            # configs = copy.deepcopy(gptq_configurations)
+            for i, gptq_config in enumerate(gptq_configurations):
                 keras_post_training_quantization(in_model=build_model(SHAPE[1:]),
                                                  representative_data_gen=random_datagen,
                                                  n_iter=1,
