@@ -16,13 +16,14 @@
 import tensorflow as tf
 import numpy as np
 
+from model_compression_toolkit.core.common import max_power_of_two
 from model_compression_toolkit.gptq.common.gptq_constants import PTQ_THRESHOLD, SCALE_PTQ, N_EPOCHS, \
     MAX_ITERATIONS_DEFAULT, SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, SOFT_ROUNDING_BETA
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape
 from typing import Dict, Any, List
-from model_compression_toolkit.core.common.constants import THRESHOLD
+from model_compression_toolkit.core.common.constants import THRESHOLD, MIN_THRESHOLD
 from model_compression_toolkit.gptq.common import gptq_constants
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.keras.quantizer.base_quantizer import BaseTrainableQuantizer
@@ -76,6 +77,7 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
     def __init__(self, num_bits: int,
                  per_axis: bool,
                  signed: bool,
+                 power_of_two: bool,
                  n_batches: int,
                  quantization_parameter_learning: bool,
                  threshold_values: np.ndarray,
@@ -88,14 +90,19 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
             num_bits: Number of bits to use for the quantization.
             per_axis: Whether to quantize per-channel or per-tensor.
             signed: Signedness to use for the quantization range.
+            power_of_two: Whether the threshold should be constrained or not.
+            n_batches: The expected number of batches for each trainig epoch.
+            quantization_parameter_learning: Whether to train the quantization threshold.
             threshold_values: Threshold to use for the quantization.
             quantization_axis: Axis of tensor to use for the quantization.
+            n_epochs: Number of epochs to run training for.
         """
 
         super().__init__()
         self.num_bits = num_bits
         self.per_axis = per_axis
         self.signed = signed
+        self.power_of_two = power_of_two
         self.quantization_parameter_learning = quantization_parameter_learning
         self.quantization_axis = quantization_axis
         self.threshold_shape = np.asarray(threshold_values).shape
@@ -195,7 +202,7 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
             A list of the quantization parameters (if there are defined parameters for the quantizer).
         """
 
-        if self.quantization_parameter_learning:
+        if self.quantization_parameter_learning and not self.power_of_two:
             return [self.quantizer_parameters[SCALE_PTQ]]
         else:
             return []
@@ -299,9 +306,9 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
                                                            threshold_tensor=ptq_threshold_tensor_hat,
                                                            num_bits=self.num_bits,
                                                            signed=self.signed,
-                                                           power_of_two=False)
+                                                           power_of_two=self.power_of_two)
 
-            if self.quantization_parameter_learning:
+            if self.quantization_parameter_learning and not self.power_of_two:
                 scale = tf.reshape(self.quantizer_parameters[SCALE_PTQ], reshape_shape)
                 q_tensor *= scale
 
@@ -312,7 +319,7 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
                                                        threshold_tensor=ptq_threshold_tensor.value(),
                                                        num_bits=self.num_bits,
                                                        signed=self.signed,
-                                                       power_of_two=False)
+                                                       power_of_two=self.power_of_two)
 
     def get_quant_config(self, layer) -> Dict[str, np.ndarray]:
         """
@@ -326,10 +333,15 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
             Keys must match NodeQuantizationConfig attributes
         """
 
-        old_threshold = self.quantizer_parameters[PTQ_THRESHOLD]
-        if self.quantization_parameter_learning:
-            scale = tf.reshape(self.quantizer_parameters[SCALE_PTQ], self.threshold_shape)
-            old_threshold = old_threshold * scale
-        old_threshold = old_threshold.numpy()
+        if self.power_of_two:
+            old_threshold = self.quantizer_parameters[PTQ_THRESHOLD]
+            old_threshold = max_power_of_two(old_threshold, MIN_THRESHOLD)
+
+        else:
+            old_threshold = self.quantizer_parameters[PTQ_THRESHOLD]
+            if self.quantization_parameter_learning:
+                scale = tf.reshape(self.quantizer_parameters[SCALE_PTQ], self.threshold_shape)
+                old_threshold = old_threshold * scale
+            old_threshold = old_threshold.numpy()
         old_threshold = old_threshold.reshape(self.threshold_shape)
         return {THRESHOLD: old_threshold}

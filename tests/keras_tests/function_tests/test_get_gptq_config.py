@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 import unittest
 from typing import List
 
@@ -113,23 +114,29 @@ class TestGetGPTQConfig(unittest.TestCase):
         gptqv2_configurations = [get_keras_gptq_config(n_epochs=1,
                                                        optimizer=tf.keras.optimizers.Adam())]
 
-        tp = generate_test_tp_model({'weights_quantization_method': QuantizationMethod.SYMMETRIC})
-        symmetric_weights_tpc = generate_keras_tpc(name="gptq_config_test", tp_model=tp)
+        pot_tp = generate_test_tp_model({'weights_quantization_method': QuantizationMethod.POWER_OF_TWO})
+        pot_weights_tpc = generate_keras_tpc(name="gptq_config_test", tp_model=pot_tp)
 
-        for i, gptq_config in enumerate(gptq_configurations):
-            keras_post_training_quantization(in_model=build_model(SHAPE[1:]),
-                                             representative_data_gen=random_datagen,
-                                             n_iter=1,
-                                             quant_config=qc,
-                                             gptq_config=gptq_config,
-                                             target_platform_capabilities=symmetric_weights_tpc)
+        symmetric_tp = generate_test_tp_model({'weights_quantization_method': QuantizationMethod.SYMMETRIC})
+        symmetric_weights_tpc = generate_keras_tpc(name="gptq_config_test", tp_model=symmetric_tp)
 
-        for i, gptq_config in enumerate(gptqv2_configurations):
-            keras_gradient_post_training_quantization_experimental(in_model=build_model(SHAPE[1:]),
-                                                                   representative_data_gen=random_datagen_experimental,
-                                                                   core_config=cc,
-                                                                   gptq_config=gptq_config,
-                                                                   target_platform_capabilities=symmetric_weights_tpc)
+        tpcs = [pot_weights_tpc, symmetric_weights_tpc]
+
+        for tpc in tpcs:
+            for i, gptq_config in enumerate(copy.deepcopy(gptq_configurations)):
+                keras_post_training_quantization(in_model=build_model(SHAPE[1:]),
+                                                 representative_data_gen=random_datagen,
+                                                 n_iter=1,
+                                                 quant_config=qc,
+                                                 gptq_config=gptq_config,
+                                                 target_platform_capabilities=tpc)
+
+            for i, gptq_config in enumerate(gptqv2_configurations):
+                keras_gradient_post_training_quantization_experimental(in_model=build_model(SHAPE[1:]),
+                                                                       representative_data_gen=random_datagen_experimental,
+                                                                       core_config=cc,
+                                                                       gptq_config=gptq_config,
+                                                                       target_platform_capabilities=tpc)
 
         tf.config.run_functions_eagerly(False)
 

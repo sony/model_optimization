@@ -87,7 +87,8 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
                                                               n_batches=gptq_config.quantizer_config.n_batches,
                                                               quantization_parameter_learning=gptq_config.quantization_parameters_learning,
                                                               quantization_axis=weight_channel_axis,
-                                                              n_epochs=gptq_config.n_epochs)
+                                                              n_epochs=gptq_config.n_epochs,
+                                                              power_of_two=is_power_of_two)
             else:
                 common.Logger.error(
                     f"For quantization method {final_weights_quantization_cfg.weights_quantization_method}, "
