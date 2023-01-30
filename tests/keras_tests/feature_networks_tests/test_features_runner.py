@@ -108,13 +108,13 @@ from tests.keras_tests.feature_networks_tests.feature_networks.softmax_shift_tes
 from tests.keras_tests.feature_networks_tests.feature_networks.split_concatenate_test import SplitConcatenateTest
 from tests.keras_tests.feature_networks_tests.feature_networks.split_conv_bug_test import SplitConvBugTest
 from tests.keras_tests.feature_networks_tests.feature_networks.symmetric_threshold_selection_activation_test import \
-    SymmetricThresholdSelectionActivationTest
+    SymmetricThresholdSelectionActivationTest, SymmetricThresholdSelectionBoundedActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
     DwConv2dReplacementTest
 from tests.keras_tests.feature_networks_tests.feature_networks.test_kmeans_quantizer import KmeansQuantizerTest, \
     KmeansQuantizerTestManyClasses, KmeansQuantizerNotPerChannelTest
 from tests.keras_tests.feature_networks_tests.feature_networks.uniform_range_selection_activation_test import \
-    UniformRangeSelectionActivationTest
+    UniformRangeSelectionActivationTest, UniformRangeSelectionBoundedActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import \
     MixedPercisionSearchTest, MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest, MixedPrecisionActivationDisabled, \
@@ -576,12 +576,26 @@ class FeatureNetworkTest(unittest.TestCase):
         SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.LP).run_test()
         SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.KL).run_test()
 
+    def test_symmetric_threshold_selection_softmax_activation(self):
+        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
+        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.MSE).run_test()
+        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.MAE).run_test()
+        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.LP).run_test()
+        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.KL).run_test()
+
     def test_uniform_range_selection_activation(self):
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.MSE).run_test()
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.MAE).run_test()
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.LP).run_test()
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.KL).run_test()
+
+    def test_uniform_range_selection_softmax_activation(self):
+        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
+        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.MSE).run_test()
+        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.MAE).run_test()
+        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.LP).run_test()
+        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.KL).run_test()
 
     def test_multi_head_attention(self):
         q_seq_len, kv_seq_len = 5, 6
