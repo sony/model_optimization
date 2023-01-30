@@ -107,10 +107,9 @@ class STEUniformWeightQuantizer(qi.BasePytorchTrainableQuantizer):
         Returns:
             A pytorch inferable quanizer object.
         """
-        _min = self.quantizer_parameters[FQ_MIN] #.cpu().detach().numpy()
-        _max = self.quantizer_parameters[FQ_MAX] #.cpu().detach().numpy()
+        _min = self.quantizer_parameters[FQ_MIN].cpu().detach().numpy()
+        _max = self.quantizer_parameters[FQ_MAX].cpu().detach().numpy()
 
-        print(f' ==> Inferable Quantizer: {_min}, {_max}, {self.num_bits}')
         return iq.WeightsUniformInferableQuantizer(num_bits=self.num_bits,
                                                    min_range=_min, max_range=_max,
                                                    per_channel=self.quantization_config.weights_per_channel_threshold,

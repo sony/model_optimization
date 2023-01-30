@@ -18,6 +18,7 @@ import numpy as np
 import torch.nn as nn
 from torch import Tensor
 
+from model_compression_toolkit.core.pytorch.utils import get_working_device
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 import model_compression_toolkit as mct
@@ -117,7 +118,7 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
                 self.unit_test.assertTrue(isinstance(layer._dispatcher.weight_quantizers['weight'], q))
 
         # check quantization didn't change when switching between PTQ model and QAT ready model
-        _in = Tensor(input_x[0]).cuda()
+        _in = Tensor(input_x[0]).to(get_working_device())
         ptq_output = ptq_model(_in).cpu().detach().numpy()
         qat_ready_output = qat_ready_model(_in).cpu().detach().numpy()
         self.unit_test.assertTrue(np.isclose(np.linalg.norm(ptq_output - qat_ready_output) / np.linalg.norm(ptq_output), 0, atol=1e-6))

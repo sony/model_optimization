@@ -52,12 +52,16 @@ if FOUND_TORCH:
                 setattr(self, LAYER, module)
 
             # Init weight quantizers from dispatcher
-            self._set_weight_quantizers()
+            self._set_weight_quantizers(True)
 
             # Init activations quantizers from dispatcher
             self._set_activation_quantizers()
 
         def convert_to_inferable_quantizers(self):
+            """
+            Convert the wrapper quantizers with inferable quantizers
+
+            """
             # Activation quantizers
             if self._dispatcher.is_activation_quantization:
                 inferable_activation_quantizers = []
@@ -66,7 +70,8 @@ if FOUND_TORCH:
                         inferable_activation_quantizers.append(quantizer.convert2inferable())
                     else:
                         Logger.error('Can only convert trainable quantizers based on BasePytorchTrainableQuantizer')
-                self.set_activation_quantizers(inferable_activation_quantizers)
+                self._dispatcher.set_activation_quantizers(inferable_activation_quantizers)
+                self._set_activation_quantizers()
 
             # Weight quantizers
             if self._dispatcher.is_weights_quantization:
@@ -76,30 +81,37 @@ if FOUND_TORCH:
                         inferable_weight_quantizers.update({name: quantizer.convert2inferable()})
                     else:
                         Logger.error('Can only convert trainable quantizers based on BasePytorchTrainableQuantizer')
-                self.set_weight_quantizers(inferable_weight_quantizers)
+                self._dispatcher.set_weight_quantizers(inferable_weight_quantizers)
+                self._set_weight_quantizers(False)
 
-        def set_weight_quantizers(self, weight_quantizers: List[BaseInferableQuantizer]):
-            self._dispatcher.set_weight_quantizers(weight_quantizers)
-            self._set_weight_quantizers()
+        def _set_weight_quantizers(self, is_training: bool):
+            """
+            Initialize learnable weights as parameters in the wrapper, and their quantizers
 
-        def set_activation_quantizers(self, activation_quantizers: List[BaseInferableQuantizer]):
-            self._dispatcher.set_activation_quantizers(activation_quantizers)
-            self._set_activation_quantizers()
+            Args:
+                is_training: Whether working with InferableQuantizers or not. If so, do not register weight as parameter.
 
-        def _set_weight_quantizers(self):
+            """
             self._weight_vars = []
 
             # Init weights quantizers
             for name, quantizer in self._dispatcher.weight_quantizers.items():
-                weight = getattr(self.layer, name)
-                weight = weight.detach()
-                delattr(self.layer, name)
-                setattr(self.layer, name, weight)
-                self.register_parameter(name, torch.nn.Parameter(weight, requires_grad=True))
+                if is_training:
+                    weight = getattr(self.layer, name).detach()
+                    delattr(self.layer, name)
+                    setattr(self.layer, name, weight)
+                    self.register_parameter(name, torch.nn.Parameter(weight, requires_grad=True))
+                else:
+                    weight = getattr(self, name).detach()
+                    delattr(self.layer, name)
+                    setattr(self.layer, name, weight)
                 quantizer.initialize_quantization(weight.shape, name, self)
                 self._weight_vars.append((name, getattr(self, name), quantizer))
 
         def _set_activation_quantizers(self):
+            """
+            Initialize layer outputs and their quantizers in the wrapper
+            """
             self._activation_vars = []
             for i, quantizer in enumerate(self._dispatcher.activation_quantizers):
                 quantizer.initialize_quantization(None, f"tensor{i}", self)

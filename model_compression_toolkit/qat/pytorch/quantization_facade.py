@@ -205,7 +205,7 @@ if FOUND_TORCH:
 
          """
         exported_model = copy.deepcopy(in_model)
-        for _name, layer in exported_model.named_children():
+        for _, layer in exported_model.named_children():
             if isinstance(layer, PytorchQuantizationWrapper):
                 layer.convert_to_inferable_quantizers()
 
