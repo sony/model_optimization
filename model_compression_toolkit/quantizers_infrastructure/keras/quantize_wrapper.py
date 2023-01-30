@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================f
-
-
+from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.quantizers_infrastructure.common.node_quantization_dispatcher import \
@@ -73,13 +72,38 @@ if FOUND_TF:
 
         def get_config(self):
             """
-
             Returns: Configuration of KerasQuantizationWrapper.
 
             """
             base_config = super(KerasQuantizationWrapper, self).get_config()
             config = {DISPATCHER: keras.utils.serialize_keras_object(self._dispatcher)}
             return dict(list(base_config.items()) + list(config.items()))
+
+        def _set_weights_quantizers(self, is_training: bool = True):
+            """
+            This function sets weights quantizers to the layer
+
+            Args:
+                is_training: Flag to indicate whether training or not
+
+            Returns: None
+            """
+            self._weight_vars = []
+            for name, quantizer in self._dispatcher.weight_quantizers.items():
+                weight = getattr(self.layer, name)
+                quantizer.initialize_quantization(weight.shape, _weight_name(weight.name) if is_training else None, self)
+                self._weight_vars.append((name, weight, quantizer))
+
+        def _set_activations_quantizers(self):
+            """
+            This function sets activations quantizers to the layer
+
+            Returns: None
+            """
+            self._activation_vars = []
+            for i, quantizer in enumerate(self._dispatcher.activation_quantizers):
+                quantizer.initialize_quantization(None, self.layer.name + f'/out{i}', self)
+                self._activation_vars.append(quantizer)
 
         @classmethod
         def from_config(cls, config):
@@ -119,20 +143,12 @@ if FOUND_TF:
                 dtype=tf.dtypes.int32,
                 trainable=False)
 
-            self._weight_vars = []
-            for name, quantizer in self._dispatcher.weight_quantizers.items():
-                weight = getattr(self.layer, name)
-                quantizer.initialize_quantization(weight.shape,
-                                                  _weight_name(weight.name), self)
+            # Set weights quantizers
+            self._set_weights_quantizers()
 
-                self._weight_vars.append((name, weight, quantizer))
-                self._trainable_weights.append(weight)
+            # Set activations quantizers
+            self._set_activations_quantizers()
 
-            self._activation_vars = []
-            for i, quantizer in enumerate(self._dispatcher.activation_quantizers):
-                quantizer.initialize_quantization(None,
-                                                  self.layer.name + f'/out{i}', self)
-                self._activation_vars.append(quantizer)
 
         def set_quantize_weights(self, quantized_weights: dict):
             """
@@ -184,9 +200,6 @@ if FOUND_TF:
                     quantized_weight = quantizer(unquantized_weight)
                     quantized_weights.update({name: quantized_weight})
 
-
-
-
             self.set_quantize_weights(quantized_weights)
 
             args_spec = tf_inspect.getfullargspec(self.layer.call).args
@@ -219,6 +232,31 @@ if FOUND_TF:
                 outputs = _outputs[0] if num_outputs == 1 else _outputs
 
             return outputs
+
+        def convert_to_inferable_quantizers(self):
+            """
+            Convert layer's quantizers to inferable.
+
+            Returns:
+                None
+            """
+            # Activations quantizers
+            inferable_activation_quantizers = []
+            if self._dispatcher.is_activation_quantization:
+                for quantizer in self._dispatcher.activation_quantizers:
+                    if isinstance(quantizer, qi.BaseKerasTrainableQuantizer):
+                        inferable_activation_quantizers.append(quantizer.convert2inferable())
+                self._dispatcher.set_activation_quantizers(inferable_activation_quantizers)
+                self._set_activations_quantizers()
+
+            # Weight quantizers
+            inferable_weight_quantizers = {}
+            if self._dispatcher.is_weights_quantization:
+                for name, quantizer in self._dispatcher.weight_quantizers.items():
+                    if isinstance(quantizer, qi.BaseKerasTrainableQuantizer):
+                        inferable_weight_quantizers.update({name: quantizer.convert2inferable()})
+                self._dispatcher.set_weight_quantizers(inferable_weight_quantizers)
+                self._set_weights_quantizers(False)
 
 else:
     class KerasQuantizationWrapper(object):
