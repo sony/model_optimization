@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict
+from typing import Dict, Union
 
 import numpy as np
 import torch
@@ -103,7 +103,7 @@ class STEWeightQuantizer(qi.BasePytorchTrainableQuantizer):
         w_q = self.delta_tensor * w1
         return w_q
 
-    def convert2inferable(self) -> iq.WeightsPOTInferableQuantizer | iq.WeightsSymmetricInferableQuantizer:
+    def convert2inferable(self) -> Union[iq.WeightsPOTInferableQuantizer, iq.WeightsSymmetricInferableQuantizer]:
         """
         Convert quantizer to inferable quantizer.
 
@@ -177,7 +177,7 @@ class STEActivationQuantizer(qi.BasePytorchTrainableQuantizer):
         q_tensor = symmetric_quantizer(inputs, _t, self.num_bits, sign=self.sign)
         return q_tensor
 
-    def convert2inferable(self) -> iq.ActivationPOTInferableQuantizer | iq.ActivationSymmetricInferableQuantizer:
+    def convert2inferable(self) -> Union[iq.ActivationPOTInferableQuantizer, iq.ActivationSymmetricInferableQuantizer]:
         """
         Convert quantizer to inferable quantizer.
 

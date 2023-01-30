@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict
+from typing import Dict, Union
 
 import numpy as np
 import tensorflow as tf
@@ -146,7 +146,7 @@ class STEWeightQuantizer(qi.BaseKerasTrainableQuantizer):
 
         return q_tensor
 
-    def convert2inferable(self) -> iq.WeightsPOTInferableQuantizer | iq.WeightsSymmetricInferableQuantizer:
+    def convert2inferable(self) -> Union[iq.WeightsPOTInferableQuantizer, iq.WeightsSymmetricInferableQuantizer]:
         """
         Convert quantizer to inferable quantizer.
 
@@ -263,7 +263,7 @@ class STEActivationQuantizer(qi.BaseKerasTrainableQuantizer):
 
         return q_tensor
 
-    def convert2inferable(self) -> iq.ActivationPOTInferableQuantizer | iq.ActivationSymmetricInferableQuantizer:
+    def convert2inferable(self) -> Union[iq.ActivationPOTInferableQuantizer, iq.ActivationSymmetricInferableQuantizer]:
         """
         Convert quantizer to inferable quantizer.
 
