@@ -24,6 +24,7 @@ from model_compression_toolkit.core.common.graph.graph_matchers import EdgeMatch
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MIN, RANGE_MAX
+from model_compression_toolkit.core.common.logger import Logger
 
 
 class BatchNormalizationRefusing(common.BaseSubstitution):
@@ -95,15 +96,22 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
 
         source_node = edge_nodes[0]
 
+        # We apply only on nodes with reconstructed BatchNormalization.
+        if not source_node.final_weights_quantization_cfg.weights_second_moment_correction:
+            return graph
+
         # If the linear operator is part of a reused group (it is the "base" node, or a reused node),
         # we should skip the substitution.
         if source_node.reuse or source_node.reuse_group is not None:
-            return graph
+            Logger.exception("If the linear operator is part of a reused group we should skip the the BN folding "
+                             "substitution and SMC feature")  # pragma: no cover
 
         bn_node = edge_nodes[1]
 
         if len(graph.get_next_nodes(source_node)) > 1 or len(graph.get_prev_nodes(bn_node)) > 1:
-            return graph
+            Logger.exception(
+                "If the linear operator has multiple outputs or the bn layer has multiple inputs we should "
+                "skip the the BN folding substitution and SMC feature")  # pragma: no cover
 
         kernel = source_node.get_weights_by_keys(self.kernel_str)
         bias = source_node.get_weights_by_keys(self.bias_str)
@@ -112,9 +120,6 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
         moving_mean = bn_node.get_weights_by_keys(self.moving_mean_str)
         moving_variance = bn_node.get_weights_by_keys(self.moving_variance_str)
         eps = bn_node.framework_attr[self.epsilon_str]
-
-        if bias is None:
-            bias = 0.0
 
         weights_scale = gamma / np.sqrt(moving_variance + eps)
         bias = beta + (bias - moving_mean) * weights_scale
@@ -177,7 +182,7 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
             corr_dict[THRESHOLD] = corr_threshold
             conv_bn.final_weights_quantization_cfg.set_weights_quantization_param(corr_dict)
 
-        # In case of SYMMETRIC weight quantization method, we update the range_min, range_max by weights_scale
+        # In case of UNIFORM weight quantization method, we update the range_min, range_max by weights_scale
         elif conv_bn.final_weights_quantization_cfg.weights_quantization_method == QuantizationMethod.UNIFORM:
             corr_dict = copy.deepcopy(conv_bn.final_weights_quantization_cfg.weights_quantization_params)
             original_range_min = conv_bn.final_weights_quantization_cfg.weights_quantization_params[RANGE_MIN]
@@ -189,5 +194,5 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
             conv_bn.final_weights_quantization_cfg.set_weights_quantization_param(corr_dict)
 
         else:
-            raise Exception("Second moment statistics correction feature disabled for models with weights "
-                            "quantization method of Power of 2")
+            Logger.exception("Second moment statistics correction feature disabled for models with weights "
+                             "quantization method of Power of 2")  # pragma: no cover

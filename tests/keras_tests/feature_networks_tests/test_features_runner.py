@@ -101,7 +101,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.reused_separable_
 from tests.keras_tests.feature_networks_tests.feature_networks.scale_equalization_test import ScaleEqualizationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.second_moment_correction_test import \
     DepthwiseConv2DSecondMomentTest, Conv2DSecondMomentTest, Conv2DTSecondMomentTest, \
-    ValueSecondMomentTest
+    ValueSecondMomentTest, POTSecondMomentTest, NoBNSecondMomentTest, ReusedConvSecondMomentTest, \
+    UniformSecondMomentTest
 from tests.keras_tests.feature_networks_tests.feature_networks.shift_neg_activation_test import ShiftNegActivationTest, \
     ShiftNegActivationPostAddTest
 from tests.keras_tests.feature_networks_tests.feature_networks.softmax_shift_test import SoftmaxShiftTest
@@ -525,6 +526,10 @@ class FeatureNetworkTest(unittest.TestCase):
         Conv2DSecondMomentTest(self).run_test()
         Conv2DTSecondMomentTest(self).run_test()
         ValueSecondMomentTest(self).run_test()
+        POTSecondMomentTest(self).run_test()
+        UniformSecondMomentTest(self).run_test()
+        ReusedConvSecondMomentTest(self).run_test()
+        NoBNSecondMomentTest(self).run_test()
 
     def test_decompose_separable_conv(self):
         DecomposeSeparableConvTest(self).run_test()
