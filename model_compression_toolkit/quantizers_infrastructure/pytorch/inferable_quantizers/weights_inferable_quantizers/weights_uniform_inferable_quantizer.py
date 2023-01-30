@@ -87,8 +87,8 @@ if FOUND_TORCH:
             inputs.requires_grad = False
             if self.per_channel:
                 return torch.fake_quantize_per_channel_affine(inputs,
-                                                              self.scales,
-                                                              self.zero_points,
+                                                              self.scales.flatten(),
+                                                              self.zero_points.flatten(),
                                                               axis=self.channel_axis,
                                                               quant_min=self.min_quantized_domain,
                                                               quant_max=self.max_quantized_domain)

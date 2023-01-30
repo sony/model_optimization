@@ -119,7 +119,7 @@ def uniform_quantizer(tensor_data: torch.Tensor,
     Returns:
         Quantized data.
     """
-    # adjusts the quantization rage so the quantization grid include zero.
+    # adjusts the quantization range so the quantization grid includes zero.
     a, b = fix_range_to_include_zero(range_min, range_max, n_bits)
 
     # Compute the step size of quantized values.

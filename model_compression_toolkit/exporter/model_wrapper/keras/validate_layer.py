@@ -42,13 +42,13 @@ def is_keras_layer_exportable(layer: Any) -> bool:
             f'Exportable layer must be wrapped using KerasQuantizationWrapper, but layer {layer.name} is of type '
             f'{type(layer)}')
 
-    valid_dispatcher = isinstance(layer.dispatcher, KerasNodeQuantizationDispatcher)
+    valid_dispatcher = isinstance(layer._dispatcher, KerasNodeQuantizationDispatcher)
     if not valid_dispatcher:
         Logger.error(
             f'KerasQuantizationWrapper must have a dispatcher of type KerasNodeQuantizationDispatcher but has a '
-            f'{type(layer.dispatcher)} object as a dispatcher')
+            f'{type(layer._dispatcher)} object as a dispatcher')
 
-    dispatcher_quantizers = layer.dispatcher.activation_quantizers + list(layer.dispatcher.weight_quantizers.values())
+    dispatcher_quantizers = layer._dispatcher.activation_quantizers + list(layer._dispatcher.weight_quantizers.values())
     inferable_quantizers = all([isinstance(x, BaseInferableQuantizer) for x in dispatcher_quantizers])
     if not inferable_quantizers:
         Logger.error(f'Found a quantizer in the dispatcher that is not of type BaseInferableQuantizer')

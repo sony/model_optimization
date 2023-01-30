@@ -17,7 +17,10 @@ from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.quantizers_infrastructure.common.node_quantization_dispatcher import \
     NodeQuantizationDispatcher
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer
+from model_compression_toolkit import quantizers_infrastructure as qi
 import inspect
+
 
 if FOUND_TORCH:
     import torch
@@ -41,17 +44,53 @@ if FOUND_TORCH:
                 dispatcher: A node quantization dispatcher.
             """
             super().__init__()
-            self.dispatcher = dispatcher
+            self._dispatcher = dispatcher
             if isinstance(module, nn.Module):
                 self.add_module(LAYER, module)
             else:
                 # Functional layers
                 setattr(self, LAYER, module)
 
+            # Init weight quantizers from dispatcher
+            self._set_weight_quantizers()
+
+            # Init activations quantizers from dispatcher
+            self._set_activation_quantizers()
+
+        def convert_to_inferable_quantizers(self):
+            # Activation quantizers
+            if self._dispatcher.is_activation_quantization:
+                inferable_activation_quantizers = []
+                for quantizer in self._dispatcher.activation_quantizers:
+                    if isinstance(quantizer, qi.BasePytorchTrainableQuantizer):
+                        inferable_activation_quantizers.append(quantizer.convert2inferable())
+                    else:
+                        Logger.error('Can only convert trainable quantizers based on BasePytorchTrainableQuantizer')
+                self.set_activation_quantizers(inferable_activation_quantizers)
+
+            # Weight quantizers
+            if self._dispatcher.is_weights_quantization:
+                inferable_weight_quantizers = {}
+                for name, quantizer in self._dispatcher.weight_quantizers.items():
+                    if isinstance(quantizer, qi.BasePytorchTrainableQuantizer):
+                        inferable_weight_quantizers.update({name: quantizer.convert2inferable()})
+                    else:
+                        Logger.error('Can only convert trainable quantizers based on BasePytorchTrainableQuantizer')
+                self.set_weight_quantizers(inferable_weight_quantizers)
+
+        def set_weight_quantizers(self, weight_quantizers: List[BaseInferableQuantizer]):
+            self._dispatcher.set_weight_quantizers(weight_quantizers)
+            self._set_weight_quantizers()
+
+        def set_activation_quantizers(self, activation_quantizers: List[BaseInferableQuantizer]):
+            self._dispatcher.set_activation_quantizers(activation_quantizers)
+            self._set_activation_quantizers()
+
+        def _set_weight_quantizers(self):
             self._weight_vars = []
 
             # Init weights quantizers
-            for name, quantizer in self.dispatcher.weight_quantizers.items():
+            for name, quantizer in self._dispatcher.weight_quantizers.items():
                 weight = getattr(self.layer, name)
                 weight = weight.detach()
                 delattr(self.layer, name)
@@ -60,9 +99,9 @@ if FOUND_TORCH:
                 quantizer.initialize_quantization(weight.shape, name, self)
                 self._weight_vars.append((name, getattr(self, name), quantizer))
 
-            # Init activations quantizers
+        def _set_activation_quantizers(self):
             self._activation_vars = []
-            for i, quantizer in enumerate(self.dispatcher.activation_quantizers):
+            for i, quantizer in enumerate(self._dispatcher.activation_quantizers):
                 quantizer.initialize_quantization(None, f"tensor{i}", self)
                 self._activation_vars.append(quantizer)
 
@@ -76,7 +115,7 @@ if FOUND_TORCH:
             Returns: None
 
             """
-            for weight_attr in self.dispatcher.weight_quantizers.keys():
+            for weight_attr in self._dispatcher.weight_quantizers.keys():
                 weight = quantized_weights.get(weight_attr)
                 setattr(self.layer, weight_attr, weight)
 
@@ -98,7 +137,7 @@ if FOUND_TORCH:
             # ----------------------------------
             # Quantize all weights, and replace them in the underlying layer.
             # ----------------------------------
-            if self.dispatcher.is_weights_quantization:
+            if self._dispatcher.is_weights_quantization:
 
                 quantized_weights = {}
                 for name, unquantized_weight, quantizer in self._weight_vars:
@@ -120,13 +159,13 @@ if FOUND_TORCH:
             # ----------------------------------
             # Quantize all activations
             # ----------------------------------
-            if self.dispatcher.is_activation_quantization:
+            if self._dispatcher.is_activation_quantization:
 
                 if not isinstance(outputs, list):
                     outputs = [outputs]
 
-                if len(outputs) != self.dispatcher.num_act_quantizers:
-                    Logger.error(f"Number of outputs {len(outputs)} is incompatible number of activation quantizers {self.dispatcher.num_act_quantizers}")  # pragma: no cover
+                if len(outputs) != self._dispatcher.num_act_quantizers:
+                    Logger.error(f"Number of outputs {len(outputs)} is incompatible number of activation quantizers {self._dispatcher.num_act_quantizers}")  # pragma: no cover
 
                 # Quantize all activations tensors
                 outputs_quantized = []

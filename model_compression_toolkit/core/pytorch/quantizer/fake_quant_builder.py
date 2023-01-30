@@ -17,6 +17,7 @@ import torch
 
 from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.core.common.quantization.quantizers.uniform_quantizers import threshold_is_power_of_two
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
 
 
 def get_symmetric_quantization_range_and_scale(activation_is_signed: bool,
@@ -120,6 +121,7 @@ def uniform_quantization(activation_n_bits: int,
     # fixing quantization range to include 0
     a = 0 if a > 0 else a
     b = 0 if b < 0 else b
+    a, b = fix_range_to_include_zero(a, b, activation_n_bits)
 
     min_value = 0
     max_value = 2 ** activation_n_bits - 1

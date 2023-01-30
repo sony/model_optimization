@@ -252,19 +252,19 @@ if FOUND_TF:
             if isinstance(layer, qi.KerasQuantizationWrapper):
                 # Activation quantizers
                 inferable_activation_quantizers = []
-                if layer.dispatcher.is_activation_quantization:
-                    for quantizer in layer.dispatcher.activation_quantizers:
+                if layer._dispatcher.is_activation_quantization:
+                    for quantizer in layer._dispatcher.activation_quantizers:
                         if isinstance(quantizer, qi.BaseKerasTrainableQuantizer):
                             inferable_activation_quantizers.append(quantizer.convert2inferable())
-                    layer.dispatcher.set_activation_quantizers(inferable_activation_quantizers)
+                    layer._dispatcher.set_activation_quantizers(inferable_activation_quantizers)
 
                 # Weight quantizers
                 inferable_weight_quantizers = {}
-                if layer.dispatcher.is_weights_quantization:
-                    for name, quantizer in layer.dispatcher.weight_quantizers.items():
+                if layer._dispatcher.is_weights_quantization:
+                    for name, quantizer in layer._dispatcher.weight_quantizers.items():
                         if isinstance(quantizer, qi.BaseKerasTrainableQuantizer):
                             inferable_weight_quantizers.update({name: quantizer.convert2inferable()})
-                    layer.dispatcher.set_weight_quantizers(inferable_weight_quantizers)
+                    layer._dispatcher.set_weight_quantizers(inferable_weight_quantizers)
 
             return layer
 

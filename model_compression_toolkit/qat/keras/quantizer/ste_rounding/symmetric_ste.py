@@ -146,7 +146,7 @@ class STEWeightQuantizer(qi.BaseKerasTrainableQuantizer):
 
         return q_tensor
 
-    def convert2inferable(self) -> qi.BaseKerasInferableQuantizer:
+    def convert2inferable(self) -> iq.WeightsPOTInferableQuantizer | iq.WeightsSymmetricInferableQuantizer:
         """
         Convert quantizer to inferable quantizer.
 
@@ -263,7 +263,7 @@ class STEActivationQuantizer(qi.BaseKerasTrainableQuantizer):
 
         return q_tensor
 
-    def convert2inferable(self) -> qi.BaseKerasInferableQuantizer:
+    def convert2inferable(self) -> iq.ActivationPOTInferableQuantizer | iq.ActivationSymmetricInferableQuantizer:
         """
         Convert quantizer to inferable quantizer.
 

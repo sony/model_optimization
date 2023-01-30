@@ -34,6 +34,7 @@ QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER = {
     QuantizationMethod.UNIFORM: pytorch_inferable_quantizers.ActivationUniformInferableQuantizer
 }
 
+
 def get_weights_inferable_quantizer_kwargs(node: BaseNode) -> Dict[str, Any]:
     # Get the weights quantization configuration for the node
     node_w_qc = node.final_weights_quantization_cfg

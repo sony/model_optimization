@@ -112,7 +112,7 @@ class QuantizationAwareTrainingQuantizersTest(QuantizationAwareTrainingTest):
             quantized_dw_weight = quantized_model.layers[2].weights[0].numpy()
         else:
             self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.DepthwiseConv2D))
-            for name, quantizer in quantized_model.layers[2].dispatcher.weight_quantizers.items():
+            for name, quantizer in quantized_model.layers[2]._dispatcher.weight_quantizers.items():
                 w_select = [w for w in quantized_model.layers[2].weights if name + ":0" in w.name]
                 if len(w_select) != 1:
                     raise Exception()
@@ -179,16 +179,16 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         for layer in qat_model.layers:
             if isinstance(layer, qi.KerasQuantizationWrapper):
                 # Check Activation quantizers
-                if layer.dispatcher.is_activation_quantization:
-                    for quantizer in layer.dispatcher.activation_quantizers:
+                if layer._dispatcher.is_activation_quantization:
+                    for quantizer in layer._dispatcher.activation_quantizers:
                         if finalize:
                             self.unit_test.assertTrue(isinstance(quantizer, qi.BaseKerasInferableQuantizer))
                         else:
                             self.unit_test.assertTrue(isinstance(quantizer, qi.BaseKerasTrainableQuantizer))
 
                 # Check Weight quantizers
-                if layer.dispatcher.is_weights_quantization:
-                    for name, quantizer in layer.dispatcher.weight_quantizers.items():
+                if layer._dispatcher.is_weights_quantization:
+                    for name, quantizer in layer._dispatcher.weight_quantizers.items():
                         if finalize:
                             self.unit_test.assertTrue(isinstance(quantizer, qi.BaseKerasInferableQuantizer))
                         else:
