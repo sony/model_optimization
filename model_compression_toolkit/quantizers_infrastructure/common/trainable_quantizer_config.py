@@ -13,8 +13,27 @@
 # limitations under the License.
 # ==============================================================================
 from abc import ABC
-from typing import Dict
+from typing import Dict, List
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+
+
+class TrainableQuantizerCandidateConfig:
+
+    def __init__(self,
+                 n_bits: int,
+                 quantization_params: Dict,
+                 ):
+        """
+        Class for representing candidates of quantization configurations for trainable quantizer.
+        It can be used for weights and activation quantization configuration.
+
+        Args:
+            n_bits (int): Number of bits to use for quantization.
+            quantization_params (Dict): Dictionary that contains quantization params.
+        """
+
+        self.n_bits = n_bits
+        self.quantization_params = quantization_params
 
 
 class TrainableQuantizerActivationConfig:
@@ -25,6 +44,7 @@ class TrainableQuantizerActivationConfig:
                  activation_quantization_params: Dict,
                  enable_activation_quantization: bool,
                  min_threshold: float,
+                 activation_quantization_candidates: List[TrainableQuantizerCandidateConfig] = None,
                  ):
         """
         Attributes for configuring activations trainable quantizer.
@@ -41,6 +61,7 @@ class TrainableQuantizerActivationConfig:
         self.activation_quantization_params = activation_quantization_params
         self.enable_activation_quantization = enable_activation_quantization
         self.min_threshold = min_threshold
+        self.activation_bits_candidates = activation_quantization_candidates
 
 
 class TrainableQuantizerWeightsConfig:
@@ -52,6 +73,7 @@ class TrainableQuantizerWeightsConfig:
                  weights_channels_axis: int,
                  weights_per_channel_threshold: bool,
                  min_threshold: float,
+                 weights_quantization_candidates: List[TrainableQuantizerCandidateConfig] = None,
                  ):
         """
         Attributes for configuring weights trainable quantizer.
@@ -72,3 +94,4 @@ class TrainableQuantizerWeightsConfig:
         self.weights_channels_axis = weights_channels_axis
         self.weights_per_channel_threshold = weights_per_channel_threshold
         self.min_threshold = min_threshold
+        self.weights_bits_candidates = weights_quantization_candidates

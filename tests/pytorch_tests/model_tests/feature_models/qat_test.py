@@ -26,6 +26,7 @@ from model_compression_toolkit.core.tpc_models.default_tpc.latest import generat
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizer import QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER, QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER
 from model_compression_toolkit.qat.pytorch.quantizer.quantization_builder import METHOD2ACTQUANTIZER, METHOD2WEIGHTQUANTIZER
+from model_compression_toolkit import MixedPrecisionQuantizationConfigV2
 
 
 class TestModel(nn.Module):

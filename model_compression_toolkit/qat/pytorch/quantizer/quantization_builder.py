@@ -12,17 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict
+from typing import Dict, List
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit import quantizers_infrastructure as qi
-from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste import STEWeightQuantizer, \
-    STEActivationQuantizer
-from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.uniform_ste import STEUniformWeightQuantizer, \
-    STEUniformActivationQuantizer
+from model_compression_toolkit.qat.common.qat_get_quantizer_config import get_trainable_quantizer_weights_config, \
+    get_trainable_quantizer_activation_config, get_trainable_quantizer_quantization_candidates
+from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste import STEWeightQuantizer, STEActivationQuantizer
+from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.uniform_ste import STEUniformWeightQuantizer, STEUniformActivationQuantizer
 from model_compression_toolkit.qat.common.qat_config import QATConfig, TrainingMethod
-from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
-    TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 METHOD2WEIGHTQUANTIZER = {TrainingMethod.STE: {qi.QuantizationMethod.SYMMETRIC: STEWeightQuantizer,
                                                qi.QuantizationMethod.POWER_OF_TWO: STEWeightQuantizer,
@@ -33,45 +31,6 @@ METHOD2ACTQUANTIZER = {TrainingMethod.STE: {qi.QuantizationMethod.SYMMETRIC: STE
                                             qi.QuantizationMethod.UNIFORM: STEUniformActivationQuantizer}}
 
 
-# TODO: move the following "get...config" functions to be members of BaseNode
-def get_trainable_quantizer_weights_config(n: common.BaseNode) -> TrainableQuantizerWeightsConfig:
-    """
-    Returns the relevant configurations for weights trainable quantizer
-
-    Args:
-        n: BaseNode
-
-    Returns:
-         TrainableQuantizerWeightsConfig - an object that contains the quantizer configuration
-    """
-    config = n.final_weights_quantization_cfg
-    return TrainableQuantizerWeightsConfig(config.weights_quantization_method,
-                                           config.weights_n_bits,
-                                           config.weights_quantization_params,
-                                           config.enable_weights_quantization,
-                                           config.weights_channels_axis,
-                                           config.weights_per_channel_threshold,
-                                           config.min_threshold)
-
-
-def get_trainable_quantizer_activation_config(n: common.BaseNode) -> TrainableQuantizerActivationConfig:
-    """
-    Returns configurations for activation trainable quantizer
-
-    Args:
-        n: BaseNode
-
-    Returns:
-         TrainableQuantizerActivationConfig - an object that contains the quantizer configuration
-    """
-    config = n.final_activation_quantization_cfg
-    return TrainableQuantizerActivationConfig(config.activation_quantization_method,
-                                              config.activation_n_bits,
-                                              config.activation_quantization_params,
-                                              config.enable_activation_quantization,
-                                              config.min_threshold)
-
-
 def quantization_builder(n: common.BaseNode,
                          qat_config: QATConfig,
                          fw_info: FrameworkInfo,
@@ -80,6 +39,7 @@ def quantization_builder(n: common.BaseNode,
                          method2actquantizer: Dict[
                              qi.QuantizationMethod, qi.BasePytorchTrainableQuantizer] = None
                          ) -> tuple:
+
     """
     Build quantizers for a node according to its quantization configuration and
     a global NoOpQuantizeConfig object.
@@ -100,6 +60,11 @@ def quantization_builder(n: common.BaseNode,
     if method2actquantizer is None:
         method2actquantizer = METHOD2ACTQUANTIZER
 
+    if len(n.candidates_quantization_cfg) > 1:
+        wq_cand, aq_cand = get_trainable_quantizer_quantization_candidates(n)
+    else:
+        wq_cand, aq_cand = None, None
+
     weight_quantizers = {}
     if n.is_weights_quantization_enabled():
         _quant_method = n.final_weights_quantization_cfg.weights_quantization_method
@@ -110,8 +75,9 @@ def quantization_builder(n: common.BaseNode,
         quantizer_class = method2weightquantizer[qat_config.weight_training_method][_quant_method]
         attributes = fw_info.get_kernel_op_attributes(n.type)
         for attr in attributes:
-            weight_quantizers.update({attr: quantizer_class(get_trainable_quantizer_weights_config(n),
+            weight_quantizers.update({attr: quantizer_class(get_trainable_quantizer_weights_config(n, wq_cand),
                                                            **qat_config.weight_quantizer_params_override)})
+
     activation_quantizers = []
     if n.is_activation_quantization_enabled():
         _quant_method = n.final_activation_quantization_cfg.activation_quantization_method
@@ -120,7 +86,7 @@ def quantization_builder(n: common.BaseNode,
         if _quant_method not in method2actquantizer[qat_config.activation_training_method]:
             common.Logger.error(f'Unknown activation quantization method: {_quant_method}')
         quantizer_class = method2actquantizer[qat_config.activation_training_method][_quant_method]
-        activation_quantizers = [quantizer_class(get_trainable_quantizer_activation_config(n),
+        activation_quantizers = [quantizer_class(get_trainable_quantizer_activation_config(n, aq_cand),
                                                      **qat_config.activation_quantizer_params_override)]
 
     return weight_quantizers, activation_quantizers
