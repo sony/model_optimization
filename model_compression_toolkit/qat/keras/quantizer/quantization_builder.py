@@ -18,7 +18,7 @@ from typing import Dict
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit import quantizers_infrastructure as qi
-from model_compression_toolkit.qat.common.qat_quantization_dispatcher import get_trainable_quantizer_weights_config, \
+from model_compression_toolkit.qat.common.qat_get_quantizer_config import get_trainable_quantizer_weights_config, \
     get_trainable_quantizer_activation_config, get_trainable_quantizer_quantization_candidates
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste import STEWeightQuantizer, STEActivationQuantizer
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste import STEUniformWeightQuantizer
