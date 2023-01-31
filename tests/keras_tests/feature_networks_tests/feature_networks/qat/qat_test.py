@@ -23,6 +23,9 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 import model_compression_toolkit as mct
 from model_compression_toolkit import quantizers_infrastructure as qi
 import os
+from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER, QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER
+from model_compression_toolkit.qat.keras.quantizer.quantization_dispatcher_builder import METHOD2ACTQUANTIZER, METHOD2WEIGHTQUANTIZER
+from model_compression_toolkit.core.keras.default_framework_info import KERNEL
 
 keras = tf.keras
 layers = keras.layers
@@ -151,28 +154,36 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                                                                                                   self.representative_data_gen,
                                                                                                   fw_info=self.get_fw_info(),
                                                                                                   target_platform_capabilities=self.get_tpc())
+
+        # PTQ model
+        in_tensor = np.random.randn(1, *ptq_model.input_shape[1:])
+        out_ptq_model = ptq_model(in_tensor)
+
+        # QAT model
         qat_model = ptq_model
         if self.test_loading:
             qat_model.save('qat2model.h5')
             qat_model = mct.keras_load_quantized_model('qat2model.h5')
             os.remove('qat2model.h5')
 
-        # -------QAT training------ #
-        x = np.random.randn(1,*qat_model.input_shape[1:])
-        qat_model(x)
-        # ------------------------- #
-
         self.compare(qat_model,
                      finalize=False,
                      input_x=self.representative_data_gen(),
                      quantization_info=quantization_info)
 
+        out_qat_model = qat_model(in_tensor)
+        self.unit_test.assertTrue(np.isclose(np.linalg.norm(out_qat_model - out_ptq_model) / np.linalg.norm(out_ptq_model), 0, atol=1e-6))
+
         if self.finalize:
-            qat_model = mct.keras_quantization_aware_training_finalize(qat_model)
-            self.compare(qat_model,
+            # QAT finalize model
+            qat_finalize_model = mct.keras_quantization_aware_training_finalize(qat_model)
+            self.compare(qat_finalize_model,
                          finalize=True,
                          input_x=self.representative_data_gen(),
                          quantization_info=quantization_info)
+            out_qat_finalize_model = qat_finalize_model(in_tensor)
+            self.unit_test.assertTrue(np.isclose(np.linalg.norm(out_qat_finalize_model - out_ptq_model) / np.linalg.norm(out_ptq_model), 0, atol=1e-6))
+
 
     def compare(self, qat_model, finalize=False, input_x=None, quantization_info=None):
 
@@ -183,14 +194,23 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                     for quantizer in layer._dispatcher.activation_quantizers:
                         if finalize:
                             self.unit_test.assertTrue(isinstance(quantizer, qi.BaseKerasInferableQuantizer))
+                            q = QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER[self.activation_quantization_method]
+                            self.unit_test.assertTrue(isinstance(layer._dispatcher.activation_quantizers[0], q))
                         else:
                             self.unit_test.assertTrue(isinstance(quantizer, qi.BaseKerasTrainableQuantizer))
+                            q = METHOD2ACTQUANTIZER[mct.TrainingMethod.STE][self.activation_quantization_method]
+                            self.unit_test.assertTrue(isinstance(layer._dispatcher.activation_quantizers[0], q))
+
 
                 # Check Weight quantizers
                 if layer._dispatcher.is_weights_quantization:
                     for name, quantizer in layer._dispatcher.weight_quantizers.items():
                         if finalize:
                             self.unit_test.assertTrue(isinstance(quantizer, qi.BaseKerasInferableQuantizer))
+                            q = QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER[self.weights_quantization_method]
+                            self.unit_test.assertTrue(isinstance(layer._dispatcher.weight_quantizers[KERNEL], q))
                         else:
                             self.unit_test.assertTrue(isinstance(quantizer, qi.BaseKerasTrainableQuantizer))
+                            q = METHOD2WEIGHTQUANTIZER[mct.TrainingMethod.STE][self.weights_quantization_method]
+                            self.unit_test.assertTrue(isinstance(layer._dispatcher.weight_quantizers[KERNEL], q))
 

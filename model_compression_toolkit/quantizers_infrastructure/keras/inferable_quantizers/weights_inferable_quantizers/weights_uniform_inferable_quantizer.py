@@ -54,9 +54,6 @@ if FOUND_TF:
 
             self.per_channel = per_channel
             self.channel_axis = channel_axis
-            self.min_range, self.max_range = fix_range_to_include_zero(np.array(self.min_range),
-                                                                       np.array(self.max_range),
-                                                                       self.num_bits)
 
             # Get the shape of the range array
             self.range_shape = np.asarray(min_range).shape
