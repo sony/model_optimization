@@ -6,27 +6,31 @@ It provides the required abstraction for emulating inference-time quantization a
 
 ## High level description
 
-To create quantization abstraction in a model,
-we replace each layer with a "Quantization Wrapper" - a more complex layer, which includes the original layer, a weights quantizer block, and activations quantizer block. A quantization dispatcher is attached to each quantization wrapper to set the quantizer type.
+For each layer, we wrap the layer and a quantization dispatcher (which contains the quantizers and all quantization information we need to quantize the layer) in a "Quantization Wrapper".
+
+Notice that the quantization wrapper and the quantization dispatcher are per framework.
+
+
+
 
 <img src="../../docsrc/images/quantization_infra.png" width="700">
 
 The quantizers in this module are divided into two main types:
-"Inferable Quantizer", is used for emulating inference-time quantization, and "Trainable Quantizer", contains learnable quantization parameters that can be optimized during training.
+The "Inferable Quantizer" is used for emulating inference-time quantization, and the "Trainable Quantizer", contains learnable quantization parameters that can be optimized during training.
 
 ## Details and Examples
 
 More details and "how to" examples for Tensorflow can be found in:
 
-[Inferable quantizers for Tensorflow/Keras](keras/inferable_quantizers/README.md)
+[Inferable quantizers for TensorFlow](keras/inferable_quantizers/README.md)
 
-[Trainable quantizers for Tensorflow/Keras](keras/README.md)
+[Trainable quantizers for TensorFlow](keras/README.md)
 
 And for pytorch:
 
-[Inferable quantizers for pytorch](pytorch/inferable_quantizers/README.md)
+[Inferable quantizers for PyTorch](pytorch/inferable_quantizers/README.md)
 
-[Trainable quantizers for pytorch](pytorch/README.md)
+[Trainable quantizers for PyTorch](pytorch/README.md)
 
   
 
