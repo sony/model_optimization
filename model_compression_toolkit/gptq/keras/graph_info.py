@@ -94,7 +94,7 @@ def get_weights_for_loss(fxp_model: Model) -> Tuple[List[list], List[list]]:
 
 def get_soft_rounding_reg(fxp_model: Model) -> List[tf.Tensor]:
     """
-    This function return the soft quantizer regularization values for SoftRounding.
+    This function returns the soft quantizer regularization values for SoftRounding.
 
     Args:
         fxp_model: A model to be quantized with SoftRounding.

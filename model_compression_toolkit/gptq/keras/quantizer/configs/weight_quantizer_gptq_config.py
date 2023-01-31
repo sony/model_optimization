@@ -71,7 +71,7 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
             threshold_values = final_weights_quantization_cfg.weights_quantization_params.get(THRESHOLD)
             if gptq_config.rounding_type == RoundingType.STE:
                 self.weight_quantizer = STEWeightQuantizer(num_bits=num_bits,
-                                                           per_axis=len(
+                                                           per_channel=len(
                                                                threshold_values.flatten()) > 1,
                                                            threshold_values=threshold_values,
                                                            signed=True,
@@ -80,7 +80,7 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
                                                            max_lsbs_change_map=max_lsbs_change_map)
             elif gptq_config.rounding_type == RoundingType.SoftQuantizer:
                 self.weight_quantizer = SymmetricSoftRounding(num_bits=num_bits,
-                                                              per_axis=len(
+                                                              per_channel=len(
                                                                   threshold_values.flatten()) > 1,
                                                               threshold_values=threshold_values,
                                                               signed=True,

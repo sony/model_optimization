@@ -18,7 +18,7 @@ from model_compression_toolkit.core.common.constants import MIN_THRESHOLD
 from typing import Tuple
 
 
-def rounding_symmetric_quantizer(input_tensor: tf.Tensor,
+def symmetric_rounding_quantizer(input_tensor: tf.Tensor,
                                  auxvar_tensor: tf.Variable,
                                  threshold_tensor: tf.Tensor,
                                  num_bits: int,

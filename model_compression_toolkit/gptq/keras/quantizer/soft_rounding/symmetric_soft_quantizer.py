@@ -18,13 +18,12 @@ import numpy as np
 
 from model_compression_toolkit.core.common import max_power_of_two
 from model_compression_toolkit.gptq.common.gptq_constants import PTQ_THRESHOLD, SCALE_PTQ, N_EPOCHS, \
-    MAX_ITERATIONS_DEFAULT, SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, SOFT_ROUNDING_BETA
+    MAX_ITERATIONS_DEFAULT, SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, SOFT_ROUNDING_BETA, GPTQ_ITER, AUXVAR
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from tensorflow.python.framework.tensor_shape import TensorShape
 from typing import Dict, Any, List
 from model_compression_toolkit.core.common.constants import THRESHOLD, MIN_THRESHOLD
-from model_compression_toolkit.gptq.common import gptq_constants
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.keras.quantizer.base_quantizer import BaseTrainableQuantizer
 
@@ -71,11 +70,11 @@ class LinearTempDecay:
 
 class SymmetricSoftRounding(BaseTrainableQuantizer):
     """
-    Trainable symmetric quantizer to optimize the rounding of the quantized values using soft quantization method.
+    Trainable symmetric quantizer to optimize the rounding of the quantized values using a soft quantization method.
     """
 
     def __init__(self, num_bits: int,
-                 per_axis: bool,
+                 per_channel: bool,
                  signed: bool,
                  power_of_two: bool,
                  n_batches: int,
@@ -88,7 +87,7 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
         for the quantization.
         Args:
             num_bits: Number of bits to use for the quantization.
-            per_axis: Whether to quantize per-channel or per-tensor.
+            per_channel: Whether to quantize per-channel or per-tensor.
             signed: Signedness to use for the quantization range.
             power_of_two: Whether the threshold should be constrained or not.
             n_batches: The expected number of batches for each trainig epoch.
@@ -100,15 +99,15 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
 
         super().__init__()
         self.num_bits = num_bits
-        self.per_axis = per_axis
+        self.per_channel = per_channel
         self.signed = signed
         self.power_of_two = power_of_two
         self.quantization_parameter_learning = quantization_parameter_learning
         self.quantization_axis = quantization_axis
         self.threshold_shape = np.asarray(threshold_values).shape
-        self.threshold_values = np.reshape(np.asarray(threshold_values), [-1]) if self.per_axis else np.asarray(
+        self.threshold_values = np.reshape(np.asarray(threshold_values), [-1]) if self.per_channel else np.asarray(
             threshold_values)
-        self.k_threshold = len(self.threshold_values) if self.per_axis else 1
+        self.num_channels = len(self.threshold_values) if self.per_channel else 1
 
         # gamma and zeta are stretch parameters for computing the rectified sigmoind function.
         # beta is used to set the regularization term.
@@ -146,23 +145,19 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
 
         super().build(tensor_shape, name, layer)
 
-        if self.per_axis:
-            input_shape = tensor_shape
-            n_axis = len(input_shape)
-            quantization_axis = n_axis + self.quantization_axis if self.quantization_axis < 0 else \
-                self.quantization_axis
-            reshape_shape = [self.k_threshold if i == quantization_axis else 1 for i in range(n_axis)]
+        if self.per_channel:
+            reshape_shape = self._get_threshold_reshape_shape(tensor_shape, quant_axis_dim=self.num_channels)
         else:
-            reshape_shape = [self.k_threshold]
+            reshape_shape = [self.num_channels]
 
         ar_iter = layer.add_weight(
-            name + gptq_constants.GPTQ_ITER,
+            f"{name}_{GPTQ_ITER}",
             shape=(),
             initializer=tf.keras.initializers.Constant(0.0),
             trainable=False)
 
         ptq_threshold_tensor = layer.add_weight(
-            name + PTQ_THRESHOLD,
+            f"{name}_{PTQ_THRESHOLD}",
             shape=reshape_shape,
             initializer=tf.keras.initializers.Constant(1.0),
             trainable=False)
@@ -170,7 +165,7 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
 
         w = getattr(layer.layer, name)
         auxvar_tensor = layer.add_weight(
-            name + gptq_constants.AUXVAR,
+            f"{name}_{AUXVAR}",
             shape=[*w.shape],
             initializer=tf.keras.initializers.Constant(0.0),
             trainable=True)
@@ -182,14 +177,14 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
 
         auxvar_tensor.assign(alpha)
 
-        self.quantizer_parameters.update({gptq_constants.AUXVAR: auxvar_tensor,
+        self.quantizer_parameters.update({AUXVAR: auxvar_tensor,
                                           PTQ_THRESHOLD: ptq_threshold_tensor,
-                                          gptq_constants.GPTQ_ITER: ar_iter})
+                                          GPTQ_ITER: ar_iter})
 
         if self.quantization_parameter_learning:
             scale = layer.add_weight(
-                name + SCALE_PTQ,
-                shape=self.k_threshold,
+                f"{name}_{SCALE_PTQ}",
+                shape=self.num_channels,
                 initializer=tf.keras.initializers.Constant(1.0),
                 trainable=True)
             self.quantizer_parameters.update({SCALE_PTQ: scale})
@@ -236,7 +231,7 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
 
         return {
             'num_bits': self.num_bits,
-            'per_axis': self.per_axis,
+            'per_channel': self.per_channel,
         }
 
     def get_soft_targets(self) -> tf.Tensor:
@@ -248,14 +243,14 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
 
         """
         return qutils.clip(
-            tf.sigmoid(self.quantizer_parameters[gptq_constants.AUXVAR]) * (self.zeta - self.gamma) + self.gamma, 1, 0)
+            tf.sigmoid(self.quantizer_parameters[AUXVAR]) * (self.zeta - self.gamma) + self.gamma, 1, 0)
 
     def get_aux_variable(self) -> tf.Tensor:
         """
         Returns:
             The auxiliary variable of the rounding learning.
         """
-        return self.quantizer_parameters[gptq_constants.AUXVAR]
+        return self.quantizer_parameters[AUXVAR]
 
     def __call__(self, inputs: tf.Tensor,
                  training: bool,
@@ -274,15 +269,11 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
             The quantized tensor.
         """
 
-        self.ar_iter = weights[gptq_constants.GPTQ_ITER]
+        self.ar_iter = weights[GPTQ_ITER]
         ptq_threshold_tensor = weights[PTQ_THRESHOLD]
 
-        if self.per_axis:
-            input_shape = inputs.shape
-            n_axis = len(input_shape)
-            quantization_axis = n_axis + self.quantization_axis if self.quantization_axis < 0 else \
-                self.quantization_axis
-            reshape_shape = [-1 if i == quantization_axis else 1 for i in range(n_axis)]
+        if self.per_channel:
+            reshape_shape = self._get_threshold_reshape_shape(inputs.shape, quant_axis_dim=-1)
 
             ##########################################################
             # Calculate soft rounding targets and optimized threshold
@@ -296,12 +287,12 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
             if training:
                 self.ar_iter.assign_add(1.0)
             else:
-                aux_var = tf.cast(weights[gptq_constants.AUXVAR] >= 0, tf.float32)
+                aux_var = tf.cast(weights[AUXVAR] >= 0, tf.float32)
 
             #####################################################
             # Quantized Input
             #####################################################
-            q_tensor = qutils.rounding_symmetric_quantizer(input_tensor=inputs,
+            q_tensor = qutils.symmetric_rounding_quantizer(input_tensor=inputs,
                                                            auxvar_tensor=aux_var,
                                                            threshold_tensor=ptq_threshold_tensor_hat,
                                                            num_bits=self.num_bits,
@@ -314,12 +305,31 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
 
             return q_tensor
         else:
-            return qutils.rounding_symmetric_quantizer(input_tensor=inputs,
-                                                       auxvar_tensor=weights[gptq_constants.AUXVAR],
+            return qutils.symmetric_rounding_quantizer(input_tensor=inputs,
+                                                       auxvar_tensor=weights[AUXVAR],
                                                        threshold_tensor=ptq_threshold_tensor.value(),
                                                        num_bits=self.num_bits,
                                                        signed=self.signed,
                                                        power_of_two=self.power_of_two)
+
+    # TODO: Extract this method to a parent class of all GPTQ quantizer and use it in other quantizers (such as STE)
+    def _get_threshold_reshape_shape(self, tensor_shape, quant_axis_dim):
+        """
+        Gets a shape that contains 1 in all axis except the quantization axis, to adjust the threshold tensor for
+        per-channel quantization.
+
+        Args:
+            tensor_shape: The shape of the tensor to be quantize.
+            quant_axis_dim: The dimension of the quantization axis.
+
+        Returns: A shape to reshape the threshold tensor according to.
+
+        """
+        n_axis = len(tensor_shape)
+        quantization_axis = n_axis + self.quantization_axis if self.quantization_axis < 0 else \
+            self.quantization_axis
+
+        return [quant_axis_dim if i == quantization_axis else 1 for i in range(n_axis)]
 
     def get_quant_config(self, layer) -> Dict[str, np.ndarray]:
         """

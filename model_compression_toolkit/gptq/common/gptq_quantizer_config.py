@@ -29,7 +29,7 @@ class GPTQQuantizerConfig:
     def get_regularization_value(self, fxp_model: Any, **kwargs) -> float:
         """
         Computes a regularization value for the quantizer's loss (if needed).
-        In the base class it only returns 0, to be used for GPTQ quantizers that doesn't require regularization.
+        In the base class it only returns 0, to be used for GPTQ quantizers that don't require regularization.
 
         Args:
             fxp_model: The quantized model that is being trained.
@@ -40,11 +40,21 @@ class GPTQQuantizerConfig:
 
         return 0
 
+    def set_num_batches(self, num_batches: int):
+        """
+        Allows to set the number of batches that the quantizer uses for training (in each epoch).
+
+        Args:
+            num_batches: number of batches to be set.
+
+        """
+        self.n_batches = num_batches
+
 
 class SoftQuantizerConfig(GPTQQuantizerConfig):
     def __init__(self, entropy_regularization: float = REG_DEFAULT):
         """
-        Initialize object that holds the arguments that are needed for soft rounding quantizer.
+        Initializes an object that holds the arguments that are needed for soft rounding quantizer.
 
         Args:
             entropy_regularization (float): A floating point number that defines the gumbel entropy regularization factor.
@@ -81,12 +91,3 @@ class SoftQuantizerConfig(GPTQQuantizerConfig):
 
         return self.entropy_regularization * reg
 
-    def set_num_batches(self, num_batches: int):
-        """
-        Allows to set the number of batches that the soft quantizer is using for training (in each epoch).
-
-        Args:
-            num_batches: number of batches to be set.
-
-        """
-        self.n_batches = num_batches

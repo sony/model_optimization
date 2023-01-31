@@ -23,6 +23,7 @@ class RoundingType(Enum):
     """
     An enum for choosing the GPTQ rounding methods
     0. STRAIGHT-THROUGH ESTIMATOR
+    1. SoftQuantizer
     """
     STE = 0
     SoftQuantizer = 1
@@ -75,7 +76,7 @@ class GradientPTQConfig:
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
             log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
             weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
-            quantizer_config (GPTQQuantizerConfig): A class the contains the quantizer specific config.
+            quantizer_config (GPTQQuantizerConfig): A class that contains the quantizer specific config.
 
         """
         self.n_iter = n_iter
@@ -172,7 +173,7 @@ class GradientPTQConfigV2(GradientPTQConfig):
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
             log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
             weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
-            quantizer_config (Any): A class the contains the quantizer specific config.
+            quantizer_config (Any): A class that contains the quantizer specific config.
 
         """
 

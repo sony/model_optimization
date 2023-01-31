@@ -68,10 +68,7 @@ class GPTQTrainer(ABC):
 
         if self.gptq_config.rounding_type == RoundingType.SoftQuantizer:
             # dry run on the representative dataset to count number of batches
-            num_batches = 0
-            for _ in representative_data_gen():
-                num_batches += 1
-            self.gptq_config.quantizer_config.set_num_batches(num_batches)
+            self.count_num_batches_for_training(representative_data_gen)
 
         self.fxp_model, self.gptq_user_info = self.build_gptq_model()
 
@@ -251,6 +248,21 @@ class GPTQTrainer(ABC):
                 prev_node = prev_node[0]
             replacement_outputs.append(prev_node)
         return replacement_outputs
+
+    def count_num_batches_for_training(self, representative_data_gen):
+        """
+        Runs a "dry-run" of the representative dataset to count the number of batches for each training epoch.
+
+        Args:
+            representative_data_gen: A callable method to retrieve images from Dataset.
+
+        Returns: The number of batches for each training epoch.
+
+        """
+        num_batches = 0
+        for _ in representative_data_gen():
+            num_batches += 1
+        self.gptq_config.quantizer_config.set_num_batches(num_batches)
 
 
 def gptq_training(graph_float: Graph,
