@@ -22,16 +22,17 @@ from model_compression_toolkit.core.common.quantization.quantizers.quantizers_he
 
 
 def lut_kmeans_quantizer(tensor_data: np.ndarray,
-                        n_bits: int,
-                        signed: bool,
-                        quantization_params: dict,
-                        per_channel: bool,
-                        output_channels_axis: int) -> np.ndarray:
+                         n_bits: int,
+                         signed: bool,
+                         quantization_params: dict,
+                         per_channel: bool,
+                         output_channels_axis: int) -> np.ndarray:
     """
     Quantize a tensor with given cluster centers and thresholds-per-channel vector.
     1. We divide tensor_data with the scale vector per channel.
     2. We scale the result to the range [-2^(MULTIPLIER_N_BITS-1), 2^(MULTIPLIER_N_BITS-1)-1].
-    3. We assign cluster centers to every value, multiply by thresholds_per_channel and divide by 2^(MULTIPLIER_N_BITS-1).
+    3. We assign cluster centers to every value, multiply by thresholds_per_channel and divide by 2^(
+    MULTIPLIER_N_BITS-1).
     The result is the quantized tensor.
 
 

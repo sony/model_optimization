@@ -20,10 +20,12 @@ import keras
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.exporter.model_exporter.tflite.fakely_quant_tflite_exporter import \
     FakelyQuantTFLiteExporter
+from model_compression_toolkit.exporter.model_exporter.tflite.int8_tflite_exporter import INT8TFLiteExporter
 
 
 class TFLiteExportMode(Enum):
     FAKELY_QUANT = 0
+    INT8 = 1
 
 
 def tflite_export_model(model: keras.models.Model,
@@ -46,6 +48,10 @@ def tflite_export_model(model: keras.models.Model,
         exporter = FakelyQuantTFLiteExporter(model,
                                              is_layer_exportable_fn,
                                              save_model_path)
+    elif mode == TFLiteExportMode.INT8:
+        exporter = INT8TFLiteExporter(model,
+                                      is_layer_exportable_fn,
+                                      save_model_path)
 
     else:
         Logger.critical(

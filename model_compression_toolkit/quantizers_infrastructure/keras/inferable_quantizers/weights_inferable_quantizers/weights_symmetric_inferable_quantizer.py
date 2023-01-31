@@ -79,12 +79,25 @@ if FOUND_TF:
             Returns:
                 quantized tensor.
             """
+
+
             # If per-channel quantization is being used
             if self.per_channel:
                 # If a permutation vector has been created to move the channel axis to the last position
                 if self.perm_vec:
                     # Transpose the input tensor to move the channel axis to the last position
                     inputs = tf.transpose(inputs, perm=self.perm_vec)
+
+                # q_tensor = quant_ops.LastValueQuantize(
+                #     inputs,
+                #     self.min_range.flatten(),
+                #     self.max_range.flatten(),
+                #     is_training=False,
+                #     num_bits=self.num_bits,
+                #     per_channel=self.per_channel,
+                #     symmetric=True,
+                #     narrow_range=False
+                # )
 
                 # Quantize the input tensor using per-channel quantization
                 q_tensor = tf.quantization.fake_quant_with_min_max_vars_per_channel(inputs,

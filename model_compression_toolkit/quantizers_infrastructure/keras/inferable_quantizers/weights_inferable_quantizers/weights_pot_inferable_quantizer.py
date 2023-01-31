@@ -20,6 +20,7 @@ from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_q
 
 if FOUND_TF:
     import tensorflow as tf
+    from tensorflow_model_optimization.python.core.quantization.keras import quant_ops
     from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_pot_inferable_quantizer import BasePOTInferableQuantizer
 
     class WeightsPOTInferableQuantizer(BasePOTInferableQuantizer):
@@ -32,7 +33,8 @@ if FOUND_TF:
                      threshold: np.ndarray,
                      signed: bool,
                      per_channel: bool,
-                     channel_axis: int):
+                     channel_axis: int,
+                     input_num_dims: int):
             """
             Initialize the quantizer with the specified parameters.
 
@@ -57,16 +59,24 @@ if FOUND_TF:
 
             # Tensorflow's fake_quant_with_min_max_vars_per_channel only works on last axis, so
             # need to move the quantization axis to the last axis
-            if per_channel and channel_axis not in [-1, len(self.threshold_shape) - 1]:
+            if per_channel and channel_axis not in [-1, input_num_dims - 1]:
                 # If per-channel quantization is being used and the channel axis is not the last axis,
                 # create a permutation vector to move the channel axis to the last position
-                self.perm_vec = list(np.arange(len(self.threshold_shape)))
-                self.perm_vec[channel_axis] = len(self.threshold_shape) - 1
-                self.perm_vec[len(self.threshold_shape) - 1] = channel_axis
+                self.perm_vec = list(np.arange(input_num_dims))
+                self.perm_vec[channel_axis] = input_num_dims - 1
+                self.perm_vec[input_num_dims - 1] = channel_axis
             else:
                 # If per-channel quantization is not being used or the channel axis is already the last axis,
                 # set the permutation vector to None
                 self.perm_vec = None
+
+            # self.min_range = tf.Variable(self.min_range.flatten(), dtype=tf.float32)
+            # self.max_range = tf.Variable(self.max_range.flatten(), dtype=tf.float32)
+            # thresholds = np.arange(3)
+            #
+            # print(thresholds)
+            # self.min_range = -thresholds.flatten()
+            # self.max_range = (thresholds - thresholds / 128).flatten()
 
         def __call__(self, inputs: tf.Tensor):
             """
@@ -78,12 +88,27 @@ if FOUND_TF:
             Returns:
                 quantized tensor.
             """
+
             # If per-channel quantization is being used
             if self.per_channel:
                 # If a permutation vector has been created to move the channel axis to the last position
                 if self.perm_vec:
                     # Transpose the input tensor to move the channel axis to the last position
                     inputs = tf.transpose(inputs, perm=self.perm_vec)
+
+                #
+                # q_tensor = quant_ops.LastValueQuantize(
+                #     inputs,
+                #     # tf.Tensor(self.min_range.flatten()),
+                #     # tf.Tensor(self.max_range.flatten()),
+                #     self.min_range,
+                #     self.max_range,
+                #     is_training=False,
+                #     num_bits=self.num_bits,
+                #     per_channel=self.per_channel,
+                #     symmetric=True,
+                #     narrow_range=False
+                # )
 
                 # Quantize the input tensor using per-channel quantization
                 q_tensor = tf.quantization.fake_quant_with_min_max_vars_per_channel(inputs,

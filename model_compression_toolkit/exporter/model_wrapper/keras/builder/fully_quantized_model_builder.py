@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Tuple
 
 import tensorflow as tf
 from tensorflow.keras.layers import Layer
@@ -19,6 +20,7 @@ from tensorflow.keras.layers import Layer
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
 from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizers import \
     get_quantization_quantizers
@@ -39,7 +41,7 @@ def _get_wrapper(node: common.BaseNode,
     return qi.KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
 
 
-def get_exportable_keras_model(graph: Graph) -> tf.keras.models.Model:
+def get_exportable_keras_model(graph: Graph) -> Tuple[tf.keras.models.Model,UserInformation]:
     """
     Convert graph to an exportable Keras model (model with all quantization parameters).
     An exportable model can then be exported using model_exporter, to retrieve the
@@ -49,7 +51,9 @@ def get_exportable_keras_model(graph: Graph) -> tf.keras.models.Model:
         graph: Graph to convert to an exportable Keras model.
 
     Returns:
-        Exportable Keras model.
+        Exportable Keras model and user information.
     """
-    return KerasModelBuilder(graph=graph,
-                             wrapper=_get_wrapper).build_model()
+    exportable_model, user_info = KerasModelBuilder(graph=graph,
+                                         wrapper=_get_wrapper).build_model()
+    exportable_model.trainable = False
+    return exportable_model, user_info
