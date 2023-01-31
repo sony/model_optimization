@@ -109,7 +109,7 @@ class GradientPTQConfig:
 
     def _verify_quantizer_config(self, quantizer_config, rounding_type) -> bool:
         """
-        Verifies that the given quantizer config is matching to the given rounding type.
+        Verifies that the given quantizer config matches the given rounding type.
 
         Args:
             quantizer_config: A quantizer config.
