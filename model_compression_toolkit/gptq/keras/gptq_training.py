@@ -19,7 +19,7 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapp
 from tqdm import tqdm
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
-from model_compression_toolkit.gptq.common.gptq_constants import REGULARIZATION_FUNCTION
+from model_compression_toolkit.gptq.common.gptq_constants import REGULARIZATION_VALUES
 from model_compression_toolkit.gptq.keras.gptq_model_builder import GPTQKerasModelBuilder
 from packaging import version
 
@@ -150,7 +150,7 @@ class KerasGPTQTrainer(GPTQTrainer):
 
             reg_value = self.gptq_config.quantizer_config.get_regularization_value(
                 self.fxp_model,
-                **{REGULARIZATION_FUNCTION: self._get_quantizer_regularization_func(self.gptq_config.rounding_type)})
+                **{REGULARIZATION_VALUES: self._get_quantizer_regularization_values(self.gptq_config.rounding_type)})
 
             loss_value += reg_value
 
@@ -272,8 +272,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         return graph
 
 
-    @staticmethod
-    def _get_quantizer_regularization_func(rounding_type) -> Callable:
+    def _get_quantizer_regularization_values(self, rounding_type: RoundingType) -> List[tf.Tensor]:
         """
         Mapping between a rounding type to its matching regularization method.
 
@@ -284,6 +283,6 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         """
         if rounding_type == RoundingType.SoftQuantizer:
-            return get_soft_rounding_reg
+            return get_soft_rounding_reg(self.fxp_model)
         else:
-            return None
+            return []

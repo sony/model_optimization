@@ -60,12 +60,13 @@ class LinearTempDecay:
         Returns: Scheduled temperature.
         """
 
-        ind = tf.cast(t < self.start_decay, tf.float32)
+        is_before_start_decay = tf.cast(t < self.start_decay, tf.float32)
 
         rel_t = (t - self.start_decay) / (self.t_max - self.start_decay)
 
-        return self.start_b * ind + (1 - ind) * (
-                self.end_b + (self.start_b - self.end_b) * tf.math.maximum(0.0, (1 - rel_t)))
+        return self.start_b * is_before_start_decay + \
+               (1 - is_before_start_decay) * \
+               (self.end_b + (self.start_b - self.end_b) * tf.math.maximum(0.0, (1 - rel_t)))
 
 
 class SymmetricSoftRounding(BaseTrainableQuantizer):
@@ -173,6 +174,8 @@ class SymmetricSoftRounding(BaseTrainableQuantizer):
         delta = qutils.calculate_delta(ptq_threshold_tensor, self.num_bits, self.signed)
         w_floor = tf.floor(w / delta)
         rest = (w / delta) - w_floor  # rest of rounding [0, 1)
+        # Note that (rest - self.gamma) can't be zero since rest is positive and gamma is negative, so the division
+        # is safe
         alpha = -qutils.safe_log((self.zeta - self.gamma) / (rest - self.gamma) - 1, 1e-16)  # => sigmoid(alpha) = rest
 
         auxvar_tensor.assign(alpha)

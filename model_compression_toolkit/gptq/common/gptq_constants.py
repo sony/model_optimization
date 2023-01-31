@@ -25,4 +25,4 @@ SOFT_ROUNDING_ZETA = 1.1
 SOFT_ROUNDING_BETA = 2 / 3
 
 # GPTQ config constant
-REGULARIZATION_FUNCTION = "regularization_function"
+REGULARIZATION_VALUES = "regularization_values"

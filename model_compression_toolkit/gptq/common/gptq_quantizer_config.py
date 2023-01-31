@@ -15,7 +15,7 @@
 from typing import Any, List, Callable
 
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT, REGULARIZATION_FUNCTION
+from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT, REGULARIZATION_VALUES
 
 
 class GPTQQuantizerConfig:
@@ -75,18 +75,18 @@ class SoftQuantizerConfig(GPTQQuantizerConfig):
         Returns: The regularization value.
         """
 
-        soft_rounding_reg_func = kwargs.get(REGULARIZATION_FUNCTION)
+        soft_rounding_reg_values = kwargs.get(REGULARIZATION_VALUES)
 
-        if soft_rounding_reg_func is None:
-            Logger.error("No regularization function has been given for computing the regularization "  # pragma: no cover
+        if soft_rounding_reg_values is None:
+            Logger.error("No regularization values has been provided for computing the regularization "  # pragma: no cover
                          "of the soft quantizer.")
-        if not isinstance(soft_rounding_reg_func, Callable):
-            Logger.error("The provided regularization function of the soft quantizer is not compatible.")  # pragma: no cover
+        if not isinstance(soft_rounding_reg_values, List):
+            Logger.error("The provided regularization values parameter of the soft quantizer "  # pragma: no cover
+                         "is not compatible (should be a list).")
 
-        soft_quant_list = soft_rounding_reg_func(fxp_model)
         reg = 0
 
-        for sq in soft_quant_list:
+        for sq in soft_rounding_reg_values:
             reg += sq
 
         return self.entropy_regularization * reg
