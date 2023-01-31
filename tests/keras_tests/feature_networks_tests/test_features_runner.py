@@ -20,7 +20,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import PReLU, ELU
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import QuantizationErrorMethod
+from model_compression_toolkit import QuantizationErrorMethod, RoundingType, SoftQuantizerConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
     ActivationDecompositionTest
@@ -547,6 +547,9 @@ class FeatureNetworkTest(unittest.TestCase):
         MultiInputsToNodeTest(self).run_test()
 
     def test_gptq(self, experimental_facade=False, experimental_exporter=False):
+        # This call removes the effect of @tf.function decoration and executes the decorated function eagerly, which
+        # enabled tracing for code coverage.
+        tf.config.run_functions_eagerly(True)
         GradientPTQTest(self).run_test(experimental_facade=experimental_facade,
                                        experimental_exporter=experimental_exporter)
         GradientPTQWeightsUpdateTest(self).run_test(experimental_facade=experimental_facade,
@@ -555,6 +558,28 @@ class FeatureNetworkTest(unittest.TestCase):
                                                     experimental_exporter=experimental_exporter)
         GradientPTQWeightedLossTest(self).run_test(experimental_facade=experimental_facade,
                                                    experimental_exporter=experimental_exporter)
+        GradientPTQTest(self,
+                        rounding_type=RoundingType.SoftQuantizer,
+                        quantizer_config=SoftQuantizerConfig(),
+                        per_channel=False) \
+            .run_test(experimental_facade=experimental_facade,
+                      experimental_exporter=experimental_exporter)
+        GradientPTQNoTempLearningTest(self,
+                                      rounding_type=RoundingType.SoftQuantizer,
+                                      quantizer_config=SoftQuantizerConfig())\
+            .run_test(experimental_facade=experimental_facade,
+                      experimental_exporter=experimental_exporter)
+        GradientPTQWeightsUpdateTest(self,
+                                     rounding_type=RoundingType.SoftQuantizer,
+                                     quantizer_config=SoftQuantizerConfig()) \
+            .run_test(experimental_facade=experimental_facade,
+                      experimental_exporter=experimental_exporter)
+        GradientPTQLearnRateZeroTest(self,
+                                     rounding_type=RoundingType.SoftQuantizer,
+                                     quantizer_config=SoftQuantizerConfig()) \
+            .run_test(experimental_facade=experimental_facade,
+                      experimental_exporter=experimental_exporter)
+        tf.config.run_functions_eagerly(False)
 
     # TODO: reuven - new experimental facade needs to be tested regardless the exporter.
     # def test_gptq_new_exporter(self):
@@ -570,6 +595,10 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_gptq_conv_group_dilation(self):
         GradientPTQLearnRateZeroConvGroupDilationTest(self).run_test()
         GradientPTQWeightsUpdateConvGroupDilationTest(self).run_test()
+        GradientPTQLearnRateZeroConvGroupDilationTest(self, rounding_type=RoundingType.SoftQuantizer,
+                                                      quantizer_config=SoftQuantizerConfig()).run_test()
+        GradientPTQWeightsUpdateConvGroupDilationTest(self, rounding_type=RoundingType.SoftQuantizer,
+                                                      quantizer_config=SoftQuantizerConfig()).run_test()
 
     def test_split_conv_bug(self):
         SplitConvBugTest(self).run_test()

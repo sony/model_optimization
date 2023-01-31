@@ -57,7 +57,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
             fw_info: Framework information
             representative_data_gen: Dataset to use for inputs of the models.
         """
-        super().__init__(graph_float, graph_quant, gptq_config, fw_impl, fw_info)
+        super().__init__(graph_float, graph_quant, gptq_config, fw_impl, fw_info, representative_data_gen)
         self.loss_list = []
         self.input_scale = 1
         if self.float_user_info.input_scale != self.gptq_user_info.input_scale:

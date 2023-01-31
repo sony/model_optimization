@@ -35,10 +35,10 @@ def build_model(in_input_shape: List[int], group: int = 1, dilation_rate=(1, 1))
 
     """
     inputs = layers.Input(shape=in_input_shape)
-    x = layers.Conv2D(16, 4, bias_initializer='glorot_uniform', dilation_rate=dilation_rate)(inputs)
+    x = layers.Conv2D(64, 4, bias_initializer='glorot_uniform', dilation_rate=dilation_rate)(inputs)
     x = layers.BatchNormalization()(x)
     x = layers.PReLU()(x)
-    x = layers.Conv2D(16, 8, bias_initializer='glorot_uniform', groups=group)(x)
+    x = layers.Conv2D(64, 8, bias_initializer='glorot_uniform', groups=group)(x)
     x = layers.BatchNormalization()(x)
     outputs = layers.ReLU()(x)
     model = keras.Model(inputs=inputs, outputs=outputs)

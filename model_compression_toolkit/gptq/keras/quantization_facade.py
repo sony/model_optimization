@@ -94,7 +94,6 @@ if common.constants.FOUND_TF:
             The configuration can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization` in order to quantize a keras model using gptq.
 
         """
-        # TODO: set default quantization_parameters_learning to True once implementing a compatible rounding method
         bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT, momentum=GPTQ_MOMENTUM)
         return GradientPTQConfigV2(n_epochs,
                                    optimizer,
@@ -102,7 +101,7 @@ if common.constants.FOUND_TF:
                                    loss=loss,
                                    log_function=log_function,
                                    train_bias=True,
-                                   quantization_parameters_learning=False,
+                                   quantization_parameters_learning=True,
                                    optimizer_bias=bias_optimizer)
 
 

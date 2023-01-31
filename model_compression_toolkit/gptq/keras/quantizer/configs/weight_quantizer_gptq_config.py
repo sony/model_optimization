@@ -20,7 +20,7 @@ import tensorflow as tf
 from packaging import version
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
-
+from model_compression_toolkit.gptq.keras.quantizer.soft_rounding.symmetric_soft_quantizer import SymmetricSoftRounding
 
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers import Layer
@@ -71,13 +71,24 @@ class WeightQuantizeConfig(BaseQuantizeConfig):
             threshold_values = final_weights_quantization_cfg.weights_quantization_params.get(THRESHOLD)
             if gptq_config.rounding_type == RoundingType.STE:
                 self.weight_quantizer = STEWeightQuantizer(num_bits=num_bits,
-                                                           per_axis=len(
+                                                           per_channel=len(
                                                                threshold_values.flatten()) > 1,
                                                            threshold_values=threshold_values,
                                                            signed=True,
                                                            power_of_two=is_power_of_two,
                                                            quantization_axis=weight_channel_axis,
                                                            max_lsbs_change_map=max_lsbs_change_map)
+            elif gptq_config.rounding_type == RoundingType.SoftQuantizer:
+                self.weight_quantizer = SymmetricSoftRounding(num_bits=num_bits,
+                                                              per_channel=len(
+                                                                  threshold_values.flatten()) > 1,
+                                                              threshold_values=threshold_values,
+                                                              signed=True,
+                                                              n_batches=gptq_config.quantizer_config.n_batches,
+                                                              quantization_parameter_learning=gptq_config.quantization_parameters_learning,
+                                                              quantization_axis=weight_channel_axis,
+                                                              n_epochs=gptq_config.n_epochs,
+                                                              power_of_two=is_power_of_two)
             else:
                 common.Logger.error(
                     f"For quantization method {final_weights_quantization_cfg.weights_quantization_method}, "

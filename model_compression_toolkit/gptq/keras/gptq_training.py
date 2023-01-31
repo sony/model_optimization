@@ -19,6 +19,7 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapp
 from tqdm import tqdm
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+from model_compression_toolkit.gptq.common.gptq_constants import REGULARIZATION_VALUES
 from model_compression_toolkit.gptq.keras.gptq_model_builder import GPTQKerasModelBuilder
 from packaging import version
 
@@ -29,9 +30,10 @@ else:
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2, RoundingType
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.gptq.keras.graph_info import get_trainable_parameters, get_weights_for_loss
+from model_compression_toolkit.gptq.keras.graph_info import get_trainable_parameters, get_weights_for_loss, \
+    get_soft_rounding_reg
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 import numpy as np
@@ -70,7 +72,8 @@ class KerasGPTQTrainer(GPTQTrainer):
                          graph_quant,
                          gptq_config,
                          fw_impl,
-                         fw_info)
+                         fw_info,
+                         representative_data_gen)
 
         self.loss_list = []
         self.input_scale = 1
@@ -144,6 +147,12 @@ class KerasGPTQTrainer(GPTQTrainer):
                                                self.compare_points_mean,
                                                self.compare_points_std,
                                                self.weights_for_average_loss)
+
+            reg_value = self.gptq_config.quantizer_config.get_regularization_value(
+                self.fxp_model,
+                **{REGULARIZATION_VALUES: self._get_quantizer_regularization_values(self.gptq_config.rounding_type)})
+
+            loss_value += reg_value
 
         # Use the gradient tape to automatically retrieve
         # the gradients of the trainable variables with respect to the loss.
@@ -262,3 +271,18 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         return graph
 
+
+    def _get_quantizer_regularization_values(self, rounding_type: RoundingType) -> List[tf.Tensor]:
+        """
+        Mapping between a rounding type to its matching regularization method.
+
+        Args:
+            rounding_type: GPTQ rounding type.
+
+        Returns: A regularization computation method.
+
+        """
+        if rounding_type == RoundingType.SoftQuantizer:
+            return get_soft_rounding_reg(self.fxp_model)
+        else:
+            return []
