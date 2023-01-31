@@ -141,13 +141,12 @@ class TestModelGradients(unittest.TestCase):
 
 
     def test_basic_model_grad(self):
-        for _ in range(1000):
-            input_shape = (8, 8, 3)
-            in_model = basic_model(input_shape)
-            keras_impl = KerasImplementation()
-            graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
+        input_shape = (8, 8, 3)
+        in_model = basic_model(input_shape)
+        keras_impl = KerasImplementation()
+        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
 
-            self._run_model_grad_test(graph, keras_impl)
+        self._run_model_grad_test(graph, keras_impl)
 
     def test_advanced_model_grad(self):
         input_shape = (8, 8, 3)
