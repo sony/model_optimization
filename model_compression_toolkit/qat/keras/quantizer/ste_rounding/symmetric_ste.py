@@ -156,10 +156,11 @@ class STEWeightQuantizer(qi.BaseKerasTrainableQuantizer):
         if self.power_of_two:
             pot_threshold = 2 ** np.ceil(np.log2(self.quantizer_parameters[THRESHOLD_TENSOR]))
             return iq.WeightsPOTInferableQuantizer(num_bits=self.num_bits,
-                                                   threshold=np.reshape(pot_threshold, self.threshold_shape),
+                                                   threshold=pot_threshold.flatten(),
                                                    signed=C.WEIGHTS_SIGNED,
                                                    per_channel=self.per_channel,
-                                                   channel_axis=self.channel_axis)
+                                                   channel_axis=self.channel_axis,
+                                                   input_num_dims=len(self.threshold_shape))
         else:
             return iq.WeightsSymmetricInferableQuantizer(num_bits=self.num_bits,
                                                          threshold=np.reshape(
