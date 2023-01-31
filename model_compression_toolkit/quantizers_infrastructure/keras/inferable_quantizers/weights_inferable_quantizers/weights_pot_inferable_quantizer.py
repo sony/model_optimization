@@ -52,6 +52,7 @@ if FOUND_TF:
 
             self.per_channel = per_channel
             self.channel_axis = channel_axis
+            self.input_num_dims = input_num_dims
 
             # Get the shape of the threshold array
             self.threshold_shape = np.asarray(threshold).shape
@@ -116,7 +117,8 @@ if FOUND_TF:
                     'signed': self.signed,
                     'threshold': self.threshold,
                     'per_channel': self.per_channel,
-                    'channel_axis': self.channel_axis}
+                    'channel_axis': self.channel_axis,
+                    'input_num_dims': self.input_num_dims}
 
 else:
     class WeightsPOTInferableQuantizer:
