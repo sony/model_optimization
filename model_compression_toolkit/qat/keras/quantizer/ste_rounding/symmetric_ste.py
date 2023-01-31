@@ -279,4 +279,4 @@ class STEActivationQuantizer(qi.BaseKerasTrainableQuantizer):
         else:
             return iq.ActivationSymmetricInferableQuantizer(num_bits=self.num_bits,
                                                             threshold=self.quantizer_parameters[THRESHOLD_TENSOR],
-                                                            signed=C.WEIGHTS_SIGNED)
+                                                            signed=self.signed)
