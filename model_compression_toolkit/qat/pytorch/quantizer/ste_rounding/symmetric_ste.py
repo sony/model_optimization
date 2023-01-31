@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict
+from typing import Dict, Union
 
 import numpy as np
 import torch
@@ -21,6 +21,7 @@ import torch.nn as nn
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
 from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.quantizers_infrastructure.pytorch import inferable_quantizers as iq
 from model_compression_toolkit.core.common import constants as C
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import ste_round, ste_clip, symmetric_quantizer
@@ -52,11 +53,12 @@ class STEWeightQuantizer(qi.BasePytorchTrainableQuantizer):
         if self.power_of_two:
             self.np_threshold_values = np.power(2.0,
                                                 np.ceil(np.log2(np.maximum(self.np_threshold_values, C.MIN_THRESHOLD))))
-        num_bits = self.quantization_config.weights_n_bits
-        delta = self.np_threshold_values / np.power(2.0, num_bits - int(C.WEIGHTS_SIGNED))
+        self.num_bits = self.quantization_config.weights_n_bits
+        n_pos_bits = self.num_bits - int(C.WEIGHTS_SIGNED)
+        delta = self.np_threshold_values / np.power(2.0, n_pos_bits)
         self.delta_tensor = to_torch_tensor(delta)
-        self.min_int = -int(C.WEIGHTS_SIGNED) * (2 ** (num_bits - int(C.WEIGHTS_SIGNED)))
-        self.max_int = (2 ** (num_bits - int(C.WEIGHTS_SIGNED))) - 1
+        self.min_int = -int(C.WEIGHTS_SIGNED) * (2 ** n_pos_bits)
+        self.max_int = (2 ** n_pos_bits) - 1
         self.min = delta * self.min_int
         self.max = delta * self.max_int
         self.quantizer_parameters = {}
@@ -100,6 +102,26 @@ class STEWeightQuantizer(qi.BasePytorchTrainableQuantizer):
         w1 = ste_clip(w0, min_val=self.min_int, max_val=self.max_int)
         w_q = self.delta_tensor * w1
         return w_q
+
+    def convert2inferable(self) -> Union[iq.WeightsPOTInferableQuantizer, iq.WeightsSymmetricInferableQuantizer]:
+        """
+        Convert quantizer to inferable quantizer.
+
+        Returns:
+            A pytorch inferable quanizer object.
+        """
+        np_threshold = self.quantizer_parameters[THRESHOLD_TENSOR].cpu().detach().numpy().flatten()
+        if self.power_of_two:
+            pot_threshold = 2 ** np.ceil(np.log2(np_threshold))
+            return iq.WeightsPOTInferableQuantizer(num_bits=self.num_bits,
+                                                   threshold=pot_threshold,
+                                                   per_channel=self.quantization_config.weights_per_channel_threshold,
+                                                   channel_axis=self.quantization_config.weights_channels_axis)
+        else:
+            return iq.WeightsSymmetricInferableQuantizer(num_bits=self.num_bits,
+                                                         threshold=np_threshold,
+                                                         per_channel=self.quantization_config.weights_per_channel_threshold,
+                                                         channel_axis=self.quantization_config.weights_channels_axis)
 
 
 class STEActivationQuantizer(qi.BasePytorchTrainableQuantizer):
@@ -154,3 +176,21 @@ class STEActivationQuantizer(qi.BasePytorchTrainableQuantizer):
         _t = self.quantizer_parameters[THRESHOLD_TENSOR]
         q_tensor = symmetric_quantizer(inputs, _t, self.num_bits, sign=self.sign)
         return q_tensor
+
+    def convert2inferable(self) -> Union[iq.ActivationPOTInferableQuantizer, iq.ActivationSymmetricInferableQuantizer]:
+        """
+        Convert quantizer to inferable quantizer.
+
+        Returns:
+            A pytorch inferable quanizer object.
+        """
+        np_threshold = self.quantizer_parameters[THRESHOLD_TENSOR].cpu().detach().numpy()
+        if self.power_of_two:
+            pot_threshold = np.power(2.0, np.ceil(np.log2(np_threshold)))
+            return iq.ActivationPOTInferableQuantizer(num_bits=self.num_bits,
+                                                      threshold=pot_threshold,
+                                                      signed=self.sign)
+        else:
+            return iq.ActivationSymmetricInferableQuantizer(num_bits=self.num_bits,
+                                                            threshold=np_threshold,
+                                                            signed=self.sign)

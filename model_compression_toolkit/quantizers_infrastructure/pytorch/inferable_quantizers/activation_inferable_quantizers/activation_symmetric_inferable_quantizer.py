@@ -39,7 +39,7 @@ if FOUND_TORCH:
             Args:
                 num_bits: number of bits to use for quantization
                 threshold: threshold for quantizing activations
-                signed: whether or not to use signed quantization
+                signed: whether to use signed quantization or not
             """
 
             super(ActivationSymmetricInferableQuantizer, self).__init__(

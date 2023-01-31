@@ -165,15 +165,14 @@ if FOUND_TORCH:
 
     def pytorch_quantization_aware_training_finalize(in_model: Module):
         """
-         Convert a model fine-tuned by the user to a network without QuantizeWrappers. The exported
-         model contains float (fake-quantized) parameters and fake-quantiztion layers for quantizing
-         the activations
+         Convert a model fine-tuned by the user to a network with QuantizeWrappers containing
+         InferableQuantizers, that quantizes both the layers weights and outputs
 
          Args:
              in_model (Model): Pytorch model to remove QuantizeWrappers.
 
          Returns:
-             A quantized model without QuantizeWrappers.
+             A quantized model with QuantizeWrappers and InferableQuantizers.
 
          Examples:
 
@@ -206,9 +205,9 @@ if FOUND_TORCH:
 
          """
         exported_model = copy.deepcopy(in_model)
-        for layer in exported_model.named_children():
-            if isinstance(layer[1], PytorchQuantizationWrapper):
-                setattr(exported_model, layer[0], layer[1].layer)
+        for _, layer in exported_model.named_children():
+            if isinstance(layer, PytorchQuantizationWrapper):
+                layer.convert_to_inferable_quantizers()
 
         return exported_model
 
@@ -223,5 +222,5 @@ else:
 
     def pytorch_quantization_aware_training_finalize(*args, **kwargs):
         Logger.critical('Installing Pytorch is mandatory '
-                        'when using pytorch_quantization_aware_training_init. '
+                        'when using pytorch_quantization_aware_training_finalize. '
                         'Could not find the torch package.')  # pragma: no cover

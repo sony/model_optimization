@@ -68,8 +68,8 @@ if FOUND_TORCH:
             a = 0 if min_range > 0 else min_range
             b = 0 if max_range < 0 else max_range
 
-            self.scale = (b - a) / ((2 ** num_bits) - 1)
-            self.zero_point = -int(a / self.scale)  # zp has to be positive, and a <=0, so we multiply by -1
+            self.scale = float((b - a) / ((2 ** num_bits) - 1))
+            self.zero_point = int(-np.round(a / self.scale))  # zp has to be positive, and a <=0, so we multiply by -1
 
         def __call__(self, inputs: torch.Tensor):
             """

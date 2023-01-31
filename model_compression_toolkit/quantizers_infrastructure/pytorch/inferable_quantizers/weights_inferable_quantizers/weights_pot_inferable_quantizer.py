@@ -53,10 +53,6 @@ if FOUND_TORCH:
             assert is_threshold_pot, f'Expected threshold to be power of 2 but is {threshold}'
 
 
-
-
-
-
 else:
     class WeightsPOTInferableQuantizer:
         def __init__(self, *args, **kwargs):

@@ -69,7 +69,7 @@ if FOUND_TF:
             """
             super(KerasQuantizationWrapper, self).__init__(layer, **kwargs)
             self._track_trackable(layer, name='layer')
-            self.dispatcher = dispatcher
+            self._dispatcher = dispatcher
 
         def get_config(self):
             """
@@ -78,7 +78,7 @@ if FOUND_TF:
 
             """
             base_config = super(KerasQuantizationWrapper, self).get_config()
-            config = {DISPATCHER: keras.utils.serialize_keras_object(self.dispatcher)}
+            config = {DISPATCHER: keras.utils.serialize_keras_object(self._dispatcher)}
             return dict(list(base_config.items()) + list(config.items()))
 
         @classmethod
@@ -120,7 +120,7 @@ if FOUND_TF:
                 trainable=False)
 
             self._weight_vars = []
-            for name, quantizer in self.dispatcher.weight_quantizers.items():
+            for name, quantizer in self._dispatcher.weight_quantizers.items():
                 weight = getattr(self.layer, name)
                 quantizer.initialize_quantization(weight.shape,
                                                   _weight_name(weight.name), self)
@@ -129,7 +129,7 @@ if FOUND_TF:
                 self._trainable_weights.append(weight)
 
             self._activation_vars = []
-            for i, quantizer in enumerate(self.dispatcher.activation_quantizers):
+            for i, quantizer in enumerate(self._dispatcher.activation_quantizers):
                 quantizer.initialize_quantization(None,
                                                   self.layer.name + f'/out{i}', self)
                 self._activation_vars.append(quantizer)
@@ -144,7 +144,7 @@ if FOUND_TF:
             Returns: None
 
             """
-            for weight_attr in self.dispatcher.weight_quantizers.keys():
+            for weight_attr in self._dispatcher.weight_quantizers.keys():
                 weight = quantized_weights.get(weight_attr)
                 current_weight = getattr(self.layer, weight_attr)
                 if current_weight.shape != weight.shape:
@@ -196,17 +196,17 @@ if FOUND_TF:
                 outputs = self.layer.call(inputs, **kwargs)
 
             # Quantize all activations if quantizers exist.
-            if self.dispatcher.is_activation_quantization:
+            if self._dispatcher.is_activation_quantization:
                 num_outputs = len(outputs) if isinstance(outputs, (list, tuple)) else 1
-                if self.dispatcher.num_act_quantizers != num_outputs:
+                if self._dispatcher.num_act_quantizers != num_outputs:
                     Logger.error('Quantization wrapper output quantization error: '
                                  f'number of outputs and quantizers mismatch ({num_outputs}!='
-                                 f'{self.dispatcher.num_act_quantizers}')
+                                 f'{self._dispatcher.num_act_quantizers}')
                 if num_outputs == 1:
                     outputs = [outputs]
 
                 _outputs = []
-                for _output, act_quant in zip(outputs, self.dispatcher.activation_quantizers):
+                for _output, act_quant in zip(outputs, self._dispatcher.activation_quantizers):
                     activation_quantizer_args_spec = tf_inspect.getfullargspec(act_quant.__call__).args
                     if TRAINING in activation_quantizer_args_spec:
                         _outputs.append(utils.smart_cond(
