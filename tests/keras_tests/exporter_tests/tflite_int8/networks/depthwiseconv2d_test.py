@@ -42,7 +42,7 @@ class TestDepthwiseConv2DExporter(TFLiteINT8ExporterBaseTest):
 
         # Reshape DW kernel to be at the same dimensions as in TF.
         kernel = self.interpreter.tensor(kernel_tensor_index)().transpose(0, 1, 3, 2)
-        fake_quantized_kernel_from_exportable_model = self.exportable_model.layers[2].dispatcher.weight_quantizers['depthwise_kernel'](self.exportable_model.layers[2].layer.depthwise_kernel)
+        fake_quantized_kernel_from_exportable_model = self.exportable_model.layers[2]._dispatcher.weight_quantizers['depthwise_kernel'](self.exportable_model.layers[2].layer.depthwise_kernel)
         fake_quantized_kernel_from_int8_model = kernel * kernel_quantization_parameters["scales"].reshape(1, 1, 3, 1)
         assert np.all(
             fake_quantized_kernel_from_exportable_model == fake_quantized_kernel_from_int8_model), f'Expected quantized kernel to be the same in exportable model and in int8 model'

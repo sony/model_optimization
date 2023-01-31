@@ -47,7 +47,7 @@ class TestDenseExporter(TFLiteINT8ExporterBaseTest):
         assert len(kernel_quantization_parameters["zero_points"]) == 20
         assert np.all(kernel_quantization_parameters["zero_points"]==np.zeros(20))
 
-        fake_quantized_kernel_from_exportable_model = self.exportable_model.layers[2].dispatcher.weight_quantizers['kernel'](self.exportable_model.layers[2].layer.kernel)
+        fake_quantized_kernel_from_exportable_model = self.exportable_model.layers[2]._dispatcher.weight_quantizers['kernel'](self.exportable_model.layers[2].layer.kernel)
         # First reshape Conv kernel to be at the same dimensions as in TF.
         # Then reshape it to the original Dense kernel shape.
         # Then use scales to compute the fake quant kernel and compare it to the Dense fake quantized kernel
