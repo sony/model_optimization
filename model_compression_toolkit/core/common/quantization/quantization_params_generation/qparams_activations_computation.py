@@ -49,24 +49,21 @@ def get_activations_qparams(activation_quant_cfg: NodeActivationQuantizationConf
                                                                     bins_counts)
     min_value, max_value = out_stats_container.get_min_max_values()
 
-    if nodes_prior_info is not None:
-        if nodes_prior_info.is_output_bounded():
-            signed = min_value < 0
-        else:
-            signed = np.any(bins_values[:-1][bins_counts > 0] < 0)
-
-        if nodes_prior_info.is_output_bounded():
-            if activation_quant_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
-                activation_quant_cfg.activation_quantization_params_fn = \
-                    quantization_params_generation.power_of_two_no_clipping_selection_min_max
-            elif activation_quant_cfg.activation_quantization_method == QuantizationMethod.SYMMETRIC:
-                activation_quant_cfg.activation_quantization_params_fn = \
-                    quantization_params_generation.symmetric_no_clipping_selection_min_max
-            elif activation_quant_cfg.activation_quantization_method == QuantizationMethod.UNIFORM:
-                activation_quant_cfg.activation_quantization_params_fn = \
-                    quantization_params_generation.uniform_no_clipping_selection_min_max
+    if nodes_prior_info.is_output_bounded():
+        signed = min_value < 0
     else:
         signed = np.any(bins_values[:-1][bins_counts > 0] < 0)
+
+    if nodes_prior_info.is_output_bounded():
+        if activation_quant_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
+            activation_quant_cfg.activation_quantization_params_fn = \
+                quantization_params_generation.power_of_two_no_clipping_selection_min_max
+        elif activation_quant_cfg.activation_quantization_method == QuantizationMethod.SYMMETRIC:
+            activation_quant_cfg.activation_quantization_params_fn = \
+                quantization_params_generation.symmetric_no_clipping_selection_min_max
+        elif activation_quant_cfg.activation_quantization_method == QuantizationMethod.UNIFORM:
+            activation_quant_cfg.activation_quantization_params_fn = \
+                quantization_params_generation.uniform_no_clipping_selection_min_max
 
     activation_params = activation_quant_cfg.activation_quantization_params_fn(bins_values,
                                                                                bins_counts,

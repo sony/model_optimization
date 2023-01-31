@@ -280,3 +280,188 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
                                              graph_to_apply_second_moment)
 
         return tg, graph_to_apply_second_moment
+
+
+class POTSecondMomentTest(BaseSecondMomentTest):
+    """
+    This test checks that the Second Moment Correction feature doesn't occur with quantization method of Power Of Two.
+    """
+
+    def __init__(self, unit_test):
+        self.i = 0
+        super().__init__(unit_test)
+
+    def get_tpc(self):
+        tp = generate_test_tp_model({'weights_n_bits': 16,
+                                     'activation_n_bits': 16,
+                                     'weights_quantization_method': QuantizationMethod.POWER_OF_TWO})
+        return generate_keras_tpc(name="second_moment_correction_test", tp_model=tp)
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Conv2D(1, 1, padding='same',
+                          kernel_initializer="ones",
+                          bias_initializer="zeros")(inputs)
+        x = layers.BatchNormalization(
+            beta_initializer="zeros",
+            gamma_initializer="ones",
+            moving_mean_initializer="zeros",
+            moving_variance_initializer="ones")(x)
+        x = layers.Activation('relu')(x)
+        return tf.keras.models.Model(inputs=inputs, outputs=x)
+
+    def run_test(self, experimental_facade=False, experimental_exporter=False):
+        with self.unit_test.assertLogs(level='WARNING') as cm:
+            feature_networks = self.create_networks()
+            feature_networks = feature_networks if isinstance(feature_networks, list) else [feature_networks]
+            for model_float in feature_networks:
+                qc = self.get_quantization_config()
+                ptq_model, quantization_info = self.get_ptq_facade()(model_float,
+                                                                     self.representative_data_gen,
+                                                                     n_iter=self.num_calibration_iter,
+                                                                     quant_config=qc,
+                                                                     fw_info=self.get_fw_info(),
+                                                                     network_editor=self.get_network_editor(),
+                                                                     gptq_config=self.get_gptq_config(),
+                                                                     target_platform_capabilities=self.get_tpc())
+                self.compare(ptq_model, model_float, cm=cm, input_x=self.representative_data_gen(),
+                             quantization_info=quantization_info)
+
+    def compare(self, quantized_model, float_model, cm, input_x=None, quantization_info=None):
+        # Check that the warning msg is correct
+        warn_msg = "Second moment statistics correction feature disabled for models with weights quantization method " \
+                   "of Power of 2"
+        self.unit_test.assertTrue(any(warn_msg in s for s in cm.output))
+
+        # Check that the SMC feature is not working
+        quantized_model_kernel = quantized_model.layers[2].weights[0]
+        quantized_model_bias = quantized_model.layers[2].weights[1]
+        float_model_gamma = float_model.layers[2].weights[0]
+        float_model_beta = float_model.layers[2].weights[1]
+        float_model_kernel = float_model.layers[1].weights[0]
+        float_model_bias = float_model.layers[1].weights[1]
+        input_var = np.var(self.inp)
+        input_mean = np.mean(self.inp)
+        eps = EPSILON_VAL
+        weight_scale = np.sqrt(float_model_gamma + eps) / np.sqrt(input_var + eps)
+
+        # new_kernel = kernel * gamma/sqrt(moving_var+eps)
+        # new_bias = beta + (bias - moving_mean) * *gamma/sqrt(moving_var+eps)
+        calculated_kernel = float_model_kernel * weight_scale
+        calculated_bias = float_model_beta + (float_model_bias - input_mean) * weight_scale
+
+        self.unit_test.assertFalse(np.isclose(quantized_model_kernel, calculated_kernel, atol=1e-1))
+        self.unit_test.assertFalse(np.isclose(quantized_model_bias, calculated_bias, atol=1e-1))
+
+
+class NoBNSecondMomentTest(BaseSecondMomentTest):
+    """
+    This test checks that the Second Moment Correction feature doesn't occur without BN layer in the float model.
+    """
+
+    def __init__(self, unit_test):
+        self.i = 0
+        super().__init__(unit_test)
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Conv2D(1, 1, padding='same',
+                          kernel_initializer="ones",
+                          bias_initializer="zeros")(inputs)
+        x = layers.Activation('relu')(x)
+        return tf.keras.models.Model(inputs=inputs, outputs=x)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        # Check that the SMC feature is not working
+        quantized_model_kernel = quantized_model.layers[2].weights[0]
+        quantized_model_bias = quantized_model.layers[2].weights[1]
+        float_model_kernel = float_model.layers[1].weights[0]
+        float_model_bias = float_model.layers[1].weights[1]
+
+        self.unit_test.assertTrue(np.isclose(quantized_model_kernel, float_model_kernel, atol=1e-1))
+        self.unit_test.assertTrue(np.isclose(quantized_model_bias, float_model_bias, atol=1e-1))
+
+
+class ReusedConvSecondMomentTest(BaseSecondMomentTest):
+    """
+    This test checks that the Second Moment Correction feature doesn't occur when the linear layer is reused.
+    """
+
+    def __init__(self, unit_test):
+        self.i = 0
+        super().__init__(unit_test)
+
+    def create_networks(self):
+        conv_layer = layers.Conv2D(1, 1, padding='same',
+                                   kernel_initializer="ones",
+                                   bias_initializer="zeros")
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        y = conv_layer(inputs)
+        y = layers.BatchNormalization(
+            beta_initializer="zeros",
+            gamma_initializer="ones",
+            moving_mean_initializer="zeros",
+            moving_variance_initializer="ones")(y)
+        x = conv_layer(y)
+        x = layers.Activation('relu')(x)
+        return tf.keras.models.Model(inputs=inputs, outputs=x)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        # Check that the SMC feature is not working
+        quantized_model_kernel = quantized_model.layers[2].weights[0]
+        quantized_model_bias = quantized_model.layers[2].weights[1]
+        float_model_kernel = float_model.layers[1].weights[0]
+        float_model_bias = float_model.layers[1].weights[1]
+
+        self.unit_test.assertTrue(np.isclose(quantized_model_kernel, float_model_kernel, atol=1e-1))
+        self.unit_test.assertTrue(np.isclose(quantized_model_bias, float_model_bias, atol=1e-1))
+
+
+class UniformSecondMomentTest(BaseSecondMomentTest):
+    """
+    This test checks that the Second Moment Correction feature With Uniform Quantization.
+    """
+
+    def __init__(self, unit_test):
+        self.i = 0
+        super().__init__(unit_test)
+
+    def get_tpc(self):
+        tp = generate_test_tp_model({'weights_n_bits': 16,
+                                     'activation_n_bits': 16,
+                                     'weights_quantization_method': QuantizationMethod.UNIFORM})
+        return generate_keras_tpc(name="second_moment_correction_test", tp_model=tp)
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Conv2D(1, 2)(inputs)
+        x = layers.BatchNormalization(
+            beta_initializer="zeros",
+            gamma_initializer="ones",
+            moving_mean_initializer="zeros",
+            moving_variance_initializer="ones")(x)
+        x = layers.Activation('relu')(x)
+        return tf.keras.models.Model(inputs=inputs, outputs=x)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        quantized_model_kernel = quantized_model.layers[2].weights[0]
+        quantized_model_bias = quantized_model.layers[2].weights[1]
+        float_model_gamma = float_model.layers[2].weights[0]
+        float_model_beta = float_model.layers[2].weights[1]
+        float_model_kernel = float_model.layers[1].weights[0]
+        float_model_bias = float_model.layers[1].weights[1]
+
+        input_tensor = tf.cast(self.inp[0], dtype=tf.float32)
+        conv_layer_tensor = float_model.layers[1].call(input_tensor)
+        input_var = np.var(conv_layer_tensor)
+        input_mean = np.mean(conv_layer_tensor)
+        eps = EPSILON_VAL
+        weight_scale = np.sqrt(float_model_gamma + eps) / np.sqrt(input_var + eps)
+
+        # new_kernel = kernel * gamma/sqrt(moving_var+eps)
+        # new_bias = beta + (bias - moving_mean) * *gamma/sqrt(moving_var+eps)
+        calculated_kernel = float_model_kernel * weight_scale
+        calculated_bias = float_model_beta + (float_model_bias - input_mean) * weight_scale
+
+        self.unit_test.assertTrue(np.isclose(quantized_model_kernel, calculated_kernel, atol=1e-1).all())
+        self.unit_test.assertTrue(np.isclose(quantized_model_bias, calculated_bias, atol=1e-1).all())

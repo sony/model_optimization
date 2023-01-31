@@ -13,11 +13,19 @@
 # limitations under the License.
 # ==============================================================================
 
-# Inferable pytorch quantizer signature parameters:
-NUM_BITS = 'num_bits'
-SIGNED = 'signed'
-THRESHOLD = 'threshold'
-PER_CHANNEL = 'per_channel'
-MIN_RANGE = 'min_range'
-MAX_RANGE = 'max_range'
-CHANNEL_AXIS = 'channel_axis'
+IS_WEIGHTS = "is_weights"
+IS_ACTIVATIONS = "is_activations"
+
+WEIGHTS_QUANTIZATION_METHOD = 'weights_quantization_method'
+WEIGHTS_N_BITS = 'weights_n_bits'
+WEIGHTS_QUANTIZATION_PARAMS = 'weights_quantization_params'
+ENABLE_WEIGHTS_QUANTIZATION = 'enable_weights_quantization'
+WEIGHTS_CHANNELS_AXIS = 'weights_channels_axis'
+WEIGHTS_PER_CHANNEL_THRESHOLD = 'weights_per_channel_threshold'
+MIN_THRESHOLD = 'min_threshold'
+ACTIVATION_QUANTIZATION_METHOD = 'activation_quantization_method'
+ACTIVATION_N_BITS = 'activation_n_bits'
+ACTIVATION_QUANTIZATION_PARAMS = 'activation_quantization_params'
+ENABLE_ACTIVATION_QUANTIZATION = 'enable_activation_quantization'
+
+

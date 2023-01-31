@@ -13,13 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit import QuantizationConfig
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
-    NodeActivationQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+    TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
+from model_compression_toolkit.quantizers_infrastructure.keras.config_serialization import config_serialization, \
+    config_deserialization
 from tests.quantizers_infrastructure_tests.keras_tests.base_keras_infrastructure_test import \
-    BaseKerasInfrastructureTest, ZeroWeightsQuantizer, ZeroActivationsQuantizer, dummy_fn
+    BaseKerasInfrastructureTest, ZeroWeightsQuantizer, ZeroActivationsQuantizer
 
 
 class TestKerasBaseWeightsQuantizer(BaseKerasInfrastructureTest):
@@ -28,11 +28,13 @@ class TestKerasBaseWeightsQuantizer(BaseKerasInfrastructureTest):
         super().__init__(unit_test)
 
     def get_weights_quantization_config(self):
-        op_cfg, _ = get_op_quantization_configs()
-        qc = QuantizationConfig()
-        op_cfg_uniform = op_cfg.clone_and_edit(activation_quantization_method=QuantizationMethod.UNIFORM,
-                                               weights_quantization_method=QuantizationMethod.UNIFORM)
-        return NodeWeightsQuantizationConfig(qc, op_cfg_uniform, dummy_fn, dummy_fn, -1)
+        return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod.UNIFORM,
+                                               weights_n_bits=8,
+                                               weights_quantization_params={},
+                                               enable_weights_quantization=True,
+                                               weights_channels_axis=3,
+                                               weights_per_channel_threshold=True,
+                                               min_threshold=0)
 
     def run_test(self):
         with self.unit_test.assertRaises(Exception) as e:
@@ -48,7 +50,10 @@ class TestKerasBaseWeightsQuantizer(BaseKerasInfrastructureTest):
         weight_quantization_config = super(TestKerasBaseWeightsQuantizer, self).get_weights_quantization_config()
         quantizer = ZeroWeightsQuantizer(weight_quantization_config)
         self.unit_test.assertTrue(quantizer.quantization_config == weight_quantization_config)
-
+        config_data = config_serialization(weight_quantization_config)
+        self.unit_test.assertTrue(config_data['enable_weights_quantization'])
+        deserialized_config = config_deserialization(config_data)
+        self.unit_test.assertTrue(weight_quantization_config.__dict__ == deserialized_config.__dict__)
 
 class TestKerasBaseActivationsQuantizer(BaseKerasInfrastructureTest):
 
@@ -56,11 +61,11 @@ class TestKerasBaseActivationsQuantizer(BaseKerasInfrastructureTest):
         super().__init__(unit_test)
 
     def get_activation_quantization_config(self):
-        op_cfg, _ = get_op_quantization_configs()
-        qc = QuantizationConfig()
-        op_cfg_uniform = op_cfg.clone_and_edit(activation_quantization_method=QuantizationMethod.UNIFORM,
-                                               weights_quantization_method=QuantizationMethod.UNIFORM)
-        return NodeActivationQuantizationConfig(qc, op_cfg_uniform, dummy_fn, dummy_fn)
+        return TrainableQuantizerActivationConfig(activation_quantization_method=QuantizationMethod.UNIFORM,
+                                                  activation_n_bits=8,
+                                                  activation_quantization_params={},
+                                                  enable_activation_quantization=True,
+                                                  min_threshold=0)
 
     def run_test(self):
         with self.unit_test.assertRaises(Exception) as e:
@@ -77,3 +82,7 @@ class TestKerasBaseActivationsQuantizer(BaseKerasInfrastructureTest):
                                                self).get_activation_quantization_config()
         quantizer = ZeroActivationsQuantizer(activation_quantization_config)
         self.unit_test.assertTrue(quantizer.quantization_config == activation_quantization_config)
+        config_data = config_serialization(activation_quantization_config)
+        self.unit_test.assertTrue(config_data['enable_activation_quantization'])
+        deserialized_config = config_deserialization(config_data)
+        self.unit_test.assertTrue(activation_quantization_config.__dict__ == deserialized_config.__dict__)

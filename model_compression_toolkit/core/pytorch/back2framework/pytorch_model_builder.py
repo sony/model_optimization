@@ -197,8 +197,6 @@ class PytorchModel(torch.nn.Module):
                 else:
                     self.add_module(n.name, self.wrapper(n, node_builder(n)))
 
-
-
     def forward(self,
                 *args: Any) -> Any:
         """

@@ -18,6 +18,7 @@ from typing import Dict, List
 from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
 from model_compression_toolkit.core.common.logger import Logger
 
+
 class NodeQuantizationDispatcher:
     def __init__(self,
                  weight_quantizers: Dict[str, BaseInferableQuantizer] = None,
@@ -26,12 +27,11 @@ class NodeQuantizationDispatcher:
         Node quantization dispatcher collects all the quantizer of a given layer.
 
         Args:
-            weight_quantizers: A dictionary between weight name to it quantizer .
+            weight_quantizers: A dictionary between weight name to its quantizer .
             activation_quantizers: A list of activation quantization one for each layer output.
         """
         self.weight_quantizers = weight_quantizers if weight_quantizers is not None else dict()
         self.activation_quantizers = activation_quantizers if activation_quantizers is not None else list()
-
 
     def set_weight_quantizers(self, weight_quantizers: Dict[str, BaseInferableQuantizer]):
         """
@@ -60,7 +60,6 @@ class NodeQuantizationDispatcher:
             if not isinstance(quantizer, BaseInferableQuantizer):
                 Logger.error(f"quantizer is supposed to be BaseInferableQuantizer but it's not!")  # pragma: no cover
         self.activation_quantizers = activation_quantizers
-
 
     def add_weight_quantizer(self, param_name: str, quantizer: BaseInferableQuantizer):
         """
@@ -97,7 +96,6 @@ class NodeQuantizationDispatcher:
     @property
     def num_weight_quantizers(self):
         return len(self.weight_quantizers)
-
 
     @property
     def num_act_quantizers(self):

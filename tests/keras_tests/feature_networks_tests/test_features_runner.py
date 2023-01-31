@@ -101,20 +101,21 @@ from tests.keras_tests.feature_networks_tests.feature_networks.reused_separable_
 from tests.keras_tests.feature_networks_tests.feature_networks.scale_equalization_test import ScaleEqualizationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.second_moment_correction_test import \
     DepthwiseConv2DSecondMomentTest, Conv2DSecondMomentTest, Conv2DTSecondMomentTest, \
-    ValueSecondMomentTest
+    ValueSecondMomentTest, POTSecondMomentTest, NoBNSecondMomentTest, ReusedConvSecondMomentTest, \
+    UniformSecondMomentTest
 from tests.keras_tests.feature_networks_tests.feature_networks.shift_neg_activation_test import ShiftNegActivationTest, \
     ShiftNegActivationPostAddTest
 from tests.keras_tests.feature_networks_tests.feature_networks.softmax_shift_test import SoftmaxShiftTest
 from tests.keras_tests.feature_networks_tests.feature_networks.split_concatenate_test import SplitConcatenateTest
 from tests.keras_tests.feature_networks_tests.feature_networks.split_conv_bug_test import SplitConvBugTest
 from tests.keras_tests.feature_networks_tests.feature_networks.symmetric_threshold_selection_activation_test import \
-    SymmetricThresholdSelectionActivationTest
+    SymmetricThresholdSelectionActivationTest, SymmetricThresholdSelectionBoundedActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
     DwConv2dReplacementTest
 from tests.keras_tests.feature_networks_tests.feature_networks.test_kmeans_quantizer import KmeansQuantizerTest, \
     KmeansQuantizerTestManyClasses, KmeansQuantizerNotPerChannelTest
 from tests.keras_tests.feature_networks_tests.feature_networks.uniform_range_selection_activation_test import \
-    UniformRangeSelectionActivationTest
+    UniformRangeSelectionActivationTest, UniformRangeSelectionBoundedActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import \
     MixedPercisionSearchTest, MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest, MixedPrecisionActivationDisabled, \
@@ -525,6 +526,10 @@ class FeatureNetworkTest(unittest.TestCase):
         Conv2DSecondMomentTest(self).run_test()
         Conv2DTSecondMomentTest(self).run_test()
         ValueSecondMomentTest(self).run_test()
+        POTSecondMomentTest(self).run_test()
+        UniformSecondMomentTest(self).run_test()
+        ReusedConvSecondMomentTest(self).run_test()
+        NoBNSecondMomentTest(self).run_test()
 
     def test_decompose_separable_conv(self):
         DecomposeSeparableConvTest(self).run_test()
@@ -605,12 +610,26 @@ class FeatureNetworkTest(unittest.TestCase):
         SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.LP).run_test()
         SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.KL).run_test()
 
+    def test_symmetric_threshold_selection_softmax_activation(self):
+        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
+        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.MSE).run_test()
+        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.MAE).run_test()
+        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.LP).run_test()
+        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.KL).run_test()
+
     def test_uniform_range_selection_activation(self):
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.MSE).run_test()
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.MAE).run_test()
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.LP).run_test()
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.KL).run_test()
+
+    def test_uniform_range_selection_softmax_activation(self):
+        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
+        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.MSE).run_test()
+        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.MAE).run_test()
+        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.LP).run_test()
+        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.KL).run_test()
 
     def test_multi_head_attention(self):
         q_seq_len, kv_seq_len = 5, 6

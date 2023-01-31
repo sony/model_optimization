@@ -14,13 +14,14 @@
 # ==============================================================================
 import unittest
 
+import model_compression_toolkit as mct
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
     MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, MixedPrecisionActivationOnlyBopsTest, \
     MixedPrecisionBopsAndWeightsKPITest, MixedPrecisionBopsAndActivationKPITest, MixedPrecisionBopsAndTotalKPITest, \
     MixedPrecisionBopsWeightsActivationKPITest, MixedPrecisionBopsMultipleOutEdgesTest
-from tests.pytorch_tests.model_tests.feature_models.qat_test import QuantizationAwareTrainingTest, QATSymmetricActivationTest, QATUniformActivationTest
+from tests.pytorch_tests.model_tests.feature_models.qat_test import QuantizationAwareTrainingTest
 from tests.pytorch_tests.model_tests.feature_models.relu_replacement_test import SingleLayerReplacementTest, \
     ReluReplacementTest, ReluReplacementWithAddBiasTest
 from tests.pytorch_tests.model_tests.feature_models.remove_assert_test import AssertNetTest
@@ -446,14 +447,30 @@ class FeatureModelsTestRunner(unittest.TestCase):
         STEWeightsUpdateTest(self).run_test()
         STELearnRateZeroTest(self).run_test()
 
-
     def test_qat(self):
         """
         This test checks the QAT feature.
         """
         QuantizationAwareTrainingTest(self).run_test()
-        QATSymmetricActivationTest(self).run_test()
-        QATUniformActivationTest(self).run_test()
+        QuantizationAwareTrainingTest(self, finalize=True).run_test()
+        _method = mct.target_platform.QuantizationMethod.SYMMETRIC
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method
+                                      ).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method,
+                                      finalize=True).run_test()
+        _method = mct.target_platform.QuantizationMethod.UNIFORM
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method
+                                      ).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method,
+                                      finalize=True).run_test()
 
 
 if __name__ == '__main__':

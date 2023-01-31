@@ -77,6 +77,13 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
         num_nodes_before_substitution = len(graph.nodes)
         num_edges_before_substitution = len(graph.edges)
 
+        # If the linear operator is part of a reused group (it is the "base" node, or a reused node),
+        # we should skip the substitution.
+        if source_node.reuse or source_node.reuse_group is not None:
+            for qc in source_node.candidates_quantization_cfg:
+                qc.weights_quantization_cfg.weights_second_moment_correction = False
+            return graph
+
         # We apply only on nodes with folded BatchNormalization.
         if source_node.prior_info.std_output is None or source_node.prior_info.mean_output is None:
             for qc in source_node.candidates_quantization_cfg:

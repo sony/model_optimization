@@ -12,23 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
-
 if FOUND_TORCH:
-    import torch
     from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers\
-        .base_uniform_inferable_quantizer \
-        import \
-        BaseUniformInferableQuantizer
+        .base_pytorch_inferable_quantizer import \
+        BasePyTorchInferableQuantizer
 
-    class BaseSymmetricInferableQuantizer(BaseUniformInferableQuantizer):
+
+    class BaseSymmetricInferableQuantizer(BasePyTorchInferableQuantizer):
 
         def __init__(self,
                      num_bits: int,
-                     threshold: torch.Tensor,
+                     threshold: np.ndarray,
                      signed: bool,
                      quantization_target: QuantizationTarget):
             """
@@ -41,17 +40,26 @@ if FOUND_TORCH:
                 quantization_target: An enum which selects the quantizer tensor type: activation or weights.
             """
 
+            super(BaseSymmetricInferableQuantizer, self).__init__(quantization_target=quantization_target)
+
+            assert isinstance(threshold,
+                              np.ndarray), f'Threshold is expected to be numpy array, but is of type {type(threshold)}'
+            assert threshold.ndim == 1, f'Threshold is expected to be flatten, but of shape {threshold.shape}'
+
             self.signed = signed
             self.threshold = threshold
+            self.num_bits = num_bits
 
-            delta = threshold / (2 ** (num_bits - int(signed)))
-            min_range = -threshold if signed else 0
-            max_range = threshold - delta
+            if signed:
+                self.min_quantized_domain = -2 ** (num_bits - 1)
+                self.max_quantized_domain = 2 ** (num_bits - 1) - 1
+                self.scales = threshold / 2 ** (num_bits - 1)
+            else:
+                self.min_quantized_domain = 0
+                self.max_quantized_domain = (2 ** num_bits) - 1
+                self.scales = threshold / 2 ** num_bits
 
-            super(BaseSymmetricInferableQuantizer, self).__init__(quantization_target=quantization_target,
-                                                                  min_range=min_range,
-                                                                  max_range=max_range,
-                                                                  num_bits=num_bits)
+
 
 else:
     class BaseSymmetricInferableQuantizer:

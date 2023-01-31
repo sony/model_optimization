@@ -19,6 +19,8 @@ from model_compression_toolkit.quantizers_infrastructure import BaseInferableQua
 
 if FOUND_TORCH:
     import torch
+
+
     class BasePyTorchInferableQuantizer(BaseInferableQuantizer):
         def __init__(self,
                      quantization_target: QuantizationTarget):

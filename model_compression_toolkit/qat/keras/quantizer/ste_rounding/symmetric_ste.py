@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict
+from typing import Dict, Union
 
 import numpy as np
 import tensorflow as tf
@@ -28,6 +28,8 @@ from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common import constants as C
 import model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers as iq
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+    TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 
 class STEWeightQuantizer(qi.BaseKerasTrainableQuantizer):
@@ -35,13 +37,13 @@ class STEWeightQuantizer(qi.BaseKerasTrainableQuantizer):
     Trainable constrained quantizer to quantize a layer inputs.
     """
 
-    def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
+    def __init__(self, quantization_config: TrainableQuantizerWeightsConfig):
         """
         Initialize a TrainableWeightQuantizer object with parameters to use
         for the quantization.
 
         Args:
-            quantization_config: node quantization config class
+            quantization_config: trainable quantizer config class
         """
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Weights,
@@ -144,7 +146,7 @@ class STEWeightQuantizer(qi.BaseKerasTrainableQuantizer):
 
         return q_tensor
 
-    def convert2inferable(self) -> qi.BaseKerasInferableQuantizer:
+    def convert2inferable(self) -> Union[iq.WeightsPOTInferableQuantizer, iq.WeightsSymmetricInferableQuantizer]:
         """
         Convert quantizer to inferable quantizer.
 
@@ -173,13 +175,13 @@ class STEActivationQuantizer(qi.BaseKerasTrainableQuantizer):
     Trainable constrained quantizer to quantize a layer outputs.
     """
 
-    def __init__(self, quantization_config: NodeActivationQuantizationConfig):
+    def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         """
         Initialize a STEActivationQuantizer object with parameters to use
         for the quantization.
 
         Args:
-            quantization_config: node quantization config class
+            quantization_config: trainable quantizer config class
         """
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Activation,
@@ -261,7 +263,7 @@ class STEActivationQuantizer(qi.BaseKerasTrainableQuantizer):
 
         return q_tensor
 
-    def convert2inferable(self) -> qi.BaseKerasInferableQuantizer:
+    def convert2inferable(self) -> Union[iq.ActivationPOTInferableQuantizer, iq.ActivationSymmetricInferableQuantizer]:
         """
         Convert quantizer to inferable quantizer.
 

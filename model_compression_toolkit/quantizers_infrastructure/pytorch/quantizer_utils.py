@@ -55,7 +55,6 @@ def to_torch_tensor(tensor):
         raise Exception(f'Conversion of type {type(tensor)} to {type(torch.Tensor)} is not supported')
 
 
-
 def get_activation_symmetric_quantization_range_and_scale(activation_is_signed: bool,
                                                           activation_n_bits: int,
                                                           activation_threshold: float):
