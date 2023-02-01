@@ -23,3 +23,12 @@ We basically follow the development style used in many GitHub repositories.
    Our maintainers will then review your changes.
 
 5. Once your change is finalized, the maintainer will merge your change.
+
+
+## Contribution Example
+
+Here a simple tutorial on how to add your own quantization method to MCT.
+Check out the readme files below:
+
+- [Adding a QAT method in Keras](./model_compression_toolkit/qat/keras/quantizer)
+- [Adding a QAT method in PyTorch](./model_compression_toolkit/qat/pytorch/quantizer)

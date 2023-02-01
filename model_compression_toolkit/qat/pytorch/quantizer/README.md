@@ -3,9 +3,9 @@
 ## Introduction
 
 Several training methods may be applied by the user to train the QAT ready model
-created by `pytorch_quantization_aware_training_init` method in [`pytorch/quantization_facade`](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/qat/pytorch/quantization_facade.py).
-Each `TrainingMethod` (an enum defined in the [`qat_config`](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/qat/common/qat_config.py)) 
-and [`QuantizationMethod`](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/common/target_platform/op_quantization_config.py)
+created by `pytorch_quantization_aware_training_init` method in [`pytorch/quantization_facade`](./model_compression_toolkit/qat/pytorch/quantization_facade.py).
+Each `TrainingMethod` (an enum defined in the [`qat_config`](./model_compression_toolkit/qat/common/qat_config.py)) 
+and [`QuantizationMethod`](./model_compression_toolkit/core/common/target_platform/op_quantization_config.py)
 selects a quantizer for weights and a quantizer for activations.
 
 Currently, only the STE (straight through estimator) training method is implemented by the MCT.
@@ -13,9 +13,9 @@ Currently, only the STE (straight through estimator) training method is implemen
 ## Make your own training method
 
 Follow these steps in order to set the quantizers required by your training method:
-- Add your `TrainingMethod` enum in [`qat_config`](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/qat/common/qat_config.py).
-- Add your quantizers for weights and activation as explained in (https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/quantizers_infrastructure/pytorch).
-- Add your `TrainingMethod` and quantizers to `METHOD2WEIGHTQUANTIZER` and `METHOD2ACTQUANTIZER` in [`quantization_dispatcher_builder.py`](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/qat/pytorch/quantizer/quantization_dispatcher_builder.py)
+- Add your `TrainingMethod` enum in [`qat_config`](./model_compression_toolkit/qat/common/qat_config.py).
+- Add your quantizers for weights and activation as explained in [quantizer readme](./model_compression_toolkit/quantizers_infrastructure/pytorch).
+- Add your `TrainingMethod` and quantizers to `METHOD2WEIGHTQUANTIZER` and `METHOD2ACTQUANTIZER` in [`quantization_dispatcher_builder.py`](./model_compression_toolkit/qat/pytorch/quantizer/quantization_dispatcher_builder.py)
 according to your desired `QuantizationMethod`.  
 - Set your `TrainingMethod` in the `QATConfig` and generate the QAT ready model for training. 
 
@@ -24,7 +24,7 @@ according to your desired `QuantizationMethod`.
 
 In this example we'll add a new quantization method, called MTM (my training method).
 
-First, we update the `TrainingMethod` enum in [`qat_config`](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/qat/common/qat_config.py)
+First, we update the `TrainingMethod` enum in [`qat_config`](./model_compression_toolkit/qat/common/qat_config.py)
 ```python
 class TrainingMethod(Enum):
     """
@@ -39,7 +39,7 @@ class TrainingMethod(Enum):
 
 Then we implement a weight quantizer class that implements the desired training scheme: MTMWeightQuantizer
 
-And update the quantizer selection dictionary `METHOD2WEIGHTQUANTIZER` in [`quantization_dispatcher_builder.py`](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/qat/pytorch/quantizer/quantization_dispatcher_builder.py)
+And update the quantizer selection dictionary `METHOD2WEIGHTQUANTIZER` in [`quantization_dispatcher_builder.py`](./model_compression_toolkit/qat/pytorch/quantizer/quantization_dispatcher_builder.py)
 
 ```python
 from my_quantizers import MTMWeightQuantizer
@@ -52,8 +52,8 @@ METHOD2WEIGHTQUANTIZER = {TrainingMethod.STE: {qi.QuantizationMethod.SYMMETRIC: 
 ```
 
 Finally, we're ready generate the model for quantization aware training
-by calling `pytorch_quantization_aware_training_init` method in [`pytorch/quantization_facade`](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/qat/pytorch/quantization_facade.py)
-with the following [`qat_config`](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/qat/common/qat_config.py):
+by calling `pytorch_quantization_aware_training_init` method in [`pytorch/quantization_facade`](./model_compression_toolkit/qat/pytorch/quantization_facade.py)
+with the following [`qat_config`](./model_compression_toolkit/qat/common/qat_config.py):
 
 ```python
 from model_compression_toolkit.qat.common.qat_config import QATConfig, TrainingMethod
