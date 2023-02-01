@@ -71,7 +71,7 @@ if found_tf:
     from tests.keras_tests.function_tests.test_kpi_data import TestKPIData
     from tests.quantizers_infrastructure_tests.keras_tests.test_keras_quantization_infrastructure_runner import \
         KerasInfrastructureTest
-    from tests.keras_tests.exporter_tests.test_runner import TFLiteINT8ExporterNetworksTest
+    from tests.keras_tests.exporter_tests.test_runner import ExporterTestsRunner
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLiteINT8ExporterNetworksTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ExporterTestsRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityMetricInterestPoints))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureNetworkTest))
