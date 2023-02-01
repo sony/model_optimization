@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================f
+# ==============================================================================
+from typing import Dict, List
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.core.common.logger import Logger
-from model_compression_toolkit.quantizers_infrastructure.common.node_quantization_dispatcher import \
-    NodeQuantizationDispatcher
+from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.common.constants import WEIGHT_QUANTIZERS, ACTIVATION_QUANTIZERS, LAYER, STEPS, TRAINING
 
 if FOUND_TF:
     import tensorflow as tf
@@ -24,12 +25,6 @@ if FOUND_TF:
     from tensorflow_model_optimization.python.core.keras import utils
 
     keras = tf.keras
-
-    DISPATCHER = "dispatcher"
-    LAYER = "layer"
-    STEPS = "optimizer_step"
-    TRAINING = "training"
-
 
     def _make_quantizer_fn(quantizer, x, training):
         """Use currying to return True/False specialized fns to the cond."""
@@ -57,18 +52,67 @@ if FOUND_TF:
     class KerasQuantizationWrapper(tf.keras.layers.Wrapper):
         def __init__(self,
                      layer,
-                     dispatcher: NodeQuantizationDispatcher,
+                     weight_quantizers: Dict[str, BaseInferableQuantizer] = None,
+                     activation_quantizers: List[BaseInferableQuantizer] = None,
                      **kwargs):
             """
-            Keras Quantization Wrapper takes a keras layer and dispatcher and infer a quantized layer.
+            Keras Quantization Wrapper takes a keras layer and quantizers infer a quantized layer.
 
             Args:
                 layer: A keras layer.
-                dispatcher: A node quantization dispatcher.
+                weight_quantizers: A dictionary between a weight's name to its quantizer.
+                activation_quantizers: A list of activations quantization, one for each layer output.
             """
             super(KerasQuantizationWrapper, self).__init__(layer, **kwargs)
             self._track_trackable(layer, name='layer')
-            self._dispatcher = dispatcher
+            self.weight_quantizers = weight_quantizers if weight_quantizers is not None else dict()
+            self.activation_quantizers = activation_quantizers if activation_quantizers is not None else list()
+
+        def add_weight_quantizer(self, param_name: str, quantizer: BaseInferableQuantizer):
+            """
+            This function adds a weight quantizer to existing wrapper
+
+            Args:
+                param_name: The name of the parameter to quantize
+                quantizer: A quantizer.
+
+            Returns: None
+
+            """
+            self.weight_quantizers.update({param_name: quantizer})
+
+        @property
+        def is_activation_quantization(self) -> bool:
+            """
+            This function check activation quantizer exists in wrapper.
+            Returns: a boolean if activation quantizer exists
+
+            """
+            return self.num_act_quantizers > 0
+
+        @property
+        def is_weights_quantization(self) -> bool:
+            """
+            This function check weights quantizer exists in wrapper.
+
+            Returns: a boolean if weights quantizer exists
+
+            """
+            return self.num_weight_quantizers > 0
+
+        @property
+        def num_weight_quantizers(self) -> int:
+            """
+            Returns: number of weights quantizers
+            """
+            return len(self.weight_quantizers)
+
+        @property
+        def num_act_quantizers(self) -> int:
+            """
+            Returns: number of activations quantizers
+            """
+            return len(self.activation_quantizers)
 
         def get_config(self):
             """
@@ -76,12 +120,15 @@ if FOUND_TF:
 
             """
             base_config = super(KerasQuantizationWrapper, self).get_config()
-            config = {DISPATCHER: keras.utils.serialize_keras_object(self._dispatcher)}
+            config = {
+                ACTIVATION_QUANTIZERS: [keras.utils.serialize_keras_object(act) for act in self.activation_quantizers],
+                WEIGHT_QUANTIZERS: {k: keras.utils.serialize_keras_object(v) for k, v in
+                                    self.weight_quantizers.items()}}
             return dict(list(base_config.items()) + list(config.items()))
 
-        def _set_weights_quantizers(self, is_training: bool = True):
+        def _set_weights_vars(self, is_training: bool = True):
             """
-            This function sets weights quantizers to the layer
+            This function sets weights quantizers vars to the layer
 
             Args:
                 is_training: Flag to indicate whether training or not
@@ -89,19 +136,20 @@ if FOUND_TF:
             Returns: None
             """
             self._weight_vars = []
-            for name, quantizer in self._dispatcher.weight_quantizers.items():
+            for name, quantizer in self.weight_quantizers.items():
                 weight = getattr(self.layer, name)
-                quantizer.initialize_quantization(weight.shape, _weight_name(weight.name) if is_training else None, self)
+                quantizer.initialize_quantization(weight.shape, _weight_name(weight.name) if is_training else None,
+                                                  self)
                 self._weight_vars.append((name, weight, quantizer))
 
-        def _set_activations_quantizers(self):
+        def _set_activations_vars(self):
             """
-            This function sets activations quantizers to the layer
+            This function sets activations quantizers vars to the layer
 
             Returns: None
             """
             self._activation_vars = []
-            for i, quantizer in enumerate(self._dispatcher.activation_quantizers):
+            for i, quantizer in enumerate(self.activation_quantizers):
                 quantizer.initialize_quantization(None, self.layer.name + f'/out{i}', self)
                 self._activation_vars.append(quantizer)
 
@@ -110,21 +158,23 @@ if FOUND_TF:
             """
 
             Args:
-                config(dict): dictionary  of  KerasNodeQuantizationDispatcher Configuration
+                config(dict): dictionary  of  KerasQuantizationWrapper Configuration
 
-            Returns: A KerasNodeQuantizationDispatcher
+            Returns: A KerasQuantizationWrapper
 
             """
             config = config.copy()
-
-            dispatcher = keras.utils.deserialize_keras_object(
-                config.pop(DISPATCHER),
-                module_objects=globals(),
-                custom_objects=None)
-
             layer = tf.keras.layers.deserialize(config.pop(LAYER))
+            activation_quantizers = [keras.utils.deserialize_keras_object(act,
+                                                                          module_objects=globals(),
+                                                                          custom_objects=None) for act in
+                                     config.pop(ACTIVATION_QUANTIZERS)]
+            weight_quantizers = {k: keras.utils.deserialize_keras_object(v,
+                                                                         module_objects=globals(),
+                                                                         custom_objects=None) for k, v in
+                                 config.pop(WEIGHT_QUANTIZERS).items()}
 
-            return cls(layer=layer, dispatcher=dispatcher, **config)
+            return cls(layer=layer, weight_quantizers=weight_quantizers, activation_quantizers=activation_quantizers, **config)
 
         def build(self, input_shape):
             """
@@ -143,12 +193,8 @@ if FOUND_TF:
                 dtype=tf.dtypes.int32,
                 trainable=False)
 
-            # Set weights quantizers
-            self._set_weights_quantizers()
-
-            # Set activations quantizers
-            self._set_activations_quantizers()
-
+            self._set_weights_vars()
+            self._set_activations_vars()
 
         def set_quantize_weights(self, quantized_weights: dict):
             """
@@ -160,7 +206,7 @@ if FOUND_TF:
             Returns: None
 
             """
-            for weight_attr in self._dispatcher.weight_quantizers.keys():
+            for weight_attr in self.weight_quantizers.keys():
                 weight = quantized_weights.get(weight_attr)
                 current_weight = getattr(self.layer, weight_attr)
                 if current_weight.shape != weight.shape:
@@ -209,17 +255,17 @@ if FOUND_TF:
                 outputs = self.layer.call(inputs, **kwargs)
 
             # Quantize all activations if quantizers exist.
-            if self._dispatcher.is_activation_quantization:
+            if self.is_activation_quantization:
                 num_outputs = len(outputs) if isinstance(outputs, (list, tuple)) else 1
-                if self._dispatcher.num_act_quantizers != num_outputs:
+                if self.num_act_quantizers != num_outputs:
                     Logger.error('Quantization wrapper output quantization error: '
                                  f'number of outputs and quantizers mismatch ({num_outputs}!='
-                                 f'{self._dispatcher.num_act_quantizers}')
+                                 f'{self.num_act_quantizers}')
                 if num_outputs == 1:
                     outputs = [outputs]
 
                 _outputs = []
-                for _output, act_quant in zip(outputs, self._dispatcher.activation_quantizers):
+                for _output, act_quant in zip(outputs, self.activation_quantizers):
                     activation_quantizer_args_spec = tf_inspect.getfullargspec(act_quant.__call__).args
                     if TRAINING in activation_quantizer_args_spec:
                         _outputs.append(utils.smart_cond(
@@ -242,31 +288,35 @@ if FOUND_TF:
             """
             # Activations quantizers
             inferable_activation_quantizers = []
-            if self._dispatcher.is_activation_quantization:
-                for quantizer in self._dispatcher.activation_quantizers:
+            if self.is_activation_quantization:
+                for quantizer in self.activation_quantizers:
                     if isinstance(quantizer, qi.BaseKerasTrainableQuantizer):
                         inferable_activation_quantizers.append(quantizer.convert2inferable())
-                self._dispatcher.set_activation_quantizers(inferable_activation_quantizers)
-                self._set_activations_quantizers()
+                self.activation_quantizers = inferable_activation_quantizers
+                self._set_activations_vars()
 
             # Weight quantizers
             inferable_weight_quantizers = {}
-            if self._dispatcher.is_weights_quantization:
-                for name, quantizer in self._dispatcher.weight_quantizers.items():
+            if self.is_weights_quantization:
+                for name, quantizer in self.weight_quantizers.items():
                     if isinstance(quantizer, qi.BaseKerasTrainableQuantizer):
                         inferable_weight_quantizers.update({name: quantizer.convert2inferable()})
-                self._dispatcher.set_weight_quantizers(inferable_weight_quantizers)
-                self._set_weights_quantizers(False)
+                self.weight_quantizers = inferable_weight_quantizers
+                self._set_weights_vars(False)
 
 else:
     class KerasQuantizationWrapper(object):
-        def __init__(self, layer, dispatcher: NodeQuantizationDispatcher):
+        def __init__(self,
+                     layer,
+                     weight_quantizers: Dict[str, BaseInferableQuantizer] = None,
+                     activation_quantizers: List[BaseInferableQuantizer] = None):
             """
-            Keras Quantization Wrapper takes a keras layer and dispatcher and infer a quantized layer.
+            Keras Quantization Wrapper takes a keras layer and quantizers and infer a quantized layer.
 
             Args:
                 layer: A keras layer.
-                dispatcher: A node quantization dispatcher.
+                weight_quantizers: A dictionary between a weight's name to its quantizer.
+                activation_quantizers: A list of activations quantization, one for each layer output.
             """
             Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using KerasQuantizationWrapper. '

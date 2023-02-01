@@ -17,9 +17,9 @@ from typing import Any
 from keras.engine.input_layer import InputLayer
 
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper, \
-    KerasNodeQuantizationDispatcher
+from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer
+
 
 
 def is_keras_layer_exportable(layer: Any) -> bool:
@@ -40,17 +40,23 @@ def is_keras_layer_exportable(layer: Any) -> bool:
     if not valid_layer:
         Logger.error(
             f'Exportable layer must be wrapped using KerasQuantizationWrapper, but layer {layer.name} is of type '
-            f'{type(layer)}')
+            f'{type(layer)}') # pragma: no cover
 
-    valid_dispatcher = isinstance(layer._dispatcher, KerasNodeQuantizationDispatcher)
-    if not valid_dispatcher:
+    valid_weight_quantizers = isinstance(layer.weight_quantizers, dict)
+    if not valid_weight_quantizers:
         Logger.error(
-            f'KerasQuantizationWrapper must have a dispatcher of type KerasNodeQuantizationDispatcher but has a '
-            f'{type(layer._dispatcher)} object as a dispatcher')
+            f'KerasQuantizationWrapper must have a weight_quantizers but has a '
+            f'{type(layer.weight_quantizers)} object') # pragma: no cover
 
-    dispatcher_quantizers = layer._dispatcher.activation_quantizers + list(layer._dispatcher.weight_quantizers.values())
-    inferable_quantizers = all([isinstance(x, BaseInferableQuantizer) for x in dispatcher_quantizers])
-    if not inferable_quantizers:
-        Logger.error(f'Found a quantizer in the dispatcher that is not of type BaseInferableQuantizer')
+    valid_activation_quantizers = isinstance(layer.activation_quantizers, list)
+    if not valid_activation_quantizers:
+        Logger.error(
+            f'KerasQuantizationWrapper must have a activation_quantizers list but has a '
+            f'{type(layer.activation_quantizers)} object') # pragma: no cover
+
+    quantizers = layer.activation_quantizers + list(layer.weight_quantizers.values())
+    is_valid_quantizers = all([isinstance(x, BaseInferableQuantizer) for x in quantizers])
+    if not is_valid_quantizers:
+        Logger.error(f'Found a quantizer that is not of type BaseInferableQuantizer') # pragma: no cover
 
     return True

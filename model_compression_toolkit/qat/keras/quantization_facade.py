@@ -51,8 +51,7 @@ if FOUND_TF:
     from model_compression_toolkit.qat.common.qat_config import _is_qat_applicable
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-    from model_compression_toolkit.qat.keras.quantizer.quantization_dispatcher_builder import \
-        quantization_dispatcher_builder
+    from model_compression_toolkit.qat.keras.quantizer.quantization_builder import quantization_builder
     from model_compression_toolkit.qat.common.qat_config import QATConfig
     from model_compression_toolkit import quantizers_infrastructure as qi
 
@@ -70,7 +69,7 @@ if FOUND_TF:
 
         """
         if _is_qat_applicable(n, DEFAULT_KERAS_INFO):
-            return qi.KerasQuantizationWrapper(layer, quantization_dispatcher_builder(n, qat_config, DEFAULT_KERAS_INFO))
+            return qi.KerasQuantizationWrapper(layer, *quantization_builder(n, qat_config, DEFAULT_KERAS_INFO))
         else:
             return layer
 

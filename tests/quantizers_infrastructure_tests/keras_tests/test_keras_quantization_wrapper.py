@@ -15,8 +15,7 @@
 
 import tensorflow as tf
 
-from model_compression_toolkit.quantizers_infrastructure import KerasNodeQuantizationDispatcher, \
-    KerasQuantizationWrapper
+from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 from tests.quantizers_infrastructure_tests.keras_tests.base_keras_infrastructure_test import \
     BaseKerasInfrastructureTest, \
     IdentityWeightsQuantizer, ZeroActivationsQuantizer
@@ -25,7 +24,6 @@ keras = tf.keras
 layers = keras.layers
 
 WEIGHT = 'kernel'
-DISPATCHER = 'dispatcher'
 CLASS_NAME = 'class_name'
 
 
@@ -44,14 +42,8 @@ class TestKerasWeightsQuantizationWrapper(BaseKerasInfrastructureTest):
         conv_layer = model.layers[1]
         inputs = self.generate_inputs()[0]
 
-        nqd = self.get_dispatcher()
-        nqd.add_weight_quantizer(WEIGHT, IdentityWeightsQuantizer(self.get_weights_quantization_config()))
-        wrapper = self.get_wrapper(conv_layer, nqd)
-
-        # get config
-        wrapper_config = wrapper.get_config()
-        self.unit_test.assertTrue(wrapper_config[DISPATCHER][CLASS_NAME] ==
-                                  KerasNodeQuantizationDispatcher.__name__)
+        wrapper = self.get_wrapper(conv_layer)
+        wrapper.add_weight_quantizer(WEIGHT, IdentityWeightsQuantizer(self.get_weights_quantization_config()))
 
         # build
         wrapper.build(self.get_input_shapes())
@@ -77,9 +69,8 @@ class TestKerasActivationsQuantizationWrapper(TestKerasWeightsQuantizationWrappe
         conv_layer = model.layers[1]
         inputs = self.generate_inputs()[0]
 
-        nqd = self.get_dispatcher(activation_quantizers=[ZeroActivationsQuantizer(
+        wrapper = self.get_wrapper(conv_layer, activation_quantizers=[ZeroActivationsQuantizer(
             self.get_activation_quantization_config())])
-        wrapper = self.get_wrapper(conv_layer, nqd)
 
         # build
         wrapper.build(self.get_input_shapes())

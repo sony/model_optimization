@@ -32,10 +32,10 @@ class TestPytorchWeightsQuantizationWrapper(BasePytorchInfrastructureTest):
         return nn.Conv2d(3,20,3)
 
     def run_test(self):
-        nqd = self.get_dispatcher()
-        nqd.add_weight_quantizer('weight', ZeroWeightsQuantizer(self.get_weights_quantization_config()))
-        wrapper = self.get_wrapper(self.create_layer(), nqd)
-        (name, weight, quantizer) = wrapper._weight_vars[0]
+        wrapper = self.get_wrapper(self.create_layer())
+        wrapper.add_weight_quantizer('weight', ZeroWeightsQuantizer(self.get_weights_quantization_config()))
+        wrapper._set_weights_vars()
+        (name, weight, quantizer) = wrapper._weights_vars[0]
         self.unit_test.assertTrue(isinstance(wrapper, qi.PytorchQuantizationWrapper))
         self.unit_test.assertTrue(isinstance(wrapper.layer, nn.Conv2d))
         self.unit_test.assertTrue(name == 'weight')
@@ -52,8 +52,9 @@ class TestPytorchActivationQuantizationWrapper(TestPytorchWeightsQuantizationWra
         super().__init__(unit_test)
 
     def run_test(self):
-        nqd = self.get_dispatcher(activation_quantizers=[ZeroActivationsQuantizer(self.get_activation_quantization_config())])
-        wrapper = qi.PytorchQuantizationWrapper(self.create_layer(), nqd)
+        wrapper = qi.PytorchQuantizationWrapper(self.create_layer(),
+                                                activation_quantizers=[ZeroActivationsQuantizer(self.get_activation_quantization_config())])
+
         (quantizer) = wrapper._activation_vars[0]
         self.unit_test.assertTrue(isinstance(quantizer, ZeroActivationsQuantizer))
         # y = wrapper(torch.Tensor(np.random.random((4, 3, 224, 224)))) # apply the wrapper on some random inputs

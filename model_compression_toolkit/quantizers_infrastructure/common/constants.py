@@ -15,7 +15,8 @@
 
 IS_WEIGHTS = "is_weights"
 IS_ACTIVATIONS = "is_activations"
-
+ACTIVATION_QUANTIZERS = "activation_quantizers"
+WEIGHT_QUANTIZERS = "weight_quantizer"
 WEIGHTS_QUANTIZATION_METHOD = 'weights_quantization_method'
 WEIGHTS_N_BITS = 'weights_n_bits'
 WEIGHTS_QUANTIZATION_PARAMS = 'weights_quantization_params'
@@ -27,5 +28,7 @@ ACTIVATION_QUANTIZATION_METHOD = 'activation_quantization_method'
 ACTIVATION_N_BITS = 'activation_n_bits'
 ACTIVATION_QUANTIZATION_PARAMS = 'activation_quantization_params'
 ENABLE_ACTIVATION_QUANTIZATION = 'enable_activation_quantization'
-
+LAYER = "layer"
+STEPS = "optimizer_step"
+TRAINING = "training"
 

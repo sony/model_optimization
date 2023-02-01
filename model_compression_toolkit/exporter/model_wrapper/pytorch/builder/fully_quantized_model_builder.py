@@ -19,8 +19,8 @@ from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
-from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_dispatcher import \
-    get_quantization_dispatcher
+from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizers import \
+    get_quantization_quantizers
 
 
 def fully_quantized_wrapper(node: common.BaseNode, module: torch.nn.Module) -> qi.PytorchQuantizationWrapper:
@@ -36,7 +36,7 @@ def fully_quantized_wrapper(node: common.BaseNode, module: torch.nn.Module) -> q
 
     """
     wrapped_layer = qi.PytorchQuantizationWrapper(module,
-                                                  get_quantization_dispatcher(node))
+                                                  *get_quantization_quantizers(node))
     return wrapped_layer
 
 
