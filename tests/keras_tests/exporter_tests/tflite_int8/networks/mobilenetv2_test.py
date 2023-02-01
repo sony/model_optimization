@@ -20,7 +20,7 @@ from tests.keras_tests.exporter_tests.tflite_int8.tflite_int8_exporter_base_test
 import keras
 layers = keras.layers
 
-class TestMBV2Exporter(TFLiteINT8ExporterBaseTest):
+class TestMBV2TFLiteINT8Exporter(TFLiteINT8ExporterBaseTest):
 
     def get_input_shape(self):
         return [(224,224,3)]

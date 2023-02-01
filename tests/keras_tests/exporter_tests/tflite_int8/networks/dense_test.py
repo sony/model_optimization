@@ -19,7 +19,7 @@ import numpy as np
 
 layers = keras.layers
 
-class TestDenseExporter(TFLiteINT8ExporterBaseTest):
+class TestDenseTFLiteINT8Exporter(TFLiteINT8ExporterBaseTest):
 
     def get_input_shape(self):
         # More than 3 dims input to test the substitution to point-wise

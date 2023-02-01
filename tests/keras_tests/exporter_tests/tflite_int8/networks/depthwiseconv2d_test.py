@@ -19,7 +19,7 @@ import numpy as np
 
 layers = keras.layers
 
-class TestDepthwiseConv2DExporter(TFLiteINT8ExporterBaseTest):
+class TestDepthwiseConv2DTFLiteINT8Exporter(TFLiteINT8ExporterBaseTest):
     def get_model(self):
         return self.get_one_layer_model(layers.DepthwiseConv2D(9))
 

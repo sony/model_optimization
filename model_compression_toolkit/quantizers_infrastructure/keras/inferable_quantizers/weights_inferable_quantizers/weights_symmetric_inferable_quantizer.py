@@ -33,7 +33,8 @@ if FOUND_TF:
                      threshold: np.ndarray,
                      signed: bool,
                      per_channel: bool,
-                     channel_axis: int):
+                     channel_axis: int,
+                     input_num_dims:int):
             """
             Initialize the quantizer with the specified parameters.
 

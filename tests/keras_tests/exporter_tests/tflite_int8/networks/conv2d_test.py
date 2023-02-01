@@ -12,16 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.core.tpc_models.default_tpc.v5.tpc_keras import generate_keras_tpc
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.exporter_tests.tflite_int8.tflite_int8_exporter_base_test import TFLiteINT8ExporterBaseTest
 import keras
 import numpy as np
 
 layers = keras.layers
 
-class TestConv2DExporter(TFLiteINT8ExporterBaseTest):
+
+class TestConv2DSymmetricTFLiteINT8Exporter(TFLiteINT8ExporterBaseTest):
+    def __init__(self):
+        self.weights_diff_tolerance=1e-7
+
+    def get_tpc(self):
+        tp = generate_test_tp_model({'weights_quantization_method': QuantizationMethod.SYMMETRIC})
+        return generate_keras_tpc(name='sym_conv2d_exporter', tp_model=tp)
+
     def get_model(self):
-        return self.get_one_layer_model(layers.Conv2D(6,5))
+        return self.get_one_layer_model(layers.Conv2D(6, 5))
 
     def run_checks(self):
         # Fetch quantized weights from int8 model tensors
@@ -40,12 +50,33 @@ class TestConv2DExporter(TFLiteINT8ExporterBaseTest):
         assert np.all(kernel_quantization_parameters["zero_points"] == np.zeros(6))
 
         # Reshape Conv kernel to be at the same dimensions as in TF.
-        kernel = self.interpreter.tensor(kernel_tensor_index)().transpose(1,2,3,0)
-        fake_quantized_kernel_from_exportable_model = self.exportable_model.layers[2]._dispatcher.weight_quantizers['kernel'](self.exportable_model.layers[2].layer.kernel)
-        fake_quantized_kernel_from_int8_model = kernel * kernel_quantization_parameters["scales"].reshape(1,1,1,6)
-        assert np.all(fake_quantized_kernel_from_exportable_model == fake_quantized_kernel_from_int8_model), f'Expected quantized kernel to be the same in exportable model and in int8 model'
+        kernel = self.interpreter.tensor(kernel_tensor_index)().transpose(1, 2, 3, 0)
+        fake_quantized_kernel_from_exportable_model = self.exportable_model.layers[2]._dispatcher.weight_quantizers[
+            'kernel'](self.exportable_model.layers[2].layer.kernel)
+        fake_quantized_kernel_from_int8_model = kernel * kernel_quantization_parameters["scales"].reshape(1, 1, 1, 6)
+        max_abs_error = np.max(np.abs(fake_quantized_kernel_from_exportable_model-fake_quantized_kernel_from_int8_model))
+        # assert np.all(fake_quantized_kernel_from_int8_model==fake_quantized_kernel_from_exportable_model)
+        assert max_abs_error<=self.weights_diff_tolerance, f'Max abs diff between fake quant (from int8 model and exportable model) kernels passed tolerance: max_abs_error {max_abs_error}, tolerance:{self.weights_diff_tolerance}'
 
+
+class TestConv2DPOTTFLiteINT8Exporter(TestConv2DSymmetricTFLiteINT8Exporter):
+
+    def __init__(self):
+        super(TestConv2DPOTTFLiteINT8Exporter, self).__init__()
+        self.weights_diff_tolerance = 0
+
+    def get_tpc(self):
+        tp = generate_test_tp_model({'weights_quantization_method': QuantizationMethod.POWER_OF_TWO})
+        return generate_keras_tpc(name='sym_conv2d_exporter', tp_model=tp)
+
+    def get_model(self):
+        return self.get_one_layer_model(layers.Conv2D(6,5))
+
+    def run_checks(self):
+        super(TestConv2DPOTTFLiteINT8Exporter, self).run_checks()
         for tensor in self.interpreter.get_tensor_details():
             assert 'quantization_parameters' in tensor.keys()
             scales = tensor['quantization_parameters']['scales']
             assert np.all(np.log2(scales) == np.round(np.log2(scales))), f'Expected all scales to be POT but scales are {scales} in tensor {tensor["name"]}'
+
+

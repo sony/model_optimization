@@ -23,6 +23,9 @@ import tensorflow as tf
 from keras import Input
 
 import model_compression_toolkit as mct
+from model_compression_toolkit import get_target_platform_capabilities
+from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.exporter.model_exporter import tflite_export_model, \
     TFLiteExportMode
 from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_exportable
@@ -42,6 +45,7 @@ class TFLiteINT8ExporterBaseTest:
             in_model=self.model,
             core_config=mct.CoreConfig(),
             representative_data_gen=self.__get_repr_dataset,
+            target_platform_capabilities=self.get_tpc(),
             new_experimental_exporter=True)
 
         # Disable bias as tflite quantizes them unlike MCT
@@ -71,7 +75,10 @@ class TFLiteINT8ExporterBaseTest:
         os.remove(self.float_model_file_path)
 
     def get_input_shape(self):
-        return [(224, 224, 3)]
+        return [(16, 16, 3)]
+
+    def get_tpc(self):
+        return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def __get_repr_dataset(self):
         for _ in range(1):
