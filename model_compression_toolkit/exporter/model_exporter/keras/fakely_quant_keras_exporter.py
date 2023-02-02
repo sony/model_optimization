@@ -22,8 +22,7 @@ from keras.engine.base_layer import Layer
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import \
     BaseKerasExporter
-from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper, \
-    KerasNodeQuantizationDispatcher
+from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 
 
 
@@ -73,7 +72,7 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
             assert self.is_layer_exportable_fn(layer), f'Layer {layer.name} is not exportable.'
 
             # If weights are quantized, use the quantized weight for the new built layer.
-            if layer._dispatcher.is_weights_quantization:
+            if layer.is_weights_quantization:
                 new_layer = layer.layer.__class__.from_config(layer.layer.get_config())
                 with tf.name_scope(new_layer.name):
                     new_layer.build(layer.input_shape)
@@ -91,8 +90,8 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                             # quantize config contains this as an attribute for quantization. If so -
                             # Take the quantized weight from the quantize_config and set it to the new layer.
                             attribute_name = w.name.split('/')[-1].split(':')[0]
-                            if attribute_name in layer._dispatcher.weight_quantizers.keys():
-                                quantizer = layer._dispatcher.weight_quantizers.get(attribute_name)
+                            if attribute_name in layer.weights_quantizers.keys():
+                                quantizer = layer.weights_quantizers.get(attribute_name)
                                 val = quantizer(qw)
                             else:
                                 val = qw
@@ -105,11 +104,9 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
 
                 # If activations are also quantized, wrap the layer back using ActivationQuantizeConfig
                 # from original wrapper (weights wrapping is no longer needed).
-                if layer._dispatcher.is_activation_quantization:
-                    activation_dispatcher = KerasNodeQuantizationDispatcher(weight_quantizers={},
-                                                                            activation_quantizers=layer._dispatcher.activation_quantizers)
+                if layer.is_activation_quantization:
                     new_layer = KerasQuantizationWrapper(layer=new_layer,
-                                                         dispatcher=activation_dispatcher)
+                                                         activation_quantizers=layer.activation_quantizers)
 
                 return new_layer
 

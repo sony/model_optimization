@@ -42,7 +42,7 @@ if FOUND_TORCH:
     from model_compression_toolkit import quantizers_infrastructure as qi
     from model_compression_toolkit import get_target_platform_capabilities
     from model_compression_toolkit.qat.common.qat_config import QATConfig
-    from model_compression_toolkit.qat.pytorch.quantizer.quantization_dispatcher_builder import quantization_dispatcher_builder
+    from model_compression_toolkit.qat.pytorch.quantizer.quantization_builder import quantization_builder
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
 
@@ -57,7 +57,8 @@ if FOUND_TORCH:
 
         """
         if _is_qat_applicable(n, DEFAULT_PYTORCH_INFO):
-            return qi.PytorchQuantizationWrapper(module, quantization_dispatcher_builder(n, qat_config, DEFAULT_PYTORCH_INFO))
+            weights_quantizers, activation_quantizers = quantization_builder(n, qat_config, DEFAULT_PYTORCH_INFO)
+            return qi.PytorchQuantizationWrapper(module, weights_quantizers, activation_quantizers)
         else:
             return module
 
