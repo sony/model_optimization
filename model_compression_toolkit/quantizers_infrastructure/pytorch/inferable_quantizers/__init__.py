@@ -21,6 +21,8 @@ from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quant
 from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.activation_inferable_quantizers \
     .activation_uniform_inferable_quantizer import \
     ActivationUniformInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.activation_inferable_quantizers.\
+    activation_lut_pot_inferable_quantizer import ActivationLutPOTInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers \
     .base_pytorch_inferable_quantizer import \
     BasePyTorchInferableQuantizer
@@ -33,3 +35,7 @@ from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quant
 from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.weights_inferable_quantizers \
     .weights_uniform_inferable_quantizer import \
     WeightsUniformInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.weights_inferable_quantizers\
+    .weights_lut_pot_inferable_quantizer import WeightsLutPOTInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers.weights_inferable_quantizers\
+    .weights_lut_sym_inferable_quantizer import WeightsLutSymInferableQuantizer

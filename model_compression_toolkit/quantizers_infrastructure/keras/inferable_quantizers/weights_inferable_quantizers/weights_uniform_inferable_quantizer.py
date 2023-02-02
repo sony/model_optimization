@@ -15,15 +15,14 @@
 
 import numpy as np
 
-from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
+from model_compression_toolkit.quantizers_infrastructure.common.constants import FOUND_TF
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.keras.quantizer_utils import fix_range_to_include_zero
 
 if FOUND_TF:
     import tensorflow as tf
     from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers\
-        .base_uniform_inferable_quantizer import \
-        BaseUniformInferableQuantizer
+        .base_uniform_inferable_quantizer import BaseUniformInferableQuantizer
 
 
     class WeightsUniformInferableQuantizer(BaseUniformInferableQuantizer):
@@ -86,7 +85,7 @@ if FOUND_TF:
                 # If a permutation vector has been created to move the channel axis to the last position
                 if self.perm_vec:
                     # Transpose the input tensor to move the channel axis to the last position
-                    inputs = tf.transpose(inputs, perm=self.perm_vec)
+                    inputs = tf.transpose(inputs, perm=self.perm_vec).numpy()
 
                 # Quantize the input tensor using per-channel quantization
                 q_tensor = tf.quantization.fake_quant_with_min_max_vars_per_channel(inputs,
@@ -106,19 +105,18 @@ if FOUND_TF:
                                                                     max=self.max_range,
                                                                     num_bits=self.num_bits)
 
+        def get_config(self):
+            """
+            Return a dictionary with the configuration of the quantizer.
 
-    def get_config(self):
-        """
-        Return a dictionary with the configuration of the quantizer.
-
-        Returns:
-            Dictionary with the following keys: 'num_bits', 'min_range', 'max_range', 'per_channel', 'channel_axis'
-        """
-        return {'per_channel': self.per_channel,
-                'num_bits': self.num_bits,
-                'max_range': self.max_range,
-                'min_range': self.min_range,
-                'channel_axis': self.channel_axis}
+            Returns:
+                Dictionary with the following keys: 'num_bits', 'min_range', 'max_range', 'per_channel', 'channel_axis'
+            """
+            return {'per_channel': self.per_channel,
+                    'num_bits': self.num_bits,
+                    'max_range': self.max_range,
+                    'min_range': self.min_range,
+                    'channel_axis': self.channel_axis}
 
 
 else:
@@ -126,4 +124,4 @@ else:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using WeightsUniformInferableQuantizer. '
-                            'Could not find Tensorflow package.')
+                            'Could not find Tensorflow package.')  # pragma: no cover

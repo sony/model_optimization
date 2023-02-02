@@ -103,6 +103,7 @@ if FOUND_TF:
                                                                     min=self.min_range,
                                                                     max=self.max_range,
                                                                     num_bits=self.num_bits)
+
         def get_config(self):
             """
             Return a dictionary with the configuration of the quantizer.
@@ -121,4 +122,4 @@ else:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using WeightsPOTInferableQuantizer. '
-                            'Could not find Tensorflow package.')
+                            'Could not find Tensorflow package.')  # pragma: no cover

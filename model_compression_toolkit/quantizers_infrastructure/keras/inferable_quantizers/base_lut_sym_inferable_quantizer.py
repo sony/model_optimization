@@ -17,42 +17,34 @@ from abc import abstractmethod
 import numpy as np
 
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_uniform_inferable_quantizer \
-    import \
-    BaseUniformInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
+    import BaseKerasInferableQuantizer
 
 
-class BaseSymmetricInferableQuantizer(BaseUniformInferableQuantizer):
+class BaseLutSymInferableQuantizer(BaseKerasInferableQuantizer):
 
     def __init__(self,
                  num_bits: int,
+                 cluster_centers: np.ndarray,
                  threshold: np.ndarray,
                  signed: bool,
-                 quantization_target: QuantizationTarget):
+                 quantization_target: QuantizationTarget
+                 ):
         """
         Initialize the quantizer with the specified parameters.
 
         Args:
             num_bits: number of bits to use for quantization
-            threshold: threshold for quantizing weights
+            cluster_centers: the cluster centers to assign the values
+            threshold: threshold for quantizing activations
             signed: whether or not to use signed quantization
             quantization_target: An enum which selects the quantizer tensor type: activation or weights.
         """
-
-        if not isinstance(threshold, np.ndarray):
-            threshold = np.asarray(threshold)
-
-        self.signed = signed
+        super(BaseLutSymInferableQuantizer, self).__init__(quantization_target=quantization_target)
+        self.num_bits = num_bits
+        self.cluster_centers = cluster_centers
         self.threshold = threshold
-
-        delta = threshold / (2 ** (num_bits - int(signed)))
-        min_range = -threshold if signed else np.zeros_like(threshold)
-        max_range = threshold - delta
-
-        super(BaseSymmetricInferableQuantizer, self).__init__(quantization_target=quantization_target,
-                                                              min_range=min_range,
-                                                              max_range=max_range,
-                                                              num_bits=num_bits)
+        self.signed = signed
 
     @abstractmethod
     def get_config(self):
@@ -60,4 +52,3 @@ class BaseSymmetricInferableQuantizer(BaseUniformInferableQuantizer):
         Return a dictionary with the configuration of the quantizer.
         """
         raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')  # pragma: no cover
-

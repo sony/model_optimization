@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import importlib
 
 IS_WEIGHTS = "is_weights"
 IS_ACTIVATIONS = "is_activations"
@@ -28,4 +29,10 @@ ACTIVATION_N_BITS = 'activation_n_bits'
 ACTIVATION_QUANTIZATION_PARAMS = 'activation_quantization_params'
 ENABLE_ACTIVATION_QUANTIZATION = 'enable_activation_quantization'
 
+EPS = 1e-8
+MULTIPLIER_N_BITS = 8
+
+TENSORFLOW = 'tensorflow'
+FOUND_TF = importlib.util.find_spec(TENSORFLOW) is not None and importlib.util.find_spec(
+    "tensorflow_model_optimization") is not None
 

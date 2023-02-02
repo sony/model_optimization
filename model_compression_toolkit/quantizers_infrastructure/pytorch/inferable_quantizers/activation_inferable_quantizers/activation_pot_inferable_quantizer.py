@@ -18,7 +18,7 @@ import numpy as np
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 
 if FOUND_TORCH:
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers\
+    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers \
         .activation_inferable_quantizers.activation_symmetric_inferable_quantizer import \
         ActivationSymmetricInferableQuantizer
 
@@ -45,7 +45,7 @@ if FOUND_TORCH:
                                                                   signed=signed,
                                                                   threshold=threshold)
 
-            is_threshold_pot = np.all(np.round(np.log2(threshold.flatten()))==np.log2(threshold.flatten()))
+            is_threshold_pot = np.all(np.round(np.log2(threshold.flatten())) == np.log2(threshold.flatten()))
             assert is_threshold_pot, f'Expected threshold to be power of 2 but is {threshold}'
 
 
@@ -54,4 +54,4 @@ else:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing torch is mandatory '
                             'when using ActivationPOTInferableQuantizer. '
-                            'Could not find torch package.')
+                            'Could not find torch package.')  # pragma: no cover

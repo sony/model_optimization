@@ -98,4 +98,4 @@ else:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing torch is mandatory '
                             'when using WeightsSymmetricInferableQuantizer. '
-                            'Could not find torch package.')
+                            'Could not find torch package.')  # pragma: no cover

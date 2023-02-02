@@ -93,4 +93,4 @@ else:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing torch is mandatory '
                             'when using ActivationUniformInferableQuantizer. '
-                            'Could not find torch package.')
+                            'Could not find torch package.')  # pragma: no cover

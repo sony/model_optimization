@@ -72,6 +72,13 @@ if found_tf:
     from tests.keras_tests.function_tests.test_gptq_loss_functions import TestGPTQLossFunctions
     from tests.quantizers_infrastructure_tests.keras_tests.test_keras_quantization_infrastructure_runner import \
         KerasInfrastructureTest
+    from tests.quantizers_infrastructure_tests.keras_tests.test_inferable_quantizers.\
+        test_activations_inferable_quantizer import TestKerasActivationsPOTQuantizer, \
+        TestKerasActivationsSymmetricQuantizer, TestKerasActivationsUniformQuantizer, \
+        TestKerasActivationsLutPOTQuantizer
+    from tests.quantizers_infrastructure_tests.keras_tests.test_inferable_quantizers.\
+        test_weights_inferable_quantizer import TestKerasWeightsPOTQuantizer, TestKerasWeightsSymmetricQuantizer, \
+        TestKerasWeightsUniformQuantizer, TestKerasWeightsLutPOTQuantizer, TestKerasWeightsLutSymmetricQuantizer
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -81,6 +88,13 @@ if found_pytorch:
     from tests.pytorch_tests.function_tests.test_pytorch_tp_model import TestPytorchTPModel
     from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_quantization_infrastructure_runner import \
         PytorchInfrastructureTest
+    from tests.quantizers_infrastructure_tests.pytorch_tests.test_inferable_quantizers.\
+        test_activations_inferable_quantizer import TestPyTorchActivationsPOTQuantizer, \
+        TestPyTorchActivationsSymmetricQuantizer, TestPyTorchActivationsUniformQuantizer, \
+        TestPyTorchActivationsLutPOTQuantizer
+    from tests.quantizers_infrastructure_tests.pytorch_tests.test_inferable_quantizers.\
+        test_weights_inferable_quantizer import TestPyTorchWeightsPOTQuantizer, TestPyTorchWeightsSymmetricQuantizer, \
+        TestPyTorchWeightsUniformQuantizer, TestPyTorchWeightsLutPOTQuantizer, TestPyTorchWeightsLutSymQuantizer
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases
@@ -122,9 +136,18 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasFakeQuantExporter))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKPIData))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFileLogger))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasInfrastructureTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGetGPTQConfig))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQLossFunctions))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasInfrastructureTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasWeightsPOTQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasWeightsSymmetricQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasWeightsUniformQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasWeightsLutPOTQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasWeightsLutSymmetricQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasActivationsPOTQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasActivationsSymmetricQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasActivationsUniformQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasActivationsLutPOTQuantizer))
 
         # Keras test layers are supported in TF2.6 or higher versions
         if version.parse(tf.__version__) >= version.parse("2.6"):
@@ -144,6 +167,16 @@ if __name__ == '__main__':
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_shufflenet_v2_x1_0', ModelTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchTPModel))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchInfrastructureTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPyTorchWeightsPOTQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPyTorchWeightsSymmetricQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPyTorchWeightsUniformQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPyTorchWeightsLutPOTQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPyTorchWeightsLutSymQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPyTorchActivationsPOTQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPyTorchActivationsSymmetricQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPyTorchActivationsUniformQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPyTorchActivationsLutPOTQuantizer))
+
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)
     unittest.TextTestRunner(verbosity=0).run(comboSuite)

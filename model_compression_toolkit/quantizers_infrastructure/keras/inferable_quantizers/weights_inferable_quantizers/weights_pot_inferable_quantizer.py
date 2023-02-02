@@ -20,7 +20,8 @@ from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_q
 
 if FOUND_TF:
     import tensorflow as tf
-    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_pot_inferable_quantizer import BasePOTInferableQuantizer
+    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_pot_inferable_quantizer \
+        import BasePOTInferableQuantizer
 
     class WeightsPOTInferableQuantizer(BasePOTInferableQuantizer):
         """
@@ -30,17 +31,17 @@ if FOUND_TF:
         def __init__(self,
                      num_bits: int,
                      threshold: np.ndarray,
-                     signed: bool,
                      per_channel: bool,
-                     channel_axis: int):
+                     signed: bool = True,
+                     channel_axis: int = None):
             """
             Initialize the quantizer with the specified parameters.
 
             Args:
                 num_bits: number of bits to use for quantization
-                threshold: threshold for quantizing activations
-                signed: whether or not to use signed quantization
+                threshold: threshold for quantizing weights
                 per_channel: whether to use per-channel quantization
+                signed: whether or not to use signed quantization
                 channel_axis: axis along which to apply per-channel quantization
             """
             # Call the superclass constructor with the given parameters, along with the target of Weights quantization
@@ -121,4 +122,4 @@ else:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using WeightsPOTInferableQuantizer. '
-                            'Could not find Tensorflow package.')
+                            'Could not find Tensorflow package.')  # pragma: no cover

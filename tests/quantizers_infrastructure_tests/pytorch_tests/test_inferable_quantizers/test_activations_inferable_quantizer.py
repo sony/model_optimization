@@ -19,10 +19,12 @@ import numpy as np
 import torch
 
 from model_compression_toolkit import quantizers_infrastructure as qi
-from model_compression_toolkit.quantizers_infrastructure.pytorch.quantizer_utils import get_working_device
+from model_compression_toolkit.quantizers_infrastructure.common.constants import MULTIPLIER_N_BITS
+from model_compression_toolkit.quantizers_infrastructure.pytorch.quantizer_utils import get_working_device, \
+    to_torch_tensor
 
 
-class TestActivationSymmetricQuantizer(unittest.TestCase):
+class TestPyTorchActivationsSymmetricQuantizer(unittest.TestCase):
 
     def test_activation_signed_symmetric_inferable_quantizer(self):
         thresholds = np.asarray([4])
@@ -36,10 +38,12 @@ class TestActivationSymmetricQuantizer(unittest.TestCase):
         quantized_tensor = quantizer(input_tensor.to(get_working_device()))
 
         # The maximal threshold is 4 using a signed quantization, so we expect all values to be in this range
-        assert torch.max(
-            quantized_tensor) < thresholds[0], f'Quantized values should not contain values greater than maximal threshold'
-        assert torch.min(
-            quantized_tensor) >= -thresholds[0], f'Quantized values should not contain values lower than minimal threshold'
+        self.assertTrue(torch.max(
+            quantized_tensor) < thresholds[0], f'Quantized values should not contain values greater than maximal '
+                                               f'threshold ')
+        self.assertTrue(torch.min(
+            quantized_tensor) >= -thresholds[0], f'Quantized values should not contain values lower than minimal '
+                                                 f'threshold ')
         # Expect to have no more than 2**num_bits unique values
         self.assertTrue(len(quantized_tensor.unique()) <= 2 ** num_bits,
                         f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
@@ -66,11 +70,12 @@ class TestActivationSymmetricQuantizer(unittest.TestCase):
         input_tensor = torch.rand(1, 50, 50, 3) * 100 - 50
         quantized_tensor = quantizer(input_tensor.to(get_working_device()))
 
-        # The maximal threshold is 4 using a signed quantization, so we expect all values to be in this range
-        assert torch.max(
-            quantized_tensor) < thresholds[0], f'Quantized values should not contain values greater than maximal threshold'
-        assert torch.min(
-            quantized_tensor) >= 0, f'Quantized values should not contain values lower than minimal threshold'
+        # The maximal threshold is 4 using a unsigned quantization, so we expect all values to be in this range
+        self.assertTrue(torch.max(
+            quantized_tensor) < thresholds[0], f'Quantized values should not contain values greater than maximal '
+                                               f'threshold ')
+        self.assertTrue(torch.min(
+            quantized_tensor) >= 0, f'Quantized values should not contain values lower than minimal threshold')
         # Expect to have no more than 2**num_bits unique values
         self.assertTrue(len(quantized_tensor.unique()) <= 2 ** num_bits,
                         f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
@@ -87,7 +92,7 @@ class TestActivationSymmetricQuantizer(unittest.TestCase):
         self.assertTrue(torch.all(manually_quantized_tensor == quantized_tensor))
 
 
-class TestActivationPOTQuantizer(unittest.TestCase):
+class TestPyTorchActivationsPOTQuantizer(unittest.TestCase):
 
     def test_illegal_pot_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
@@ -114,16 +119,20 @@ class TestActivationPOTQuantizer(unittest.TestCase):
 
         # Initialize a random input to quantize between -50 to 50.
         input_tensor = torch.rand(1, 3, 3, 3) * 100 - 50
-        fake_quantized_tensor = quantizer(input_tensor.to(get_working_device())).dequantize()
+        fake_quantized_tensor = quantizer(input_tensor.to(get_working_device()))
 
-        assert torch.max(
-            fake_quantized_tensor) < thresholds[0], f'Quantized values should not contain values greater than threshold'
-        assert torch.min(
-            fake_quantized_tensor) >= -thresholds[0], f'Quantized values should not contain values lower than threshold'
+        self.assertTrue(torch.max(
+            fake_quantized_tensor) < thresholds[0],
+                        f'Quantized values should not contain values greater than threshold')
+        self.assertTrue(torch.min(
+            fake_quantized_tensor) >= -thresholds[0],
+                        f'Quantized values should not contain values lower than threshold')
+
         # Expect to have no more than 2**num_bits unique values
         self.assertTrue(len(fake_quantized_tensor.unique()) <= 2 ** num_bits,
                         f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
                         f'{len(fake_quantized_tensor.unique())} unique values')
+
         # Assert some values are negative (signed quantization)
         self.assertTrue(torch.any(fake_quantized_tensor < 0),
                         f'Expected some values to be negative but quantized tensor is {fake_quantized_tensor}')
@@ -144,11 +153,15 @@ class TestActivationPOTQuantizer(unittest.TestCase):
 
         # Initialize a random input to quantize between -50 to 50.
         input_tensor = torch.rand(1, 3, 3, 3) * 100 - 50
-        fake_quantized_tensor = quantizer(input_tensor.to(get_working_device())).dequantize()
+        fake_quantized_tensor = quantizer(input_tensor.to(get_working_device()))
 
-        assert torch.max(
-            fake_quantized_tensor) < thresholds[0], f'Quantized values should not contain values greater than threshold'
-        assert torch.min(fake_quantized_tensor) >= 0, f'Quantized values should not contain values lower than threshold'
+        self.assertTrue(torch.max(
+            fake_quantized_tensor) < thresholds[0],
+                        f'Quantized values should not contain values greater than threshold')
+
+        self.assertTrue(torch.min(fake_quantized_tensor) >= 0,
+                        f'Quantized values should not contain values lower than threshold')
+
         # Expect to have no more than 2**num_bits unique values
         self.assertTrue(len(fake_quantized_tensor.unique()) <= 2 ** num_bits,
                         f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
@@ -162,7 +175,7 @@ class TestActivationPOTQuantizer(unittest.TestCase):
         self.assertTrue(torch.all(manually_quantized_tensor == fake_quantized_tensor))
 
 
-class TestActivationUniformQuantizer(unittest.TestCase):
+class TestPyTorchActivationsUniformQuantizer(unittest.TestCase):
 
     def test_uniform_inferable_quantizer(self):
         min_range = np.asarray([-10])
@@ -177,14 +190,18 @@ class TestActivationUniformQuantizer(unittest.TestCase):
         quantized_tensor = quantizer(input_tensor.to(get_working_device()))
 
         # The maximal threshold is 4 using a signed quantization, so we expect all values to be in this range
-        assert torch.max(
-            quantized_tensor) <= max_range[0], f'Quantized values should not contain values greater than maximal threshold'
-        assert torch.min(
-            quantized_tensor) >= min_range[0], f'Quantized values should not contain values lower than minimal threshold'
+        self.assertTrue(torch.max(
+            quantized_tensor) <= max_range[0], f'Quantized values should not contain values greater than maximal '
+                                               f'threshold')
+        self.assertTrue(torch.min(
+            quantized_tensor) >= min_range[0], f'Quantized values should not contain values lower '
+                                               f'than minimal threshold')
+
         # Expect to have no more than 2**num_bits unique values
         self.assertTrue(len(quantized_tensor.unique()) <= 2 ** num_bits,
                         f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
                         f'{len(quantized_tensor.unique())} unique values')
+
         # Assert some values are negative (signed quantization)
         self.assertTrue(torch.any(quantized_tensor < 0),
                         f'Expected some values to be negative but quantized tensor is {quantized_tensor}')
@@ -211,10 +228,12 @@ class TestActivationUniformQuantizer(unittest.TestCase):
         quantized_tensor = quantizer(input_tensor.to(get_working_device()))
 
         # The maximal threshold is 4 using a signed quantization, so we expect all values to be in this range
-        assert torch.max(
-            quantized_tensor) <= max_range[0], f'Quantized values should not contain values greater than maximal threshold'
-        assert torch.min(
-            quantized_tensor) >= 0, f'Quantized values should not contain values lower than minimal threshold'
+        self.assertTrue(torch.max(
+            quantized_tensor) <= max_range[0], f'Quantized values should not contain values greater than maximal '
+                                               f'threshold')
+        self.assertTrue(torch.min(
+            quantized_tensor) >= 0, f'Quantized values should not contain values lower than minimal threshold')
+
         # Expect to have no more than 2**num_bits unique values
         self.assertTrue(len(quantized_tensor.unique()) <= 2 ** num_bits,
                         f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
@@ -232,3 +251,73 @@ class TestActivationUniformQuantizer(unittest.TestCase):
         manually_quantized_tensor = torch.round((torch.clip(input_tensor.to(get_working_device()), min_range,
                                                             max_range) - min_range) / scale) * scale + min_range
         self.assertTrue(torch.all(manually_quantized_tensor == quantized_tensor))
+
+
+class TestPyTorchActivationsLutPOTQuantizer(unittest.TestCase):
+
+    def test_illegal_pot_inferable_quantizer(self):
+        with self.assertRaises(Exception) as e:
+            qi.pytorch_inferable_quantizers.ActivationLutPOTInferableQuantizer(num_bits=4,
+                                                                               cluster_centers=np.asarray([1]),
+                                                                               threshold=np.asarray([3]),
+                                                                               signed=True)
+        self.assertEqual('Expected threshold to be power of 2 but is 3', str(e.exception))
+
+    def test_activation_signed_lut_pot_inferable_quantizer(self):
+        cluster_centers = np.asarray([-25, 25])
+        thresholds = np.asarray([4])
+        num_bits = 3
+        signed = True
+
+        quantizer = qi.pytorch_inferable_quantizers.ActivationLutPOTInferableQuantizer(num_bits=num_bits,
+                                                                                       cluster_centers=cluster_centers,
+                                                                                       threshold=thresholds,
+                                                                                       signed=signed)
+
+        # Initialize a random input to quantize between -50 to 50.
+        input_tensor = torch.rand(1, 50, 50, 3) * 100 - 50
+        fake_quantized_tensor = quantizer(input_tensor.to(get_working_device()))
+
+        quant_tensor_values = to_torch_tensor(
+            np.concatenate([(center / (2 ** (MULTIPLIER_N_BITS - 1))) * thresholds for
+                            center in cluster_centers], 0))
+
+        self.assertTrue(len(fake_quantized_tensor.unique()) <= 2 ** num_bits,
+                        f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
+                        f'{len(fake_quantized_tensor.unique())} unique values')
+
+        self.assertTrue(np.all(fake_quantized_tensor.unique().detach().cpu().numpy() == torch.sort(
+            quant_tensor_values).values.detach().cpu().numpy()))
+
+        # Assert some values are negative (signed quantization)
+        self.assertTrue(torch.any(fake_quantized_tensor < 0),
+                        f'Expected some values to be negative but quantized tensor is {fake_quantized_tensor}')
+
+    def test_activation_unsigned_pot_inferable_quantizer(self):
+        cluster_centers = np.asarray([25, 75])
+        thresholds = np.asarray([2, 8, 1])
+        num_bits = 3
+        signed = False
+        quantizer = qi.pytorch_inferable_quantizers.ActivationLutPOTInferableQuantizer(num_bits=num_bits,
+                                                                                       cluster_centers=cluster_centers,
+                                                                                       threshold=thresholds,
+                                                                                       signed=signed)
+
+        # Initialize a random input to quantize between -50 to 50.
+        input_tensor = torch.rand(1, 50, 50, 3) * 100 - 50
+        fake_quantized_tensor = quantizer(input_tensor.to(get_working_device()))
+
+        for i in range(len(thresholds)):
+            channel_slice_i = fake_quantized_tensor[:, :, :, i]
+            channel_quant_tensor_values = to_torch_tensor(cluster_centers / (2 ** (MULTIPLIER_N_BITS -
+                                                                                   int(signed))) * thresholds[i])
+            self.assertTrue(len(channel_slice_i.unique()) <= 2 ** num_bits,
+                            f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
+                            f'{len(channel_slice_i.unique())} unique values')
+
+            self.assertTrue(np.all(channel_slice_i.unique().detach().cpu().numpy()
+                                   == torch.sort(channel_quant_tensor_values).values.detach().cpu().numpy()))
+
+        # Assert all values are non-negative (unsigned quantization)
+        self.assertTrue(torch.all(fake_quantized_tensor >= 0),
+                        f'Expected all values to be non-negative but quantized tensor is {fake_quantized_tensor}')

@@ -17,42 +17,37 @@ from abc import abstractmethod
 import numpy as np
 
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_uniform_inferable_quantizer \
-    import \
-    BaseUniformInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_lut_sym_inferable_quantizer \
+    import BaseLutSymInferableQuantizer
 
 
-class BaseSymmetricInferableQuantizer(BaseUniformInferableQuantizer):
+class BaseLutPOTInferableQuantizer(BaseLutSymInferableQuantizer):
 
     def __init__(self,
                  num_bits: int,
+                 cluster_centers: np.ndarray,
                  threshold: np.ndarray,
                  signed: bool,
-                 quantization_target: QuantizationTarget):
+                 quantization_target: QuantizationTarget
+                 ):
         """
         Initialize the quantizer with the specified parameters.
 
         Args:
             num_bits: number of bits to use for quantization
-            threshold: threshold for quantizing weights
+            cluster_centers: the cluster centers to assign the values
+            threshold: threshold for quantizing values
             signed: whether or not to use signed quantization
             quantization_target: An enum which selects the quantizer tensor type: activation or weights.
         """
+        super(BaseLutPOTInferableQuantizer, self).__init__(num_bits=num_bits,
+                                                           cluster_centers=cluster_centers,
+                                                           threshold=threshold,
+                                                           signed=signed,
+                                                           quantization_target=quantization_target)
 
-        if not isinstance(threshold, np.ndarray):
-            threshold = np.asarray(threshold)
-
-        self.signed = signed
-        self.threshold = threshold
-
-        delta = threshold / (2 ** (num_bits - int(signed)))
-        min_range = -threshold if signed else np.zeros_like(threshold)
-        max_range = threshold - delta
-
-        super(BaseSymmetricInferableQuantizer, self).__init__(quantization_target=quantization_target,
-                                                              min_range=min_range,
-                                                              max_range=max_range,
-                                                              num_bits=num_bits)
+        is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in self.threshold.flatten()])
+        assert is_threshold_pot, f'Expected threshold to be power of 2 but is {self.threshold}'
 
     @abstractmethod
     def get_config(self):
@@ -60,4 +55,3 @@ class BaseSymmetricInferableQuantizer(BaseUniformInferableQuantizer):
         Return a dictionary with the configuration of the quantizer.
         """
         raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')  # pragma: no cover
-

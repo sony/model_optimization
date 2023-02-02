@@ -17,6 +17,9 @@ from typing import Tuple
 import torch
 import numpy as np
 
+from model_compression_toolkit.quantizers_infrastructure.common.constants import MULTIPLIER_N_BITS
+from model_compression_toolkit.quantizers_infrastructure.common.constants import EPS
+
 
 def get_working_device():
     """
@@ -52,8 +55,8 @@ def to_torch_tensor(tensor):
     elif isinstance(tensor, int):
         return torch.Tensor([tensor]).int().to(working_device)
     else:
-        raise Exception(f'Conversion of type {type(tensor)} to {type(torch.Tensor)} is not supported')
-
+        raise Exception(f'Conversion of type {type(tensor)} to {type(torch.Tensor)} '
+                        f'is not supported')  # pragma: no cover
 
 def get_activation_symmetric_quantization_range_and_scale(activation_is_signed: bool,
                                                           activation_n_bits: int,
@@ -112,3 +115,63 @@ def fix_range_to_include_zero(range_min: torch.Tensor,
     return min_range_adj, max_range_adj
 
 
+def lut_kmeans_quantizer(tensor_data: torch.Tensor,
+                         cluster_centers: torch.Tensor,
+                         signed: bool,
+                         threshold: torch.Tensor) -> torch.Tensor:
+    """
+    Quantize a tensor using a non-uniform quantization based on the pre-defined kmeans clusters.
+    1. Scales tensor_data with the threshold into 8-bit quantization range.
+    2. Assigns cluster centers to each value.
+    3. Scales back by multiplying the result by threshold and dividing with the quantization range max value.
+    The result is the quantized tensor.
+
+    Args:
+        tensor_data: Input tensor.
+        cluster_centers: the cluster centers to assign the tensor values.
+        signed: Whether the quantization is signed or not.
+        threshold: threshold for quantization.
+
+    Returns: Quantized tensor.
+    """
+    tensor = int_quantization_with_threshold(data=tensor_data, n_bits=MULTIPLIER_N_BITS,
+                                             signed=signed, threshold=threshold)
+    tensor = tensor.unsqueeze(-1)
+
+    expanded_cluster_centers = cluster_centers.reshape([*[1 for _ in range(len(tensor.shape) - 1)], -1])
+    cluster_assignments = torch.argmin(torch.abs(tensor - expanded_cluster_centers), dim=-1)
+    centers = cluster_centers.flatten()[cluster_assignments]
+
+    quant_tensor = (centers / (2 ** (MULTIPLIER_N_BITS - int(signed)))) * threshold
+
+    return quant_tensor
+
+
+def int_quantization_with_threshold(data: torch.Tensor,
+                                    n_bits: int,
+                                    signed: bool,
+                                    threshold: torch.Tensor,
+                                    eps: float = EPS) -> torch.Tensor:
+    """
+    Divides data by threshold and quantize it to integers in the quantization range (depends on signed value).
+
+    Args:
+        data: tensor data.
+        n_bits: number of bits that determines the quantization range.
+        signed: Whether the quantization is signed or not.
+        threshold: threshold for quantization.
+        eps: Small value for numerical stability in division.
+
+    Returns:
+        Uniform Quantized tensor.
+
+    """
+
+    if signed:
+        clip_max = 2 ** (n_bits - 1) - 1
+        clip_min = -2 ** (n_bits - 1)
+    else:
+        clip_max = 2 ** n_bits - 1
+        clip_min = 0
+
+    return torch.clip((data / (threshold + eps)) * (2 ** (n_bits - int(signed))), min=clip_min, max=clip_max)

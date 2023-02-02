@@ -16,17 +16,20 @@ import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.pytorch.quantizer_utils import get_working_device, \
+    to_torch_tensor
 
 if FOUND_TORCH:
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers\
+    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers \
         .base_pytorch_inferable_quantizer import \
         BasePyTorchInferableQuantizer
 
 
-    class BaseSymmetricInferableQuantizer(BasePyTorchInferableQuantizer):
+    class BaseLutSymInferableQuantizer(BasePyTorchInferableQuantizer):
 
         def __init__(self,
                      num_bits: int,
+                     cluster_centers: np.ndarray,
                      threshold: np.ndarray,
                      signed: bool,
                      quantization_target: QuantizationTarget):
@@ -35,35 +38,27 @@ if FOUND_TORCH:
 
             Args:
                 num_bits: number of bits to use for quantization
-                threshold: threshold for quantizing weights
+                cluster_centers: the cluster centers to assign the values
+                threshold: threshold for quantizing values
                 signed: whether or not to use signed quantization
                 quantization_target: An enum which selects the quantizer tensor type: activation or weights.
             """
 
-            super(BaseSymmetricInferableQuantizer, self).__init__(quantization_target=quantization_target)
+            super(BaseLutSymInferableQuantizer, self).__init__(quantization_target=quantization_target)
 
             assert isinstance(threshold,
                               np.ndarray), f'Threshold is expected to be numpy array, but is of type {type(threshold)}'
             assert threshold.ndim == 1, f'Threshold is expected to be flatten, but of shape {threshold.shape}'
 
             self.signed = signed
-            self.threshold = threshold
+            self.cluster_centers = to_torch_tensor(cluster_centers).to(get_working_device())
+            self.threshold = to_torch_tensor(threshold).to(get_working_device())
             self.num_bits = num_bits
-
-            if signed:
-                self.min_quantized_domain = -2 ** (num_bits - 1)
-                self.max_quantized_domain = 2 ** (num_bits - 1) - 1
-                self.scales = threshold / 2 ** (num_bits - 1)
-            else:
-                self.min_quantized_domain = 0
-                self.max_quantized_domain = (2 ** num_bits) - 1
-                self.scales = threshold / 2 ** num_bits
-
 
 
 else:
-    class BaseSymmetricInferableQuantizer:
+    class BaseLutSymInferableQuantizer:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing torch is mandatory '
-                            'when using BaseSymmetricInferableQuantizer. '
+                            'when using BaseLutSymInferableQuantizer. '
                             'Could not find torch package.')  # pragma: no cover
