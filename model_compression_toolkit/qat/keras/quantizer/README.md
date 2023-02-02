@@ -14,7 +14,7 @@ Currently, only the STE (straight through estimator) training method is implemen
 
 Follow these steps in order to set the quantizers required by your training method:
 - Add your `TrainingMethod` enum in [`qat_config`](../../common/qat_config.py).
-- Add your quantizers for weights and activation as explained in [quantizer readme](../../quantizers_infrastructure/keras).
+- Add your quantizers for weights and activation as explained in [quantizer readme](../../../quantizers_infrastructure/keras).
 - Add your `TrainingMethod` and quantizers to `METHOD2WEIGHTQUANTIZER` and `METHOD2ACTQUANTIZER` in [`quantization_dispatcher_builder.py`](../quantizer/quantization_dispatcher_builder.py)
 according to your desired `QuantizationMethod`.  
 - Set your `TrainingMethod` in the `QATConfig` and generate the QAT ready model for training. 
