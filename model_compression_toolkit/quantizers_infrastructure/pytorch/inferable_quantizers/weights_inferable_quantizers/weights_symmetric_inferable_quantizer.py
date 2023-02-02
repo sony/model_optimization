@@ -16,7 +16,6 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 
 if FOUND_TORCH:
     import torch
@@ -48,8 +47,7 @@ if FOUND_TORCH:
                 channel_axis: Axis of input to apply per-channel quantization on.
             """
 
-            super(WeightsSymmetricInferableQuantizer, self).__init__(quantization_target=QuantizationTarget.Weights,
-                                                                     threshold=threshold,
+            super(WeightsSymmetricInferableQuantizer, self).__init__(threshold=threshold,
                                                                      num_bits=num_bits,
                                                                      signed=True)
 

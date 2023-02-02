@@ -15,7 +15,6 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
 if FOUND_TORCH:
     from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers\
@@ -28,8 +27,7 @@ if FOUND_TORCH:
         def __init__(self,
                      num_bits: int,
                      min_range: np.ndarray,
-                     max_range: np.ndarray,
-                     quantization_target: QuantizationTarget):
+                     max_range: np.ndarray):
             """
             Initialize the quantizer with the specified parameters.
 
@@ -37,10 +35,9 @@ if FOUND_TORCH:
                 num_bits: number of bits to use for quantization
                 min_range: min quantization range for quantizing
                 max_range: max quantization range for quantizing
-                quantization_target: An enum which selects the quantizer tensor type: activation or weights.
             """
 
-            super(BaseUniformInferableQuantizer, self).__init__(quantization_target=quantization_target)
+            super(BaseUniformInferableQuantizer, self).__init__()
             self.num_bits = num_bits
             self.min_range = min_range
             self.max_range = max_range

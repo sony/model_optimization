@@ -15,7 +15,6 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 
 if FOUND_TORCH:
     import torch
@@ -43,7 +42,6 @@ if FOUND_TORCH:
             """
 
             super(ActivationSymmetricInferableQuantizer, self).__init__(
-                quantization_target=QuantizationTarget.Activation,
                 num_bits=num_bits,
                 threshold=threshold,
                 signed=signed)

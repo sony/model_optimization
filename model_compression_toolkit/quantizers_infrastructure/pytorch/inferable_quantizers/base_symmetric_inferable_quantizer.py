@@ -15,7 +15,6 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
 if FOUND_TORCH:
     from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers\
@@ -28,8 +27,7 @@ if FOUND_TORCH:
         def __init__(self,
                      num_bits: int,
                      threshold: np.ndarray,
-                     signed: bool,
-                     quantization_target: QuantizationTarget):
+                     signed: bool):
             """
             Initialize the quantizer with the specified parameters.
 
@@ -37,10 +35,9 @@ if FOUND_TORCH:
                 num_bits: number of bits to use for quantization
                 threshold: threshold for quantizing weights
                 signed: whether or not to use signed quantization
-                quantization_target: An enum which selects the quantizer tensor type: activation or weights.
             """
 
-            super(BaseSymmetricInferableQuantizer, self).__init__(quantization_target=quantization_target)
+            super(BaseSymmetricInferableQuantizer, self).__init__()
 
             assert isinstance(threshold,
                               np.ndarray), f'Threshold is expected to be numpy array, but is of type {type(threshold)}'

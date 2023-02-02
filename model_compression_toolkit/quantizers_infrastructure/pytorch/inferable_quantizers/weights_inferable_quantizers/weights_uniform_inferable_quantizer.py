@@ -51,8 +51,7 @@ if FOUND_TORCH:
                 per_channel: whether to use per-channel quantization
                 channel_axis: Axis of input to apply per-channel quantization on.
             """
-            super(WeightsUniformInferableQuantizer, self).__init__(quantization_target=QuantizationTarget.Weights,
-                                                                   num_bits=num_bits,
+            super(WeightsUniformInferableQuantizer, self).__init__(num_bits=num_bits,
                                                                    min_range=min_range,
                                                                    max_range=max_range)
 

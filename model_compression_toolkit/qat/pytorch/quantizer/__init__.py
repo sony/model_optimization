@@ -12,3 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
+import model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste
+import model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.uniform_ste

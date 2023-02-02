@@ -25,10 +25,12 @@ from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_q
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 from model_compression_toolkit.quantizers_infrastructure.common.constants import QUANTIZATION_TARGET, \
     QUANTIZATION_METHOD, QUANTIZER_TYPE
-from model_compression_toolkit.quantizers_infrastructure.keras.load_model import get_all_subclasses
 
 
 # TODO: move the following "get...config" functions to be members of BaseNode
+from model_compression_toolkit.quantizers_infrastructure.common.get_all_subclasses import get_all_subclasses
+
+
 def get_trainable_quantizer_weights_config(n: common.BaseNode) -> TrainableQuantizerWeightsConfig:
     """
     Returns the relevant configurations for weights trainable quantizer

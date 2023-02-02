@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,19 +19,22 @@ from model_compression_toolkit.core.common.constants import FOUND_TORCH
 
 from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
-    TrainableQuantizerActivationConfig
+    TrainableQuantizerActivationConfig, BasePytorchTrainableQuantizer
 
 if FOUND_TORCH:
 
-    class BasePytorchTrainableQuantizer(BaseTrainableQuantizer):
+    class BasePytorchQATTrainableQuantizer(BasePytorchTrainableQuantizer):
+        """
+        A base class for trainable Keras quantizer for QAT.
+        """
+
         def __init__(self,
                      quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
             """
-            This class is a base Pytorch quantizer which validates the provided quantization config and defines an
-            abstract function which any quantizer needs to implement.
+            Initializes BasePytorchQATTrainableQuantizer object.
 
             Args:
-                quantization_config: quantizer config class contains all the information about the quantizer configuration.
+                quantization_config: quantizer config class contains all the information about a quantizer configuration.
             """
             super().__init__(quantization_config)
 

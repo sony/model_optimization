@@ -20,7 +20,9 @@ import torch.nn as nn
 
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
-from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
+from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.pytorch import inferable_quantizers as iq
 from model_compression_toolkit.core.common import constants as C
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
@@ -29,7 +31,10 @@ from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_q
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 
-class STEWeightQuantizer(qi.BasePytorchTrainableQuantizer):
+@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
+                quantizer_type=TrainingMethod.STE)
+class STEWeightQuantizer(BasePytorchQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer weights.
     """
@@ -42,9 +47,7 @@ class STEWeightQuantizer(qi.BasePytorchTrainableQuantizer):
         Args:
             quantization_config: trainable quantizer config class
         """
-        super().__init__(quantization_config,
-                         qi.QuantizationTarget.Weights,
-                         [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
+        super().__init__(quantization_config)
         self.power_of_two = quantization_config.weights_quantization_method == QuantizationMethod.POWER_OF_TWO
         self.threshold_values = quantization_config.weights_quantization_params[C.THRESHOLD]
         self.threshold_shape = np.asarray(self.threshold_values).shape
@@ -124,7 +127,11 @@ class STEWeightQuantizer(qi.BasePytorchTrainableQuantizer):
                                                          channel_axis=self.quantization_config.weights_channels_axis)
 
 
-class STEActivationQuantizer(qi.BasePytorchTrainableQuantizer):
+
+@mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
+                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
+                quantizer_type=TrainingMethod.STE)
+class STEActivationQuantizer(BasePytorchQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer activations.
     """
@@ -137,9 +144,7 @@ class STEActivationQuantizer(qi.BasePytorchTrainableQuantizer):
         Args:
             quantization_config: trainable quantizer config class
         """
-        super().__init__(quantization_config,
-                         qi.QuantizationTarget.Activation,
-                         [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
+        super().__init__(quantization_config)
         self.power_of_two = quantization_config.activation_quantization_method == QuantizationMethod.POWER_OF_TWO
         self.sign = quantization_config.activation_quantization_params['is_signed']
         np_threshold_values = quantization_config.activation_quantization_params[C.THRESHOLD]
