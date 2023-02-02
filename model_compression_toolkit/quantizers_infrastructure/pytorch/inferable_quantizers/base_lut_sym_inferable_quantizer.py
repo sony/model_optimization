@@ -16,10 +16,11 @@ import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.pytorch.quantizer_utils import get_working_device, \
-    to_torch_tensor
+
 
 if FOUND_TORCH:
+    from model_compression_toolkit.quantizers_infrastructure.pytorch.quantizer_utils import get_working_device, \
+        to_torch_tensor
     from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers \
         .base_pytorch_inferable_quantizer import \
         BasePyTorchInferableQuantizer

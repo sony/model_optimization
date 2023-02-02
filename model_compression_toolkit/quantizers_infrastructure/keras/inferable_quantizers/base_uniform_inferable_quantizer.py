@@ -16,7 +16,6 @@ from abc import abstractmethod
 
 import numpy as np
 
-from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
     import \
