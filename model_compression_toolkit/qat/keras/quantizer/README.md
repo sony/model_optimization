@@ -3,7 +3,7 @@
 ## Introduction
 
 Several training methods may be applied by the user to train the QAT ready model
-created by `keras_quantization_aware_training_init` method in [`keras/quantization_facade`](./model_compression_toolkit/qat/keras/quantization_facade.py).
+created by `keras_quantization_aware_training_init` method in [`keras/quantization_facade`](../quantization_facade.py).
 Each `TrainingMethod` (an enum defined in the [`qat_config`](./model_compression_toolkit/qat/common/qat_config.py)) 
 and [`QuantizationMethod`](./model_compression_toolkit/core/common/target_platform/op_quantization_config.py)
 selects a quantizer for weights and a quantizer for activations.
