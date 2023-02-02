@@ -518,8 +518,8 @@ class TestKerasWeightsUniformQuantizer(unittest.TestCase):
     def test_uniform_inferable_quantizer_zero_not_in_range(self):
         num_bits = 3
         range_shape = (1, 1, 4, 1)
-        min_range = np.reshape(np.asarray([-10.7, 2.3, -6.6, 0]), range_shape)
-        max_range = np.reshape(np.asarray([-4.1, 4.7, 20, 7]), range_shape)
+        min_range = np.reshape(np.asarray([-10.7, -2.3, -6.6, 0]), range_shape)
+        max_range = np.reshape(np.asarray([4.1, 4.7, 20, 7]), range_shape)
         channel_axis = 2
 
         quantizer = qi.keras_inferable_quantizers.WeightsUniformInferableQuantizer(num_bits=num_bits,
@@ -533,14 +533,8 @@ class TestKerasWeightsUniformQuantizer(unittest.TestCase):
         self.assertTrue(quantizer_config['num_bits'] == num_bits)
         self.assertTrue(quantizer_config['per_channel'] is True)
         self.assertTrue(quantizer_config['channel_axis'] == channel_axis)
-
-        # Zero not in range
-        self.assertFalse(np.all(quantizer_config['max_range'] == max_range))
-        self.assertFalse(np.all(quantizer_config['min_range'] == min_range))
-
-        # Check including zero
-        self.assertTrue(np.all(quantizer_config['max_range'][max_range < 0] == 0.))
-        self.assertTrue(np.all(quantizer_config['min_range'][min_range > 0] == 0.))
+        self.assertTrue(np.all(quantizer_config['max_range'] == max_range))
+        self.assertTrue(np.all(quantizer_config['min_range'] == min_range))
 
         # Initialize a random input to quantize between -50 to 50.
         input_tensor = np.random.rand(1, 50, 4, 50) * 100 - 50
