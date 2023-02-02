@@ -15,8 +15,8 @@
 from abc import abstractmethod
 
 import numpy as np
-
-from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
+from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.quantizers_infrastructure.common.quant_utils import adjust_range_to_include_zero
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
     import \
@@ -42,8 +42,14 @@ class BaseUniformInferableQuantizer(BaseKerasInferableQuantizer):
         """
         super(BaseUniformInferableQuantizer, self).__init__(quantization_target=quantization_target)
         self.num_bits = num_bits
-        self.max_range = max_range
-        self.min_range = min_range
+        assert np.all(max_range > min_range), f'Expected max_range to be bigger than min_range!'
+        _min_range, _max_range = adjust_range_to_include_zero(min_range, max_range, num_bits)
+        assert np.all(_min_range <= 0) and np.all(_max_range >= 0), f'Expected zero to be in the range, got min_range={_min_range}, max_range={_max_range}'
+        if not np.isclose(np.linalg.norm(_min_range-min_range),0,atol=1e-6) or not np.isclose(np.linalg.norm(_max_range-max_range),0,atol=1e-6):
+            Logger.warning(f"Adjusting (min_range, max_range) from ({min_range},{max_range}) to ({_min_range},{_max_range})")  # pragma: no cover
+
+        self.max_range = _max_range
+        self.min_range = _min_range
 
     @abstractmethod
     def get_config(self):
