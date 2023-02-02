@@ -16,7 +16,7 @@
 IS_WEIGHTS = "is_weights"
 IS_ACTIVATIONS = "is_activations"
 ACTIVATION_QUANTIZERS = "activation_quantizers"
-WEIGHT_QUANTIZERS = "weight_quantizer"
+WEIGHTS_QUANTIZERS = "weights_quantizer"
 WEIGHTS_QUANTIZATION_METHOD = 'weights_quantization_method'
 WEIGHTS_N_BITS = 'weights_n_bits'
 WEIGHTS_QUANTIZATION_PARAMS = 'weights_quantization_params'

@@ -42,11 +42,11 @@ def is_keras_layer_exportable(layer: Any) -> bool:
             f'Exportable layer must be wrapped using KerasQuantizationWrapper, but layer {layer.name} is of type '
             f'{type(layer)}') # pragma: no cover
 
-    valid_weight_quantizers = isinstance(layer.weight_quantizers, dict)
-    if not valid_weight_quantizers:
+    valid_weights_quantizers = isinstance(layer.weights_quantizers, dict)
+    if not valid_weights_quantizers:
         Logger.error(
-            f'KerasQuantizationWrapper must have a weight_quantizers but has a '
-            f'{type(layer.weight_quantizers)} object') # pragma: no cover
+            f'KerasQuantizationWrapper must have a weights_quantizers but has a '
+            f'{type(layer.weights_quantizers)} object') # pragma: no cover
 
     valid_activation_quantizers = isinstance(layer.activation_quantizers, list)
     if not valid_activation_quantizers:
@@ -54,7 +54,7 @@ def is_keras_layer_exportable(layer: Any) -> bool:
             f'KerasQuantizationWrapper must have a activation_quantizers list but has a '
             f'{type(layer.activation_quantizers)} object') # pragma: no cover
 
-    quantizers = layer.activation_quantizers + list(layer.weight_quantizers.values())
+    quantizers = layer.activation_quantizers + list(layer.weights_quantizers.values())
     is_valid_quantizers = all([isinstance(x, BaseInferableQuantizer) for x in quantizers])
     if not is_valid_quantizers:
         Logger.error(f'Found a quantizer that is not of type BaseInferableQuantizer') # pragma: no cover

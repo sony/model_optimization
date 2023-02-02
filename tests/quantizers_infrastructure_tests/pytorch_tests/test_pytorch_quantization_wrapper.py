@@ -33,7 +33,7 @@ class TestPytorchWeightsQuantizationWrapper(BasePytorchInfrastructureTest):
 
     def run_test(self):
         wrapper = self.get_wrapper(self.create_layer())
-        wrapper.add_weight_quantizer('weight', ZeroWeightsQuantizer(self.get_weights_quantization_config()))
+        wrapper.add_weights_quantizer('weight', ZeroWeightsQuantizer(self.get_weights_quantization_config()))
         wrapper._set_weights_vars()
         (name, weight, quantizer) = wrapper._weights_vars[0]
         self.unit_test.assertTrue(isinstance(wrapper, qi.PytorchQuantizationWrapper))

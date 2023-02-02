@@ -57,7 +57,8 @@ if FOUND_TORCH:
 
         """
         if _is_qat_applicable(n, DEFAULT_PYTORCH_INFO):
-            return qi.PytorchQuantizationWrapper(module, *quantization_builder(n, qat_config, DEFAULT_PYTORCH_INFO))
+            weights_quantizers, activation_quantizers = quantization_builder(n, qat_config, DEFAULT_PYTORCH_INFO)
+            return qi.PytorchQuantizationWrapper(module, weights_quantizers, activation_quantizers)
         else:
             return module
 

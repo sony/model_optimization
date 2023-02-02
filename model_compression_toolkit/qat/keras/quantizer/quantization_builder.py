@@ -14,7 +14,7 @@
 # ==============================================================================
 
 
-from typing import Dict, List
+from typing import Dict
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit import quantizers_infrastructure as qi
@@ -83,7 +83,7 @@ def quantization_builder(n: common.BaseNode,
                              qi.QuantizationMethod, qi.BaseKerasTrainableQuantizer] = None,
                          method2actquantizer: Dict[
                              qi.QuantizationMethod, qi.BaseKerasTrainableQuantizer] = None
-                         ) -> [List, Dict]:
+                         ) -> tuple:
     """
     Build quantizers for a node according to its quantization configuration and
     a global NoOpQuantizeConfig object.
@@ -96,7 +96,7 @@ def quantization_builder(n: common.BaseNode,
         method2actquantizer: A mapping between quantization method to activation quantizer.
 
     Returns:
-        weight_quantizers: A dictionary between a weight's name to its quantizer.
+        weights_quantizers: A dictionary between a weight's name to its quantizer.
         activation_quantizers: A list of activations quantization, one for each layer output.
     """
     if method2weightquantizer is None:

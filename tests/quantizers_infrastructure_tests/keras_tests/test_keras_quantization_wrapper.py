@@ -43,11 +43,11 @@ class TestKerasWeightsQuantizationWrapper(BaseKerasInfrastructureTest):
         inputs = self.generate_inputs()[0]
 
         wrapper = self.get_wrapper(conv_layer)
-        wrapper.add_weight_quantizer(WEIGHT, IdentityWeightsQuantizer(self.get_weights_quantization_config()))
+        wrapper.add_weights_quantizer(WEIGHT, IdentityWeightsQuantizer(self.get_weights_quantization_config()))
 
         # build
         wrapper.build(self.get_input_shapes())
-        (name, weight, quantizer) = wrapper._weight_vars[0]
+        (name, weight, quantizer) = wrapper._weights_vars[0]
         self.unit_test.assertTrue(isinstance(wrapper, KerasQuantizationWrapper))
         self.unit_test.assertTrue(isinstance(wrapper.layer, layers.Conv2D))
         self.unit_test.assertTrue(name == WEIGHT)

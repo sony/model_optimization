@@ -115,7 +115,7 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
                 self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q))
             if isinstance(layer.layer, nn.Conv2d):
                 q = METHOD2WEIGHTQUANTIZER[mct.TrainingMethod.STE][self.activation_quantization_method]
-                self.unit_test.assertTrue(isinstance(layer.weight_quantizers['weight'], q))
+                self.unit_test.assertTrue(isinstance(layer.weights_quantizers['weight'], q))
 
         # check quantization didn't change when switching between PTQ model and QAT ready model
         _in = Tensor(input_x[0]).to(get_working_device())
@@ -130,7 +130,7 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
                     self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q))
                 if isinstance(layer.layer, nn.Conv2d):
                     q = QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER[self.activation_quantization_method]
-                    self.unit_test.assertTrue(isinstance(layer.weight_quantizers['weight'], q))
+                    self.unit_test.assertTrue(isinstance(layer.weights_quantizers['weight'], q))
             # check quantization didn't change when switching between PTQ model and QAT ready model
             qat_finalized_output = qat_finalized_model(_in).cpu().detach().numpy()
             self.unit_test.assertTrue(np.isclose(np.linalg.norm(qat_finalized_output - qat_ready_output) / np.linalg.norm(qat_ready_output), 0, atol=1e-6))
