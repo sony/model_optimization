@@ -28,4 +28,6 @@ ACTIVATION_N_BITS = 'activation_n_bits'
 ACTIVATION_QUANTIZATION_PARAMS = 'activation_quantization_params'
 ENABLE_ACTIVATION_QUANTIZATION = 'enable_activation_quantization'
 
-
+QUANTIZATION_TARGET = 'quantization_target'
+QUANTIZATION_METHOD = 'quantization_method'
+QUANTIZER_TYPE = 'quantizer_type'

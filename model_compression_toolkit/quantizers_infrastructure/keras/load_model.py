@@ -19,12 +19,12 @@ from model_compression_toolkit.core.common.constants import FOUND_TF
 
 
 
-def _get_all_subclasses(cls: type) -> Set[type]:
+def get_all_subclasses(cls: type) -> Set[type]:
     # This function returns a list of all subclasses of the given class,
     # including all subclasses of those subclasses, and so on.
     # Recursively get all subclasses of the subclass and add them to the list of all subclasses.
     return set(cls.__subclasses__()).union(
-        [s for c in cls.__subclasses__() for s in _get_all_subclasses(c)])
+        [s for c in cls.__subclasses__() for s in get_all_subclasses(c)])
 
 if FOUND_TF:
     import tensorflow as tf
@@ -48,9 +48,9 @@ if FOUND_TF:
         Returns: A keras Model
 
         """
-        qi_inferable_custom_objects = {subclass.__name__: subclass for subclass in _get_all_subclasses(BaseKerasInferableQuantizer)}
+        qi_inferable_custom_objects = {subclass.__name__: subclass for subclass in get_all_subclasses(BaseKerasInferableQuantizer)}
         qi_trainable_custom_objects = {subclass.__name__: subclass for subclass in
-                                       _get_all_subclasses(BaseKerasTrainableQuantizer)}
+                                       get_all_subclasses(BaseKerasTrainableQuantizer)}
 
         # Merge dictionaries into one dict
         qi_custom_objects = {**qi_inferable_custom_objects, **qi_trainable_custom_objects}

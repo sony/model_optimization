@@ -44,7 +44,7 @@ class STEWeightQuantizer(qi.BasePytorchTrainableQuantizer):
         """
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Weights,
-                         [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
+                         [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
         self.power_of_two = quantization_config.weights_quantization_method == QuantizationMethod.POWER_OF_TWO
         self.threshold_values = quantization_config.weights_quantization_params[C.THRESHOLD]
         self.threshold_shape = np.asarray(self.threshold_values).shape
@@ -139,7 +139,7 @@ class STEActivationQuantizer(qi.BasePytorchTrainableQuantizer):
         """
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Activation,
-                         [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
+                         [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
         self.power_of_two = quantization_config.activation_quantization_method == QuantizationMethod.POWER_OF_TWO
         self.sign = quantization_config.activation_quantization_params['is_signed']
         np_threshold_values = quantization_config.activation_quantization_params[C.THRESHOLD]

@@ -21,6 +21,7 @@ from torch import Tensor
 
 from model_compression_toolkit.core.common.constants import RANGE_MAX, RANGE_MIN
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit.core.common import constants as C
 from model_compression_toolkit import quantizers_infrastructure as qi
@@ -46,7 +47,7 @@ class STEUniformWeightQuantizer(qi.BasePytorchTrainableQuantizer):
         """
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Weights,
-                         [qi.QuantizationMethod.UNIFORM])
+                         [QuantizationMethod.UNIFORM])
         self.num_bits = self.quantization_config.weights_n_bits
         self.min_int = 0
         self.max_int = 2 ** self.num_bits - 1
@@ -131,7 +132,7 @@ class STEUniformActivationQuantizer(qi.BasePytorchTrainableQuantizer):
         """
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Activation,
-                         [qi.QuantizationMethod.UNIFORM])
+                         [QuantizationMethod.UNIFORM])
 
         np_min_range = quantization_config.activation_quantization_params[C.RANGE_MIN]
         np_max_range = quantization_config.activation_quantization_params[C.RANGE_MAX]

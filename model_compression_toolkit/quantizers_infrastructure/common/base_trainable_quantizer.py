@@ -17,52 +17,60 @@ from typing import List, Union
 from inspect import signature
 
 from model_compression_toolkit.core import common
+from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer, \
     QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
     TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig
+from model_compression_toolkit.quantizers_infrastructure.common.constants import QUANTIZATION_METHOD, \
+    QUANTIZATION_TARGET
 
 
 class BaseTrainableQuantizer(BaseInferableQuantizer):
     def __init__(self,
-                 quantization_config: Union[TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig],
-                 quantization_target: QuantizationTarget,
-                 quantization_method: List[QuantizationMethod]):
+                 quantization_config: Union[TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig]):
         """
         This class is a base quantizer which validates the provided quantization config and defines an abstract function which any quantizer needs to implment.
 
         Args:
             quantization_config: quantizer config class contains all the information about the quantizer configuration.
-            quantization_target: A enum which selects the quantizer tensor type: activation or weights.
-            quantization_method: A list of enums which represent the supported methods for the quantizer.
         """
 
         # verify the quantizer class that inherits this class only has a config argument and key-word arguments
         for i, (k, v) in enumerate(self.get_sig().parameters.items()):
             if i == 0:
                 if v.annotation not in [TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]:
-                    common.Logger.error(f"First parameter must be either TrainableQuantizerWeightsConfig or TrainableQuantizerActivationConfig")
+                    common.Logger.error(f"First parameter must be either TrainableQuantizerWeightsConfig or TrainableQuantizerActivationConfig")  # pragma: no cover
             elif v.default is v.empty:
-                common.Logger.error(f"Parameter {k} doesn't have a default value")
+                common.Logger.error(f"Parameter {k} doesn't have a default value")  # pragma: no cover
 
-        super(BaseTrainableQuantizer, self).__init__(quantization_target=quantization_target)
+        super(BaseTrainableQuantizer, self).__init__()
         self.quantization_config = quantization_config
-        self.quantization_method = quantization_method
-        if self.quantization_target == QuantizationTarget.Weights:
+
+        # Inherited class should be decorated with @mark_quantizer decorator, and define the following static properties
+        static_quantization_method = getattr(self, QUANTIZATION_METHOD)
+        static_quantization_target = getattr(self, QUANTIZATION_TARGET)
+
+        if static_quantization_method is None or static_quantization_target is None:
+            # TODO: add test that defines a new quantizer without the decorator and check for the exception.
+            Logger.error("A quantizer class that inherit from BaseTrainableQuantizer is not defined appropriately."
+                         "Either it misses the @mark_quantizer decorator or the decorator is not used correctly.")
+
+        if static_quantization_target == QuantizationTarget.Weights:
             self.validate_weights()
-            if self.quantization_config.weights_quantization_method not in quantization_method:
+            if self.quantization_config.weights_quantization_method not in static_quantization_method:
                 common.Logger.error(
-                    f'Quantization method mismatch expected: {quantization_method} and got  {self.quantization_config.weights_quantization_method}')
-        elif self.quantization_target == QuantizationTarget.Activation:
+                    f'Quantization method mismatch expected: {static_quantization_method} and got  {self.quantization_config.weights_quantization_method}')
+        elif static_quantization_target == QuantizationTarget.Activation:
             self.validate_activation()
-            if self.quantization_config.activation_quantization_method not in quantization_method:
+            if self.quantization_config.activation_quantization_method not in static_quantization_method:
                 common.Logger.error(
-                    f'Quantization method mismatch expected: {quantization_method} and got  {self.quantization_config.activation_quantization_method}')
+                    f'Quantization method mismatch expected: {static_quantization_method} and got  {self.quantization_config.activation_quantization_method}')
         else:
             common.Logger.error(
-                f'Unknown Quantization Part:{quantization_target}')
+                f'Unknown Quantization Part:{static_quantization_target}')  # pragma: no cover
 
     @classmethod
     def get_sig(cls):

@@ -32,7 +32,7 @@ class IdentityWeightsQuantizer(qi.BaseKerasTrainableQuantizer):
     def __init__(self, quantization_config: TrainableQuantizerWeightsConfig):
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Weights,
-                         [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
+                         [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
 
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
@@ -53,7 +53,7 @@ class ZeroWeightsQuantizer(qi.BaseKerasTrainableQuantizer):
     def __init__(self, quantization_config: TrainableQuantizerWeightsConfig):
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Weights,
-                         [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
+                         [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
 
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
@@ -74,7 +74,7 @@ class ZeroActivationsQuantizer(qi.BaseKerasTrainableQuantizer):
     def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         super().__init__(quantization_config,
                          qi.QuantizationTarget.Activation,
-                         [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
+                         [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
 
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,

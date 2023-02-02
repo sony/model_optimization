@@ -16,20 +16,20 @@ from typing import Dict
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste import STEWeightQuantizer, STEActivationQuantizer
 from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.uniform_ste import STEUniformWeightQuantizer, STEUniformActivationQuantizer
 from model_compression_toolkit.qat.common.qat_config import QATConfig, TrainingMethod
 from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
-METHOD2WEIGHTQUANTIZER = {TrainingMethod.STE:{qi.QuantizationMethod.SYMMETRIC: STEWeightQuantizer,
-                                              qi.QuantizationMethod.POWER_OF_TWO: STEWeightQuantizer,
-                                              qi.QuantizationMethod.UNIFORM: STEUniformWeightQuantizer}}
+METHOD2WEIGHTQUANTIZER = {TrainingMethod.STE: {QuantizationMethod.SYMMETRIC: STEWeightQuantizer,
+                                               QuantizationMethod.POWER_OF_TWO: STEWeightQuantizer,
+                                               QuantizationMethod.UNIFORM: STEUniformWeightQuantizer}}
 
-
-METHOD2ACTQUANTIZER = {TrainingMethod.STE:{qi.QuantizationMethod.SYMMETRIC: STEActivationQuantizer,
-                                           qi.QuantizationMethod.POWER_OF_TWO: STEActivationQuantizer,
-                                           qi.QuantizationMethod.UNIFORM: STEUniformActivationQuantizer}}
+METHOD2ACTQUANTIZER = {TrainingMethod.STE: {QuantizationMethod.SYMMETRIC: STEActivationQuantizer,
+                                            QuantizationMethod.POWER_OF_TWO: STEActivationQuantizer,
+                                            QuantizationMethod.UNIFORM: STEUniformActivationQuantizer}}
 
 
 # TODO: move the following "get...config" functions to be members of BaseNode
@@ -75,9 +75,9 @@ def quantization_dispatcher_builder(n: common.BaseNode,
                                     qat_config: QATConfig,
                                     fw_info: FrameworkInfo,
                                     method2weightquantizer: Dict[
-                                        qi.QuantizationMethod, qi.BasePytorchTrainableQuantizer] = None,
+                                        QuantizationMethod, qi.BasePytorchTrainableQuantizer] = None,
                                     method2actquantizer: Dict[
-                                        qi.QuantizationMethod, qi.BasePytorchTrainableQuantizer] = None
+                                        QuantizationMethod, qi.BasePytorchTrainableQuantizer] = None
                                     ) -> qi.PytorchNodeQuantizationDispatcher:
 
     """
