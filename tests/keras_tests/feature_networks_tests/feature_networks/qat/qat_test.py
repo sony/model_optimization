@@ -116,7 +116,7 @@ class QuantizationAwareTrainingQuantizersTest(QuantizationAwareTrainingTest):
         else:
             self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.DepthwiseConv2D))
             for name, quantizer in quantized_model.layers[2]._dispatcher.weight_quantizers.items():
-                w_select = [w for w in quantized_model.layers[2].weights if name + ":0" in w.name]
+                w_select = [w for w in float_model.layers[1].weights if name + ":0" in w.name]
                 if len(w_select) != 1:
                     raise Exception()
                 dw_weight = w_select[0]
