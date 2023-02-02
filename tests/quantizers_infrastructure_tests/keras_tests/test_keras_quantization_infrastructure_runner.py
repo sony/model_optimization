@@ -17,8 +17,6 @@ import tensorflow as tf
 
 from tests.quantizers_infrastructure_tests.keras_tests.test_keras_base_quantizer import TestKerasBaseWeightsQuantizer, \
     TestKerasBaseActivationsQuantizer
-from tests.quantizers_infrastructure_tests.keras_tests.test_keras_node_quantization_dispatcher import \
-    TestKerasNodeWeightsQuantizationDispatcher, TestKerasNodeActivationsQuantizationDispatcher
 from tests.quantizers_infrastructure_tests.keras_tests.test_keras_quantization_wrapper import \
     TestKerasWeightsQuantizationWrapper, TestKerasActivationsQuantizationWrapper
 
@@ -30,10 +28,6 @@ class KerasInfrastructureTest(unittest.TestCase):
     def test_layer_keras_infrastructure(self):
         TestKerasWeightsQuantizationWrapper(self).run_test()
         TestKerasActivationsQuantizationWrapper(self).run_test()
-
-    def test_keras_node_quantization_dispatcher(self):
-        TestKerasNodeWeightsQuantizationDispatcher(self).run_test()
-        TestKerasNodeActivationsQuantizationDispatcher(self).run_test()
 
     def test_keras_base_quantizer(self):
         TestKerasBaseWeightsQuantizer(self).run_test()

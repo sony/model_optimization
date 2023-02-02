@@ -56,8 +56,7 @@ if FOUND_TF:
         qi_custom_objects = {**qi_inferable_custom_objects, **qi_trainable_custom_objects}
 
         # Add non-quantizers custom objects
-        qi_custom_objects.update({qi.KerasQuantizationWrapper.__name__: qi.KerasQuantizationWrapper,
-                                  qi.KerasNodeQuantizationDispatcher.__name__: qi.KerasNodeQuantizationDispatcher})
+        qi_custom_objects.update({qi.KerasQuantizationWrapper.__name__: qi.KerasQuantizationWrapper})
         if custom_objects is not None:
             qi_custom_objects.update(custom_objects)
         return tf.keras.models.load_model(filepath,
