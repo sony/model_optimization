@@ -12,23 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-from model_compression_toolkit import quantizers_infrastructure as qi
+from typing import Dict, List, Tuple
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
     get_weights_quantizer_for_node, get_activations_quantizer_for_node
 
 
-def get_quantization_dispatcher(node: BaseNode) -> qi.KerasNodeQuantizationDispatcher:
+def get_quantization_quantizers(node: BaseNode) -> Tuple[Dict, List]:
     """
-    Create a KerasNodeQuantizationDispatcher to wrap a layer for its corresponding node.
+    Create quantizers to wrap a layer for its corresponding node.
 
     Args:
-        node: Node to create a KerasNodeQuantizationDispatcher for.
+        node: Node to create quantizers for.
 
     Returns:
-        KerasNodeQuantizationDispatcher to use for wrapping the layer from the passed node.
+        weight_quantizers: A dictionary between a weight's name to its quantizer.
+        activation_quantizers: A list of activations quantization, one for each layer output.
     """
     weight_quantizers = {}
     activation_quantizers = []
@@ -43,7 +43,4 @@ def get_quantization_dispatcher(node: BaseNode) -> qi.KerasNodeQuantizationDispa
         num_of_outputs = len(node.output_shape) if isinstance(node.output_shape, list) else 1
         activation_quantizers = [get_activations_quantizer_for_node(node)] * num_of_outputs
 
-    dispatcher = qi.KerasNodeQuantizationDispatcher(weight_quantizers,
-                                                    activation_quantizers)
-
-    return dispatcher
+    return weight_quantizers, activation_quantizers

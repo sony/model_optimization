@@ -20,8 +20,8 @@ from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
-from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_dispatcher import \
-    get_quantization_dispatcher
+from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizers import \
+    get_quantization_quantizers
 
 
 def _get_wrapper(node: common.BaseNode,
@@ -35,8 +35,7 @@ def _get_wrapper(node: common.BaseNode,
     Returns: Wrapped layer
 
     """
-    return qi.KerasQuantizationWrapper(layer,
-                                       get_quantization_dispatcher(node))
+    return qi.KerasQuantizationWrapper(layer, *get_quantization_quantizers(node))
 
 
 def get_exportable_keras_model(graph: Graph) -> tf.keras.models.Model:

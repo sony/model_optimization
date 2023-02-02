@@ -18,10 +18,11 @@ from typing import Dict
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.framework.tensor_shape import TensorShape
-
 from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
+from model_compression_toolkit.qat.keras.quantizer.quant_utils import adjust_range_to_include_zero
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
 from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
 from model_compression_toolkit.core.common import constants as C
 import model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers as iq
@@ -116,6 +117,8 @@ class STEUniformWeightQuantizer(BaseKerasQATTrainableQuantizer):
 
         _min = self.quantizer_parameters[FQ_MIN]
         _max = self.quantizer_parameters[FQ_MAX]
+        _min, _max = adjust_range_to_include_zero(_min, _max, self.num_bits)
+
         if self.per_channel:
             if self.perm_vec:
                 inputs = tf.transpose(inputs, perm=self.perm_vec)
@@ -137,10 +140,13 @@ class STEUniformWeightQuantizer(BaseKerasQATTrainableQuantizer):
         Returns:
             BaseKerasInferableQuantizer object.
         """
+        min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN].numpy(),
+                                                         self.quantizer_parameters[FQ_MAX].numpy(),
+                                                         self.num_bits)
         return iq.WeightsUniformInferableQuantizer(num_bits=self.num_bits,
-                                                   min_range=np.reshape(self.quantizer_parameters[FQ_MIN],
+                                                   min_range=np.reshape(min_range,
                                                                         self.min_max_shape),
-                                                   max_range=np.reshape(self.quantizer_parameters[FQ_MAX],
+                                                   max_range=np.reshape(max_range,
                                                                         self.min_max_shape),
                                                    per_channel=self.per_channel,
                                                    channel_axis=self.channel_axis)
@@ -217,6 +223,7 @@ class STEUniformActivationQuantizer(BaseKerasQATTrainableQuantizer):
 
         _min = self.quantizer_parameters[FQ_MIN]
         _max = self.quantizer_parameters[FQ_MAX]
+        _min, _max = adjust_range_to_include_zero(_min, _max, self.num_bits)
         q_tensor = tf.quantization.fake_quant_with_min_max_vars(inputs, _min, _max,
                                                                 num_bits=self.num_bits)
 
@@ -229,7 +236,9 @@ class STEUniformActivationQuantizer(BaseKerasQATTrainableQuantizer):
         Returns:
             BaseKerasInferableQuantizer object.
         """
-
+        min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN].numpy(),
+                                                         self.quantizer_parameters[FQ_MAX].numpy(),
+                                                         self.num_bits)
         return iq.ActivationUniformInferableQuantizer(num_bits=self.num_bits,
-                                                      min_range=self.quantizer_parameters[FQ_MIN],
-                                                      max_range=self.quantizer_parameters[FQ_MAX])
+                                                      min_range=min_range,
+                                                      max_range=max_range)

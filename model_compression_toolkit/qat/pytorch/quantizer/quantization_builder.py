@@ -15,20 +15,18 @@
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.common.qat_config import QATConfig, TrainingMethod
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
-
-
-
-# TODO: move the following "get...config" functions to be members of BaseNode
 from model_compression_toolkit.quantizers_infrastructure.common.constants import QUANTIZATION_TARGET, \
     QUANTIZATION_METHOD, QUANTIZER_TYPE
 from model_compression_toolkit.quantizers_infrastructure.common.get_all_subclasses import get_all_subclasses
+
+
+# TODO: move the following "get...config" functions to be members of BaseNode
 
 
 def get_trainable_quantizer_weights_config(n: common.BaseNode) -> TrainableQuantizerWeightsConfig:
@@ -101,13 +99,12 @@ def _get_quantizer_class(quant_target: QuantizationTarget,
     return filtered_quantizers[0]
 
 
-def quantization_dispatcher_builder(n: common.BaseNode,
-                                    qat_config: QATConfig,
-                                    fw_info: FrameworkInfo,
-                                    ) -> qi.PytorchNodeQuantizationDispatcher:
-
+def quantization_builder(n: common.BaseNode,
+                         qat_config: QATConfig,
+                         fw_info: FrameworkInfo,
+                         ) -> tuple:
     """
-    Build a NodeQuantizationDispatcher for a node according to its quantization configuration and
+    Build quantizers for a node according to its quantization configuration and
     a global NoOpQuantizeConfig object.
 
     Args:
@@ -116,29 +113,28 @@ def quantization_dispatcher_builder(n: common.BaseNode,
         fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
 
     Returns:
-        A QuantizeConfig object with the appropriate quantizers (according to the node's
-        quantization configuration).
+        weights_quantizers: A dictionary between a weight's name to its quantizer.
+        activation_quantizers: A list of activations quantization, one for each layer output.).
     """
-
-    nqd = qi.PytorchNodeQuantizationDispatcher()
+    weight_quantizers = {}
     if n.is_weights_quantization_enabled():
-        _quant_method = n.final_weights_quantization_cfg.weights_quantization_method
-
+        quant_method = n.final_weights_quantization_cfg.weights_quantization_method
         quantizer_class = _get_quantizer_class(QuantizationTarget.Weights,
                                                qat_config.activation_training_method,
-                                               _quant_method)
+                                               quant_method)
         attributes = fw_info.get_kernel_op_attributes(n.type)
         for attr in attributes:
-            nqd.add_weight_quantizer(attr, quantizer_class(get_trainable_quantizer_weights_config(n),
-                                                           **qat_config.weight_quantizer_params_override))
+            weight_quantizers.update({attr: quantizer_class(get_trainable_quantizer_weights_config(n),
+                                                           **qat_config.weight_quantizer_params_override)})
 
+    activation_quantizers = []
     if n.is_activation_quantization_enabled():
-        _quant_method = n.final_activation_quantization_cfg.activation_quantization_method
-
+        quant_method = n.final_activation_quantization_cfg.activation_quantization_method
         quantizer_class = _get_quantizer_class(QuantizationTarget.Activation,
                                                qat_config.activation_training_method,
-                                               _quant_method)
-        nqd.activation_quantizers = [quantizer_class(get_trainable_quantizer_activation_config(n),
-                                                     **qat_config.activation_quantizer_params_override)]
+                                               quant_method)
 
-    return nqd
+        activation_quantizers = [quantizer_class(get_trainable_quantizer_activation_config(n),
+                                                 **qat_config.activation_quantizer_params_override)]
+
+    return weight_quantizers, activation_quantizers
