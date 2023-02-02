@@ -25,7 +25,7 @@ from model_compression_toolkit.quantizers_infrastructure.pytorch import inferabl
 from model_compression_toolkit.core.common import constants as C
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import ste_round, ste_clip, symmetric_quantizer
-from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+from model_compression_toolkit.quantizers_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 

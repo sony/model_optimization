@@ -27,7 +27,7 @@ from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.quantizers_infrastructure.pytorch import inferable_quantizers as iq
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import uniform_quantizer
-from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+from model_compression_toolkit.quantizers_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 

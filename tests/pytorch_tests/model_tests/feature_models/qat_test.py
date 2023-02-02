@@ -140,14 +140,7 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
 
 
 class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTest):
-    def __init__(self, unit_test, weight_bits=2, activation_bits=4, finalize=False,
-                 weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO, test_loading=False):
-
-        self.weight_bits = weight_bits
-        self.activation_bits = activation_bits
-        self.finalize = finalize
-        self.weights_quantization_method = weights_quantization_method
-        self.test_loading = test_loading
+    def __init__(self, unit_test):
         super().__init__(unit_test)
 
     def get_tpc(self):
@@ -162,25 +155,64 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
             tpc_name='qat_test_tpc')['qat_test']
 
     def run_test(self, experimental_facade=False):
+        self._gen_fixed_input()
         model_float = self.create_networks()
         config = mct.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
-        num_of_parameters = sum(p.numel() for p in model_float.parameters() if p.requires_grad)
-        # kpi = mct.KPI(num_of_parameters * 0.75)
-        kpi = mct.KPI()
-        ptq_model, quantization_info = mct.pytorch_quantization_aware_training_init(model_float,
+        kpi = mct.KPI() # inf memory
+        qat_ready_model, quantization_info = mct.pytorch_quantization_aware_training_init(model_float,
                                                                                     self.representative_data_gen_experimental,
                                                                                     kpi,
                                                                                     core_config=config,
                                                                                     fw_info=self.get_fw_info(),
                                                                                     target_platform_capabilities=self.get_tpc())
 
-        ptq_model2 = ptq_model
-        if self.finalize:
-            ptq_model = mct.pytorch_quantization_aware_training_finalize(ptq_model)
 
-        self.compare(ptq_model,
-                     model_float,
-                     ptq_model2,
+        self.compare(qat_ready_model,
+                     qat_ready_model,
+                     qat_ready_model,
                      input_x=self.representative_data_gen(),
                      quantization_info=quantization_info)
 
+        # check that MP search returns 8 bits configuration for all layers
+        self.unit_test.assertTrue(all(quantization_info.mixed_precision_cfg == [0, 0, 0, 0, 0]))
+
+        # check that quantizer gets multiple bits configuration
+        for _, layer in qat_ready_model.named_children():
+            len(layer._dispatcher.weight_quantizers['weight'].quantization_config.weights_bits_candidates) > 1
+
+class QuantizationAwareTrainingMixedPrecisionKpiCfgTest(QuantizationAwareTrainingTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def get_tpc(self):
+        base_config, _ = get_op_quantization_configs()
+        return get_mp_activation_pytorch_tpc_dict(
+            tpc_model=generate_tp_model_with_activation_mp(
+                base_cfg=base_config,
+                mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
+                                             (4, 8), (4, 4), (4, 2),
+                                             (2, 8), (2, 4), (2, 2)]),
+            test_name='qat_test',
+            tpc_name='qat_test_tpc')['qat_test']
+
+    def run_test(self, experimental_facade=False):
+        self._gen_fixed_input()
+        model_float = self.create_networks()
+        config = mct.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
+        kpi = mct.KPI(weights_memory=50, activation_memory=40)
+        qat_ready_model, quantization_info = mct.pytorch_quantization_aware_training_init(model_float,
+                                                                                    self.representative_data_gen_experimental,
+                                                                                    kpi,
+                                                                                    core_config=config,
+                                                                                    fw_info=self.get_fw_info(),
+                                                                                    target_platform_capabilities=self.get_tpc())
+
+
+        self.compare(qat_ready_model,
+                     qat_ready_model,
+                     qat_ready_model,
+                     input_x=self.representative_data_gen(),
+                     quantization_info=quantization_info)
+
+        # check that MP search doesn't return 8 bits configuration for all layers
+        self.unit_test.assertTrue(all(quantization_info.mixed_precision_cfg == [1, 1, 0, 0, 0]))

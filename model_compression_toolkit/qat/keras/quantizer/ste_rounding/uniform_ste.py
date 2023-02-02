@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.quantization.quantizers.quantizers_he
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common import constants as C
 import model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers as iq
-from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+from model_compression_toolkit.quantizers_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 
