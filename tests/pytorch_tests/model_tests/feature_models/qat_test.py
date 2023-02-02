@@ -178,7 +178,11 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
 
         # check that quantizer gets multiple bits configuration
         for _, layer in qat_ready_model.named_children():
-            len(layer._dispatcher.weight_quantizers['weight'].quantization_config.weights_bits_candidates) > 1
+            if layer.is_weights_quantization:
+                self.unit_test.assertTrue(len(layer.weights_quantizers['weight'].quantization_config.weights_bits_candidates) > 1)
+            if layer.is_activation_quantization:
+                self.unit_test.assertTrue(len(layer.activation_quantizers[0].quantization_config.activation_bits_candidates) > 1)
+
 
 class QuantizationAwareTrainingMixedPrecisionKpiCfgTest(QuantizationAwareTrainingTest):
     def __init__(self, unit_test):
@@ -216,3 +220,10 @@ class QuantizationAwareTrainingMixedPrecisionKpiCfgTest(QuantizationAwareTrainin
 
         # check that MP search doesn't return 8 bits configuration for all layers
         self.unit_test.assertTrue(all(quantization_info.mixed_precision_cfg == [1, 1, 0, 0, 0]))
+
+        # check that quantizer gets multiple bits configuration
+        for _, layer in qat_ready_model.named_children():
+            if layer.is_weights_quantization:
+                self.unit_test.assertTrue(len(layer.weights_quantizers['weight'].quantization_config.weights_bits_candidates) > 1)
+            if layer.is_activation_quantization:
+                self.unit_test.assertTrue(len(layer.activation_quantizers[0].quantization_config.activation_bits_candidates) > 1)

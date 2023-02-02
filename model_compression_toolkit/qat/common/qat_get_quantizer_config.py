@@ -30,7 +30,7 @@ def get_trainable_quantizer_weights_config(
     Returns:
          TrainableQuantizerWeightsConfig: an object that contains the quantizer configuration
     """
-    if n.final_weights_quantization_cfg is not None:
+    if n.final_weights_quantization_cfg is None:
         Logger.error(f'Node must have final_weights_quantization_cfg in order to build quantizer configuration')
 
     final_cfg = n.final_weights_quantization_cfg
