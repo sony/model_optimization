@@ -45,9 +45,8 @@ class BaseUniformInferableQuantizer(BaseKerasInferableQuantizer):
         assert np.all(max_range > min_range), f'Expected max_range to be bigger than min_range!'
         _min_range, _max_range = adjust_range_to_include_zero(min_range, max_range, num_bits)
         assert np.all(_min_range <= 0) and np.all(_max_range >= 0), f'Expected zero to be in the range, got min_range={_min_range}, max_range={_max_range}'
-        if np.any(_min_range != min_range) or np.any(_max_range != max_range):
+        if not np.isclose(np.linalg.norm(_min_range-min_range),0,atol=1e-6) or not np.isclose(np.linalg.norm(_max_range-max_range),0,atol=1e-6):
             Logger.warning(f"Adjusting (min_range, max_range) from ({min_range},{max_range}) to ({_min_range},{_max_range})")  # pragma: no cover
-
 
         self.max_range = _max_range
         self.min_range = _min_range

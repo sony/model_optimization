@@ -137,8 +137,8 @@ class STEUniformWeightQuantizer(qi.BaseKerasTrainableQuantizer):
             BaseKerasInferableQuantizer object.
         """
         min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN].numpy(),
-                                                            self.quantizer_parameters[FQ_MAX].numpy(),
-                                                            self.num_bits)
+                                                         self.quantizer_parameters[FQ_MAX].numpy(),
+                                                         self.num_bits)
         return iq.WeightsUniformInferableQuantizer(num_bits=self.num_bits,
                                                    min_range=np.reshape(min_range,
                                                                         self.min_max_shape),
@@ -232,8 +232,8 @@ class STEUniformActivationQuantizer(qi.BaseKerasTrainableQuantizer):
             BaseKerasInferableQuantizer object.
         """
         min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN].numpy(),
-                                                            self.quantizer_parameters[FQ_MAX].numpy(),
-                                                            self.num_bits)
+                                                         self.quantizer_parameters[FQ_MAX].numpy(),
+                                                         self.num_bits)
         return iq.ActivationUniformInferableQuantizer(num_bits=self.num_bits,
                                                       min_range=min_range,
                                                       max_range=max_range)
