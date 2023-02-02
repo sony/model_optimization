@@ -15,6 +15,9 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer, \
+    QuantizationTarget
 
 if FOUND_TORCH:
     import torch
@@ -22,6 +25,10 @@ if FOUND_TORCH:
         .base_uniform_inferable_quantizer import \
         BaseUniformInferableQuantizer
 
+
+    @mark_quantizer(quantization_target=QuantizationTarget.Activation,
+                    quantization_method=[QuantizationMethod.UNIFORM],
+                    quantizer_type=None)
     class ActivationUniformInferableQuantizer(BaseUniformInferableQuantizer):
         """
         Class for quantizing activations using an uniform quantizer

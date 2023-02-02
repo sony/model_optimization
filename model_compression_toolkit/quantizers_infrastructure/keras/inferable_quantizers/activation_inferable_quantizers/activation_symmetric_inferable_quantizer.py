@@ -16,6 +16,9 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TF
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer, \
+    QuantizationTarget
 
 if FOUND_TF:
     import tensorflow as tf
@@ -25,6 +28,9 @@ if FOUND_TF:
         BaseSymmetricInferableQuantizer
 
 
+    @mark_quantizer(quantization_target=QuantizationTarget.Activation,
+                    quantization_method=[QuantizationMethod.SYMMETRIC],
+                    quantizer_type=None)
     class ActivationSymmetricInferableQuantizer(BaseSymmetricInferableQuantizer):
         """
         Class for quantizing activations using a symmetric quantizer

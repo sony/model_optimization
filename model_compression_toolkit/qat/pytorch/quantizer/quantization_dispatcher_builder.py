@@ -72,6 +72,19 @@ def get_trainable_quantizer_activation_config(n: common.BaseNode) -> TrainableQu
 def _get_quantizer_class(quant_target: QuantizationTarget,
                          training_method: TrainingMethod,
                          quant_method: QuantizationMethod):
+    """
+    Searches for a quantizer class that matches the requested QuantizationTarget and QuantizationMethod and TrainingMethod.
+    Exactly one class should be found.
+
+    Args:
+        quant_target: QuantizationTarget value which indicates what is the target for quantization to
+            use the quantizer for.
+        quant_method: A list of QuantizationMethod values to indicate all type of quantization methods that the
+            quantizer supports.
+
+    Returns: A class of a quantizer that inherits from BasePytorchQATTrainableQuantizer.
+
+    """
     qat_quantizer_classes = get_all_subclasses(BasePytorchQATTrainableQuantizer)
     filtered_quantizers = list(filter(lambda q_class: getattr(q_class, QUANTIZATION_TARGET) == quant_target and
                                                       getattr(q_class, QUANTIZATION_METHOD) is not None and

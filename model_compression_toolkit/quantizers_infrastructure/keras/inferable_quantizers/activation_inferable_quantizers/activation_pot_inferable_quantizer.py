@@ -17,11 +17,18 @@ import numpy as np
 
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 
 if FOUND_TF:
     import tensorflow as tf
     from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_pot_inferable_quantizer import BasePOTInferableQuantizer
 
+
+    @mark_quantizer(quantization_target=QuantizationTarget.Activation,
+                    quantization_method=[QuantizationMethod.POWER_OF_TWO],
+                    quantizer_type=None)
     class ActivationPOTInferableQuantizer(BasePOTInferableQuantizer):
         """
         Class for quantizing activations using power-of-two quantizer

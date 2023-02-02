@@ -17,23 +17,13 @@ from typing import Dict, Any
 from model_compression_toolkit.core.common import BaseNode, Logger
 from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MIN, RANGE_MAX, SIGNED
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure import keras_inferable_quantizers
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.constants import QUANTIZATION_TARGET, \
+    QUANTIZATION_METHOD
+from model_compression_toolkit.quantizers_infrastructure.common.get_all_subclasses import get_all_subclasses
 from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
     import \
     BaseKerasInferableQuantizer
-
-QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER = {
-    QuantizationMethod.POWER_OF_TWO: keras_inferable_quantizers.WeightsPOTInferableQuantizer,
-    QuantizationMethod.SYMMETRIC: keras_inferable_quantizers.WeightsSymmetricInferableQuantizer,
-    QuantizationMethod.UNIFORM: keras_inferable_quantizers.WeightsUniformInferableQuantizer
-}
-
-QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER = {
-    QuantizationMethod.POWER_OF_TWO: keras_inferable_quantizers.ActivationPOTInferableQuantizer,
-    QuantizationMethod.SYMMETRIC: keras_inferable_quantizers.ActivationSymmetricInferableQuantizer,
-    QuantizationMethod.UNIFORM: keras_inferable_quantizers.ActivationUniformInferableQuantizer
-}
 
 
 def get_inferable_quantizer_kwargs(node: BaseNode,
@@ -106,6 +96,36 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
 
 
 
+def _get_quantizer_class(quant_target: QuantizationTarget,
+                         quant_method: QuantizationMethod) -> type:
+    """
+    Searches for a quantizer class that matches the requested QuantizationTarget and QuantizationMethod.
+    Exactly one class should be found.
+
+    Args:
+        quant_target: QuantizationTarget value which indicates what is the target for quantization to
+            use the quantizer for.
+        quant_method: A list of QuantizationMethod values to indicate all type of quantization methods that the
+            quantizer supports.
+
+    Returns: A class of a quantizer that inherits from BaseKerasInferableQuantizer.
+
+    """
+    qat_quantizer_classes = get_all_subclasses(BaseKerasInferableQuantizer)
+    filtered_quantizers = list(filter(lambda q_class: getattr(q_class, QUANTIZATION_TARGET) == quant_target and
+                                                      getattr(q_class, QUANTIZATION_METHOD) is not None and
+                                                       quant_method in getattr(q_class, QUANTIZATION_METHOD),
+                                      qat_quantizer_classes))
+
+    if len(filtered_quantizers) != 1:
+        Logger.error(f"Found {len(filtered_quantizers)} quantizer for target {quant_target.value} "
+                     f"that matches the requested quantization method {quant_method.name} "
+                     f"but there should be exactly one."
+                     f"The possible quantizers that were found are {filtered_quantizers}.")
+
+    return filtered_quantizers[0]
+
+
 def get_weights_quantizer_for_node(node: BaseNode) -> BaseKerasInferableQuantizer:
     """
     Get weights quantizer for a node.
@@ -122,8 +142,11 @@ def get_weights_quantizer_for_node(node: BaseNode) -> BaseKerasInferableQuantize
         # no cover
     node_w_qc = node.final_weights_quantization_cfg
     weights_quantization_method = node_w_qc.weights_quantization_method
+
+    quantier_for_node = _get_quantizer_class(QuantizationTarget.Weights, weights_quantization_method)
     kwargs = get_inferable_quantizer_kwargs(node, QuantizationTarget.Weights)
-    return QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER.get(weights_quantization_method)(**kwargs)
+
+    return quantier_for_node(**kwargs)
 
 
 def get_activations_quantizer_for_node(node: BaseNode) -> BaseKerasInferableQuantizer:
@@ -142,5 +165,8 @@ def get_activations_quantizer_for_node(node: BaseNode) -> BaseKerasInferableQuan
         # pragma: no cover
     node_act_qc = node.final_activation_quantization_cfg
     activation_quantization_method = node_act_qc.activation_quantization_method
+
+    quantier_for_node = _get_quantizer_class(QuantizationTarget.Activation, activation_quantization_method)
     kwargs = get_inferable_quantizer_kwargs(node, QuantizationTarget.Activation)
-    return QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER.get(activation_quantization_method)(**kwargs)
+
+    return quantier_for_node(**kwargs)
