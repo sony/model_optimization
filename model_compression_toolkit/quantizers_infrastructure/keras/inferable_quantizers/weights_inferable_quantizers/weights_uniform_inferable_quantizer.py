@@ -15,9 +15,8 @@
 
 import numpy as np
 
-from model_compression_toolkit.quantizers_infrastructure.common.constants import FOUND_TF
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.keras.quantizer_utils import fix_range_to_include_zero
+from model_compression_toolkit.quantizers_infrastructure.common.constants import FOUND_TF
 
 if FOUND_TF:
     import tensorflow as tf
