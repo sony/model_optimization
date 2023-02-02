@@ -16,10 +16,6 @@ from abc import abstractmethod
 
 import numpy as np
 
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
-    import \
-    BaseKerasInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_uniform_inferable_quantizer \
     import \
     BaseUniformInferableQuantizer
@@ -30,8 +26,7 @@ class BaseSymmetricInferableQuantizer(BaseUniformInferableQuantizer):
     def __init__(self,
                  num_bits: int,
                  threshold: np.ndarray,
-                 signed: bool,
-                 quantization_target: QuantizationTarget):
+                 signed: bool):
         """
         Initialize the quantizer with the specified parameters.
 
@@ -39,7 +34,6 @@ class BaseSymmetricInferableQuantizer(BaseUniformInferableQuantizer):
             num_bits: number of bits to use for quantization
             threshold: threshold for quantizing weights
             signed: whether or not to use signed quantization
-            quantization_target: An enum which selects the quantizer tensor type: activation or weights.
         """
 
         if not isinstance(threshold, np.ndarray):
@@ -52,8 +46,7 @@ class BaseSymmetricInferableQuantizer(BaseUniformInferableQuantizer):
         min_range = -threshold if signed else 0
         max_range = threshold - delta
 
-        super(BaseSymmetricInferableQuantizer, self).__init__(quantization_target=quantization_target,
-                                                              min_range=min_range,
+        super(BaseSymmetricInferableQuantizer, self).__init__(min_range=min_range,
                                                               max_range=max_range,
                                                               num_bits=num_bits)
 

@@ -16,7 +16,6 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
 if FOUND_TF:
     import tensorflow as tf
@@ -47,8 +46,7 @@ if FOUND_TF:
 
             super(WeightsSymmetricInferableQuantizer, self).__init__(num_bits=num_bits,
                                                                      threshold=threshold,
-                                                                     signed=signed,
-                                                                     quantization_target=QuantizationTarget.Weights)
+                                                                     signed=signed)
 
             self.per_channel = per_channel
             self.channel_axis = channel_axis

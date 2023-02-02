@@ -16,8 +16,6 @@ from abc import abstractmethod
 
 import numpy as np
 
-from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
     import \
     BaseKerasInferableQuantizer
@@ -28,9 +26,7 @@ class BaseUniformInferableQuantizer(BaseKerasInferableQuantizer):
     def __init__(self,
                  num_bits: int,
                  min_range: np.ndarray,
-                 max_range: np.ndarray,
-                 quantization_target: QuantizationTarget
-                 ):
+                 max_range: np.ndarray):
         """
         Initialize the quantizer with the specified parameters.
 
@@ -38,9 +34,8 @@ class BaseUniformInferableQuantizer(BaseKerasInferableQuantizer):
             num_bits: number of bits to use for quantization
             min_range: min quantization range
             max_range: max quantization range
-            quantization_target: An enum which selects the quantizer tensor type: activation or weights.
         """
-        super(BaseUniformInferableQuantizer, self).__init__(quantization_target=quantization_target)
+        super(BaseUniformInferableQuantizer, self).__init__()
         self.num_bits = num_bits
         self.max_range = max_range
         self.min_range = min_range

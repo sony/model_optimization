@@ -17,7 +17,6 @@ import numpy as np
 
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
 if FOUND_TF:
     import tensorflow as tf
@@ -44,8 +43,7 @@ if FOUND_TF:
             # quantization
             super(ActivationPOTInferableQuantizer, self).__init__(num_bits=num_bits,
                                                                   threshold=threshold,
-                                                                  signed=signed,
-                                                                  quantization_target=QuantizationTarget.Activation)
+                                                                  signed=signed)
 
         def __call__(self, inputs: tf.Tensor):
             """
