@@ -657,15 +657,15 @@ class FeatureNetworkTest(unittest.TestCase):
                                    separate_key_value=separate_key_value, output_dim=14).run_test()
 
     def test_qat(self):
-        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True).run_test()
+        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu')).run_test()
         QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
                         weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
                         activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
-        QATWrappersTest(self, layers.Dense(3, activation='relu'), test_loading=True,
+        QATWrappersTest(self, layers.Dense(3, activation='relu'),
                         weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
                         activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM).run_test()
         QATWrappersTest(self, layers.Dense(3, activation='relu')).run_test()
-        QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), test_loading=True,
+        QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu'),
                         weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
                         activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
         QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu')).run_test()

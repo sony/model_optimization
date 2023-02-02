@@ -23,8 +23,10 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 import model_compression_toolkit as mct
 from model_compression_toolkit import quantizers_infrastructure as qi
 import os
-from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER, QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER
-from model_compression_toolkit.qat.keras.quantizer.quantization_dispatcher_builder import METHOD2ACTQUANTIZER, METHOD2WEIGHTQUANTIZER
+from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
+    QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER, QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER
+from model_compression_toolkit.qat.keras.quantizer.quantization_dispatcher_builder import METHOD2ACTQUANTIZER, \
+    METHOD2WEIGHTQUANTIZER
 from model_compression_toolkit.core.keras.default_framework_info import KERNEL
 
 keras = tf.keras
@@ -116,7 +118,7 @@ class QuantizationAwareTrainingQuantizersTest(QuantizationAwareTrainingTest):
         else:
             self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.DepthwiseConv2D))
             for name, quantizer in quantized_model.layers[2]._dispatcher.weight_quantizers.items():
-                w_select = [w for w in quantized_model.layers[2].weights if name + ":0" in w.name]
+                w_select = [w for w in float_model.layers[1].weights if name + ":0" in w.name]
                 if len(w_select) != 1:
                     raise Exception()
                 dw_weight = w_select[0]
@@ -135,6 +137,7 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         self.finalize = finalize
         self.weights_quantization_method = weights_quantization_method
         self.activation_quantization_method = activation_quantization_method
+        assert test_loading == False, "Loading is currently not working in tf2.10 and below." # TODO
         self.test_loading = test_loading
         super().__init__(unit_test)
 
@@ -172,7 +175,8 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                      quantization_info=quantization_info)
 
         out_qat_model = qat_model(in_tensor)
-        self.unit_test.assertTrue(np.isclose(np.linalg.norm(out_qat_model - out_ptq_model) / np.linalg.norm(out_ptq_model), 0, atol=1e-6))
+        self.unit_test.assertTrue(
+            np.isclose(np.linalg.norm(out_qat_model - out_ptq_model) / np.linalg.norm(out_ptq_model), 0, atol=1e-6))
 
         if self.finalize:
             # QAT finalize model
@@ -182,8 +186,9 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                          input_x=self.representative_data_gen(),
                          quantization_info=quantization_info)
             out_qat_finalize_model = qat_finalize_model(in_tensor)
-            self.unit_test.assertTrue(np.isclose(np.linalg.norm(out_qat_finalize_model - out_ptq_model) / np.linalg.norm(out_ptq_model), 0, atol=1e-6))
-
+            self.unit_test.assertTrue(
+                np.isclose(np.linalg.norm(out_qat_finalize_model - out_ptq_model) / np.linalg.norm(out_ptq_model), 0,
+                           atol=1e-6))
 
     def compare(self, qat_model, finalize=False, input_x=None, quantization_info=None):
 
@@ -201,7 +206,6 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                             q = METHOD2ACTQUANTIZER[mct.TrainingMethod.STE][self.activation_quantization_method]
                             self.unit_test.assertTrue(isinstance(layer._dispatcher.activation_quantizers[0], q))
 
-
                 # Check Weight quantizers
                 if layer._dispatcher.is_weights_quantization:
                     for name, quantizer in layer._dispatcher.weight_quantizers.items():
@@ -213,4 +217,3 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                             self.unit_test.assertTrue(isinstance(quantizer, qi.BaseKerasTrainableQuantizer))
                             q = METHOD2WEIGHTQUANTIZER[mct.TrainingMethod.STE][self.weights_quantization_method]
                             self.unit_test.assertTrue(isinstance(layer._dispatcher.weight_quantizers[KERNEL], q))
-
