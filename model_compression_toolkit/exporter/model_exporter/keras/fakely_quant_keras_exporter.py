@@ -90,8 +90,8 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                             # quantize config contains this as an attribute for quantization. If so -
                             # Take the quantized weight from the quantize_config and set it to the new layer.
                             attribute_name = w.name.split('/')[-1].split(':')[0]
-                            if attribute_name in layer.weight_quantizers.keys():
-                                quantizer = layer.weight_quantizers.get(attribute_name)
+                            if attribute_name in layer.weights_quantizers.keys():
+                                quantizer = layer.weights_quantizers.get(attribute_name)
                                 val = quantizer(qw)
                             else:
                                 val = qw

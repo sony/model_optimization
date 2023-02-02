@@ -122,8 +122,7 @@ if FOUND_TF:
             base_config = super(KerasQuantizationWrapper, self).get_config()
             config = {
                 ACTIVATION_QUANTIZERS: [keras.utils.serialize_keras_object(act) for act in self.activation_quantizers],
-                WEIGHTS_QUANTIZERS: {k: keras.utils.serialize_keras_object(v) for k, v in
-                                    self.weights_quantizers.items()}}
+                WEIGHTS_QUANTIZERS: {k: keras.utils.serialize_keras_object(v) for k, v in self.weights_quantizers.items()}}
             return dict(list(base_config.items()) + list(config.items()))
 
         def _set_weights_vars(self, is_training: bool = True):
@@ -164,7 +163,6 @@ if FOUND_TF:
 
             """
             config = config.copy()
-            layer = tf.keras.layers.deserialize(config.pop(LAYER))
             activation_quantizers = [keras.utils.deserialize_keras_object(act,
                                                                           module_objects=globals(),
                                                                           custom_objects=None) for act in
@@ -173,7 +171,7 @@ if FOUND_TF:
                                                                          module_objects=globals(),
                                                                          custom_objects=None) for k, v in
                                  config.pop(WEIGHTS_QUANTIZERS).items()}
-
+            layer = tf.keras.layers.deserialize(config.pop(LAYER))
             return cls(layer=layer, weights_quantizers=weights_quantizers, activation_quantizers=activation_quantizers, **config)
 
         def build(self, input_shape):

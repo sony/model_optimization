@@ -47,14 +47,14 @@ class ExportableModelTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
         self.unit_test.assertTrue(len(quantized_model.layers[2].activation_quantizers) == 1)
         self.unit_test.assertTrue(isinstance(quantized_model.layers[2].activation_quantizers[0], qi.BaseInferableQuantizer))
-        self.unit_test.assertTrue(len(quantized_model.layers[2].weight_quantizers) == 1)
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].weight_quantizers[KERNEL], qi.BaseInferableQuantizer))
+        self.unit_test.assertTrue(len(quantized_model.layers[2].weights_quantizers) == 1)
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].weights_quantizers[KERNEL], qi.BaseInferableQuantizer))
 
         self.unit_test.assertTrue(isinstance(quantized_model.layers[3], qi.KerasQuantizationWrapper))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.Conv2D))
         self.unit_test.assertTrue(len(quantized_model.layers[3].activation_quantizers) == 0)
-        self.unit_test.assertTrue(len(quantized_model.layers[3].weight_quantizers) == 1)
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].weight_quantizers[KERNEL], qi.BaseInferableQuantizer))
+        self.unit_test.assertTrue(len(quantized_model.layers[3].weights_quantizers) == 1)
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].weights_quantizers[KERNEL], qi.BaseInferableQuantizer))
 
         self.unit_test.assertTrue(isinstance(quantized_model.layers[4], qi.KerasQuantizationWrapper))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[4].layer, layers.ReLU))
