@@ -14,11 +14,13 @@
 # ==============================================================================
 from typing import Tuple
 
-import torch
 import numpy as np
-
+from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.quantizers_infrastructure.common.constants import MULTIPLIER_N_BITS
 from model_compression_toolkit.quantizers_infrastructure.common.constants import EPS
+
+if FOUND_TORCH:
+    import torch
 
 
 def get_working_device():
