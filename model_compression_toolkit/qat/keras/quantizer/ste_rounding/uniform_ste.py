@@ -21,6 +21,7 @@ from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit.qat.keras.quantizer.quant_utils import adjust_range_to_include_zero
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common import constants as C
 import model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers as iq
@@ -135,11 +136,13 @@ class STEUniformWeightQuantizer(qi.BaseKerasTrainableQuantizer):
         Returns:
             BaseKerasInferableQuantizer object.
         """
-
+        min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN].numpy(),
+                                                            self.quantizer_parameters[FQ_MAX].numpy(),
+                                                            self.num_bits)
         return iq.WeightsUniformInferableQuantizer(num_bits=self.num_bits,
-                                                   min_range=np.reshape(self.quantizer_parameters[FQ_MIN].numpy(),
+                                                   min_range=np.reshape(min_range,
                                                                         self.min_max_shape),
-                                                   max_range=np.reshape(self.quantizer_parameters[FQ_MAX].numpy(),
+                                                   max_range=np.reshape(max_range,
                                                                         self.min_max_shape),
                                                    per_channel=self.per_channel,
                                                    channel_axis=self.channel_axis)
@@ -228,7 +231,9 @@ class STEUniformActivationQuantizer(qi.BaseKerasTrainableQuantizer):
         Returns:
             BaseKerasInferableQuantizer object.
         """
-
+        min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN].numpy(),
+                                                            self.quantizer_parameters[FQ_MAX].numpy(),
+                                                            self.num_bits)
         return iq.ActivationUniformInferableQuantizer(num_bits=self.num_bits,
-                                                      min_range=self.quantizer_parameters[FQ_MIN].numpy(),
-                                                      max_range=self.quantizer_parameters[FQ_MAX].numpy())
+                                                      min_range=min_range,
+                                                      max_range=max_range)

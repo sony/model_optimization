@@ -13,11 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+from typing import Tuple
 
-def adjust_range_to_include_zero(range_min: np.ndarray, range_max: np.ndarray, n_bits: int):
+def adjust_range_to_include_zero(range_min: np.ndarray,
+                                 range_max: np.ndarray,
+                                 n_bits: int) -> Tuple[np.ndarray, np.ndarray]:
     """
     Adjusting the quantization range to include representation of 0.0 in the quantization grid.
-    If quantization per-channel, then range_min and range_max should be tensors in the specific shape that allows
+    For per_channel quantization range_min\range_max should be tensors in the specific shape that allows
     quantization along the channel_axis.
 
     Args:

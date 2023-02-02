@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ def adjust_range_to_include_zero(range_min: tf.Tensor,
                                  n_bits: int) -> Tuple[tf.Tensor, tf.Tensor]:
     """
     Adjusting the quantization range to include representation of 0.0 in the quantization grid.
-    If quantization per-channel, then range_min and range_max should be tensors in the specific shape that allows
+    For per_channel quantization range_min\range_max should be tensors in the specific shape that allows
     quantization along the channel_axis.
 
     Args:
