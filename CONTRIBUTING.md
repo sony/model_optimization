@@ -27,7 +27,7 @@ We basically follow the development style used in many GitHub repositories.
 
 ## Contribution Example
 
-Here a simple tutorial on how to add your own quantization method to MCT.
+Here a simple tutorial on how to add your quantization method to MCT.
 Check out the readme files below:
 
 - [Adding a QAT method in Keras](./model_compression_toolkit/qat/keras/quantizer)

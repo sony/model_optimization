@@ -51,7 +51,7 @@ METHOD2WEIGHTQUANTIZER = {TrainingMethod.STE: {qi.QuantizationMethod.SYMMETRIC: 
                           }
 ```
 
-Finally, we're ready generate the model for quantization aware training
+Finally, we're ready to generate the model for quantization aware training
 by calling `keras_quantization_aware_training_init` method in [`keras/quantization_facade`](./model_compression_toolkit/qat/keras/quantization_facade.py)
 with the following [`qat_config`](./model_compression_toolkit/qat/common/qat_config.py):
 
