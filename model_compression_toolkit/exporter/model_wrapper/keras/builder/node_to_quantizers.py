@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
     get_weights_quantizer_for_node, get_activations_quantizer_for_node
 
 
-def get_quantization_quantizers(node: BaseNode) -> [Dict, List]:
+def get_quantization_quantizers(node: BaseNode) -> Tuple[Dict, List]:
     """
     Create quantizers to wrap a layer for its corresponding node.
 

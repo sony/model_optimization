@@ -35,8 +35,8 @@ def fully_quantized_wrapper(node: common.BaseNode, module: torch.nn.Module) -> q
     Returns: Wrapped layer
 
     """
-    wrapped_layer = qi.PytorchQuantizationWrapper(module,
-                                                  *get_quantization_quantizers(node))
+    weight_quantizers, activation_quantizers = get_quantization_quantizers(node)
+    wrapped_layer = qi.PytorchQuantizationWrapper(module, weight_quantizers, activation_quantizers)
     return wrapped_layer
 
 

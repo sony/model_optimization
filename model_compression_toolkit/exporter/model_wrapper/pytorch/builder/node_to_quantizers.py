@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Dict
+from typing import Tuple, List, Dict
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizer import \
     get_activations_quantizer_for_node, get_weights_quantizer_for_node
 
 
-def get_quantization_quantizers(node: BaseNode) -> [List, Dict]:
+def get_quantization_quantizers(node: BaseNode) -> Tuple[Dict, List]:
     """
     Create quantizers to wrap a layer for its corresponding node.
 
