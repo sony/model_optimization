@@ -306,14 +306,14 @@ else:
     class KerasQuantizationWrapper(object):
         def __init__(self,
                      layer,
-                     weight_quantizers: Dict[str, BaseInferableQuantizer] = None,
+                     weights_quantizers: Dict[str, BaseInferableQuantizer] = None,
                      activation_quantizers: List[BaseInferableQuantizer] = None):
             """
             Keras Quantization Wrapper takes a keras layer and quantizers and infer a quantized layer.
 
             Args:
                 layer: A keras layer.
-                weight_quantizers: A dictionary between a weight's name to its quantizer.
+                weights_quantizers: A dictionary between a weight's name to its quantizer.
                 activation_quantizers: A list of activations quantization, one for each layer output.
             """
             Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '

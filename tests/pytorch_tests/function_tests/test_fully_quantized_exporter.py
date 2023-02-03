@@ -117,25 +117,25 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         self.assertTrue(self.fully_quantized_mbv2.classifier_1.is_activation_quantization)
 
     def test_weights_qc(self):
-        self.assertTrue(len(self.fully_quantized_mbv2.features_0_0_bn.weight_quantizers)==1)
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.weight_quantizers['weight'], qi.pytorch_inferable_quantizers.WeightsPOTInferableQuantizer))
+        self.assertTrue(len(self.fully_quantized_mbv2.features_0_0_bn.weights_quantizers)==1)
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.weights_quantizers['weight'], qi.pytorch_inferable_quantizers.WeightsPOTInferableQuantizer))
 
     def test_weights_activation_qc(self):
-        self.assertTrue(len(self.fully_quantized_mbv2.classifier_1.weight_quantizers) == 1)
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.weight_quantizers['weight'],
+        self.assertTrue(len(self.fully_quantized_mbv2.classifier_1.weights_quantizers) == 1)
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.weights_quantizers['weight'],
                                    qi.pytorch_inferable_quantizers.WeightsPOTInferableQuantizer))
         self.assertTrue(len(self.fully_quantized_mbv2.classifier_1.activation_quantizers) == 1)
         self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.activation_quantizers[0], qi.pytorch_inferable_quantizers.ActivationPOTInferableQuantizer))
 
     def test_activation_qc(self):
-        self.assertTrue(len(self.fully_quantized_mbv2.features_0_2.weight_quantizers) == 0)
+        self.assertTrue(len(self.fully_quantized_mbv2.features_0_2.weights_quantizers) == 0)
         self.assertTrue(len(self.fully_quantized_mbv2.features_0_2.activation_quantizers) == 1)
         self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_2.activation_quantizers[0],
                                    qi.pytorch_inferable_quantizers.ActivationPOTInferableQuantizer))
 
     def test_no_quantization_qc(self):
         self.assertTrue(len(self.fully_quantized_mbv2.classifier_0.activation_quantizers) == 0)
-        self.assertTrue(len(self.fully_quantized_mbv2.classifier_0.weight_quantizers) == 0)
+        self.assertTrue(len(self.fully_quantized_mbv2.classifier_0.weights_quantizers) == 0)
 
     def test_save_and_load_model(self):
         float_model_filename = f'mbv2_float.pth'
