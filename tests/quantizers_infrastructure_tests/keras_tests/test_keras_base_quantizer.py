@@ -14,6 +14,7 @@
 # ==============================================================================
 
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 from model_compression_toolkit.quantizers_infrastructure.keras.config_serialization import config_serialization, \
@@ -55,6 +56,7 @@ class TestKerasBaseWeightsQuantizer(BaseKerasInfrastructureTest):
         deserialized_config = config_deserialization(config_data)
         self.unit_test.assertTrue(weight_quantization_config.__dict__ == deserialized_config.__dict__)
 
+
 class TestKerasBaseActivationsQuantizer(BaseKerasInfrastructureTest):
 
     def __init__(self, unit_test):
@@ -86,3 +88,23 @@ class TestKerasBaseActivationsQuantizer(BaseKerasInfrastructureTest):
         self.unit_test.assertTrue(config_data['enable_activation_quantization'])
         deserialized_config = config_deserialization(config_data)
         self.unit_test.assertTrue(activation_quantization_config.__dict__ == deserialized_config.__dict__)
+
+
+class _TestQuantizer(BaseKerasTrainableQuantizer):
+    def __init__(self, quantizer_config: TrainableQuantizerWeightsConfig):
+        super().__init__(quantizer_config)
+
+
+class TestKerasQuantizerWithoutMarkDecorator(BaseKerasInfrastructureTest):
+
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def run_test(self):
+        # create instance of dummy _TestQuantizer. Should throw exception because it is not marked with @mark_quantizer.
+        with self.unit_test.assertRaises(Exception) as e:
+            test_quantizer = _TestQuantizer(self.get_weights_quantization_config())
+        self.unit_test.assertEqual(
+            "A quantizer class that inherit from BaseTrainableQuantizer is not defined appropriately."
+            "Either it misses the @mark_quantizer decorator or the decorator is not used correctly.",
+            str(e.exception))

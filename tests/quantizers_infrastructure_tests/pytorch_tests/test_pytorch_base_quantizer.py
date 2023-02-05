@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from model_compression_toolkit.quantizers_infrastructure import BasePytorchTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 from tests.quantizers_infrastructure_tests.pytorch_tests.base_pytorch_infrastructure_test import \
     BasePytorchInfrastructureTest, ZeroWeightsQuantizer, ZeroActivationsQuantizer
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
-from model_compression_toolkit import QuantizationConfig
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
-    NodeActivationQuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 
@@ -77,3 +74,23 @@ class TestPytorchBaseActivationQuantizer(BasePytorchInfrastructureTest):
         activation_quantization_config = super(TestPytorchBaseActivationQuantizer, self).get_activation_quantization_config()
         quantizer = ZeroActivationsQuantizer(activation_quantization_config)
         self.unit_test.assertTrue(quantizer.quantization_config == activation_quantization_config)
+
+
+class _TestQuantizer(BasePytorchTrainableQuantizer):
+    def __init__(self, quantization_config: TrainableQuantizerWeightsConfig):
+        super().__init__(quantization_config)
+
+
+class TestPytorchQuantizerWithoutMarkDecorator(BasePytorchInfrastructureTest):
+
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def run_test(self):
+        # create instance of dummy _TestQuantizer. Should throw exception because it is not marked with @mark_quantizer.
+        with self.unit_test.assertRaises(Exception) as e:
+            test_quantizer = _TestQuantizer(self.get_weights_quantization_config())
+        self.unit_test.assertEqual(
+            "A quantizer class that inherit from BaseTrainableQuantizer is not defined appropriately."
+            "Either it misses the @mark_quantizer decorator or the decorator is not used correctly.",
+            str(e.exception))

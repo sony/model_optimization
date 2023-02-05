@@ -16,7 +16,7 @@ import unittest
 import tensorflow as tf
 
 from tests.quantizers_infrastructure_tests.keras_tests.test_keras_base_quantizer import TestKerasBaseWeightsQuantizer, \
-    TestKerasBaseActivationsQuantizer
+    TestKerasBaseActivationsQuantizer, TestKerasQuantizerWithoutMarkDecorator
 from tests.quantizers_infrastructure_tests.keras_tests.test_keras_quantization_wrapper import \
     TestKerasWeightsQuantizationWrapper, TestKerasActivationsQuantizationWrapper
 
@@ -32,6 +32,7 @@ class KerasInfrastructureTest(unittest.TestCase):
     def test_keras_base_quantizer(self):
         TestKerasBaseWeightsQuantizer(self).run_test()
         TestKerasBaseActivationsQuantizer(self).run_test()
+        TestKerasQuantizerWithoutMarkDecorator(self).run_test()
 
 
 if __name__ == '__main__':

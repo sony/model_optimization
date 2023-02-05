@@ -17,7 +17,7 @@
 import unittest
 
 from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_base_quantizer import \
-    TestPytorchBaseWeightsQuantizer, TestPytorchBaseActivationQuantizer
+    TestPytorchBaseWeightsQuantizer, TestPytorchBaseActivationQuantizer, TestPytorchQuantizerWithoutMarkDecorator
 from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_quantization_wrapper import \
     TestPytorchWeightsQuantizationWrapper, TestPytorchActivationQuantizationWrapper
 
@@ -32,6 +32,8 @@ class PytorchInfrastructureTest(unittest.TestCase):
     def test_pytorch_base_quantizer(self):
         TestPytorchBaseWeightsQuantizer(self).run_test()
         TestPytorchBaseActivationQuantizer(self).run_test()
+        TestPytorchQuantizerWithoutMarkDecorator(self).run_test()
+
 
 if __name__ == '__main__':
     unittest.main()

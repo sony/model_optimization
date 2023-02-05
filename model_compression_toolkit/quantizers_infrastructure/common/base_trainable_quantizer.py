@@ -13,12 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import List, Union
+from typing import Union
 from inspect import signature
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer, \
     QuantizationTarget
@@ -50,11 +49,10 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         self.quantization_config = quantization_config
 
         # Inherited class should be decorated with @mark_quantizer decorator, and define the following static properties
-        static_quantization_method = getattr(self, QUANTIZATION_METHOD)
-        static_quantization_target = getattr(self, QUANTIZATION_TARGET)
+        static_quantization_method = getattr(self, QUANTIZATION_METHOD, None)
+        static_quantization_target = getattr(self, QUANTIZATION_TARGET, None)
 
         if static_quantization_method is None or static_quantization_target is None:
-            # TODO: add test that defines a new quantizer without the decorator and check for the exception.
             Logger.error("A quantizer class that inherit from BaseTrainableQuantizer is not defined appropriately."
                          "Either it misses the @mark_quantizer decorator or the decorator is not used correctly.")
 
