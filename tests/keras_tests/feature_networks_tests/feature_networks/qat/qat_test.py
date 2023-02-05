@@ -139,7 +139,6 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         self.finalize = finalize
         self.weights_quantization_method = weights_quantization_method
         self.activation_quantization_method = activation_quantization_method
-        assert test_loading == False, "Loading is currently not working in tf2.10 and below." # TODO
         self.test_loading = test_loading
         super().__init__(unit_test)
 

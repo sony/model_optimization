@@ -32,10 +32,11 @@ def _get_wrapper(node: common.BaseNode,
         n: A node of mct graph.
         layer: A keras layer
 
-    Returns: Wrapped layer
+    Returns: Wrapped layer with weights quantizers and activation quantizers
 
     """
-    return qi.KerasQuantizationWrapper(layer, *get_quantization_quantizers(node))
+    weights_quantizers, activation_quantizers = get_quantization_quantizers(node)
+    return qi.KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
 
 
 def get_exportable_keras_model(graph: Graph) -> tf.keras.models.Model:
