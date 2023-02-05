@@ -72,6 +72,8 @@ if found_tf:
     from tests.quantizers_infrastructure_tests.keras_tests.test_keras_quantization_infrastructure_runner import \
         KerasInfrastructureTest
     from tests.keras_tests.exporter_tests.test_runner import ExporterTestsRunner
+    from tests.keras_tests.function_tests.test_get_gptq_config import TestGetGPTQConfig
+    from tests.keras_tests.function_tests.test_gptq_loss_functions import TestGPTQLossFunctions
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -124,6 +126,8 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKPIData))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFileLogger))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasInfrastructureTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGetGPTQConfig))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQLossFunctions))
 
         # Keras test layers are supported in TF2.6 or higher versions
         if version.parse(tf.__version__) >= version.parse("2.6"):
