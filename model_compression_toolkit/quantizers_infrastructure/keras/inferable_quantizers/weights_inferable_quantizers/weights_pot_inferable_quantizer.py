@@ -38,7 +38,8 @@ if FOUND_TF:
                      threshold: np.ndarray,
                      signed: bool,
                      per_channel: bool,
-                     channel_axis: int):
+                     channel_axis: int,
+                     input_rank: int):
             """
             Initialize the quantizer with the specified parameters.
 
@@ -48,6 +49,7 @@ if FOUND_TF:
                 signed: whether or not to use signed quantization
                 per_channel: whether to use per-channel quantization
                 channel_axis: axis along which to apply per-channel quantization
+                input_rank: number of dimensions of input tensor the quantizer quantizes
             """
             # Call the superclass constructor with the given parameters, along with the target of Weights quantization
             super(WeightsPOTInferableQuantizer, self).__init__(num_bits=num_bits,
@@ -56,18 +58,16 @@ if FOUND_TF:
 
             self.per_channel = per_channel
             self.channel_axis = channel_axis
-
-            # Get the shape of the threshold array
-            self.threshold_shape = np.asarray(threshold).shape
+            self.input_rank = input_rank
 
             # Tensorflow's fake_quant_with_min_max_vars_per_channel only works on last axis, so
             # need to move the quantization axis to the last axis
-            if per_channel and channel_axis not in [-1, len(self.threshold_shape) - 1]:
+            if per_channel and channel_axis not in [-1, self.input_rank - 1]:
                 # If per-channel quantization is being used and the channel axis is not the last axis,
                 # create a permutation vector to move the channel axis to the last position
-                self.perm_vec = list(np.arange(len(self.threshold_shape)))
-                self.perm_vec[channel_axis] = len(self.threshold_shape) - 1
-                self.perm_vec[len(self.threshold_shape) - 1] = channel_axis
+                self.perm_vec = list(np.arange(self.input_rank))
+                self.perm_vec[channel_axis] = self.input_rank - 1
+                self.perm_vec[self.input_rank - 1] = channel_axis
             else:
                 # If per-channel quantization is not being used or the channel axis is already the last axis,
                 # set the permutation vector to None
@@ -114,13 +114,14 @@ if FOUND_TF:
             Return a dictionary with the configuration of the quantizer.
 
             Returns:
-                Dictionary with the following keys: 'num_bits', 'signed', 'threshold', 'per_channel', 'channel_axis'
+                Dictionary with the following keys: 'num_bits', 'signed', 'threshold', 'per_channel', 'channel_axis', 'input_rank'
             """
             return {'num_bits': self.num_bits,
                     'signed': self.signed,
                     'threshold': self.threshold,
                     'per_channel': self.per_channel,
-                    'channel_axis': self.channel_axis}
+                    'channel_axis': self.channel_axis,
+                    'input_rank': self.input_rank}
 
 else:
     class WeightsPOTInferableQuantizer:

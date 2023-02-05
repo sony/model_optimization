@@ -39,7 +39,8 @@ if FOUND_TF:
                      min_range: np.ndarray,
                      max_range: np.ndarray,
                      per_channel: bool,
-                     channel_axis: int
+                     channel_axis: int,
+                     input_rank: int
                      ):
             """
             Initialize the quantizer with the specified parameters.
@@ -50,6 +51,7 @@ if FOUND_TF:
                 max_range: max quantization range for quantizing weights
                 per_channel: whether to use per-channel quantization
                 channel_axis: axis along which to apply per-channel quantization
+                input_rank: number of dimensions of input tensor the quantizer quantizes
             """
             super(WeightsUniformInferableQuantizer, self).__init__(num_bits,
                                                                    min_range,
@@ -57,18 +59,16 @@ if FOUND_TF:
 
             self.per_channel = per_channel
             self.channel_axis = channel_axis
-
-            # Get the shape of the range array
-            self.range_shape = np.asarray(min_range).shape
+            self.input_rank = input_rank
 
             # Tensorflow's fake_quant_with_min_max_vars_per_channel only works on last axis, so
             # need to move the quantization axis to the last axis
-            if per_channel and channel_axis not in [-1, len(self.range_shape) - 1]:
+            if per_channel and channel_axis not in [-1, self.input_rank - 1]:
                 # If per-channel quantization is being used and the channel axis is not the last axis,
                 # create a permutation vector to move the channel axis to the last position
-                self.perm_vec = list(np.arange(len(self.range_shape)))
-                self.perm_vec[channel_axis] = len(self.range_shape) - 1
-                self.perm_vec[len(self.range_shape) - 1] = channel_axis
+                self.perm_vec = list(np.arange(self.input_rank))
+                self.perm_vec[channel_axis] = self.input_rank - 1
+                self.perm_vec[self.input_rank - 1] = channel_axis
             else:
                 # If per-channel quantization is not being used or the channel axis is already the last axis,
                 # set the permutation vector to None
@@ -121,7 +121,8 @@ if FOUND_TF:
                 'num_bits': self.num_bits,
                 'max_range': self.max_range,
                 'min_range': self.min_range,
-                'channel_axis': self.channel_axis}
+                'channel_axis': self.channel_axis,
+                'input_rank': self.input_rank}
 
 
 else:
