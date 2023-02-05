@@ -35,8 +35,7 @@ if FOUND_TF:
                      min_range: np.ndarray,
                      max_range: np.ndarray,
                      per_channel: bool,
-                     channel_axis: int,
-                     input_num_dims: int
+                     channel_axis: int
                      ):
             """
             Initialize the quantizer with the specified parameters.
