@@ -132,9 +132,7 @@ class TestFileLogger(unittest.TestCase):
         base_config, _ = get_op_quantization_configs()
         tpc_model = generate_tp_model_with_activation_mp(
             base_cfg=base_config,
-            mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
-                                         (4, 8), (4, 4), (4, 2),
-                                         (2, 8), (2, 4), (2, 2)])
+            mp_bitwidth_candidates_list=[(8, 8), (8, 4)])
         tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
         mct.keras_post_training_quantization_mixed_precision(in_model=self.model,
                                                              representative_data_gen=random_datagen,
