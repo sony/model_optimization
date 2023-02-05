@@ -24,6 +24,7 @@ In order to make your new quantizer you need to create your quantizer class, `My
 To create custom `MyWeightsTrainingQuantizer` which is a symmetric weights training quantizer you need to set
 `qi.QuantizationTarget.Weights` as target and `qi.QuantizationMethod.SYMMETRIC` as method.
 Assume that the quantizer is designated for a general task, and that we have an Enum `TaskType` to define that type of quantizers that are implemented for this task.
+We define the quantizer for QAT, so it need to inherit from `BaseKerasQATTrainableQuantizer`.
 ```python
 import tensorflow as tf
 from model_compression_toolkit import quantizers_infrastructure as qi
@@ -32,7 +33,7 @@ NEW_PARAM = "new_param_name"
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.SYMMETRIC],
                 quantizer_type=TaskType.MyQuantizerType)
-class MyWeightsTrainingQuantizer(BaseKerasTrainableQuantizer):
+class MyWeightsTrainingQuantizer(BaseKerasQATTrainableQuantizer):
     def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
         super(MyWeightsTrainingQuantizer, self).__init__(quantization_config)
         # Define your new params here:
@@ -63,6 +64,7 @@ class MyWeightsTrainingQuantizer(BaseKerasTrainableQuantizer):
 ## Example: Symmetric Activations Quantizer
 To create custom `MyActivationsTrainingQuantizer` which is a symmetric activations training quantizer you need to set `qi.QuantizationTarget.Activation` as target and `qi.QuantizationMethod.SYMMETRIC` as method.
 Assume that the quantizer is designated for a general task, and that we have an Enum `TaskType` to define that type of quantizers that are implemented for this task.
+We define the quantizer for QAT, so it need to inherit from `BaseKerasQATTrainableQuantizer`.
 ```python
 import tensorflow as tf
 NEW_PARAM = "new_param_name"
@@ -71,7 +73,7 @@ from model_compression_toolkit import quantizers_infrastructure as qi
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.SYMMETRIC],
                 quantizer_type=TaskType.MyQuantizerType)
-class MyActivationsTrainingQuantizer(BaseKerasTrainableQuantizer):
+class MyActivationsTrainingQuantizer(BaseKerasQATTrainableQuantizer):
     def __init__(self, quantization_config: NodeActivationQuantizationConfig):
         super(MyActivationsTrainingQuantizer, self).__init__(quantization_config)
         # Define your new params here:
