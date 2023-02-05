@@ -112,26 +112,30 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         # we need to wrap it using qi.KerasQuantizationWrapper with a new
         # relevant quantization dispatcher based on current dispatcher information
         # Create new kernel quantizer
-        pw_kernel_quantizer_cfg = wrapped_layer._dispatcher.weight_quantizers[KERNEL].get_config()
+        pw_kernel_quantizer_cfg = wrapped_layer.weights_quantizers[KERNEL].get_config()
 
         # In Conv2D channel axis is 3 and not 1 as in Dense
         pw_kernel_quantizer_cfg[keras_inferable_constants.CHANNEL_AXIS] = CONV_KERNEL_CHANNEL_AXIS
 
+        pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD] = pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD].reshape(1,1,1,pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD].shape[1])
+
         # Unquantized weight to conv layer has 4 dimensions (unlike dense which varies)
-        pw_kernel_quantizer_cfg[keras_inferable_constants.INPUT_NUM_DIMS] = CONV_INPUT_CHANNELS_DIM
+        # pw_kernel_quantizer_cfg[keras_inferable_constants.INPUT_NUM_DIMS] = CONV_INPUT_CHANNELS_DIM
 
         # Now that we have the point-wise quantizer we can instantiate it
-        quantizer_class = type(wrapped_layer._dispatcher.weight_quantizers[KERNEL])
+        quantizer_class = type(wrapped_layer.weights_quantizers[KERNEL])
         pw_quantizer = quantizer_class(**pw_kernel_quantizer_cfg)
-        pw_weights_quantizer = copy.deepcopy(wrapped_layer._dispatcher.weight_quantizers)
-        pw_weights_quantizer[KERNEL] = pw_quantizer
+        pw_weights_quantizers = copy.deepcopy(wrapped_layer.weights_quantizers)
+        pw_weights_quantizers[KERNEL] = pw_quantizer
 
         # Set new quantizer in pw dispatcher
-        pw_dispatcher = copy.deepcopy(wrapped_layer._dispatcher)
-        pw_dispatcher.set_weight_quantizers(pw_weights_quantizer)
+        # pw_dispatcher = copy.deepcopy(wrapped_layer._dispatcher)
+        # pw_dispatcher.set_weight_quantizers(pw_weights_quantizer)
 
         # Wrap pw with dispatcher that was built from the Dense dispatcher
-        wrapped_pw = qi.KerasQuantizationWrapper(pw_layer, pw_dispatcher)
+        wrapped_pw = qi.KerasQuantizationWrapper(pw_layer,
+                                                 pw_weights_quantizers,
+                                                 wrapped_layer.activation_quantizers)
 
         # Compute the shape that the input to the new layer should be reshaped into
         # Example: Dense kernel with the following shape (3, 20) expects to have input with the

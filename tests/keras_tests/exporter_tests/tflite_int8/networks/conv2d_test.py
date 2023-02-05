@@ -53,7 +53,7 @@ class TestConv2DSymmetricTFLiteINT8Exporter(TFLiteINT8ExporterBaseTest):
 
         # Reshape Conv kernel to be at the same dimensions as in TF.
         kernel = self.interpreter.tensor(kernel_tensor_index)().transpose(1, 2, 3, 0)
-        fake_quantized_kernel_from_exportable_model = self.exportable_model.layers[2]._dispatcher.weight_quantizers[
+        fake_quantized_kernel_from_exportable_model = self.exportable_model.layers[2].weights_quantizers[
             'kernel'](self.exportable_model.layers[2].layer.kernel)
         fake_quantized_kernel_from_int8_model = kernel * kernel_quantization_parameters["scales"].reshape(1, 1, 1, 6)
         max_abs_error = np.max(np.abs(fake_quantized_kernel_from_exportable_model-fake_quantized_kernel_from_int8_model))
