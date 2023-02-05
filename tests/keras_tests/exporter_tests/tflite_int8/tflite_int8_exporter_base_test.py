@@ -114,16 +114,30 @@ class TFLiteINT8ExporterBaseTest:
 
         # Test inference and similarity to fully quantized model
         images = next(self.__get_repr_dataset())[0]
-        pred_diff = self.exportable_model(images) - self.__infer_via_interpreter(images)
-        assert np.sum(pred_diff != 0) / np.prod(
-            pred_diff.shape) < 0.01, f'Parentage of different elements: ' \
-                                     f'{np.sum(pred_diff != 0) / np.prod(pred_diff.shape)}'
+        exportable_predictions = self.exportable_model(images)
+        tflite_predictions = self.__infer_via_interpreter(images)
+
+        # In order similarity between predictions we search for the last activation quantization delta.
+        # We do this in order to assert that the outputs are similar up to the last scale which can
+        # be caused due to rounding errors between the float and int8 models: https://github.com/tensorflow/tensorflow/issues/38845
+        # The search assumes the delta of the last quantization node is in the last quantization
+        # tensor details and it has a single scale
+        scales = []
+        for t in reversed(self.interpreter.get_tensor_details()):
+            if len(t['quantization_parameters']['scales']) > 0:
+                scales = t['quantization_parameters']['scales']
+                break
+        assert len(scales)==1, f'Expected to find a single scale in the tensor details but scales are: {scales}'
+
+        # Tolerance is an LSB due to rounding differences
+        are_predictions_close = np.isclose(exportable_predictions, tflite_predictions, atol=scales[0])
+        assert np.all(are_predictions_close), f'Outputs expected to be similar up to an LSB, but LSB is {scales[0]} and max error is {np.max(np.abs(exportable_predictions-tflite_predictions))}'
 
         # Compare int8 model size to original float model
         float_model_size = os.path.getsize(self.float_model_file_path)
         int8_model_size = os.path.getsize(self.int8_model_file_path)
         assert float_model_size >= int8_model_size, f'INT8 model should be smaller than float model but INT8 model ' \
-                                                    f'size is {int8_model_size} and float model size is {float_model_size}'
+                                                    f'size is {int8_model_size} bytes and float model size is {float_model_size} bytes'
         print(f'Compression ratio: {float_model_size / int8_model_size}')
 
     # Helper method to create a keras model with a single layer

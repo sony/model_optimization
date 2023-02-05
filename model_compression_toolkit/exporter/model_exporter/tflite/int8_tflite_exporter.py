@@ -25,6 +25,7 @@ from keras.models import clone_model
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import FakelyQuantKerasExporter
+from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers import constants as keras_inferable_constants
 
 BIAS_INITIALIZER = 'bias_initializer'
 BIAS_REGULARIZER = 'bias_regularizer'
@@ -43,14 +44,17 @@ USE_BIAS = 'use_bias'
 FILTERS = 'filters'
 UNITS = 'units'
 PAD_VALID = 'valid'
+KERNEL = 'kernel'
 
+CONV_KERNEL_CHANNEL_AXIS = 3
+CONV_INPUT_CHANNELS_DIM = 4
 
 class INT8TFLiteExporter(FakelyQuantKerasExporter):
     """
     Exporter for INT8 TFLite models.
     The exporter expects to receive an exportable model (where each layer's full quantization parameters
     can be retrieved), and convert it into a quantized model where weights and activations are represented
-    at integer data type.
+    as integer data type.
     """
 
     def __init__(self,
@@ -70,12 +74,84 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
 
         self.exported_model = None
 
+    def _get_pointwise_layer_to_replace_dense(self, wrapped_layer: qi.KerasQuantizationWrapper) -> keras.layers.Layer:
+        # First we create a pointwise configuration based on the Dense layer's configuration
+        dense_cfg = wrapped_layer.layer.get_config()
+
+        # List of pw attributes that should be taken from the dense layer as they are.
+        pw_attr_list = [LAYER_NAME, ACTIVATION, USE_BIAS, BIAS_CONSTRAINT,
+                        BIAS_INITIALIZER, BIAS_REGULARIZER, TRAINABLE, ACTIVITY_REGULARIZER,
+                        KERNEL_INITIALIZER, KERNEL_REGULARIZER, KERNEL_CONSTRAINT]
+
+        pw_cfg = {attr: dense_cfg[attr] for attr in pw_attr_list}
+
+        # Use more attributes that are not taken as they are
+        pw_cfg.update({KERNEL_SIZE: (1, 1),
+                       STRIDES: (1, 1),
+                       PADDING: PAD_VALID,
+                       FILTERS: dense_cfg[UNITS]})
+
+        # Create the point-wise layer
+        pw_layer = Conv2D(**pw_cfg)
+        pw_layer.build(wrapped_layer.layer.input_shape)
+
+        # Create and set the point-wise weights to assign
+        dense_kernel = wrapped_layer.layer.kernel
+        pw_weights = []
+        pw_kernel = np.reshape(wrapped_layer.get_weights()[0],
+                               (1, 1, dense_kernel.get_shape()[0], dense_cfg[UNITS]))
+
+        pw_weights.append(pw_kernel)
+        if wrapped_layer.layer.use_bias:
+            pw_bias = wrapped_layer.get_weights()[2]
+            pw_weights.append(pw_bias)
+
+        pw_layer.set_weights(pw_weights)
+
+        # Now that we have the point-wise to replace the dense layer,
+        # we need to wrap it using qi.KerasQuantizationWrapper with a new
+        # relevant quantization dispatcher based on current dispatcher information
+        # Create new kernel quantizer
+        pw_kernel_quantizer_cfg = wrapped_layer._dispatcher.weight_quantizers[KERNEL].get_config()
+
+        # In Conv2D channel axis is 3 and not 1 as in Dense
+        pw_kernel_quantizer_cfg[keras_inferable_constants.CHANNEL_AXIS] = CONV_KERNEL_CHANNEL_AXIS
+
+        # Unquantized weight to conv layer has 4 dimensions (unlike dense which varies)
+        pw_kernel_quantizer_cfg[keras_inferable_constants.INPUT_NUM_DIMS] = CONV_INPUT_CHANNELS_DIM
+
+        # Now that we have the point-wise quantizer we can instantiate it
+        quantizer_class = type(wrapped_layer._dispatcher.weight_quantizers[KERNEL])
+        pw_quantizer = quantizer_class(**pw_kernel_quantizer_cfg)
+        pw_weights_quantizer = copy.deepcopy(wrapped_layer._dispatcher.weight_quantizers)
+        pw_weights_quantizer[KERNEL] = pw_quantizer
+
+        # Set new quantizer in pw dispatcher
+        pw_dispatcher = copy.deepcopy(wrapped_layer._dispatcher)
+        pw_dispatcher.set_weight_quantizers(pw_weights_quantizer)
+
+        # Wrap pw with dispatcher that was built from the Dense dispatcher
+        wrapped_pw = qi.KerasQuantizationWrapper(pw_layer, pw_dispatcher)
+
+        # Compute the shape that the input to the new layer should be reshaped into
+        # Example: Dense kernel with the following shape (3, 20) expects to have input with the
+        # next dimensions (BATCH_SIZE, x0, x1, ..., xn, 20).
+        # Conv layer expects 4-rank input. Thus, the input is reshaped to (BATCH_SIZE, 1, x0*x1*...*xn, 20)
+        dim = wrapped_layer.layer.input_shape[1:-1]
+        target_shape = (1, int(np.prod(dim))) + (dense_kernel.get_shape()[0],)
+
+        return Sequential([
+            Reshape(target_shape=target_shape),
+            wrapped_pw,
+            Reshape(wrapped_layer.layer.output_shape[1:])
+        ])
+
     def export(self) -> None:
         """
         Export a fully quantized model to its int8 tflite model.
         """
 
-        def _substitute_model(wrapped_layer):
+        def _substitute_model(wrapped_layer: qi.KerasQuantizationWrapper) -> keras.layers.Layer:
             assert self.is_layer_exportable_fn(
                 wrapped_layer), f'Layer {wrapped_layer.get_config()} did not pass validation'
 
@@ -83,71 +159,7 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
             # unsupported in TFLITE int models) we substitute each dense layer to its equivalent
             # point-wise convolution.
             if isinstance(wrapped_layer.layer, Dense):
-                # First we create a pointwise configuration based on the Dense layer's configuration
-                dense_cfg = wrapped_layer.layer.get_config()
-
-                # List of pw attributes that should take from the dense layer as they are.
-                pw_attr_list = [LAYER_NAME, ACTIVATION, USE_BIAS, BIAS_CONSTRAINT,
-                                BIAS_INITIALIZER, BIAS_REGULARIZER, TRAINABLE, ACTIVITY_REGULARIZER,
-                                KERNEL_INITIALIZER, KERNEL_REGULARIZER, KERNEL_CONSTRAINT]
-                pw_cfg = {attr: dense_cfg[attr] for attr in pw_attr_list}
-
-                # Use more attributes that are not taken as are
-                pw_cfg.update({KERNEL_SIZE: (1, 1),
-                               STRIDES: (1, 1),
-                               PADDING: PAD_VALID,
-                               FILTERS: dense_cfg[UNITS]})
-
-                # Create the point-wise layer
-                pw_layer = Conv2D(**pw_cfg)
-                pw_layer.build(wrapped_layer.layer.input_shape)
-
-                # Create and set the point-wise weights to assign
-                dense_kernel = wrapped_layer.layer.kernel
-                pw_weights = []
-                pw_kernel = np.reshape(wrapped_layer.get_weights()[0],
-                                       (1, 1, dense_kernel.get_shape()[0], dense_cfg[UNITS]))
-                pw_weights.append(pw_kernel)
-                if wrapped_layer.layer.use_bias:
-                    pw_bias = wrapped_layer.get_weights()[2]
-                    pw_weights.append(pw_bias)
-                pw_layer.set_weights(pw_weights)
-
-                # Now that we have the point-wise to replace the dense layer,
-                # we need to wrap it using qi.KerasQuantizationWrapper with a new
-                # relevant quantization dispatcher based on current dispatcher information
-
-                # Create new kernel quantizer
-                pw_kernel_quantizer_cfg = wrapped_layer._dispatcher.weight_quantizers['kernel'].get_config()
-                # In Conv2D channel axis is 3 and not 1 as in Dense
-                pw_kernel_quantizer_cfg['channel_axis'] = 3
-                # Unquantized weight to conv layer has 4 dimensions (unlike dense which varies)
-                pw_kernel_quantizer_cfg['input_num_dims'] = 4
-
-                # Now that we have the point-wise quantizer we can instantiate it
-                quantizer_class = type(wrapped_layer._dispatcher.weight_quantizers['kernel'])
-                pw_quantizer = quantizer_class(**pw_kernel_quantizer_cfg)
-                pw_weights_quantizer = copy.deepcopy(wrapped_layer._dispatcher.weight_quantizers)
-                pw_weights_quantizer['kernel'] = pw_quantizer
-
-                # Set new quantizer in pw dispatcher
-                pw_dispatcher = copy.deepcopy(wrapped_layer._dispatcher)
-                pw_dispatcher.set_weight_quantizers(pw_weights_quantizer)
-
-                # Wrap pw with dispatcher that was built from the Dense dispatcher
-                wrapped_pw = qi.KerasQuantizationWrapper(pw_layer, pw_dispatcher)
-
-                # Compute the shape that the input to the new layer should be reshaped into y
-                # Example: Dense kernel with the shape (3, 20) expects to have input with the
-                # next dimensions (BATCH_SIZE, x0, x1, ..., xn, 20).
-                # Conv layer expects 4-rank input. Thus, the input is reshaped to (BATCH_SIZE, 1, x0*x1*...*xn, 20)
-                dim = wrapped_layer.layer.input_shape[1:][:-1]
-                target_shape = (1, int(np.prod(dim))) + (dense_kernel.get_shape()[0],)
-                return Sequential([
-                    Reshape(target_shape=target_shape),
-                    wrapped_pw,
-                    Reshape(wrapped_layer.layer.output_shape[1:])
-                ])
+                return self._get_pointwise_layer_to_replace_dense(wrapped_layer)
 
             return wrapped_layer
 

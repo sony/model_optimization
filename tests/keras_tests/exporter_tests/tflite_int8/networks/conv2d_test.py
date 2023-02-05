@@ -24,14 +24,16 @@ layers = keras.layers
 
 class TestConv2DSymmetricTFLiteINT8Exporter(TFLiteINT8ExporterBaseTest):
     def __init__(self):
+        super(TestConv2DSymmetricTFLiteINT8Exporter, self).__init__()
         self.weights_diff_tolerance=1e-7
+
+    def get_model(self):
+        return self.get_one_layer_model(layers.Conv2D(6, 5))
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_quantization_method': QuantizationMethod.SYMMETRIC})
         return generate_keras_tpc(name='sym_conv2d_exporter', tp_model=tp)
 
-    def get_model(self):
-        return self.get_one_layer_model(layers.Conv2D(6, 5))
 
     def run_checks(self):
         # Fetch quantized weights from int8 model tensors
@@ -68,9 +70,6 @@ class TestConv2DPOTTFLiteINT8Exporter(TestConv2DSymmetricTFLiteINT8Exporter):
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_quantization_method': QuantizationMethod.POWER_OF_TWO})
         return generate_keras_tpc(name='sym_conv2d_exporter', tp_model=tp)
-
-    def get_model(self):
-        return self.get_one_layer_model(layers.Conv2D(6,5))
 
     def run_checks(self):
         super(TestConv2DPOTTFLiteINT8Exporter, self).run_checks()

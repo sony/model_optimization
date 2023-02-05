@@ -74,7 +74,8 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
                     'per_channel': node_w_qc.weights_per_channel_threshold,
                     'min_range': node_w_qc.weights_quantization_params.get(RANGE_MIN),
                     'max_range': node_w_qc.weights_quantization_params.get(RANGE_MAX),
-                    'input_num_dims': node_w_qc.weights_quantization_params.get(THRESHOLD).ndim}
+                    'channel_axis': node_w_qc.weights_channels_axis,
+                    'input_num_dims': node_w_qc.weights_quantization_params.get(RANGE_MIN).ndim}
         else:
             Logger.critical(f'Not supported quantization method for inferable quantizers.')  # pragma: no cover
 
