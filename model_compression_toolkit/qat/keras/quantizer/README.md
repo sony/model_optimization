@@ -15,8 +15,7 @@ Currently, only the STE (straight through estimator) training method is implemen
 Follow these steps in order to set the quantizers required by your training method:
 - Add your `TrainingMethod` enum in [`qat_config`](../../common/qat_config.py).
 - Add your quantizers for weights and activation as explained in [quantizer readme](../../../quantizers_infrastructure/keras).
-- Add your `TrainingMethod` and quantizers to `METHOD2WEIGHTQUANTIZER` and `METHOD2ACTQUANTIZER` in [`quantization_dispatcher_builder.py`](../quantizer/quantization_dispatcher_builder.py)
-according to your desired `QuantizationMethod`.  
+- Import your quantizer package in the quantizer [`__init.py__`](./__init__.py) file.
 - Set your `TrainingMethod` in the `QATConfig` and generate the QAT ready model for training. 
 
    
@@ -37,18 +36,11 @@ class TrainingMethod(Enum):
     MTM = 1
 ```
 
-Then we implement a weight quantizer class that implements the desired training scheme: MTMWeightQuantizer
-
-And update the quantizer selection dictionary `METHOD2WEIGHTQUANTIZER` in [`quantization_dispatcher_builder.py`](../quantizer/quantization_dispatcher_builder.py)
+Then we implement a weight quantizer class that implements the desired training scheme: MTMWeightQuantizer,
+under a new package in `qat/keras/quantizer/mtm_quantizer/mtm.py`, and import it in the quantizer `__init__.py` file.
 
 ```python
-from my_quantizers import MTMWeightQuantizer
-
-METHOD2WEIGHTQUANTIZER = {TrainingMethod.STE: {qi.QuantizationMethod.SYMMETRIC: STEWeightQuantizer,
-                                               qi.QuantizationMethod.POWER_OF_TWO: STEWeightQuantizer,
-                                               qi.QuantizationMethod.UNIFORM: STEUniformWeightQuantizer},
-                          TrainingMethod.MTM: {qi.QuantizationMethod.POWER_OF_TWO: MTMWeightQuantizer}
-                          }
+import model_compression_toolkit.qat.keras.quantizer.mtm_quantizer.mtm
 ```
 
 Finally, we're ready to generate the model for quantization aware training
