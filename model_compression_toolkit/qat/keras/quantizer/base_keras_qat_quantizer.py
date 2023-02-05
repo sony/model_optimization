@@ -40,7 +40,7 @@ if FOUND_TF:
             super().__init__(quantization_config)
 
 else:
-    class BaseKerasQATTrainableQuantizer(BaseTrainableQuantizer):
+    class BaseKerasQATTrainableQuantizer(BaseKerasTrainableQuantizer):
         def __init__(self,
                      quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
 
