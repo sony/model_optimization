@@ -21,7 +21,7 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapp
 
 from model_compression_toolkit import quantizers_infrastructure as qi, QuantizationConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+from model_compression_toolkit.quantizers_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 
