@@ -46,17 +46,19 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
         if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                    QuantizationMethod.SYMMETRIC]:
             return {'num_bits': node_w_qc.weights_n_bits,
-                    'threshold': node_w_qc.weights_quantization_params.get(THRESHOLD),
+                    'threshold': node_w_qc.weights_quantization_params.get(THRESHOLD).flatten(),
                     'signed': True,
                     'per_channel': node_w_qc.weights_per_channel_threshold,
-                    'channel_axis': node_w_qc.weights_channels_axis}
+                    'channel_axis': node_w_qc.weights_channels_axis,
+                    'input_rank': node_w_qc.weights_quantization_params.get(THRESHOLD).ndim}
 
         elif quantization_method in [QuantizationMethod.UNIFORM]:
             return {'num_bits': node_w_qc.weights_n_bits,
                     'per_channel': node_w_qc.weights_per_channel_threshold,
-                    'min_range': node_w_qc.weights_quantization_params.get(RANGE_MIN),
-                    'max_range': node_w_qc.weights_quantization_params.get(RANGE_MAX),
-                    'channel_axis': node_w_qc.weights_channels_axis}
+                    'min_range': node_w_qc.weights_quantization_params.get(RANGE_MIN).flatten(),
+                    'max_range': node_w_qc.weights_quantization_params.get(RANGE_MAX).flatten(),
+                    'channel_axis': node_w_qc.weights_channels_axis,
+                    'input_rank': node_w_qc.weights_quantization_params.get(THRESHOLD).ndim}
         else:
             Logger.critical(f'Not supported quantization method for inferable quantizers.')  # pragma: no cover
 

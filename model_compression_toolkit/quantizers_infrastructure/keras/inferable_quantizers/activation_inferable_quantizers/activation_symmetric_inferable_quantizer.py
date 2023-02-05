@@ -22,16 +22,14 @@ from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_q
 
 if FOUND_TF:
     import tensorflow as tf
-
-    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers \
-        .base_symmetric_inferable_quantizer import \
-        BaseSymmetricInferableQuantizer
-
+    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.activation_inferable_quantizers.activation_uniform_inferable_quantizer import \
+        ActivationUniformInferableQuantizer
 
     @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                     quantization_method=[QuantizationMethod.SYMMETRIC],
                     quantizer_type=None)
-    class ActivationSymmetricInferableQuantizer(BaseSymmetricInferableQuantizer):
+    class ActivationSymmetricInferableQuantizer(ActivationUniformInferableQuantizer):
+
         """
         Class for quantizing activations using a symmetric quantizer
         """
@@ -50,9 +48,16 @@ if FOUND_TF:
             """
             # Call the superclass constructor with the given parameters, along with the target of Activation
             # quantization
+            self.signed = signed
+
+            delta = threshold / (2 ** (num_bits - int(signed)))
+            min_range = -threshold if signed else 0
+            max_range = threshold - delta
+
             super(ActivationSymmetricInferableQuantizer, self).__init__(num_bits=num_bits,
-                                                                        threshold=threshold,
-                                                                        signed=signed)
+                                                                        min_range=min_range,
+                                                                        max_range=max_range)
+
 
         def get_config(self):
             """

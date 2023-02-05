@@ -29,6 +29,7 @@ Each of them should be used according to the quantization method of the quantize
 
 ```python
 # Import TensorFlow and quantizers_infrastructure
+import numpy as np
 import tensorflow as tf
 
 from model_compression_toolkit import quantizers_infrastructure as qi
@@ -42,10 +43,11 @@ from model_compression_toolkit import quantizers_infrastructure as qi
 # * Uses three thresholds (since it has 3 output channels and the quantization is per-channel): 1, 2 and 4.
 # * Quantizes the tensor using signed quantization range.
 quantizer = qi.keras_inferable_quantizers.WeightsSymmetricInferableQuantizer(num_bits=8,
-                                                                             threshold=[2, 4, 1],
+                                                                             threshold=np.asarray([2, 4, 1]),
                                                                              per_channel=True,
                                                                              channel_axis=-1,
-                                                                             signed=True)
+                                                                             signed=True,
+                                                                             input_rank=4)
 
 # Initialize a random input qo quantize
 input_tensor = tf.random.uniform(shape=(1, 3, 3, 3), minval=-100, maxval=100)

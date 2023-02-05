@@ -21,14 +21,14 @@ from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_q
     QuantizationTarget
 
 if FOUND_TF:
-    import tensorflow as tf
-    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_pot_inferable_quantizer import BasePOTInferableQuantizer
+    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.weights_inferable_quantizers.weights_symmetric_inferable_quantizer import \
+        WeightsSymmetricInferableQuantizer
 
 
     @mark_quantizer(quantization_target=QuantizationTarget.Weights,
                     quantization_method=[QuantizationMethod.POWER_OF_TWO],
                     quantizer_type=None)
-    class WeightsPOTInferableQuantizer(BasePOTInferableQuantizer):
+    class WeightsPOTInferableQuantizer(WeightsSymmetricInferableQuantizer):
         """
         Class for quantizing weights using power-of-two quantizer
         """
@@ -36,17 +36,15 @@ if FOUND_TF:
         def __init__(self,
                      num_bits: int,
                      threshold: np.ndarray,
-                     signed: bool,
                      per_channel: bool,
-                     channel_axis: int,
-                     input_rank: int):
+                     channel_axis: int = None,
+                     input_rank: int = None):
             """
             Initialize the quantizer with the specified parameters.
 
             Args:
                 num_bits: number of bits to use for quantization
                 threshold: threshold for quantizing activations
-                signed: whether or not to use signed quantization
                 per_channel: whether to use per-channel quantization
                 channel_axis: axis along which to apply per-channel quantization
                 input_rank: number of dimensions of input tensor the quantizer quantizes
@@ -54,74 +52,13 @@ if FOUND_TF:
             # Call the superclass constructor with the given parameters, along with the target of Weights quantization
             super(WeightsPOTInferableQuantizer, self).__init__(num_bits=num_bits,
                                                                threshold=threshold,
-                                                               signed=signed)
+                                                               per_channel=per_channel,
+                                                               channel_axis=channel_axis,
+                                                               input_rank=input_rank)
 
-            self.per_channel = per_channel
-            self.channel_axis = channel_axis
-            self.input_rank = input_rank
+            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in self.threshold.flatten()])
+            assert is_threshold_pot, f'Expected threshold to be power of 2 but is {self.threshold}'
 
-            # Tensorflow's fake_quant_with_min_max_vars_per_channel only works on last axis, so
-            # need to move the quantization axis to the last axis
-            if per_channel and channel_axis not in [-1, self.input_rank - 1]:
-                # If per-channel quantization is being used and the channel axis is not the last axis,
-                # create a permutation vector to move the channel axis to the last position
-                self.perm_vec = list(np.arange(self.input_rank))
-                self.perm_vec[channel_axis] = self.input_rank - 1
-                self.perm_vec[self.input_rank - 1] = channel_axis
-            else:
-                # If per-channel quantization is not being used or the channel axis is already the last axis,
-                # set the permutation vector to None
-                self.perm_vec = None
-
-        def __call__(self, inputs: tf.Tensor):
-            """
-            Quantize the given inputs using the quantizer parameters.
-
-            Args:
-                inputs: input tensor to quantize
-
-            Returns:
-                quantized tensor.
-            """
-
-            # If per-channel quantization is being used
-            if self.per_channel:
-                # If a permutation vector has been created to move the channel axis to the last position
-                if self.perm_vec:
-                    # Transpose the input tensor to move the channel axis to the last position
-                    inputs = tf.transpose(inputs, perm=self.perm_vec)
-
-                # Quantize the input tensor using per-channel quantization
-                q_tensor = tf.quantization.fake_quant_with_min_max_vars_per_channel(inputs,
-                                                                                    min=self.min_range.flatten(),
-                                                                                    max=self.max_range.flatten(),
-                                                                                    num_bits=self.num_bits)
-                if self.perm_vec:
-                    # Transpose the quantized tensor back to its original shape
-                    q_tensor = tf.transpose(q_tensor, perm=self.perm_vec)
-
-                # Return the quantized tensor
-                return q_tensor
-            else:
-                # If per-channel quantization is not being used, quantize the input tensor using regular quantization
-                return tf.quantization.fake_quant_with_min_max_vars(inputs,
-                                                                    min=self.min_range,
-                                                                    max=self.max_range,
-                                                                    num_bits=self.num_bits)
-
-        def get_config(self):
-            """
-            Return a dictionary with the configuration of the quantizer.
-
-            Returns:
-                Dictionary with the following keys: 'num_bits', 'signed', 'threshold', 'per_channel', 'channel_axis', 'input_rank'
-            """
-            return {'num_bits': self.num_bits,
-                    'signed': self.signed,
-                    'threshold': self.threshold,
-                    'per_channel': self.per_channel,
-                    'channel_axis': self.channel_axis,
-                    'input_rank': self.input_rank}
 
 else:
     class WeightsPOTInferableQuantizer:

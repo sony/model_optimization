@@ -117,20 +117,14 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         # In Conv2D channel axis is 3 and not 1 as in Dense
         pw_kernel_quantizer_cfg[keras_inferable_constants.CHANNEL_AXIS] = CONV_KERNEL_CHANNEL_AXIS
 
-        pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD] = pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD].reshape(1,1,1,pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD].shape[1])
-
         # Unquantized weight to conv layer has 4 dimensions (unlike dense which varies)
-        # pw_kernel_quantizer_cfg[keras_inferable_constants.INPUT_NUM_DIMS] = CONV_INPUT_CHANNELS_DIM
+        pw_kernel_quantizer_cfg[keras_inferable_constants.INPUT_RANK] = CONV_INPUT_CHANNELS_DIM
 
         # Now that we have the point-wise quantizer we can instantiate it
         quantizer_class = type(wrapped_layer.weights_quantizers[KERNEL])
         pw_quantizer = quantizer_class(**pw_kernel_quantizer_cfg)
         pw_weights_quantizers = copy.deepcopy(wrapped_layer.weights_quantizers)
         pw_weights_quantizers[KERNEL] = pw_quantizer
-
-        # Set new quantizer in pw dispatcher
-        # pw_dispatcher = copy.deepcopy(wrapped_layer._dispatcher)
-        # pw_dispatcher.set_weight_quantizers(pw_weights_quantizer)
 
         # Wrap pw with dispatcher that was built from the Dense dispatcher
         wrapped_pw = qi.KerasQuantizationWrapper(pw_layer,

@@ -39,8 +39,8 @@ if FOUND_TF:
                      min_range: np.ndarray,
                      max_range: np.ndarray,
                      per_channel: bool,
-                     channel_axis: int,
-                     input_rank: int
+                     channel_axis: int = None,
+                     input_rank: int = None
                      ):
             """
             Initialize the quantizer with the specified parameters.
@@ -56,6 +56,18 @@ if FOUND_TF:
             super(WeightsUniformInferableQuantizer, self).__init__(num_bits,
                                                                    min_range,
                                                                    max_range)
+
+            if per_channel:
+                assert input_rank is not None, f'Input rank is missing in per channel quantization'
+                assert channel_axis is not None, f'Channel axis is missing in per channel quantization'
+                assert len(
+                    self.min_range) >= 1, f'In per-channel quantization min/max numpy arrays should be of length >= 1 but is ' \
+                                     f'{len(self.min_range)}'
+            else:
+                assert len(
+                    self.min_range) == 1, f'In per-tensor quantization min/max should be of length 1 but is {len(min_range)}'
+                assert len(self.min_range) == 1, f'In per-tensor quantization min_range should be of length 1 but is {len(self.min_range)}'
+                assert len(self.max_range) == 1, f'In per-tensor quantization max_range should be of length 1 but is {len(self.max_range)}'
 
             self.per_channel = per_channel
             self.channel_axis = channel_axis
@@ -74,7 +86,7 @@ if FOUND_TF:
                 # set the permutation vector to None
                 self.perm_vec = None
 
-        def __call__(self, inputs: tf.Tensor):
+        def __call__(self, inputs: tf.Tensor) -> tf.Tensor:
             """
             Quantize the given inputs using the quantizer parameters.
 
@@ -84,6 +96,9 @@ if FOUND_TF:
             Returns:
                 quantized tensor.
             """
+            assert isinstance(inputs, tf.Tensor), f'Input was expected to be a tf.Tensor but is of type {type(inputs)}'
+            assert inputs.dtype==tf.float32, f'Input tensor was expected to be a float tensor but is of type {inputs.dtype}'
+
             # If per-channel quantization is being used
             if self.per_channel:
                 # If a permutation vector has been created to move the channel axis to the last position
@@ -93,8 +108,8 @@ if FOUND_TF:
 
                 # Quantize the input tensor using per-channel quantization
                 q_tensor = tf.quantization.fake_quant_with_min_max_vars_per_channel(inputs,
-                                                                                    min=self.min_range.flatten(),
-                                                                                    max=self.max_range.flatten(),
+                                                                                    min=self.min_range,
+                                                                                    max=self.max_range,
                                                                                     num_bits=self.num_bits)
                 if self.perm_vec:
                     # Transpose the quantized tensor back to its original shape
@@ -105,24 +120,24 @@ if FOUND_TF:
             else:
                 # If per-channel quantization is not being used, quantize the input tensor using regular quantization
                 return tf.quantization.fake_quant_with_min_max_vars(inputs,
-                                                                    min=self.min_range,
-                                                                    max=self.max_range,
+                                                                    min=self.min_range[0],
+                                                                    max=self.max_range[0],
                                                                     num_bits=self.num_bits)
 
 
-    def get_config(self):
-        """
-        Return a dictionary with the configuration of the quantizer.
+        def get_config(self):
+            """
+            Return a dictionary with the configuration of the quantizer.
 
-        Returns:
-            Dictionary with the following keys: 'num_bits', 'min_range', 'max_range', 'per_channel', 'channel_axis'
-        """
-        return {'per_channel': self.per_channel,
-                'num_bits': self.num_bits,
-                'max_range': self.max_range,
-                'min_range': self.min_range,
-                'channel_axis': self.channel_axis,
-                'input_rank': self.input_rank}
+            Returns:
+                Dictionary with the following keys: 'num_bits', 'min_range', 'max_range', 'per_channel', 'channel_axis'
+            """
+            return {'per_channel': self.per_channel,
+                    'num_bits': self.num_bits,
+                    'max_range': self.max_range,
+                    'min_range': self.min_range,
+                    'channel_axis': self.channel_axis,
+                    'input_rank': self.input_rank}
 
 
 else:

@@ -18,44 +18,64 @@ import numpy as np
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
+
+
+from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.quantizers_infrastructure.common.quant_utils import adjust_range_to_include_zero
-
-from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
-    import \
-    BaseKerasInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 
 
-@mark_quantizer(quantization_target=None,
-                quantization_method=[QuantizationMethod.UNIFORM],
-                quantizer_type=None)
-class BaseUniformInferableQuantizer(BaseKerasInferableQuantizer):
+if FOUND_TF:
+    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
+        import \
+        BaseKerasInferableQuantizer
 
-    def __init__(self,
-                 num_bits: int,
-                 min_range: np.ndarray,
-                 max_range: np.ndarray):
-        """
-        Initialize the quantizer with the specified parameters.
+    @mark_quantizer(quantization_target=None,
+                    quantization_method=[QuantizationMethod.UNIFORM],
+                    quantizer_type=None)
+    class BaseUniformInferableQuantizer(BaseKerasInferableQuantizer):
 
-        Args:
-            num_bits: number of bits to use for quantization
-            min_range: min quantization range
-            max_range: max quantization range
-        """
-        super(BaseUniformInferableQuantizer, self).__init__()
-        self.num_bits = num_bits
-        assert np.all(max_range > min_range), f'Expected max_range to be bigger than min_range!'
-        _min_range, _max_range = adjust_range_to_include_zero(min_range, max_range, num_bits)
-        assert np.all(_min_range <= 0) and np.all(_max_range >= 0), f'Expected zero to be in the range, got min_range={_min_range}, max_range={_max_range}'
-        if not np.isclose(np.linalg.norm(_min_range-min_range),0,atol=1e-6) or not np.isclose(np.linalg.norm(_max_range-max_range),0,atol=1e-6):
-            Logger.warning(f"Adjusting (min_range, max_range) from ({min_range},{max_range}) to ({_min_range},{_max_range})")  # pragma: no cover
+        def __init__(self,
+                     num_bits: int,
+                     min_range: np.ndarray,
+                     max_range: np.ndarray,
+                     ):
+            """
+            Initialize the quantizer with the specified parameters.
 
-        self.max_range = _max_range
-        self.min_range = _min_range
+            Args:
+                num_bits: number of bits to use for quantization
+                min_range: min quantization range
+                max_range: max quantization range
+            """
+            super(BaseUniformInferableQuantizer, self).__init__()
+            assert isinstance(min_range,
+                              np.ndarray), f'Expected min_range to be of type np.ndarray but is {type(min_range)}'
+            assert isinstance(max_range,
+                              np.ndarray), f'Expected max_range to be of type np.ndarray but is {type(max_range)}'
+            assert min_range.shape == max_range.shape, f'Expected min/max values to have the same shape but min shape: {min_range.shape} and max shape: {max_range.shape}'
 
-    @abstractmethod
-    def get_config(self):
-        """
-        Return a dictionary with the configuration of the quantizer.
-        """
-        raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')  # pragma: no cover
+            self.num_bits = num_bits
+
+            assert np.all(max_range > min_range), f'Expected max_range to be bigger than min_range!'
+            _min_range, _max_range = adjust_range_to_include_zero(min_range, max_range, num_bits)
+            assert np.all(_min_range <= 0) and np.all(_max_range >= 0), f'Expected zero to be in the range, got min_range={_min_range}, max_range={_max_range}'
+            if not np.isclose(np.linalg.norm(_min_range-min_range),0,atol=1e-6) or not np.isclose(np.linalg.norm(_max_range-max_range),0,atol=1e-6):
+                Logger.warning(f"Adjusting (min_range, max_range) from ({min_range},{max_range}) to ({_min_range},{_max_range})")  # pragma: no cover
+
+            self.max_range = _max_range
+            self.min_range = _min_range
+
+        @abstractmethod
+        def get_config(self):
+            """
+            Return a dictionary with the configuration of the quantizer.
+            """
+            raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')  # pragma: no cover
+
+else:
+    class BaseUniformInferableQuantizer:
+        def __init__(self, *args, **kwargs):
+            raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
+                            'when using BaseUniformInferableQuantizer. '
+                            'Could not find Tensorflow package.')
