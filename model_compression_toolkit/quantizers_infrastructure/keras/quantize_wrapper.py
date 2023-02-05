@@ -140,6 +140,7 @@ if FOUND_TF:
                 quantizer.initialize_quantization(weight.shape, _weight_name(weight.name) if is_training else None,
                                                   self)
                 self._weights_vars.append((name, weight, quantizer))
+                self._trainable_weights.append(weight) # Must when inherit from tf.keras.layers.Wrapper in tf2.10 and below
 
         def _set_activations_vars(self):
             """
