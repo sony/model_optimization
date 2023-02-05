@@ -19,6 +19,9 @@ import torch.nn as nn
 from torch import Tensor
 
 from model_compression_toolkit.core.pytorch.utils import get_working_device
+from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, BasePyTorchInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.common.get_all_subclasses import get_all_subclasses
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \
     generate_tp_model_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
@@ -109,15 +112,22 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
                      quantization_info=quantization_info)
 
     def compare(self, ptq_model, qat_ready_model, qat_finalized_model, input_x=None, quantization_info=None):
+        all_trainable_quantizers = get_all_subclasses(BasePytorchQATTrainableQuantizer)
         # check relevant layers are wrapped and correct quantizers were chosen
         for _, layer in qat_ready_model.named_children():
             self.unit_test.assertTrue(isinstance(layer, qi.PytorchQuantizationWrapper))
-            # if isinstance(layer.layer, nn.SiLU):
-                # q = METHOD2ACTQUANTIZER[mct.TrainingMethod.STE][self.activation_quantization_method]
-                # self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q))
-            # if isinstance(layer.layer, nn.Conv2d):
-                # q = METHOD2WEIGHTQUANTIZER[mct.TrainingMethod.STE][self.activation_quantization_method]
-                # self.unit_test.assertTrue(isinstance(layer.weights_quantizers['weight'], q))
+            if isinstance(layer.layer, nn.SiLU):
+                q = [_q for _q in all_trainable_quantizers if _q.quantizer_type == mct.TrainingMethod.STE
+                     and _q.quantization_target == QuantizationTarget.Activation
+                     and self.activation_quantization_method in _q.quantization_method]
+                self.unit_test.assertTrue(len(q) == 1)
+                self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q[0]))
+            if isinstance(layer.layer, nn.Conv2d):
+                q = [_q for _q in all_trainable_quantizers if _q.quantizer_type == mct.TrainingMethod.STE
+                     and _q.quantization_target == QuantizationTarget.Weights
+                     and self.weights_quantization_method in _q.quantization_method]
+                self.unit_test.assertTrue(len(q) == 1)
+                self.unit_test.assertTrue(isinstance(layer.weights_quantizers['weight'], q[0]))
 
         # check quantization didn't change when switching between PTQ model and QAT ready model
         _in = Tensor(input_x[0]).to(get_working_device())
@@ -125,14 +135,21 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         qat_ready_output = qat_ready_model(_in).cpu().detach().numpy()
         self.unit_test.assertTrue(np.isclose(np.linalg.norm(ptq_output - qat_ready_output) / np.linalg.norm(ptq_output), 0, atol=1e-6))
         if self.finalize:
+            all_inferable_quantizers = get_all_subclasses(BasePyTorchInferableQuantizer)
             for _, layer in qat_finalized_model.named_children():
                 self.unit_test.assertTrue(isinstance(layer, qi.PytorchQuantizationWrapper))
-                # if isinstance(layer.layer, nn.SiLU):
-                #     q = QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER[self.activation_quantization_method]
-                #     self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q))
-                # if isinstance(layer.layer, nn.Conv2d):
-                #     q = QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER[self.activation_quantization_method]
-                #     self.unit_test.assertTrue(isinstance(layer.weights_quantizers['weight'], q))
+                if isinstance(layer.layer, nn.SiLU):
+                    q = [_q for _q in all_inferable_quantizers if
+                         _q.quantization_target == QuantizationTarget.Activation
+                         and self.activation_quantization_method in _q.quantization_method]
+                    self.unit_test.assertTrue(len(q) == 1)
+                    self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q[0]))
+                if isinstance(layer.layer, nn.Conv2d):
+                    q = [_q for _q in all_inferable_quantizers if
+                         _q.quantization_target == QuantizationTarget.Weights
+                         and self.weights_quantization_method in _q.quantization_method]
+                    self.unit_test.assertTrue(len(q) == 1)
+                    self.unit_test.assertTrue(isinstance(layer.weights_quantizers['weight'], q[0]))
             # check quantization didn't change when switching between PTQ model and QAT ready model
             qat_finalized_output = qat_finalized_model(_in).cpu().detach().numpy()
             self.unit_test.assertTrue(np.isclose(np.linalg.norm(qat_finalized_output - qat_ready_output) / np.linalg.norm(qat_ready_output), 0, atol=1e-6))
