@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import List, Dict, Tuple
+
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -102,7 +104,8 @@ def _get_quantizer_class(quant_target: QuantizationTarget,
 def quantization_builder(n: common.BaseNode,
                          qat_config: QATConfig,
                          fw_info: FrameworkInfo,
-                         ) -> tuple:
+                         ) -> Tuple[Dict[str, BasePytorchQATTrainableQuantizer],
+                                    List[BasePytorchQATTrainableQuantizer]]:
     """
     Build quantizers for a node according to its quantization configuration and
     a global NoOpQuantizeConfig object.

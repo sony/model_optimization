@@ -140,7 +140,7 @@ def get_activations_quantizer_for_node(node: BaseNode) -> pytorch_inferable_quan
     node_act_qc = node.final_activation_quantization_cfg
     activation_quantization_method = node_act_qc.activation_quantization_method
 
-    quantier_for_node = _get_quantizer_class(QuantizationTarget.Weights, activation_quantization_method)
+    quantier_for_node = _get_quantizer_class(QuantizationTarget.Activation, activation_quantization_method)
     kwargs = get_activation_inferable_quantizer_kwargs(node)
 
     return quantier_for_node(**kwargs)

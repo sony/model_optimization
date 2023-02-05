@@ -44,11 +44,6 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
         node_w_qc = node.final_weights_quantization_cfg
         quantization_method = node_w_qc.weights_quantization_method
 
-        # Check if the quantization method is supported for inferable quantizers
-        assert quantization_method in QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER, f'{quantization_method} for weights ' \
-                                                                               f'not in supported quantization ' \
-                                                                               f'methods for inferable quantizers'
-
         # Return the appropriate quantization parameters based on the quantization method
         if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                    QuantizationMethod.SYMMETRIC]:
@@ -70,13 +65,6 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
         # Get the activation quantization configuration for the node
         node_qc = node.final_activation_quantization_cfg
         quantization_method = node_qc.activation_quantization_method
-
-        # Check if the quantization method is supported for inferable quantizers
-        assert quantization_method in QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER, f'{quantization_method} for weights ' \
-                                                                                  f'not in ' \
-                                                                                  f'supported quantization methods ' \
-                                                                                  f'for inferable' \
-                                                                                  f' quantizers'
 
         # Return the appropriate quantization parameters based on the quantization method
         if quantization_method in [QuantizationMethod.POWER_OF_TWO,

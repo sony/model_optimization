@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Tuple, Dict, List
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
@@ -103,7 +104,7 @@ def _get_quantizer_class(quant_target: QuantizationTarget,
 def quantization_builder(n: common.BaseNode,
                          qat_config: QATConfig,
                          fw_info: FrameworkInfo,
-                         ) -> tuple:
+                         ) -> Tuple[Dict[str, BaseKerasQATTrainableQuantizer], List[BaseKerasQATTrainableQuantizer]]:
     """
     Build quantizers for a node according to its quantization configuration and
     a global NoOpQuantizeConfig object.
