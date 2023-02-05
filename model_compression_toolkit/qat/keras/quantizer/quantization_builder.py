@@ -17,56 +17,15 @@ from typing import Tuple, Dict, List
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.qat.common.qat_get_quantizer_config import get_trainable_quantizer_weights_config, \
+    get_trainable_quantizer_activation_config, get_trainable_quantizer_quantization_candidates
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from model_compression_toolkit.qat.common.qat_config import QATConfig, TrainingMethod
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
-    TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 from model_compression_toolkit.quantizers_infrastructure.common.constants import QUANTIZATION_TARGET, \
     QUANTIZATION_METHOD, QUANTIZER_TYPE
 from model_compression_toolkit.quantizers_infrastructure.common.get_all_subclasses import get_all_subclasses
-
-
-# TODO: move the following "get...config" functions to be members of BaseNode
-def get_trainable_quantizer_weights_config(n: common.BaseNode) -> TrainableQuantizerWeightsConfig:
-    """
-    Returns the relevant configurations for weights trainable quantizer
-
-    Args:
-        n: BaseNode
-
-    Returns:
-         TrainableQuantizerWeightsConfig - an object that contains the quantizer configuration
-
-    """
-    config = n.final_weights_quantization_cfg
-    return TrainableQuantizerWeightsConfig(config.weights_quantization_method,
-                                           config.weights_n_bits,
-                                           config.weights_quantization_params,
-                                           config.enable_weights_quantization,
-                                           config.weights_channels_axis,
-                                           config.weights_per_channel_threshold,
-                                           config.min_threshold)
-
-
-def get_trainable_quantizer_activation_config(n: common.BaseNode) -> TrainableQuantizerActivationConfig:
-    """
-    Returns configurations for activation trainable quantizer
-
-    Args:
-        n: BaseNode
-
-    Returns:
-         TrainableQuantizerActivationConfig - an object that contains the quantizer configuration
-
-    """
-    config = n.final_activation_quantization_cfg
-    return TrainableQuantizerActivationConfig(config.activation_quantization_method,
-                                              config.activation_n_bits,
-                                              config.activation_quantization_params,
-                                              config.enable_activation_quantization,
-                                              config.min_threshold)
 
 
 def _get_quantizer_class(quant_target: QuantizationTarget,
@@ -118,6 +77,10 @@ def quantization_builder(n: common.BaseNode,
         weights_quantizers: A dictionary between a weight's name to its quantizer.
         activation_quantizers: A list of activations quantization, one for each layer output.
     """
+    if len(n.candidates_quantization_cfg) > 1:
+        wq_cand, aq_cand = get_trainable_quantizer_quantization_candidates(n)
+    else:
+        wq_cand, aq_cand = None, None
 
     weight_quantizers = {}
     if n.is_weights_quantization_enabled():
@@ -128,7 +91,7 @@ def quantization_builder(n: common.BaseNode,
                                                quant_method)
         attributes = fw_info.get_kernel_op_attributes(n.type)
         for attr in attributes:
-            weight_quantizers.update({attr: quantizer_class(get_trainable_quantizer_weights_config(n),
+            weight_quantizers.update({attr: quantizer_class(get_trainable_quantizer_weights_config(n, wq_cand),
                                                             **qat_config.weight_quantizer_params_override)})
 
     activation_quantizers = []
@@ -141,7 +104,7 @@ def quantization_builder(n: common.BaseNode,
                                                qat_config.activation_training_method,
                                                _quant_method)
 
-        activation_quantizers = [quantizer_class(get_trainable_quantizer_activation_config(n),
+        activation_quantizers = [quantizer_class(get_trainable_quantizer_activation_config(n, aq_cand),
                                                  **qat_config.activation_quantizer_params_override)] * len(output_shapes)
 
     return weight_quantizers, activation_quantizers

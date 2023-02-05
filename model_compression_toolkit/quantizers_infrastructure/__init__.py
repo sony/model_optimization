@@ -14,7 +14,7 @@
 # ==============================================================================
 
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget, BaseInferableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer_config import \
+from model_compression_toolkit.quantizers_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 from model_compression_toolkit.quantizers_infrastructure.keras.base_keras_quantizer import BaseKerasTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.keras.load_model import keras_load_quantized_model

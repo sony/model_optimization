@@ -210,7 +210,7 @@ if __name__ == '__main__':
     test(qat_model, device, test_loader)
 
     # Fine-tune QAT model from MCT to recover the accuracy.
-    optimizer = optim.Adam(qat_model.parameters(), lr=lr/1000)
+    optimizer = optim.Adam(qat_model.parameters(), lr=lr/10000)
     scheduler = StepLR(optimizer, step_size=1, gamma=gamma)
 
     for epoch in range(1, epochs + 1):

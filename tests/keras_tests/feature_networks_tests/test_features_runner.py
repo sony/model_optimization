@@ -88,7 +88,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.no
     ScopeFilterTest, TypeFilterTest
 from tests.keras_tests.feature_networks_tests.feature_networks.output_in_middle_test import OutputInMiddleTest
 from tests.keras_tests.feature_networks_tests.feature_networks.qat.qat_test import QATWrappersTest, \
-    QuantizationAwareTrainingQuantizersTest
+    QuantizationAwareTrainingQuantizersTest, QATWrappersMixedPrecisionCfgTest
 from tests.keras_tests.feature_networks_tests.feature_networks.relu_replacement_test import ReluReplacementTest, \
     SingleReluReplacementTest, ReluReplacementWithAddBiasTest
 from tests.keras_tests.feature_networks_tests.feature_networks.remove_upper_bound_test import RemoveUpperBoundTest
@@ -672,6 +672,8 @@ class FeatureNetworkTest(unittest.TestCase):
         # DW-Conv2D are tested under the tests below because an extra check is needed to verify the
         # quantization per channel of its kernel TODO: should be part of the quantizers tests
         QuantizationAwareTrainingQuantizersTest(self).run_test()
+        QATWrappersMixedPrecisionCfgTest(self).run_test()
+        QATWrappersMixedPrecisionCfgTest(self,kpi_weights=17920 * 4 / 8, kpi_activation=5408 * 4 / 8, expected_mp_cfg=[0, 4, 1, 1]).run_test()
 
 
 if __name__ == '__main__':

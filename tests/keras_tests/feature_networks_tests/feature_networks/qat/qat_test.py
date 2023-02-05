@@ -18,10 +18,12 @@ import os
 import tensorflow as tf
 import numpy as np
 
+from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_tests import \
+    MixedPrecisionActivationBaseTest
 from tests.keras_tests.tpc_keras import get_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as mct
-from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi, MixedPrecisionQuantizationConfigV2
 import os
 from model_compression_toolkit.core.keras.default_framework_info import KERNEL
 
@@ -214,4 +216,39 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                             self.unit_test.assertTrue(isinstance(quantizer, qi.BaseKerasTrainableQuantizer))
                             # q = METHOD2WEIGHTQUANTIZER[mct.TrainingMethod.STE][self.weights_quantization_method]
                             # self.unit_test.assertTrue(isinstance(layer.weights_quantizers[KERNEL], q))
+
+
+class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
+    def __init__(self, unit_test, kpi_weights=np.inf, kpi_activation=np.inf, expected_mp_cfg=[0,0,0,0]):
+        self.kpi_weights = kpi_weights
+        self.kpi_activation = kpi_activation
+        self.expected_mp_cfg = expected_mp_cfg
+        super().__init__(unit_test, activation_layers_idx=[1, 3, 6])
+
+    def run_test(self, experimental_facade=False, **kwargs):
+        model_float = self.create_networks()
+        config = mct.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
+        qat_ready_model, quantization_info, custom_objects = mct.keras_quantization_aware_training_init(
+            model_float,
+            self.representative_data_gen_experimental,
+            mct.KPI(weights_memory=self.kpi_weights, activation_memory=self.kpi_activation),
+            core_config=config,
+            fw_info=self.get_fw_info(),
+            target_platform_capabilities=self.get_tpc())
+
+        self.compare(qat_ready_model, quantization_info)
+
+    def compare(self, qat_ready_model, quantization_info):
+
+        # check that MP search returns 8 bits configuration for all layers
+        self.unit_test.assertTrue(all(quantization_info.mixed_precision_cfg == self.expected_mp_cfg))
+
+        # check that quantizer gets multiple bits configuration
+        for layer in qat_ready_model.layers:
+            if isinstance(layer, qi.KerasQuantizationWrapper):
+                if layer.is_weights_quantization:
+                    self.unit_test.assertTrue(len(layer.weights_quantizers['kernel'].quantization_config.weights_bits_candidates) > 1)
+                if layer.is_activation_quantization:
+                    self.unit_test.assertTrue(len(layer.activation_quantizers[0].quantization_config.activation_bits_candidates) > 1)
+
 
