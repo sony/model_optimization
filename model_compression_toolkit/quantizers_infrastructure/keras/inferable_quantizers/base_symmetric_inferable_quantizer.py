@@ -16,51 +16,58 @@ from abc import abstractmethod
 
 import numpy as np
 
+from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
-    import \
-    BaseKerasInferableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_uniform_inferable_quantizer \
-    import \
-    BaseUniformInferableQuantizer
 
 
-class BaseSymmetricInferableQuantizer(BaseUniformInferableQuantizer):
+if FOUND_TF:
+    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers\
+        .base_uniform_inferable_quantizer \
+        import \
+        BaseUniformInferableQuantizer
 
-    def __init__(self,
-                 num_bits: int,
-                 threshold: np.ndarray,
-                 signed: bool,
-                 quantization_target: QuantizationTarget):
-        """
-        Initialize the quantizer with the specified parameters.
+    class BaseSymmetricInferableQuantizer(BaseUniformInferableQuantizer):
 
-        Args:
-            num_bits: number of bits to use for quantization
-            threshold: threshold for quantizing weights
-            signed: whether or not to use signed quantization
-            quantization_target: An enum which selects the quantizer tensor type: activation or weights.
-        """
+        def __init__(self,
+                     num_bits: int,
+                     threshold: np.ndarray,
+                     signed: bool,
+                     quantization_target: QuantizationTarget):
+            """
+            Initialize the quantizer with the specified parameters.
 
-        if not isinstance(threshold, np.ndarray):
-            threshold = np.asarray(threshold)
+            Args:
+                num_bits: number of bits to use for quantization
+                threshold: threshold for quantizing weights
+                signed: whether or not to use signed quantization
+                quantization_target: An enum which selects the quantizer tensor type: activation or weights.
+            """
 
-        self.signed = signed
-        self.threshold = threshold
+            if not isinstance(threshold, np.ndarray):
+                threshold = np.asarray(threshold)
 
-        delta = threshold / (2 ** (num_bits - int(signed)))
-        min_range = -threshold if signed else 0
-        max_range = threshold - delta
+            self.signed = signed
+            self.threshold = threshold
 
-        super(BaseSymmetricInferableQuantizer, self).__init__(quantization_target=quantization_target,
-                                                              min_range=min_range,
-                                                              max_range=max_range,
-                                                              num_bits=num_bits)
+            delta = threshold / (2 ** (num_bits - int(signed)))
+            min_range = -threshold if signed else 0
+            max_range = threshold - delta
 
-    @abstractmethod
-    def get_config(self):
-        """
-        Return a dictionary with the configuration of the quantizer.
-        """
-        raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')  # pragma: no cover
+            super(BaseSymmetricInferableQuantizer, self).__init__(quantization_target=quantization_target,
+                                                                  min_range=min_range,
+                                                                  max_range=max_range,
+                                                                  num_bits=num_bits)
 
+        @abstractmethod
+        def get_config(self):
+            """
+            Return a dictionary with the configuration of the quantizer.
+            """
+            raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')  # pragma: no cover
+else:
+
+    class BaseSymmetricInferableQuantizer:
+        def __init__(self, *args, **kwargs):
+            raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
+                            'when using BaseSymmetricInferableQuantizer. '
+                            'Could not find Tensorflow package.')

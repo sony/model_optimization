@@ -25,7 +25,7 @@ FOUND_ONNXRUNTIME = importlib.util.find_spec("onnxruntime") is not None
 
 WEIGHTS_SIGNED = True
 # Minimal threshold to use for quantization ranges:
-MIN_THRESHOLD = (2 ** -28)
+MIN_THRESHOLD = (2 ** -16)
 EPS = 1e-8
 MULTIPLIER_N_BITS = 8
 

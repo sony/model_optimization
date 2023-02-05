@@ -78,6 +78,7 @@ if FOUND_TF:
             Returns:
                 quantized tensor.
             """
+
             # If per-channel quantization is being used
             if self.per_channel:
                 # If a permutation vector has been created to move the channel axis to the last position

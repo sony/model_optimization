@@ -29,6 +29,7 @@ from tests.common_tests.function_tests.test_kpi_object import TestKPIObject
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
+
 if FOUND_ONNX:
     from tests.pytorch_tests.function_tests.test_export_pytorch_fully_quantized_model import TestPyTorchFakeQuantExporter
 
@@ -68,10 +69,11 @@ if found_tf:
     from tests.keras_tests.function_tests.test_set_layer_to_bitwidth import TestKerasSetLayerToBitwidth
     from tests.keras_tests.function_tests.test_export_keras_fully_quantized_model import TestKerasFakeQuantExporter
     from tests.keras_tests.function_tests.test_kpi_data import TestKPIData
-    from tests.keras_tests.function_tests.test_get_gptq_config import TestGetGPTQConfig
-    from tests.keras_tests.function_tests.test_gptq_loss_functions import TestGPTQLossFunctions
     from tests.quantizers_infrastructure_tests.keras_tests.test_keras_quantization_infrastructure_runner import \
         KerasInfrastructureTest
+    from tests.keras_tests.exporter_tests.test_runner import ExporterTestsRunner
+    from tests.keras_tests.function_tests.test_get_gptq_config import TestGetGPTQConfig
+    from tests.keras_tests.function_tests.test_gptq_loss_functions import TestGPTQLossFunctions
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -98,6 +100,7 @@ if __name__ == '__main__':
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ExporterTestsRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityMetricInterestPoints))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureNetworkTest))
