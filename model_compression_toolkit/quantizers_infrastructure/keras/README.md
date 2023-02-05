@@ -12,4 +12,4 @@ The [`@mark_quantizer`](../common/base_inferable_quantizer.py) decorator is used
 
 ## Examples and Fully implementation quantizers
 For fully reference, check our QAT quantizers here:
-[QAT Quantizers](../../qat/keras/quantizer/README.md)
+[QAT Quantizers](../../qat/keras/README.md)
