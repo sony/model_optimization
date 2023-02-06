@@ -239,5 +239,7 @@ class STEUniformActivationQuantizer(BaseKerasQATTrainableQuantizer):
                                                          self.quantizer_parameters[FQ_MAX].numpy(),
                                                          self.num_bits)
         return iq.ActivationUniformInferableQuantizer(num_bits=self.num_bits,
+                                                      # In activation quantization is per-tensor only - thus we pass
+                                                      # the min/max as lists with a len of 1
                                                       min_range=[min_range],
                                                       max_range=[max_range])
