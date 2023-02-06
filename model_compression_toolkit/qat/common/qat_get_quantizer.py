@@ -14,6 +14,7 @@
 # ==============================================================================
 from typing import Any
 
+from model_compression_toolkit import TrainingMethod
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
@@ -23,7 +24,7 @@ from model_compression_toolkit.quantizers_infrastructure.common.get_all_subclass
 
 
 def get_quantizer_class(quant_target: QuantizationTarget,
-                        quantizer_type: Any,
+                        quantizer_type: TrainingMethod,
                         quant_method: QuantizationMethod,
                         quantizer_base_class: type) -> type:
     """
