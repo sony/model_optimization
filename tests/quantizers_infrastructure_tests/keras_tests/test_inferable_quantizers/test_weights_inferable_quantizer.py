@@ -448,9 +448,21 @@ class TestKerasWeightsUniformQuantizer(unittest.TestCase):
         self.assertTrue(quantizer_config['per_channel'] is True)
         self.assertTrue(quantizer_config['channel_axis'] == channel_axis)
 
-        # TODO: assert that min/max were adjusted correctly
-        # self.assertTrue(np.all(quantizer_config['max_range'] == max_range))
-        # self.assertTrue(np.all(quantizer_config['min_range'] == min_range))
+        # TODO: check if needed
+        # Compute expected adjusted min/max (based on https://www.tensorflow.org/api_docs/python/tf/quantization/fake_quant_with_min_max_vars):
+        # for i, (_min,_max) in enumerate(zip(min_range, max_range)):
+        #     if 0 < _min < _max:
+        #         min_adj, max_adj = 0, _max-_min
+        #     elif _min < _max < 0:
+        #         min_adj, max_adj = _min-_max, 0
+        #     elif _min<=0<=_max:
+        #         _scale = (_max-_min) / (2**num_bits - 1)
+        #         min_adj = _scale * round(_min / _scale)
+        #         max_adj = _max + min_adj - _min
+        #     else:
+        #         raise Exception
+        #     self.assertTrue(quantizer_config['max_range'][i] == max_adj)
+        #     self.assertTrue(quantizer_config['min_range'][i] == min_adj)
 
         # Initialize a random input to quantize between -50 to 50.
         input_tensor = tf.constant(np.random.rand(1, 50, 4, 50) * 100 - 50, dtype=tf.float32)
