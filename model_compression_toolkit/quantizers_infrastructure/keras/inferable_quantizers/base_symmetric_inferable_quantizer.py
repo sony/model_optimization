@@ -16,49 +16,57 @@ from abc import abstractmethod
 
 import numpy as np
 
+from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
-from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_uniform_inferable_quantizer \
-    import \
-    BaseUniformInferableQuantizer
+
+if FOUND_TF:
+    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers\
+        .base_uniform_inferable_quantizer import BaseUniformInferableQuantizer
 
 
-@mark_quantizer(quantization_target=None,
-                quantization_method=[QuantizationMethod.SYMMETRIC],
-                quantizer_type=None)
-class BaseSymmetricInferableQuantizer(BaseUniformInferableQuantizer):
+    @mark_quantizer(quantization_target=None,
+                    quantization_method=[QuantizationMethod.SYMMETRIC],
+                    quantizer_type=None)
+    class BaseSymmetricInferableQuantizer(BaseUniformInferableQuantizer):
 
-    def __init__(self,
-                 num_bits: int,
-                 threshold: np.ndarray,
-                 signed: bool):
-        """
-        Initialize the quantizer with the specified parameters.
+        def __init__(self,
+                     num_bits: int,
+                     threshold: np.ndarray,
+                     signed: bool):
+            """
+            Initialize the quantizer with the specified parameters.
 
-        Args:
-            num_bits: number of bits to use for quantization
-            threshold: threshold for quantizing weights
-            signed: whether or not to use signed quantization
-        """
+            Args:
+                num_bits: number of bits to use for quantization
+                threshold: threshold for quantizing weights
+                signed: whether or not to use signed quantization
+            """
 
-        if not isinstance(threshold, np.ndarray):
-            threshold = np.asarray(threshold)
+            if not isinstance(threshold, np.ndarray):
+                threshold = np.asarray(threshold)
 
-        self.signed = signed
-        self.threshold = threshold
+            self.signed = signed
+            self.threshold = threshold
 
-        delta = threshold / (2 ** (num_bits - int(signed)))
-        min_range = -threshold if signed else 0
-        max_range = threshold - delta
+            delta = threshold / (2 ** (num_bits - int(signed)))
+            min_range = -threshold if signed else 0
+            max_range = threshold - delta
 
-        super(BaseSymmetricInferableQuantizer, self).__init__(min_range=min_range,
-                                                              max_range=max_range,
-                                                              num_bits=num_bits)
+            super(BaseSymmetricInferableQuantizer, self).__init__(min_range=min_range,
+                                                                  max_range=max_range,
+                                                                  num_bits=num_bits)
 
-    @abstractmethod
-    def get_config(self):
-        """
-        Return a dictionary with the configuration of the quantizer.
-        """
-        raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')  # pragma: no cover
+        @abstractmethod
+        def get_config(self):
+            """
+            Return a dictionary with the configuration of the quantizer.
+            """
+            raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')  # pragma: no cover
+else:
 
+    class BaseSymmetricInferableQuantizer:
+        def __init__(self, *args, **kwargs):
+            raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
+                            'when using BaseSymmetricInferableQuantizer. '
+                            'Could not find Tensorflow package.')

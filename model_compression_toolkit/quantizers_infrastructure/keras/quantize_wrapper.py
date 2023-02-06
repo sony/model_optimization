@@ -140,6 +140,7 @@ if FOUND_TF:
                 quantizer.initialize_quantization(weight.shape, _weight_name(weight.name) if is_training else None,
                                                   self)
                 self._weights_vars.append((name, weight, quantizer))
+                self._trainable_weights.append(weight) # Must when inherit from tf.keras.layers.Wrapper in tf2.10 and below
 
         def _set_activations_vars(self):
             """
@@ -306,14 +307,14 @@ else:
     class KerasQuantizationWrapper(object):
         def __init__(self,
                      layer,
-                     weight_quantizers: Dict[str, BaseInferableQuantizer] = None,
+                     weights_quantizers: Dict[str, BaseInferableQuantizer] = None,
                      activation_quantizers: List[BaseInferableQuantizer] = None):
             """
             Keras Quantization Wrapper takes a keras layer and quantizers and infer a quantized layer.
 
             Args:
                 layer: A keras layer.
-                weight_quantizers: A dictionary between a weight's name to its quantizer.
+                weights_quantizers: A dictionary between a weight's name to its quantizer.
                 activation_quantizers: A list of activations quantization, one for each layer output.
             """
             Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
