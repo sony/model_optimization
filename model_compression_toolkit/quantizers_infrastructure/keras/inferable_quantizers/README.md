@@ -34,15 +34,10 @@ Here, we can see a demonstration of a symmetric weights quantizer usage:
 import tensorflow as tf
 from model_compression_toolkit import quantizers_infrastructure as qi
 
-# Create a weights symmetric quantizer for quantizing a kernel. The quantizer
-# has the following properties:
-# * It uses 8 bits for quantization.
-# * It quantizes the tensor per-channel.
-# Since it is a symmetric weights quantizer it needs to have the thresholds. Thus, the quantizer also
-# uses three thresholds (since it has 3 output channels and the quantization is per-channel): 1, 2 and 3.
-# Notice that for weights quantization (like in this case) the quantization is always signed.
-# Also, in Keras quantizers the input rank should be given in the case of per-channel quantization.
-# Here, we expect the input's rank to be four.
+# Creates a WeightsSymmetricInferableQuantizer instance for quantizing a tensor with four dimensions.
+# The quantizer uses 8 bits for quantization and quantizes the tensor per channel.
+# The quantizer uses three thresholds (1, 2, and 3) for quantizing each of the three output channels.
+# The quantization axis is the last dimension (-1).
 quantizer = qi.keras_inferable_quantizers.WeightsSymmetricInferableQuantizer(num_bits=8,
                                                                              threshold=[2.0, 3.0, 1.0],
                                                                              per_channel=True,
@@ -68,13 +63,11 @@ Now, let's see a demonstration of a symmetric activation quantizer usage:
 import tensorflow as tf
 from model_compression_toolkit import quantizers_infrastructure as qi
 
-# Create an activation symmetric quantizer for quantizing a tensorflow tensor. The quantizer
-# has the following properties:
-# * It uses 8 bits for quantization.
-# * It quantizes the tensor per-tensor (in activation quantization we support only per-tensor quantization).
-# * It uses an unsigned quantization range (namely, between 0 to a threshold).
-# Since it is a symmetric activation quantizer it needs to have the thresholds. Thus, the quantizer also
-# uses the threshold 5.
+# Creates an ActivationSymmetricInferableQuantizer quantizer.
+# The quantizer uses 8 bits for quantization and quantizes the tensor per-tensor 
+# (per-channel quantization is not supported in activation quantizers). 
+# The quantization is unsigned, meaning the range of values is between 0 and the
+# threshold, which is 5.0.
 quantizer = qi.keras_inferable_quantizers.ActivationSymmetricInferableQuantizer(num_bits=8,
                                                                                 threshold=[5.0],
                                                                                 signed=False)
