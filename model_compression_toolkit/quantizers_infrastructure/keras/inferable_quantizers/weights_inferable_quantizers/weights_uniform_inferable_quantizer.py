@@ -57,12 +57,10 @@ if FOUND_TF:
             if per_channel:
                 assert input_rank is not None, f'Input rank is missing in per channel quantization'
                 assert channel_axis is not None, f'Channel axis is missing in per channel quantization'
-                assert len(
-                    self.min_range) >= 1, f'In per-channel quantization min/max numpy arrays should be of length >= 1 but is ' \
-                                     f'{len(self.min_range)}'
+                assert len(self.min_range) >= 1, f'In per-channel quantization min ranges list should be of length >= 1 but is {len(self.min_range)}'
+                assert len(self.max_range) >= 1, f'In per-channel quantization max ranges list should be of length >= 1 but is {len(self.max_range)}'
             else:
-                assert len(
-                    self.min_range) == 1, f'In per-tensor quantization min/max should be of length 1 but is {len(min_range)}'
+                assert len(self.min_range) == 1, f'In per-tensor quantization min/max should be of length 1 but is {len(min_range)}'
                 assert len(self.min_range) == 1, f'In per-tensor quantization min_range should be of length 1 but is {len(self.min_range)}'
                 assert len(self.max_range) == 1, f'In per-tensor quantization max_range should be of length 1 but is {len(self.max_range)}'
                 self.min_range = self.min_range[0]
