@@ -98,7 +98,6 @@ if FOUND_TF:
             Returns:
                 quantized tensor.
             """
-            assert isinstance(inputs, tf.Tensor), f'Input was expected to be a tf.Tensor but is of type {type(inputs)}'
             assert inputs.dtype==tf.float32, f'Input tensor was expected to be a float tensor but is of type {inputs.dtype}'
 
             # If per-channel quantization is being used

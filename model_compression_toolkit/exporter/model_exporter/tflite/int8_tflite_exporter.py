@@ -120,6 +120,9 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         # Unquantized weight to conv layer has 4 dimensions (unlike dense which varies)
         pw_kernel_quantizer_cfg[keras_inferable_constants.INPUT_RANK] = CONV_INPUT_CHANNELS_DIM
 
+        assert isinstance(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD], np.ndarray), f'Expected to find threshold which is a numpy array, but found: {type(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])}'
+        pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD] = list(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])
+
         # Now that we have the point-wise quantizer we can instantiate it
         quantizer_class = type(wrapped_layer.weights_quantizers[KERNEL])
         pw_quantizer = quantizer_class(**pw_kernel_quantizer_cfg)

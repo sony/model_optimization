@@ -22,6 +22,7 @@ from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_q
     QuantizationTarget
 
 if FOUND_TF:
+    import tensorflow as tf
     from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.weights_inferable_quantizers.weights_uniform_inferable_quantizer import \
         WeightsUniformInferableQuantizer
     @mark_quantizer(quantization_target=QuantizationTarget.Weights,
@@ -48,13 +49,19 @@ if FOUND_TF:
                 channel_axis: axis along which to apply per-channel quantization
                 input_rank: number of dimensions of input tensor the quantizer quantizes
             """
-            assert isinstance(threshold,
-                              np.ndarray), f'Expected min_range to be of type np.ndarray but is {type(threshold)}'
-            self.threshold = threshold
+            assert isinstance(threshold, list), f'Expected threshold to be of type list but is {type(threshold)}'
+            assert all([isinstance(x, (float, np.float32, tf.float32)) for x in
+                        threshold]), f'Expected threshold list to contain float or np.float values but found ' \
+                                     f'{[type(x) for x in threshold]}'
+
+            self.threshold = np.asarray(threshold)
+
+            _min_range = -self.threshold
+            _max_range = self.threshold - self.threshold / (2 ** (num_bits - 1))
 
             super(WeightsSymmetricInferableQuantizer, self).__init__(num_bits=num_bits,
-                                                                     min_range=-threshold,
-                                                                     max_range=threshold - threshold / (2 ** (num_bits - 1)),
+                                                                     min_range=list(_min_range),
+                                                                     max_range=list(_max_range),
                                                                      per_channel=per_channel,
                                                                      channel_axis=channel_axis,
                                                                      input_rank=input_rank)

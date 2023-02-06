@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import List
 
 import numpy as np
 
@@ -36,8 +37,8 @@ if FOUND_TF:
 
         def __init__(self,
                      num_bits: int,
-                     min_range: np.ndarray,
-                     max_range: np.ndarray,
+                     min_range: List[float],
+                     max_range: List[float],
                      ):
             """
             Initialize the quantizer with the specified parameters.
@@ -53,7 +54,13 @@ if FOUND_TF:
                                                                       min_range,
                                                                       max_range)
 
-        def __call__(self, inputs:tf.Tensor):
+            assert len(self.min_range) == 1, f'In per-tensor quantization min_range should be of length 1 but is {len(self.min_range)}'
+            assert len(self.max_range) == 1, f'In per-tensor quantization max_range should be of length 1 but is {len(self.max_range)}'
+
+            self.min_range = self.min_range[0]
+            self.max_range = self.max_range[0]
+
+        def __call__(self, inputs:tf.Tensor) -> tf.Tensor:
             """
             Quantize the given inputs using the quantizer parameters.
 
@@ -63,6 +70,8 @@ if FOUND_TF:
             Returns:
                 quantized tensor.
             """
+            assert inputs.dtype==tf.float32, f'Input tensor was expected to be a float tensor but is of type {inputs.dtype}'
+
             return tf.quantization.fake_quant_with_min_max_vars(inputs,
                                                                 min=self.min_range,
                                                                 max=self.max_range,

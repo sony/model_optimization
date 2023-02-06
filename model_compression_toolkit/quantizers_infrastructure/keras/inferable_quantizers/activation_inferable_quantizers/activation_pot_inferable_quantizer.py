@@ -17,6 +17,7 @@ import numpy as np
 
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
+
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
@@ -25,7 +26,6 @@ from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_q
 if FOUND_TF:
     from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.activation_inferable_quantizers.activation_symmetric_inferable_quantizer import \
         ActivationSymmetricInferableQuantizer
-
 
     @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                     quantization_method=[QuantizationMethod.POWER_OF_TWO],

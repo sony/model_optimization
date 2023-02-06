@@ -144,11 +144,11 @@ class STEUniformWeightQuantizer(BaseKerasQATTrainableQuantizer):
                                                          self.quantizer_parameters[FQ_MAX].numpy(),
                                                          self.num_bits)
         return iq.WeightsUniformInferableQuantizer(num_bits=self.num_bits,
-                                                   min_range=min_range.flatten(),
-                                                   max_range=max_range.flatten(),
+                                                   min_range=list(min_range.flatten()),
+                                                   max_range=list(max_range.flatten()),
                                                    per_channel=self.per_channel,
                                                    channel_axis=self.channel_axis,
-                                                   input_rank=self.min_max_shape.ndim)
+                                                   input_rank=len(self.min_max_shape))
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
@@ -239,5 +239,5 @@ class STEUniformActivationQuantizer(BaseKerasQATTrainableQuantizer):
                                                          self.quantizer_parameters[FQ_MAX].numpy(),
                                                          self.num_bits)
         return iq.ActivationUniformInferableQuantizer(num_bits=self.num_bits,
-                                                      min_range=min_range,
-                                                      max_range=max_range)
+                                                      min_range=[min_range],
+                                                      max_range=[max_range])

@@ -22,6 +22,7 @@ from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_q
 from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
     import \
     BaseKerasInferableQuantizer
+import numpy as np
 
 
 def get_inferable_quantizer_kwargs(node: BaseNode,
@@ -46,19 +47,18 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
         if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                    QuantizationMethod.SYMMETRIC]:
             return {'num_bits': node_w_qc.weights_n_bits,
-                    'threshold': node_w_qc.weights_quantization_params.get(THRESHOLD).flatten(),
-                    'signed': True,
+                    'threshold': list(node_w_qc.weights_quantization_params[THRESHOLD].flatten()),
                     'per_channel': node_w_qc.weights_per_channel_threshold,
                     'channel_axis': node_w_qc.weights_channels_axis,
-                    'input_rank': node_w_qc.weights_quantization_params.get(THRESHOLD).ndim}
+                    'input_rank': node_w_qc.weights_quantization_params[THRESHOLD].ndim}
 
         elif quantization_method in [QuantizationMethod.UNIFORM]:
             return {'num_bits': node_w_qc.weights_n_bits,
                     'per_channel': node_w_qc.weights_per_channel_threshold,
-                    'min_range': node_w_qc.weights_quantization_params.get(RANGE_MIN).flatten(),
-                    'max_range': node_w_qc.weights_quantization_params.get(RANGE_MAX).flatten(),
+                    'min_range': list(node_w_qc.weights_quantization_params[RANGE_MIN].flatten()),
+                    'max_range': list(node_w_qc.weights_quantization_params[RANGE_MAX].flatten()),
                     'channel_axis': node_w_qc.weights_channels_axis,
-                    'input_rank': node_w_qc.weights_quantization_params.get(THRESHOLD).ndim}
+                    'input_rank': node_w_qc.weights_quantization_params[THRESHOLD].ndim}
         else:
             Logger.critical(f'Not supported quantization method for inferable quantizers.')  # pragma: no cover
 
@@ -71,13 +71,13 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
         if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                    QuantizationMethod.SYMMETRIC]:
             return {'num_bits': node_qc.activation_n_bits,
-                    'threshold': node_qc.activation_quantization_params.get(THRESHOLD),
-                    'signed': node_qc.activation_quantization_params.get(SIGNED)}
+                    'threshold': [node_qc.activation_quantization_params[THRESHOLD]],
+                    'signed': node_qc.activation_quantization_params[SIGNED]}
 
         elif quantization_method in [QuantizationMethod.UNIFORM]:
             return {'num_bits': node_qc.activation_n_bits,
-                    'min_range': node_qc.activation_quantization_params.get(RANGE_MIN),
-                    'max_range': node_qc.activation_quantization_params.get(RANGE_MAX)}
+                    'min_range': [node_qc.activation_quantization_params[RANGE_MIN]],
+                    'max_range': [node_qc.activation_quantization_params[RANGE_MAX]]}
         else:
             Logger.critical(f'Not supported quantization method for inferable quantizers.')  # pragma: no cover
     else:

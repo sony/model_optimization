@@ -26,6 +26,7 @@ from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_q
 
 
 if FOUND_TF:
+    import tensorflow as tf
     from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
         import \
         BaseKerasInferableQuantizer
@@ -49,13 +50,23 @@ if FOUND_TF:
                 max_range: max quantization range
             """
             super(BaseUniformInferableQuantizer, self).__init__()
-            assert isinstance(min_range,
-                              np.ndarray), f'Expected min_range to be of type np.ndarray but is {type(min_range)}'
-            assert isinstance(max_range,
-                              np.ndarray), f'Expected max_range to be of type np.ndarray but is {type(max_range)}'
-            assert min_range.shape == max_range.shape, f'Expected min/max values to have the same shape but min shape: {min_range.shape} and max shape: {max_range.shape}'
+
+            assert isinstance(min_range, list), f'Expected min_range to be of type list but is {type(min_range)}'
+            assert isinstance(max_range, list), f'Expected max_range to be of type list but is {type(max_range)}'
+
+            assert all([isinstance(x, (float, np.float32)) for x in
+                        min_range]), f'Expected min_range list to contain float values but found ' \
+                                     f'{[type(x) for x in min_range]}'
+            assert all([isinstance(x, (float, np.float32)) for x in
+                        max_range]), f'Expected max_range list to contain float values but found ' \
+                                     f'{[type(x) for x in max_range]}'
+
+            assert len(min_range) == len(max_range), f'Expected min/max values to have the same length but min shape: {len(min_range)} and max shape: {len(max_range)}'
 
             self.num_bits = num_bits
+
+            # Convert min/max to numpy arrays
+            min_range, max_range = np.asarray(min_range), np.asarray(max_range)
 
             assert np.all(max_range > min_range), f'Expected max_range to be bigger than min_range!'
             _min_range, _max_range = adjust_range_to_include_zero(min_range, max_range, num_bits)

@@ -157,18 +157,16 @@ class STEWeightQuantizer(BaseKerasQATTrainableQuantizer):
         if self.power_of_two:
             pot_threshold = 2 ** np.ceil(np.log2(self.quantizer_parameters[THRESHOLD_TENSOR]))
             return iq.WeightsPOTInferableQuantizer(num_bits=self.num_bits,
-                                                   threshold=pot_threshold.flatten(),
-                                                   signed=C.WEIGHTS_SIGNED,
+                                                   threshold=list(pot_threshold.flatten()),
                                                    per_channel=self.per_channel,
                                                    channel_axis=self.channel_axis,
-                                                   input_rank=self.threshold_shape.ndim)
+                                                   input_rank=len(self.threshold_shape))
         else:
             return iq.WeightsSymmetricInferableQuantizer(num_bits=self.num_bits,
-                                                         threshold=self.quantizer_parameters[THRESHOLD_TENSOR].numpy().flatten(),
-                                                         signed=C.WEIGHTS_SIGNED,
+                                                         threshold=list(self.quantizer_parameters[THRESHOLD_TENSOR].numpy().flatten()),
                                                          per_channel=self.per_channel,
                                                          channel_axis=self.channel_axis,
-                                                         input_rank=self.threshold_shape.ndim)
+                                                         input_rank=len(self.threshold_shape))
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
@@ -276,9 +274,9 @@ class STEActivationQuantizer(BaseKerasQATTrainableQuantizer):
         if self.power_of_two:
             pot_threshold = 2 ** np.ceil(np.log2(self.quantizer_parameters[THRESHOLD_TENSOR]))
             return iq.ActivationPOTInferableQuantizer(num_bits=self.num_bits,
-                                                      threshold=pot_threshold,
+                                                      threshold=[pot_threshold],
                                                       signed=self.signed)
         else:
             return iq.ActivationSymmetricInferableQuantizer(num_bits=self.num_bits,
-                                                            threshold=self.quantizer_parameters[THRESHOLD_TENSOR],
+                                                            threshold=[self.quantizer_parameters[THRESHOLD_TENSOR].numpy()],
                                                             signed=self.signed)
