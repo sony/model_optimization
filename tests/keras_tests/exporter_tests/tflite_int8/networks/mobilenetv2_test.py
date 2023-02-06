@@ -17,10 +17,11 @@ from keras.applications import MobileNetV2
 import numpy as np
 
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.core.tpc_models.default_tpc.v5.tpc_keras import generate_keras_tpc
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.exporter_tests.tflite_int8.tflite_int8_exporter_base_test import TFLiteINT8ExporterBaseTest
 import keras
+
 layers = keras.layers
 
 class TestMBV2TFLiteINT8Exporter(TFLiteINT8ExporterBaseTest):
