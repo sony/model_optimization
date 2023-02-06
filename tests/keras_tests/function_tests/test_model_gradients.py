@@ -1,6 +1,7 @@
 import keras
 import unittest
 
+from keras.layers import Dense
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, SeparableConv2D, Reshape
 from tensorflow import initializers
 import numpy as np
@@ -54,6 +55,16 @@ def advenced_model(input_shape):
     return keras.Model(inputs=inputs, outputs=outputs)
 
 
+def multiple_output_model(input_shape):
+    inputs = Input(shape=input_shape)
+    x = Dense(2)(inputs)
+    x = Conv2D(2, 4)(x)
+    x = BatchNormalization()(x)
+    out1 = ReLU(max_value=6.0)(x)
+    out2 = Conv2D(2, 4)(out1)
+    return keras.Model(inputs=inputs, outputs=[out1, out2])
+
+
 def inputs_as_list_model(input_shape):
     input1 = Input(shape=input_shape)
     input2 = Input(shape=input_shape)
@@ -84,13 +95,14 @@ def representative_dataset():
 
 class TestModelGradients(unittest.TestCase):
 
-    def _run_model_grad_test(self, graph, keras_impl):
+    def _run_model_grad_test(self, graph, keras_impl, output_indices=None):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
 
         input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
         output_nodes = [o.node for o in graph.output_nodes]
-        all_output_indices = [len(interest_points) - 1]
+
+        all_output_indices = [len(interest_points) - 1] if output_indices is None else output_indices
 
         x = keras_impl.model_grad(graph_float=graph,
                                   model_input_tensors=input_tensors,
@@ -155,6 +167,16 @@ class TestModelGradients(unittest.TestCase):
         graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
 
         self._run_model_grad_test(graph, keras_impl)
+
+    def test_multiple_outputs_grad(self):
+        input_shape = (8, 8, 3)
+        in_model = multiple_output_model(input_shape)
+        keras_impl = KerasImplementation()
+        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
+
+        sorted_graph_nodes = graph.get_topo_sorted_nodes()
+        self._run_model_grad_test(graph, keras_impl, output_indices=[len(sorted_graph_nodes) - 1,
+                                                                     len(sorted_graph_nodes) - 2])
 
     def test_model_grad_with_output_replacements(self):
         input_shape = (8, 8, 3)

@@ -138,7 +138,15 @@ def keras_iterative_approx_jacobian_trace(graph_float: common.Graph,
                                                                       gradient_tape=g)
 
         # Concat outputs
-        r_outputs = [tf.reshape(output, shape=[output.shape[0], -1]) for output in outputs]
+        # First, we need to unfold all outputs that are given as list, to extract the actual output tensors
+        unfold_outputs = []
+        for output in outputs:
+            if isinstance(output, List):
+                unfold_outputs += output
+            else:
+                unfold_outputs.append(output)
+
+        r_outputs = [tf.reshape(output, shape=[output.shape[0], -1]) for output in unfold_outputs]
 
         concat_axis_dim = [o.shape[0] for o in r_outputs]
         if not all(d == concat_axis_dim[0] for d in concat_axis_dim):

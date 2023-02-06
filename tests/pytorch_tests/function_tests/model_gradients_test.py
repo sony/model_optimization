@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import torch
-from torch.nn import Conv2d, BatchNorm2d, ReLU
+from torch.nn import Conv2d, BatchNorm2d, ReLU, Linear
 
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 import numpy as np
@@ -90,6 +90,24 @@ class advanced_model(torch.nn.Module):
         x = torch.reshape(x, [-1])
         x = self.bn3(x)
         return x
+
+
+class multiple_output_model(torch.nn.Module):
+    def __init__(self):
+        super(multiple_output_model, self).__init__()
+        self.linear = Linear(32, 32)
+        self.conv1 = Conv2d(3, 3, kernel_size=(1, 1), stride=(1, 1))
+        self.bn = BatchNorm2d(3)
+        self.relu = ReLU()
+        self.conv2 = Conv2d(3, 3, kernel_size=(1, 1), stride=(1, 1))
+
+    def forward(self, inp):
+        x = self.linear(inp)
+        x = self.conv1(x)
+        x = self.bn(x)
+        x1 = self.relu(x)
+        x2 = self.conv2(x1)
+        return x1, x2
 
 
 class model_with_output_replacements(torch.nn.Module):
@@ -253,6 +271,42 @@ class ModelGradientsAdvancedModelTest(BasePytorchTest):
                                               interest_points=ipts,
                                               output_list=output_list,
                                               all_outputs_indices=[len(ipts) - 1],
+                                              alpha=0.3)
+
+        # Checking that the weights where computed and normalized correctly
+        self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
+
+
+class ModelGradientsMultipleOutputsTest(BasePytorchTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+        self.val_batch_size = 1
+
+    def create_inputs_shape(self):
+        return [[self.val_batch_size, 3, 32, 32]]
+
+    @staticmethod
+    def generate_inputs(input_shapes):
+        return generate_inputs(input_shapes)
+
+    def representative_data_gen(self):
+        input_shapes = self.create_inputs_shape()
+        yield self.generate_inputs(input_shapes)
+
+    def run_test(self, seed=0):
+        model_float = multiple_output_model()
+        pytorch_impl = PytorchImplementation()
+        graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
+                                           self.representative_data_gen, generate_pytorch_tpc)
+        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
+
+        ipts = [n for n in graph.get_topo_sorted_nodes()]
+        output_list = [o.node for o in graph.output_nodes]
+        model_grads = pytorch_impl.model_grad(graph_float=graph,
+                                              model_input_tensors=input_tensors,
+                                              interest_points=ipts,
+                                              output_list=output_list,
+                                              all_outputs_indices=[len(ipts) - 1, len(ipts) - 2],
                                               alpha=0.3)
 
         # Checking that the weights where computed and normalized correctly
