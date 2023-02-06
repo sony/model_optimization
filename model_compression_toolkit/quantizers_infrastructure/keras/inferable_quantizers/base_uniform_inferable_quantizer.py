@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from abc import abstractmethod
+from typing import List
 
 import numpy as np
 from model_compression_toolkit.core.common import Logger
@@ -38,8 +39,8 @@ if FOUND_TF:
 
         def __init__(self,
                      num_bits: int,
-                     min_range: np.ndarray,
-                     max_range: np.ndarray,
+                     min_range: List[float],
+                     max_range: List[float],
                      ):
             """
             Initialize the quantizer with the specified parameters.

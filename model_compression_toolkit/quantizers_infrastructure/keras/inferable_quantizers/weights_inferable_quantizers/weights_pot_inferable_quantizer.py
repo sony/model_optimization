@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import List
 
 import numpy as np
 
@@ -35,7 +36,7 @@ if FOUND_TF:
 
         def __init__(self,
                      num_bits: int,
-                     threshold: np.ndarray,
+                     threshold: List[float],
                      per_channel: bool,
                      channel_axis: int = None,
                      input_rank: int = None):
