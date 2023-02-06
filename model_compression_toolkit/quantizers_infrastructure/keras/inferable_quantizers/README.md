@@ -44,7 +44,7 @@ quantizer = qi.keras_inferable_quantizers.WeightsSymmetricInferableQuantizer(num
                                                                              channel_axis=-1,
                                                                              input_rank=4)
 
-# Initialize a random input to quantize. Note the input must have float data type.
+# Initialize a random input to quantize. Note that the input must have float data type.
 input_tensor = tf.random.uniform(shape=(1, 3, 3, 3), minval=-100, maxval=100, dtype=tf.float32)
 # Quantize tensor
 quantized_tensor = quantizer(input_tensor)
@@ -72,7 +72,7 @@ quantizer = qi.keras_inferable_quantizers.ActivationSymmetricInferableQuantizer(
                                                                                 threshold=[5.0],
                                                                                 signed=False)
 
-# Initialize a random input to quantize. Note the input must have float data type.
+# Initialize a random input to quantize. Note that the input must have float data type.
 input_tensor = tf.random.uniform(shape=(1, 3, 3, 3), minval=-100, maxval=100, dtype=tf.float32)
 # Quantize tensor
 quantized_tensor = quantizer(input_tensor)
