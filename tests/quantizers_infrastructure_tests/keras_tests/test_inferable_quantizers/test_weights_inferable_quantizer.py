@@ -348,7 +348,7 @@ class TestKerasWeightsUniformQuantizer(unittest.TestCase):
         self.assertTrue(quantizer_config['channel_axis'] == channel_axis)
 
         # Initialize a random input to quantize between -50 to 50.
-        input_tensor = tf.constant(np.random.rand(1, 4, 50, 50) * 100 - 50, dtype=np.float)
+        input_tensor = tf.constant(np.random.rand(1, 4, 50, 50) * 100 - 50, dtype=tf.float32)
         fake_quantized_tensor = quantizer(input_tensor)
 
         min_range = np.asarray(min_range)
