@@ -21,15 +21,16 @@ from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
+from model_compression_toolkit.quantizers_infrastructure.common.quant_utils import adjust_range_to_include_zero
 
 if FOUND_TF:
     import tensorflow as tf
-    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_uniform_inferable_quantizer import BaseUniformInferableQuantizer
+    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer import BaseKerasInferableQuantizer
 
     @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                     quantization_method=[QuantizationMethod.UNIFORM],
                     quantizer_type=None)
-    class ActivationUniformInferableQuantizer(BaseUniformInferableQuantizer):
+    class ActivationUniformInferableQuantizer(BaseKerasInferableQuantizer):
         """
         Class for quantizing activations using an uniform quantizer
         """
@@ -47,17 +48,33 @@ if FOUND_TF:
                 min_range: min range for quantizing activations
                 max_range: max range for quantizing activations
             """
-            # Call the superclass constructor with the given parameters, along with the target of Activation
-            # quantization
-            super(ActivationUniformInferableQuantizer, self).__init__(num_bits,
-                                                                      min_range,
-                                                                      max_range)
+            super(ActivationUniformInferableQuantizer, self).__init__()
 
-            assert len(self.min_range) == 1, f'In per-tensor quantization min_range should be of length 1 but is {len(self.min_range)}'
-            assert len(self.max_range) == 1, f'In per-tensor quantization max_range should be of length 1 but is {len(self.max_range)}'
+            assert isinstance(min_range, list), f'Expected min_range to be of type list but is {type(min_range)}'
+            assert isinstance(max_range, list), f'Expected max_range to be of type list but is {type(max_range)}'
 
-            self.min_range = self.min_range[0]
-            self.max_range = self.max_range[0]
+            assert all([isinstance(x, (float, np.float32, np.float64)) for x in min_range]), f'Expected min_range list to contain float values but found {[type(x) for x in min_range]}'
+            assert all([isinstance(x, (float, np.float32, np.float64)) for x in max_range]), f'Expected max_range list to contain float values but found {[type(x) for x in max_range]}'
+
+            assert len(min_range) == len(max_range), f'Expected min/max values to have the same length but min shape: {len(min_range)} and max shape: {len(max_range)}'
+
+            assert len(min_range) == 1, f'In per-tensor quantization min_range should be of length 1 but is {len(min_range)}'
+            assert len(max_range) == 1, f'In per-tensor quantization max_range should be of length 1 but is {len(max_range)}'
+
+            self.num_bits = num_bits
+
+            # Convert min/max to numpy arrays
+            min_range, max_range = np.asarray(min_range), np.asarray(max_range)
+
+            assert np.all(max_range > min_range), f'Expected max_range to be bigger than min_range!'
+            _min_range, _max_range = adjust_range_to_include_zero(min_range, max_range, num_bits)
+            assert np.all(_min_range <= 0) and np.all(_max_range >= 0), f'Expected zero to be in the range, got min_range={_min_range}, max_range={_max_range}'
+            if not np.isclose(np.linalg.norm(_min_range-min_range),0,atol=1e-6) or not np.isclose(np.linalg.norm(_max_range-max_range),0,atol=1e-6):
+                Logger.warning(f"Adjusting (min_range, max_range) from ({min_range},{max_range}) to ({_min_range},{_max_range})")  # pragma: no cover
+
+            self.max_range = _max_range[0]
+            self.min_range = _min_range[0]
+
 
         def __call__(self, inputs:tf.Tensor) -> tf.Tensor:
             """
