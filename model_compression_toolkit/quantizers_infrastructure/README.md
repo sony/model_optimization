@@ -6,7 +6,7 @@ It provides the required abstraction for emulating inference-time quantization a
 
 ## High level description
 
-For each layer, we use a "Quantization Wrapper" to wrap the layer, weights quantizers, and activation quantizers. We can choose the quantizers and all the quantization information for each layer by initializing the weights_quantizer and activation_quantizer API.
+For each layer, we use a "Quantization Wrapper" to wrap the layer, the weights quantizers, and the activation quantizers. We can choose the quantizers and all the quantization information for each layer by initializing the weights_quantizer and activation_quantizer API.
 
 Notice that the quantization wrapper and the quantizers are per framework.
 
