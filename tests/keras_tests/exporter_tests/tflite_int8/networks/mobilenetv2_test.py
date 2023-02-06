@@ -38,4 +38,13 @@ class TestMBV2TFLiteINT8Exporter(TFLiteINT8ExporterBaseTest):
             assert np.all(np.log2(scales) == np.round(np.log2(scales))), f'Expected all scales to be POT but scales are {scales} in tensor {tensor["name"]}'
 
 
+class TestMBV2UniformActivationTFLiteINT8Exporter(TestMBV2TFLiteINT8Exporter):
+
+    def get_tpc(self):
+        tp = generate_test_tp_model({'activation_quantization_method': QuantizationMethod.UNIFORM})
+        return generate_keras_tpc(name='uniform_conv2d_exporter', tp_model=tp)
+
+    def run_checks(self):
+        pass
+
 
