@@ -55,10 +55,10 @@ if FOUND_TF:
             assert isinstance(min_range, list), f'Expected min_range to be of type list but is {type(min_range)}'
             assert isinstance(max_range, list), f'Expected max_range to be of type list but is {type(max_range)}'
 
-            assert all([isinstance(x, (float, np.float32)) for x in
+            assert all([isinstance(x, (float, np.float32, np.float64)) for x in
                         min_range]), f'Expected min_range list to contain float values but found ' \
                                      f'{[type(x) for x in min_range]}'
-            assert all([isinstance(x, (float, np.float32)) for x in
+            assert all([isinstance(x, (float, np.float32, np.float64)) for x in
                         max_range]), f'Expected max_range list to contain float values but found ' \
                                      f'{[type(x) for x in max_range]}'
 

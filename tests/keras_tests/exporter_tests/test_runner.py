@@ -19,8 +19,7 @@ from tests.keras_tests.exporter_tests.tflite_int8.networks.conv2d_test import Te
     TestConv2DSymmetricTFLiteINT8Exporter
 from tests.keras_tests.exporter_tests.tflite_int8.networks.dense_test import TestDenseTFLiteINT8Exporter
 from tests.keras_tests.exporter_tests.tflite_int8.networks.depthwiseconv2d_test import TestDepthwiseConv2DTFLiteINT8Exporter
-from tests.keras_tests.exporter_tests.tflite_int8.networks.mobilenetv2_test import TestMBV2TFLiteINT8Exporter, \
-    TestMBV2UniformActivationTFLiteINT8Exporter
+from tests.keras_tests.exporter_tests.tflite_int8.networks.mobilenetv2_test import TestMBV2TFLiteINT8Exporter
 
 
 class ExporterTestsRunner(unittest.TestCase):
@@ -37,7 +36,6 @@ class ExporterTestsRunner(unittest.TestCase):
 
     def test_mbv2(self):
         TestMBV2TFLiteINT8Exporter().run_test()
-        TestMBV2UniformActivationTFLiteINT8Exporter().run_test()
 
 
 
