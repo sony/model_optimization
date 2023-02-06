@@ -18,6 +18,9 @@ import os
 import tensorflow as tf
 import numpy as np
 
+from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import BaseKerasInferableQuantizer, QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.get_all_subclasses import get_all_subclasses
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_tests import \
     MixedPrecisionActivationBaseTest
 from tests.keras_tests.tpc_keras import get_tpc
@@ -25,10 +28,6 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 import model_compression_toolkit as mct
 from model_compression_toolkit import quantizers_infrastructure as qi, MixedPrecisionQuantizationConfigV2
 import os
-from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
-    QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER, QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER
-from model_compression_toolkit.qat.keras.quantizer.quantization_builder import METHOD2ACTQUANTIZER, \
-    METHOD2WEIGHTQUANTIZER
 from model_compression_toolkit.core.keras.default_framework_info import KERNEL
 
 keras = tf.keras
@@ -192,7 +191,8 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                            atol=1e-6))
 
     def compare(self, qat_model, finalize=False, input_x=None, quantization_info=None):
-
+        all_trainable_quantizers = get_all_subclasses(BaseKerasQATTrainableQuantizer)
+        all_inferable_quantizers = get_all_subclasses(BaseKerasInferableQuantizer)
         for layer in qat_model.layers:
             if isinstance(layer, qi.KerasQuantizationWrapper):
                 # Check Activation quantizers
@@ -200,12 +200,18 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                     for quantizer in layer.activation_quantizers:
                         if finalize:
                             self.unit_test.assertTrue(isinstance(quantizer, qi.BaseKerasInferableQuantizer))
-                            q = QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER[self.activation_quantization_method]
-                            self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q))
+                            q = [_q for _q in all_inferable_quantizers if
+                                 _q.quantization_target == QuantizationTarget.Activation
+                                 and self.activation_quantization_method in _q.quantization_method]
+                            self.unit_test.assertTrue(len(q) == 1)
+                            self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q[0]))
                         else:
                             self.unit_test.assertTrue(isinstance(quantizer, qi.BaseKerasTrainableQuantizer))
-                            q = METHOD2ACTQUANTIZER[mct.TrainingMethod.STE][self.activation_quantization_method]
-                            self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q))
+                            q = [_q for _q in all_trainable_quantizers if _q.quantizer_type == mct.TrainingMethod.STE
+                                 and _q.quantization_target == QuantizationTarget.Activation
+                                 and self.activation_quantization_method in _q.quantization_method]
+                            self.unit_test.assertTrue(len(q) == 1)
+                            self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q[0]))
 
 
                 # Check Weight quantizers
@@ -213,12 +219,20 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                     for name, quantizer in layer.weights_quantizers.items():
                         if finalize:
                             self.unit_test.assertTrue(isinstance(quantizer, qi.BaseKerasInferableQuantizer))
-                            q = QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER[self.weights_quantization_method]
-                            self.unit_test.assertTrue(isinstance(layer.weights_quantizers[KERNEL], q))
+                            q = [_q for _q in all_inferable_quantizers if
+                                 _q.quantization_target == QuantizationTarget.Weights
+                                 and self.weights_quantization_method in _q.quantization_method]
+                            self.unit_test.assertTrue(len(q) == 1)
+                            self.unit_test.assertTrue(isinstance(layer.weights_quantizers[KERNEL], q[0]))
                         else:
                             self.unit_test.assertTrue(isinstance(quantizer, qi.BaseKerasTrainableQuantizer))
-                            q = METHOD2WEIGHTQUANTIZER[mct.TrainingMethod.STE][self.weights_quantization_method]
-                            self.unit_test.assertTrue(isinstance(layer.weights_quantizers[KERNEL], q))
+                            q = [_q for _q in all_trainable_quantizers if _q.quantizer_type == mct.TrainingMethod.STE
+                                 and _q.quantization_target == QuantizationTarget.Weights
+                                 and self.weights_quantization_method in _q.quantization_method]
+                            self.unit_test.assertTrue(len(q) == 1)
+                            self.unit_test.assertTrue(isinstance(layer.weights_quantizers[KERNEL], q[0]))
+
+
 
 
 class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):

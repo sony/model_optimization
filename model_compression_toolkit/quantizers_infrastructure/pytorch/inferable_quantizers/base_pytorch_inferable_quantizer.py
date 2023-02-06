@@ -15,22 +15,18 @@
 from abc import abstractmethod
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
-from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer, QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
 
 if FOUND_TORCH:
     import torch
 
 
     class BasePyTorchInferableQuantizer(BaseInferableQuantizer):
-        def __init__(self,
-                     quantization_target: QuantizationTarget):
+        def __init__(self):
             """
             This class is a base quantizer for PyTorch quantizers for inference only.
-
-            Args:
-                quantization_target: An enum which selects the quantizer tensor type: activation or weights.
             """
-            super(BasePyTorchInferableQuantizer, self).__init__(quantization_target=quantization_target)
+            super(BasePyTorchInferableQuantizer, self).__init__()
 
         @abstractmethod
         def __call__(self, inputs: torch.Tensor):

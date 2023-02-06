@@ -17,12 +17,18 @@ import numpy as np
 
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 
 if FOUND_TF:
     import tensorflow as tf
     from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_uniform_inferable_quantizer import BaseUniformInferableQuantizer
 
+
+    @mark_quantizer(quantization_target=QuantizationTarget.Activation,
+                    quantization_method=[QuantizationMethod.UNIFORM],
+                    quantizer_type=None)
     class ActivationUniformInferableQuantizer(BaseUniformInferableQuantizer):
         """
         Class for quantizing activations using an uniform quantizer
@@ -45,8 +51,7 @@ if FOUND_TF:
             # quantization
             super(ActivationUniformInferableQuantizer, self).__init__(num_bits,
                                                                       min_range,
-                                                                      max_range,
-                                                                      QuantizationTarget.Activation)
+                                                                      max_range)
 
         def __call__(self, inputs:tf.Tensor):
             """

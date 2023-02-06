@@ -14,7 +14,7 @@
 # ==============================================================================
 import copy
 import os
-
+import torch
 import numpy as np
 import random
 import unittest
@@ -28,7 +28,6 @@ from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizat
 from model_compression_toolkit import quantizers_infrastructure as qi
 tp = mct.target_platform
 
-import torch
 
 class TestFullyQuantizedExporter(unittest.TestCase):
 

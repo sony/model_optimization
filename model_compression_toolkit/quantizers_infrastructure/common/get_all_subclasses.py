@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Set
 
-import model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste
-import model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste
+
+def get_all_subclasses(cls: type) -> Set[type]:
+    """
+    This function returns a list of all subclasses of the given class,
+    including all subclasses of those subclasses, and so on.
+    Recursively get all subclasses of the subclass and add them to the list of all subclasses.
+
+    Args:
+        cls: A class object.
+
+    Returns: All classes that inherit from cls.
+
+    """
+
+    return set(cls.__subclasses__()).union(
+        [s for c in cls.__subclasses__() for s in get_all_subclasses(c)])

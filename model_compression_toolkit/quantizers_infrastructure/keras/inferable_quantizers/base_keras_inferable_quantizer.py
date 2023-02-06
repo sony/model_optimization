@@ -15,21 +15,17 @@
 from abc import abstractmethod
 
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer, QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
 
 if FOUND_TF:
     import tensorflow as tf
 
     class BaseKerasInferableQuantizer(BaseInferableQuantizer):
-        def __init__(self,
-                     quantization_target: QuantizationTarget):
+        def __init__(self):
             """
             This class is a base quantizer for Keras quantizers for inference only.
-
-            Args:
-                quantization_target: An enum which selects the quantizer tensor type: activation or weights.
             """
-            super(BaseKerasInferableQuantizer, self).__init__(quantization_target=quantization_target)
+            super(BaseKerasInferableQuantizer, self).__init__()
 
         @abstractmethod
         def get_config(self):

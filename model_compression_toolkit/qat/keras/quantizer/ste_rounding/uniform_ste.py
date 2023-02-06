@@ -19,17 +19,23 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit.qat.keras.quantizer.quant_utils import adjust_range_to_include_zero
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
-from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
 from model_compression_toolkit.core.common import constants as C
 import model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers as iq
-from model_compression_toolkit.quantizers_infrastructure.common.trainable_quantizer_config import \
-    TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
+from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
+    TrainableQuantizerActivationConfig
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 
 
-class STEUniformWeightQuantizer(qi.BaseKerasTrainableQuantizer):
+@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+                quantization_method=[QuantizationMethod.UNIFORM],
+                quantizer_type=TrainingMethod.STE)
+class STEUniformWeightQuantizer(BaseKerasQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer inputs.
     """
@@ -43,9 +49,7 @@ class STEUniformWeightQuantizer(qi.BaseKerasTrainableQuantizer):
             quantization_config: a trainable quantizer config class with attributes for the quantization.
 
         """
-        super().__init__(quantization_config,
-                         qi.QuantizationTarget.Weights,
-                         [qi.QuantizationMethod.UNIFORM])
+        super().__init__(quantization_config)
         self.max_values = quantization_config.weights_quantization_params[RANGE_MAX]
         self.min_values = quantization_config.weights_quantization_params[RANGE_MIN]
         self.num_bits = self.quantization_config.weights_n_bits
@@ -148,7 +152,10 @@ class STEUniformWeightQuantizer(qi.BaseKerasTrainableQuantizer):
                                                    channel_axis=self.channel_axis)
 
 
-class STEUniformActivationQuantizer(qi.BaseKerasTrainableQuantizer):
+@mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
+                quantization_method=[QuantizationMethod.UNIFORM],
+                quantizer_type=TrainingMethod.STE)
+class STEUniformActivationQuantizer(BaseKerasQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer outputs.
     """
@@ -161,9 +168,7 @@ class STEUniformActivationQuantizer(qi.BaseKerasTrainableQuantizer):
         Args:
             quantization_config: trainable quantizer config class
         """
-        super().__init__(quantization_config,
-                         qi.QuantizationTarget.Activation,
-                         [qi.QuantizationMethod.UNIFORM])
+        super().__init__(quantization_config)
 
         self.num_bits = quantization_config.activation_n_bits
         self.min_range = quantization_config.activation_quantization_params[C.RANGE_MIN]

@@ -16,7 +16,9 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer, \
+    QuantizationTarget
 
 if FOUND_TF:
     import tensorflow as tf
@@ -24,6 +26,10 @@ if FOUND_TF:
         .base_symmetric_inferable_quantizer import \
         BaseSymmetricInferableQuantizer
 
+
+    @mark_quantizer(quantization_target=QuantizationTarget.Weights,
+                    quantization_method=[QuantizationMethod.SYMMETRIC],
+                    quantizer_type=None)
     class WeightsSymmetricInferableQuantizer(BaseSymmetricInferableQuantizer):
         """
         Class for quantizing weights using a symmetric quantizer
@@ -47,8 +53,7 @@ if FOUND_TF:
 
             super(WeightsSymmetricInferableQuantizer, self).__init__(num_bits=num_bits,
                                                                      threshold=threshold,
-                                                                     signed=signed,
-                                                                     quantization_target=QuantizationTarget.Weights)
+                                                                     signed=signed)
 
             self.per_channel = per_channel
             self.channel_axis = channel_axis

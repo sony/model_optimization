@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget, BaseInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig

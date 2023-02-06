@@ -18,32 +18,17 @@ from typing import Dict, Any
 from model_compression_toolkit.core.common import BaseNode, Logger
 from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure import pytorch_inferable_quantizers
+from model_compression_toolkit.exporter.model_wrapper.common.exporter_get_quantizer import get_quantizer_class
+from model_compression_toolkit.quantizers_infrastructure import pytorch_inferable_quantizers, QuantizationTarget, \
+    BasePyTorchInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers import constants as qi_inferable_quantizers_constants
 import numpy as np
-
-QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER = {
-    QuantizationMethod.POWER_OF_TWO: pytorch_inferable_quantizers.WeightsPOTInferableQuantizer,
-    QuantizationMethod.SYMMETRIC: pytorch_inferable_quantizers.WeightsSymmetricInferableQuantizer,
-    QuantizationMethod.UNIFORM: pytorch_inferable_quantizers.WeightsUniformInferableQuantizer
-}
-
-QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER = {
-    QuantizationMethod.POWER_OF_TWO: pytorch_inferable_quantizers.ActivationPOTInferableQuantizer,
-    QuantizationMethod.SYMMETRIC: pytorch_inferable_quantizers.ActivationSymmetricInferableQuantizer,
-    QuantizationMethod.UNIFORM: pytorch_inferable_quantizers.ActivationUniformInferableQuantizer
-}
 
 
 def get_weights_inferable_quantizer_kwargs(node: BaseNode) -> Dict[str, Any]:
     # Get the weights quantization configuration for the node
     node_w_qc = node.final_weights_quantization_cfg
     quantization_method = node_w_qc.weights_quantization_method
-
-    # Check if the quantization method is supported for inferable quantizers
-    assert quantization_method in QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER, f'{quantization_method} for weights ' \
-                                                                           f'not in supported quantization ' \
-                                                                           f'methods for inferable quantizers'
 
     # Return the appropriate quantization parameters based on the quantization method
     if quantization_method in [QuantizationMethod.POWER_OF_TWO,
@@ -67,13 +52,6 @@ def get_activation_inferable_quantizer_kwargs(node: BaseNode) -> Dict[str, Any]:
     # Get the activation quantization configuration for the node
     node_qc = node.final_activation_quantization_cfg
     quantization_method = node_qc.activation_quantization_method
-
-    # Check if the quantization method is supported for inferable quantizers
-    assert quantization_method in QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER, f'{quantization_method} for weights ' \
-                                                                              f'not in ' \
-                                                                              f'supported quantization methods ' \
-                                                                              f'for inferable' \
-                                                                              f' quantizers'
 
     # Return the appropriate quantization parameters based on the quantization method
     if quantization_method in [QuantizationMethod.POWER_OF_TWO,
@@ -106,8 +84,13 @@ def get_weights_quantizer_for_node(node: BaseNode) -> pytorch_inferable_quantize
         # no cover
     node_w_qc = node.final_weights_quantization_cfg
     weights_quantization_method = node_w_qc.weights_quantization_method
+
+    quantier_for_node = get_quantizer_class(QuantizationTarget.Weights,
+                                            weights_quantization_method,
+                                            BasePyTorchInferableQuantizer)
     kwargs = get_weights_inferable_quantizer_kwargs(node)
-    return QUANTIZATION_METHOD_2_WEIGHTS_QUANTIZER.get(weights_quantization_method)(**kwargs)
+
+    return quantier_for_node(**kwargs)
 
 
 def get_activations_quantizer_for_node(node: BaseNode) -> pytorch_inferable_quantizers.BasePyTorchInferableQuantizer:
@@ -126,6 +109,11 @@ def get_activations_quantizer_for_node(node: BaseNode) -> pytorch_inferable_quan
         # pragma: no cover
     node_act_qc = node.final_activation_quantization_cfg
     activation_quantization_method = node_act_qc.activation_quantization_method
+
+    quantier_for_node = get_quantizer_class(QuantizationTarget.Activation,
+                                            activation_quantization_method,
+                                            BasePyTorchInferableQuantizer)
     kwargs = get_activation_inferable_quantizer_kwargs(node)
-    return QUANTIZATION_METHOD_2_ACTIVATION_QUANTIZER.get(activation_quantization_method)(**kwargs)
+
+    return quantier_for_node(**kwargs)
 

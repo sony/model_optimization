@@ -20,10 +20,12 @@ import torch.nn as nn
 from torch import Tensor
 
 from model_compression_toolkit.core.common.constants import RANGE_MAX, RANGE_MIN
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit.core.common import constants as C
-from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
+from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.pytorch import inferable_quantizers as iq
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import uniform_quantizer
@@ -31,7 +33,10 @@ from model_compression_toolkit.quantizers_infrastructure.common.trainable_quanti
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 
-class STEUniformWeightQuantizer(qi.BasePytorchTrainableQuantizer):
+@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+                quantization_method=[QuantizationMethod.UNIFORM],
+                quantizer_type=TrainingMethod.STE)
+class STEUniformWeightQuantizer(BasePytorchQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer inputs.
     """
@@ -44,9 +49,7 @@ class STEUniformWeightQuantizer(qi.BasePytorchTrainableQuantizer):
         Args:
             quantization_config: trainable quantizer config class
         """
-        super().__init__(quantization_config,
-                         qi.QuantizationTarget.Weights,
-                         [qi.QuantizationMethod.UNIFORM])
+        super().__init__(quantization_config)
         self.num_bits = self.quantization_config.weights_n_bits
         self.min_int = 0
         self.max_int = 2 ** self.num_bits - 1
@@ -116,7 +119,10 @@ class STEUniformWeightQuantizer(qi.BasePytorchTrainableQuantizer):
                                                    channel_axis=self.quantization_config.weights_channels_axis)
 
 
-class STEUniformActivationQuantizer(qi.BasePytorchTrainableQuantizer):
+@mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
+                quantization_method=[QuantizationMethod.UNIFORM],
+                quantizer_type=TrainingMethod.STE)
+class STEUniformActivationQuantizer(BasePytorchQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer activations.
     """
@@ -129,9 +135,7 @@ class STEUniformActivationQuantizer(qi.BasePytorchTrainableQuantizer):
         Args:
             quantization_config: trainable quantizer config class
         """
-        super().__init__(quantization_config,
-                         qi.QuantizationTarget.Activation,
-                         [qi.QuantizationMethod.UNIFORM])
+        super().__init__(quantization_config)
 
         np_min_range = quantization_config.activation_quantization_params[C.RANGE_MIN]
         np_max_range = quantization_config.activation_quantization_params[C.RANGE_MAX]

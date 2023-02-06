@@ -16,7 +16,9 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer, \
+    QuantizationTarget
 
 if FOUND_TORCH:
     import torch
@@ -27,6 +29,9 @@ if FOUND_TORCH:
         BaseSymmetricInferableQuantizer
 
 
+    @mark_quantizer(quantization_target=QuantizationTarget.Weights,
+                    quantization_method=[QuantizationMethod.SYMMETRIC],
+                    quantizer_type=None)
     class WeightsSymmetricInferableQuantizer(BaseSymmetricInferableQuantizer):
         """
         Class for quantizing weights using a symmetric quantizer
@@ -48,8 +53,7 @@ if FOUND_TORCH:
                 channel_axis: Axis of input to apply per-channel quantization on.
             """
 
-            super(WeightsSymmetricInferableQuantizer, self).__init__(quantization_target=QuantizationTarget.Weights,
-                                                                     threshold=threshold,
+            super(WeightsSymmetricInferableQuantizer, self).__init__(threshold=threshold,
                                                                      num_bits=num_bits,
                                                                      signed=True)
 

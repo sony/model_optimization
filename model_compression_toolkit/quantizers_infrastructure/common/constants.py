@@ -32,3 +32,7 @@ LAYER = "layer"
 STEPS = "optimizer_step"
 TRAINING = "training"
 
+
+QUANTIZATION_TARGET = 'quantization_target'
+QUANTIZATION_METHOD = 'quantization_method'
+QUANTIZER_TYPE = 'quantizer_type'

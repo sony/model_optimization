@@ -16,8 +16,9 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer, \
+    QuantizationTarget
 
 if FOUND_TF:
     import tensorflow as tf
@@ -26,6 +27,9 @@ if FOUND_TF:
         BaseUniformInferableQuantizer
 
 
+    @mark_quantizer(quantization_target=QuantizationTarget.Weights,
+                    quantization_method=[QuantizationMethod.UNIFORM],
+                    quantizer_type=None)
     class WeightsUniformInferableQuantizer(BaseUniformInferableQuantizer):
         """
         Class for quantizing weights using a uniform quantizer
@@ -49,8 +53,7 @@ if FOUND_TF:
             """
             super(WeightsUniformInferableQuantizer, self).__init__(num_bits,
                                                                    min_range,
-                                                                   max_range,
-                                                                   QuantizationTarget.Weights)
+                                                                   max_range)
 
             self.per_channel = per_channel
             self.channel_axis = channel_axis

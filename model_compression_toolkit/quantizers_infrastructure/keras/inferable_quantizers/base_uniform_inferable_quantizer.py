@@ -16,21 +16,24 @@ from abc import abstractmethod
 
 import numpy as np
 from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.common.quant_utils import adjust_range_to_include_zero
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+
 from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
     import \
     BaseKerasInferableQuantizer
 
 
+@mark_quantizer(quantization_target=None,
+                quantization_method=[QuantizationMethod.UNIFORM],
+                quantizer_type=None)
 class BaseUniformInferableQuantizer(BaseKerasInferableQuantizer):
 
     def __init__(self,
                  num_bits: int,
                  min_range: np.ndarray,
-                 max_range: np.ndarray,
-                 quantization_target: QuantizationTarget
-                 ):
+                 max_range: np.ndarray):
         """
         Initialize the quantizer with the specified parameters.
 
@@ -38,9 +41,8 @@ class BaseUniformInferableQuantizer(BaseKerasInferableQuantizer):
             num_bits: number of bits to use for quantization
             min_range: min quantization range
             max_range: max quantization range
-            quantization_target: An enum which selects the quantizer tensor type: activation or weights.
         """
-        super(BaseUniformInferableQuantizer, self).__init__(quantization_target=quantization_target)
+        super(BaseUniformInferableQuantizer, self).__init__()
         self.num_bits = num_bits
         assert np.all(max_range > min_range), f'Expected max_range to be bigger than min_range!'
         _min_range, _max_range = adjust_range_to_include_zero(min_range, max_range, num_bits)

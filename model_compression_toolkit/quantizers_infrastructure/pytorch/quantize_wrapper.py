@@ -36,7 +36,7 @@ if FOUND_TORCH:
 
             Args:
                 module: A pytorch module.
-                weight_quantizers: A dictionary between a weight's name to its quantizer.
+                weights_quantizers: A dictionary between a weight's name to its quantizer.
                 activation_quantizers: A list of activations quantization, one for each layer output.
             """
             super().__init__()

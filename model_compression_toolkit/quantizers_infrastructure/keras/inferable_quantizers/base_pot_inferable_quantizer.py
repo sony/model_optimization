@@ -16,19 +16,22 @@ from abc import abstractmethod
 
 import numpy as np
 
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers \
     .base_symmetric_inferable_quantizer import \
     BaseSymmetricInferableQuantizer
 
 
+@mark_quantizer(quantization_target=None,
+                quantization_method=[QuantizationMethod.POWER_OF_TWO],
+                quantizer_type=None)
 class BasePOTInferableQuantizer(BaseSymmetricInferableQuantizer):
 
     def __init__(self,
                  num_bits: int,
                  threshold: np.ndarray,
-                 signed: bool,
-                 quantization_target: QuantizationTarget):
+                 signed: bool):
         """
         Initialize the quantizer with the specified parameters.
 
@@ -36,12 +39,10 @@ class BasePOTInferableQuantizer(BaseSymmetricInferableQuantizer):
             num_bits: number of bits to use for quantization
             threshold: threshold for quantizing weights
             signed: whether or not to use signed quantization
-            quantization_target: An enum which selects the quantizer tensor type: activation or weights.
         """
         super(BasePOTInferableQuantizer, self).__init__(num_bits=num_bits,
                                                         threshold=threshold,
-                                                        signed=signed,
-                                                        quantization_target=quantization_target)
+                                                        signed=signed)
 
         is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in self.threshold.flatten()])
         assert is_threshold_pot, f'Expected threshold to be power of 2 but is {self.threshold}'

@@ -22,19 +22,20 @@ import torch.nn as nn
 
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 
+@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
 class ZeroWeightsQuantizer(qi.BasePytorchTrainableQuantizer):
     """
     A dummy quantizer for test usage - "quantize" the layer's weights to 0
     """
 
     def __init__(self, quantization_config: TrainableQuantizerWeightsConfig):
-        super().__init__(quantization_config,
-                         qi.QuantizationTarget.Weights,
-                         [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
+        super().__init__(quantization_config)
 
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
@@ -49,15 +50,15 @@ class ZeroWeightsQuantizer(qi.BasePytorchTrainableQuantizer):
         return inputs * 0
 
 
+@mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
+                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
 class ZeroActivationsQuantizer(qi.BasePytorchTrainableQuantizer):
     """
     A dummy quantizer for test usage - "quantize" the layer's activation to 0
     """
 
     def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
-        super().__init__(quantization_config,
-                         qi.QuantizationTarget.Activation,
-                         [qi.QuantizationMethod.POWER_OF_TWO, qi.QuantizationMethod.SYMMETRIC])
+        super().__init__(quantization_config)
 
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
