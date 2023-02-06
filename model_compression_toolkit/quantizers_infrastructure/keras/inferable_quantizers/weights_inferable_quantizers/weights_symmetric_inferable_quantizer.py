@@ -50,7 +50,7 @@ if FOUND_TF:
                 input_rank: number of dimensions of input tensor the quantizer quantizes
             """
             assert isinstance(threshold, list), f'Expected threshold to be of type list but is {type(threshold)}'
-            assert all([isinstance(x, (float, np.float32, tf.float32)) for x in
+            assert all([isinstance(x, (float, np.float)) for x in
                         threshold]), f'Expected threshold list to contain float or np.float values but found ' \
                                      f'{[type(x) for x in threshold]}'
 
