@@ -6,15 +6,13 @@ It provides the required abstraction for emulating inference-time quantization a
 
 ## High level description
 
-For each layer, we wrap the layer and a quantization dispatcher (which contains the quantizers and all quantization information we need to quantize the layer) in a "Quantization Wrapper".
+For each layer, we use a "Quantization Wrapper" to wrap the layer, weights quantizers, and activation quantizers. We can choose the quantizers and all the quantization information for each layer by initializing the weights_quantizer and activation_quantizer API.
 
-Notice that the quantization wrapper and the quantization dispatcher are per framework.
-
-
-
+Notice that the quantization wrapper and the quantizers are per framework.
 
 <img src="../../docsrc/images/quantization_infra.png" width="700">
 
+## Quantizers 
 The quantizers in this module are divided into two main types:
 The "Inferable Quantizer" is used for emulating inference-time quantization, and the "Trainable Quantizer", contains learnable quantization parameters that can be optimized during training.
 
