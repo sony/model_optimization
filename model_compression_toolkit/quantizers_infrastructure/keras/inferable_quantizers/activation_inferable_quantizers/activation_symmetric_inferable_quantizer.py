@@ -25,8 +25,7 @@ from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_q
 
 if FOUND_TF:
     import tensorflow as tf
-    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.activation_inferable_quantizers.activation_uniform_inferable_quantizer import \
-        ActivationUniformInferableQuantizer
+    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.activation_inferable_quantizers.activation_uniform_inferable_quantizer import ActivationUniformInferableQuantizer
 
     @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                     quantization_method=[QuantizationMethod.SYMMETRIC],
@@ -58,6 +57,7 @@ if FOUND_TF:
             self.signed = signed
 
             delta = self.threshold / (2 ** (num_bits - int(self.signed)))
+            # In activation quantization is per-tensor only - thus we pass the threshold as a list with a len of 1
             min_range = list(-self.threshold) if self.signed else [0.0]
             max_range = list(self.threshold - delta)
 
