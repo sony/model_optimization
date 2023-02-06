@@ -71,11 +71,13 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
         if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                    QuantizationMethod.SYMMETRIC]:
             return {'num_bits': node_qc.activation_n_bits,
+                    # In activation quantization is per-tensor only - thus we hold the threshold as a list with a len of 1
                     'threshold': [node_qc.activation_quantization_params[THRESHOLD]],
                     'signed': node_qc.activation_quantization_params[SIGNED]}
 
         elif quantization_method in [QuantizationMethod.UNIFORM]:
             return {'num_bits': node_qc.activation_n_bits,
+                    # In activation quantization is per-tensor only - thus we hold the min/max as a list with a len of 1
                     'min_range': [node_qc.activation_quantization_params[RANGE_MIN]],
                     'max_range': [node_qc.activation_quantization_params[RANGE_MAX]]}
         else:

@@ -274,9 +274,13 @@ class STEActivationQuantizer(BaseKerasQATTrainableQuantizer):
         if self.power_of_two:
             pot_threshold = 2 ** np.ceil(np.log2(self.quantizer_parameters[THRESHOLD_TENSOR]))
             return iq.ActivationPOTInferableQuantizer(num_bits=self.num_bits,
+                                                      # In activation quantization is per-tensor only - thus we pass
+                                                      # the threshold as a list with a len of 1
                                                       threshold=[pot_threshold],
                                                       signed=self.signed)
         else:
             return iq.ActivationSymmetricInferableQuantizer(num_bits=self.num_bits,
+                                                            # In activation quantization is per-tensor only - thus we
+                                                            # pass the threshold as a list with a len of 1
                                                             threshold=[self.quantizer_parameters[THRESHOLD_TENSOR].numpy()],
                                                             signed=self.signed)
