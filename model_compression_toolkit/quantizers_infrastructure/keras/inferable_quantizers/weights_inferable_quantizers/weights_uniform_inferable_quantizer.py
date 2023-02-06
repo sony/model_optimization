@@ -68,6 +68,8 @@ if FOUND_TF:
                     self.min_range) == 1, f'In per-tensor quantization min/max should be of length 1 but is {len(min_range)}'
                 assert len(self.min_range) == 1, f'In per-tensor quantization min_range should be of length 1 but is {len(self.min_range)}'
                 assert len(self.max_range) == 1, f'In per-tensor quantization max_range should be of length 1 but is {len(self.max_range)}'
+                self.min_range = self.min_range[0]
+                self.max_range = self.max_range[0]
 
             self.per_channel = per_channel
             self.channel_axis = channel_axis
@@ -120,8 +122,8 @@ if FOUND_TF:
             else:
                 # If per-channel quantization is not being used, quantize the input tensor using regular quantization
                 return tf.quantization.fake_quant_with_min_max_vars(inputs,
-                                                                    min=self.min_range[0],
-                                                                    max=self.max_range[0],
+                                                                    min=self.min_range,
+                                                                    max=self.max_range,
                                                                     num_bits=self.num_bits)
 
 
