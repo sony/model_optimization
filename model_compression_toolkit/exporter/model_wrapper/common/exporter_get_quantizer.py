@@ -28,8 +28,8 @@ def get_quantizer_class(quant_target: QuantizationTarget,
     Exactly one class should be found.
 
     Args:
-        quant_target: QuantizationTarget value which indicates what is the target for quantization to
-            use the quantizer for.
+        quant_target: QuantizationTarget value (Weights or Activation) which indicates what is the target for
+            quantization to use the quantizer for.
         quant_method: A list of QuantizationMethod values to indicate all type of quantization methods that the
             quantizer supports.
         quantizer_base_class: A type of quantizer that the requested quantizer should inherit from.

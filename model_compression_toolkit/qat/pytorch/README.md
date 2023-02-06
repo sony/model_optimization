@@ -5,7 +5,7 @@
 All available training types for QAT are defined in the Enum [`TrainingMethod`](./quantizer/README.md).
 
 ## Make your own Pytorch trainable quantizers
-Trainable quantizer can be Weights Quantizer or Activation Quantizer.
+A trainable quantizer can be Weights Quantizer or Activation Quantizer.
 In order to make your new quantizer you need to create your quantizer class, `MyTrainingQuantizer` and do as follows:
    - `MyTrainingQuantizer` should inherit from [`BasePytorchTrainableQuantizer`](../../quantizers_infrastructure/pytorch/base_pytorch_quantizer.py).
    - `MyTrainingQuantizer` should have [`init`](../../quantizers_infrastructure/common/base_trainable_quantizer.py) function that gets `quantization_config` which is [`NodeWeightsQuantizationConfig`](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/common/quantization/node_quantization_config.py#L228) if you choose to implement weights quantizer or [`NodeActivationQuantizationConfig`](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/common/quantization/node_quantization_config.py#L63) if you choose activation quantizer.
@@ -17,7 +17,7 @@ In order to make your new quantizer you need to create your quantizer class, `My
 ## Example: Symmetric Weights Quantizer
 To create custom `MyWeightsTrainingQuantizer` which is a symmetric weights training quantizer you need to set
 `qi.QuantizationTarget.Weights` as target and `qi.QuantizationMethod.SYMMETRIC` as method.
-Assume that the quantizer a new trining mathod called `MyTrainig` which is defined in the `TrainingMethod` Enum.
+Assume that the quantizer has a new training method called `MyTrainig` which is defined in the `TrainingMethod` Enum.
 ```python
 NEW_PARAM = "new_param_name"
 from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
@@ -54,7 +54,7 @@ class MyWeightsTrainingQuantizer(BasePytorchQATTrainableQuantizer):
 
 ## Example: Symmetric Activations Quantizer
 To create custom `MyActivationsTrainingQuantizer` which is a symmetric activations training quantizer you need to set `qi.QuantizationTarget.Activation` as target and `qi.QuantizationMethod.SYMMETRIC` as method.
-Assume that the quantizer a new trining mathod called `MyTrainig` which is defined in the `TrainingMethod` Enum.
+Assume that the quantizer has a new training method called `MyTrainig` which is defined in the `TrainingMethod` Enum.
 ```python
 NEW_PARAM = "new_param_name"
 from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod

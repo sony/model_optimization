@@ -2,7 +2,7 @@
 
 [`BasePytorchTrainableQuantizer`](./base_pytorch_quantizer.py) is an interface that enables easy quantizers development and training. 
 Using this base class makes it simple to implement new quantizers for training and inference for weights or activations.
-[`BasePytorchTrainableQuantizer`](./base_pytorch_quantizer.py) constitutes a base class for trainable quantizers of specific of specific tasks - currently, [`BasePytorchQATTrainableQuantizer`](../../qat/pytorch/quantizer/base_pytorch_qat_quantizer.py) for Quantization-Aware Training.
+[`BasePytorchTrainableQuantizer`](./base_pytorch_quantizer.py) constitutes a base class for trainable quantizers of specific tasks - currently, [`BasePytorchQATTrainableQuantizer`](../../qat/pytorch/quantizer/base_pytorch_qat_quantizer.py) for Quantization-Aware Training.
 
 ### The mark_quantizer Decorator
 The [`@mark_quantizer`](../common/base_inferable_quantizer.py) decorator is used to supply each quantizer with static properties which define its task compitability. Each quantizer class should be decorated with this decorator. It defines the following properties:
