@@ -22,6 +22,8 @@ from model_compression_toolkit.core.common.target_platform import QuantizationMe
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.common.quant_utils import adjust_range_to_include_zero
+from model_compression_toolkit.quantizers_infrastructure.keras.validation_functions import \
+    validate_uniform_min_max_ranges, validate_adjusted_min_max_ranges
 
 if FOUND_TF:
     import tensorflow as tf
@@ -50,14 +52,11 @@ if FOUND_TF:
             """
             super(ActivationUniformInferableQuantizer, self).__init__()
 
-            assert isinstance(min_range, list), f'Expected min_range to be of type list but is {type(min_range)}'
-            assert isinstance(max_range, list), f'Expected max_range to be of type list but is {type(max_range)}'
+            # Validate ranges properties
+            validate_uniform_min_max_ranges(min_range,
+                                            max_range)
 
-            assert all([isinstance(x, (float, np.float32, np.float64)) for x in min_range]), f'Expected min_range list to contain float values but found {[type(x) for x in min_range]}'
-            assert all([isinstance(x, (float, np.float32, np.float64)) for x in max_range]), f'Expected max_range list to contain float values but found {[type(x) for x in max_range]}'
-
-            assert len(min_range) == len(max_range), f'Expected min/max values to have the same length but min shape: {len(min_range)} and max shape: {len(max_range)}'
-
+            # In activation per-channel quantization is not supported thus we expect a single min/max value.
             assert len(min_range) == 1, f'In per-tensor quantization min_range should be of length 1 but is {len(min_range)}'
             assert len(max_range) == 1, f'In per-tensor quantization max_range should be of length 1 but is {len(max_range)}'
 
@@ -65,12 +64,11 @@ if FOUND_TF:
 
             # Convert min/max to numpy arrays
             min_range, max_range = np.asarray(min_range), np.asarray(max_range)
-
-            assert np.all(max_range > min_range), f'Expected max_range to be bigger than min_range!'
             _min_range, _max_range = adjust_range_to_include_zero(min_range, max_range, num_bits)
-            assert np.all(_min_range <= 0) and np.all(_max_range >= 0), f'Expected zero to be in the range, got min_range={_min_range}, max_range={_max_range}'
-            if not np.isclose(np.linalg.norm(_min_range-min_range),0,atol=1e-6) or not np.isclose(np.linalg.norm(_max_range-max_range),0,atol=1e-6):
-                Logger.warning(f"Adjusting (min_range, max_range) from ({min_range},{max_range}) to ({_min_range},{_max_range})")  # pragma: no cover
+            validate_adjusted_min_max_ranges(min_range=min_range,
+                                             max_range=max_range,
+                                             adj_min=_min_range,
+                                             adj_max=_max_range)
 
             self.max_range = _max_range[0]
             self.min_range = _min_range[0]
