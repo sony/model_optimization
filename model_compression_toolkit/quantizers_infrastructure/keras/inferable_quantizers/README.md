@@ -84,5 +84,4 @@ assert tf.reduce_min(quantized_tensor) >= 0, f'Quantized values should not conta
 
 ```
 
-
-If you have any questions or issues using the Keras inferable quantizers, please open an issue on the GitHub.
+If you have any questions or issues using the Keras inferable quantizers, please [open an issue](https://github.com/sony/model_optimization/issues/new/choose) in this GitHub repository.
