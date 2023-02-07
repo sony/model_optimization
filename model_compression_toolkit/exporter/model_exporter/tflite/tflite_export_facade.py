@@ -35,8 +35,12 @@ if FOUND_TF:
                             is_layer_exportable_fn: Callable = is_keras_layer_exportable
                             ):
         """
-        Prepare and return fully quantized model for export. Save exported model to
-        a path if passed.
+        Export a Keras quantized model to a tflite model.
+        The model will be saved to the path in save_model_path.
+        Mode can be used for different exported files. Currently, tflite_export_model
+        supports TFLiteExportMode.FAKELY_QUANT (where weights and activations are
+        float fakely-quantized values), and TFLiteExportMode.INT8 (where weights
+        and activations are represented using 8bits integers).
 
         Args:
             model: Model to export.

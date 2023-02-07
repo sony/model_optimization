@@ -19,7 +19,7 @@ import model_compression_toolkit as mct
 
 # Create a model
 float_model = ResNet50()
-# Quantize the model. In order to export the model new_experimental_exporter is True.
+# Quantize the model. In order to export the model set new_experimental_exporter to True.
 # Notice that here the representative dataset is random. 
 quantized_exportable_model, _ = mct.keras_post_training_quantization_experimental(float_model,
                                                                                   representative_data_gen=lambda: [np.random.random((1, 224, 224, 3))],
@@ -56,6 +56,7 @@ print(f'Compression ratio: {os.path.getsize(float_file_path)/os.path.getsize(tfl
 
 ### Fakely-Quantized TFLite 
 The model will be exported as a tflite model where weights and activations are quantized but represented as float.
+Notice that activation quantizers are implemented using [tf.quantization.fake_quant_with_min_max_vars](https://www.tensorflow.org/api_docs/python/tf/quantization/fake_quant_with_min_max_vars) operators. 
 
 #### Usage Example
 ```python
@@ -103,7 +104,7 @@ from torchvision.models.mobilenetv2 import mobilenet_v2
 
 # Create a model
 float_model = mobilenet_v2()
-# Quantize the model. In order to export the model new_experimental_exporter is True.
+# Quantize the model. In order to export the model set new_experimental_exporter to True.
 # Notice that here the representative dataset is random.
 def representative_data_gen():
     for i in range(1):

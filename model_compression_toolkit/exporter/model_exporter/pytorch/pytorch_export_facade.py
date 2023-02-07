@@ -36,8 +36,13 @@ if FOUND_TORCH:
                              is_layer_exportable_fn: Callable = is_pytorch_layer_exportable,
                              mode: PyTorchExportMode = PyTorchExportMode.FAKELY_QUANT_TORCHSCRIPT) -> None:
         """
-        Prepare and return fully quantized model for export. Save exported model to
-        a path if passed.
+        Export a PyTorch quantized model to a torchscript or onnx model.
+        The model will be saved to the path in save_model_path.
+        Mode can be used for different exported files. Currently, pytorch_export_model
+        supports PyTorchExportMode.FAKELY_QUANT_TORCHSCRIPT (where the exported model
+        is in a TorchScript format and its weights and activations are float fakely-quantized values),
+        and PyTorchExportMode.FakelyQuantONNX (where the exported model
+        is in an ONNX format and its weights and activations are float fakely-quantized values)
 
         Args:
             model: Model to export.

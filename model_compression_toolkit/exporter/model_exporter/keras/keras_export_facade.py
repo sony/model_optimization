@@ -33,8 +33,11 @@ if FOUND_TF:
                            is_layer_exportable_fn: Callable = is_keras_layer_exportable,
                            mode: KerasExportMode = KerasExportMode.FAKELY_QUANT) -> Dict[str, type]:
         """
-        Prepare and return fully quantized model for export. Save exported model to
-        a path if passed.
+        Export a Keras quantized model to h5 model.
+        The model will be saved to the path in save_model_path.
+        Mode can be used for different exported files. Currently, keras_export_model
+        supports KerasExportMode.FAKELY_QUANT (where weights and activations are
+        float fakely-quantized values).
 
         Args:
             model: Model to export.
