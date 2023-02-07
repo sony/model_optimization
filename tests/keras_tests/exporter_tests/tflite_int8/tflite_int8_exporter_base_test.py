@@ -58,7 +58,6 @@ class TFLiteINT8ExporterBaseTest:
         # Export model in INT8 format
         _, self.int8_model_file_path = tempfile.mkstemp('.tflite')
         tflite_export_model(model=self.exportable_model,
-                            is_layer_exportable_fn=is_keras_layer_exportable,
                             mode=TFLiteExportMode.INT8,
                             save_model_path=self.int8_model_file_path)
 

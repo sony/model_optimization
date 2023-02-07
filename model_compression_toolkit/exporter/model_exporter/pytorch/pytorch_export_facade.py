@@ -15,13 +15,8 @@
 from enum import Enum
 from typing import Callable
 
-import torch.nn
-
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import \
-    FakelyQuantONNXPyTorchExporter
-from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_torchscript_pytorch_exporter import \
-    FakelyQuantTorchScriptPyTorchExporter
+from model_compression_toolkit.core.common.constants import FOUND_TORCH
 
 
 class PyTorchExportMode(Enum):
@@ -29,39 +24,51 @@ class PyTorchExportMode(Enum):
     FAKELY_QUANT_ONNX = 1
 
 
-def pytorch_export_model(model: torch.nn.Module,
-                         is_layer_exportable_fn: Callable,
-                         mode: PyTorchExportMode = PyTorchExportMode.FAKELY_QUANT_TORCHSCRIPT,
-                         save_model_path: str = None,
-                         repr_dataset: Callable = None) -> None:
-    """
-    Prepare and return fully quantized model for export. Save exported model to
-    a path if passed.
+if FOUND_TORCH:
+    import torch.nn
+    from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import FakelyQuantONNXPyTorchExporter
+    from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_torchscript_pytorch_exporter import FakelyQuantTorchScriptPyTorchExporter
+    from model_compression_toolkit.exporter.model_wrapper.pytorch.validate_layer import is_pytorch_layer_exportable
 
-    Args:
-        model: Model to export.
-        is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
-        mode: Mode to export the model according to.
-        save_model_path: Path to save the model.
-        repr_dataset: Representative dataset for tracing the pytorch model (mandatory for exporting it).
+    def pytorch_export_model(model: torch.nn.Module,
+                             save_model_path: str,
+                             repr_dataset: Callable,
+                             is_layer_exportable_fn: Callable = is_pytorch_layer_exportable,
+                             mode: PyTorchExportMode = PyTorchExportMode.FAKELY_QUANT_TORCHSCRIPT) -> None:
+        """
+        Prepare and return fully quantized model for export. Save exported model to
+        a path if passed.
 
-    """
+        Args:
+            model: Model to export.
+            is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
+            mode: Mode to export the model according to.
+            save_model_path: Path to save the model.
+            repr_dataset: Representative dataset for tracing the pytorch model (mandatory for exporting it).
 
-    if mode == PyTorchExportMode.FAKELY_QUANT_TORCHSCRIPT:
-        exporter = FakelyQuantTorchScriptPyTorchExporter(model,
-                                                         is_layer_exportable_fn,
-                                                         save_model_path,
-                                                         repr_dataset)
+        """
 
-    elif mode == PyTorchExportMode.FAKELY_QUANT_ONNX:
-        exporter = FakelyQuantONNXPyTorchExporter(model,
-                                                  is_layer_exportable_fn,
-                                                  save_model_path,
-                                                  repr_dataset)
+        if mode == PyTorchExportMode.FAKELY_QUANT_TORCHSCRIPT:
+            exporter = FakelyQuantTorchScriptPyTorchExporter(model,
+                                                             is_layer_exportable_fn,
+                                                             save_model_path,
+                                                             repr_dataset)
 
-    else:
-        Logger.critical(
-            f'Unsupported mode was used {mode.name} to export PyTorch model. '
-            f'Please see API for supported modes.')  # pragma: no cover
+        elif mode == PyTorchExportMode.FAKELY_QUANT_ONNX:
+            exporter = FakelyQuantONNXPyTorchExporter(model,
+                                                      is_layer_exportable_fn,
+                                                      save_model_path,
+                                                      repr_dataset)
 
-    exporter.export()
+        else:
+            Logger.critical(
+                f'Unsupported mode was used {mode.name} to export PyTorch model. '
+                f'Please see API for supported modes.')  # pragma: no cover
+
+        exporter.export()
+
+else:
+    def pytorch_export_model(*args, **kwargs):
+        Logger.error('Installing torch is mandatory '
+                     'when using pytorch_export_model. '
+                     'Could not find PyTorch packages.')  # pragma: no cover
