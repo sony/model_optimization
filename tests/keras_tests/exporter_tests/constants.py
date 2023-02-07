@@ -13,12 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
-# Inferable keras quantizer signature parameters:
-NUM_BITS = 'num_bits'
-SIGNED = 'signed'
-THRESHOLD = 'threshold'
-PER_CHANNEL = 'per_channel'
-MIN_RANGE = 'min_range'
-MAX_RANGE = 'max_range'
-CHANNEL_AXIS = 'channel_axis'
-INPUT_RANK = 'input_rank'
+# TFLite tensor details keys:
+QUANTIZATION_PARAMETERS = 'quantization_parameters'
+SCALES = "scales"
+ZERO_POINTS = "zero_points"
+INDEX = "index"
+NAME = "name"
+SHAPE = "shape"
