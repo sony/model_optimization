@@ -13,13 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 import os
-import struct
 import tempfile
 import unittest
 
 import numpy as np
 import torch
 from torchvision.models.mobilenetv2 import mobilenet_v2
+
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.constants import FOUND_ONNX, FOUND_ONNXRUNTIME
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
@@ -27,7 +27,6 @@ from model_compression_toolkit.exporter.model_exporter import pytorch_export_mod
 
 _, SAVED_MODEL_PATH_PTH = tempfile.mkstemp('.pth')
 _, SAVED_MODEL_PATH_ONNX = tempfile.mkstemp('.onnx')
-
 
 if FOUND_ONNX:
     import onnx
@@ -46,17 +45,15 @@ if FOUND_ONNX:
             self.exportable_model = self.run_mct(self.model, new_experimental_exporter=True)
             self.exportable_model.eval()
             pytorch_export_model(model=self.exportable_model,
-                                 is_layer_exportable_fn=lambda x: x,
                                  mode=PyTorchExportMode.FAKELY_QUANT_TORCHSCRIPT,
                                  save_model_path=SAVED_MODEL_PATH_PTH,
                                  repr_dataset=self.repr_datagen)
             self.exported_model_pth = torch.load(SAVED_MODEL_PATH_PTH)
             self.exported_model_pth.eval()
             pytorch_export_model(model=self.exportable_model,
-                                                           is_layer_exportable_fn=lambda x: x,
-                                                           mode=PyTorchExportMode.FAKELY_QUANT_ONNX,
-                                                           save_model_path=SAVED_MODEL_PATH_ONNX,
-                                                           repr_dataset=self.repr_datagen)
+                                 mode=PyTorchExportMode.FAKELY_QUANT_ONNX,
+                                 save_model_path=SAVED_MODEL_PATH_ONNX,
+                                 repr_dataset=self.repr_datagen)
             self.exported_model_onnx = onnx.load(SAVED_MODEL_PATH_ONNX)
             # Check that the model is well formed
             onnx.checker.check_model(self.exported_model_onnx)
@@ -91,4 +88,3 @@ if FOUND_ONNX:
                 # compute ONNX Runtime output prediction
                 ort_inputs = {ort_session.get_inputs()[0].name: to_numpy(x)}
                 ort_session.run(None, ort_inputs)
-
