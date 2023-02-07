@@ -14,5 +14,4 @@
 # ==============================================================================
 
 import model_compression_toolkit.gptq.keras.quantizer.ste_rounding.symmetric_ste
-import model_compression_toolkit.gptq.keras.quantizer.ste_rounding.uniform_ste
 import model_compression_toolkit.gptq.keras.quantizer.soft_rounding.symmetric_soft_quantizer

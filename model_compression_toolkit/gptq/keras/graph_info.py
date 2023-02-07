@@ -47,8 +47,8 @@ def gptq_get_trainable_parameters(fxp_model: Model,
     for layer in fxp_model.layers:
         if isinstance(layer, KerasQuantizationWrapper):
             # collect trainable weights per layer
-            layer_trainable_weights = layer.get_aux_variable()
-            layer_trainable_threshold = layer.get_quantization_variable()
+            layer_trainable_weights = layer.weights_quantizers[KERNEL].get_aux_variable()
+            layer_trainable_threshold = layer.weights_quantizers[KERNEL].get_quantization_variable()
 
             if add_bias:
                 kernel_ops_attrs = fw_info.kernel_ops_attributes_mapping.get(type(layer.layer))
@@ -81,9 +81,10 @@ def get_weights_for_loss(fxp_model: Model) -> Tuple[List[list], List[list]]:
 
             # collect pairs of float and quantized weights per layer
             _layer_flp_weights, _layer_fxp_weights = [], []
-            for weight, quantizer, quantizer_vars in layer._weight_vars:
-                _layer_flp_weights.append(weight)
-                _layer_fxp_weights.append(quantizer(weight, training=False, weights=quantizer_vars))
+            for weight, quantizer_vars, quantizer in layer.get_weights_vars():
+                _layer_flp_weights.append(quantizer_vars)
+                _layer_fxp_weights.append(quantizer(training=False, inputs=quantizer_vars))
+
             flp_weights_list.append(_layer_flp_weights)
             fxp_weights_list.append(_layer_fxp_weights)
 

@@ -305,6 +305,9 @@ if FOUND_TF:
                 self.weights_quantizers = inferable_weight_quantizers
                 self._set_weights_vars(False)
 
+        def get_weights_vars(self):
+            return self._weights_vars
+
         def update_layer_quantization_params(self) -> (Dict[str, tf.Tensor], Dict[str, Dict], Dict):
             """
             A Function to calculate the needed change in attributes in NodeQuantizationConfig after retraining.
@@ -316,10 +319,10 @@ if FOUND_TF:
 
             """
             weights = {}
-            for weight, quantizer, quantizer_vars in self.layer._weight_vars:
-                weights.update({KERNEL: quantizer(weight, training=False, weights=quantizer_vars)})
+            for weight, quantizer_vars, quantizer in self._weights_vars:
+                weights.update({KERNEL: quantizer(training=False, inputs=quantizer_vars)})
 
-            quant_config = {WEIGHTS_QUANTIZATION_PARAMS: self.weight_quantizer.get_quant_config(self.layer)}
+            quant_config = {WEIGHTS_QUANTIZATION_PARAMS: self.weights_quantizers[KERNEL].get_quant_config()}
 
             return weights, quant_config, {}
 

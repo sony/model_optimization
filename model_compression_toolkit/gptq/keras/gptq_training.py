@@ -101,7 +101,8 @@ class KerasGPTQTrainer(GPTQTrainer):
         self.optimizer_with_param = self.get_optimizer_with_param(flattened_trainable_weights,
                                                                   flattened_bias_weights,
                                                                   trainable_quantization_parameters)
-        self.has_params_to_train = np.sum([len(optimizer_params_tuple[1]) for optimizer_params_tuple in self.optimizer_with_param])>0
+        self.has_params_to_train = np.sum(
+            [len(optimizer_params_tuple[1]) for optimizer_params_tuple in self.optimizer_with_param]) > 0
 
         if self.float_user_info.input_scale != self.gptq_user_info.input_scale:
             common.Logger.error("Input scale mismatch between float and GPTQ networks")  # pragma: no cover
@@ -150,13 +151,12 @@ class KerasGPTQTrainer(GPTQTrainer):
             Quantized graph for GPTQ fine-tuning, GPTQ graph user info
         """
 
-        _gptq_wrapper = partial(self.gptq_wrapper, qat_config=self.gptq_config)
-        gptq_model, _ = KerasModelBuilder(graph=self.graph_quant,
-                                          append2output=self.compare_points,
-                                          fw_info=self.fw_info,
-                                          wrapper=_gptq_wrapper).build_model()
+        gptq_model, gptq_user_info = KerasModelBuilder(graph=self.graph_quant,
+                                                       append2output=self.compare_points,
+                                                       fw_info=self.fw_info,
+                                                       wrapper=self.gptq_wrapper).build_model()
 
-        return gptq_model
+        return gptq_model, gptq_user_info
 
     def compute_gradients(self, in_y_float: List[tf.Tensor], input_data: List[np.ndarray],
                           in_optimizer_with_param: List,
@@ -221,7 +221,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                                      self.gptq_config.n_epochs,
                                      True)
 
-    @tf.function
+    # @tf.function
     def nano_training_step(self, input_data, in_compute_gradients, in_optimizer_with_param, is_training):
         """
         This function run part of the training step, wrapped by a tf.function for acceleration.
@@ -265,7 +265,8 @@ class KerasGPTQTrainer(GPTQTrainer):
             for data in tqdm(data_function()):
                 input_data = [d * self.input_scale for d in data]
 
-                loss_value_step, grads = self.nano_training_step(input_data, in_compute_gradients, in_optimizer_with_param, is_training)
+                loss_value_step, grads = self.nano_training_step(input_data, in_compute_gradients,
+                                                                 in_optimizer_with_param, is_training)
                 # Run one step of gradient descent by updating
                 # the value of the variables to minimize the loss.
                 for i, (o, p) in enumerate(in_optimizer_with_param):
@@ -308,7 +309,6 @@ class KerasGPTQTrainer(GPTQTrainer):
                         node.set_weights_by_keys(BIAS, new_bias)
 
         return graph
-
 
     def _get_quantizer_regularization_values(self, rounding_type: RoundingType) -> List[tf.Tensor]:
         """

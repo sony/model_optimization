@@ -179,8 +179,8 @@ class STEWeightQuantizer(BaseKerasGPTQTrainableQuantizer):
                                                    signed=True,
                                                    power_of_two=self.power_of_two)
 
-    def get_aux_variable(self) -> tf.Tensor:
-        return self.quantizer_parameters[AUXVAR]
+    def get_aux_variable(self) -> List[tf.Tensor]:
+        return [self.quantizer_parameters[AUXVAR]]
 
     def get_quantization_variable(self) -> List[tf.Tensor]:
         """

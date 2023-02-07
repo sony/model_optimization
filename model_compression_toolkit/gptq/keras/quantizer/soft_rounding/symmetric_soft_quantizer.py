@@ -115,8 +115,8 @@ class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
 
     def __init__(self,
                  quantization_config: TrainableQuantizerWeightsConfig,
-                 n_batches: int,
-                 quantization_parameter_learning: bool,
+                 n_batches: int = None,
+                 quantization_parameter_learning: bool = False,
                  n_epochs: int = N_EPOCHS):
         """
         Initialize a SymmetricSoftRounding object with parameters to use
@@ -124,10 +124,13 @@ class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
 
         Args:
             quantization_config: Trainable weights quantizer config.
-            n_batches: The expected number of batches for each trainig epoch.
+            n_batches: The expected number of batches for each training epoch.
             quantization_parameter_learning: Whether to train the quantization threshold.
             n_epochs: Number of epochs to run training for.
         """
+
+        if n_batches is None:
+            Logger.error("SymmetricSoftRounding got an uninitialized n_batches argument.")
 
         super().__init__(quantization_config)
         self.num_bits = quantization_config.weights_n_bits
@@ -139,6 +142,7 @@ class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
             threshold_values)
 
         self.quantization_axis = quantization_config.weights_channels_axis
+        self.power_of_two = quantization_config.weights_quantization_method == QuantizationMethod.POWER_OF_TWO
         self.quantization_parameter_learning = quantization_parameter_learning
         self.num_channels = len(self.threshold_values) if self.per_channel else 1
 
@@ -200,7 +204,7 @@ class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
             initializer=tf.keras.initializers.Constant(0.0),
             trainable=True)
 
-        delta = qutils.calculate_delta(ptq_threshold_tensor, self.num_bits, self.signed)
+        delta = qutils.calculate_delta(ptq_threshold_tensor, self.num_bits, signed=True)
         w_floor = tf.floor(w / delta)
         rest = (w / delta) - w_floor  # rest of rounding [0, 1)
         # Note that (rest - self.gamma) can't be zero since rest is positive and gamma is negative, so the division
@@ -257,12 +261,12 @@ class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
         return qutils.clip(
             tf.sigmoid(self.quantizer_parameters[AUXVAR]) * (self.zeta - self.gamma) + self.gamma, 1, 0)
 
-    def get_aux_variable(self) -> tf.Tensor:
+    def get_aux_variable(self) -> List[tf.Tensor]:
         """
         Returns:
             The auxiliary variable of the rounding learning.
         """
-        return self.quantizer_parameters[AUXVAR]
+        return [self.quantizer_parameters[AUXVAR]]
 
     def __call__(self,
                  inputs: tf.Tensor,

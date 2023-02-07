@@ -16,7 +16,7 @@ from typing import Dict, Any
 
 from model_compression_toolkit import GradientPTQConfig, RoundingType
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer import BaseKerasGPTQTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.common.get_quantizer_config import \
@@ -35,7 +35,9 @@ def quantization_builder(n: common.BaseNode,
         gptq_config (GradientPTQConfig): GradientPTQConfig configuration.
 
     Returns:
-        A dictionary which maps each weights attribute to a quantizer for GPTQ training.
+        A dictionary which maps the weights kernel attribute to a quantizer for GPTQ training.
+        Note that we return a dictionary although there is only a single attribute that is being mapped to a quantizer,
+        to be compatible with the quantization infrastructure template.
     """
 
     if n.is_weights_quantization_enabled():
@@ -46,9 +48,8 @@ def quantization_builder(n: common.BaseNode,
                                               quant_method,
                                               BaseKerasGPTQTrainableQuantizer)
 
-        return {attr: quantizer_class(get_trainable_quantizer_weights_config(n),
-                                      **_get_extended_quantizer_parametes(gptq_config))
-                for attr in DEFAULT_KERAS_INFO.get_kernel_op_attributes(n.type)}
+        return {KERNEL: quantizer_class(get_trainable_quantizer_weights_config(n),
+                                        **_get_extended_quantizer_parametes(gptq_config))}
     else:
         return {}
 
