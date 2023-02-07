@@ -15,18 +15,18 @@
 
 
 import tensorflow as tf
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from typing import Tuple, List
 
-from model_compression_toolkit.core.keras.constants import USE_BIAS
-from model_compression_toolkit.gptq.keras.quantizer import WeightQuantizeConfig
+from model_compression_toolkit.core.keras.constants import USE_BIAS, KERNEL
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from tensorflow.keras.models import Model
 
+from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 
-def get_trainable_parameters(fxp_model: Model,
-                             fw_info: FrameworkInfo,
-                             add_bias: bool = False) -> (
+
+def gptq_get_trainable_parameters(fxp_model: Model,
+                                  fw_info: FrameworkInfo,
+                                  add_bias: bool = False) -> (
         List[tf.Variable], List[tf.Variable], List[tf.Variable], List[tf.Variable], List[tf.Variable]):
     """
     Get trainable parameters from all layers in a model
@@ -45,11 +45,10 @@ def get_trainable_parameters(fxp_model: Model,
     bias_weights: List[List[tf.Tensor]] = []
     temperature_weights: List[tf.Tensor] = []
     for layer in fxp_model.layers:
-        if isinstance(layer, QuantizeWrapper) and isinstance(
-                layer.quantize_config, WeightQuantizeConfig):
+        if isinstance(layer, KerasQuantizationWrapper):
             # collect trainable weights per layer
-            layer_trainable_weights = layer.quantize_config.get_aux_variable()
-            layer_trainable_threshold = layer.quantize_config.get_quantization_variable()
+            layer_trainable_weights = layer.get_aux_variable()
+            layer_trainable_threshold = layer.get_quantization_variable()
 
             if add_bias:
                 kernel_ops_attrs = fw_info.kernel_ops_attributes_mapping.get(type(layer.layer))
@@ -78,8 +77,7 @@ def get_weights_for_loss(fxp_model: Model) -> Tuple[List[list], List[list]]:
     flp_weights_list = []
     fxp_weights_list = []
     for layer in fxp_model.layers:
-        if isinstance(layer, QuantizeWrapper) and isinstance(
-                layer.quantize_config, WeightQuantizeConfig):
+        if isinstance(layer, KerasQuantizationWrapper):
 
             # collect pairs of float and quantized weights per layer
             _layer_flp_weights, _layer_fxp_weights = [], []
@@ -92,6 +90,8 @@ def get_weights_for_loss(fxp_model: Model) -> Tuple[List[list], List[list]]:
     return flp_weights_list, fxp_weights_list
 
 
+# TODO: this function need to move to location that is relevant only for soft quantizer -
+#  once deciding how to handle GPTQ quantizers regularization.
 def get_soft_rounding_reg(fxp_model: Model) -> List[tf.Tensor]:
     """
     This function returns the soft quantizer regularization values for SoftRounding.
@@ -104,7 +104,6 @@ def get_soft_rounding_reg(fxp_model: Model) -> List[tf.Tensor]:
 
     soft_reg_aux: List[tf.Tensor] = []
     for layer in fxp_model.layers:
-        if isinstance(layer, QuantizeWrapper) and isinstance(
-                layer.quantize_config, WeightQuantizeConfig):
-            soft_reg_aux.append(layer.quantize_config.weight_quantizer.get_regularization())
+        if isinstance(layer, KerasQuantizationWrapper):
+            soft_reg_aux.append(layer.weights_quantizers[KERNEL].get_regularization())
     return soft_reg_aux

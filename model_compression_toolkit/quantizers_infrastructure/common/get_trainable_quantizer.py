@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Any
+from typing import Any, Union
 
-from model_compression_toolkit import TrainingMethod
+from model_compression_toolkit import TrainingMethod, RoundingType
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
@@ -24,12 +24,12 @@ from model_compression_toolkit.quantizers_infrastructure.common.get_all_subclass
 
 
 def get_quantizer_class(quant_target: QuantizationTarget,
-                        quantizer_type: TrainingMethod,
+                        quantizer_type: Union[TrainingMethod, RoundingType],
                         quant_method: QuantizationMethod,
                         quantizer_base_class: type) -> type:
     """
-    Searches for a quantizer class that matches the requested QuantizationTarget and QuantizationMethod and TrainingMethod.
-    Exactly one class should be found.
+    Searches for a quantizer class that matches the requested QuantizationTarget and QuantizationMethod and
+    a task dedicated quantizer type. Exactly one class should be found.
 
     Args:
         quant_target: QuantizationTarget value which indicates what is the target for quantization to

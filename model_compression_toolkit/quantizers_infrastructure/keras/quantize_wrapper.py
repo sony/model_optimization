@@ -16,6 +16,8 @@ from typing import Dict, List
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.core.keras.constants import KERNEL
+from model_compression_toolkit.gptq.common.gptq_constants import WEIGHTS_QUANTIZATION_PARAMS
 from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.common.constants import WEIGHTS_QUANTIZERS, ACTIVATION_QUANTIZERS, LAYER, STEPS, TRAINING
 
@@ -302,6 +304,24 @@ if FOUND_TF:
                         inferable_weight_quantizers.update({name: quantizer.convert2inferable()})
                 self.weights_quantizers = inferable_weight_quantizers
                 self._set_weights_vars(False)
+
+        def update_layer_quantization_params(self) -> (Dict[str, tf.Tensor], Dict[str, Dict], Dict):
+            """
+            A Function to calculate the needed change in attributes in NodeQuantizationConfig after retraining.
+
+            Returns:
+                3 dictionaries describing the change in layer's weights, weights config, activation config
+                that changed during GPTQ retraining.
+                Keys must match NodeQuantizationConfig attributes
+
+            """
+            weights = {}
+            for weight, quantizer, quantizer_vars in self.layer._weight_vars:
+                weights.update({KERNEL: quantizer(weight, training=False, weights=quantizer_vars)})
+
+            quant_config = {WEIGHTS_QUANTIZATION_PARAMS: self.weight_quantizer.get_quant_config(self.layer)}
+
+            return weights, quant_config, {}
 
 else:
     class KerasQuantizationWrapper(object):

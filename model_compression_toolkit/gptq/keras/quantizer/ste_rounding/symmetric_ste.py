@@ -17,41 +17,18 @@ from typing import Dict, Any, List
 
 import numpy as np
 import tensorflow as tf
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
-from tensorflow.python.framework.tensor_shape import TensorShape
-from model_compression_toolkit.core.keras.quantizer.base_quantizer import BaseTrainableQuantizer
-from model_compression_toolkit.gptq.common.gptq_constants import GPTQ_ITER, THRESHOLD_TENSOR, AUXVAR
-from model_compression_toolkit.gptq.keras.quantizer import quant_utils as  qutils
+
+from model_compression_toolkit import RoundingType
+from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.gptq.common.gptq_constants import GPTQ_ITER, AUXVAR, PTQ_THRESHOLD
+from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 from model_compression_toolkit.core.common.constants import THRESHOLD
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
+from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer import BaseKerasGPTQTrainableQuantizer
 from model_compression_toolkit.gptq.keras.quantizer.kernel_functions import get_kernel
-
-
-def symmetric_quantizer(input_tensor: tf.Tensor,
-                        max_tensor: tf.Tensor,
-                        num_bits: int,
-                        signed: bool,
-                        power_of_two: bool = False) -> tf.Tensor:
-    """
-    Quantize a tensor symmetrically.
-    Args:
-        input_tensor: Tensor to quantize. values of this tensor are not changed during gptq.
-        max_tensor: Tensor with max values to compute the threshold.
-        num_bits: Num of bits to use.
-        signed: Signedness of the quantization range.
-        power_of_two: Whether the threshold should be constrained or not.
-
-    Returns:
-        A quantized tensor.
-    """
-
-    if power_of_two:
-        max_tensor = qutils.power_of_two_max(max_tensor)
-    delta = qutils.calculate_delta(max_tensor, num_bits, signed)
-    tensor_q = qutils.ste_round(input_tensor / delta)
-    min_int = -int(signed) * (2 ** (num_bits - int(signed)))
-    max_int = (2 ** (num_bits - int(signed))) - 1
-    return delta * qutils.ste_clip(tensor_q, max_val=max_int, min_val=min_int)
+from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 
 
 def pertubation_symmetric_quantizer(input_tensor: tf.Tensor,
@@ -63,6 +40,7 @@ def pertubation_symmetric_quantizer(input_tensor: tf.Tensor,
                                     max_lsbs_change: int = 1) -> tf.Tensor:
     """
     Quantize a tensor symmetrically with maximum LSBs shift.
+
     Args:
         input_tensor: Tensor to quantize. values of this tensor are not changed during gptq.
         auxvar_tensor: Tensor that manifests the bit shift the weight due to gptq
@@ -87,58 +65,54 @@ def pertubation_symmetric_quantizer(input_tensor: tf.Tensor,
     return delta * qutils.ste_clip(tensor_q, max_val=max_int, min_val=min_int)
 
 
-class STEWeightQuantizer(BaseTrainableQuantizer):
+@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
+                quantizer_type=RoundingType.STE)
+class STEWeightQuantizer(BaseKerasGPTQTrainableQuantizer):
     """
-    Trainable constrained quantizer to quantize a layer inputs.
+    Trainable symmetric quantizer to quantize a layer weights.
     """
 
     def __init__(self,
-                 num_bits: int,
-                 per_channel: bool,
-                 signed: bool,
-                 threshold_values: np.ndarray,
-                 quantization_axis: int = -1,
-                 power_of_two: bool = True,
+                 quantization_config: TrainableQuantizerWeightsConfig,
                  max_lsbs_change_map: dict = DefaultDict({}, lambda: 1)):
         """
-        Initialize a TrainableWeightQuantizer object with parameters to use
-        for the quantization.
+        Initialize a STEWeightQuantizer object with parameters to use for the quantization.
 
         Args:
-            num_bits: Number of bits to use for the quantization.
-            per_channel: Whether to quantize per-channel or per-tensor.
-            signed: Signedness to use for the quantization range.
-            threshold_values: Threshold to use for the quantization.
-            quantization_axis: Axis of tensor to use for the quantization.
-            power_of_two: Whether the threshold should be constrained or not.
+            quantization_config: Trainable weights quantizer config.
             max_lsbs_change_map: a mapping between number of bits to max lsb change.
         """
-        self.num_bits = num_bits
-        self.per_channel = per_channel
-        self.signed = signed
+        super().__init__(quantization_config)
+        self.num_bits = quantization_config.weights_n_bits
+        self.per_channel = quantization_config.weights_per_channel_threshold
+
+        threshold_values = quantization_config.weights_quantization_params[THRESHOLD]
         self.threshold_shape = np.asarray(threshold_values).shape
         self.threshold_values = np.reshape(np.asarray(threshold_values), [-1]) if self.per_channel else float(
             threshold_values)
-        self.quantization_axis = quantization_axis
-        self.power_of_two = power_of_two
-        self.max_lsbs_change = max_lsbs_change_map.get(num_bits)
+
+        self.quantization_axis = quantization_config.weights_channels_axis
+        self.power_of_two = quantization_config.weights_quantization_method == QuantizationMethod.POWER_OF_TWO
+        self.max_lsbs_change = max_lsbs_change_map.get(self.num_bits)
         self.quantizer_parameters = {}
 
-    def build(self,
-              tensor_shape: TensorShape,
-              name: str,
-              layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
+    def initialize_quantization(self,
+                                tensor_shape: Any,
+                                name: str,
+                                layer: Any) -> Dict[Any, Any]:
         """
-        Add min and max variables to layer.
+        Return a dictionary of quantizer parameters and their names.
+
         Args:
-            tensor_shape: Tensor shape the quantizer quantize.
-            name: Prefix of variables names.
-            layer: Layer to add the variables to. The variables are saved
-            in the layer's scope.
+            tensor_shape: tensor shape of the quantized tensor.
+            name: Tensor name.
+            layer: Layer to quantize.
 
         Returns:
-            Dictionary of new variables.
+            Dictionary of parameters names to the variables.
         """
+
         w_shape = get_kernel(layer.weights).shape
         ar_iter = layer.add_weight(
             f"{name}_{GPTQ_ITER}",
@@ -147,7 +121,7 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
             trainable=False)
 
         ptq_threshold_tensor = layer.add_weight(
-            name + THRESHOLD_TENSOR,
+            f"{name}_{PTQ_THRESHOLD}",
             shape=len(self.threshold_values) if self.per_channel else (),
             initializer=tf.keras.initializers.Constant(1.0),
             trainable=False)
@@ -160,29 +134,27 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
             trainable=True)
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {THRESHOLD_TENSOR: ptq_threshold_tensor,
+        self.quantizer_parameters = {PTQ_THRESHOLD: ptq_threshold_tensor,
                                      AUXVAR: auxvar_tensor,
                                      GPTQ_ITER: ar_iter}
         return self.quantizer_parameters
 
-    def __call__(self, inputs: tf.Tensor,
-                 training: bool,
-                 weights: Dict[str, tf.Variable],
-                 **kwargs: Dict[str, Any]):
+    def __call__(self,
+                 inputs: tf.Tensor,
+                 training: bool):
         """
         Quantize a tensor.
+
         Args:
             inputs: Input tensor to quantize.
             training: Whether the graph is in training mode.
-            weights: Dictionary of weights the quantizer can use to quantize the tensor.
-            **kwargs: Additional variables the quantizer may receive.
 
         Returns:
             The quantized tensor.
         """
 
-        auxvar = weights[AUXVAR]
-        ptq_threshold_tensor = weights[THRESHOLD_TENSOR]
+        auxvar = self.quantizer_parameters[AUXVAR]
+        ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD]
 
         if self.per_channel:
             input_shape = inputs.shape
@@ -191,59 +163,24 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
                 self.quantization_axis
             reshape_shape = [-1 if i == quantization_axis else 1 for i in range(n_axis)]
             ptq_threshold_tensor = tf.reshape(ptq_threshold_tensor, reshape_shape)
-            q_tensor = pertubation_symmetric_quantizer(inputs, auxvar,
+            q_tensor = pertubation_symmetric_quantizer(inputs,
+                                                       auxvar,
                                                        ptq_threshold_tensor,
                                                        self.num_bits,
-                                                       self.signed,
-                                                       self.power_of_two,
+                                                       signed=True,
+                                                       power_of_two=self.power_of_two,
                                                        max_lsbs_change=self.max_lsbs_change)
             return q_tensor
         else:
-            return pertubation_symmetric_quantizer(inputs, auxvar,
+            return pertubation_symmetric_quantizer(inputs,
+                                                   auxvar,
                                                    ptq_threshold_tensor,
                                                    self.num_bits,
-                                                   self.signed,
-                                                   self.power_of_two)
+                                                   signed=True,
+                                                   power_of_two=self.power_of_two)
 
     def get_aux_variable(self) -> tf.Tensor:
         return self.quantizer_parameters[AUXVAR]
-
-    def get_config(self) -> Dict[str, Any]:
-        """
-        Returns: Configuration of TrainableQuantizer.
-        """
-
-        return {
-            'num_bits': self.num_bits,
-            'per_channel': self.per_channel,
-            'symmetric': self.symmetric,
-            'power_of_two': self.power_of_two
-        }
-
-    def get_quant_config(self, layer) -> Dict[str, np.ndarray]:
-        """
-        Returns the config used to edit NodeQuantizationConfig after GPTQ retraining
-
-        Args:
-            layer: quantized layer
-
-        Returns:
-            A dictionary of attributes the quantize_config retraining has changed during GPTQ retraining.
-            Keys must match NodeQuantizationConfig attributes
-
-        """
-        old_threshold = self.quantizer_parameters[THRESHOLD_TENSOR]
-        return {THRESHOLD: old_threshold.numpy().reshape(self.threshold_shape)}
-
-    def get_trainable_parameters(self):
-        """
-        A function to get a list trainable of trainable parameters of the quantizer for GPTQ retraining
-
-        Returns:
-            A list of trainable Tensors
-
-        """
-        return [t for t in self.quantizer_parameters.values() if t.trainable]
 
     def get_quantization_variable(self) -> List[tf.Tensor]:
         """
@@ -251,31 +188,16 @@ class STEWeightQuantizer(BaseTrainableQuantizer):
          Returns: A list of the quantizer parameters
 
          """
-        return [self.quantizer_parameters[THRESHOLD_TENSOR]]
+        return [self.quantizer_parameters[PTQ_THRESHOLD]]
 
-    def __eq__(self, other: Any) -> bool:
+    def get_quant_config(self) -> Dict[str, np.ndarray]:
         """
-        Check if equals to another object.
-        Args:
-            other: Other object to compare.
+        Returns the config used to edit NodeQuantizationConfig after GPTQ retraining
 
         Returns:
-            Whether they are equal or not.
-        """
-        if not isinstance(other, STEWeightQuantizer):
-            return False
+            A dictionary of attributes the quantize_config retraining has changed during GPTQ retraining.
+            Keys must match NodeQuantizationConfig attributes
 
-        return (self.num_bits == other.num_bits and
-                self.per_channel == other.per_channel and
-                self.symmetric == other.symmetric)
-
-    def __ne__(self, other: Any) -> bool:
         """
-        Check if not equals to another object.
-        Args:
-            other: Other object to compare.
-
-        Returns:
-            Whether they are differ or not.
-        """
-        return not self.__eq__(other)
+        old_threshold = self.quantizer_parameters[PTQ_THRESHOLD]
+        return {THRESHOLD: old_threshold.numpy().reshape(self.threshold_shape)}

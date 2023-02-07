@@ -13,4 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.gptq.keras.quantizer.configs.weight_quantizer_gptq_config import WeightQuantizeConfig
+import model_compression_toolkit.gptq.keras.quantizer.ste_rounding.symmetric_ste
+import model_compression_toolkit.gptq.keras.quantizer.ste_rounding.uniform_ste
+import model_compression_toolkit.gptq.keras.quantizer.soft_rounding.symmetric_soft_quantizer

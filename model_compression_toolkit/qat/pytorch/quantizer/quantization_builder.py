@@ -17,8 +17,8 @@ from typing import List, Dict, Tuple
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.qat.common.qat_config import QATConfig
-from model_compression_toolkit.qat.common.qat_get_quantizer import get_quantizer_class
-from model_compression_toolkit.qat.common.qat_get_quantizer_config import \
+from model_compression_toolkit.quantizers_infrastructure.common.get_trainable_quantizer import get_quantizer_class
+from model_compression_toolkit.quantizers_infrastructure.common.get_quantizer_config import \
     get_trainable_quantizer_quantization_candidates, get_trainable_quantizer_weights_config, \
     get_trainable_quantizer_activation_config
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
@@ -31,8 +31,7 @@ def quantization_builder(n: common.BaseNode,
                          ) -> Tuple[Dict[str, BasePytorchQATTrainableQuantizer],
                                     List[BasePytorchQATTrainableQuantizer]]:
     """
-    Build quantizers for a node according to its quantization configuration and
-    a global NoOpQuantizeConfig object.
+    Build quantizers for a node according to its quantization configuration.
 
     Args:
         n: Node to build its QuantizeConfig.

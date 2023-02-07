@@ -20,12 +20,14 @@ from model_compression_toolkit.quantizers_infrastructure.common.trainable_quanti
 
 def get_trainable_quantizer_weights_config(
         n: BaseNode,
-        weights_quantization_candidates: List[TrainableQuantizerCandidateConfig] = None) -> TrainableQuantizerWeightsConfig:
+        weights_quantization_candidates: List[TrainableQuantizerCandidateConfig] = None
+) -> TrainableQuantizerWeightsConfig:
     """
     Returns the relevant configuration for weights trainable quantizer
 
     Args:
-        n: BaseNode - the node to build a trainable quantizer from
+        n: BaseNode - the node to build a trainable quantizer from.
+        weights_quantization_candidates: A list of weights quantizer config candidates.
 
     Returns:
          TrainableQuantizerWeightsConfig: an object that contains the quantizer configuration
@@ -46,12 +48,14 @@ def get_trainable_quantizer_weights_config(
 
 def get_trainable_quantizer_activation_config(
         n: BaseNode,
-        activation_quantization_candidates: List[TrainableQuantizerCandidateConfig] = None) -> TrainableQuantizerActivationConfig:
+        activation_quantization_candidates: List[TrainableQuantizerCandidateConfig] = None
+) -> TrainableQuantizerActivationConfig:
     """
     Returns configuration for activation trainable quantizer
 
     Args:
-        n: BaseNode - the node to build a trainable quantizer from
+        n: BaseNode - the node to build a trainable quantizer from.
+        activation_quantization_candidates: A list of activation quantizer candidates config.
 
     Returns:
          TrainableQuantizerActivationConfig - an object that contains the quantizer configuration
