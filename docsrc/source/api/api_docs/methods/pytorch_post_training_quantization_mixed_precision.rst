@@ -4,7 +4,7 @@
 
 
 ==================================================================
-Pytorch Post Training Mixed Precision Quantization (Experimental)
+PyTorch Post Training Mixed Precision Quantization
 ==================================================================
 
 .. autofunction:: model_compression_toolkit.pytorch_post_training_quantization_mixed_precision

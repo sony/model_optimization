@@ -57,4 +57,4 @@ from model_compression_toolkit.quantizers_infrastructure.keras.load_model import
 
 from model_compression_toolkit.exporter.model_exporter import tflite_export_model, TFLiteExportMode, keras_export_model, KerasExportMode, pytorch_export_model, PyTorchExportMode
 
-__version__ = "1.7.1"
+__version__ = "1.8.0"
