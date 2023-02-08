@@ -159,6 +159,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         gptq_model, gptq_user_info = KerasModelBuilder(graph=self.graph_quant,
                                                        append2output=self.compare_points,
                                                        fw_info=self.fw_info,
+                                                       return_float_outputs=True,
                                                        wrapper=self.gptq_wrapper).build_model()
 
         return gptq_model, gptq_user_info
