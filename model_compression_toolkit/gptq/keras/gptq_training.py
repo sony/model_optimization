@@ -138,8 +138,10 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         """
         if self._is_gptq_applicable(n):
-            weights_quantizers = quantization_builder(n, self.gptq_config)
-            return qi.KerasQuantizationWrapper(layer, weights_quantizers)
+            weights_quantizers, activation_quantizers = quantization_builder(n, self.gptq_config)
+            return qi.KerasQuantizationWrapper(layer,
+                                               weights_quantizers=weights_quantizers,
+                                               activation_quantizers=activation_quantizers)
         else:
             return layer
 

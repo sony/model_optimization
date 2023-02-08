@@ -12,20 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple
 
 from model_compression_toolkit import GradientPTQConfig, RoundingType
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.keras.constants import KERNEL
+from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
+    get_inferable_quantizer_kwargs
 from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer import BaseKerasGPTQTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, BaseKerasInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.common.get_quantizer_config import \
     get_trainable_quantizer_weights_config
-from model_compression_toolkit.quantizers_infrastructure.common.get_trainable_quantizer import get_quantizer_class
+from model_compression_toolkit.quantizers_infrastructure.common.get_quantizers import get_trainable_quantizer_class, \
+    get_inferable_quantizer_class
 
 
 def quantization_builder(n: common.BaseNode,
-                         gptq_config: GradientPTQConfig) -> Dict[str, BaseKerasGPTQTrainableQuantizer]:
+                         gptq_config: GradientPTQConfig
+                         ) -> Tuple[Dict[str, BaseKerasGPTQTrainableQuantizer], List[BaseKerasInferableQuantizer]]:
     """
     Build quantizers for a node according to its quantization configuration and
     a global NoOpQuantizeConfig object.
@@ -40,18 +44,30 @@ def quantization_builder(n: common.BaseNode,
         to be compatible with the quantization infrastructure template.
     """
 
+    weights_quantizers = {}
     if n.is_weights_quantization_enabled():
         quant_method = n.final_weights_quantization_cfg.weights_quantization_method
 
-        quantizer_class = get_quantizer_class(QuantizationTarget.Weights,
-                                              gptq_config.rounding_type,
-                                              quant_method,
-                                              BaseKerasGPTQTrainableQuantizer)
+        quantizer_class = get_trainable_quantizer_class(quant_target=QuantizationTarget.Weights,
+                                                        quantizer_type=gptq_config.rounding_type,
+                                                        quant_method=quant_method,
+                                                        quantizer_base_class=BaseKerasGPTQTrainableQuantizer)
+        weights_quantizers.update({KERNEL: quantizer_class(get_trainable_quantizer_weights_config(n),
+                                                           **_get_extended_quantizer_parametes(gptq_config))})
 
-        return {KERNEL: quantizer_class(get_trainable_quantizer_weights_config(n),
-                                        **_get_extended_quantizer_parametes(gptq_config))}
-    else:
-        return {}
+    activation_quantizers = []
+    if n.is_activation_quantization_enabled():
+        quant_method = n.final_activation_quantization_cfg.activation_quantization_method
+
+        quantizer_class = get_inferable_quantizer_class(quant_target=QuantizationTarget.Activation,
+                                                        quant_method=quant_method,
+                                                        quantizer_base_class=BaseKerasInferableQuantizer)
+
+        kwargs = get_inferable_quantizer_kwargs(n, QuantizationTarget.Activation)
+
+        activation_quantizers.append(quantizer_class(**kwargs))
+
+    return weights_quantizers, activation_quantizers
 
 
 def _get_extended_quantizer_parametes(gptq_config: GradientPTQConfig) -> Dict[str, Any]:

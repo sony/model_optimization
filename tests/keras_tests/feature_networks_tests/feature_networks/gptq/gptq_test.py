@@ -48,7 +48,8 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
     x = layers.PReLU()(x)
     x = layers.Conv2D(64, 8, bias_initializer='glorot_uniform')(x)
     x = layers.BatchNormalization()(x)
-    outputs = layers.ReLU()(x)
+    x = layers.ReLU()(x)
+    outputs = layers.Dense(20)(x)
     model = keras.Model(inputs=inputs, outputs=outputs)
     return model
 
