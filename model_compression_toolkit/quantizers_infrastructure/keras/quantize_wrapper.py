@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict, List
+from typing import Dict, List, Any, Tuple
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.core.keras.constants import KERNEL
+from model_compression_toolkit.gptq.common.gptq_constants import WEIGHTS_QUANTIZATION_PARAMS
 from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.common.constants import WEIGHTS_QUANTIZERS, ACTIVATION_QUANTIZERS, LAYER, STEPS, TRAINING
 
@@ -302,6 +304,17 @@ if FOUND_TF:
                         inferable_weight_quantizers.update({name: quantizer.convert2inferable()})
                 self.weights_quantizers = inferable_weight_quantizers
                 self._set_weights_vars(False)
+
+        def get_weights_vars(self) -> List[Tuple[str, Any, BaseInferableQuantizer]]:
+            """
+            A getter for the layer's weights variables.
+
+            Returns:
+                List pf tuples of the wrapped layer's weights variables with weight name, values and assigned quantizer.
+
+            """
+
+            return self._weights_vars
 
 else:
     class KerasQuantizationWrapper(object):

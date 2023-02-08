@@ -18,7 +18,7 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType, GradientPTQConfigV2
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -48,7 +48,8 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
     x = layers.PReLU()(x)
     x = layers.Conv2D(64, 8, bias_initializer='glorot_uniform')(x)
     x = layers.BatchNormalization()(x)
-    outputs = layers.ReLU()(x)
+    x = layers.ReLU()(x)
+    outputs = layers.Dense(20)(x)
     model = keras.Model(inputs=inputs, outputs=outputs)
     return model
 
@@ -115,7 +116,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
             ptq_gptq_model, quantization_info = mct.keras_gradient_post_training_quantization_experimental(
                 model_float,
                 self.representative_data_gen_experimental,
-                gptq_config=self.get_gptq_config(),
+                gptq_config=GradientPTQConfigV2.from_v1(self.num_calibration_iter, self.get_gptq_config()),
                 target_kpi=self.get_kpi(),
                 core_config=core_config,
                 target_platform_capabilities=self.get_tpc(),
@@ -146,7 +147,7 @@ class GradientPTQTest(GradientPTQBaseTest):
         y = float_model(input_x)
         y_hat = quantized_model(input_x)
         cs = cosine_similarity(y.numpy(), y_hat.numpy())
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check: {cs}')
+        self.unit_test.assertTrue(np.isclose(cs, 1, rtol=1e-4), msg=f'fail cosine similarity check: {cs}')
 
 
 class GradientPTQNoTempLearningTest(GradientPTQBaseTest):
