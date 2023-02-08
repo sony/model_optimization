@@ -4,7 +4,7 @@
 
 
 ==================================================================
-Keras Post Training Mixed Precision Quantization (Experimental)
+Keras Post Training Mixed Precision Quantization
 ==================================================================
 
 .. autofunction:: model_compression_toolkit.keras_post_training_quantization_mixed_precision
