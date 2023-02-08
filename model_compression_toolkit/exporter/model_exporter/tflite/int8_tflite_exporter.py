@@ -110,17 +110,18 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
 
         # Now that we have the point-wise to replace the dense layer,
         # we need to wrap it using qi.KerasQuantizationWrapper with a new
-        # relevant quantization dispatcher based on current dispatcher information
+        # relevant quantizers.
         # Create new kernel quantizer
         pw_kernel_quantizer_cfg = wrapped_layer.weights_quantizers[KERNEL].get_config()
 
         # In Conv2D channel axis is 3 and not 1 as in Dense
         pw_kernel_quantizer_cfg[keras_inferable_constants.CHANNEL_AXIS] = CONV_KERNEL_CHANNEL_AXIS
 
-        pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD] = pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD].reshape(1,1,1,pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD].shape[1])
-
         # Unquantized weight to conv layer has 4 dimensions (unlike dense which varies)
-        # pw_kernel_quantizer_cfg[keras_inferable_constants.INPUT_NUM_DIMS] = CONV_INPUT_CHANNELS_DIM
+        pw_kernel_quantizer_cfg[keras_inferable_constants.INPUT_RANK] = CONV_INPUT_CHANNELS_DIM
+
+        assert isinstance(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD], np.ndarray), f'Expected to find threshold which is a numpy array, but found: {type(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])}'
+        pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD] = list(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])
 
         # Now that we have the point-wise quantizer we can instantiate it
         quantizer_class = type(wrapped_layer.weights_quantizers[KERNEL])
@@ -128,11 +129,7 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         pw_weights_quantizers = copy.deepcopy(wrapped_layer.weights_quantizers)
         pw_weights_quantizers[KERNEL] = pw_quantizer
 
-        # Set new quantizer in pw dispatcher
-        # pw_dispatcher = copy.deepcopy(wrapped_layer._dispatcher)
-        # pw_dispatcher.set_weight_quantizers(pw_weights_quantizer)
-
-        # Wrap pw with dispatcher that was built from the Dense dispatcher
+        # Wrap pw with the new quantizers (the activation is not affected thus we take the Dense quantizers)
         wrapped_pw = qi.KerasQuantizationWrapper(pw_layer,
                                                  pw_weights_quantizers,
                                                  wrapped_layer.activation_quantizers)
@@ -169,7 +166,8 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
 
         # Transform the model to a new model that can be converted to int8 models.
         # For example: replace dense layers with point-wise layers (to support per-channel quantization)
-        self.transformed_model = clone_model(self.model, clone_function=_substitute_model)
+        self.transformed_model = clone_model(self.model,
+                                             clone_function=_substitute_model)
 
         # Convert model to int8 representation
         converter = tf.lite.TFLiteConverter.from_keras_model(self.transformed_model)

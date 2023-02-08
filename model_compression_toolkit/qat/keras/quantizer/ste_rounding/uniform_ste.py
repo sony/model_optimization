@@ -144,12 +144,11 @@ class STEUniformWeightQuantizer(BaseKerasQATTrainableQuantizer):
                                                          self.quantizer_parameters[FQ_MAX].numpy(),
                                                          self.num_bits)
         return iq.WeightsUniformInferableQuantizer(num_bits=self.num_bits,
-                                                   min_range=np.reshape(min_range,
-                                                                        self.min_max_shape),
-                                                   max_range=np.reshape(max_range,
-                                                                        self.min_max_shape),
+                                                   min_range=list(min_range.flatten()),
+                                                   max_range=list(max_range.flatten()),
                                                    per_channel=self.per_channel,
-                                                   channel_axis=self.channel_axis)
+                                                   channel_axis=self.channel_axis,
+                                                   input_rank=len(self.min_max_shape))
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
@@ -240,5 +239,7 @@ class STEUniformActivationQuantizer(BaseKerasQATTrainableQuantizer):
                                                          self.quantizer_parameters[FQ_MAX].numpy(),
                                                          self.num_bits)
         return iq.ActivationUniformInferableQuantizer(num_bits=self.num_bits,
-                                                      min_range=min_range,
-                                                      max_range=max_range)
+                                                      # In activation quantization is per-tensor only - thus we pass
+                                                      # the min/max as lists with a len of 1
+                                                      min_range=[min_range],
+                                                      max_range=[max_range])

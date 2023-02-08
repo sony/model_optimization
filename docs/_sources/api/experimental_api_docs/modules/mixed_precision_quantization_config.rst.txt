@@ -4,7 +4,7 @@
 
 
 ===========================================================
-mixed_precision_quantization_config Module (Experimental)
+mixed_precision_quantization_config Module
 ===========================================================
 
 

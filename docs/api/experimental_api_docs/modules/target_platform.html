@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>target_platform Module &#8212; MCT Documentation: ver 1.7.1</title>
+    <title>target_platform Module &#8212; MCT Documentation: ver 1.8.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.7.1</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">target_platform Module</a></li> 
       </ul>
     </div>  
@@ -51,7 +51,7 @@ for Conv2d, while when using tflite modeling, Tensorflow uses <a class="referenc
 Conv2D</a>.</p>
 <p>This can be addressed in MCT by using the target_platform module, that can configure different
 parameters that are hardware-related, and the optimization process will use this to optimize the model accordingly.
-Models for TFLite and qnnpack can be observed <a class="reference external" href="https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/core/tpc_models">here</a>, and can be used using <a class="reference internal" href="../methods/get_target_platform_capabilities.html#ug-get-target-platform-capabilities"><span class="std std-ref">get_target_platform_capabilities function</span></a>.</p>
+Models for IMX500, TFLite and qnnpack can be observed <a class="reference external" href="https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/core/tpc_models">here</a>, and can be used using <a class="reference internal" href="../methods/get_target_platform_capabilities.html#ug-get-target-platform-capabilities"><span class="std std-ref">get_target_platform_capabilities function</span></a>.</p>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
@@ -82,9 +82,10 @@ Several methods can be used using QuantizationMethod API:</p>
 <dd><p>Method for quantization function selection:</p>
 <p>POWER_OF_TWO - Symmetric, uniform, threshold is power of two quantization.</p>
 <p>KMEANS - k-means quantization.</p>
-<p>LUT_QUANTIZER - quantization using a look up table.</p>
+<p>LUT_POT_QUANTIZER - quantization using a lookup table and power of 2 threshold.</p>
 <p>SYMMETRIC - Symmetric, uniform, quantization.</p>
 <p>UNIFORM - uniform quantization,</p>
+<p>LUT_SYM_QUANTIZER - quantization using a lookup table and symmetric threshold.</p>
 </dd></dl>
 
 <div class="line-block">
@@ -743,13 +744,13 @@ to the TargetPlatformCapabilities like in the following example:</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.7.1</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">target_platform Module</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Sony Semiconductor Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
     </div>
   </body>
 </html>

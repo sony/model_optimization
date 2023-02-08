@@ -29,7 +29,7 @@ from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.exporter.model_exporter import tflite_export_model, \
     TFLiteExportMode
 from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_exportable
-
+import tests.keras_tests.exporter_tests.constants as constants
 
 class TFLiteINT8ExporterBaseTest:
 
@@ -58,7 +58,6 @@ class TFLiteINT8ExporterBaseTest:
         # Export model in INT8 format
         _, self.int8_model_file_path = tempfile.mkstemp('.tflite')
         tflite_export_model(model=self.exportable_model,
-                            is_layer_exportable_fn=is_keras_layer_exportable,
                             mode=TFLiteExportMode.INT8,
                             save_model_path=self.int8_model_file_path)
 
@@ -85,12 +84,12 @@ class TFLiteINT8ExporterBaseTest:
             yield [np.random.randn(*((1,) + shape)) for shape in self.get_input_shape()]
 
     def __infer_via_interpreter(self, inputs):
-        input_index = self.interpreter.get_input_details()[0]["index"]
+        input_index = self.interpreter.get_input_details()[0][constants.INDEX]
         self.interpreter.set_tensor(input_index, inputs.astype("float32"))
         # Run inference.
         self.interpreter.invoke()
         output_details = self.interpreter.get_output_details()
-        output_data = self.interpreter.get_tensor(output_details[0]['index'])
+        output_data = self.interpreter.get_tensor(output_details[0][constants.INDEX])
         return output_data
 
     @abstractmethod
@@ -107,10 +106,10 @@ class TFLiteINT8ExporterBaseTest:
     def run_common_checks(self):
         # Assert output shapes are the same
         # Ignore batch dim as it is constantly 1 in tflite models
-        assert np.all(self.interpreter.get_output_details()[0]['shape'][1:] == self.exportable_model.output_shape[1:]), \
+        assert np.all(self.interpreter.get_output_details()[0][constants.SHAPE][1:] == self.exportable_model.output_shape[1:]), \
             f'Expected shapes of exportable model and int8 tflite model are expected to be equal but exportable ' \
             f'output shape is {self.exportable_model.output_shape} and int8 output shape is ' \
-            f'{self.interpreter.get_output_details()[0]["shape"]}'
+            f'{self.interpreter.get_output_details()[0][constants.SHAPE]}'
 
         # Test inference and similarity to fully quantized model
         images = next(self.__get_repr_dataset())[0]
@@ -124,8 +123,8 @@ class TFLiteINT8ExporterBaseTest:
         # tensor details and it has a single scale
         scales = []
         for t in reversed(self.interpreter.get_tensor_details()):
-            if len(t['quantization_parameters']['scales']) > 0:
-                scales = t['quantization_parameters']['scales']
+            if len(t[constants.QUANTIZATION_PARAMETERS][constants.SCALES]) > 0:
+                scales = t[constants.QUANTIZATION_PARAMETERS][constants.SCALES]
                 break
         assert len(scales)==1, f'Expected to find a single scale in the tensor details but scales are: {scales}'
 

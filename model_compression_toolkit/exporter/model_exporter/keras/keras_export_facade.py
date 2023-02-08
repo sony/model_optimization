@@ -15,45 +15,56 @@
 from enum import Enum
 from typing import Callable, Dict
 
-import keras
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import \
-    FakelyQuantKerasExporter
+from model_compression_toolkit.core.common.constants import FOUND_TF
 
 
 class KerasExportMode(Enum):
     FAKELY_QUANT = 0
 
 
-def keras_export_model(model: keras.models.Model,
-                       is_layer_exportable_fn: Callable,
-                       mode: KerasExportMode = KerasExportMode.FAKELY_QUANT,
-                       save_model_path: str = None) -> Dict[str, type]:
-    """
-    Prepare and return fully quantized model for export. Save exported model to
-    a path if passed.
+if FOUND_TF:
+    import keras
+    from model_compression_toolkit.exporter.model_wrapper.keras.validate_layer import is_keras_layer_exportable
+    from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import FakelyQuantKerasExporter
 
-    Args:
-        model: Model to export.
-        is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
-        mode: Mode to export the model according to.
-        save_model_path: Path to save the model.
+    def keras_export_model(model: keras.models.Model,
+                           save_model_path: str,
+                           is_layer_exportable_fn: Callable = is_keras_layer_exportable,
+                           mode: KerasExportMode = KerasExportMode.FAKELY_QUANT) -> Dict[str, type]:
+        """
+        Export a Keras quantized model to h5 model.
+        The model will be saved to the path in save_model_path.
+        Mode can be used for different exported files. Currently, keras_export_model
+        supports KerasExportMode.FAKELY_QUANT (where weights and activations are
+        float fakely-quantized values).
 
-    Returns:
-        Custom objects dictionary needed to load the model.
+        Args:
+            model: Model to export.
+            is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
+            mode: Mode to export the model according to.
+            save_model_path: Path to save the model.
 
-    """
+        Returns:
+            Custom objects dictionary needed to load the model.
 
-    if mode == KerasExportMode.FAKELY_QUANT:
-        exporter = FakelyQuantKerasExporter(model,
-                                            is_layer_exportable_fn,
-                                            save_model_path)
+        """
 
-    else:
-        Logger.critical(
-            f'Unsupported mode was used {mode.name} to '
-            f'export Keras model. Please see API for supported modes.')  # pragma: no cover
+        if mode == KerasExportMode.FAKELY_QUANT:
+            exporter = FakelyQuantKerasExporter(model,
+                                                is_layer_exportable_fn,
+                                                save_model_path)
 
-    exporter.export()
+        else:
+            Logger.critical(
+                f'Unsupported mode was used {mode.name} to '
+                f'export Keras model. Please see API for supported modes.')  # pragma: no cover
 
-    return exporter.get_custom_objects()
+        exporter.export()
+
+        return exporter.get_custom_objects()
+else:
+    def keras_export_model(*args, **kwargs):
+        Logger.error('Installing tensorflow and tensorflow_model_optimization is mandatory '
+                     'when using keras_export_model. '
+                     'Could not find some or all of TensorFlow packages.')  # pragma: no cover

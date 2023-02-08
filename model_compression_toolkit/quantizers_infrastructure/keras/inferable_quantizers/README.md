@@ -27,37 +27,61 @@ Each of them should be used according to the quantization method of the quantize
 
 ## Usage Example
 
+Here, we can see a demonstration of a symmetric weights quantizer usage:
+
 ```python
 # Import TensorFlow and quantizers_infrastructure
 import tensorflow as tf
-
 from model_compression_toolkit import quantizers_infrastructure as qi
 
-# Create a weights symmetric quantizer for quantizing a kernel. The quantizer
-# has the following properties:
-# * It uses 8 bits for quantization.
-# * It quantizes the tensor per-channel.
-# Since it is a symmetric quantizer it needs to have the thresholds and whether it is signed or not.
-# Thus, the quantizer also:
-# * Uses three thresholds (since it has 3 output channels and the quantization is per-channel): 1, 2 and 4.
-# * Quantizes the tensor using signed quantization range.
+# Creates a WeightsSymmetricInferableQuantizer instance for quantizing a tensor with four dimensions.
+# The quantizer uses 8 bits for quantization and quantizes the tensor per channel.
+# The quantizer uses three thresholds (1, 2, and 3) for quantizing each of the three output channels.
+# The quantization axis is the last dimension (-1).
 quantizer = qi.keras_inferable_quantizers.WeightsSymmetricInferableQuantizer(num_bits=8,
-                                                                             threshold=[2, 4, 1],
+                                                                             threshold=[2.0, 3.0, 1.0],
                                                                              per_channel=True,
                                                                              channel_axis=-1,
-                                                                             signed=True)
+                                                                             input_rank=4)
 
-# Initialize a random input qo quantize
-input_tensor = tf.random.uniform(shape=(1, 3, 3, 3), minval=-100, maxval=100)
+# Initialize a random input to quantize. Note that the input must have float data type.
+input_tensor = tf.random.uniform(shape=(1, 3, 3, 3), minval=-100, maxval=100, dtype=tf.float32)
 # Quantize tensor
 quantized_tensor = quantizer(input_tensor)
 print(quantized_tensor)
 
-# The maximal threshold is 4 using a signed quantization, so we expect all values to be in this range
-assert tf.reduce_max(quantized_tensor) < 4, f'Quantized values should not contain values greater than maximal threshold'
-assert tf.reduce_min(quantized_tensor) >= -4, f'Quantized values should not contain values lower than minimal threshold'
-
+# The maximal threshold is 3 using a signed quantization, so we expect all values to be in this range
+assert tf.reduce_max(quantized_tensor) < 3, f'Quantized values should not contain values greater than maximal threshold'
+assert tf.reduce_min(quantized_tensor) >= -3, f'Quantized values should not contain values lower than minimal threshold'
 
 ```
 
-If you have any questions or issues using the Keras inferable quantizers, please open an issue on the GitHub.
+Now, let's see a demonstration of a symmetric activation quantizer usage:
+
+```python
+# Import TensorFlow and quantizers_infrastructure
+import tensorflow as tf
+from model_compression_toolkit import quantizers_infrastructure as qi
+
+# Creates an ActivationSymmetricInferableQuantizer quantizer.
+# The quantizer uses 8 bits for quantization and quantizes the tensor per-tensor 
+# (per-channel quantization is not supported in activation quantizers). 
+# The quantization is unsigned, meaning the range of values is between 0 and the
+# threshold, which is 5.0.
+quantizer = qi.keras_inferable_quantizers.ActivationSymmetricInferableQuantizer(num_bits=8,
+                                                                                threshold=[5.0],
+                                                                                signed=False)
+
+# Initialize a random input to quantize. Note that the input must have float data type.
+input_tensor = tf.random.uniform(shape=(1, 3, 3, 3), minval=-100, maxval=100, dtype=tf.float32)
+# Quantize tensor
+quantized_tensor = quantizer(input_tensor)
+print(quantized_tensor)
+
+# The maximal threshold is 3 using a signed quantization, so we expect all values to be in this range
+assert tf.reduce_max(quantized_tensor) < 5, f'Quantized values should not contain values greater than maximal threshold'
+assert tf.reduce_min(quantized_tensor) >= 0, f'Quantized values should not contain values lower than minimal threshold'
+
+```
+
+If you have any questions or issues using the Keras inferable quantizers, please [open an issue](https://github.com/sony/model_optimization/issues/new/choose) in this GitHub repository.

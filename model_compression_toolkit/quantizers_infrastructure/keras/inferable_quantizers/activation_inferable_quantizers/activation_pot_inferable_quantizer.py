@@ -12,31 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import List
 
 import numpy as np
 
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
+
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 
-if FOUND_TF:
-    import tensorflow as tf
-    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_pot_inferable_quantizer import BasePOTInferableQuantizer
 
+if FOUND_TF:
+    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.activation_inferable_quantizers.activation_symmetric_inferable_quantizer import ActivationSymmetricInferableQuantizer
 
     @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                     quantization_method=[QuantizationMethod.POWER_OF_TWO],
                     quantizer_type=None)
-    class ActivationPOTInferableQuantizer(BasePOTInferableQuantizer):
+    class ActivationPOTInferableQuantizer(ActivationSymmetricInferableQuantizer):
         """
         Class for quantizing activations using power-of-two quantizer
         """
 
         def __init__(self,
                      num_bits: int,
-                     threshold: np.ndarray,
+                     threshold: List[float],
                      signed: bool):
             """
             Initialize the quantizer with the specified parameters.
@@ -52,31 +53,8 @@ if FOUND_TF:
                                                                   threshold=threshold,
                                                                   signed=signed)
 
-        def __call__(self, inputs: tf.Tensor):
-            """
-            Quantize the given inputs using the quantizer parameters.
-
-            Args:
-                inputs: input tensor to quantize
-
-            Returns:
-                quantized tensor.
-            """
-            return tf.quantization.fake_quant_with_min_max_vars(inputs,
-                                                                min=self.min_range,
-                                                                max=self.max_range,
-                                                                num_bits=self.num_bits)
-
-        def get_config(self):
-            """
-            Return a dictionary with the configuration of the quantizer.
-
-            Returns:
-                Dictionary with the following keys: 'num_bits', 'signed', 'threshold'
-            """
-            return {'num_bits': self.num_bits,
-                    'signed': self.signed,
-                    'threshold': self.threshold}
+            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in self.threshold.flatten()])
+            assert is_threshold_pot, f'Expected threshold to be power of 2 but is {self.threshold}'
 
 else:
     class ActivationPOTInferableQuantizer:
