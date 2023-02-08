@@ -12,10 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Union
+from abc import abstractmethod
+from typing import Union, Dict, List
+
+import tensorflow as tf
 
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
+from model_compression_toolkit.core.keras.constants import KERNEL
+from model_compression_toolkit.gptq.common.gptq_constants import WEIGHTS_QUANTIZATION_PARAMS, PTQ_THRESHOLD, AUXVAR
 
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
     TrainableQuantizerActivationConfig, BaseKerasTrainableQuantizer
@@ -37,6 +42,39 @@ if FOUND_TF:
             """
 
             super().__init__(quantization_config)
+
+            self.quantizer_parameters = None
+
+        def update_layer_quantization_params(self, layer) -> (Dict[str, tf.Tensor], Dict[str, Dict], Dict):
+            """
+            A Function to calculate the needed change in attributes in NodeQuantizationConfig after retraining.
+
+            Returns:
+                3 dictionaries describing the change in layer's weights, weights config, activation config
+                that changed during GPTQ retraining.
+                Keys must match NodeQuantizationConfig attributes
+
+            """
+            weights = {}
+            for weight, quantizer_vars, quantizer in layer.get_weights_vars():
+                weights.update({KERNEL: quantizer(training=False, inputs=quantizer_vars)})
+
+            quant_config = {WEIGHTS_QUANTIZATION_PARAMS: self.get_quant_config()}
+
+            return weights, quant_config, {}
+
+        @abstractmethod
+        def get_quant_config(self):
+            """
+            Returns the config used to edit NodeQuantizationConfig after GPTQ retraining.
+
+            Returns:
+                A dictionary of attributes the quantize_config retraining has changed during GPTQ retraining.
+                Keys must match NodeQuantizationConfig attributes.
+
+            """
+            raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                                 f'quantizer\'s get_quant_config.')
 
 else:
     class BaseKerasGPTQTrainableQuantizer(BaseKerasTrainableQuantizer):

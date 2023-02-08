@@ -180,14 +180,23 @@ class STEWeightQuantizer(BaseKerasGPTQTrainableQuantizer):
                                                    power_of_two=self.power_of_two)
 
     def get_aux_variable(self) -> List[tf.Tensor]:
+        """
+        This function return a list with the quantizer's quantization auxiliary variables.
+
+        Returns: A list with the quantization auxiliary variables.
+
+        """
+
         return [self.quantizer_parameters[AUXVAR]]
 
     def get_quantization_variable(self) -> List[tf.Tensor]:
         """
-         This function return a list of quantizer parameters.
-         Returns: A list of the quantizer parameters
+        This function return a list with the quantizer's quantization parameters variables.
 
-         """
+        Returns: A list with the quantization parameters.
+
+        """
+
         return [self.quantizer_parameters[PTQ_THRESHOLD]]
 
     def get_quant_config(self) -> Dict[str, np.ndarray]:

@@ -42,7 +42,7 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 import numpy as np
 import copy
-from model_compression_toolkit.core.keras.constants import BIAS, USE_BIAS
+from model_compression_toolkit.core.keras.constants import BIAS, USE_BIAS, KERNEL
 from model_compression_toolkit import quantizers_infrastructure as qi
 
 
@@ -295,7 +295,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                     common.Logger.error(f"Can't update GPTQ graph due to missing layer named: {layer.layer.name}")
                 node = node[0]
                 weights, weight_quant_config, activation_quant_config = \
-                    layer.update_layer_quantization_params()
+                    layer.weights_quantizers[KERNEL].update_layer_quantization_params(layer)
                 for weight_attr, weight in weights.items():
                     node.set_weights_by_keys(weight_attr, weight.numpy())
                 for config_attr, config_value in weight_quant_config.items():

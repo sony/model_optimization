@@ -308,24 +308,6 @@ if FOUND_TF:
         def get_weights_vars(self):
             return self._weights_vars
 
-        def update_layer_quantization_params(self) -> (Dict[str, tf.Tensor], Dict[str, Dict], Dict):
-            """
-            A Function to calculate the needed change in attributes in NodeQuantizationConfig after retraining.
-
-            Returns:
-                3 dictionaries describing the change in layer's weights, weights config, activation config
-                that changed during GPTQ retraining.
-                Keys must match NodeQuantizationConfig attributes
-
-            """
-            weights = {}
-            for weight, quantizer_vars, quantizer in self._weights_vars:
-                weights.update({KERNEL: quantizer(training=False, inputs=quantizer_vars)})
-
-            quant_config = {WEIGHTS_QUANTIZATION_PARAMS: self.weights_quantizers[KERNEL].get_quant_config()}
-
-            return weights, quant_config, {}
-
 else:
     class KerasQuantizationWrapper(object):
         def __init__(self,

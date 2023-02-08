@@ -138,7 +138,7 @@ class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
 
         threshold_values = quantization_config.weights_quantization_params[THRESHOLD]
         self.threshold_shape = np.asarray(threshold_values).shape
-        self.threshold_values = np.reshape(np.asarray(threshold_values), [-1]) if self.per_channel else float(
+        self.threshold_values = np.reshape(np.asarray(threshold_values), [-1]) if self.per_channel else np.asarray(
             threshold_values)
 
         self.quantization_axis = quantization_config.weights_channels_axis
@@ -229,8 +229,10 @@ class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
 
     def get_quantization_variable(self) -> List[tf.Tensor]:
         """
-        Returns:
-            A list of the quantization parameters (if there are defined parameters for the quantizer).
+        This function return a list with the quantizer's quantization parameters variables.
+
+        Returns: A list with the quantization parameters if there are defined parameters.
+
         """
 
         if self.quantization_parameter_learning and not self.power_of_two:
@@ -263,8 +265,10 @@ class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
 
     def get_aux_variable(self) -> List[tf.Tensor]:
         """
-        Returns:
-            The auxiliary variable of the rounding learning.
+        This function return a list with the quantizer's quantization auxiliary variables.
+
+        Returns: A list with the quantization auxiliary variables.
+
         """
         return [self.quantizer_parameters[AUXVAR]]
 
