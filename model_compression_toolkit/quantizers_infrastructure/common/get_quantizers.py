@@ -27,7 +27,7 @@ def get_inferable_quantizer_class(quant_target: QuantizationTarget,
                                   quant_method: QuantizationMethod,
                                   quantizer_base_class: type) -> type:
     """
-    Searches for a quantizer class that matches the requested QuantizationTarget and QuantizationMethod.
+    Searches for an inferable quantizer class that matches the requested QuantizationTarget and QuantizationMethod.
     Exactly one class should be found.
 
     Args:
@@ -60,7 +60,7 @@ def get_trainable_quantizer_class(quant_target: QuantizationTarget,
                                   quant_method: QuantizationMethod,
                                   quantizer_base_class: type) -> type:
     """
-    Searches for a quantizer class that matches the requested QuantizationTarget and QuantizationMethod and
+    Searches for a trainable quantizer class that matches the requested QuantizationTarget and QuantizationMethod and
     a task dedicated quantizer type. Exactly one class should be found.
 
     Args:

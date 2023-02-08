@@ -13,13 +13,15 @@
 # limitations under the License.
 # ==============================================================================
 from functools import partial
-from typing import Callable, List, Tuple
+from typing import Callable, List, Tuple, Union
 
 import tensorflow as tf
+from keras import Model
 from tensorflow.keras.layers import Layer
 from tqdm import tqdm
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
 from model_compression_toolkit.gptq.common.gptq_constants import REGULARIZATION_VALUES
 from packaging import version
@@ -127,14 +129,15 @@ class KerasGPTQTrainer(GPTQTrainer):
             common.Logger.error("GPTQ Error: Quantizing a node without a kernel isn't supported")
         return node.is_weights_quantization_enabled()
 
-    def gptq_wrapper(self, n: common.BaseNode, layer: Layer):
+    def gptq_wrapper(self, n: common.BaseNode, layer: Layer) -> Union[qi.KerasQuantizationWrapper, Layer]:
         """
-        A function which takes a computational graph node and a keras layer and perform the quantization wrapping
+        A function which takes a computational graph node and a keras layer and perform the quantization wrapping.
+
         Args:
             n: A node of mct graph.
             layer: A keras layer
 
-        Returns: Wrapped layer
+        Returns: Wrapped layer if the layer should be wrap, otherwise returns the layer as is.
 
         """
         if self._is_gptq_applicable(n):
@@ -145,7 +148,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         else:
             return layer
 
-    def build_gptq_model(self):
+    def build_gptq_model(self) -> Tuple[Model, UserInformation]:
         """
         Build the GPTQ model with QuantizationWrappers
 
@@ -223,7 +226,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                                      self.gptq_config.n_epochs,
                                      True)
 
-    # @tf.function
+    @tf.function
     def nano_training_step(self, input_data, in_compute_gradients, in_optimizer_with_param, is_training):
         """
         This function run part of the training step, wrapped by a tf.function for acceleration.
