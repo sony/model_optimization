@@ -63,6 +63,26 @@ if FOUND_TF:
 
             return weights, quant_config, {}
 
+        def get_aux_variable(self) -> List[tf.Tensor]:
+            """
+            This function return a list with the quantizer's quantization auxiliary variables.
+
+            Returns: A list with the quantization auxiliary variables.
+
+            """
+
+            return []
+
+        def get_quantization_variable(self) -> List[tf.Tensor]:
+            """
+            This function return a list with the quantizer's quantization parameters variables.
+
+            Returns: A list with the quantization parameters.
+
+            """
+
+            return []
+
         @abstractmethod
         def get_quant_config(self):
             """
