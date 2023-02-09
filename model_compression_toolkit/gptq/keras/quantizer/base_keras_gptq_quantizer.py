@@ -57,7 +57,7 @@ if FOUND_TF:
             """
             weights = {}
             for weight, quantizer_vars, quantizer in layer.get_weights_vars():
-                weights.update({KERNEL: quantizer(training=False, inputs=quantizer_vars)})
+                weights.update({weight: quantizer(training=False, inputs=quantizer_vars)})
 
             quant_config = {WEIGHTS_QUANTIZATION_PARAMS: self.get_quant_config()}
 
