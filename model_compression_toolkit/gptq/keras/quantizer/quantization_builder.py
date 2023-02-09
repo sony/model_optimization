@@ -85,5 +85,7 @@ def _get_extended_quantizer_parametes(gptq_config: GradientPTQConfig) -> Dict[st
         return {'n_batches': gptq_config.quantizer_config.n_batches,
                 'quantization_parameter_learning': gptq_config.quantization_parameters_learning,
                 'n_epochs': gptq_config.n_epochs}
+    elif gptq_config.rounding_type == RoundingType.STE:
+        return {'max_lsbs_change_map': gptq_config.lsb_change_per_bit_width}
 
     return {}
