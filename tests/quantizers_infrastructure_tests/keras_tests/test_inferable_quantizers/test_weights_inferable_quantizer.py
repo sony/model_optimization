@@ -542,10 +542,27 @@ class TestKerasWeightsLUTSymmetricQuantizer(unittest.TestCase):
         self.assertTrue(quantizer_config['channel_axis'] == channel_axis)
         self.assertTrue(quantizer_config['input_rank'] == input_rank)
 
+        # test permute
+        perm_vec = list(np.arange(input_rank))
+        if per_channel and channel_axis not in [-1, input_rank - 1]:
+            perm_vec[channel_axis] = input_rank - 1
+            perm_vec[input_rank - 1] = channel_axis
+
         # Initialize a random input to quantize between -50 to 50.
         input_tensor = tf.constant(np.random.rand(1, 50, 50, 3) * 100 - 50, dtype=tf.float32)
+
+        # change the input only when channel_axis is not the last axis
+        input_tensor = tf.transpose(input_tensor, perm=perm_vec)
+
         # Quantize tensor
         quantized_tensor = quantizer(input_tensor)
+
+        self.assertTrue(quantized_tensor.shape == input_tensor.shape, f'Quantized tensor should be in the same shape '
+                                                                      f'as the input tensor')
+
+        # return the output's channel axis to the last axis
+        # change the input only when channel_axis is not the last axis
+        quantized_tensor = tf.transpose(quantized_tensor, perm=perm_vec)
 
         # Using a signed quantization, so we expect all values to be between -abs(max(threshold))
         # and abs(max(threshold))
@@ -622,6 +639,14 @@ class TestKerasWeightsLUTSymmetricQuantizer(unittest.TestCase):
                                               per_channel=per_channel, channel_axis=channel_axis,
                                               input_rank=input_rank)
 
+        # test per channel and channel axis is not last
+        threshold = [3., 8., 7.]
+        channel_axis = 1
+        self.weights_inferable_quantizer_test(inferable_quantizer=inferable_quantizer, num_bits=num_bits,
+                                              threshold=threshold, cluster_centers=cluster_centers,
+                                              per_channel=per_channel, channel_axis=channel_axis,
+                                              input_rank=input_rank)
+
         # test per tensor
         threshold = [3.]
         channel_axis = None
@@ -679,6 +704,14 @@ class TestKerasWeightsLUTPOTQuantizer(TestKerasWeightsLUTSymmetricQuantizer):
         # test per channel
         threshold = [2., 8., 32.]
         channel_axis = 3
+        self.weights_inferable_quantizer_test(inferable_quantizer=inferable_quantizer, num_bits=num_bits,
+                                              threshold=threshold, cluster_centers=cluster_centers,
+                                              per_channel=per_channel, channel_axis=channel_axis,
+                                              input_rank=input_rank)
+
+        # test per channel and channel axis is not last
+        threshold = [2., 8., 32.]
+        channel_axis = 1
         self.weights_inferable_quantizer_test(inferable_quantizer=inferable_quantizer, num_bits=num_bits,
                                               threshold=threshold, cluster_centers=cluster_centers,
                                               per_channel=per_channel, channel_axis=channel_axis,
