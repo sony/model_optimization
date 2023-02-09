@@ -126,6 +126,22 @@ class GradientPTQConfig:
         return type(quantizer_config) == GPTQQuantizerConfig
 
 
+    def get_extended_quantizer_parametes(self) -> Dict[str, Any]:
+        """
+        Return a dictionary with a mapping to necessary additional parameters for initializing the GPTQ quantizer.
+
+        Returns: A dictionary with parameters for initializing a quantizer.
+
+        """
+
+        if self.rounding_type == RoundingType.SoftQuantizer:
+            return {'n_batches': self.quantizer_config.n_batches,
+                    'quantization_parameter_learning': self.quantization_parameters_learning,
+                    'n_epochs': getattr(self, 'n_epochs', None)}
+
+        return {}
+
+
 
 class GradientPTQConfigV2(GradientPTQConfig):
     """

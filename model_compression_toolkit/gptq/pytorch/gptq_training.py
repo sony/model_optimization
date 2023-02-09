@@ -12,23 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable, List, Tuple
+from typing import Callable, List, Tuple, Union
 
 import numpy as np
+from torch.nn import Module
 from tqdm import tqdm
 import copy
 import torch
 from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
-from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.pytorch.constants import BIAS, KERNEL
-from model_compression_toolkit.gptq.pytorch.gptq_model_builder import GPTQPytorchModelBuilder
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_model, torch_tensor_to_numpy
-from model_compression_toolkit.gptq.pytorch.gptq_graph_info import get_trainable_parameters, get_weights_for_loss
-from model_compression_toolkit.gptq.pytorch.quantizer.quantizer_wrapper import WeightQuantizerWrapper
+from model_compression_toolkit.gptq.pytorch.graph_info import get_trainable_parameters, get_weights_for_loss
+from model_compression_toolkit.gptq.pytorch.quantizer.quantization_builder import quantization_builder
+from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
 
 
 class PytorchGPTQTrainer(GPTQTrainer):
@@ -83,16 +86,52 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
         self.weights_for_average_loss = to_torch_tensor(self.compute_jacobian_based_weights(representative_data_gen))
 
+    def _is_gptq_applicable(self,
+                            node: BaseNode) -> bool:
+        """
+        A function for deciding if a layer should be fine-tuned during GPTQ.
+        Args:
+            node (BaseNode): Node for quantization decision
+        Returns:
+            A boolean whether the layer is to be wrapped with a Quantization Wrapper.
+        """
+
+        if node.is_weights_quantization_enabled() and not self.fw_info.is_kernel_op(node.type):
+            Logger.error("GPTQ Error: Quantizing a node without a kernel isn't supported")
+        return node.is_weights_quantization_enabled()
+
+    def gptq_wrapper(self, n: BaseNode, layer: Module) -> Union[qi.KerasQuantizationWrapper, Module]:
+        """
+        A function which takes a computational graph node and a pytorch layer and perform the quantization wrapping.
+
+        Args:
+            n: A node of mct graph.
+            layer: A pytorch layer
+
+        Returns: Wrapped layer if the layer should be wrap, otherwise returns the layer as is.
+        """
+
+        if self._is_gptq_applicable(n):
+            weights_quantizers, activation_quantizers = quantization_builder(n, self.gptq_config)
+            return qi.PytorchQuantizationWrapper(layer,
+                                                 weights_quantizers=weights_quantizers,
+                                                 activation_quantizers=activation_quantizers)
+        else:
+            return layer
+
     def build_gptq_model(self):
         """
         Build the GPTQ model with QuantizationWrappers
         Returns:
             Quantized graph for GPTQ fine-tuning, GPTQ graph user info
         """
-        return GPTQPytorchModelBuilder(self.graph_quant,
-                                       self.gptq_config,
-                                       append2output=self.compare_points,
-                                       return_float_outputs=True).build_model()
+        gptq_model, gptq_user_info = PyTorchModelBuilder(graph=self.graph_quant,
+                                                         append2output=self.compare_points,
+                                                         fw_info=self.fw_info,
+                                                         wrapper=self.gptq_wrapper,
+                                                         return_float_outputs=True).build_model()
+
+        return gptq_model, gptq_user_info
 
     def train(self, representative_data_gen: Callable):
         """
@@ -190,7 +229,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
         # Update graph after training
         for name, layer in self.fxp_model.named_modules():
-            if isinstance(layer, WeightQuantizerWrapper):
+            if isinstance(layer, PytorchQuantizationWrapper):
                 node = self.graph_quant.find_node_by_name(name)
                 if len(node) != 1:
                     Logger.error(f"Can't update GPTQ graph due to missing layer named: {name}")
@@ -216,8 +255,8 @@ class PytorchGPTQTrainer(GPTQTrainer):
             param.requires_grad = False
 
         # Fxp model: unfreeze bias trainable parameters
-        for layer in self.fxp_model.modules():
-            if isinstance(layer, WeightQuantizerWrapper):
-                if hasattr(layer.op, BIAS):
-                    bias = getattr(layer.op, BIAS)
-                    bias.requires_grad = self.gptq_config.train_bias
+        # for layer in self.fxp_model.modules():
+        #     if isinstance(layer, WeightQuantizerWrapper):
+        #         if hasattr(layer.op, BIAS):
+        #             bias = getattr(layer.op, BIAS)
+        #             bias.requires_grad = self.gptq_config.train_bias

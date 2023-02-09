@@ -15,48 +15,62 @@
 import torch
 import torch.nn as nn
 from typing import List, Union
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
-from model_compression_toolkit.gptq.pytorch.quantizer.gptq_quantizer import BaseWeightQuantizer
+import numpy as np
+
+from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.gptq.common.gptq_config import RoundingType
+from model_compression_toolkit.gptq.pytorch.quantizer.base_pytorch_gptq_quantizer import \
+    BasePytorchGPTQTrainableQuantizer
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.gptq.pytorch.quantizer.quant_utils import ste_round, ste_clip
 from model_compression_toolkit.gptq.common.gptq_constants import AUXVAR
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
 from model_compression_toolkit.core.common.constants import THRESHOLD
+from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
+from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 
 
-class STEWeightQuantizer(BaseWeightQuantizer):
+@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
+                quantizer_type=RoundingType.STE)
+class STEWeightQuantizer(BasePytorchGPTQTrainableQuantizer):
     """
-    Class that implements a quantizer with trainable parameters to be used for GPTQ training.
+    Trainable symmetric quantizer to quantize a layer weights.
     """
 
     def __init__(self,
-                 weights_quantization_cfg: NodeWeightsQuantizationConfig,
-                 gptq_config: GradientPTQConfig,
-                 weight: torch.nn.Parameter):
+                 quantization_config: TrainableQuantizerWeightsConfig):
         """
         Construct a Pytorch model that utilize a fake weight quantizer of STE (Straight Through Estimator) for symmetric quantizer.
+
         Args:
-            weights_quantization_cfg: Configuration of weight quantization
-            gptq_config: GradientPTQConfig object with parameters about the tuning process.
-            weight: weight for auxiliary tensor creation.
+            quantization_config: Trainable weights quantizer config.
         """
-        super().__init__()
+        super().__init__(quantization_config)
 
         self.signed = True
-        self.num_bits = weights_quantization_cfg.weights_n_bits
-        self.min_int = -int(self.signed) * (2 ** (self.num_bits - int(self.signed)))
-        self.max_int = (2 ** (self.num_bits - int(self.signed))) - 1
-        self.weight_shape = weight.shape
-        self.threshold_values = weights_quantization_cfg.weights_quantization_params.get(THRESHOLD)
-        self.delta_tensor = self.threshold_values / (2 ** (self.num_bits-int(self.signed)))
-        self.max_delta_change = gptq_config.lsb_change_per_bit_width.get(self.num_bits)
+        self.num_bits = quantization_config.weights_n_bits
+        self.per_channel = quantization_config.weights_per_channel_threshold
+
+        threshold_values = quantization_config.weights_quantization_params[THRESHOLD]
+        self.threshold_shape = np.asarray(threshold_values).shape
+        self.threshold_values = np.reshape(np.asarray(threshold_values), [-1]) if self.per_channel else float(
+            threshold_values)
+
+        self.quantization_axis = quantization_config.weights_channels_axis
+        self.power_of_two = quantization_config.weights_quantization_method == QuantizationMethod.POWER_OF_TWO
 
         # Set trainable tensors
-        self.set_trainable_params()
+        # self.set_trainable_params()
 
         # Create tensors
-        self.delta_tensor = to_torch_tensor(self.delta_tensor)
-        self.max_tensor_change = self.delta_tensor * self.max_delta_change
+        # self.delta_tensor = self.threshold_values / (2 ** (self.num_bits - int(self.signed)))
+        # self.max_delta_change = gptq_config.lsb_change_per_bit_width.get(self.num_bits)
+        # self.delta_tensor = to_torch_tensor(self.delta_tensor)
+        # self.max_tensor_change = self.delta_tensor * self.max_delta_change
+
+        # self.min_int = -int(self.signed) * (2 ** (self.num_bits - int(self.signed)))
+        # self.max_int = (2 ** (self.num_bits - int(self.signed))) - 1
 
     def set_trainable_params(self):
         """

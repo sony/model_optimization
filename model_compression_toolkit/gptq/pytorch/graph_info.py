@@ -12,17 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import torch
 import torch.nn as nn
 from typing import List
-from model_compression_toolkit.gptq.pytorch.quantizer.quantizer_wrapper import WeightQuantizerWrapper
 from model_compression_toolkit.core.pytorch.constants import BIAS
+from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
 
 
-def get_trainable_parameters(fxp_model: nn.Module,
-                             add_bias: bool = False,
-                             quantization_parameters_learning: bool = False
-                             ) -> (List[nn.Parameter], List[nn.Parameter], List[nn.Parameter]):
+def gptq_get_trainable_parameters(fxp_model: nn.Module,
+                                  add_bias: bool = False,
+                                  quantization_parameters_learning: bool = False
+                                  ) -> (List[nn.Parameter], List[nn.Parameter], List[nn.Parameter]):
     """
     Get trainable parameters from all layers in a model
 
@@ -40,10 +39,10 @@ def get_trainable_parameters(fxp_model: nn.Module,
     trainable_temperature = nn.ParameterList()
 
     for layer in fxp_model.modules():
-        if isinstance(layer, WeightQuantizerWrapper):
-            trainable_aux_weights.append(layer.weight_quantizer.get_aux_variable())
+        if isinstance(layer, PytorchQuantizationWrapper):
+            trainable_aux_weights.append(layer.quantize_config.get_aux_variable())
             if quantization_parameters_learning:
-                trainable_threshold.extend(layer.weight_quantizer.get_quantization_variable())
+                trainable_threshold.extend(layer.quantize_config.get_quantization_variable())
             if add_bias and hasattr(layer.op, BIAS):
                 bias = getattr(layer.op, BIAS)
                 trainable_bias.append(bias)
@@ -65,10 +64,10 @@ def get_weights_for_loss(fxp_model: nn.Module) -> [List, List]:
 
     flp_weights_list, fxp_weights_list = [], []
     for layer in fxp_model.modules():
-        if isinstance(layer, WeightQuantizerWrapper):
+        if isinstance(layer, PytorchQuantizationWrapper):
             # Collect pairs of float and quantized weights per layer
-            weights = layer.op.weight
-            flp_weights_list.append(weights)
-            fxp_weights_list.append(layer.weight_quantizer(weights, training=False))
+            for weight, quantizer_vars, quantizer in layer.get_weights_vars():
+                flp_weights_list.append(quantizer_vars)
+                fxp_weights_list.append(quantizer(training=False, inputs=quantizer_vars))
 
     return flp_weights_list, fxp_weights_list
