@@ -255,8 +255,8 @@ class PytorchGPTQTrainer(GPTQTrainer):
             param.requires_grad = False
 
         # Fxp model: unfreeze bias trainable parameters
-        # for layer in self.fxp_model.modules():
-        #     if isinstance(layer, WeightQuantizerWrapper):
-        #         if hasattr(layer.op, BIAS):
-        #             bias = getattr(layer.op, BIAS)
-        #             bias.requires_grad = self.gptq_config.train_bias
+        for layer in self.fxp_model.modules():
+            if isinstance(layer, PytorchQuantizationWrapper):
+                if hasattr(layer.layer, BIAS):
+                    bias = getattr(layer.layer, BIAS)
+                    bias.requires_grad = self.gptq_config.train_bias

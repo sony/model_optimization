@@ -122,8 +122,10 @@ class STEWeightQuantizer(BasePytorchGPTQTrainableQuantizer):
             Dictionary of parameters names to the variables.
         """
 
-        layer.register_parameter(f"{name}_{PTQ_THRESHOLD}", nn.Parameter(to_torch_tensor(self.threshold_values),
-                                                                         requires_grad=False))
+        layer.register_parameter(f"{name}_{PTQ_THRESHOLD}",
+                                 nn.Parameter(torch.tensor(self.threshold_values, requires_grad=False)
+                                              if not self.per_channel
+                                              else to_torch_tensor(self.threshold_values),requires_grad=False))
         layer.register_parameter(f"{name}_{AUXVAR}", nn.Parameter(to_torch_tensor(torch.zeros(self.threshold_shape)),
                                                                   requires_grad=True))
 
