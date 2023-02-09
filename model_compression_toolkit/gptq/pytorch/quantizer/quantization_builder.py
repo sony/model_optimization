@@ -16,9 +16,9 @@ from typing import List, Dict, Tuple
 
 from model_compression_toolkit import GradientPTQConfig
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.keras.constants import KERNEL
-from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
-    get_inferable_quantizer_kwargs
+from model_compression_toolkit.core.pytorch.constants import KERNEL
+from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizer import \
+    get_activation_inferable_quantizer_kwargs
 from model_compression_toolkit.gptq.pytorch.quantizer.base_pytorch_gptq_quantizer import \
     BasePytorchGPTQTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.common.get_quantizer_config import \
@@ -64,7 +64,7 @@ def quantization_builder(n: common.BaseNode,
                                                         quant_method=quant_method,
                                                         quantizer_base_class=BasePyTorchInferableQuantizer)
 
-        kwargs = get_inferable_quantizer_kwargs(n, QuantizationTarget.Activation)
+        kwargs = get_activation_inferable_quantizer_kwargs(n)
 
         activation_quantizers.append(quantizer_class(**kwargs))
 

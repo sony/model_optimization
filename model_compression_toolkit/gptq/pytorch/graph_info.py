@@ -14,13 +14,13 @@
 # ==============================================================================
 import torch.nn as nn
 from typing import List
-from model_compression_toolkit.core.pytorch.constants import BIAS
+from model_compression_toolkit.core.pytorch.constants import BIAS, KERNEL, USE_BIAS
+from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
 
 
 def gptq_get_trainable_parameters(fxp_model: nn.Module,
                                   add_bias: bool = False,
-                                  quantization_parameters_learning: bool = False
                                   ) -> (List[nn.Parameter], List[nn.Parameter], List[nn.Parameter]):
     """
     Get trainable parameters from all layers in a model
@@ -28,7 +28,7 @@ def gptq_get_trainable_parameters(fxp_model: nn.Module,
     Args:
         fxp_model: Model to get its trainable parameters.
         add_bias: Whether to include biases of the model (if there are) or not.
-        quantization_parameters_learning: Whether to include quantization parameters of the model or not.
+
     Returns:
         A list of trainable variables in a model. Each item is a list of a layers weights.
     """
@@ -40,11 +40,11 @@ def gptq_get_trainable_parameters(fxp_model: nn.Module,
 
     for layer in fxp_model.modules():
         if isinstance(layer, PytorchQuantizationWrapper):
-            trainable_aux_weights.append(layer.quantize_config.get_aux_variable())
-            if quantization_parameters_learning:
-                trainable_threshold.extend(layer.quantize_config.get_quantization_variable())
-            if add_bias and hasattr(layer.op, BIAS):
-                bias = getattr(layer.op, BIAS)
+            trainable_aux_weights.extend(layer.weights_quantizers[KERNEL].get_aux_variable())
+            trainable_threshold.extend(layer.weights_quantizers[KERNEL].get_quantization_variable())
+
+            if add_bias and hasattr(layer.layer, BIAS):
+                bias = getattr(layer.layer, BIAS)
                 trainable_bias.append(bias)
 
     return trainable_aux_weights, trainable_bias, trainable_threshold, trainable_temperature

@@ -28,7 +28,7 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.pytorch.constants import BIAS, KERNEL
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_model, torch_tensor_to_numpy
-from model_compression_toolkit.gptq.pytorch.graph_info import get_trainable_parameters, get_weights_for_loss
+from model_compression_toolkit.gptq.pytorch.graph_info import gptq_get_trainable_parameters, get_weights_for_loss
 from model_compression_toolkit.gptq.pytorch.quantizer.quantization_builder import quantization_builder
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
@@ -68,10 +68,9 @@ class PytorchGPTQTrainer(GPTQTrainer):
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
-        trainable_weights, trainable_bias, trainable_threshold, trainable_temperature = get_trainable_parameters(
+        trainable_weights, trainable_bias, trainable_threshold, trainable_temperature = gptq_get_trainable_parameters(
             self.fxp_model,
-            add_bias=self.gptq_config.train_bias,
-            quantization_parameters_learning=self.gptq_config.quantization_parameters_learning)
+            add_bias=self.gptq_config.train_bias)
 
         self.flp_weights_list, self.fxp_weights_list = get_weights_for_loss(self.fxp_model)
         if not (len(self.compare_points) == len(trainable_weights) == len(self.flp_weights_list) == len(
@@ -234,15 +233,16 @@ class PytorchGPTQTrainer(GPTQTrainer):
                 if len(node) != 1:
                     Logger.error(f"Can't update GPTQ graph due to missing layer named: {name}")
                 node = node[0]
-                # Weight
-                node.set_weights_by_keys(KERNEL, self.fw_impl.to_numpy(layer.weight_quantizer(layer.float_weight, training=False)))
-                # Weight quantization params
-                if self.gptq_config.quantization_parameters_learning:
-                    node.final_weights_quantization_cfg.set_weights_quantization_param(layer.weight_quantizer.get_weight_quant_params())
-                # Bias
-                if self.gptq_config.train_bias and hasattr(layer.op, BIAS):
-                    node.set_weights_by_keys(BIAS, self.fw_impl.to_numpy(getattr(layer.op, BIAS)))
-
+                weights, weight_quant_config, activation_quant_config = \
+                    layer.weights_quantizers[KERNEL].update_layer_quantization_params(layer)
+                for weight_attr, weight in weights.items():
+                    node.set_weights_by_keys(weight_attr, self.fw_impl.to_numpy(weight))
+                for config_attr, config_value in weight_quant_config.items():
+                    node.final_weights_quantization_cfg.set_quant_config_attr(config_attr, config_value)
+                for config_attr, config_value in activation_quant_config.items():
+                    node.final_activation_quantization_cfg.set_quant_config_attr(config_attr, config_value)
+                if self.gptq_config.train_bias and hasattr(layer.layer, BIAS):
+                    node.set_weights_by_keys(BIAS, self.fw_impl.to_numpy(getattr(layer.layer, BIAS)))
 
         return graph_quant
 
