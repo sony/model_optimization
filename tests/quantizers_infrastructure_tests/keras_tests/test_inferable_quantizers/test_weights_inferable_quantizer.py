@@ -18,6 +18,7 @@ import numpy as np
 import tensorflow as tf
 
 from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.quantizers_infrastructure.common.constants import MULTIPLIER_N_BITS
 
 
 class TestKerasWeightsSymmetricQuantizer(unittest.TestCase):
@@ -44,7 +45,7 @@ class TestKerasWeightsSymmetricQuantizer(unittest.TestCase):
         with self.assertRaises(Exception) as e:
             qi.keras_inferable_quantizers.WeightsSymmetricInferableQuantizer(num_bits=8,
                                                                              per_channel=True,
-                                                                             threshold=[3.,2.],
+                                                                             threshold=[3., 2.],
                                                                              input_rank=4)
         self.assertEqual('Channel axis is missing in per channel quantization', str(e.exception))
 
@@ -52,7 +53,7 @@ class TestKerasWeightsSymmetricQuantizer(unittest.TestCase):
         with self.assertRaises(Exception) as e:
             qi.keras_inferable_quantizers.WeightsSymmetricInferableQuantizer(num_bits=8,
                                                                              per_channel=True,
-                                                                             threshold=[3.,2.],
+                                                                             threshold=[3., 2.],
                                                                              channel_axis=1)
         self.assertEqual('Input rank is missing in per channel quantization', str(e.exception))
 
@@ -99,7 +100,7 @@ class TestKerasWeightsSymmetricQuantizer(unittest.TestCase):
         self.assertTrue(np.all(manually_quantized_tensor.numpy() == quantized_tensor.numpy()))
 
     def test_weights_symmetric_signed_per_channel_inferable_quantizer(self):
-        thresholds = [3.,6.,2.]
+        thresholds = [3., 6., 2.]
         num_bits = 2
         quantizer = qi.keras_inferable_quantizers.WeightsSymmetricInferableQuantizer(num_bits=num_bits,
                                                                                      per_channel=True,
@@ -294,7 +295,7 @@ class TestKerasWeightsUniformQuantizer(unittest.TestCase):
             qi.keras_inferable_quantizers.WeightsUniformInferableQuantizer(num_bits=8,
                                                                            per_channel=False,
                                                                            min_range=[3., 2.],
-                                                                           max_range=[4.,3.],
+                                                                           max_range=[4., 3.],
                                                                            channel_axis=None,
                                                                            input_rank=4)
         self.assertEqual('In per-tensor quantization min/max should be of length 1 but is 2', str(e.exception))
@@ -477,3 +478,217 @@ class TestKerasWeightsUniformQuantizer(unittest.TestCase):
             self.assertTrue(0 in np.unique(channel_slice_i),
                             f'zero should be in quantization range, but quantized values are in set: '
                             f'{np.unique(channel_slice_i)}')
+
+
+class TestKerasWeightsLUTSymmetricQuantizer(unittest.TestCase):
+
+    def illegal_num_of_thresholds_inferable_quantizer_test(self, inferable_quantizer, threshold, cluster_centers,
+                                                           per_channel, channel_axis, input_rank):
+        with self.assertRaises(Exception) as e:
+            inferable_quantizer(num_bits=8,
+                                per_channel=per_channel,
+                                cluster_centers=cluster_centers,
+                                threshold=threshold,
+                                channel_axis=channel_axis,
+                                input_rank=input_rank)
+        self.assertEqual('In per-tensor quantization threshold should be of length 1 but is 2', str(e.exception))
+
+    def illegal_threshold_type_inferable_quantizer_test(self, inferable_quantizer, threshold, cluster_centers,
+                                                        per_channel, channel_axis, input_rank):
+        with self.assertRaises(Exception) as e:
+            inferable_quantizer(num_bits=8,
+                                per_channel=per_channel,
+                                cluster_centers=cluster_centers,
+                                threshold=threshold,
+                                channel_axis=channel_axis,
+                                input_rank=input_rank)
+        self.assertEqual('Expected threshold to be of type list but is <class \'numpy.ndarray\'>', str(e.exception))
+
+    def missing_channel_axis_inferable_quantizer(self, inferable_quantizer, threshold, cluster_centers,
+                                                 per_channel, input_rank):
+        with self.assertRaises(Exception) as e:
+            inferable_quantizer(num_bits=8,
+                                per_channel=per_channel,
+                                cluster_centers=cluster_centers,
+                                threshold=threshold,
+                                input_rank=input_rank)
+        self.assertEqual('Channel axis is missing in per channel quantization', str(e.exception))
+
+    def missing_input_rank_inferable_quantizer(self, inferable_quantizer, threshold, cluster_centers,
+                                               per_channel, channel_axis):
+        with self.assertRaises(Exception) as e:
+            inferable_quantizer(num_bits=8,
+                                per_channel=per_channel,
+                                cluster_centers=cluster_centers,
+                                threshold=threshold,
+                                channel_axis=channel_axis)
+        self.assertEqual('Input rank is missing in per channel quantization', str(e.exception))
+
+    def weights_inferable_quantizer_test(self, inferable_quantizer, num_bits, threshold, cluster_centers,
+                                         per_channel, channel_axis, input_rank):
+        quantizer = inferable_quantizer(num_bits=num_bits,
+                                        per_channel=per_channel,
+                                        cluster_centers=cluster_centers,
+                                        threshold=threshold,
+                                        channel_axis=channel_axis,
+                                        input_rank=input_rank)
+
+        # check config
+        quantizer_config = quantizer.get_config()
+        self.assertTrue(quantizer_config['num_bits'] == num_bits)
+        self.assertTrue(np.all(quantizer_config['threshold'] == np.asarray(threshold)))
+        self.assertTrue(np.all(quantizer_config['cluster_centers'] == cluster_centers))
+        self.assertTrue(quantizer_config['per_channel'] == per_channel)
+        self.assertTrue(quantizer_config['channel_axis'] == channel_axis)
+        self.assertTrue(quantizer_config['input_rank'] == input_rank)
+
+        # Initialize a random input to quantize between -50 to 50.
+        input_tensor = tf.constant(np.random.rand(1, 50, 50, 3) * 100 - 50, dtype=tf.float32)
+        # Quantize tensor
+        quantized_tensor = quantizer(input_tensor)
+
+        # Using a signed quantization, so we expect all values to be between -abs(max(threshold))
+        # and abs(max(threshold))
+
+        max_threshold = np.max(np.abs(threshold))
+
+        self.assertTrue(np.max(
+            quantized_tensor) < max_threshold, f'Quantized values should not contain values greater than maximal '
+                                               f'threshold ')
+        self.assertTrue(np.min(
+            quantized_tensor) >= -max_threshold, f'Quantized values should not contain values lower than minimal '
+                                                 f'threshold ')
+
+        self.assertTrue(len(np.unique(quantized_tensor)) <= 2 ** num_bits,
+                        f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
+                        f'{len(np.unique(quantized_tensor))} unique values')
+
+        if per_channel:
+            for i in range(len(threshold)):
+                channel_slice_i = quantized_tensor[:, :, :, i]
+                channel_quant_tensor_values = cluster_centers / (2 ** (MULTIPLIER_N_BITS - 1)) * threshold[i]
+                self.assertTrue(len(np.unique(channel_slice_i)) <= 2 ** num_bits,
+                                f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
+                                f'{len(np.unique(channel_slice_i))} unique values')
+                self.assertTrue(np.all(np.unique(channel_slice_i) == np.sort(channel_quant_tensor_values)))
+        else:
+            quant_tensor_values = cluster_centers / (2 ** (MULTIPLIER_N_BITS - 1)) * threshold
+            self.assertTrue(len(np.unique(quantized_tensor)) <= 2 ** num_bits,
+                            f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
+                            f'{len(np.unique(quantized_tensor))} unique values')
+            self.assertTrue(np.all(np.unique(quantized_tensor) == np.sort(quant_tensor_values)))
+
+        # Assert some values are negative (signed quantization)
+        self.assertTrue(np.any(quantized_tensor < 0),
+                        f'Expected some values to be negative but quantized tensor is {quantized_tensor}')
+
+    def test_weights_lut_symmetric_inferable_quantizer(self):
+        inferable_quantizer = qi.keras_inferable_quantizers.WeightsLUTSymmetricInferableQuantizer
+        num_bits = 3
+        cluster_centers = np.asarray([-25, 25])
+        per_channel = False
+        channel_axis = None
+        input_rank = 4
+
+        threshold = np.asarray([3., 2.])
+        self.illegal_threshold_type_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
+                                                             threshold=threshold,
+                                                             cluster_centers=cluster_centers, per_channel=per_channel,
+                                                             channel_axis=channel_axis, input_rank=input_rank)
+
+        threshold = [2., 7.]
+        self.illegal_num_of_thresholds_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
+                                                                threshold=threshold, cluster_centers=cluster_centers,
+                                                                per_channel=per_channel, channel_axis=channel_axis,
+                                                                input_rank=input_rank)
+
+        threshold = [2.]
+        per_channel = True
+        self.missing_channel_axis_inferable_quantizer(inferable_quantizer=inferable_quantizer,
+                                                      threshold=threshold,
+                                                      cluster_centers=cluster_centers, per_channel=per_channel,
+                                                      input_rank=input_rank)
+
+        self.missing_input_rank_inferable_quantizer(inferable_quantizer=inferable_quantizer,
+                                                    threshold=threshold,
+                                                    cluster_centers=cluster_centers, per_channel=per_channel,
+                                                    channel_axis=channel_axis)
+
+        # test per channel
+        threshold = [3., 8., 7.]
+        channel_axis = 3
+        self.weights_inferable_quantizer_test(inferable_quantizer=inferable_quantizer, num_bits=num_bits,
+                                              threshold=threshold, cluster_centers=cluster_centers,
+                                              per_channel=per_channel, channel_axis=channel_axis,
+                                              input_rank=input_rank)
+
+        # test per tensor
+        threshold = [3.]
+        channel_axis = None
+        per_channel = False
+        self.weights_inferable_quantizer_test(inferable_quantizer=inferable_quantizer, num_bits=num_bits,
+                                              threshold=threshold, cluster_centers=cluster_centers,
+                                              per_channel=per_channel, channel_axis=channel_axis,
+                                              input_rank=input_rank)
+
+
+class TestKerasWeightsLUTPOTQuantizer(TestKerasWeightsLUTSymmetricQuantizer):
+
+    def test_illegal_pot_inferable_quantizer(self):
+        with self.assertRaises(Exception) as e:
+            qi.keras_inferable_quantizers.WeightsLUTPOTInferableQuantizer(num_bits=8,
+                                                                          per_channel=False,
+                                                                          cluster_centers=np.asarray([25., 85.]),
+                                                                          threshold=[3.],
+                                                                          channel_axis=None,
+                                                                          input_rank=4)
+        self.assertEqual('Expected threshold to be power of 2 but is 3.0', str(e.exception))
+
+    def test_weights_lut_pot_inferable_quantizer(self):
+        inferable_quantizer = qi.keras_inferable_quantizers.WeightsLUTPOTInferableQuantizer
+        num_bits = 3
+        cluster_centers = np.asarray([-25, 25])
+        per_channel = False
+        channel_axis = None
+        input_rank = 4
+
+        threshold = np.asarray([2., 16.])
+        self.illegal_threshold_type_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
+                                                             threshold=threshold,
+                                                             cluster_centers=cluster_centers, per_channel=per_channel,
+                                                             channel_axis=channel_axis, input_rank=input_rank)
+
+        threshold = [2., 8.]
+        self.illegal_num_of_thresholds_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
+                                                                threshold=threshold, cluster_centers=cluster_centers,
+                                                                per_channel=per_channel, channel_axis=channel_axis,
+                                                                input_rank=input_rank)
+
+        threshold = [2.]
+        per_channel = True
+        self.missing_channel_axis_inferable_quantizer(inferable_quantizer=inferable_quantizer,
+                                                      threshold=threshold,
+                                                      cluster_centers=cluster_centers, per_channel=per_channel,
+                                                      input_rank=input_rank)
+
+        self.missing_input_rank_inferable_quantizer(inferable_quantizer=inferable_quantizer,
+                                                    threshold=threshold,
+                                                    cluster_centers=cluster_centers, per_channel=per_channel,
+                                                    channel_axis=channel_axis)
+
+        # test per channel
+        threshold = [2., 8., 32.]
+        channel_axis = 3
+        self.weights_inferable_quantizer_test(inferable_quantizer=inferable_quantizer, num_bits=num_bits,
+                                              threshold=threshold, cluster_centers=cluster_centers,
+                                              per_channel=per_channel, channel_axis=channel_axis,
+                                              input_rank=input_rank)
+
+        # test per tensor
+        threshold = [4.]
+        channel_axis = None
+        per_channel = False
+        self.weights_inferable_quantizer_test(inferable_quantizer=inferable_quantizer, num_bits=num_bits,
+                                              threshold=threshold, cluster_centers=cluster_centers,
+                                              per_channel=per_channel, channel_axis=channel_axis,
+                                              input_rank=input_rank)

@@ -18,6 +18,7 @@ import numpy as np
 import tensorflow as tf
 
 from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.quantizers_infrastructure.common.constants import MULTIPLIER_N_BITS
 
 
 class TestKerasActivationsSymmetricQuantizer(unittest.TestCase):
@@ -287,3 +288,81 @@ class TestKerasActivationsUniformQuantizer(unittest.TestCase):
                             f'zero should be in quantization range, but quantized values are in set: '
                             f'{np.unique(channel_slice_i)}')
 
+
+class TestKerasActivationsLUTPOTQuantizer(unittest.TestCase):
+
+    def test_illegal_pot_inferable_quantizer(self):
+        with self.assertRaises(Exception) as e:
+            qi.keras_inferable_quantizers.ActivationLutPOTInferableQuantizer(num_bits=8,
+                                                                             cluster_centers=np.asarray([25., 85.]),
+                                                                             threshold=[3.],
+                                                                             signed=True)
+        self.assertEqual('Expected threshold to be power of 2 but is [3.]', str(e.exception))
+
+    def test_lut_pot_signed_inferable_quantizer(self):
+        cluster_centers = np.asarray([-25, 25])
+        thresholds = [4.]
+        num_bits = 3
+        signed = True
+
+        quantizer = qi.keras_inferable_quantizers.ActivationLutPOTInferableQuantizer(num_bits=num_bits,
+                                                                                     cluster_centers=cluster_centers,
+                                                                                     signed=signed,
+                                                                                     threshold=thresholds)
+
+        thresholds = np.asarray(thresholds)
+
+        # check config
+        quantizer_config = quantizer.get_config()
+        self.assertTrue(quantizer_config['num_bits'] == num_bits)
+        self.assertTrue(np.all(quantizer_config['cluster_centers'] == cluster_centers))
+        self.assertTrue(quantizer_config['threshold'] == thresholds)
+        self.assertTrue(quantizer_config['signed'] == signed)
+
+        # Initialize a random input to quantize between -50 to 50.
+        input_tensor = tf.constant(np.random.rand(1, 50, 50, 3) * 100 - 50, tf.float32)
+        fake_quantized_tensor = quantizer(input_tensor)
+
+        quant_tensor_values = tf.concat([(center / (2 ** (MULTIPLIER_N_BITS - 1))) * thresholds for
+                                         center in cluster_centers], 0)
+
+        self.assertTrue(len(np.unique(fake_quantized_tensor)) <= 2 ** num_bits,
+                        f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
+                        f'{len(np.unique(fake_quantized_tensor))} unique values')
+
+        self.assertTrue(np.all(np.unique(fake_quantized_tensor) == np.sort(quant_tensor_values)))
+
+        # Assert some values are negative (signed quantization)
+        self.assertTrue(np.any(fake_quantized_tensor < 0),
+                        f'Expected some values to be negative but quantized tensor is {fake_quantized_tensor}')
+
+    def test_lut_pot_unsigned_inferable_quantizer(self):
+        cluster_centers = np.asarray([25, 75])
+        thresholds = [2.]
+        num_bits = 3
+        signed = False
+        quantizer = qi.keras_inferable_quantizers.ActivationLutPOTInferableQuantizer(num_bits=num_bits,
+                                                                                     cluster_centers=cluster_centers,
+                                                                                     threshold=thresholds,
+                                                                                     signed=signed)
+        # check config
+        quantizer_config = quantizer.get_config()
+        self.assertTrue(quantizer_config['num_bits'] == num_bits)
+        self.assertTrue(np.all(quantizer_config['cluster_centers'] == cluster_centers))
+        self.assertTrue(quantizer_config['threshold'] == thresholds)
+        self.assertTrue(quantizer_config['signed'] == signed)
+
+        # Initialize a random input to quantize between -50 to 50.
+        input_tensor = tf.constant(np.random.rand(1, 50, 50, 3) * 100 - 50, tf.float32)
+        fake_quantized_tensor = quantizer(input_tensor)
+
+        quant_tensor_values = (cluster_centers / (2 ** (MULTIPLIER_N_BITS - 1))) * thresholds
+        self.assertTrue(len(np.unique(fake_quantized_tensor)) <= 2 ** num_bits,
+                        f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
+                        f'{len(np.unique(fake_quantized_tensor))} unique values')
+
+        self.assertTrue(np.all(np.unique(fake_quantized_tensor) == np.sort(quant_tensor_values)))
+
+        # Assert all values are non-negative (unsigned quantization)
+        self.assertTrue(np.all(fake_quantized_tensor >= 0),
+                        f'Expected all values to be non-negative but quantized tensor is {fake_quantized_tensor}')
