@@ -56,9 +56,9 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
 
 class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, quant_method=QuantizationMethod.SYMMETRIC, rounding_type=RoundingType.STE,
-                 quantizer_config=GPTQQuantizerConfig(), per_channel=True):
+                 quantizer_config=GPTQQuantizerConfig(), per_channel=True, input_shape=(1, 16, 16, 3)):
         super().__init__(unit_test,
-                         input_shape=(1, 16, 16, 3))
+                         input_shape=input_shape)
 
         self.quant_method = quant_method
         self.rounding_type = rounding_type
@@ -242,3 +242,19 @@ class GradientPTQWeightedLossTest(GradientPTQBaseTest):
         y_hat = quantized_model.predict(input_x)
         cs = cosine_similarity(y, y_hat)
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check: {cs}')
+
+
+class GradientPTQWithDepthwiseTest(GradientPTQTest):
+
+    def __init__(self, unit_test, rounding_type, quantizer_config):
+        super().__init__(unit_test, rounding_type=rounding_type, quantizer_config=quantizer_config,
+                         input_shape=(16, 16, 3))
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.DepthwiseConv2D(4)(inputs)
+        x = layers.BatchNormalization()(x)
+        x = layers.ReLU()(x)
+        x = layers.DepthwiseConv2D(4)(x)
+        model = keras.Model(inputs=inputs, outputs=x)
+        return model

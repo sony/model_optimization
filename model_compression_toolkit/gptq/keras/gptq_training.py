@@ -26,6 +26,7 @@ from model_compression_toolkit.core.keras.back2framework.keras_model_builder imp
 from model_compression_toolkit.gptq.common.gptq_constants import REGULARIZATION_VALUES
 from packaging import version
 
+from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.keras.quantizer.quantization_builder import quantization_builder
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 
@@ -300,8 +301,10 @@ class KerasGPTQTrainer(GPTQTrainer):
                 if len(node) != 1:
                     common.Logger.error(f"Can't update GPTQ graph due to missing layer named: {layer.layer.name}")
                 node = node[0]
+                kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=node.type,
+                                                                      fw_info=self.fw_info)
                 weights, weight_quant_config, activation_quant_config = \
-                    layer.weights_quantizers[KERNEL].update_layer_quantization_params(layer)
+                    layer.weights_quantizers[kernel_attribute].update_layer_quantization_params(layer)
                 for weight_attr, weight in weights.items():
                     node.set_weights_by_keys(weight_attr, weight.numpy())
                 for config_attr, config_value in weight_quant_config.items():

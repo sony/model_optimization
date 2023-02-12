@@ -44,7 +44,7 @@ def soft_rounding_symmetric_quantizer(input_tensor: tf.Tensor,
 
     Args:
         input_tensor: Tensor to quantize. values of this tensor are not changed during gptq.
-        auxvar_tensor: Tensor that manifests the bit shift the weight due to gptq.
+        auxvar_tensor: Tensor that manifests the bit shift of the quantized weights due to gptq training.
         threshold_tensor: Tensor with values to compute the threshold.
         num_bits: Num of bits to use.
         signed: Signedness of the quantization range.
