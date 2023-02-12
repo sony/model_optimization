@@ -180,7 +180,9 @@ class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
         """
 
         if self.per_channel:
-            reshape_shape = self._get_threshold_reshape_shape(tensor_shape, quant_axis_dim=self.num_channels)
+            reshape_shape = self.get_threshold_reshape_shape(tensor_shape,
+                                                             quant_axis=self.quantization_axis,
+                                                             quant_axis_dim=self.num_channels)
         else:
             reshape_shape = [self.num_channels]
 
@@ -290,7 +292,9 @@ class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
         ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD]
 
         if self.per_channel:
-            reshape_shape = self._get_threshold_reshape_shape(inputs.shape, quant_axis_dim=-1)
+            reshape_shape = self.get_threshold_reshape_shape(inputs.shape,
+                                                             quant_axis=self.quantization_axis,
+                                                             quant_axis_dim=-1)
 
             ##########################################################
             # Calculate soft rounding targets and optimized threshold
@@ -328,25 +332,6 @@ class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
                                                      num_bits=self.num_bits,
                                                      signed=True,
                                                      power_of_two=self.power_of_two)
-
-    # TODO: Extract this method to a parent class of all GPTQ quantizer and use it in other quantizers (such as STE)
-    def _get_threshold_reshape_shape(self, tensor_shape, quant_axis_dim):
-        """
-        Gets a shape that contains 1 in all axis except the quantization axis, to adjust the threshold tensor for
-        per-channel quantization.
-
-        Args:
-            tensor_shape: The shape of the tensor to be quantize.
-            quant_axis_dim: The dimension of the quantization axis.
-
-        Returns: A shape to reshape the threshold tensor according to.
-
-        """
-        n_axis = len(tensor_shape)
-        quantization_axis = n_axis + self.quantization_axis if self.quantization_axis < 0 else \
-            self.quantization_axis
-
-        return [quant_axis_dim if i == quantization_axis else 1 for i in range(n_axis)]
 
     def get_quant_config(self) -> Dict[str, np.ndarray]:
         """

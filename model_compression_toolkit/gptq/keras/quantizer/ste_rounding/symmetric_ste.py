@@ -157,11 +157,9 @@ class STEWeightQuantizer(BaseKerasGPTQTrainableQuantizer):
         ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD]
 
         if self.per_channel:
-            input_shape = inputs.shape
-            n_axis = len(input_shape)
-            quantization_axis = n_axis + self.quantization_axis if self.quantization_axis < 0 else \
-                self.quantization_axis
-            reshape_shape = [-1 if i == quantization_axis else 1 for i in range(n_axis)]
+            reshape_shape = self.get_threshold_reshape_shape(inputs.shape,
+                                                             quant_axis=self.quantization_axis,
+                                                             quant_axis_dim=-1)
             ptq_threshold_tensor = tf.reshape(ptq_threshold_tensor, reshape_shape)
             q_tensor = pertubation_symmetric_quantizer(inputs,
                                                        auxvar,

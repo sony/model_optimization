@@ -90,8 +90,6 @@ class STEWeightQuantizer(BasePytorchGPTQTrainableQuantizer):
             quantization_config: Trainable weights quantizer config.
         """
         super().__init__(quantization_config)
-
-        self.signed = True
         self.num_bits = quantization_config.weights_n_bits
         self.per_channel = quantization_config.weights_per_channel_threshold
 
@@ -168,7 +166,7 @@ class STEWeightQuantizer(BasePytorchGPTQTrainableQuantizer):
                  inputs: nn.Parameter,
                  training: bool) -> nn.Parameter:
         """
-        Quantize a tensor
+        Quantize a tensor.
 
         Args:
             inputs: Input tensor to quantize.
@@ -181,10 +179,9 @@ class STEWeightQuantizer(BasePytorchGPTQTrainableQuantizer):
         ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD]
 
         if self.per_channel:
-            input_shape = inputs.shape
-            n_axis = len(input_shape)
-            quantization_axis = n_axis + self.quantization_axis if self.quantization_axis < 0 else self.quantization_axis
-            reshape_shape = [-1 if i == quantization_axis else 1 for i in range(n_axis)]
+            reshape_shape = self.get_threshold_reshape_shape(inputs.shape,
+                                                             quant_axis=self.quantization_axis,
+                                                             quant_axis_dim=-1)
             ptq_threshold_tensor = torch.reshape(ptq_threshold_tensor, reshape_shape)
 
             q_tensor = pertubation_symmetric_quantizer(inputs,
