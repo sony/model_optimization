@@ -17,7 +17,7 @@ from typing import Dict, Any
 from model_compression_toolkit.core.common import BaseNode, Logger
 from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MIN, RANGE_MAX, SIGNED
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.exporter.model_wrapper.common.exporter_get_quantizer import get_quantizer_class
+from model_compression_toolkit.quantizers_infrastructure.common.get_quantizers import get_inferable_quantizer_class
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
     import \
@@ -103,9 +103,9 @@ def get_weights_quantizer_for_node(node: BaseNode) -> BaseKerasInferableQuantize
     node_w_qc = node.final_weights_quantization_cfg
     weights_quantization_method = node_w_qc.weights_quantization_method
 
-    quantier_for_node = get_quantizer_class(QuantizationTarget.Weights,
-                                            weights_quantization_method,
-                                            BaseKerasInferableQuantizer)
+    quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
+                                                      weights_quantization_method,
+                                                      BaseKerasInferableQuantizer)
     kwargs = get_inferable_quantizer_kwargs(node, QuantizationTarget.Weights)
 
     return quantier_for_node(**kwargs)
@@ -128,9 +128,9 @@ def get_activations_quantizer_for_node(node: BaseNode) -> BaseKerasInferableQuan
     node_act_qc = node.final_activation_quantization_cfg
     activation_quantization_method = node_act_qc.activation_quantization_method
 
-    quantier_for_node = get_quantizer_class(QuantizationTarget.Activation,
-                                            activation_quantization_method,
-                                            BaseKerasInferableQuantizer)
+    quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Activation,
+                                                      activation_quantization_method,
+                                                      BaseKerasInferableQuantizer)
     kwargs = get_inferable_quantizer_kwargs(node, QuantizationTarget.Activation)
 
     return quantier_for_node(**kwargs)
