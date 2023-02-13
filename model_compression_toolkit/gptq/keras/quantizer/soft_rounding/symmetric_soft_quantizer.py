@@ -337,9 +337,6 @@ class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
         """
         Returns the config used to edit NodeQuantizationConfig after GPTQ retraining
 
-        Args:
-            layer: quantized layer
-
         Returns:
             A dictionary of attributes the quantize_config retraining has changed during GPTQ retraining.
             Keys must match NodeQuantizationConfig attributes
