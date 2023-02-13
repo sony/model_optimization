@@ -20,7 +20,7 @@ from model_compression_toolkit.core.common.defaultdict import DefaultDict
 
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
+from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation as PI
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from model_compression_toolkit.gptq.pytorch.quantizer.base_pytorch_gptq_quantizer import \
     BasePytorchGPTQTrainableQuantizer
@@ -160,7 +160,7 @@ class STEWeightQuantizer(BasePytorchGPTQTrainableQuantizer):
 
         """
         old_threshold = self.quantizer_parameters[PTQ_THRESHOLD]
-        return {THRESHOLD: PytorchImplementation().to_numpy(old_threshold).reshape(self.threshold_shape)}
+        return {THRESHOLD: PI.PytorchImplementation().to_numpy(old_threshold).reshape(self.threshold_shape)}
 
     def __call__(self,
                  inputs: nn.Parameter,
