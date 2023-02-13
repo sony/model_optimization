@@ -91,7 +91,8 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         _tpc = self.get_tpc()
         ptq_model, quantization_info = mct.pytorch_post_training_quantization_experimental(model_float,
                                                                                            self.representative_data_gen_experimental,
-                                                                                           target_platform_capabilities=_tpc)
+                                                                                           target_platform_capabilities=_tpc,
+                                                                                           new_experimental_exporter=True)
 
         qat_ready_model, quantization_info = mct.pytorch_quantization_aware_training_init(model_float,
                                                                                           self.representative_data_gen_experimental,
@@ -150,7 +151,7 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
                          and self.weights_quantization_method in _q.quantization_method]
                     self.unit_test.assertTrue(len(q) == 1)
                     self.unit_test.assertTrue(isinstance(layer.weights_quantizers['weight'], q[0]))
-            # check quantization didn't change when switching between PTQ model and QAT ready model
+            # check quantization didn't change when switching between PTQ model and QAT finalized model
             qat_finalized_output = qat_finalized_model(_in).cpu().detach().numpy()
             self.unit_test.assertTrue(np.isclose(np.linalg.norm(qat_finalized_output - qat_ready_output) / np.linalg.norm(qat_ready_output), 0, atol=1e-6))
 

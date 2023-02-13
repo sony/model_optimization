@@ -126,7 +126,7 @@ def uniform_quantization(activation_n_bits: int,
     min_value = 0
     max_value = 2 ** activation_n_bits - 1
     scale = (b - a) / ((2 ** activation_n_bits) - 1)
-    zero_point = -int(a / scale)  # zp has to be positive, and a <=0, so we multiply by -1
+    zero_point = -round(a / scale)  # zp has to be positive, and a <=0, so we multiply by -1
 
     return lambda x: q(x, min_value, max_value, scale, zero_point)
 

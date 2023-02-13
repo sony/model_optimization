@@ -17,10 +17,12 @@
 import tensorflow as tf
 from typing import Tuple, List
 
-from model_compression_toolkit.core.keras.constants import USE_BIAS, KERNEL
+from model_compression_toolkit.core.keras.constants import USE_BIAS
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from tensorflow.keras.models import Model
 
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 
 
@@ -44,11 +46,15 @@ def gptq_get_trainable_parameters(fxp_model: Model,
     trainable_threshold: List[tf.Tensor] = []
     bias_weights: List[List[tf.Tensor]] = []
     temperature_weights: List[tf.Tensor] = []
+
     for layer in fxp_model.layers:
         if isinstance(layer, KerasQuantizationWrapper):
+            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
+                                                                  fw_info=DEFAULT_KERAS_INFO)
+
             # collect trainable weights per layer
-            layer_trainable_weights = layer.weights_quantizers[KERNEL].get_aux_variable()
-            layer_trainable_threshold = layer.weights_quantizers[KERNEL].get_quantization_variable()
+            layer_trainable_weights = layer.weights_quantizers[kernel_attribute].get_aux_variable()
+            layer_trainable_threshold = layer.weights_quantizers[kernel_attribute].get_quantization_variable()
 
             if add_bias:
                 kernel_ops_attrs = fw_info.kernel_ops_attributes_mapping.get(type(layer.layer))
@@ -106,5 +112,8 @@ def get_soft_rounding_reg(fxp_model: Model) -> List[tf.Tensor]:
     soft_reg_aux: List[tf.Tensor] = []
     for layer in fxp_model.layers:
         if isinstance(layer, KerasQuantizationWrapper):
-            soft_reg_aux.append(layer.weights_quantizers[KERNEL].get_regularization())
+            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
+                                                                  fw_info=DEFAULT_KERAS_INFO)
+
+            soft_reg_aux.append(layer.weights_quantizers[kernel_attribute].get_regularization())
     return soft_reg_aux

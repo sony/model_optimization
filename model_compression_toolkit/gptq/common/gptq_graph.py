@@ -13,6 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 from typing import Tuple, List
+
+from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 
@@ -42,3 +45,22 @@ def get_compare_points(input_graph: Graph) -> Tuple[List[BaseNode], List[str], L
             compare_points_std.append(n.prior_info.std_output)
             compare_points_mean.append(n.prior_info.mean_output)
     return compare_points, compare_points_name, compare_points_mean, compare_points_std
+
+
+def get_kernel_attribute_name_for_gptq(layer_type: type, fw_info: FrameworkInfo) -> str:
+    """
+    Returns a layer's kernel attribute name for GPTQ training purposes.
+
+    Args:
+        layer_type: A type of model's layer.
+        fw_info: A FrameworkInfo object.
+
+    Returns: The name of the kernel attribute.
+
+    """
+    kernel_attribute = fw_info.get_kernel_op_attributes(layer_type)
+    if len(kernel_attribute) != 1:
+        Logger.error(
+            f"In GPTQ training only the kernel weights attribute should be trained, but number of kernel "
+            f"attributes is {len(kernel_attribute)}.")
+    return kernel_attribute[0]

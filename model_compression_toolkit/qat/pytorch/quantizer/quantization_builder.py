@@ -51,7 +51,7 @@ def quantization_builder(n: common.BaseNode,
     if n.is_weights_quantization_enabled():
         quant_method = n.final_weights_quantization_cfg.weights_quantization_method
         quantizer_class = get_trainable_quantizer_class(QuantizationTarget.Weights,
-                                                        qat_config.activation_training_method,
+                                                        qat_config.weight_training_method,
                                                         quant_method,
                                                         BasePytorchQATTrainableQuantizer)
         attributes = fw_info.get_kernel_op_attributes(n.type)

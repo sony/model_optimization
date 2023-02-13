@@ -41,7 +41,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.gptq.gptq_conv im
     GradientPTQLearnRateZeroConvGroupDilationTest, GradientPTQWeightsUpdateConvGroupDilationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.gptq.gptq_test import GradientPTQTest, \
     GradientPTQWeightsUpdateTest, GradientPTQLearnRateZeroTest, GradientPTQWeightedLossTest, \
-    GradientPTQNoTempLearningTest
+    GradientPTQNoTempLearningTest, GradientPTQWithDepthwiseTest
 from tests.keras_tests.feature_networks_tests.feature_networks.input_scaling_test import InputScalingDenseTest, \
     InputScalingConvTest, InputScalingDWTest, InputScalingZeroPadTest
 from tests.keras_tests.feature_networks_tests.feature_networks.linear_collapsing_test import TwoConv2DCollapsingTest, \
@@ -577,6 +577,10 @@ class FeatureNetworkTest(unittest.TestCase):
         GradientPTQLearnRateZeroTest(self,
                                      rounding_type=RoundingType.SoftQuantizer,
                                      quantizer_config=SoftQuantizerConfig()).run_test()
+        GradientPTQWithDepthwiseTest(self,
+                                     rounding_type=RoundingType.SoftQuantizer,
+                                     quantizer_config=SoftQuantizerConfig()).run_test()
+
         tf.config.run_functions_eagerly(False)
 
     # TODO: reuven - new experimental facade needs to be tested regardless the exporter.
