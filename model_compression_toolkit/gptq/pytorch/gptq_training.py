@@ -21,6 +21,7 @@ import copy
 import torch
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
+from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
 from model_compression_toolkit.core.common import Graph, BaseNode
@@ -233,8 +234,10 @@ class PytorchGPTQTrainer(GPTQTrainer):
                 if len(node) != 1:
                     Logger.error(f"Can't update GPTQ graph due to missing layer named: {name}")
                 node = node[0]
+                kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=node.type,
+                                                                      fw_info=self.fw_info)
                 weights, weight_quant_config, activation_quant_config = \
-                    layer.weights_quantizers[KERNEL].update_layer_quantization_params(layer)
+                    layer.weights_quantizers[kernel_attribute].update_layer_quantization_params(layer)
                 for weight_attr, weight in weights.items():
                     node.set_weights_by_keys(weight_attr, self.fw_impl.to_numpy(weight))
                 for config_attr, config_value in weight_quant_config.items():

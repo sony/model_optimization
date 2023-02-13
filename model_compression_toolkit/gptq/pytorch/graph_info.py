@@ -14,8 +14,11 @@
 # ==============================================================================
 import torch.nn as nn
 from typing import List
+
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.pytorch.constants import BIAS, KERNEL, USE_BIAS
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
 
 
@@ -40,8 +43,11 @@ def gptq_get_trainable_parameters(fxp_model: nn.Module,
 
     for layer in fxp_model.modules():
         if isinstance(layer, PytorchQuantizationWrapper):
-            trainable_aux_weights.extend(layer.weights_quantizers[KERNEL].get_aux_variable())
-            trainable_threshold.extend(layer.weights_quantizers[KERNEL].get_quantization_variable())
+            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
+                                                                  fw_info=DEFAULT_KERAS_INFO)
+
+            trainable_aux_weights.extend(layer.weights_quantizers[kernel_attribute].get_aux_variable())
+            trainable_threshold.extend(layer.weights_quantizers[kernel_attribute].get_quantization_variable())
 
             if add_bias and hasattr(layer.layer, BIAS):
                 bias = getattr(layer.layer, BIAS)
