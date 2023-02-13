@@ -90,3 +90,4 @@ class SoftQuantizerConfig(GPTQQuantizerConfig):
             reg += sq
 
         return self.entropy_regularization * reg
+
