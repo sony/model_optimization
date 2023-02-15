@@ -14,7 +14,7 @@
 # ==============================================================================
 from typing import Dict, List, Tuple
 
-from model_compression_toolkit import GradientPTQConfig
+from model_compression_toolkit import GradientPTQConfigV2
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
@@ -29,7 +29,7 @@ from model_compression_toolkit.quantizers_infrastructure.common.get_quantizers i
 
 
 def quantization_builder(n: common.BaseNode,
-                         gptq_config: GradientPTQConfig
+                         gptq_config: GradientPTQConfigV2
                          ) -> Tuple[Dict[str, BaseKerasGPTQTrainableQuantizer], List[BaseKerasInferableQuantizer]]:
     """
     Build quantizers for a node according to its quantization configuration and
@@ -37,7 +37,7 @@ def quantization_builder(n: common.BaseNode,
 
     Args:
         n: Node to build its QuantizeConfig.
-        gptq_config (GradientPTQConfig): GradientPTQConfig configuration.
+        gptq_config (GradientPTQConfigV2): GradientPTQConfigV2 configuration.
 
     Returns:
         A dictionary which maps the weights kernel attribute to a quantizer for GPTQ training.
