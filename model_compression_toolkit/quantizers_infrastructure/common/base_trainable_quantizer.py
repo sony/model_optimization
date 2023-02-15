@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Union
+from typing import Union, Tuple, List
 from inspect import signature
 
 from model_compression_toolkit.core import common
@@ -149,7 +149,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         raise NotImplemented  # pragma: no cover
 
     @staticmethod
-    def get_threshold_reshape_shape(tensor_shape, quant_axis, quant_axis_dim):
+    def get_threshold_reshape_shape(tensor_shape: Tuple, quant_axis: int, quant_axis_dim: int) -> List[int]:
         """
         Gets a shape that contains 1 in all axis except the quantization axis, to adjust the threshold tensor for
         per-channel quantization.

@@ -23,7 +23,8 @@ from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.gptq.common.gptq_constants import WEIGHTS_QUANTIZATION_PARAMS, PTQ_THRESHOLD, AUXVAR
 
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
-    TrainableQuantizerActivationConfig, BaseKerasTrainableQuantizer
+    TrainableQuantizerActivationConfig, BaseKerasTrainableQuantizer, KerasQuantizationWrapper
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 
 if FOUND_TF:
 
@@ -45,9 +46,13 @@ if FOUND_TF:
 
             self.quantizer_parameters = None
 
-        def update_layer_quantization_params(self, layer) -> (Dict[str, tf.Tensor], Dict[str, Dict], Dict):
+        def update_layer_quantization_params(self, layer: KerasQuantizationWrapper
+                                             ) -> (Dict[str, tf.Tensor], Dict[str, Dict], Dict):
             """
             A Function to calculate the needed change in attributes in NodeQuantizationConfig after retraining.
+
+            Args:
+                layer: A wrapped Keras layer.
 
             Returns:
                 3 dictionaries describing the change in layer's weights, weights config, activation config
@@ -57,6 +62,9 @@ if FOUND_TF:
             """
             weights = {}
             for weight, quantizer_vars, quantizer in layer.get_weights_vars():
+                if not isinstance(quantizer, BaseTrainableQuantizer):
+                    Logger.error(f"Expecting a GPTQ trainable quantizer, "
+                                 f"but got {type(quantizer)} which is not callable.")
                 weights.update({weight: quantizer(training=False, inputs=quantizer_vars)})
 
             quant_config = {WEIGHTS_QUANTIZATION_PARAMS: self.get_quant_config()}

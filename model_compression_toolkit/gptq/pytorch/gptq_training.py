@@ -97,10 +97,11 @@ class PytorchGPTQTrainer(GPTQTrainer):
         """
 
         if node.is_weights_quantization_enabled() and not self.fw_info.is_kernel_op(node.type):
-            Logger.error("GPTQ Error: Quantizing a node without a kernel isn't supported")
+            Logger.error(f"GPTQ Error: Quantizing node {node.name} of type {node.type} "
+                         f"without a kernel isn't supported.")
         return node.is_weights_quantization_enabled()
 
-    def gptq_wrapper(self, n: BaseNode, layer: Module) -> Union[qi.KerasQuantizationWrapper, Module]:
+    def gptq_wrapper(self, n: BaseNode, layer: Module) -> Union[qi.PytorchQuantizationWrapper, Module]:
         """
         A function which takes a computational graph node and a pytorch layer and perform the quantization wrapping.
 

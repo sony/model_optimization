@@ -25,7 +25,7 @@ from model_compression_toolkit.gptq.pytorch.quantizer.base_pytorch_gptq_quantize
     BasePytorchGPTQTrainableQuantizer
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from model_compression_toolkit.gptq.pytorch.quantizer import quant_utils as qutils
-from model_compression_toolkit.gptq.common.gptq_constants import AUXVAR, PTQ_THRESHOLD
+from model_compression_toolkit.gptq.common.gptq_constants import AUXVAR, PTQ_THRESHOLD, MAX_LSB_CHANGE
 from model_compression_toolkit.core.common.constants import THRESHOLD
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
@@ -37,7 +37,7 @@ def pertubation_symmetric_quantizer(input_tensor: torch.Tensor,
                                     num_bits: int,
                                     signed: bool,
                                     power_of_two: bool,
-                                    max_lsbs_change: int = 1) -> nn.Parameter:
+                                    max_lsbs_change: int = MAX_LSB_CHANGE) -> nn.Parameter:
     """
     Quantize a tensor symmetrically with maximum LSBs shift.
 

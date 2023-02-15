@@ -22,7 +22,8 @@ from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.gptq.common.gptq_constants import WEIGHTS_QUANTIZATION_PARAMS
 
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
-    TrainableQuantizerActivationConfig, BasePytorchTrainableQuantizer
+    TrainableQuantizerActivationConfig, BasePytorchTrainableQuantizer, PytorchQuantizationWrapper
+from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 
 if FOUND_TORCH:
 
@@ -42,9 +43,13 @@ if FOUND_TORCH:
 
             super().__init__(quantization_config)
 
-        def update_layer_quantization_params(self, layer) -> (Dict[str, Tensor], Dict[str, Dict], Dict):
+        def update_layer_quantization_params(self, layer: PytorchQuantizationWrapper
+                                             ) -> (Dict[str, Tensor], Dict[str, Dict], Dict):
             """
             A Function to calculate the needed change in attributes in NodeQuantizationConfig after retraining.
+
+            Args:
+                layer: A wrapped Pytorch layer.
 
             Returns:
                 3 dictionaries describing the change in layer's weights, weights config, activation config
@@ -54,6 +59,9 @@ if FOUND_TORCH:
             """
             weights = {}
             for weight, quantizer_vars, quantizer in layer.get_weights_vars():
+                if not isinstance(quantizer, BaseTrainableQuantizer):
+                    Logger.error(f"Expecting a GPTQ trainable quantizer, "
+                                 f"but got {type(quantizer)} which is not callable.")
                 weights.update({weight: quantizer(training=False, inputs=quantizer_vars)})
 
             quant_config = {WEIGHTS_QUANTIZATION_PARAMS: self.get_quant_config()}

@@ -307,7 +307,7 @@ if FOUND_TF:
 
         def get_weights_vars(self) -> List[Tuple[str, Any, BaseInferableQuantizer]]:
             """
-            A getter for the layer's weights variables.
+            A getter of the layer's weights variables.
 
             Returns:
                 List pf tuples of the wrapped layer's weights variables with weight name, values and assigned quantizer.

@@ -16,6 +16,8 @@ from enum import Enum
 from typing import Callable, Any, Dict
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core import common
+from model_compression_toolkit.gptq.common.gptq_constants import N_BATCHES_STR, QUANT_PARAM_LEARNING_STR, N_EPOCHS_STR, \
+    MAX_LSB_STR
 from model_compression_toolkit.gptq.common.gptq_quantizer_config import GPTQQuantizerConfig, SoftQuantizerConfig
 
 
@@ -135,9 +137,11 @@ class GradientPTQConfig:
         """
 
         if self.rounding_type == RoundingType.SoftQuantizer:
-            return {'n_batches': self.quantizer_config.n_batches,
-                    'quantization_parameter_learning': self.quantization_parameters_learning,
-                    'n_epochs': getattr(self, 'n_epochs', None)}
+            return {N_BATCHES_STR: self.quantizer_config.n_batches,
+                    QUANT_PARAM_LEARNING_STR: self.quantization_parameters_learning,
+                    N_EPOCHS_STR: getattr(self, 'n_epochs', None)}
+        elif self.rounding_type == RoundingType.STE:
+            return {MAX_LSB_STR: self.lsb_change_per_bit_width}
 
         return {}
 
