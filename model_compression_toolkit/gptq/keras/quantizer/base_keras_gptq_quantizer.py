@@ -15,18 +15,19 @@
 from abc import abstractmethod
 from typing import Union, Dict, List
 
-import tensorflow as tf
-
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.core.keras.constants import KERNEL
-from model_compression_toolkit.gptq.common.gptq_constants import WEIGHTS_QUANTIZATION_PARAMS, PTQ_THRESHOLD, AUXVAR
+from model_compression_toolkit.gptq.common.gptq_constants import WEIGHTS_QUANTIZATION_PARAMS
 
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
-    TrainableQuantizerActivationConfig, BaseKerasTrainableQuantizer, KerasQuantizationWrapper
+    TrainableQuantizerActivationConfig
 from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 
 if FOUND_TF:
+    import tensorflow as tf
+
+    from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer, \
+        KerasQuantizationWrapper
 
     class BaseKerasGPTQTrainableQuantizer(BaseKerasTrainableQuantizer):
         """
@@ -105,11 +106,8 @@ if FOUND_TF:
                                  f'quantizer\'s get_quant_config.')
 
 else:
-    class BaseKerasGPTQTrainableQuantizer(BaseKerasTrainableQuantizer):
-        def __init__(self,
-                     quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
-
-            super().__init__(quantization_config)
+    class BaseKerasGPTQTrainableQuantizer:
+        def __init__(self, *args, **kwargs):
             Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using BaseKerasGPTQTrainableQuantizer. '
                             'Could not find Tensorflow package.')  # pragma: no cover

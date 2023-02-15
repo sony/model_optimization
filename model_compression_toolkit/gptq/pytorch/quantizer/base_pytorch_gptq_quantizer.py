@@ -15,17 +15,17 @@
 from abc import abstractmethod
 from typing import Union, Dict, List
 
-from torch import Tensor
-
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.gptq.common.gptq_constants import WEIGHTS_QUANTIZATION_PARAMS
 
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
-    TrainableQuantizerActivationConfig, BasePytorchTrainableQuantizer, PytorchQuantizationWrapper
+    TrainableQuantizerActivationConfig
 from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 
 if FOUND_TORCH:
+    from torch import Tensor
+    from model_compression_toolkit.quantizers_infrastructure import BasePytorchTrainableQuantizer, PytorchQuantizationWrapper
 
     class BasePytorchGPTQTrainableQuantizer(BasePytorchTrainableQuantizer):
         """
@@ -102,10 +102,8 @@ if FOUND_TORCH:
                                  f'quantizer\'s get_quant_config.')
 
 else:
-    class BasePytorchGPTQTrainableQuantizer(BasePytorchTrainableQuantizer):
-        def __init__(self,
-                     quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
-            super().__init__(quantization_config)
+    class BasePytorchGPTQTrainableQuantizer:
+        def __init__(self, *args, **kwargs):
             Logger.critical('Installing Pytorch is mandatory '
                             'when using BasePytorchGPTQTrainableQuantizer. '
                             'Could not find torch package.')  # pragma: no cover

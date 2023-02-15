@@ -26,7 +26,7 @@ from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribut
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 
 
-def gptq_get_trainable_parameters(fxp_model: Model,
+def get_gptq_trainable_parameters(fxp_model: Model,
                                   fw_info: FrameworkInfo,
                                   add_bias: bool = False) -> (
         List[tf.Variable], List[tf.Variable], List[tf.Variable], List[tf.Variable], List[tf.Variable]):

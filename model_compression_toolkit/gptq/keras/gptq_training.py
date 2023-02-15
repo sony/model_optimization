@@ -40,7 +40,7 @@ from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2, RoundingType
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.gptq.keras.graph_info import get_weights_for_loss, \
-    get_soft_rounding_reg, gptq_get_trainable_parameters
+    get_soft_rounding_reg, get_gptq_trainable_parameters
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 import numpy as np
@@ -85,7 +85,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         self.loss_list = []
         self.input_scale = 1
 
-        trainable_weights, bias_weights, trainable_threshold, temperature_weights = gptq_get_trainable_parameters(
+        trainable_weights, bias_weights, trainable_threshold, temperature_weights = get_gptq_trainable_parameters(
             self.fxp_model,
             fw_info,
             add_bias=gptq_config.train_bias)

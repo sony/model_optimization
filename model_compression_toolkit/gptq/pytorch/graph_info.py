@@ -21,7 +21,7 @@ from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribut
 from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
 
 
-def gptq_get_trainable_parameters(fxp_model: nn.Module,
+def get_gptq_trainable_parameters(fxp_model: nn.Module,
                                   add_bias: bool = False,
                                   ) -> (List[nn.Parameter], List[nn.Parameter], List[nn.Parameter]):
     """

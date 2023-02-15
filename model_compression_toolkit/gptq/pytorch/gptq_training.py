@@ -27,9 +27,9 @@ from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.pytorch.constants import BIAS, KERNEL
+from model_compression_toolkit.core.pytorch.constants import BIAS
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_model, torch_tensor_to_numpy
-from model_compression_toolkit.gptq.pytorch.graph_info import gptq_get_trainable_parameters, get_weights_for_loss
+from model_compression_toolkit.gptq.pytorch.graph_info import get_gptq_trainable_parameters, get_weights_for_loss
 from model_compression_toolkit.gptq.pytorch.quantizer.quantization_builder import quantization_builder
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
@@ -69,7 +69,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
-        trainable_weights, trainable_bias, trainable_threshold, trainable_temperature = gptq_get_trainable_parameters(
+        trainable_weights, trainable_bias, trainable_threshold, trainable_temperature = get_gptq_trainable_parameters(
             self.fxp_model,
             add_bias=self.gptq_config.train_bias)
 

@@ -29,6 +29,7 @@ from model_compression_toolkit.gptq.common.gptq_constants import AUXVAR, PTQ_THR
 from model_compression_toolkit.core.common.constants import THRESHOLD
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
+from model_compression_toolkit.quantizers_infrastructure.common.quant_utils import get_threshold_reshape_shape
 
 
 def pertubation_symmetric_quantizer(input_tensor: torch.Tensor,
@@ -178,9 +179,9 @@ class STEWeightQuantizer(BasePytorchGPTQTrainableQuantizer):
         ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD]
 
         if self.per_channel:
-            reshape_shape = self.get_threshold_reshape_shape(inputs.shape,
-                                                             quant_axis=self.quantization_axis,
-                                                             quant_axis_dim=-1)
+            reshape_shape = get_threshold_reshape_shape(inputs.shape,
+                                                        quant_axis=self.quantization_axis,
+                                                        quant_axis_dim=-1)
             ptq_threshold_tensor = torch.reshape(ptq_threshold_tensor, reshape_shape)
 
             q_tensor = pertubation_symmetric_quantizer(inputs,
