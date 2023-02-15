@@ -19,12 +19,12 @@ import tensorflow as tf
 from model_compression_toolkit.quantizers_infrastructure.common.constants import EPS, MULTIPLIER_N_BITS
 
 
-def lut_kmeans_quantizer(tensor_data: tf.Tensor,
-                         cluster_centers: np.ndarray,
-                         signed: bool,
-                         threshold: np.ndarray) -> tf.Tensor:
+def lut_quantizer(tensor_data: tf.Tensor,
+                  cluster_centers: np.ndarray,
+                  signed: bool,
+                  threshold: np.ndarray) -> tf.Tensor:
     """
-    Quantize a tensor using a non-uniform quantization based on the pre-defined kmeans clusters.
+    Quantize a tensor using a non-uniform quantization based on the pre-defined clusters.
     1. Scales tensor_data with the threshold into 8-bit quantization range.
     2. Assigns cluster centers to each value.
     3. Scales back by multiplying the result by threshold and dividing with the quantization range max value.

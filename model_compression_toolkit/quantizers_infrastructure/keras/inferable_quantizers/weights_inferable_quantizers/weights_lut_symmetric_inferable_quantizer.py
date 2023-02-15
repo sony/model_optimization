@@ -25,7 +25,7 @@ if FOUND_TF:
     import tensorflow as tf
     from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer import \
         BaseKerasInferableQuantizer
-    from model_compression_toolkit.quantizers_infrastructure.keras.quantizer_utils import lut_kmeans_quantizer
+    from model_compression_toolkit.quantizers_infrastructure.keras.quantizer_utils import lut_quantizer
 
 
     @mark_quantizer(quantization_target=QuantizationTarget.Weights,
@@ -115,8 +115,8 @@ if FOUND_TF:
                     inputs = tf.transpose(inputs, perm=self.perm_vec)
 
                 # Quantize the input tensor using per-channel quantization
-                q_tensor = lut_kmeans_quantizer(inputs, cluster_centers=self.cluster_centers, signed=True,
-                                                threshold=self.threshold)
+                q_tensor = lut_quantizer(inputs, cluster_centers=self.cluster_centers, signed=True,
+                                         threshold=self.threshold)
                 if self.perm_vec:
                     # Transpose the quantized tensor back to its original shape
                     q_tensor = tf.transpose(q_tensor, perm=self.perm_vec)
@@ -124,8 +124,8 @@ if FOUND_TF:
                 # Return the quantized tensor
                 return q_tensor
             else:
-                return lut_kmeans_quantizer(inputs, cluster_centers=self.cluster_centers, signed=True,
-                                            threshold=self.threshold)
+                return lut_quantizer(inputs, cluster_centers=self.cluster_centers, signed=True,
+                                     threshold=self.threshold)
 
         def get_config(self):
             """

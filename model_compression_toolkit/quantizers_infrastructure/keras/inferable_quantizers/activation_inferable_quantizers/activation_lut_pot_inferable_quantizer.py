@@ -27,7 +27,7 @@ if FOUND_TF:
     import tensorflow as tf
     from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
         import BaseKerasInferableQuantizer
-    from model_compression_toolkit.quantizers_infrastructure.keras.quantizer_utils import lut_kmeans_quantizer
+    from model_compression_toolkit.quantizers_infrastructure.keras.quantizer_utils import lut_quantizer
 
 
     @mark_quantizer(quantization_target=QuantizationTarget.Activation,
@@ -67,6 +67,11 @@ if FOUND_TF:
             self.cluster_centers = cluster_centers
             self.signed = signed
 
+            # If unsigned activation quantization, all cluster_centers must have the same sign
+            if not self.signed:
+                assert np.all(self.cluster_centers >= 0) or np.all(self.cluster_centers <= 0), \
+                    f'Expected unsigned cluster centers in unsigned activation quantization'
+
             is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in self.threshold.flatten()])
             assert is_threshold_pot, f'Expected threshold to be power of 2 but is {self.threshold}'
 
@@ -87,8 +92,8 @@ if FOUND_TF:
             assert inputs.dtype == tf.float32, f'Input tensor was expected to be a float tensor but is of type ' \
                                                f'{inputs.dtype}'
 
-            return lut_kmeans_quantizer(inputs, cluster_centers=self.cluster_centers, signed=True,
-                                        threshold=self.threshold)
+            return lut_quantizer(inputs, cluster_centers=self.cluster_centers, signed=self.signed,
+                                 threshold=self.threshold)
 
         def get_config(self):
             """

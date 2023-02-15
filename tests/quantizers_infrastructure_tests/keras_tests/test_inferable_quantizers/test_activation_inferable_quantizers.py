@@ -299,6 +299,14 @@ class TestKerasActivationsLUTPOTQuantizer(unittest.TestCase):
                                                                              signed=True)
         self.assertEqual('Expected threshold to be power of 2 but is [3.]', str(e.exception))
 
+    def test_illegal_signed_cluster_centers_inferable_quantizer(self):
+        with self.assertRaises(Exception) as e:
+            qi.keras_inferable_quantizers.ActivationLutPOTInferableQuantizer(num_bits=8,
+                                                                             cluster_centers=np.asarray([-25., 85.]),
+                                                                             threshold=[2.],
+                                                                             signed=False)
+        self.assertEqual('Expected unsigned cluster centers in unsigned activation quantization', str(e.exception))
+
     def test_lut_pot_signed_inferable_quantizer(self):
         cluster_centers = np.asarray([-25, 25])
         thresholds = [4.]
@@ -323,8 +331,7 @@ class TestKerasActivationsLUTPOTQuantizer(unittest.TestCase):
         input_tensor = tf.constant(np.random.rand(1, 50, 50, 3) * 100 - 50, tf.float32)
         fake_quantized_tensor = quantizer(input_tensor)
 
-        quant_tensor_values = tf.concat([(center / (2 ** (MULTIPLIER_N_BITS - 1))) * thresholds for
-                                         center in cluster_centers], 0)
+        quant_tensor_values = (cluster_centers / (2 ** (MULTIPLIER_N_BITS - int(signed)))) * thresholds
 
         self.assertTrue(len(np.unique(fake_quantized_tensor)) <= 2 ** num_bits,
                         f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
@@ -356,7 +363,7 @@ class TestKerasActivationsLUTPOTQuantizer(unittest.TestCase):
         input_tensor = tf.constant(np.random.rand(1, 50, 50, 3) * 100 - 50, tf.float32)
         fake_quantized_tensor = quantizer(input_tensor)
 
-        quant_tensor_values = (cluster_centers / (2 ** (MULTIPLIER_N_BITS - 1))) * thresholds
+        quant_tensor_values = (cluster_centers / (2 ** (MULTIPLIER_N_BITS - int(signed)))) * thresholds
         self.assertTrue(len(np.unique(fake_quantized_tensor)) <= 2 ** num_bits,
                         f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
                         f'{len(np.unique(fake_quantized_tensor))} unique values')
