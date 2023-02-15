@@ -15,29 +15,27 @@
 from abc import abstractmethod
 from typing import Union, Dict, List
 
-from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.core.common.constants import FOUND_TF
+from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.gptq.common.gptq_constants import WEIGHTS_QUANTIZATION_PARAMS
 
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
     TrainableQuantizerActivationConfig
 from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 
-if FOUND_TF:
-    import tensorflow as tf
+if FOUND_TORCH:
+    from torch import Tensor
+    from model_compression_toolkit.quantizers_infrastructure import BasePytorchTrainableQuantizer, PytorchQuantizationWrapper
 
-    from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer, \
-        KerasQuantizationWrapper
-
-    class BaseKerasGPTQTrainableQuantizer(BaseKerasTrainableQuantizer):
+    class BasePytorchGPTQTrainableQuantizer(BasePytorchTrainableQuantizer):
         """
-        A base class for trainable Keras quantizer for GPTQ.
+        A base class for trainable Pytorch quantizer for GPTQ.
         """
 
         def __init__(self,
                      quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
             """
-            Initializes BaseKerasGPTQTrainableQuantizer object.
+            Initializes BasePytorchGPTQTrainableQuantizer object.
 
             Args:
                 quantization_config: quantizer config class contains all the information about a quantizer configuration.
@@ -45,15 +43,13 @@ if FOUND_TF:
 
             super().__init__(quantization_config)
 
-            self.quantizer_parameters = None
-
-        def update_layer_quantization_params(self, layer: KerasQuantizationWrapper
-                                             ) -> (Dict[str, tf.Tensor], Dict[str, Dict], Dict):
+        def update_layer_quantization_params(self, layer: PytorchQuantizationWrapper
+                                             ) -> (Dict[str, Tensor], Dict[str, Dict], Dict):
             """
             A Function to calculate the needed change in attributes in NodeQuantizationConfig after retraining.
 
             Args:
-                layer: A wrapped Keras layer.
+                layer: A wrapped Pytorch layer.
 
             Returns:
                 3 dictionaries describing the change in layer's weights, weights config, activation config
@@ -72,7 +68,7 @@ if FOUND_TF:
 
             return weights, quant_config, {}
 
-        def get_aux_variable(self) -> List[tf.Tensor]:
+        def get_aux_variable(self) -> List[Tensor]:
             """
             This function return a list with the quantizer's quantization auxiliary variables.
 
@@ -82,7 +78,7 @@ if FOUND_TF:
 
             return []
 
-        def get_quantization_variable(self) -> List[tf.Tensor]:
+        def get_quantization_variable(self) -> List[Tensor]:
             """
             This function return a list with the quantizer's quantization parameters variables.
 
@@ -106,8 +102,8 @@ if FOUND_TF:
                                  f'quantizer\'s get_quant_config.')
 
 else:
-    class BaseKerasGPTQTrainableQuantizer:
+    class BasePytorchGPTQTrainableQuantizer:
         def __init__(self, *args, **kwargs):
-            Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
-                            'when using BaseKerasGPTQTrainableQuantizer. '
-                            'Could not find Tensorflow package.')  # pragma: no cover
+            Logger.critical('Installing Pytorch is mandatory '
+                            'when using BasePytorchGPTQTrainableQuantizer. '
+                            'Could not find torch package.')  # pragma: no cover

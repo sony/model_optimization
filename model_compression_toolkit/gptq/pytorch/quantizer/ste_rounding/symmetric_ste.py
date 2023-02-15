@@ -1,4 +1,4 @@
-# Copyright 2021 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,33 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-from typing import Dict, Any, List
-
+import torch
+import torch.nn as nn
+from typing import List, Dict
 import numpy as np
-import tensorflow as tf
+from model_compression_toolkit.core.common.defaultdict import DefaultDict
 
-from model_compression_toolkit import RoundingType
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.gptq.common.gptq_constants import GPTQ_ITER, AUXVAR, PTQ_THRESHOLD
-from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
+from model_compression_toolkit.gptq.common.gptq_config import RoundingType
+from model_compression_toolkit.gptq.pytorch.quantizer.base_pytorch_gptq_quantizer import \
+    BasePytorchGPTQTrainableQuantizer
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
+from model_compression_toolkit.gptq.pytorch.quantizer import quant_utils as qutils
+from model_compression_toolkit.gptq.common.gptq_constants import AUXVAR, PTQ_THRESHOLD, MAX_LSB_CHANGE
 from model_compression_toolkit.core.common.constants import THRESHOLD
-from model_compression_toolkit.core.common.defaultdict import DefaultDict
-from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer import BaseKerasGPTQTrainableQuantizer
-from model_compression_toolkit.gptq.keras.quantizer.kernel_functions import get_kernel
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.common.quant_utils import get_threshold_reshape_shape
 
 
-def pertubation_symmetric_quantizer(input_tensor: tf.Tensor,
-                                    auxvar_tensor: tf.Variable,
-                                    max_tensor: tf.Tensor,
+def pertubation_symmetric_quantizer(input_tensor: torch.Tensor,
+                                    auxvar_tensor: nn.Parameter,
+                                    max_tensor: torch.Tensor,
                                     num_bits: int,
                                     signed: bool,
                                     power_of_two: bool,
-                                    max_lsbs_change: int = 1) -> tf.Tensor:
+                                    max_lsbs_change: int = MAX_LSB_CHANGE) -> nn.Parameter:
     """
     Quantize a tensor symmetrically with maximum LSBs shift.
 
@@ -58,18 +58,24 @@ def pertubation_symmetric_quantizer(input_tensor: tf.Tensor,
     if power_of_two:
         max_tensor = qutils.power_of_two_max(max_tensor)
     delta = qutils.calculate_delta(max_tensor, num_bits, signed)
-    input_tensor_int = tf.stop_gradient(tf.round(input_tensor / delta))
-    tensor_q = qutils.ste_round(
-        input_tensor_int + qutils.ste_clip(auxvar_tensor, max_val=max_lsbs_change * delta) / delta)
+    delta = to_torch_tensor(delta)
+    max_tensor_change = delta * max_lsbs_change
+
     min_int = -int(signed) * (2 ** (num_bits - int(signed)))
     max_int = (2 ** (num_bits - int(signed))) - 1
+
+    tensor_clipped = qutils.ste_clip(auxvar_tensor, min_val=-max_tensor_change, max_val=max_tensor_change) / delta
+    input_tensor_int = torch.round(input_tensor / delta).detach()
+
+    tensor_q = qutils.ste_round(qutils.ste_round(input_tensor_int + tensor_clipped))
+
     return delta * qutils.ste_clip(tensor_q, max_val=max_int, min_val=min_int)
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=RoundingType.STE)
-class STEWeightQuantizer(BaseKerasGPTQTrainableQuantizer):
+class STEWeightQuantizer(BasePytorchGPTQTrainableQuantizer):
     """
     Trainable symmetric quantizer to quantize a layer weights.
     """
@@ -78,11 +84,10 @@ class STEWeightQuantizer(BaseKerasGPTQTrainableQuantizer):
                  quantization_config: TrainableQuantizerWeightsConfig,
                  max_lsbs_change_map: dict = DefaultDict({}, lambda: 1)):
         """
-        Initialize a STEWeightQuantizer object with parameters to use for the quantization.
+        Construct a Pytorch model that utilize a fake weight quantizer of STE (Straight Through Estimator) for symmetric quantizer.
 
         Args:
             quantization_config: Trainable weights quantizer config.
-            max_lsbs_change_map: a mapping between number of bits to max lsb change.
         """
         super().__init__(quantization_config)
         self.num_bits = quantization_config.weights_n_bits
@@ -98,10 +103,11 @@ class STEWeightQuantizer(BaseKerasGPTQTrainableQuantizer):
         self.max_lsbs_change = max_lsbs_change_map.get(self.num_bits)
         self.quantizer_parameters = {}
 
+
     def initialize_quantization(self,
-                                tensor_shape: Any,
+                                tensor_shape: torch.Size,
                                 name: str,
-                                layer: Any) -> Dict[Any, Any]:
+                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, nn.Parameter]:
         """
         Return a dictionary of quantizer parameters and their names.
 
@@ -114,46 +120,61 @@ class STEWeightQuantizer(BaseKerasGPTQTrainableQuantizer):
             Dictionary of parameters names to the variables.
         """
 
-        w_shape = get_kernel(layer.weights).shape
-        ar_iter = layer.add_weight(
-            f"{name}_{GPTQ_ITER}",
-            shape=(),
-            initializer=tf.keras.initializers.Constant(0.0),
-            trainable=False)
-
-        ptq_threshold_tensor = layer.add_weight(
-            f"{name}_{PTQ_THRESHOLD}",
-            shape=len(self.threshold_values) if self.per_channel else (),
-            initializer=tf.keras.initializers.Constant(1.0),
-            trainable=False)
-        ptq_threshold_tensor.assign(self.threshold_values)
-
-        auxvar_tensor = layer.add_weight(
-            f"{name}_{AUXVAR}",
-            shape=w_shape,
-            initializer=tf.keras.initializers.Constant(0.0),
-            trainable=True)
+        layer.register_parameter(f"{name}_{PTQ_THRESHOLD}",
+                                 nn.Parameter(torch.tensor(self.threshold_values, requires_grad=False)
+                                              if not self.per_channel
+                                              else to_torch_tensor(self.threshold_values),requires_grad=False))
+        layer.register_parameter(f"{name}_{AUXVAR}", nn.Parameter(to_torch_tensor(torch.zeros(self.threshold_shape)),
+                                                                  requires_grad=True))
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {PTQ_THRESHOLD: ptq_threshold_tensor,
-                                     AUXVAR: auxvar_tensor,
-                                     GPTQ_ITER: ar_iter}
+        self.quantizer_parameters = {PTQ_THRESHOLD: layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"),
+                                     AUXVAR: layer.get_parameter(f"{name}_{AUXVAR}")}
+
         return self.quantizer_parameters
 
+
+    def get_aux_variable(self) -> List[torch.Tensor]:
+        """
+        This function return a list with the quantizer's quantization auxiliary variables.
+
+        Returns: A list with the quantization auxiliary variables.
+        """
+        return [self.quantizer_parameters.get(AUXVAR)]
+
+    def get_quantization_variable(self) -> List[torch.Tensor]:
+        """
+        This function return a list with the quantizer's quantization parameters variables.
+
+        Returns: A list with the quantization parameters.
+        """
+        return [self.quantizer_parameters.get(PTQ_THRESHOLD)]
+
+    def get_quant_config(self) -> Dict[str, np.ndarray]:
+        """
+        Returns the config used to edit NodeQuantizationConfig after GPTQ retraining
+
+        Returns:
+            A dictionary of attributes the quantize_config retraining has changed during GPTQ retraining.
+            Keys must match NodeQuantizationConfig attributes
+
+        """
+        old_threshold = self.quantizer_parameters[PTQ_THRESHOLD]
+        return {THRESHOLD: torch_tensor_to_numpy(old_threshold).reshape(self.threshold_shape)}
+
     def __call__(self,
-                 inputs: tf.Tensor,
-                 training: bool):
+                 inputs: nn.Parameter,
+                 training: bool) -> nn.Parameter:
         """
         Quantize a tensor.
 
         Args:
             inputs: Input tensor to quantize.
-            training: Whether the graph is in training mode.
+            training: whether in training mode or not
 
         Returns:
-            The quantized tensor.
+            quantized tensor
         """
-
         auxvar = self.quantizer_parameters[AUXVAR]
         ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD]
 
@@ -161,7 +182,8 @@ class STEWeightQuantizer(BaseKerasGPTQTrainableQuantizer):
             reshape_shape = get_threshold_reshape_shape(inputs.shape,
                                                         quant_axis=self.quantization_axis,
                                                         quant_axis_dim=-1)
-            ptq_threshold_tensor = tf.reshape(ptq_threshold_tensor, reshape_shape)
+            ptq_threshold_tensor = torch.reshape(ptq_threshold_tensor, reshape_shape)
+
             q_tensor = pertubation_symmetric_quantizer(inputs,
                                                        auxvar,
                                                        ptq_threshold_tensor,
@@ -177,35 +199,3 @@ class STEWeightQuantizer(BaseKerasGPTQTrainableQuantizer):
                                                    self.num_bits,
                                                    signed=True,
                                                    power_of_two=self.power_of_two)
-
-    def get_aux_variable(self) -> List[tf.Tensor]:
-        """
-        This function return a list with the quantizer's quantization auxiliary variables.
-
-        Returns: A list with the quantization auxiliary variables.
-
-        """
-
-        return [self.quantizer_parameters[AUXVAR]]
-
-    def get_quantization_variable(self) -> List[tf.Tensor]:
-        """
-        This function return a list with the quantizer's quantization parameters variables.
-
-        Returns: A list with the quantization parameters.
-
-        """
-
-        return [self.quantizer_parameters[PTQ_THRESHOLD]]
-
-    def get_quant_config(self) -> Dict[str, np.ndarray]:
-        """
-        Returns the config used to edit NodeQuantizationConfig after GPTQ retraining
-
-        Returns:
-            A dictionary of attributes the quantize_config retraining has changed during GPTQ retraining.
-            Keys must match NodeQuantizationConfig attributes
-
-        """
-        old_threshold = self.quantizer_parameters[PTQ_THRESHOLD]
-        return {THRESHOLD: old_threshold.numpy().reshape(self.threshold_shape)}

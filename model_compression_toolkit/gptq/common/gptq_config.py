@@ -16,6 +16,8 @@ from enum import Enum
 from typing import Callable, Any, Dict
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core import common
+from model_compression_toolkit.gptq.common.gptq_constants import N_BATCHES_STR, QUANT_PARAM_LEARNING_STR, N_EPOCHS_STR, \
+    MAX_LSB_STR
 from model_compression_toolkit.gptq.common.gptq_quantizer_config import GPTQQuantizerConfig, SoftQuantizerConfig
 
 
@@ -126,7 +128,6 @@ class GradientPTQConfig:
         return type(quantizer_config) == GPTQQuantizerConfig
 
 
-
 class GradientPTQConfigV2(GradientPTQConfig):
     """
     Configuration to use for quantization with GradientPTQV2 (experimental).
@@ -212,5 +213,21 @@ class GradientPTQConfigV2(GradientPTQConfig):
         v1_params = {k: v for k, v in v1_params.items() if k != 'n_iter'}
         return cls(n_epochs, **v1_params)
 
+    def get_extended_quantizer_parametes(self) -> Dict[str, Any]:
+        """
+        Return a dictionary with a mapping to necessary additional parameters for initializing the GPTQ quantizer.
+
+        Returns: A dictionary with parameters for initializing a quantizer.
+
+        """
+
+        if self.rounding_type == RoundingType.SoftQuantizer:
+            return {N_BATCHES_STR: self.quantizer_config.n_batches,
+                    QUANT_PARAM_LEARNING_STR: self.quantization_parameters_learning,
+                    N_EPOCHS_STR: self.n_epochs}
+        elif self.rounding_type == RoundingType.STE:
+            return {MAX_LSB_STR: self.lsb_change_per_bit_width}
+
+        return {}
 
 

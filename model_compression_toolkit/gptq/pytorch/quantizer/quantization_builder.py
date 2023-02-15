@@ -12,25 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict, List, Tuple
+from typing import List, Dict, Tuple
 
 from model_compression_toolkit import GradientPTQConfigV2
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
-    get_inferable_quantizer_kwargs
-from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
-from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer import BaseKerasGPTQTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, BaseKerasInferableQuantizer
+from model_compression_toolkit.core.pytorch.constants import KERNEL
+from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizer import \
+    get_activation_inferable_quantizer_kwargs
+from model_compression_toolkit.gptq.pytorch.quantizer.base_pytorch_gptq_quantizer import \
+    BasePytorchGPTQTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.common.get_quantizer_config import \
     get_trainable_quantizer_weights_config
+from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, BasePyTorchInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.common.get_quantizers import get_trainable_quantizer_class, \
     get_inferable_quantizer_class
 
 
 def quantization_builder(n: common.BaseNode,
-                         gptq_config: GradientPTQConfigV2
-                         ) -> Tuple[Dict[str, BaseKerasGPTQTrainableQuantizer], List[BaseKerasInferableQuantizer]]:
+                         gptq_config: GradientPTQConfigV2,
+                         ) -> Tuple[Dict[str, BasePytorchQATTrainableQuantizer],
+                                    List[BasePyTorchInferableQuantizer]]:
     """
     Build quantizers for a node according to its quantization configuration and
     a global NoOpQuantizeConfig object.
@@ -48,26 +50,21 @@ def quantization_builder(n: common.BaseNode,
     weights_quantizers = {}
     if n.is_weights_quantization_enabled():
         quant_method = n.final_weights_quantization_cfg.weights_quantization_method
-
         quantizer_class = get_trainable_quantizer_class(quant_target=QuantizationTarget.Weights,
                                                         quantizer_type=gptq_config.rounding_type,
                                                         quant_method=quant_method,
-                                                        quantizer_base_class=BaseKerasGPTQTrainableQuantizer)
-        kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=n.type,
-                                                              fw_info=DEFAULT_KERAS_INFO)
-
-        weights_quantizers.update({kernel_attribute: quantizer_class(get_trainable_quantizer_weights_config(n),
-                                                                     **gptq_config.get_extended_quantizer_parametes())})
-
+                                                        quantizer_base_class=BasePytorchGPTQTrainableQuantizer)
+        weights_quantizers.update({KERNEL: quantizer_class(get_trainable_quantizer_weights_config(n),
+                                                           **gptq_config.get_extended_quantizer_parametes())})
     activation_quantizers = []
     if n.is_activation_quantization_enabled():
         quant_method = n.final_activation_quantization_cfg.activation_quantization_method
 
         quantizer_class = get_inferable_quantizer_class(quant_target=QuantizationTarget.Activation,
                                                         quant_method=quant_method,
-                                                        quantizer_base_class=BaseKerasInferableQuantizer)
+                                                        quantizer_base_class=BasePyTorchInferableQuantizer)
 
-        kwargs = get_inferable_quantizer_kwargs(n, QuantizationTarget.Activation)
+        kwargs = get_activation_inferable_quantizer_kwargs(n)
 
         activation_quantizers.append(quantizer_class(**kwargs))
 

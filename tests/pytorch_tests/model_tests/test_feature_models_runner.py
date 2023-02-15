@@ -445,6 +445,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the GPTQ feature.
         """
         STEAccuracyTest(self).run_test()
+        STEAccuracyTest(self, per_channel=False).run_test()
         STEWeightsUpdateTest(self).run_test()
         STELearnRateZeroTest(self).run_test()
 

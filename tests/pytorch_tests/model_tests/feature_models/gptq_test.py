@@ -35,27 +35,32 @@ class TestModel(nn.Module):
         self.conv1 = nn.Conv2d(3, 8, kernel_size=(3, 3), stride=(1, 1))
         self.conv2 = nn.Conv2d(8, 16, kernel_size=(1, 1), stride=(1, 1))
         self.activation = nn.SiLU()
+        self.linear = nn.Linear(14, 3)
 
     def forward(self, inp):
         x0 = self.conv1(inp)
         x1 = self.activation(x0)
         x2 = self.conv2(x1)
         y = self.activation(x2)
+        y = self.linear(y)
         return y
 
 
 class GPTQBaseTest(BasePytorchFeatureNetworkTest):
     def __init__(self, unit_test, experimental_exporter=False, rounding_type=RoundingType.STE,
-                 quantizer_config=GPTQQuantizerConfig()):
+                 quantizer_config=GPTQQuantizerConfig(), per_channel=True):
         super().__init__(unit_test, input_shape=(3, 16, 16))
         self.seed = 0
         self.experimental = True
         self.experimental_exporter = experimental_exporter
         self.rounding_type = rounding_type
         self.quantizer_config = quantizer_config
+        self.per_channel = per_channel
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING)
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
+                                      mct.QuantizationErrorMethod.NOCLIPPING,
+                                      weights_per_channel_threshold=self.per_channel)
 
     def create_networks(self):
         return TestModel()
