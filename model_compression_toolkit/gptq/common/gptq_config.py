@@ -224,7 +224,7 @@ class GradientPTQConfigV2(GradientPTQConfig):
         if self.rounding_type == RoundingType.SoftQuantizer:
             return {N_BATCHES_STR: self.quantizer_config.n_batches,
                     QUANT_PARAM_LEARNING_STR: self.quantization_parameters_learning,
-                    N_EPOCHS_STR: getattr(self, 'n_epochs', None)}
+                    N_EPOCHS_STR: self.n_epochs}
         elif self.rounding_type == RoundingType.STE:
             return {MAX_LSB_STR: self.lsb_change_per_bit_width}
 
