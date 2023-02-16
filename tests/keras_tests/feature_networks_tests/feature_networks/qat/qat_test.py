@@ -19,6 +19,8 @@ import tensorflow as tf
 import numpy as np
 from datetime import datetime
 
+from model_compression_toolkit.core.common import Logger
+
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import BaseKerasInferableQuantizer, QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.common.get_all_subclasses import get_all_subclasses
@@ -66,9 +68,9 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
         if self.test_loading:
             ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S.%f").replace('.', '_')
             qat2model_name = f'qat2model_{ts}.h5'
-            print("Save QAT model as ", qat2model_name)
+            Logger.warning(f'save QAT model as {qat2model_name}')
             ptq_model.save(qat2model_name)
-            print("Load QAT model from: ", qat2model_name)
+            Logger.warning(f'Load QAT model from {qat2model_name}')
             ptq_model2 = mct.keras_load_quantized_model(qat2model_name)
             os.remove(qat2model_name)
 
@@ -172,9 +174,9 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         if self.test_loading:
             ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S.%f").replace('.', '_')
             qat2model_name = f'qat2model_{ts}.h5'
-            print("Save QAT model as ", qat2model_name)
+            Logger.warning(f'Save QAT model as {qat2model_name}')
             qat_model.save(qat2model_name)
-            print("Load QAT model from: ", qat2model_name)
+            Logger.warning(f'Load QAT model from: {qat2model_name}')
             qat_model = mct.keras_load_quantized_model(qat2model_name)
             os.remove(qat2model_name)
 

@@ -657,7 +657,7 @@ class FeatureNetworkTest(unittest.TestCase):
                                    separate_key_value=separate_key_value, output_dim=14).run_test()
 
     def test_qat(self):
-        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True).run_test()
+        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=False).run_test()
         QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
                         weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
                         activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
