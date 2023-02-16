@@ -63,9 +63,9 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
 
         ptq_model2 = None
         if self.test_loading:
-            ptq_model.save('qat2model.h5')
-            ptq_model2 = mct.keras_load_quantized_model('qat2model.h5')
-            os.remove('qat2model.h5')
+            ptq_model.save('qat2model2.h5')
+            ptq_model2 = mct.keras_load_quantized_model('qat2model2.h5')
+            os.remove('qat2model2.h5')
 
         if self.finalize:
             ptq_model = mct.keras_quantization_aware_training_finalize(ptq_model)
