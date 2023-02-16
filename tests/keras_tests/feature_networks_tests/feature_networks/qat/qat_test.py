@@ -17,6 +17,7 @@ import os
 
 import tensorflow as tf
 import numpy as np
+from datetime import datetime
 
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import BaseKerasInferableQuantizer, QuantizationTarget
@@ -63,9 +64,11 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
 
         ptq_model2 = None
         if self.test_loading:
-            ptq_model.save('qat2model2.h5')
-            ptq_model2 = mct.keras_load_quantized_model('qat2model2.h5')
-            os.remove('qat2model2.h5')
+            ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S")
+            qat2model_name = f'qat2model_{ts}.h5'
+            ptq_model.save(qat2model_name)
+            ptq_model2 = mct.keras_load_quantized_model(qat2model_name)
+            os.remove(qat2model_name)
 
         if self.finalize:
             ptq_model = mct.keras_quantization_aware_training_finalize(ptq_model)
@@ -165,9 +168,11 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         # QAT model
         qat_model = ptq_model
         if self.test_loading:
-            qat_model.save('qat2model.h5')
-            qat_model = mct.keras_load_quantized_model('qat2model.h5')
-            os.remove('qat2model.h5')
+            ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S")
+            qat2model_name = f'qat2model_{ts}.h5'
+            qat_model.save(qat2model_name)
+            qat_model = mct.keras_load_quantized_model(qat2model_name)
+            os.remove(qat2model_name)
 
         self.compare(qat_model,
                      finalize=False,
