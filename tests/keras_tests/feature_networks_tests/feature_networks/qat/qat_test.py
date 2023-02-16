@@ -64,9 +64,11 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
 
         ptq_model2 = None
         if self.test_loading:
-            ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S")
+            ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S.%f").replace('.', '_')
             qat2model_name = f'qat2model_{ts}.h5'
+            print("Save QAT model as ", qat2model_name)
             ptq_model.save(qat2model_name)
+            print("Load QAT model from: ", qat2model_name)
             ptq_model2 = mct.keras_load_quantized_model(qat2model_name)
             os.remove(qat2model_name)
 
@@ -168,9 +170,11 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         # QAT model
         qat_model = ptq_model
         if self.test_loading:
-            ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S")
+            ts = datetime.now(tz=None).strftime("%d%m%Y_%H%M%S.%f").replace('.', '_')
             qat2model_name = f'qat2model_{ts}.h5'
+            print("Save QAT model as ", qat2model_name)
             qat_model.save(qat2model_name)
+            print("Load QAT model from: ", qat2model_name)
             qat_model = mct.keras_load_quantized_model(qat2model_name)
             os.remove(qat2model_name)
 
