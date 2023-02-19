@@ -56,7 +56,8 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
 
 class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, quant_method=QuantizationMethod.SYMMETRIC, rounding_type=RoundingType.STE,
-                 quantizer_config=GPTQQuantizerConfig(), per_channel=True, input_shape=(1, 16, 16, 3)):
+                 quantizer_config=GPTQQuantizerConfig(), per_channel=True, input_shape=(1, 16, 16, 3),
+                 hessian_weights=True, log_norm_weights=True):
         super().__init__(unit_test,
                          input_shape=input_shape)
 
@@ -64,6 +65,8 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         self.rounding_type = rounding_type
         self.quantizer_config = quantizer_config
         self.per_channel = per_channel
+        self.hessian_weights = hessian_weights
+        self.log_norm_weights = log_norm_weights
 
     def get_tpc(self):
         return get_tpc("gptq_test", 16, 16, self.quant_method)
@@ -84,7 +87,9 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                                  loss=multiple_tensors_mse_loss,
                                  rounding_type=self.rounding_type,
                                  train_bias=True,
-                                 quantizer_config=self.quantizer_config)
+                                 quantizer_config=self.quantizer_config,
+                                 use_jac_based_weights=self.hessian_weights,
+                                 log_norm=self.log_norm_weights)
 
     def create_networks(self):
         in_shape = self.get_input_shapes()[0][1:]
