@@ -15,11 +15,11 @@
 
 from model_compression_toolkit.quantizers_infrastructure.common.get_quantizers import get_inferable_quantizer_class, \
     get_trainable_quantizer_class
-from tests.quantizers_infrastructure_tests.keras_tests.base_keras_infrastructure_test import \
-    BaseKerasInfrastructureTest
+from tests.quantizers_infrastructure_tests.pytorch_tests.base_pytorch_infrastructure_test import \
+    BasePytorchInfrastructureTest
 
 
-class BaseKerasGetQuantizerTest(BaseKerasInfrastructureTest):
+class BasePytorchGetQuantizerTest(BasePytorchInfrastructureTest):
 
     def __init__(self, unit_test, quant_target, quant_method, quantizer_base_class, expected_quantizer_class=None):
         super().__init__(unit_test)
@@ -30,7 +30,7 @@ class BaseKerasGetQuantizerTest(BaseKerasInfrastructureTest):
         self.expected_quantizer_class = expected_quantizer_class
 
 
-class TestGetInferableQuantizer(BaseKerasGetQuantizerTest):
+class TestGetInferableQuantizer(BasePytorchGetQuantizerTest):
 
     def __init__(self, unit_test, quant_target, quant_method, quantizer_base_class):
         super().__init__(unit_test, quant_target, quant_method, quantizer_base_class)
@@ -44,7 +44,7 @@ class TestGetInferableQuantizer(BaseKerasGetQuantizerTest):
         self.unit_test.assertEqual(type(quantizer), self.expected_quantizer_class)
 
 
-class TestGetTrainableQuantizer(BaseKerasGetQuantizerTest):
+class TestGetTrainableQuantizer(BasePytorchGetQuantizerTest):
 
     def __init__(self, unit_test, quant_target, quant_method, quantizer_base_class, quantizer_type):
         super().__init__(unit_test, quant_target, quant_method, quantizer_base_class)
