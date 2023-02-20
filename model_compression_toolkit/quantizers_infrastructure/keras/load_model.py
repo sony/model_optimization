@@ -38,9 +38,19 @@ if FOUND_TF:
         Returns: A keras Model
 
         """
-        qi_inferable_custom_objects = {subclass.__name__: subclass for subclass in get_all_subclasses(BaseKerasInferableQuantizer)}
+        qi_inferable_custom_objects = {subclass.__name__: subclass for subclass in
+                                       get_all_subclasses(BaseKerasInferableQuantizer)}
+        all_inferable_names = list(qi_inferable_custom_objects.keys())
+        if len(set(all_inferable_names)) < len(all_inferable_names):
+            Logger.error(f"Found multiple quantizers with the same name that inherit from BaseKerasInferableQuantizer"
+                         f"while trying to load a model.")
+
         qi_trainable_custom_objects = {subclass.__name__: subclass for subclass in
                                        get_all_subclasses(BaseKerasTrainableQuantizer)}
+        all_trainable_names = list(qi_trainable_custom_objects.keys())
+        if len(set(all_trainable_names)) < len(all_trainable_names):
+            Logger.error(f"Found multiple quantizers with the same name that inherit from BaseKerasTrainableQuantizer"
+                         f"while trying to load a model.")
 
         # Merge dictionaries into one dict
         qi_custom_objects = {**qi_inferable_custom_objects, **qi_trainable_custom_objects}

@@ -129,7 +129,7 @@ class STEUniformActivationQuantizer(BasePytorchQATTrainableQuantizer):
 
     def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         """
-        Initialize a STEUniformActivationQuantizer object with parameters to use
+        Initialize a STEUniformActivationQATQuantizer object with parameters to use
         for uniform quantization.
 
         Args:

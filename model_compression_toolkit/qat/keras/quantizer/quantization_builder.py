@@ -16,12 +16,13 @@ from typing import Tuple, Dict, List
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.qat.common.qat_get_quantizer import get_quantizer_class
-from model_compression_toolkit.qat.common.qat_get_quantizer_config import get_trainable_quantizer_weights_config, \
-    get_trainable_quantizer_activation_config, get_trainable_quantizer_quantization_candidates
+from model_compression_toolkit.quantizers_infrastructure.common.get_quantizer_config import \
+    get_trainable_quantizer_weights_config, get_trainable_quantizer_activation_config, \
+    get_trainable_quantizer_quantization_candidates
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from model_compression_toolkit.qat.common.qat_config import QATConfig
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.get_quantizers import get_trainable_quantizer_class
 
 
 def quantization_builder(n: common.BaseNode,
@@ -29,8 +30,7 @@ def quantization_builder(n: common.BaseNode,
                          fw_info: FrameworkInfo,
                          ) -> Tuple[Dict[str, BaseKerasQATTrainableQuantizer], List[BaseKerasQATTrainableQuantizer]]:
     """
-    Build quantizers for a node according to its quantization configuration and
-    a global NoOpQuantizeConfig object.
+    Build quantizers for a node according to its quantization configuration.
 
     Args:
         n: Node to build its QuantizeConfig.
@@ -50,10 +50,10 @@ def quantization_builder(n: common.BaseNode,
     if n.is_weights_quantization_enabled():
         quant_method = n.final_weights_quantization_cfg.weights_quantization_method
 
-        quantizer_class = get_quantizer_class(QuantizationTarget.Weights,
-                                              qat_config.weight_training_method,
-                                              quant_method,
-                                              BaseKerasQATTrainableQuantizer)
+        quantizer_class = get_trainable_quantizer_class(QuantizationTarget.Weights,
+                                                        qat_config.weight_training_method,
+                                                        quant_method,
+                                                        BaseKerasQATTrainableQuantizer)
         attributes = fw_info.get_kernel_op_attributes(n.type)
         for attr in attributes:
             weight_quantizers.update({attr: quantizer_class(get_trainable_quantizer_weights_config(n, wq_cand),
@@ -65,10 +65,10 @@ def quantization_builder(n: common.BaseNode,
         # single output -> normalize to list of output_shapes
         output_shapes = n.output_shape if isinstance(n.output_shape[0], (list, tuple)) else [n.output_shape]
 
-        quantizer_class = get_quantizer_class(QuantizationTarget.Activation,
-                                              qat_config.activation_training_method,
-                                              quant_method,
-                                              BaseKerasQATTrainableQuantizer)
+        quantizer_class = get_trainable_quantizer_class(QuantizationTarget.Activation,
+                                                        qat_config.activation_training_method,
+                                                        quant_method,
+                                                        BaseKerasQATTrainableQuantizer)
 
         activation_quantizers = [quantizer_class(get_trainable_quantizer_activation_config(n, aq_cand),
                                                  **qat_config.activation_quantizer_params_override)] * len(output_shapes)

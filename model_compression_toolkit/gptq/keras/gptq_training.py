@@ -12,16 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable, List, Tuple
+from functools import partial
+from typing import Callable, List, Tuple, Union
 
 import tensorflow as tf
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
+from keras import Model
+from tensorflow.keras.layers import Layer
 from tqdm import tqdm
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
+from model_compression_toolkit.core.common.user_info import UserInformation
+from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
 from model_compression_toolkit.gptq.common.gptq_constants import REGULARIZATION_VALUES
-from model_compression_toolkit.gptq.keras.gptq_model_builder import GPTQKerasModelBuilder
 from packaging import version
+
+from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
+from model_compression_toolkit.gptq.keras.quantizer.quantization_builder import quantization_builder
+from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
@@ -32,14 +39,14 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2, RoundingType
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.gptq.keras.graph_info import get_trainable_parameters, get_weights_for_loss, \
-    get_soft_rounding_reg
+from model_compression_toolkit.gptq.keras.graph_info import get_weights_for_loss, \
+    get_soft_rounding_reg, get_gptq_trainable_parameters
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 import numpy as np
 import copy
-from model_compression_toolkit.core.keras.constants import BIAS, USE_BIAS
-from model_compression_toolkit.gptq.keras.quantizer import WeightQuantizeConfig
+from model_compression_toolkit.core.keras.constants import BIAS, USE_BIAS, KERNEL
+from model_compression_toolkit import quantizers_infrastructure as qi
 
 
 class KerasGPTQTrainer(GPTQTrainer):
@@ -78,7 +85,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         self.loss_list = []
         self.input_scale = 1
 
-        trainable_weights, bias_weights, trainable_threshold, temperature_weights = get_trainable_parameters(
+        trainable_weights, bias_weights, trainable_threshold, temperature_weights = get_gptq_trainable_parameters(
             self.fxp_model,
             fw_info,
             add_bias=gptq_config.train_bias)
@@ -97,7 +104,8 @@ class KerasGPTQTrainer(GPTQTrainer):
         self.optimizer_with_param = self.get_optimizer_with_param(flattened_trainable_weights,
                                                                   flattened_bias_weights,
                                                                   trainable_quantization_parameters)
-        self.has_params_to_train = np.sum([len(optimizer_params_tuple[1]) for optimizer_params_tuple in self.optimizer_with_param])>0
+        self.has_params_to_train = np.sum(
+            [len(optimizer_params_tuple[1]) for optimizer_params_tuple in self.optimizer_with_param]) > 0
 
         if self.float_user_info.input_scale != self.gptq_user_info.input_scale:
             common.Logger.error("Input scale mismatch between float and GPTQ networks")  # pragma: no cover
@@ -106,18 +114,57 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         self.weights_for_average_loss = self.compute_jacobian_based_weights(representative_data_gen)
 
-    def build_gptq_model(self):
+    def _is_gptq_applicable(self,
+                            node: common.BaseNode) -> bool:
+        """
+        A function for deciding if a layer should be fine-tuned during GPTQ.
+
+        Args:
+            node (BaseNode): Node for quantization decision
+
+        Returns:
+            A boolean whether the layer is to be wrapped with a QuantizeWrapper
+        """
+
+        if node.is_weights_quantization_enabled() and not self.fw_info.is_kernel_op(node.type):
+            common.Logger.error(f"GPTQ Error: Quantizing node {node.name} of type {node.type} "
+                                f"without a kernel isn't supported")
+        return node.is_weights_quantization_enabled()
+
+    def gptq_wrapper(self, n: common.BaseNode, layer: Layer) -> Union[qi.KerasQuantizationWrapper, Layer]:
+        """
+        A function which takes a computational graph node and a keras layer and perform the quantization wrapping.
+
+        Args:
+            n: A node of mct graph.
+            layer: A keras layer
+
+        Returns: Wrapped layer if the layer should be wrap, otherwise returns the layer as is.
+
+        """
+        if self._is_gptq_applicable(n):
+            weights_quantizers, activation_quantizers = quantization_builder(n, self.gptq_config)
+            return qi.KerasQuantizationWrapper(layer,
+                                               weights_quantizers=weights_quantizers,
+                                               activation_quantizers=activation_quantizers)
+        else:
+            return layer
+
+    def build_gptq_model(self) -> Tuple[Model, UserInformation]:
         """
         Build the GPTQ model with QuantizationWrappers
+
         Returns:
             Quantized graph for GPTQ fine-tuning, GPTQ graph user info
         """
 
-        return GPTQKerasModelBuilder(graph=self.graph_quant,
-                                     gptq_config=self.gptq_config,
-                                     append2output=self.compare_points,
-                                     fw_info=self.fw_info,
-                                     return_float_outputs=True).build_model()
+        gptq_model, gptq_user_info = KerasModelBuilder(graph=self.graph_quant,
+                                                       append2output=self.compare_points,
+                                                       fw_info=self.fw_info,
+                                                       return_float_outputs=True,
+                                                       wrapper=self.gptq_wrapper).build_model()
+
+        return gptq_model, gptq_user_info
 
     def compute_gradients(self, in_y_float: List[tf.Tensor], input_data: List[np.ndarray],
                           in_optimizer_with_param: List,
@@ -226,7 +273,8 @@ class KerasGPTQTrainer(GPTQTrainer):
             for data in tqdm(data_function()):
                 input_data = [d * self.input_scale for d in data]
 
-                loss_value_step, grads = self.nano_training_step(input_data, in_compute_gradients, in_optimizer_with_param, is_training)
+                loss_value_step, grads = self.nano_training_step(input_data, in_compute_gradients,
+                                                                 in_optimizer_with_param, is_training)
                 # Run one step of gradient descent by updating
                 # the value of the variables to minimize the loss.
                 for i, (o, p) in enumerate(in_optimizer_with_param):
@@ -247,16 +295,17 @@ class KerasGPTQTrainer(GPTQTrainer):
         graph = copy.copy(self.graph_quant)
 
         for layer in self.fxp_model.layers:
-            if isinstance(layer, QuantizeWrapper) and isinstance(
-                    layer.quantize_config, WeightQuantizeConfig):
+            if isinstance(layer, KerasQuantizationWrapper):
                 node = graph.find_node_by_name(layer.layer.name)
                 if len(node) == 0 and isinstance(layer.layer, TensorFlowOpLayer):
                     node = graph.find_node_by_name('_'.join(layer.layer.name.split('_')[3:]))
                 if len(node) != 1:
                     common.Logger.error(f"Can't update GPTQ graph due to missing layer named: {layer.layer.name}")
                 node = node[0]
+                kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=node.type,
+                                                                      fw_info=self.fw_info)
                 weights, weight_quant_config, activation_quant_config = \
-                    layer.quantize_config.update_layer_quantization_params(layer)
+                    layer.weights_quantizers[kernel_attribute].update_layer_quantization_params(layer)
                 for weight_attr, weight in weights.items():
                     node.set_weights_by_keys(weight_attr, weight.numpy())
                 for config_attr, config_value in weight_quant_config.items():
@@ -270,7 +319,6 @@ class KerasGPTQTrainer(GPTQTrainer):
                         node.set_weights_by_keys(BIAS, new_bias)
 
         return graph
-
 
     def _get_quantizer_regularization_values(self, rounding_type: RoundingType) -> List[tf.Tensor]:
         """

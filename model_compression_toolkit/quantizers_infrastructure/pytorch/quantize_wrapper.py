@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================f
-from typing import List, Union, Any, Dict
+from typing import List, Union, Any, Dict, Tuple
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
@@ -170,6 +170,17 @@ if FOUND_TORCH:
             for weight_attr in self.weights_quantizers.keys():
                 weight = quantized_weights.get(weight_attr)
                 setattr(self.layer, weight_attr, weight)
+
+        def get_weights_vars(self) -> List[Tuple[str, Any, BaseInferableQuantizer]]:
+            """
+            A getter of the layer's weights variables.
+
+            Returns:
+                List pf tuples of the wrapped layer's weights variables with weight name, values and assigned quantizer.
+
+            """
+
+            return self._weights_vars
 
         def forward(self,
                     x: torch.Tensor,
