@@ -17,9 +17,6 @@ import os
 
 import tensorflow as tf
 import numpy as np
-import tempfile
-
-from model_compression_toolkit.core.common import Logger
 
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import BaseKerasInferableQuantizer, QuantizationTarget
@@ -66,12 +63,9 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
 
         ptq_model2 = None
         if self.test_loading:
-            _, qat2model_name = tempfile.mkstemp('.h5')
-            Logger.warning(f'save QAT model as {qat2model_name}')
-            ptq_model.save(qat2model_name)
-            Logger.warning(f'Load QAT model from {qat2model_name}')
-            ptq_model2 = mct.keras_load_quantized_model(qat2model_name)
-            os.remove(qat2model_name)
+            ptq_model.save('qat2model.h5')
+            ptq_model2 = mct.keras_load_quantized_model('qat2model.h5')
+            os.remove('qat2model.h5')
 
         if self.finalize:
             ptq_model = mct.keras_quantization_aware_training_finalize(ptq_model)
@@ -171,12 +165,9 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         # QAT model
         qat_model = ptq_model
         if self.test_loading:
-            _, qat2model_name = tempfile.mkstemp('.h5')
-            Logger.warning(f'Save QAT model as {qat2model_name}')
-            qat_model.save(qat2model_name)
-            Logger.warning(f'Load QAT model from: {qat2model_name}')
-            qat_model = mct.keras_load_quantized_model(qat2model_name)
-            os.remove(qat2model_name)
+            qat_model.save('qat2model.h5')
+            qat_model = mct.keras_load_quantized_model('qat2model.h5')
+            os.remove('qat2model.h5')
 
         self.compare(qat_model,
                      finalize=False,
@@ -222,7 +213,6 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                             self.unit_test.assertTrue(len(q) == 1)
                             self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q[0]))
 
-
                 # Check Weight quantizers
                 if layer.is_weights_quantization:
                     for name, quantizer in layer.weights_quantizers.items():
@@ -242,10 +232,8 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                             self.unit_test.assertTrue(isinstance(layer.weights_quantizers[KERNEL], q[0]))
 
 
-
-
 class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
-    def __init__(self, unit_test, kpi_weights=np.inf, kpi_activation=np.inf, expected_mp_cfg=[0,0,0,0]):
+    def __init__(self, unit_test, kpi_weights=np.inf, kpi_activation=np.inf, expected_mp_cfg=[0, 0, 0, 0]):
         self.kpi_weights = kpi_weights
         self.kpi_activation = kpi_activation
         self.expected_mp_cfg = expected_mp_cfg
@@ -273,8 +261,8 @@ class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
         for layer in qat_ready_model.layers:
             if isinstance(layer, qi.KerasQuantizationWrapper):
                 if layer.is_weights_quantization:
-                    self.unit_test.assertTrue(len(layer.weights_quantizers['kernel'].quantization_config.weights_bits_candidates) > 1)
+                    self.unit_test.assertTrue(
+                        len(layer.weights_quantizers['kernel'].quantization_config.weights_bits_candidates) > 1)
                 if layer.is_activation_quantization:
-                    self.unit_test.assertTrue(len(layer.activation_quantizers[0].quantization_config.activation_bits_candidates) > 1)
-
-
+                    self.unit_test.assertTrue(
+                        len(layer.activation_quantizers[0].quantization_config.activation_bits_candidates) > 1)
