@@ -85,6 +85,12 @@ if found_pytorch:
     from tests.pytorch_tests.function_tests.test_pytorch_tp_model import TestPytorchTPModel
     from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_quantization_infrastructure_runner import \
         PytorchInfrastructureTest
+    from tests.quantizers_infrastructure_tests.pytorch_tests.test_inferable_quantizers.test_weights_inferable_quantizer \
+        import TestWeightsUniformQuantizer, TestWeightsSymmetricQuantizer, TestWeightsPOTQuantizer, \
+        TestPyTorchWeightsLUTSymmetricQuantizer, TestPyTorchWeightsLUTPOTQuantizer
+    from tests.quantizers_infrastructure_tests.pytorch_tests.test_inferable_quantizers.\
+        test_activations_inferable_quantizer import TestActivationUniformQuantizer, TestActivationSymmetricQuantizer, \
+        TestActivationPOTQuantizer, TestActivationLUTPOTQuantizer
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases
@@ -155,6 +161,15 @@ if __name__ == '__main__':
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_shufflenet_v2_x1_0', ModelTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchTPModel))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchInfrastructureTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestWeightsUniformQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestWeightsSymmetricQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestWeightsPOTQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPyTorchWeightsLUTSymmetricQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPyTorchWeightsLUTPOTQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationUniformQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationSymmetricQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationPOTQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationLUTPOTQuantizer))
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)
     unittest.TextTestRunner(verbosity=0).run(comboSuite)
