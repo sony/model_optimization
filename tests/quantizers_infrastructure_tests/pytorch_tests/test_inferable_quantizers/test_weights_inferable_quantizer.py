@@ -425,7 +425,7 @@ class TestPyTorchWeightsLUTSymmetricQuantizer(unittest.TestCase):
         fake_quantized_tensor = fake_quantized_tensor.detach().cpu().numpy()
 
         self.assertTrue(np.max(
-            fake_quantized_tensor) < (max_threshold - delta_threshold), f'Quantized values should not contain values '
+            fake_quantized_tensor) <= (max_threshold - delta_threshold), f'Quantized values should not contain values '
                                                                         f'greater than maximal threshold ')
         self.assertTrue(np.min(
             fake_quantized_tensor) >= -max_threshold, f'Quantized values should not contain values lower than minimal '
