@@ -15,8 +15,14 @@
 import unittest
 import tensorflow as tf
 
+from model_compression_toolkit import TrainingMethod
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, BaseKerasInferableQuantizer, \
+    BaseKerasTrainableQuantizer
 from tests.quantizers_infrastructure_tests.keras_tests.test_keras_base_quantizer import TestKerasBaseWeightsQuantizer, \
     TestKerasBaseActivationsQuantizer, TestKerasQuantizerWithoutMarkDecorator
+from tests.quantizers_infrastructure_tests.keras_tests.test_keras_get_quantizers import TestGetInferableQuantizer, \
+    TestGetTrainableQuantizer
 from tests.quantizers_infrastructure_tests.keras_tests.test_keras_quantization_wrapper import \
     TestKerasWeightsQuantizationWrapper, TestKerasActivationsQuantizationWrapper
 
@@ -33,6 +39,46 @@ class KerasInfrastructureTest(unittest.TestCase):
         TestKerasBaseWeightsQuantizer(self).run_test()
         TestKerasBaseActivationsQuantizer(self).run_test()
         TestKerasQuantizerWithoutMarkDecorator(self).run_test()
+
+    def test_keras_get_quantizers(self):
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.POWER_OF_TWO,
+                                  quantizer_base_class=BaseKerasInferableQuantizer)
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.SYMMETRIC,
+                                  quantizer_base_class=BaseKerasInferableQuantizer)
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.UNIFORM,
+                                  quantizer_base_class=BaseKerasInferableQuantizer)
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.POWER_OF_TWO,
+                                  quantizer_base_class=BaseKerasInferableQuantizer)
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.SYMMETRIC,
+                                  quantizer_base_class=BaseKerasInferableQuantizer)
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.UNIFORM,
+                                  quantizer_base_class=BaseKerasInferableQuantizer)
+
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.POWER_OF_TWO,
+                                  quantizer_base_class=BaseKerasTrainableQuantizer, quantizer_type=TrainingMethod.STE)
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.SYMMETRIC,
+                                  quantizer_base_class=BaseKerasTrainableQuantizer, quantizer_type=TrainingMethod.STE)
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.UNIFORM,
+                                  quantizer_base_class=BaseKerasTrainableQuantizer, quantizer_type=TrainingMethod.STE)
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.POWER_OF_TWO,
+                                  quantizer_base_class=BaseKerasTrainableQuantizer, quantizer_type=TrainingMethod.STE)
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.SYMMETRIC,
+                                  quantizer_base_class=BaseKerasTrainableQuantizer, quantizer_type=TrainingMethod.STE)
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.UNIFORM,
+                                  quantizer_base_class=BaseKerasTrainableQuantizer, quantizer_type=TrainingMethod.STE)
+
 
 
 if __name__ == '__main__':

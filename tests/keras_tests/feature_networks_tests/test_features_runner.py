@@ -552,6 +552,8 @@ class FeatureNetworkTest(unittest.TestCase):
         tf.config.run_functions_eagerly(True)
         GradientPTQTest(self).run_test()
         GradientPTQTest(self, per_channel=True).run_test()
+        GradientPTQTest(self, per_channel=True, hessian_weights=False).run_test()
+        GradientPTQTest(self, per_channel=True, log_norm_weights=False).run_test()
         GradientPTQTest(self, per_channel=True).run_test(experimental_facade=True)
         GradientPTQWeightsUpdateTest(self).run_test()
         GradientPTQLearnRateZeroTest(self).run_test()

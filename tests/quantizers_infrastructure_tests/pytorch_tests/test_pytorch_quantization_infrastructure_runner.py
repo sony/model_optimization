@@ -16,8 +16,14 @@
 
 import unittest
 
+from model_compression_toolkit import TrainingMethod
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, BasePyTorchInferableQuantizer, \
+    BasePytorchTrainableQuantizer
 from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_base_quantizer import \
     TestPytorchBaseWeightsQuantizer, TestPytorchBaseActivationQuantizer, TestPytorchQuantizerWithoutMarkDecorator
+from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_get_quantizers import TestGetInferableQuantizer, \
+    TestGetTrainableQuantizer
 from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_quantization_wrapper import \
     TestPytorchWeightsQuantizationWrapper, TestPytorchActivationQuantizationWrapper
 
@@ -33,6 +39,45 @@ class PytorchInfrastructureTest(unittest.TestCase):
         TestPytorchBaseWeightsQuantizer(self).run_test()
         TestPytorchBaseActivationQuantizer(self).run_test()
         TestPytorchQuantizerWithoutMarkDecorator(self).run_test()
+
+    def test_pytorch_get_quantizers(self):
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.POWER_OF_TWO,
+                                  quantizer_base_class=BasePyTorchInferableQuantizer)
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.SYMMETRIC,
+                                  quantizer_base_class=BasePyTorchInferableQuantizer)
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.UNIFORM,
+                                  quantizer_base_class=BasePyTorchInferableQuantizer)
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.POWER_OF_TWO,
+                                  quantizer_base_class=BasePyTorchInferableQuantizer)
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.SYMMETRIC,
+                                  quantizer_base_class=BasePyTorchInferableQuantizer)
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.UNIFORM,
+                                  quantizer_base_class=BasePyTorchInferableQuantizer)
+
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.POWER_OF_TWO,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer, quantizer_type=TrainingMethod.STE)
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.SYMMETRIC,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer, quantizer_type=TrainingMethod.STE)
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.UNIFORM,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer, quantizer_type=TrainingMethod.STE)
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.POWER_OF_TWO,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer, quantizer_type=TrainingMethod.STE)
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.SYMMETRIC,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer, quantizer_type=TrainingMethod.STE)
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.UNIFORM,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer, quantizer_type=TrainingMethod.STE)
 
 
 if __name__ == '__main__':

@@ -26,7 +26,6 @@ from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 from model_compression_toolkit.core.common.constants import THRESHOLD
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer import BaseKerasGPTQTrainableQuantizer
-from model_compression_toolkit.gptq.keras.quantizer.kernel_functions import get_kernel
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.common.quant_utils import get_threshold_reshape_shape
@@ -114,7 +113,6 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
             Dictionary of parameters names to the variables.
         """
 
-        w_shape = get_kernel(layer.weights).shape
         ar_iter = layer.add_weight(
             f"{name}_{GPTQ_ITER}",
             shape=(),
@@ -128,9 +126,10 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
             trainable=False)
         ptq_threshold_tensor.assign(self.threshold_values)
 
+        w = getattr(layer.layer, name)
         auxvar_tensor = layer.add_weight(
             f"{name}_{AUXVAR}",
-            shape=w_shape,
+            shape=list(w.shape),
             initializer=tf.keras.initializers.Constant(0.0),
             trainable=True)
 
