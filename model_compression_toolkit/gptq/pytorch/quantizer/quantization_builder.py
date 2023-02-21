@@ -21,12 +21,14 @@ from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_qu
     get_activation_inferable_quantizer_kwargs
 from model_compression_toolkit.gptq.pytorch.quantizer.base_pytorch_gptq_quantizer import \
     BasePytorchGPTQTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.common.get_quantizer_config import \
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_quantizers import \
+    get_inferable_quantizer_class
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizer_config import \
     get_trainable_quantizer_weights_config
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, BasePyTorchInferableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.common.get_quantizers import get_trainable_quantizer_class, \
-    get_inferable_quantizer_class
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizers import \
+    get_trainable_quantizer_class
 
 
 def quantization_builder(n: common.BaseNode,

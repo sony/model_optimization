@@ -18,7 +18,7 @@ from keras.engine.input_layer import InputLayer
 
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer
 
 
 

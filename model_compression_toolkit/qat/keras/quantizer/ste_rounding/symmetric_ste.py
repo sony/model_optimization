@@ -29,13 +29,13 @@ import model_compression_toolkit.quantizers_infrastructure.keras.inferable_quant
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
     TrainableQuantizerActivationConfig
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.STE)
-class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
+class STEWeightQuantizer(BaseKerasQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer inputs.
     """
@@ -172,14 +172,14 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.STE)
-class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
+class STEActivationQuantizer(BaseKerasQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer outputs.
     """
 
     def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         """
-        Initialize a STEActivationQATQuantizer object with parameters to use
+        Initialize a STEActivationQuantizer object with parameters to use
         for the quantization.
 
         Args:

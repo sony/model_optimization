@@ -17,7 +17,7 @@ from typing import Union
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 
-from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
     TrainableQuantizerActivationConfig
 

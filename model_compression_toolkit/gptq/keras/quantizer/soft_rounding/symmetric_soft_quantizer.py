@@ -29,8 +29,9 @@ from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer import BaseKerasGPTQTrainableQuantizer
 from model_compression_toolkit.gptq.keras.quantizer.quant_utils import power_of_two_max, clip, calculate_delta
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
-from model_compression_toolkit.quantizers_infrastructure.common.quant_utils import get_threshold_reshape_shape
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.quant_utils import \
+    get_threshold_reshape_shape
 
 
 def soft_rounding_symmetric_quantizer(input_tensor: tf.Tensor,

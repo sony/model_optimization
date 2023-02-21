@@ -18,9 +18,10 @@ from typing import Dict, Any
 from model_compression_toolkit.core.common import BaseNode, Logger
 from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure.common.get_quantizers import get_inferable_quantizer_class
 from model_compression_toolkit.quantizers_infrastructure import pytorch_inferable_quantizers, QuantizationTarget, \
     BasePyTorchInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_quantizers import \
+    get_inferable_quantizer_class
 from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers import constants as qi_inferable_quantizers_constants
 import numpy as np
 

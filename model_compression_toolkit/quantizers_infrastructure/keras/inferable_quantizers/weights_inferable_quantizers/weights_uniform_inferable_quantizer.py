@@ -16,11 +16,11 @@ from typing import List
 
 import numpy as np
 
-from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer, QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.common.quant_utils import adjust_range_to_include_zero
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer, QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.quant_utils import \
+    adjust_range_to_include_zero
 from model_compression_toolkit.quantizers_infrastructure.keras.validation_functions import \
     validate_uniform_min_max_ranges, validate_adjusted_min_max_ranges
 

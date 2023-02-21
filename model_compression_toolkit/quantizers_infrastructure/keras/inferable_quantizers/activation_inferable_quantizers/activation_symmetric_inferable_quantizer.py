@@ -19,7 +19,7 @@ import numpy as np
 from model_compression_toolkit.core.common.constants import FOUND_TF
 
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer, \
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer, \
     QuantizationTarget
 
 

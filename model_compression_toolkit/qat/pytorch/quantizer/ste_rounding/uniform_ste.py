@@ -25,11 +25,11 @@ from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit.core.common import constants as C
 from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.pytorch import inferable_quantizers as iq
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import uniform_quantizer
-from model_compression_toolkit.quantizers_infrastructure.common.trainable_quantizer_config import \
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 
@@ -129,7 +129,7 @@ class STEUniformActivationQuantizer(BasePytorchQATTrainableQuantizer):
 
     def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         """
-        Initialize a STEUniformActivationQATQuantizer object with parameters to use
+        Initialize a STEUniformActivationQuantizer object with parameters to use
         for uniform quantization.
 
         Args:
