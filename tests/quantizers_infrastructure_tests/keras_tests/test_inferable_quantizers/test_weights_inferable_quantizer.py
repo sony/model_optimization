@@ -17,52 +17,53 @@ import unittest
 import numpy as np
 import tensorflow as tf
 
-from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
+    WeightsPOTInferableQuantizer, WeightsUniformInferableQuantizer, WeightsSymmetricInferableQuantizer
 
 
 class TestKerasWeightsSymmetricQuantizer(unittest.TestCase):
 
     def test_illegal_num_of_thresholds_symmetric_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
-            qi.keras_inferable_quantizers.WeightsSymmetricInferableQuantizer(num_bits=8,
-                                                                             per_channel=False,
-                                                                             threshold=[3., 2.],
-                                                                             channel_axis=None,
-                                                                             input_rank=4)
+            WeightsSymmetricInferableQuantizer(num_bits=8,
+                                               per_channel=False,
+                                               threshold=[3., 2.],
+                                               channel_axis=None,
+                                               input_rank=4)
         self.assertEqual('In per-tensor quantization min/max should be of length 1 but is 2', str(e.exception))
 
     def test_illegal_threshold_type_symmetric_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
-            qi.keras_inferable_quantizers.WeightsSymmetricInferableQuantizer(num_bits=8,
-                                                                             per_channel=True,
-                                                                             threshold=np.asarray([3., 2.]),
-                                                                             channel_axis=None,
-                                                                             input_rank=4)
+            WeightsSymmetricInferableQuantizer(num_bits=8,
+                                               per_channel=True,
+                                               threshold=np.asarray([3., 2.]),
+                                               channel_axis=None,
+                                               input_rank=4)
         self.assertEqual('Expected threshold to be of type list but is <class \'numpy.ndarray\'>', str(e.exception))
 
     def test_missing_channel_axis_symmetric_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
-            qi.keras_inferable_quantizers.WeightsSymmetricInferableQuantizer(num_bits=8,
-                                                                             per_channel=True,
-                                                                             threshold=[3.,2.],
-                                                                             input_rank=4)
+            WeightsSymmetricInferableQuantizer(num_bits=8,
+                                               per_channel=True,
+                                               threshold=[3., 2.],
+                                               input_rank=4)
         self.assertEqual('Channel axis is missing in per channel quantization', str(e.exception))
 
     def test_missing_input_rank_pot_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
-            qi.keras_inferable_quantizers.WeightsSymmetricInferableQuantizer(num_bits=8,
-                                                                             per_channel=True,
-                                                                             threshold=[3.,2.],
-                                                                             channel_axis=1)
+            WeightsSymmetricInferableQuantizer(num_bits=8,
+                                               per_channel=True,
+                                               threshold=[3., 2.],
+                                               channel_axis=1)
         self.assertEqual('Input rank is missing in per channel quantization', str(e.exception))
 
     def test_weights_symmetric_signed_per_tensor_inferable_quantizer(self):
         num_bits = 3
         thresholds = [4.]
-        quantizer = qi.keras_inferable_quantizers.WeightsSymmetricInferableQuantizer(num_bits=num_bits,
-                                                                                     per_channel=False,
-                                                                                     threshold=thresholds,
-                                                                                     channel_axis=None)
+        quantizer = WeightsSymmetricInferableQuantizer(num_bits=num_bits,
+                                                       per_channel=False,
+                                                       threshold=thresholds,
+                                                       channel_axis=None)
 
         # check config
         quantizer_config = quantizer.get_config()
@@ -99,13 +100,13 @@ class TestKerasWeightsSymmetricQuantizer(unittest.TestCase):
         self.assertTrue(np.all(manually_quantized_tensor.numpy() == quantized_tensor.numpy()))
 
     def test_weights_symmetric_signed_per_channel_inferable_quantizer(self):
-        thresholds = [3.,6.,2.]
+        thresholds = [3., 6., 2.]
         num_bits = 2
-        quantizer = qi.keras_inferable_quantizers.WeightsSymmetricInferableQuantizer(num_bits=num_bits,
-                                                                                     per_channel=True,
-                                                                                     threshold=thresholds,
-                                                                                     channel_axis=3,
-                                                                                     input_rank=4)
+        quantizer = WeightsSymmetricInferableQuantizer(num_bits=num_bits,
+                                                       per_channel=True,
+                                                       threshold=thresholds,
+                                                       channel_axis=3,
+                                                       input_rank=4)
 
         # check config
         quantizer_config = quantizer.get_config()
@@ -150,55 +151,55 @@ class TestKerasWeightsPOTQuantizer(unittest.TestCase):
 
     def test_illegal_pot_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
-            qi.keras_inferable_quantizers.WeightsPOTInferableQuantizer(num_bits=8,
-                                                                       per_channel=False,
-                                                                       threshold=[3.],
-                                                                       channel_axis=None,
-                                                                       input_rank=4)
+            WeightsPOTInferableQuantizer(num_bits=8,
+                                         per_channel=False,
+                                         threshold=[3.],
+                                         channel_axis=None,
+                                         input_rank=4)
         self.assertEqual('Expected threshold to be power of 2 but is [3.]', str(e.exception))
 
     def test_illegal_num_of_thresholds_pot_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
-            qi.keras_inferable_quantizers.WeightsPOTInferableQuantizer(num_bits=8,
-                                                                       per_channel=False,
-                                                                       threshold=[3.0, 2.0],
-                                                                       channel_axis=None,
-                                                                       input_rank=4)
+            WeightsPOTInferableQuantizer(num_bits=8,
+                                         per_channel=False,
+                                         threshold=[3.0, 2.0],
+                                         channel_axis=None,
+                                         input_rank=4)
         self.assertEqual('In per-tensor quantization min/max should be of length 1 but is 2', str(e.exception))
 
     def test_illegal_threshold_type_pot_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
-            qi.keras_inferable_quantizers.WeightsPOTInferableQuantizer(num_bits=8,
-                                                                       per_channel=True,
-                                                                       threshold=np.asarray([3.0, 2.0]),
-                                                                       channel_axis=None,
-                                                                       input_rank=4)
+            WeightsPOTInferableQuantizer(num_bits=8,
+                                         per_channel=True,
+                                         threshold=np.asarray([3.0, 2.0]),
+                                         channel_axis=None,
+                                         input_rank=4)
         self.assertEqual('Expected threshold to be of type list but is <class \'numpy.ndarray\'>', str(e.exception))
 
     def test_missing_channel_axis_pot_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
-            qi.keras_inferable_quantizers.WeightsPOTInferableQuantizer(num_bits=8,
-                                                                       per_channel=True,
-                                                                       threshold=[3., 2.],
-                                                                       input_rank=4)
+            WeightsPOTInferableQuantizer(num_bits=8,
+                                         per_channel=True,
+                                         threshold=[3., 2.],
+                                         input_rank=4)
         self.assertEqual('Channel axis is missing in per channel quantization', str(e.exception))
 
     def test_missing_input_rank_pot_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
-            qi.keras_inferable_quantizers.WeightsPOTInferableQuantizer(num_bits=8,
-                                                                       per_channel=True,
-                                                                       threshold=[3., 2.],
-                                                                       channel_axis=1)
+            WeightsPOTInferableQuantizer(num_bits=8,
+                                         per_channel=True,
+                                         threshold=[3., 2.],
+                                         channel_axis=1)
         self.assertEqual('Input rank is missing in per channel quantization', str(e.exception))
 
     def test_pot_signed_per_channel_inferable_quantizer(self):
         thresholds = [2., 4., 1.]
         num_bits = 3
-        quantizer = qi.keras_inferable_quantizers.WeightsPOTInferableQuantizer(num_bits=num_bits,
-                                                                               per_channel=True,
-                                                                               threshold=thresholds,
-                                                                               channel_axis=-1,
-                                                                               input_rank=4)
+        quantizer = WeightsPOTInferableQuantizer(num_bits=num_bits,
+                                                 per_channel=True,
+                                                 threshold=thresholds,
+                                                 channel_axis=-1,
+                                                 input_rank=4)
         # check config
         quantizer_config = quantizer.get_config()
         self.assertTrue(quantizer_config['num_bits'] == num_bits)
@@ -245,10 +246,10 @@ class TestKerasWeightsPOTQuantizer(unittest.TestCase):
     def test_pot_signed_per_tensor_inferable_quantizer(self):
         thresholds = [1.]
         num_bits = 2
-        quantizer = qi.keras_inferable_quantizers.WeightsPOTInferableQuantizer(num_bits=num_bits,
-                                                                               per_channel=False,
-                                                                               threshold=thresholds,
-                                                                               channel_axis=None)
+        quantizer = WeightsPOTInferableQuantizer(num_bits=num_bits,
+                                                 per_channel=False,
+                                                 threshold=thresholds,
+                                                 channel_axis=None)
         # check config
         quantizer_config = quantizer.get_config()
         self.assertTrue(quantizer_config['num_bits'] == num_bits)
@@ -291,40 +292,40 @@ class TestKerasWeightsUniformQuantizer(unittest.TestCase):
 
     def test_illegal_num_of_minmax_uniform_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
-            qi.keras_inferable_quantizers.WeightsUniformInferableQuantizer(num_bits=8,
-                                                                           per_channel=False,
-                                                                           min_range=[3., 2.],
-                                                                           max_range=[4.,3.],
-                                                                           channel_axis=None,
-                                                                           input_rank=4)
+            WeightsUniformInferableQuantizer(num_bits=8,
+                                             per_channel=False,
+                                             min_range=[3., 2.],
+                                             max_range=[4., 3.],
+                                             channel_axis=None,
+                                             input_rank=4)
         self.assertEqual('In per-tensor quantization min/max should be of length 1 but is 2', str(e.exception))
 
     def test_illegal_threshold_type_pot_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
-            qi.keras_inferable_quantizers.WeightsUniformInferableQuantizer(num_bits=8,
-                                                                           per_channel=True,
-                                                                           min_range=[3., 2.],
-                                                                           max_range=4,
-                                                                           channel_axis=None,
-                                                                           input_rank=4)
+            WeightsUniformInferableQuantizer(num_bits=8,
+                                             per_channel=True,
+                                             min_range=[3., 2.],
+                                             max_range=4,
+                                             channel_axis=None,
+                                             input_rank=4)
         self.assertEqual('Expected max_range to be of type list but is <class \'int\'>', str(e.exception))
 
     def test_missing_channel_axis_pot_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
-            qi.keras_inferable_quantizers.WeightsUniformInferableQuantizer(num_bits=8,
-                                                                           per_channel=True,
-                                                                           min_range=[3.0, 2.0],
-                                                                           max_range=[4.0, 3.0],
-                                                                           input_rank=4)
+            WeightsUniformInferableQuantizer(num_bits=8,
+                                             per_channel=True,
+                                             min_range=[3.0, 2.0],
+                                             max_range=[4.0, 3.0],
+                                             input_rank=4)
         self.assertEqual('Channel axis is missing in per channel quantization', str(e.exception))
 
     def test_missing_input_rank_pot_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
-            qi.keras_inferable_quantizers.WeightsUniformInferableQuantizer(num_bits=8,
-                                                                           per_channel=True,
-                                                                           min_range=[3., 2.],
-                                                                           max_range=[4., 3.],
-                                                                           channel_axis=1)
+            WeightsUniformInferableQuantizer(num_bits=8,
+                                             per_channel=True,
+                                             min_range=[3., 2.],
+                                             max_range=[4., 3.],
+                                             channel_axis=1)
         self.assertEqual('Input rank is missing in per channel quantization', str(e.exception))
 
     def test_uniform_per_channel_inferable_quantizer(self):
@@ -332,12 +333,12 @@ class TestKerasWeightsUniformQuantizer(unittest.TestCase):
         min_range = [-10., -3., -8., 0.]
         max_range = [4., 4., 20., 7.]
         channel_axis = 1
-        quantizer = qi.keras_inferable_quantizers.WeightsUniformInferableQuantizer(num_bits=num_bits,
-                                                                                   per_channel=True,
-                                                                                   min_range=min_range,
-                                                                                   max_range=max_range,
-                                                                                   channel_axis=channel_axis,
-                                                                                   input_rank=4)
+        quantizer = WeightsUniformInferableQuantizer(num_bits=num_bits,
+                                                     per_channel=True,
+                                                     min_range=min_range,
+                                                     max_range=max_range,
+                                                     channel_axis=channel_axis,
+                                                     input_rank=4)
 
         # check config
         quantizer_config = quantizer.get_config()
@@ -388,11 +389,11 @@ class TestKerasWeightsUniformQuantizer(unittest.TestCase):
         max_range = [4.]
         channel_axis = 0
 
-        quantizer = qi.keras_inferable_quantizers.WeightsUniformInferableQuantizer(num_bits=num_bits,
-                                                                                   per_channel=False,
-                                                                                   min_range=min_range,
-                                                                                   max_range=max_range,
-                                                                                   channel_axis=channel_axis)
+        quantizer = WeightsUniformInferableQuantizer(num_bits=num_bits,
+                                                     per_channel=False,
+                                                     min_range=min_range,
+                                                     max_range=max_range,
+                                                     channel_axis=channel_axis)
 
         # check config
         quantizer_config = quantizer.get_config()
@@ -435,12 +436,12 @@ class TestKerasWeightsUniformQuantizer(unittest.TestCase):
         max_range = [4.1, 4.7, 20.0, 7.0]
         channel_axis = 2
 
-        quantizer = qi.keras_inferable_quantizers.WeightsUniformInferableQuantizer(num_bits=num_bits,
-                                                                                   per_channel=True,
-                                                                                   min_range=min_range,
-                                                                                   max_range=max_range,
-                                                                                   channel_axis=channel_axis,
-                                                                                   input_rank=4)
+        quantizer = WeightsUniformInferableQuantizer(num_bits=num_bits,
+                                                     per_channel=True,
+                                                     min_range=min_range,
+                                                     max_range=max_range,
+                                                     channel_axis=channel_axis,
+                                                     input_rank=4)
 
         # check config
         quantizer_config = quantizer.get_config()

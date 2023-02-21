@@ -25,7 +25,8 @@ from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructur
 
 if FOUND_TF:
     import tensorflow as tf
-    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.activation_inferable_quantizers.activation_uniform_inferable_quantizer import ActivationUniformInferableQuantizer
+    from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.activation_inferable_quantizers.activation_uniform_inferable_quantizer \
+        import ActivationUniformInferableQuantizer
 
     @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                     quantization_method=[QuantizationMethod.SYMMETRIC],

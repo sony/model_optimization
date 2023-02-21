@@ -21,9 +21,11 @@ from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quan
     get_inferable_quantizer_kwargs
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer import BaseKerasGPTQTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, BaseKerasInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_quantizers import \
     get_inferable_quantizer_class
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.base_keras_inferable_quantizer import \
+    BaseKerasInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizer_config import \
     get_trainable_quantizer_weights_config
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizers import \

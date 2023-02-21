@@ -1,7 +1,7 @@
 # QAT Quantizers
 
 ## Introduction
-[`BaseKerasQATTrainableQuantizer`](./quantizer/base_keras_qat_quantizer.py) is an interface that utilizes the Quantization Infrastructure's [`BaseKerasTrainableQuantizer`](../../quantizers_infrastructure/keras/base_keras_quantizer.py) class to  enable easy development of quantizers dedicated to Quantization-Aware Training (QAT).
+[`BaseKerasQATTrainableQuantizer`](./quantizer/base_keras_qat_quantizer.py) is an interface that utilizes the Quantization Infrastructure's [`BaseKerasTrainableQuantizer`](../../quantizers_infrastructure/trainable_infrastructure/keras/quantizers/base_keras_quantizer.py) class to  enable easy development of quantizers dedicated to Quantization-Aware Training (QAT).
 All available training types for QAT are defined in the Enum `TrainingMethod`. See [Training Methods for QAT](./quantizer/README.md) for more details.
 
 ## Make your own Keras trainable quantizers
@@ -12,7 +12,7 @@ In order to make your new quantizer you need to create your quantizer class, `My
    - Implement [`initialize_quantization`](../../quantizers_infrastructure/trainable_infrastructure/common/base_trainable_quantizer.py) where you can define your parameters for the quantizer.
    - Implement [`__call__`](../../quantizers_infrastructure/trainable_infrastructure/common/base_trainable_quantizer.py) method to quantize the given inputs while training. This is your custom quantization itself. 
    - Implement [`convert2inferable`](../../quantizers_infrastructure/trainable_infrastructure/common/base_trainable_quantizer.py) method. This method exports your quantizer for inference (deployment). For doing that you need to choose one of our Inferable Quantizers ([Inferable Quantizers](../../quantizers_infrastructure/keras/inferable_quantizers)) according to target when implementing `convert2inferable`, and set your learned quantization parameters there.
-   - Decorate `MyTrainingQuantizer` class with the `@mark_quantizer` decorator and choose the appropriate properties to set for you quantizer. The quantizer_type argument for the decorator should be of type of the `TrainingMethod  enum. See explaination about `@mark_quantizer` and how to use it under the [Kears Quantization Infrastructure](../../quantizers_infrastructure/keras/README.md).
+   - Decorate `MyTrainingQuantizer` class with the `@mark_quantizer` decorator and choose the appropriate properties to set for you quantizer. The quantizer_type argument for the decorator should be of type of the `TrainingMethod  enum. See explaination about `@mark_quantizer` and how to use it under the [Kears Quantization Infrastructure](../../quantizers_infrastructure/trainable_infrastructure/keras/README.md).
    
 ## Example: Symmetric Weights Quantizer
 To create custom `MyWeightsTrainingQuantizer` which is a symmetric weights training quantizer you need to set

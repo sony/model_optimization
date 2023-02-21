@@ -17,7 +17,8 @@ import unittest
 import numpy as np
 import tensorflow as tf
 
-from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
+    ActivationSymmetricInferableQuantizer, ActivationPOTInferableQuantizer, ActivationUniformInferableQuantizer
 
 
 class TestKerasActivationsSymmetricQuantizer(unittest.TestCase):
@@ -27,9 +28,9 @@ class TestKerasActivationsSymmetricQuantizer(unittest.TestCase):
         thresholds = [4.]
         signed = True
 
-        quantizer = qi.keras_inferable_quantizers.ActivationSymmetricInferableQuantizer(num_bits=num_bits,
-                                                                                        threshold=thresholds,
-                                                                                        signed=signed)
+        quantizer = ActivationSymmetricInferableQuantizer(num_bits=num_bits,
+                                                          threshold=thresholds,
+                                                          signed=signed)
         thresholds = np.asarray(thresholds)
 
         # check config
@@ -70,7 +71,7 @@ class TestKerasActivationsSymmetricQuantizer(unittest.TestCase):
         num_bits = 2
         signed = False
 
-        quantizer = qi.keras_inferable_quantizers.ActivationSymmetricInferableQuantizer(num_bits=num_bits,
+        quantizer = ActivationSymmetricInferableQuantizer(num_bits=num_bits,
                                                                                         threshold=thresholds,
                                                                                         signed=signed)
 
@@ -113,9 +114,9 @@ class TestKerasActivationsPOTQuantizer(unittest.TestCase):
 
     def test_illegal_pot_inferable_quantizer(self):
         with self.assertRaises(Exception) as e:
-            qi.keras_inferable_quantizers.ActivationPOTInferableQuantizer(num_bits=8,
-                                                                          threshold=[3.],
-                                                                          signed=True)
+            ActivationPOTInferableQuantizer(num_bits=8,
+                                            threshold=[3.],
+                                            signed=True)
         self.assertEqual('Expected threshold to be power of 2 but is [3.]', str(e.exception))
 
     def test_pot_signed_inferable_quantizer(self):
@@ -123,9 +124,9 @@ class TestKerasActivationsPOTQuantizer(unittest.TestCase):
         num_bits = 2
         signed = True
 
-        quantizer = qi.keras_inferable_quantizers.ActivationPOTInferableQuantizer(num_bits=num_bits,
-                                                                                  signed=signed,
-                                                                                  threshold=thresholds)
+        quantizer = ActivationPOTInferableQuantizer(num_bits=num_bits,
+                                                    signed=signed,
+                                                    threshold=thresholds)
 
         thresholds = np.asarray(thresholds)
 
@@ -171,9 +172,9 @@ class TestKerasActivationsPOTQuantizer(unittest.TestCase):
         num_bits = 2
         signed = False
 
-        quantizer = qi.keras_inferable_quantizers.ActivationPOTInferableQuantizer(num_bits=num_bits,
-                                                                                  signed=signed,
-                                                                                  threshold=thresholds)
+        quantizer = ActivationPOTInferableQuantizer(num_bits=num_bits,
+                                                    signed=signed,
+                                                    threshold=thresholds)
         thresholds = np.asarray(thresholds)
 
         # check config
@@ -220,9 +221,9 @@ class TestKerasActivationsUniformQuantizer(unittest.TestCase):
         min_range = [-10.]
         max_range = [5.]
         num_bits = 2
-        quantizer = qi.keras_inferable_quantizers.ActivationUniformInferableQuantizer(num_bits=num_bits,
-                                                                                      min_range=min_range,
-                                                                                      max_range=max_range)
+        quantizer = ActivationUniformInferableQuantizer(num_bits=num_bits,
+                                                        min_range=min_range,
+                                                        max_range=max_range)
 
         min_range = np.asarray(min_range)
         max_range = np.asarray(max_range)
@@ -262,9 +263,9 @@ class TestKerasActivationsUniformQuantizer(unittest.TestCase):
         max_range = [10.]
         num_bits = 2
 
-        quantizer = qi.keras_inferable_quantizers.ActivationUniformInferableQuantizer(num_bits=num_bits,
-                                                                                      min_range=min_range,
-                                                                                      max_range=max_range)
+        quantizer = ActivationUniformInferableQuantizer(num_bits=num_bits,
+                                                        min_range=min_range,
+                                                        max_range=max_range)
 
         # check config
         quantizer_config = quantizer.get_config()

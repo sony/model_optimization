@@ -23,12 +23,12 @@ from model_compression_toolkit.quantizers_infrastructure import QuantizationTarg
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.quant_utils import \
     adjust_range_to_include_zero
-from model_compression_toolkit.quantizers_infrastructure.keras.validation_functions import \
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.validation_functions import \
     validate_uniform_min_max_ranges, validate_adjusted_min_max_ranges
 
 if FOUND_TF:
     import tensorflow as tf
-    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer import BaseKerasInferableQuantizer
+    from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.base_keras_inferable_quantizer import BaseKerasInferableQuantizer
 
     @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                     quantization_method=[QuantizationMethod.UNIFORM],

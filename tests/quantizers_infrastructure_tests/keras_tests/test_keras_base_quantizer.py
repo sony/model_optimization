@@ -17,7 +17,7 @@ from model_compression_toolkit.core.common.target_platform import QuantizationMe
 from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
-from model_compression_toolkit.quantizers_infrastructure.keras.config_serialization import config_serialization, \
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.keras.config_serialization import config_serialization, \
     config_deserialization
 from tests.quantizers_infrastructure_tests.keras_tests.base_keras_infrastructure_test import \
     BaseKerasInfrastructureTest, ZeroWeightsQuantizer, ZeroActivationsQuantizer

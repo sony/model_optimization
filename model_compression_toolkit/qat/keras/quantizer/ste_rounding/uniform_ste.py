@@ -25,11 +25,13 @@ from model_compression_toolkit.qat.keras.quantizer.quant_utils import adjust_ran
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
 from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
 from model_compression_toolkit.core.common import constants as C
-import model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers as iq
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
     TrainableQuantizerActivationConfig
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import \
+    mark_quantizer
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
+    BaseKerasInferableQuantizer, WeightsUniformInferableQuantizer, ActivationUniformInferableQuantizer
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
@@ -133,7 +135,7 @@ class STEUniformWeightQuantizer(BaseKerasQATTrainableQuantizer):
 
         return q_tensor
 
-    def convert2inferable(self) -> qi.BaseKerasInferableQuantizer:
+    def convert2inferable(self) -> BaseKerasInferableQuantizer:
         """
         Convert quantizer to inferable quantizer.
 
@@ -143,12 +145,12 @@ class STEUniformWeightQuantizer(BaseKerasQATTrainableQuantizer):
         min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN].numpy(),
                                                          self.quantizer_parameters[FQ_MAX].numpy(),
                                                          self.num_bits)
-        return iq.WeightsUniformInferableQuantizer(num_bits=self.num_bits,
-                                                   min_range=list(min_range.flatten()),
-                                                   max_range=list(max_range.flatten()),
-                                                   per_channel=self.per_channel,
-                                                   channel_axis=self.channel_axis,
-                                                   input_rank=len(self.min_max_shape))
+        return WeightsUniformInferableQuantizer(num_bits=self.num_bits,
+                                                min_range=list(min_range.flatten()),
+                                                max_range=list(max_range.flatten()),
+                                                per_channel=self.per_channel,
+                                                channel_axis=self.channel_axis,
+                                                input_rank=len(self.min_max_shape))
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
@@ -228,7 +230,7 @@ class STEUniformActivationQuantizer(BaseKerasQATTrainableQuantizer):
 
         return q_tensor
 
-    def convert2inferable(self) -> qi.BaseKerasInferableQuantizer:
+    def convert2inferable(self) -> BaseKerasInferableQuantizer:
         """
         Convert quantizer to inferable quantizer.
 
@@ -238,8 +240,8 @@ class STEUniformActivationQuantizer(BaseKerasQATTrainableQuantizer):
         min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN].numpy(),
                                                          self.quantizer_parameters[FQ_MAX].numpy(),
                                                          self.num_bits)
-        return iq.ActivationUniformInferableQuantizer(num_bits=self.num_bits,
-                                                      # In activation quantization is per-tensor only - thus we pass
-                                                      # the min/max as lists with a len of 1
-                                                      min_range=[min_range],
-                                                      max_range=[max_range])
+        return ActivationUniformInferableQuantizer(num_bits=self.num_bits,
+                                                   # In activation quantization is per-tensor only - thus we pass
+                                                   # the min/max as lists with a len of 1
+                                                   min_range=[min_range],
+                                                   max_range=[max_range])

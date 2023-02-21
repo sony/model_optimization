@@ -23,7 +23,7 @@ from model_compression_toolkit.quantizers_infrastructure import TrainableQuantiz
 
 if FOUND_TF:
     QUANTIZATION_CONFIG = 'quantization_config'
-    from model_compression_toolkit.quantizers_infrastructure.keras.config_serialization import config_serialization, \
+    from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.keras.config_serialization import config_serialization, \
         config_deserialization
 
 

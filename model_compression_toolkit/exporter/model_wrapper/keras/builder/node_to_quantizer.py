@@ -20,7 +20,7 @@ from model_compression_toolkit.core.common.target_platform import QuantizationMe
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_quantizers import \
     get_inferable_quantizer_class
-from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.base_keras_inferable_quantizer \
     import \
     BaseKerasInferableQuantizer
 

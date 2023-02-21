@@ -20,7 +20,7 @@ if FOUND_TF:
     import tensorflow as tf
     from model_compression_toolkit import quantizers_infrastructure as qi
     from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
-    from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
+    from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.base_keras_inferable_quantizer \
         import \
         BaseKerasInferableQuantizer
     keras = tf.keras
