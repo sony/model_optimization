@@ -364,6 +364,8 @@ class TestActivationLUTPOTQuantizer(unittest.TestCase):
         quantizer = qi.pytorch_inferable_quantizers.ActivationLutPOTInferableQuantizer(num_bits=num_bits,
                                                                                        cluster_centers=cluster_centers,
                                                                                        signed=signed,
+                                                                                       multiplier_n_bits=
+                                                                                       multiplier_n_bits,
                                                                                        threshold=thresholds)
 
         # Initialize a random input to quantize between -50 to 50.
@@ -393,6 +395,8 @@ class TestActivationLUTPOTQuantizer(unittest.TestCase):
         quantizer = qi.pytorch_inferable_quantizers.ActivationLutPOTInferableQuantizer(num_bits=num_bits,
                                                                                        cluster_centers=cluster_centers,
                                                                                        signed=signed,
+                                                                                       multiplier_n_bits=
+                                                                                       multiplier_n_bits,
                                                                                        threshold=thresholds)
 
         # Initialize a random input to quantize between -50 to 50.
