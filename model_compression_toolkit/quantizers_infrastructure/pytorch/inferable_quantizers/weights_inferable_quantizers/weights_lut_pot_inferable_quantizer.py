@@ -39,8 +39,9 @@ if FOUND_TORCH:
                      cluster_centers: np.ndarray,
                      threshold: np.ndarray,
                      per_channel: bool,
-                     channel_axis: int = None
-                     ):
+                     channel_axis: int = None,
+                     multiplier_n_bits: int = 8,
+                     eps: float = 1e-8):
             """
             Initialize the quantizer with the specified parameters.
 
@@ -49,14 +50,18 @@ if FOUND_TORCH:
                 cluster_centers: the cluster centers to assign the weights
                 threshold: threshold for quantizing weights
                 per_channel: whether to use per-channel quantization
-                channel_axis: Axis of input to apply per-channel quantization on.
+                channel_axis: Axis of input to apply per-channel quantization on
+                multiplier_n_bits: Number of bits that determines the quantization range
+                eps: Small value for numerical stability in division
             """
             # target of Weights quantization
             super(WeightsLUTPOTInferableQuantizer, self).__init__(num_bits=num_bits,
                                                                   threshold=threshold,
                                                                   cluster_centers=cluster_centers,
                                                                   per_channel=per_channel,
-                                                                  channel_axis=channel_axis)
+                                                                  channel_axis=channel_axis,
+                                                                  multiplier_n_bits=multiplier_n_bits,
+                                                                  eps=eps)
 
             is_threshold_pot = np.all(np.round(np.log2(threshold.flatten())) == np.log2(threshold.flatten()))
             assert is_threshold_pot, f'Expected threshold to be power of 2 but is {threshold}'

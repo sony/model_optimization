@@ -40,7 +40,9 @@ if FOUND_TORCH:
                      num_bits: int,
                      cluster_centers: np.ndarray,
                      threshold: np.ndarray,
-                     signed: bool):
+                     signed: bool,
+                     multiplier_n_bits: int = 8,
+                     eps: float = 1e-8):
             """
             Initialize the quantizer with the specified parameters.
 
@@ -49,13 +51,17 @@ if FOUND_TORCH:
                 cluster_centers: the cluster centers to assign the activations
                 threshold: threshold for quantizing activations
                 signed: whether to use signed quantization or not
+                multiplier_n_bits: Number of bits that determines the quantization range
+                eps: Small value for numerical stability in division
             """
 
             super(ActivationLutPOTInferableQuantizer, self).__init__(
                 num_bits=num_bits,
                 cluster_centers=cluster_centers,
                 threshold=threshold,
-                signed=signed)
+                signed=signed,
+                multiplier_n_bits=multiplier_n_bits,
+                eps=eps)
 
             is_threshold_pot = np.all(np.round(np.log2(threshold.flatten())) == np.log2(threshold.flatten()))
             assert is_threshold_pot, f'Expected threshold to be power of 2 but is {threshold}'
@@ -85,7 +91,7 @@ if FOUND_TORCH:
             """
             inputs.requires_grad = False
             return lut_quantizer(inputs, cluster_centers=self.cluster_centers, signed=self.signed,
-                                 threshold=self.threshold)
+                                 threshold=self.threshold, multiplier_n_bits=self.multiplier_n_bits, eps=self.eps)
 
 else:
     class ActivationLutPOTInferableQuantizer:

@@ -13,13 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+import warnings
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
 
 if FOUND_TORCH:
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers\
+    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers \
         .base_pytorch_inferable_quantizer import \
         BasePyTorchInferableQuantizer
 
@@ -33,7 +34,9 @@ if FOUND_TORCH:
                      num_bits: int,
                      cluster_centers: np.ndarray,
                      threshold: np.ndarray,
-                     signed: bool):
+                     signed: bool,
+                     multiplier_n_bits: int,
+                     eps: float):
             """
             Initialize the quantizer with the specified parameters.
 
@@ -42,6 +45,8 @@ if FOUND_TORCH:
                 cluster_centers: the cluster centers to assign the values
                 threshold: threshold for quantizing values
                 signed: whether or not to use signed quantization
+                multiplier_n_bits: Number of bits that determines the quantization range
+                eps: Small value for numerical stability in division
             """
 
             super(BaseLUTSymmetricInferableQuantizer, self).__init__()
@@ -50,15 +55,36 @@ if FOUND_TORCH:
                               np.ndarray), f'Threshold is expected to be numpy array, but is of type {type(threshold)}'
             assert threshold.ndim == 1, f'Threshold is expected to be flatten, but of shape {threshold.shape}'
 
+            assert len(np.unique(cluster_centers)) <= 2 ** num_bits, \
+                f'Expected num of cluster centers to be less or equal than {2 ** num_bits} ' \
+                f'but got {len(cluster_centers)}'
+
+            assert not np.any(cluster_centers - cluster_centers.astype(int)), f'Expected cluster centers to be integers'
+
+            if signed:
+                assert np.all((-1 * (2 ** (multiplier_n_bits - int(signed))) <= cluster_centers) &
+                              (cluster_centers <= (2 ** (multiplier_n_bits - int(signed)) - 1))), \
+                    f'Expected cluster centers in the quantization range'
+            else:
+                assert np.all(np.abs(cluster_centers) <= (2 ** multiplier_n_bits)), \
+                    f'Expected cluster centers in the quantization range'
+
+            # num_bits must be less than multiplier_n_bits
+            assert num_bits <= multiplier_n_bits, f'Look-Up-Table bit configuration has {num_bits} bits. It must be ' \
+                                                  f'less then {multiplier_n_bits}'
+            if num_bits == multiplier_n_bits:
+                warnings.warn("Num of bits equal to multiplier n bits, Please be aware LUT quantizier may be "
+                              "inefficient in that case")
+
             self.signed = signed
             self.threshold = threshold
             self.cluster_centers = cluster_centers
             self.num_bits = num_bits
-
+            self.multiplier_n_bits = multiplier_n_bits
+            self.eps = eps
 
 else:
     class BaseLUTSymmetricInferableQuantizer:
         def __init__(self, *args, **kwargs):
-            raise Exception('Installing torch is mandatory '
-                            'when using BaseLUTSymmetricInferableQuantizer. '
-                            'Could not find torch package.')  # pragma: no cover
+            raise Exception('Installing torch is mandatory when using BaseLUTSymmetricInferableQuantizer. Could not '
+                            'find torch package.')  # pragma: no cover

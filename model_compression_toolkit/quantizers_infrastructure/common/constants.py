@@ -36,6 +36,3 @@ TRAINING = "training"
 QUANTIZATION_TARGET = 'quantization_target'
 QUANTIZATION_METHOD = 'quantization_method'
 QUANTIZER_TYPE = 'quantizer_type'
-
-EPS = 1e-8
-MULTIPLIER_N_BITS = 8

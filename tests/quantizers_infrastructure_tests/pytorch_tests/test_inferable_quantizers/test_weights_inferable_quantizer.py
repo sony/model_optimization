@@ -17,11 +17,10 @@ import unittest
 
 import numpy as np
 import torch
+import warnings
 
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.quantizers_infrastructure.pytorch.quantizer_utils import get_working_device
-
-from model_compression_toolkit.quantizers_infrastructure.common.constants import MULTIPLIER_N_BITS
 
 
 class TestWeightsSymmetricQuantizer(unittest.TestCase):
@@ -40,9 +39,11 @@ class TestWeightsSymmetricQuantizer(unittest.TestCase):
 
         # The maximal threshold is 4 using a signed quantization, so we expect all values to be in this range
         assert torch.max(
-            quantized_tensor) < thresholds[0], f'Quantized values should not contain values greater than maximal threshold'
+            quantized_tensor) < thresholds[
+                   0], f'Quantized values should not contain values greater than maximal threshold'
         assert torch.min(
-            quantized_tensor) >= -thresholds[0], f'Quantized values should not contain values lower than minimal threshold'
+            quantized_tensor) >= -thresholds[
+            0], f'Quantized values should not contain values lower than minimal threshold'
 
         self.assertTrue(len(quantized_tensor.unique()) <= 2 ** num_bits,
                         f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
@@ -52,10 +53,10 @@ class TestWeightsSymmetricQuantizer(unittest.TestCase):
                         f'Expected some values to be negative but quantized tensor is {quantized_tensor}')
 
         # Assert manually quantized values are the same:
-        scale = thresholds[0]/(2**(num_bits-1))
-        manually_quantized_tensor = torch.clip(torch.round(input_tensor.to(get_working_device()) / scale), -thresholds[0], thresholds[0] - scale)
+        scale = thresholds[0] / (2 ** (num_bits - 1))
+        manually_quantized_tensor = torch.clip(torch.round(input_tensor.to(get_working_device()) / scale),
+                                               -thresholds[0], thresholds[0] - scale)
         self.assertTrue(torch.all(manually_quantized_tensor == quantized_tensor))
-
 
     def test_weights_symmetric_per_channel_inferable_quantizer(self):
         thresholds = np.asarray([3, 6, 2])
@@ -91,7 +92,8 @@ class TestWeightsSymmetricQuantizer(unittest.TestCase):
         thresholds = torch.Tensor(thresholds).to(get_working_device())
         thresholds = thresholds.reshape((1, 1, 1, 3))
         scale = thresholds / (2 ** (num_bits - 1))
-        manually_quantized_tensor = torch.round(torch.clip(input_tensor.to(get_working_device()), -thresholds, thresholds-scale)/scale)*scale
+        manually_quantized_tensor = torch.round(
+            torch.clip(input_tensor.to(get_working_device()), -thresholds, thresholds - scale) / scale) * scale
         self.assertTrue(torch.all(manually_quantized_tensor == quantized_tensor))
 
     def test_weights_symmetric_per_channel_no_axis(self):
@@ -190,8 +192,10 @@ class TestWeightsPOTQuantizer(unittest.TestCase):
         # Assert manually quantized values are the same:
         thresholds = torch.Tensor(thresholds).to(get_working_device())
         scale = thresholds / (2 ** (num_bits - 1))
-        manually_quantized_tensor = torch.round(torch.clip(input_tensor.to(get_working_device()), -thresholds, thresholds-scale)/scale)*scale
+        manually_quantized_tensor = torch.round(
+            torch.clip(input_tensor.to(get_working_device()), -thresholds, thresholds - scale) / scale) * scale
         self.assertTrue(torch.all(manually_quantized_tensor == fake_quantized_tensor))
+
 
 class TestWeightsUniformQuantizer(unittest.TestCase):
 
@@ -229,10 +233,11 @@ class TestWeightsUniformQuantizer(unittest.TestCase):
                                 f'Expected some values to be negative but quantized tensor is {channel_slice_i}')
 
         # Assert manually quantized values are the same:
-        min_range = torch.reshape(torch.Tensor(min_range).to(get_working_device()), (1,1,4,1))
-        max_range = torch.reshape(torch.Tensor(max_range).to(get_working_device()), (1,1,4,1))
+        min_range = torch.reshape(torch.Tensor(min_range).to(get_working_device()), (1, 1, 4, 1))
+        max_range = torch.reshape(torch.Tensor(max_range).to(get_working_device()), (1, 1, 4, 1))
         scale = (max_range - min_range) / (2 ** num_bits - 1)
-        manually_quantized_tensor = torch.round((torch.clip(input_tensor.to(get_working_device()), min_range, max_range)-min_range) / scale) *scale + min_range
+        manually_quantized_tensor = torch.round((torch.clip(input_tensor.to(get_working_device()), min_range,
+                                                            max_range) - min_range) / scale) * scale + min_range
         self.assertTrue(torch.all(manually_quantized_tensor == fake_quantized_tensor))
 
     def test_uniform_inferable_quantizer_per_tensor(self):
@@ -296,6 +301,69 @@ class TestWeightsUniformQuantizer(unittest.TestCase):
 
 class TestPyTorchWeightsLUTSymmetricQuantizer(unittest.TestCase):
 
+    def illegal_cluster_centers_inferable_quantizer_test(self, inferable_quantizer, threshold, cluster_centers,
+                                                         per_channel, channel_axis):
+        with self.assertRaises(Exception) as e:
+            inferable_quantizer(num_bits=8,
+                                per_channel=per_channel,
+                                cluster_centers=cluster_centers,
+                                threshold=threshold,
+                                channel_axis=channel_axis)
+        self.assertEqual('Expected cluster centers to be integers', str(e.exception))
+
+    def illegal_num_of_cluster_centers_inferable_quantizer_test(self, inferable_quantizer, threshold, cluster_centers,
+                                                                per_channel, channel_axis):
+        with self.assertRaises(Exception) as e:
+            inferable_quantizer(num_bits=2,
+                                per_channel=per_channel,
+                                cluster_centers=cluster_centers,
+                                threshold=threshold,
+                                channel_axis=channel_axis)
+        self.assertEqual(f'Expected num of cluster centers to be less or equal than {2 ** 2} but got '
+                         f'{len(cluster_centers)}', str(e.exception))
+
+    def illegal_cluster_centers_range_inferable_quantizer_test(self, inferable_quantizer, threshold, cluster_centers,
+                                                               per_channel, channel_axis,
+                                                               multiplier_n_bits):
+        with self.assertRaises(Exception) as e:
+            inferable_quantizer(num_bits=8,
+                                per_channel=per_channel,
+                                cluster_centers=cluster_centers,
+                                threshold=threshold,
+                                channel_axis=channel_axis,
+                                multiplier_n_bits=multiplier_n_bits)
+        self.assertEqual('Expected cluster centers in the quantization range', str(e.exception))
+
+    def illegal_num_bit_bigger_than_multiplier_n_bits_inferable_quantizer_test(self, inferable_quantizer, threshold,
+                                                                               cluster_centers,
+                                                                               num_bits,
+                                                                               per_channel, channel_axis,
+                                                                               multiplier_n_bits):
+        with self.assertRaises(Exception) as e:
+            inferable_quantizer(num_bits=num_bits,
+                                per_channel=per_channel,
+                                cluster_centers=cluster_centers,
+                                threshold=threshold,
+                                channel_axis=channel_axis,
+                                multiplier_n_bits=multiplier_n_bits)
+        self.assertEqual('Look-Up-Table bit configuration has 10 bits. It must be less then 8'
+                         , str(e.exception))
+
+    def warning_num_bit_equal_multiplier_n_bits_inferable_quantizer_test(self, inferable_quantizer, threshold,
+                                                                         cluster_centers,
+                                                                         num_bits,
+                                                                         per_channel, channel_axis,
+                                                                         multiplier_n_bits):
+        with warnings.catch_warnings(record=True) as w:
+            inferable_quantizer(num_bits=num_bits,
+                                per_channel=per_channel,
+                                cluster_centers=cluster_centers,
+                                threshold=threshold,
+                                channel_axis=channel_axis,
+                                multiplier_n_bits=multiplier_n_bits)
+        self.assertTrue('Num of bits equal to multiplier n bits, Please be aware LUT quantizier may be inefficient '
+                        'in that case' in [str(warning.message) for warning in w])
+
     def illegal_num_of_thresholds_inferable_quantizer_test(self, inferable_quantizer, threshold, cluster_centers,
                                                            per_channel, channel_axis):
         with self.assertRaises(Exception) as e:
@@ -316,6 +384,16 @@ class TestPyTorchWeightsLUTSymmetricQuantizer(unittest.TestCase):
                                 channel_axis=channel_axis)
         self.assertEqual('Threshold is expected to be numpy array, but is of type <class \'list\'>', str(e.exception))
 
+    def illegal_threshold_shape_inferable_quantizer_test(self, inferable_quantizer, threshold, cluster_centers,
+                                                         per_channel, channel_axis):
+        with self.assertRaises(Exception) as e:
+            inferable_quantizer(num_bits=8,
+                                per_channel=per_channel,
+                                cluster_centers=cluster_centers,
+                                threshold=threshold,
+                                channel_axis=channel_axis)
+        self.assertEqual(f'Threshold is expected to be flatten, but of shape {threshold.shape}', str(e.exception))
+
     def missing_channel_axis_inferable_quantizer(self, inferable_quantizer, threshold, cluster_centers,
                                                  per_channel):
         with self.assertRaises(Exception) as e:
@@ -326,12 +404,13 @@ class TestPyTorchWeightsLUTSymmetricQuantizer(unittest.TestCase):
         self.assertEqual('Channel axis is missing in per channel quantization', str(e.exception))
 
     def weights_inferable_quantizer_test(self, inferable_quantizer, num_bits, threshold, cluster_centers,
-                                         per_channel, channel_axis):
+                                         per_channel, channel_axis, multiplier_n_bits):
         quantizer = inferable_quantizer(num_bits=num_bits,
                                         per_channel=per_channel,
                                         cluster_centers=cluster_centers,
                                         threshold=threshold,
-                                        channel_axis=channel_axis)
+                                        channel_axis=channel_axis,
+                                        multiplier_n_bits=multiplier_n_bits)
 
         # Initialize a random input to quantize between -50 to 50.
         input_tensor = torch.rand(1, 3, 3, 3) * 100 - 50
@@ -357,18 +436,34 @@ class TestPyTorchWeightsLUTSymmetricQuantizer(unittest.TestCase):
         if per_channel:
             for i in range(len(threshold)):
                 channel_slice_i = fake_quantized_tensor[:, :, :, i]
-                channel_quant_tensor_values = cluster_centers / (2 ** (MULTIPLIER_N_BITS - 1)) * threshold[i]
+                channel_quant_tensor_values = cluster_centers / (2 ** (multiplier_n_bits - 1)) * threshold[i]
                 self.assertTrue(len(np.unique(channel_slice_i)) <= 2 ** num_bits,
                                 f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
                                 f'{len(np.unique(channel_slice_i))} unique values')
                 self.assertTrue(np.all(np.unique(channel_slice_i) == np.sort(channel_quant_tensor_values)))
+
+                # Check quantized tensor assigned correctly
+                tensor = input_tensor[:, :, :, i].unsqueeze(-1)
+                expanded_cluster_centers = cluster_centers.reshape([*[1 for _ in range(len(tensor.shape) - 1)], -1])
+                cluster_assignments = torch.argmin(torch.abs(tensor - expanded_cluster_centers), dim=-1)
+                centers = cluster_centers.flatten()[cluster_assignments]
+
+                self.assertTrue(np.all(centers / (2 ** (multiplier_n_bits - 1)) * threshold[i] == channel_slice_i),
+                                "Quantized tensor values weren't assigned correctly")
+
         else:
-            quant_tensor_values = cluster_centers / (2 ** (MULTIPLIER_N_BITS - 1)) * threshold
+            quant_tensor_values = cluster_centers / (2 ** (multiplier_n_bits - 1)) * threshold
             self.assertTrue(len(np.unique(fake_quantized_tensor)) <= 2 ** num_bits,
                             f'Quantized tensor expected to have no more than {2 ** num_bits} unique values but has '
                             f'{len(np.unique(fake_quantized_tensor))} unique values')
             self.assertTrue(np.all(np.unique(fake_quantized_tensor)
                                    == np.sort(quant_tensor_values)))
+
+            # Check quantized tensor assigned correctly
+            tensor = input_tensor.unsqueeze(-1)
+            expanded_cluster_centers = cluster_centers.reshape([*[1 for _ in range(len(tensor.shape) - 1)], -1])
+            cluster_assignments = torch.argmin(torch.abs(tensor - expanded_cluster_centers), dim=-1)
+            centers = cluster_centers.flatten()[cluster_assignments]
 
         # Assert some values are negative (signed quantization)
         self.assertTrue(np.any(fake_quantized_tensor < 0),
@@ -376,16 +471,59 @@ class TestPyTorchWeightsLUTSymmetricQuantizer(unittest.TestCase):
 
     def test_weights_lut_symmetric_inferable_quantizer(self):
         inferable_quantizer = qi.pytorch_inferable_quantizers.WeightsLUTSymmetricInferableQuantizer
-        num_bits = 3
-        cluster_centers = np.asarray([-25, 25])
+        cluster_centers = np.asarray([-25.6, 25])
         per_channel = False
         channel_axis = None
 
+        threshold = np.asarray([2.])
+        self.illegal_cluster_centers_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
+                                                              threshold=threshold,
+                                                              cluster_centers=cluster_centers, per_channel=per_channel,
+                                                              channel_axis=channel_axis)
+
+        cluster_centers = np.asarray([-25, 25, 3, 19, 55])
+        self.illegal_num_of_cluster_centers_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
+                                                                     threshold=threshold,
+                                                                     cluster_centers=cluster_centers,
+                                                                     per_channel=per_channel,
+                                                                     channel_axis=channel_axis)
+        multiplier_n_bits = 5
+        cluster_centers = np.asarray([-25, 25])
+        self.illegal_cluster_centers_range_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
+                                                                    threshold=threshold,
+                                                                    cluster_centers=cluster_centers,
+                                                                    per_channel=per_channel,
+                                                                    channel_axis=channel_axis,
+                                                                    multiplier_n_bits=multiplier_n_bits)
+
+        multiplier_n_bits = 8
+        num_bits = 10
+        self.illegal_num_bit_bigger_than_multiplier_n_bits_inferable_quantizer_test(
+            inferable_quantizer=inferable_quantizer,
+            threshold=threshold, cluster_centers=cluster_centers,
+            per_channel=per_channel, channel_axis=channel_axis,
+            multiplier_n_bits=multiplier_n_bits, num_bits=num_bits)
+
+        multiplier_n_bits = 8
+        num_bits = 8
+        self.warning_num_bit_equal_multiplier_n_bits_inferable_quantizer_test(
+            inferable_quantizer=inferable_quantizer,
+            threshold=threshold, cluster_centers=cluster_centers,
+            per_channel=per_channel, channel_axis=channel_axis,
+            multiplier_n_bits=multiplier_n_bits, num_bits=num_bits)
+
         threshold = [3., 2.]
+        num_bits = 3
         self.illegal_threshold_type_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
                                                              threshold=threshold,
                                                              cluster_centers=cluster_centers, per_channel=per_channel,
                                                              channel_axis=channel_axis)
+
+        threshold = np.array([[3., 2.], [2., 5.]])
+        self.illegal_threshold_shape_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
+                                                              threshold=threshold,
+                                                              cluster_centers=cluster_centers, per_channel=per_channel,
+                                                              channel_axis=channel_axis)
 
         threshold = np.asarray([2., 7.])
         self.illegal_num_of_thresholds_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
@@ -401,16 +539,19 @@ class TestPyTorchWeightsLUTSymmetricQuantizer(unittest.TestCase):
         # test per channel
         threshold = np.asarray([3., 8., 7.])
         channel_axis = 3
+        multiplier_n_bits = 8
         self.weights_inferable_quantizer_test(inferable_quantizer=inferable_quantizer, num_bits=num_bits,
                                               threshold=threshold, cluster_centers=cluster_centers,
-                                              per_channel=per_channel, channel_axis=channel_axis)
+                                              per_channel=per_channel, channel_axis=channel_axis,
+                                              multiplier_n_bits=multiplier_n_bits)
 
         # test per channel and channel axis is not last
         threshold = np.asarray([3., 8., 7.])
         channel_axis = 1
         self.weights_inferable_quantizer_test(inferable_quantizer=inferable_quantizer, num_bits=num_bits,
                                               threshold=threshold, cluster_centers=cluster_centers,
-                                              per_channel=per_channel, channel_axis=channel_axis)
+                                              per_channel=per_channel, channel_axis=channel_axis,
+                                              multiplier_n_bits=multiplier_n_bits)
 
         # test per tensor
         threshold = np.asarray([3.])
@@ -418,7 +559,8 @@ class TestPyTorchWeightsLUTSymmetricQuantizer(unittest.TestCase):
         per_channel = False
         self.weights_inferable_quantizer_test(inferable_quantizer=inferable_quantizer, num_bits=num_bits,
                                               threshold=threshold, cluster_centers=cluster_centers,
-                                              per_channel=per_channel, channel_axis=channel_axis)
+                                              per_channel=per_channel, channel_axis=channel_axis,
+                                              multiplier_n_bits=multiplier_n_bits)
 
 
 class TestPyTorchWeightsLUTPOTQuantizer(TestPyTorchWeightsLUTSymmetricQuantizer):
@@ -443,18 +585,61 @@ class TestPyTorchWeightsLUTPOTQuantizer(TestPyTorchWeightsLUTSymmetricQuantizer)
 
     def test_weights_lut_symmetric_inferable_quantizer(self):
         inferable_quantizer = qi.pytorch_inferable_quantizers.WeightsLUTSymmetricInferableQuantizer
-        num_bits = 3
-        cluster_centers = np.asarray([-25, 25])
+        cluster_centers = np.asarray([-25.6, 25])
         per_channel = False
         channel_axis = None
 
+        threshold = np.asarray([2.])
+        self.illegal_cluster_centers_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
+                                                              threshold=threshold,
+                                                              cluster_centers=cluster_centers, per_channel=per_channel,
+                                                              channel_axis=channel_axis)
+
+        cluster_centers = np.asarray([-25, 25, 3, 19, 55])
+        self.illegal_num_of_cluster_centers_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
+                                                                     threshold=threshold,
+                                                                     cluster_centers=cluster_centers,
+                                                                     per_channel=per_channel,
+                                                                     channel_axis=channel_axis)
+
+        multiplier_n_bits = 5
+        cluster_centers = np.asarray([-25, 25])
+        self.illegal_cluster_centers_range_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
+                                                                    threshold=threshold,
+                                                                    cluster_centers=cluster_centers,
+                                                                    per_channel=per_channel,
+                                                                    channel_axis=channel_axis,
+                                                                    multiplier_n_bits=multiplier_n_bits)
+        multiplier_n_bits = 8
+        num_bits = 10
+        self.illegal_num_bit_bigger_than_multiplier_n_bits_inferable_quantizer_test(
+            inferable_quantizer=inferable_quantizer,
+            threshold=threshold, cluster_centers=cluster_centers,
+            per_channel=per_channel, channel_axis=channel_axis,
+            multiplier_n_bits=multiplier_n_bits, num_bits=num_bits)
+
+        num_bits = 8
+        self.warning_num_bit_equal_multiplier_n_bits_inferable_quantizer_test(
+            inferable_quantizer=inferable_quantizer,
+            threshold=threshold, cluster_centers=cluster_centers,
+            per_channel=per_channel, channel_axis=channel_axis,
+            multiplier_n_bits=multiplier_n_bits, num_bits=num_bits)
+
+        num_bits = 3
         threshold = [4., 2.]
         self.illegal_threshold_type_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
                                                              threshold=threshold,
                                                              cluster_centers=cluster_centers, per_channel=per_channel,
                                                              channel_axis=channel_axis)
 
+        threshold = np.array([[4., 2.], [2., 8.]])
+        self.illegal_threshold_shape_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
+                                                              threshold=threshold,
+                                                              cluster_centers=cluster_centers, per_channel=per_channel,
+                                                              channel_axis=channel_axis)
+
         threshold = np.asarray([2., 8.])
+        multiplier_n_bits = 7
         self.illegal_num_of_thresholds_inferable_quantizer_test(inferable_quantizer=inferable_quantizer,
                                                                 threshold=threshold, cluster_centers=cluster_centers,
                                                                 per_channel=per_channel, channel_axis=channel_axis)
@@ -470,14 +655,16 @@ class TestPyTorchWeightsLUTPOTQuantizer(TestPyTorchWeightsLUTSymmetricQuantizer)
         channel_axis = 3
         self.weights_inferable_quantizer_test(inferable_quantizer=inferable_quantizer, num_bits=num_bits,
                                               threshold=threshold, cluster_centers=cluster_centers,
-                                              per_channel=per_channel, channel_axis=channel_axis)
+                                              per_channel=per_channel, channel_axis=channel_axis,
+                                              multiplier_n_bits=multiplier_n_bits)
 
         # test per channel and channel axis is not last
         threshold = np.asarray([2., 8., 16.])
         channel_axis = 1
         self.weights_inferable_quantizer_test(inferable_quantizer=inferable_quantizer, num_bits=num_bits,
                                               threshold=threshold, cluster_centers=cluster_centers,
-                                              per_channel=per_channel, channel_axis=channel_axis)
+                                              per_channel=per_channel, channel_axis=channel_axis,
+                                              multiplier_n_bits=multiplier_n_bits)
 
         # test per tensor
         threshold = np.asarray([4.])
@@ -485,4 +672,5 @@ class TestPyTorchWeightsLUTPOTQuantizer(TestPyTorchWeightsLUTSymmetricQuantizer)
         per_channel = False
         self.weights_inferable_quantizer_test(inferable_quantizer=inferable_quantizer, num_bits=num_bits,
                                               threshold=threshold, cluster_centers=cluster_centers,
-                                              per_channel=per_channel, channel_axis=channel_axis)
+                                              per_channel=per_channel, channel_axis=channel_axis,
+                                              multiplier_n_bits=multiplier_n_bits)

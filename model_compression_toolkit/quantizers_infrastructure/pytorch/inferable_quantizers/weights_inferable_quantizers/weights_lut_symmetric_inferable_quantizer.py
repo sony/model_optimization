@@ -42,8 +42,9 @@ if FOUND_TORCH:
                      cluster_centers: np.ndarray,
                      threshold: np.ndarray,
                      per_channel: bool,
-                     channel_axis: int = None
-                     ):
+                     channel_axis: int = None,
+                     multiplier_n_bits: int = 8,
+                     eps: float = 1e-8):
             """
             Initialize the quantizer with the specified parameters.
 
@@ -52,13 +53,17 @@ if FOUND_TORCH:
                 cluster_centers: the cluster centers to assign the weights
                 threshold: threshold for quantizing weights
                 per_channel: whether to use per-channel quantization
-                channel_axis: Axis of input to apply per-channel quantization on.
+                channel_axis: Axis of input to apply per-channel quantization on
+                multiplier_n_bits: Number of bits that determines the quantization range
+                eps: Small value for numerical stability in division
             """
 
             super(WeightsLUTSymmetricInferableQuantizer, self).__init__(threshold=threshold,
                                                                         num_bits=num_bits,
                                                                         cluster_centers=cluster_centers,
-                                                                        signed=True)
+                                                                        signed=True,
+                                                                        multiplier_n_bits=multiplier_n_bits,
+                                                                        eps=eps)
 
             if per_channel:
                 assert channel_axis is not None, f'Channel axis is missing in per channel quantization'
@@ -88,7 +93,7 @@ if FOUND_TORCH:
             """
             inputs.requires_grad = False
             return lut_quantizer(inputs, cluster_centers=self.cluster_centers, signed=True,
-                                 threshold=self.threshold)
+                                 threshold=self.threshold, multiplier_n_bits=self.multiplier_n_bits, eps=self.eps)
 
 
 else:
