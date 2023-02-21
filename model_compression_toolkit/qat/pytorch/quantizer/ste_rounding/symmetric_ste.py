@@ -139,7 +139,7 @@ class STEActivationQuantizer(BasePytorchQATTrainableQuantizer):
 
     def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         """
-        Initialize a STEActivationQuantizer object with parameters to use
+        Initialize a STEActivationQATQuantizer object with parameters to use
         for symmetric or power of two quantization.
 
         Args:
