@@ -108,7 +108,7 @@ class LinearTempDecay:
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=RoundingType.SoftQuantizer)
-class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
+class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
     """
     Trainable symmetric quantizer to optimize the rounding of the quantized values using a soft quantization method.
     """
@@ -119,7 +119,7 @@ class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
                  quantization_parameter_learning: bool = False,
                  n_epochs: int = N_EPOCHS):
         """
-        Initialize a SymmetricSoftRounding object with parameters to use
+        Initialize a SymmetricSoftRoundingGPTQ object with parameters to use
         for the quantization.
 
         Args:
@@ -130,7 +130,7 @@ class SymmetricSoftRounding(BaseKerasGPTQTrainableQuantizer):
         """
 
         if n_batches is None:
-            Logger.error("SymmetricSoftRounding got an uninitialized n_batches argument.")
+            Logger.error("SymmetricSoftRoundingGPTQ got an uninitialized n_batches argument.")
 
         super().__init__(quantization_config)
         self.num_bits = quantization_config.weights_n_bits

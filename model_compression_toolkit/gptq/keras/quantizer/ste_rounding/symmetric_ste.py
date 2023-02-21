@@ -68,7 +68,7 @@ def pertubation_symmetric_quantizer(input_tensor: tf.Tensor,
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=RoundingType.STE)
-class STEWeightQuantizer(BaseKerasGPTQTrainableQuantizer):
+class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
     """
     Trainable symmetric quantizer to quantize a layer weights.
     """
@@ -77,7 +77,7 @@ class STEWeightQuantizer(BaseKerasGPTQTrainableQuantizer):
                  quantization_config: TrainableQuantizerWeightsConfig,
                  max_lsbs_change_map: dict = DefaultDict({}, lambda: 1)):
         """
-        Initialize a STEWeightQuantizer object with parameters to use for the quantization.
+        Initialize a STEWeightGPTQQuantizer object with parameters to use for the quantization.
 
         Args:
             quantization_config: Trainable weights quantizer config.
