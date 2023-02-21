@@ -19,6 +19,7 @@ from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer, \
     QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.constants import MULTIPLIER_N_BITS, EPS
 
 if FOUND_TORCH:
     from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers \
@@ -40,8 +41,8 @@ if FOUND_TORCH:
                      threshold: np.ndarray,
                      per_channel: bool,
                      channel_axis: int = None,
-                     multiplier_n_bits: int = 8,
-                     eps: float = 1e-8):
+                     multiplier_n_bits: int = MULTIPLIER_N_BITS,
+                     eps: float = EPS):
             """
             Initialize the quantizer with the specified parameters.
 

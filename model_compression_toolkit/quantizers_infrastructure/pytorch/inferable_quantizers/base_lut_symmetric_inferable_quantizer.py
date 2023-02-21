@@ -66,15 +66,15 @@ if FOUND_TORCH:
                               (cluster_centers <= (2 ** (multiplier_n_bits - int(signed)) - 1))), \
                     f'Expected cluster centers in the quantization range'
             else:
-                assert np.all(np.abs(cluster_centers) <= (2 ** multiplier_n_bits)), \
-                    f'Expected cluster centers in the quantization range'
+                assert np.all(cluster_centers <= (2 ** multiplier_n_bits)), f'Expected cluster centers in the ' \
+                                                                            f'quantization range'
 
             # num_bits must be less than multiplier_n_bits
             assert num_bits <= multiplier_n_bits, f'Look-Up-Table bit configuration has {num_bits} bits. It must be ' \
                                                   f'less then {multiplier_n_bits}'
             if num_bits == multiplier_n_bits:
                 warnings.warn("Num of bits equal to multiplier n bits, Please be aware LUT quantizier may be "
-                              "inefficient in that case")
+                              "inefficient in that case, consider using SymmetricInferableQuantizer instead")
 
             self.signed = signed
             self.threshold = threshold
