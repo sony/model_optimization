@@ -23,7 +23,7 @@ from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructur
     QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig
-from model_compression_toolkit.quantizers_infrastructure.common.constants import QUANTIZATION_METHOD, \
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import QUANTIZATION_METHOD, \
     QUANTIZATION_TARGET
 
 

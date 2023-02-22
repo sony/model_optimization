@@ -14,7 +14,7 @@
 # ==============================================================================
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
-from model_compression_toolkit.quantizers_infrastructure.common.get_all_subclasses import get_all_subclasses
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_all_subclasses import get_all_subclasses
 
 if FOUND_TF:
     import tensorflow as tf

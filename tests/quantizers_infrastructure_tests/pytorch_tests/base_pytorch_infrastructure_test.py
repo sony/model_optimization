@@ -24,11 +24,13 @@ from model_compression_toolkit.core.common.target_platform import QuantizationMe
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
+    BasePytorchTrainableQuantizer
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
-class ZeroWeightsQuantizer(qi.BasePytorchTrainableQuantizer):
+class ZeroWeightsQuantizer(BasePytorchTrainableQuantizer):
     """
     A dummy quantizer for test usage - "quantize" the layer's weights to 0
     """
@@ -51,7 +53,7 @@ class ZeroWeightsQuantizer(qi.BasePytorchTrainableQuantizer):
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
-class ZeroActivationsQuantizer(qi.BasePytorchTrainableQuantizer):
+class ZeroActivationsQuantizer(BasePytorchTrainableQuantizer):
     """
     A dummy quantizer for test usage - "quantize" the layer's activation to 0
     """

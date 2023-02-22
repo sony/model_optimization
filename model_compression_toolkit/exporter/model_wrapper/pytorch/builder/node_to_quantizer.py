@@ -18,11 +18,11 @@ from typing import Dict, Any
 from model_compression_toolkit.core.common import BaseNode, Logger
 from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure import pytorch_inferable_quantizers, QuantizationTarget, \
-    BasePyTorchInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_quantizers import \
     get_inferable_quantizer_class
-from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers import constants as qi_inferable_quantizers_constants
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers import \
+    constants as qi_inferable_quantizers_constants, BasePyTorchInferableQuantizer
 import numpy as np
 
 
@@ -69,7 +69,7 @@ def get_activation_inferable_quantizer_kwargs(node: BaseNode) -> Dict[str, Any]:
         Logger.critical(f'Not supported quantization method for inferable quantizers.')  # pragma: no cover
 
 
-def get_weights_quantizer_for_node(node: BaseNode) -> pytorch_inferable_quantizers.BasePyTorchInferableQuantizer:
+def get_weights_quantizer_for_node(node: BaseNode) -> BasePyTorchInferableQuantizer:
     """
     Get weights quantizer for a node.
 
@@ -94,7 +94,7 @@ def get_weights_quantizer_for_node(node: BaseNode) -> pytorch_inferable_quantize
     return quantier_for_node(**kwargs)
 
 
-def get_activations_quantizer_for_node(node: BaseNode) -> pytorch_inferable_quantizers.BasePyTorchInferableQuantizer:
+def get_activations_quantizer_for_node(node: BaseNode) -> BasePyTorchInferableQuantizer:
     """
     Get activation quantizer for a node.
 

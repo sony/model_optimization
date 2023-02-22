@@ -16,10 +16,11 @@ from typing import List, Union, Any, Dict, Tuple
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.common.constants import LAYER, TRAINING
-from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import LAYER, TRAINING
 import inspect
 
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
+    BasePytorchTrainableQuantizer
 
 if FOUND_TORCH:
     import torch
@@ -106,7 +107,7 @@ if FOUND_TORCH:
             if self.is_activation_quantization:
                 inferable_activation_quantizers = []
                 for quantizer in self.activation_quantizers:
-                    if isinstance(quantizer, qi.BasePytorchTrainableQuantizer):
+                    if isinstance(quantizer, BasePytorchTrainableQuantizer):
                         inferable_activation_quantizers.append(quantizer.convert2inferable())
                     else:
                         Logger.error('Can only convert trainable quantizers based on BasePytorchTrainableQuantizer') # pragma: no cover
@@ -117,7 +118,7 @@ if FOUND_TORCH:
             if self.is_weights_quantization:
                 inferable_weight_quantizers = {}
                 for name, quantizer in self.weights_quantizers.items():
-                    if isinstance(quantizer, qi.BasePytorchTrainableQuantizer):
+                    if isinstance(quantizer, BasePytorchTrainableQuantizer):
                         inferable_weight_quantizers.update({name: quantizer.convert2inferable()})
                     else:
                         Logger.error('Can only convert trainable quantizers based on BasePytorchTrainableQuantizer') # pragma: no cover

@@ -20,8 +20,10 @@ from torch import Tensor
 
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, BasePyTorchInferableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.common.get_all_subclasses import get_all_subclasses
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_all_subclasses import get_all_subclasses
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers import \
+    BasePyTorchInferableQuantizer
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \
     generate_tp_model_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest

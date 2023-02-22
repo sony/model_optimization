@@ -26,9 +26,9 @@ More details and "how to" examples for TensorFlow can be found in:
 
 And for PyTorch:
 
-[Inferable quantizers for PyTorch](pytorch/inferable_quantizers/README.md)
+[Inferable quantizers for PyTorch](inferable_infrastructure/pytorch/quantizers/README.md)
 
-[Trainable quantizers for PyTorch](pytorch/README.md)
+[Trainable quantizers for PyTorch](trainable_infrastructure/pytorch/README.md)
 
   
 

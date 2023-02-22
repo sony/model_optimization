@@ -21,47 +21,42 @@ from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructur
     QuantizationTarget
 
 if FOUND_TORCH:
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers\
-        .weights_inferable_quantizers.weights_symmetric_inferable_quantizer import \
-        WeightsSymmetricInferableQuantizer
+    from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers.activation_inferable_quantizers.activation_symmetric_inferable_quantizer import \
+        ActivationSymmetricInferableQuantizer
 
 
-    @mark_quantizer(quantization_target=QuantizationTarget.Weights,
+    @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                     quantization_method=[QuantizationMethod.POWER_OF_TWO],
                     quantizer_type=None)
-    class WeightsPOTInferableQuantizer(WeightsSymmetricInferableQuantizer):
+    class ActivationPOTInferableQuantizer(ActivationSymmetricInferableQuantizer):
         """
-        Class for quantizing weights using power-of-two quantizer
+        Class for quantizing activations using power-of-two quantizer
         """
 
         def __init__(self,
                      num_bits: int,
                      threshold: np.ndarray,
-                     per_channel: bool,
-                     channel_axis: int = None
-                     ):
+                     signed: bool):
             """
             Initialize the quantizer with the specified parameters.
 
             Args:
                 num_bits: number of bits to use for quantization
                 threshold: threshold for quantizing activations
-                per_channel: whether to use per-channel quantization
-                channel_axis: Axis of input to apply per-channel quantization on.
+                signed: whether to use signed quantization or not
             """
-            # target of Weights quantization
-            super(WeightsPOTInferableQuantizer, self).__init__(num_bits=num_bits,
-                                                               threshold=threshold,
-                                                               per_channel=per_channel,
-                                                               channel_axis=channel_axis)
+            # target of Activation quantization
+            super(ActivationPOTInferableQuantizer, self).__init__(num_bits=num_bits,
+                                                                  signed=signed,
+                                                                  threshold=threshold)
 
             is_threshold_pot = np.all(np.round(np.log2(threshold.flatten()))==np.log2(threshold.flatten()))
             assert is_threshold_pot, f'Expected threshold to be power of 2 but is {threshold}'
 
 
 else:
-    class WeightsPOTInferableQuantizer:
+    class ActivationPOTInferableQuantizer:
         def __init__(self, *args, **kwargs):
             raise Exception('Installing torch is mandatory '
-                            'when using WeightsPOTInferableQuantizer. '
+                            'when using ActivationPOTInferableQuantizer. '
                             'Could not find torch package.')

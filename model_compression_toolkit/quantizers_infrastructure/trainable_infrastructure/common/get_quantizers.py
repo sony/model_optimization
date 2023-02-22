@@ -18,9 +18,9 @@ from model_compression_toolkit import TrainingMethod, RoundingType
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.common.constants import QUANTIZATION_TARGET, \
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import QUANTIZATION_TARGET, \
     QUANTIZATION_METHOD, QUANTIZER_TYPE
-from model_compression_toolkit.quantizers_infrastructure.common.get_all_subclasses import get_all_subclasses
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_all_subclasses import get_all_subclasses
 
 
 def get_trainable_quantizer_class(quant_target: QuantizationTarget,

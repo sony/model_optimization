@@ -21,8 +21,7 @@ from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructur
 
 if FOUND_TORCH:
     import torch
-    from model_compression_toolkit.quantizers_infrastructure.pytorch.inferable_quantizers \
-        .base_uniform_inferable_quantizer import \
+    from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers.base_uniform_inferable_quantizer import \
         BaseUniformInferableQuantizer
 
 

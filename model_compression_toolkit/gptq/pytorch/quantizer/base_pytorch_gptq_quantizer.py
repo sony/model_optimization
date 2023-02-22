@@ -23,10 +23,12 @@ from model_compression_toolkit.quantizers_infrastructure import TrainableQuantiz
     TrainableQuantizerActivationConfig
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import \
     BaseTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
+    BasePytorchTrainableQuantizer
 
 if FOUND_TORCH:
     from torch import Tensor
-    from model_compression_toolkit.quantizers_infrastructure import BasePytorchTrainableQuantizer, PytorchQuantizationWrapper
+    from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
 
     class BasePytorchGPTQTrainableQuantizer(BasePytorchTrainableQuantizer):
         """

@@ -26,9 +26,10 @@ from model_compression_toolkit.core.common import constants as C
 from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
-from model_compression_toolkit.quantizers_infrastructure.pytorch import inferable_quantizers as iq
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import uniform_quantizer
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers import \
+    WeightsUniformInferableQuantizer, ActivationUniformInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
@@ -103,7 +104,7 @@ class STEUniformWeightQuantizer(BasePytorchQATTrainableQuantizer):
         """
         return uniform_quantizer(inputs, self.quantizer_parameters[FQ_MIN], self.quantizer_parameters[FQ_MAX], self.num_bits)
 
-    def convert2inferable(self) -> iq.WeightsUniformInferableQuantizer:
+    def convert2inferable(self) -> WeightsUniformInferableQuantizer:
         """
         Convert quantizer to inferable quantizer.
 
@@ -113,10 +114,10 @@ class STEUniformWeightQuantizer(BasePytorchQATTrainableQuantizer):
         _min = self.quantizer_parameters[FQ_MIN].cpu().detach().numpy()
         _max = self.quantizer_parameters[FQ_MAX].cpu().detach().numpy()
 
-        return iq.WeightsUniformInferableQuantizer(num_bits=self.num_bits,
-                                                   min_range=_min, max_range=_max,
-                                                   per_channel=self.quantization_config.weights_per_channel_threshold,
-                                                   channel_axis=self.quantization_config.weights_channels_axis)
+        return WeightsUniformInferableQuantizer(num_bits=self.num_bits,
+                                                min_range=_min, max_range=_max,
+                                                per_channel=self.quantization_config.weights_per_channel_threshold,
+                                                channel_axis=self.quantization_config.weights_channels_axis)
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
@@ -176,7 +177,7 @@ class STEUniformActivationQuantizer(BasePytorchQATTrainableQuantizer):
         q_tensor = uniform_quantizer(inputs, _min, _max, self.num_bits)
         return q_tensor
 
-    def convert2inferable(self) -> iq.ActivationUniformInferableQuantizer:
+    def convert2inferable(self) -> ActivationUniformInferableQuantizer:
         """
         Convert quantizer to inferable quantizer.
 
@@ -186,5 +187,5 @@ class STEUniformActivationQuantizer(BasePytorchQATTrainableQuantizer):
         _min = self.quantizer_parameters[FQ_MIN].cpu().detach().numpy()
         _max = self.quantizer_parameters[FQ_MAX].cpu().detach().numpy()
 
-        return iq.ActivationUniformInferableQuantizer(num_bits=self.num_bits,
-                                                      min_range=_min, max_range=_max)
+        return ActivationUniformInferableQuantizer(num_bits=self.num_bits,
+                                                   min_range=_min, max_range=_max)
