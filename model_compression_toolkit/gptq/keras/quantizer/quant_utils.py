@@ -72,20 +72,6 @@ def calculate_delta(max_tensor: tf.Tensor,
     return max_tensor / (2 ** (num_bits - int(signed)))
 
 
-def adjustable_steps(x: tf.Variable, t: float) -> tf.Tensor:
-    """
-    A function to gradually quantize a float variable to an integer of values [-1, 0 ,1]
-    Args:
-        x: input float variable
-        t: temperature to control quantization
-
-    Returns:
-        semi-quantized variable
-
-    """
-    return tf.sigmoid(tf.add(x, 1) / t) + tf.sigmoid(tf.add(x, -1) / t) - 1
-
-
 def ste_clip(x: [tf.Tensor, tf.Variable], max_val=1, min_val=None) -> tf.Tensor:
     """
     clip a variable between fixed values such that min_val<=output<=max_val

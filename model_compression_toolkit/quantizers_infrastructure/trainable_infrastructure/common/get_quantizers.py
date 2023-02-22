@@ -18,9 +18,10 @@ from model_compression_toolkit import TrainingMethod, RoundingType
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import QUANTIZATION_TARGET, \
-    QUANTIZATION_METHOD, QUANTIZER_TYPE
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_all_subclasses import get_all_subclasses
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants \
+    import QUANTIZATION_TARGET, QUANTIZATION_METHOD, QUANTIZER_TYPE
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_all_subclasses \
+    import get_all_subclasses
 
 
 def get_trainable_quantizer_class(quant_target: QuantizationTarget,
@@ -44,6 +45,9 @@ def get_trainable_quantizer_class(quant_target: QuantizationTarget,
 
     """
     qat_quantizer_classes = get_all_subclasses(quantizer_base_class)
+    if len(qat_quantizer_classes) == 0:
+        Logger.error(f"No quantizers were found that inherit from {quantizer_base_class}.")  # pragma: no cover
+
     filtered_quantizers = list(filter(lambda q_class: getattr(q_class, QUANTIZATION_TARGET) == quant_target and
                                                       getattr(q_class, QUANTIZATION_METHOD) is not None and
                                                        quant_method in getattr(q_class, QUANTIZATION_METHOD) and
@@ -51,7 +55,7 @@ def get_trainable_quantizer_class(quant_target: QuantizationTarget,
                                       qat_quantizer_classes))
 
     if len(filtered_quantizers) != 1:
-        Logger.error(f"Found {len(filtered_quantizers)} quantizer for target {quant_target.value} "
+        Logger.error(f"Found {len(filtered_quantizers)} quantizer for target {quant_target.value} "  # pragma: no cover
                      f"that matches the requested quantization method {quant_method.name} and "
                      f"quantizer type {quantizer_type.value} but there should be exactly one."
                      f"The possible quantizers that were found are {filtered_quantizers}.")

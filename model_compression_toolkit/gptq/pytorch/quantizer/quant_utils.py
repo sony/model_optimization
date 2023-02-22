@@ -66,32 +66,6 @@ def ste_clip(x: torch.Tensor, min_val=-1.0, max_val=1.0) -> torch.Tensor:
     return (torch.clip(x, min=min_val, max=max_val) - x).detach() + x
 
 
-def symmetric_quantizer(input_tensor: torch.Tensor,
-                        max_tensor: torch.Tensor,
-                        num_bits: int,
-                        signed: bool,
-                        power_of_two: bool = False) -> torch.Tensor:
-    """
-    Quantize a tensor symmetrically.
-    Args:
-        input_tensor: Tensor to quantize. values of this tensor are not changed during gptq.
-        max_tensor: Tensor with max values to compute the threshold.
-        num_bits: Num of bits to use.
-        signed: Signedness of the quantization range.
-        power_of_two: Whether the threshold should be constrained or not.
-    Returns:
-        A quantized tensor.
-    """
-
-    if power_of_two:
-        max_tensor = power_of_two_max(max_tensor)
-    delta_tensor = calculate_delta(max_tensor, num_bits, signed)
-    tensor_q = ste_round(input_tensor / delta_tensor)
-    min_int = -int(signed) * (2 ** (num_bits - int(signed)))
-    max_int = (2 ** (num_bits - int(signed))) - 1
-    return delta_tensor * ste_clip(tensor_q, min_val=min_int, max_val=max_int)
-
-
 def fix_range_to_include_zero(range_min: torch.Tensor,
                               range_max: torch.Tensor,
                               n_bits: int) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -119,34 +93,3 @@ def fix_range_to_include_zero(range_min: torch.Tensor,
     min_range_adj = min_range_adj * mid_range + max_negative * range_min
     max_range_adj = max_range_adj * mid_range + min_positive * range_max
     return min_range_adj, max_range_adj
-
-
-def uniform_quantizer(tensor_data: torch.Tensor,
-                       range_min: torch.Tensor,
-                       range_max: torch.Tensor,
-                       n_bits: int) -> torch.Tensor:
-    """
-    Quantize a tensor according to given range (min, max) and number of bits.
-    Args:
-        tensor_data: Tensor values to quantize.
-        range_min: minimum bound of the range for quantization (or array of min values per channel).
-        range_max: maximum bound of the range for quantization (or array of max values per channel).
-        n_bits: Number of bits to quantize the tensor.
-    Returns:
-        Quantized data.
-    """
-    # adjusts the quantization rage so the quantization grid include zero.
-    a, b = fix_range_to_include_zero(range_min, range_max, n_bits)
-
-    # Compute the step size of quantized values.
-    delta_tensor = (b - a) / (2 ** n_bits - 1)
-
-    # Apply rounding
-    input_tensor_int = ste_round((tensor_data - a) / delta_tensor)
-
-    # Clip data in range
-    clipped_tensor = ste_clip(input_tensor_int, min_val=0, max_val=2 ** n_bits - 1)
-
-    # Quantize the data between min/max of quantization range.
-    q = delta_tensor * clipped_tensor + a
-    return q

@@ -33,7 +33,7 @@ def get_trainable_quantizer_weights_config(
          TrainableQuantizerWeightsConfig: an object that contains the quantizer configuration
     """
     if n.final_weights_quantization_cfg is None:
-        Logger.error(f'Node must have final_weights_quantization_cfg in order to build quantizer configuration')
+        Logger.error(f'Node must have final_weights_quantization_cfg in order to build quantizer configuration')  # pragma: no cover
 
     final_cfg = n.final_weights_quantization_cfg
     return TrainableQuantizerWeightsConfig(final_cfg.weights_quantization_method,
@@ -61,7 +61,7 @@ def get_trainable_quantizer_activation_config(
          TrainableQuantizerActivationConfig - an object that contains the quantizer configuration
     """
     if n.final_activation_quantization_cfg is None:
-        Logger.error(f'Node must have final_activation_quantization_cfg in order to build quantizer configuration')
+        Logger.error(f'Node must have final_activation_quantization_cfg in order to build quantizer configuration')  # pragma: no cover
 
     final_cfg = n.final_activation_quantization_cfg
     return TrainableQuantizerActivationConfig(final_cfg.activation_quantization_method,

@@ -203,7 +203,7 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
         w = getattr(layer.layer, name)
         auxvar_tensor = layer.add_weight(
             f"{name}_{AUXVAR}",
-            shape=[*w.shape],
+            shape=list(w.shape),
             initializer=tf.keras.initializers.Constant(0.0),
             trainable=True)
 

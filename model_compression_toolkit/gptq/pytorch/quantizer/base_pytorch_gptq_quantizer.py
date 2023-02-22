@@ -63,7 +63,7 @@ if FOUND_TORCH:
             weights = {}
             for weight, quantizer_vars, quantizer in layer.get_weights_vars():
                 if not isinstance(quantizer, BaseTrainableQuantizer):
-                    Logger.error(f"Expecting a GPTQ trainable quantizer, "
+                    Logger.error(f"Expecting a GPTQ trainable quantizer, "  # pragma: no cover
                                  f"but got {type(quantizer)} which is not callable.")
                 weights.update({weight: quantizer(training=False, inputs=quantizer_vars)})
 
@@ -79,7 +79,7 @@ if FOUND_TORCH:
 
             """
 
-            return []
+            return []  # pragma: no cover
 
         def get_quantization_variable(self) -> List[Tensor]:
             """
@@ -89,7 +89,7 @@ if FOUND_TORCH:
 
             """
 
-            return []
+            return []  # pragma: no cover
 
         @abstractmethod
         def get_quant_config(self):
@@ -101,11 +101,11 @@ if FOUND_TORCH:
                 Keys must match NodeQuantizationConfig attributes.
 
             """
-            raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+            raise NotImplemented(f'{self.__class__.__name__} have to implement the '  # pragma: no cover
                                  f'quantizer\'s get_quant_config.')
 
 else:
-    class BasePytorchGPTQTrainableQuantizer:
+    class BasePytorchGPTQTrainableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             Logger.critical('Installing Pytorch is mandatory '
                             'when using BasePytorchGPTQTrainableQuantizer. '
