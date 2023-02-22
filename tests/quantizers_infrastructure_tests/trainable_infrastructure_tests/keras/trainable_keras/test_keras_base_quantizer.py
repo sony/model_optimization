@@ -19,11 +19,11 @@ from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructur
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.keras.config_serialization import config_serialization, \
     config_deserialization
-from tests.quantizers_infrastructure_tests.keras_tests.base_keras_infrastructure_test import \
-    BaseKerasInfrastructureTest, ZeroWeightsQuantizer, ZeroActivationsQuantizer
+from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.base_keras_trainable_infra_test import \
+    BaseKerasTrainableInfrastructureTest, ZeroWeightsQuantizer, ZeroActivationsQuantizer
 
 
-class TestKerasBaseWeightsQuantizer(BaseKerasInfrastructureTest):
+class TestKerasBaseWeightsQuantizer(BaseKerasTrainableInfrastructureTest):
 
     def __init__(self, unit_test):
         super().__init__(unit_test)
@@ -57,7 +57,7 @@ class TestKerasBaseWeightsQuantizer(BaseKerasInfrastructureTest):
         self.unit_test.assertTrue(weight_quantization_config.__dict__ == deserialized_config.__dict__)
 
 
-class TestKerasBaseActivationsQuantizer(BaseKerasInfrastructureTest):
+class TestKerasBaseActivationsQuantizer(BaseKerasTrainableInfrastructureTest):
 
     def __init__(self, unit_test):
         super().__init__(unit_test)
@@ -95,7 +95,7 @@ class _TestQuantizer(BaseKerasTrainableQuantizer):
         super().__init__(quantizer_config)
 
 
-class TestKerasQuantizerWithoutMarkDecorator(BaseKerasInfrastructureTest):
+class TestKerasQuantizerWithoutMarkDecorator(BaseKerasTrainableInfrastructureTest):
 
     def __init__(self, unit_test):
         super().__init__(unit_test)

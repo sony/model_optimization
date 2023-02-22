@@ -16,8 +16,8 @@
 import tensorflow as tf
 
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
-from tests.quantizers_infrastructure_tests.keras_tests.base_keras_infrastructure_test import \
-    BaseKerasInfrastructureTest, \
+from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.base_keras_trainable_infra_test import \
+    BaseKerasTrainableInfrastructureTest, \
     IdentityWeightsQuantizer, ZeroActivationsQuantizer
 
 keras = tf.keras
@@ -27,7 +27,7 @@ WEIGHT = 'kernel'
 CLASS_NAME = 'class_name'
 
 
-class TestKerasWeightsQuantizationWrapper(BaseKerasInfrastructureTest):
+class TestKerasWeightsQuantizationWrapper(BaseKerasTrainableInfrastructureTest):
 
     def __init__(self, unit_test):
         super().__init__(unit_test)

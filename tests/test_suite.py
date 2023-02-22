@@ -69,13 +69,13 @@ if found_tf:
     from tests.keras_tests.function_tests.test_set_layer_to_bitwidth import TestKerasSetLayerToBitwidth
     from tests.keras_tests.function_tests.test_export_keras_fully_quantized_model import TestKerasFakeQuantExporter
     from tests.keras_tests.function_tests.test_kpi_data import TestKPIData
-    from tests.quantizers_infrastructure_tests.keras_tests.test_keras_quantization_infrastructure_runner import \
+    from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.test_keras_trainable_infra_runner import \
         KerasInfrastructureTest
     from tests.keras_tests.exporter_tests.test_runner import ExporterTestsRunner
     from tests.keras_tests.function_tests.test_get_gptq_config import TestGetGPTQConfig
     from tests.keras_tests.function_tests.test_gptq_loss_functions import TestGPTQLossFunctions
-    from tests.quantizers_infrastructure_tests.keras_tests.test_inferable_quantizers.test_activation_inferable_quantizers import TestKerasActivationsSymmetricQuantizer, TestKerasActivationsUniformQuantizer, TestKerasActivationsPOTQuantizer
-    from tests.quantizers_infrastructure_tests.keras_tests.test_inferable_quantizers.test_weights_inferable_quantizer import TestKerasWeightsSymmetricQuantizer, TestKerasWeightsPOTQuantizer, TestKerasWeightsUniformQuantizer
+    from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_activation_inferable_quantizers import TestKerasActivationsSymmetricQuantizer, TestKerasActivationsUniformQuantizer, TestKerasActivationsPOTQuantizer
+    from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_weights_inferable_quantizer import TestKerasWeightsSymmetricQuantizer, TestKerasWeightsPOTQuantizer, TestKerasWeightsUniformQuantizer
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest

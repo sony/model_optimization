@@ -89,7 +89,7 @@ class ZeroActivationsQuantizer(qi.BaseKerasTrainableQuantizer):
         return inputs * 0
 
 
-class BaseKerasInfrastructureTest:
+class BaseKerasTrainableInfrastructureTest:
     def __init__(self,
                  unit_test,
                  num_calibration_iter=1,
