@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import warnings
 from typing import List
 
 import numpy as np
@@ -20,6 +21,7 @@ from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer, \
     QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.constants import MULTIPLIER_N_BITS, EPS
 
 if FOUND_TF:
     import tensorflow as tf
@@ -42,7 +44,9 @@ if FOUND_TF:
                      threshold: List[float],
                      per_channel: bool,
                      channel_axis: int = None,
-                     input_rank: int = None):
+                     input_rank: int = None,
+                     multiplier_n_bits: int = MULTIPLIER_N_BITS,
+                     eps: float = EPS):
             """
             Initialize the quantizer with the specified parameters.
 
@@ -53,6 +57,8 @@ if FOUND_TF:
                 per_channel: whether to use per-channel quantization
                 channel_axis: axis along which to apply per-channel quantization
                 input_rank: number of dimensions of input tensor the quantizer quantizes
+                multiplier_n_bits: Number of bits that determines the quantization range
+                eps: Small value for numerical stability in division
             """
 
             super(WeightsLUTSymmetricInferableQuantizer, self).__init__()
@@ -74,9 +80,29 @@ if FOUND_TF:
                                             f' {len(threshold)}'
                 self.threshold = self.threshold[0]
 
+            assert len(np.unique(cluster_centers)) <= 2 ** num_bits, \
+                f'Expected num of cluster centers to be less or equal than {2 ** num_bits} ' \
+                f'but got {len(cluster_centers)}'
+
+            assert not np.any(cluster_centers - cluster_centers.astype(int)), f'Expected cluster centers to be integers'
+
+            # Weight quantization is signed, hence the quantization range is
+            # [-2**(multiplier_n_bits - 1), 2**(multiplier_n_bits - 1) - 1]
+            assert np.all((-1 * (2 ** (multiplier_n_bits - 1)) <= cluster_centers) &
+                          (cluster_centers <= (2 ** (multiplier_n_bits - 1) - 1))), \
+                f'Expected cluster centers in the quantization range'
+
+            # num_bits must be less than multiplier_n_bits
+            assert num_bits <= multiplier_n_bits, f'Look-Up-Table bit configuration has {num_bits} bits. It must be ' \
+                                                  f'less then {multiplier_n_bits}'
+            if num_bits == multiplier_n_bits:
+                warnings.warn("Num of bits equal to multiplier n bits, Please be aware LUT quantizier may be "
+                              "inefficient in that case, consider using SymmetricInferableQuantizer instead")
+
             self.num_bits = num_bits
             self.cluster_centers = cluster_centers
-
+            self.multiplier_n_bits = multiplier_n_bits
+            self.eps = eps
             self.per_channel = per_channel
             self.channel_axis = channel_axis
             self.input_rank = input_rank
@@ -116,7 +142,8 @@ if FOUND_TF:
 
                 # Quantize the input tensor using per-channel quantization
                 q_tensor = lut_quantizer(inputs, cluster_centers=self.cluster_centers, signed=True,
-                                         threshold=self.threshold)
+                                         threshold=self.threshold, multiplier_n_bits=self.multiplier_n_bits,
+                                         eps=self.eps)
                 if self.perm_vec:
                     # Transpose the quantized tensor back to its original shape
                     q_tensor = tf.transpose(q_tensor, perm=self.perm_vec)
@@ -125,7 +152,7 @@ if FOUND_TF:
                 return q_tensor
             else:
                 return lut_quantizer(inputs, cluster_centers=self.cluster_centers, signed=True,
-                                     threshold=self.threshold)
+                                     threshold=self.threshold, multiplier_n_bits=self.multiplier_n_bits, eps=self.eps)
 
         def get_config(self):
             """
@@ -133,14 +160,16 @@ if FOUND_TF:
 
             Returns:
                 Dictionary with the following keys: 'per_channel', 'num_bits', 'cluster_centers', 'threshold',
-                 'channel_axis', 'input_rank'
+                 'channel_axis', 'input_rank', 'multiplier_n_bits', 'eps'
             """
             return {'per_channel': self.per_channel,
                     'num_bits': self.num_bits,
                     'cluster_centers': self.cluster_centers,
                     'threshold': self.threshold,
                     'channel_axis': self.channel_axis,
-                    'input_rank': self.input_rank}
+                    'input_rank': self.input_rank,
+                    'multiplier_n_bits': self.multiplier_n_bits,
+                    'eps': self.eps}
 
 else:
     class WeightsLUTSymmetricInferableQuantizer:

@@ -20,6 +20,7 @@ from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer, \
     QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.common.constants import MULTIPLIER_N_BITS, EPS
 
 if FOUND_TF:
     from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.weights_inferable_quantizers.\
@@ -40,7 +41,9 @@ if FOUND_TF:
                      threshold: List[float],
                      per_channel: bool,
                      channel_axis: int = None,
-                     input_rank: int = None):
+                     input_rank: int = None,
+                     multiplier_n_bits: int = MULTIPLIER_N_BITS,
+                     eps: float = EPS):
             """
             Initialize the quantizer with the specified parameters.
 
@@ -51,6 +54,8 @@ if FOUND_TF:
                 per_channel: whether to use per-channel quantization
                 channel_axis: axis along which to apply per-channel quantization
                 input_rank: number of dimensions of input tensor the quantizer quantizes
+                multiplier_n_bits: Number of bits that determines the quantization range
+                eps: Small value for numerical stability in division
             """
 
             super(WeightsLUTPOTInferableQuantizer, self).__init__(num_bits=num_bits,
@@ -58,7 +63,9 @@ if FOUND_TF:
                                                                   threshold=threshold,
                                                                   per_channel=per_channel,
                                                                   channel_axis=channel_axis,
-                                                                  input_rank=input_rank)
+                                                                  input_rank=input_rank,
+                                                                  multiplier_n_bits=multiplier_n_bits,
+                                                                  eps=eps)
 
             is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in self.threshold.flatten()])
             assert is_threshold_pot, f'Expected threshold to be power of 2 but is {self.threshold}'
