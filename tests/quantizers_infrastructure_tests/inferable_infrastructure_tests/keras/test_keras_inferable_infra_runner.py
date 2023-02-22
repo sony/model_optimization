@@ -20,11 +20,13 @@ from model_compression_toolkit.quantizers_infrastructure import QuantizationTarg
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
     BaseKerasInferableQuantizer
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_activation_inferable_quantizers import \
-    TestKerasActivationsPOTQuantizer, TestKerasActivationsSymmetricQuantizer, TestKerasActivationsUniformQuantizer
+    TestKerasActivationsPOTQuantizer, TestKerasActivationsSymmetricQuantizer, TestKerasActivationsUniformQuantizer, \
+    TestKerasActivationsLUTPOTQuantizer
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_get_quantizers import \
     TestGetInferableQuantizer
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_weights_inferable_quantizer import \
-    TestKerasWeightsPOTQuantizer, TestKerasWeightsSymmetricQuantizer, TestKerasWeightsUniformQuantizer
+    TestKerasWeightsPOTQuantizer, TestKerasWeightsSymmetricQuantizer, TestKerasWeightsUniformQuantizer, \
+    TestKerasWeightsLUTSymmetricQuantizer, TestKerasWeightsLUTPOTQuantizer
 
 layers = tf.keras.layers
 
@@ -35,11 +37,14 @@ class KerasInferableInfrastructureTestRunner(unittest.TestCase):
         TestKerasWeightsPOTQuantizer()
         TestKerasWeightsSymmetricQuantizer()
         TestKerasWeightsUniformQuantizer()
+        TestKerasWeightsLUTPOTQuantizer()
+        TestKerasWeightsLUTSymmetricQuantizer()
 
     def test_activation_inferable_quantizers(self):
         TestKerasActivationsPOTQuantizer()
         TestKerasActivationsSymmetricQuantizer()
         TestKerasActivationsUniformQuantizer()
+        TestKerasActivationsLUTPOTQuantizer()
 
     def test_get_quantizers(self):
         TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Weights,

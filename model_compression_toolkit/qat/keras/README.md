@@ -1,7 +1,7 @@
 # QAT Quantizers
 
 ## Introduction
-[`BaseKerasQATTrainableQuantizer`](./quantizer/base_keras_qat_quantizer.py) is an interface that utilizes the Quantization Infrastructure's [`BaseKerasTrainableQuantizer`](../../quantizers_infrastructure/trainable_infrastructure/keras/quantizers/base_keras_quantizer.py) class to  enable easy development of quantizers dedicated to Quantization-Aware Training (QAT).
+[`BaseKerasQATTrainableQuantizer`](./quantizer/base_keras_qat_quantizer.py) is an interface that utilizes the Quantization Infrastructure's [`BaseKerasTrainableQuantizer`](../../quantizers_infrastructure/trainable_infrastructure/keras/base_keras_quantizer.py) class to  enable easy development of quantizers dedicated to Quantization-Aware Training (QAT).
 All available training types for QAT are defined in the Enum `TrainingMethod`. See [Training Methods for QAT](./quantizer/README.md) for more details.
 
 ## Make your own Keras trainable quantizers
