@@ -69,13 +69,13 @@ if found_tf:
     from tests.keras_tests.function_tests.test_set_layer_to_bitwidth import TestKerasSetLayerToBitwidth
     from tests.keras_tests.function_tests.test_export_keras_fully_quantized_model import TestKerasFakeQuantExporter
     from tests.keras_tests.function_tests.test_kpi_data import TestKPIData
-    from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.test_keras_trainable_infra_runner import \
-        KerasInfrastructureTest
     from tests.keras_tests.exporter_tests.test_runner import ExporterTestsRunner
     from tests.keras_tests.function_tests.test_get_gptq_config import TestGetGPTQConfig
     from tests.keras_tests.function_tests.test_gptq_loss_functions import TestGPTQLossFunctions
-    from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_activation_inferable_quantizers import TestKerasActivationsSymmetricQuantizer, TestKerasActivationsUniformQuantizer, TestKerasActivationsPOTQuantizer
-    from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_weights_inferable_quantizer import TestKerasWeightsSymmetricQuantizer, TestKerasWeightsPOTQuantizer, TestKerasWeightsUniformQuantizer
+    from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.test_keras_inferable_infra_runner import \
+        KerasInferableInfrastructureTestRunner
+    from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.test_keras_trainable_infra_runner import \
+        KerasTrainableInfrastructureTestRunner
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -83,8 +83,11 @@ if found_pytorch:
     # from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
     from tests.pytorch_tests.function_tests.test_pytorch_tp_model import TestPytorchTPModel
-    from tests.quantizers_infrastructure_tests.pytorch_tests.test_pytorch_quantization_infrastructure_runner import \
-        PytorchInfrastructureTest
+    from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.pytorch.test_pytorch_inferable_infra_runner import \
+        PytorchInferableInfrastructureTestRunner
+    from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.pytorch.test_pytorch_trainable_infra_runner import \
+        PytorchTrainableInfrastructureTestRunner
+
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases
@@ -127,15 +130,10 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasFakeQuantExporter))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKPIData))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFileLogger))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasInfrastructureTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGetGPTQConfig))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQLossFunctions))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasWeightsPOTQuantizer))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasWeightsSymmetricQuantizer))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasWeightsUniformQuantizer))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasActivationsPOTQuantizer))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasActivationsSymmetricQuantizer))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasActivationsUniformQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasInferableInfrastructureTestRunner))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasTrainableInfrastructureTestRunner))
 
         # Keras test layers are supported in TF2.6 or higher versions
         if version.parse(tf.__version__) >= version.parse("2.6"):
@@ -154,7 +152,8 @@ if __name__ == '__main__':
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_resnet18', ModelTest))
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_shufflenet_v2_x1_0', ModelTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchTPModel))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchInfrastructureTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchInferableInfrastructureTestRunner))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchTrainableInfrastructureTestRunner))
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)
     unittest.TextTestRunner(verbosity=0).run(comboSuite)

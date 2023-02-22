@@ -12,43 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-from model_compression_toolkit.quantizers_infrastructure.common.get_quantizers import get_inferable_quantizer_class, \
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizers import \
     get_trainable_quantizer_class
-from tests.quantizers_infrastructure_tests.pytorch_tests.base_pytorch_infrastructure_test import \
-    BasePytorchInfrastructureTest
 
 
-class BasePytorchGetQuantizerTest(BasePytorchInfrastructureTest):
+class TestGetTrainableQuantizer:
 
-    def __init__(self, unit_test, quant_target, quant_method, quantizer_base_class, expected_quantizer_class=None):
-        super().__init__(unit_test)
-
+    def __init__(self, unit_test, quant_target, quant_method, quantizer_base_class, quantizer_type,
+                 expected_quantizer_class=None):
+        self.unit_test = unit_test
         self.quant_target = quant_target
         self.quant_method = quant_method
         self.quantizer_base_class = quantizer_base_class
         self.expected_quantizer_class = expected_quantizer_class
-
-
-class TestGetInferableQuantizer(BasePytorchGetQuantizerTest):
-
-    def __init__(self, unit_test, quant_target, quant_method, quantizer_base_class):
-        super().__init__(unit_test, quant_target, quant_method, quantizer_base_class)
-
-    def run_test(self):
-        quantizer = get_inferable_quantizer_class(quant_target=self.quant_target,
-                                                  quant_method=self.quant_method,
-                                                  quantizer_base_class=self.quantizer_base_class)
-
-        self.unit_test.assertTrue(isinstance(quantizer, self.quantizer_base_class))
-        self.unit_test.assertEqual(type(quantizer), self.expected_quantizer_class)
-
-
-class TestGetTrainableQuantizer(BasePytorchGetQuantizerTest):
-
-    def __init__(self, unit_test, quant_target, quant_method, quantizer_base_class, quantizer_type):
-        super().__init__(unit_test, quant_target, quant_method, quantizer_base_class)
-
         self.quantizer_type = quantizer_type
 
     def run_test(self):

@@ -28,7 +28,7 @@ from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.
 layers = tf.keras.layers
 
 
-class KerasTrainableInfrastructureTest(unittest.TestCase):
+class KerasTrainableInfrastructureTestRunner(unittest.TestCase):
 
     def test_layer_keras_infrastructure(self):
         TestKerasWeightsQuantizationWrapper(self).run_test()

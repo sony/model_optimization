@@ -17,9 +17,9 @@ import torch
 import torch.nn as nn
 
 from model_compression_toolkit import quantizers_infrastructure as qi
-from tests.quantizers_infrastructure_tests.pytorch_tests.base_pytorch_infrastructure_test import \
+from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.pytorch.base_pytorch_trainable_infra_test import \
     ZeroWeightsQuantizer, ZeroActivationsQuantizer
-from tests.quantizers_infrastructure_tests.pytorch_tests.base_pytorch_infrastructure_test import \
+from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.pytorch.base_pytorch_trainable_infra_test import \
     BasePytorchInfrastructureTest
 
 
