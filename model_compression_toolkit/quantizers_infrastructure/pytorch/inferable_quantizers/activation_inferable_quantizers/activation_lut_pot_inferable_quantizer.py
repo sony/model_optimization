@@ -67,11 +67,6 @@ if FOUND_TORCH:
             is_threshold_pot = np.all(np.round(np.log2(threshold.flatten())) == np.log2(threshold.flatten()))
             assert is_threshold_pot, f'Expected threshold to be power of 2 but is {threshold}'
 
-            # If unsigned activation quantization, all cluster_centers must have the same sign
-            if not self.signed:
-                assert np.all(self.cluster_centers >= 0), f'Expected unsigned cluster centers in unsigned activation ' \
-                                                          f'quantization'
-
             # Activation supports only per-tensor quantization
             assert len(
                 self.threshold) == 1, f'For activation, quantization per channel is not supported and threshold ' \

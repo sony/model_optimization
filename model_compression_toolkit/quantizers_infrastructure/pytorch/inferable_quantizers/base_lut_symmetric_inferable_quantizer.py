@@ -69,6 +69,11 @@ if FOUND_TORCH:
                 assert np.all(cluster_centers <= (2 ** multiplier_n_bits)), f'Expected cluster centers in the ' \
                                                                             f'quantization range'
 
+            # If unsigned activation quantization, all cluster_centers must be positive
+            if not signed:
+                assert np.all(cluster_centers >= 0), f'Expected unsigned cluster centers in unsigned activation ' \
+                                                          f'quantization'
+
             # num_bits must be less than multiplier_n_bits
             assert num_bits <= multiplier_n_bits, f'Look-Up-Table bit configuration has {num_bits} bits. It must be ' \
                                                   f'less then {multiplier_n_bits}'
