@@ -156,7 +156,7 @@ if FOUND_TF:
 
 
 else:
-    class WeightsUniformInferableQuantizer:
+    class WeightsUniformInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using WeightsUniformInferableQuantizer. '

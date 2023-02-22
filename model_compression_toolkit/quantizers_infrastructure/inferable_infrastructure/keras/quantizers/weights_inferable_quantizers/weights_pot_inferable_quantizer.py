@@ -60,7 +60,7 @@ if FOUND_TF:
 
 
 else:
-    class WeightsPOTInferableQuantizer:
+    class WeightsPOTInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using WeightsPOTInferableQuantizer. '

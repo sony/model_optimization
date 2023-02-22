@@ -80,7 +80,7 @@ if FOUND_TF:
                     'input_rank': self.input_rank}
 
 else:
-    class WeightsSymmetricInferableQuantizer:
+    class WeightsSymmetricInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using WeightsPOTInferableQuantizer. '

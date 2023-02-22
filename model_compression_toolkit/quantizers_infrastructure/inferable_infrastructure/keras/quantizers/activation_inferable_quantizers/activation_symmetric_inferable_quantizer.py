@@ -79,7 +79,7 @@ if FOUND_TF:
 
 
 else:
-    class ActivationSymmetricInferableQuantizer:
+    class ActivationSymmetricInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using ActivationSymmetricInferableQuantizer. '

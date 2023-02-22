@@ -104,8 +104,8 @@ if FOUND_TF:
                     'max_range': self.max_range}
 
 else:
-    class ActivationUniformInferableQuantizer:
+    class ActivationUniformInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             Logger.error('Installing tensorflow and tensorflow_model_optimization is mandatory '
                          'when using ActivationUniformInferableQuantizer. '
-                         'Could not find Tensorflow package.')  # pragma: no cover
+                         'Could not find Tensorflow package.')
