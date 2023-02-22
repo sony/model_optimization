@@ -44,8 +44,10 @@ from tests.pytorch_tests.model_tests.feature_models.symmetric_activation_test im
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
     SoftmaxFunctionNetTest
 from tests.pytorch_tests.model_tests.feature_models.permute_substitution_test import PermuteSubstitutionTest
-from tests.pytorch_tests.model_tests.feature_models.constant_conv_substitution_test import ConstantConvSubstitutionTest, ConstantConvReuseSubstitutionTest, ConstantConvTransposeSubstitutionTest
-from tests.pytorch_tests.model_tests.feature_models.multi_head_attention_test import MHALayerNetTest
+from tests.pytorch_tests.model_tests.feature_models.constant_conv_substitution_test import ConstantConvSubstitutionTest, \
+    ConstantConvReuseSubstitutionTest, ConstantConvTransposeSubstitutionTest
+from tests.pytorch_tests.model_tests.feature_models.multi_head_attention_test import MHALayerNetTest, \
+    MHALayerNetFeatureTest
 from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test import \
     ScaleEqualizationWithZeroPadNetTest, ScaleEqualizationNetTest, \
     ScaleEqualizationReluFuncNetTest, ScaleEqualizationReluFuncWithZeroPadNetTest, \
@@ -439,6 +441,8 @@ class FeatureModelsTestRunner(unittest.TestCase):
                             kv_seq_len[iter], kdim[iter], vdim[iter], bias=True).run_test()
             MHALayerNetTest(self, num_heads[iter], q_seq_len[iter], qdim[iter] * num_heads[iter],
                             kv_seq_len[iter], kdim[iter], vdim[iter], bias=False).run_test()
+        MHALayerNetFeatureTest(self, num_heads[0], q_seq_len[0], qdim[0] * num_heads[0],
+                               kv_seq_len[0], kdim[0], vdim[0], bias=True, add_bias_kv=True).run_test()
 
     def test_gptq(self):
         """

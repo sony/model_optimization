@@ -58,21 +58,15 @@ class MHAParams:
 
         # Check if Add Bias KV feature is Active
         if BIAS_K and BIAS_V in mha_node.weights.keys():
-            if mha_node.weights[BIAS_K] and mha_node.weights[BIAS_V] is not None:
+            if mha_node.weights[BIAS_K] is not None and mha_node.weights[BIAS_V] is not None:
                 Logger.error('Add BIAS_KV feature is Not Implemented')  # pragma: no cover
 
         self.embed_dim = mha_node.framework_attr[EMBED_DIM]
         self.num_heads = mha_node.framework_attr[NUM_HEADS]
 
-        if KEY_DIM in mha_node.framework_attr:
-            self.kdim = mha_node.framework_attr[KEY_DIM]
-        else:
-            self.kdim = False
+        self.kdim = mha_node.framework_attr[KEY_DIM]
 
-        if VALUE_DIM in mha_node.framework_attr:
-            self.vdim = mha_node.framework_attr[VALUE_DIM]
-        else:
-            self.vdim = False
+        self.vdim = mha_node.framework_attr[VALUE_DIM]
 
         self.qdim = int(self.embed_dim / self.num_heads)
 
@@ -708,7 +702,7 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
         """
 
         if mha_node.reuse:
-            raise Exception("MCT doesn't support reuse of MultiHeadAttention layer")
+            raise Exception("MCT doesn't support reuse of MultiHeadAttention layer")  # pragma: no cover
         params = MHAParams(mha_node)
 
         # project
