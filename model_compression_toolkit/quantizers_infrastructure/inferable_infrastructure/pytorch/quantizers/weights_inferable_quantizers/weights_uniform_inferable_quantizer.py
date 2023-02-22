@@ -102,8 +102,8 @@ if FOUND_TORCH:
 
 
 else:
-    class WeightsUniformInferableQuantizer:
+    class WeightsUniformInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             Logger.error('Installing torch is mandatory '
                          'when using WeightsUniformInferableQuantizer. '
-                         'Could not find torch package.')  # pragma: no cover
+                         'Could not find torch package.')

@@ -89,7 +89,7 @@ if FOUND_TORCH:
             self.eps = eps
 
 else:
-    class BaseLUTSymmetricInferableQuantizer:
+    class BaseLUTSymmetricInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             raise Exception('Installing torch is mandatory when using BaseLUTSymmetricInferableQuantizer. Could not '
-                            'find torch package.')  # pragma: no cover
+                            'find torch package.')

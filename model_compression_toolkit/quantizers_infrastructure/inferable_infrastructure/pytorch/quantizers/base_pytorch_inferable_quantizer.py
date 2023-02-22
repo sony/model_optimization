@@ -39,9 +39,9 @@ if FOUND_TORCH:
             Returns:
                 quantized tensor.
             """
-            raise NotImplemented(f'{self.__class__.__name__} did not implement __call__')
+            raise NotImplemented(f'{self.__class__.__name__} did not implement __call__')  # pragma: no cover
 else:
-    class BasePyTorchInferableQuantizer:
+    class BasePyTorchInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             raise Exception('Installing torch is mandatory '
                             'when using BasePyTorchInferableQuantizer. '

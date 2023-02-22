@@ -76,7 +76,7 @@ if FOUND_TORCH:
                                                          quant_max=self.max_quantized_domain)
 
 else:
-    class ActivationSymmetricInferableQuantizer:
+    class ActivationSymmetricInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             raise Exception('Installing torch is mandatory '
                             'when using ActivationSymmetricInferableQuantizer. '

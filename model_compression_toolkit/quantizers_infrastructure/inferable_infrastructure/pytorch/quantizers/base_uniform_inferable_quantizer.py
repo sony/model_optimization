@@ -50,7 +50,7 @@ if FOUND_TORCH:
 
 
 else:
-    class BaseUniformInferableQuantizer:
+    class BaseUniformInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             raise Exception('Installing torch is mandatory '
                             'when using BaseUniformInferableQuantizer. '

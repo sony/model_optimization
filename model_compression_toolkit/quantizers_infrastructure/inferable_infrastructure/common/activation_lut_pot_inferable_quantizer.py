@@ -90,8 +90,8 @@ if FOUND_TORCH:
                                  threshold=self.threshold, multiplier_n_bits=self.multiplier_n_bits, eps=self.eps)
 
 else:
-    class ActivationLutPOTInferableQuantizer:
+    class ActivationLutPOTInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             raise Exception('Installing torch is mandatory '
                             'when using ActivationLutPOTInferableQuantizer. '
-                            'Could not find torch package.')  # pragma: no cover
+                            'Could not find torch package.')

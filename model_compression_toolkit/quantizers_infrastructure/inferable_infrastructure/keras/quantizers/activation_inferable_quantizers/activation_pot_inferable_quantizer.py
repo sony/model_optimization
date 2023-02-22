@@ -58,7 +58,7 @@ if FOUND_TF:
             assert is_threshold_pot, f'Expected threshold to be power of 2 but is {self.threshold}'
 
 else:
-    class ActivationPOTInferableQuantizer:
+    class ActivationPOTInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             Logger.error('Installing tensorflow and tensorflow_model_optimization is mandatory '
                          'when using ActivationPOTInferableQuantizer. '

@@ -32,7 +32,7 @@ if FOUND_TF:
             """
             Return a dictionary with the configuration of the quantizer.
             """
-            raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')
+            raise NotImplemented(f'{self.__class__.__name__} did not implement get_config')  # pragma: no cover
 
         @abstractmethod
         def __call__(self, inputs: tf.Tensor):
@@ -45,9 +45,9 @@ if FOUND_TF:
             Returns:
                 quantized tensor.
             """
-            raise NotImplemented(f'{self.__class__.__name__} did not implement __call__')
+            raise NotImplemented(f'{self.__class__.__name__} did not implement __call__')  # pragma: no cover
 else:
-    class BaseKerasInferableQuantizer:
+    class BaseKerasInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             raise Exception('Installing tensorflow and tensorflow_model_optimization is mandatory '
                             'when using BaseKerasInferableQuantizer. '

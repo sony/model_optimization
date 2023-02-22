@@ -70,8 +70,8 @@ if FOUND_TORCH:
 
 
 else:
-    class WeightsLUTPOTInferableQuantizer:
+    class WeightsLUTPOTInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             raise Exception('Installing torch is mandatory '
                             'when using WeightsLUTPOTInferableQuantizer. '
-                            'Could not find torch package.')  # pragma: no cover
+                            'Could not find torch package.')

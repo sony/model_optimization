@@ -63,7 +63,7 @@ if FOUND_TORCH:
 
 
 else:
-    class BaseSymmetricInferableQuantizer:
+    class BaseSymmetricInferableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
             raise Exception('Installing torch is mandatory '
                             'when using BaseSymmetricInferableQuantizer. '
