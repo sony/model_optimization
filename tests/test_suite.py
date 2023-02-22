@@ -74,8 +74,12 @@ if found_tf:
     from tests.keras_tests.exporter_tests.test_runner import ExporterTestsRunner
     from tests.keras_tests.function_tests.test_get_gptq_config import TestGetGPTQConfig
     from tests.keras_tests.function_tests.test_gptq_loss_functions import TestGPTQLossFunctions
-    from tests.quantizers_infrastructure_tests.keras_tests.test_inferable_quantizers.test_activation_inferable_quantizers import TestKerasActivationsSymmetricQuantizer, TestKerasActivationsUniformQuantizer, TestKerasActivationsPOTQuantizer
-    from tests.quantizers_infrastructure_tests.keras_tests.test_inferable_quantizers.test_weights_inferable_quantizer import TestKerasWeightsSymmetricQuantizer, TestKerasWeightsPOTQuantizer, TestKerasWeightsUniformQuantizer
+    from tests.quantizers_infrastructure_tests.keras_tests.test_inferable_quantizers.\
+        test_activation_inferable_quantizers import TestKerasActivationsSymmetricQuantizer, \
+        TestKerasActivationsUniformQuantizer, TestKerasActivationsPOTQuantizer, TestKerasActivationsLUTPOTQuantizer
+    from tests.quantizers_infrastructure_tests.keras_tests.test_inferable_quantizers.test_weights_inferable_quantizer \
+        import TestKerasWeightsSymmetricQuantizer, TestKerasWeightsPOTQuantizer, TestKerasWeightsUniformQuantizer, \
+        TestKerasWeightsLUTSymmetricQuantizer, TestKerasWeightsLUTPOTQuantizer
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -139,9 +143,12 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasWeightsPOTQuantizer))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasWeightsSymmetricQuantizer))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasWeightsUniformQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasWeightsLUTSymmetricQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasWeightsLUTPOTQuantizer))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasActivationsPOTQuantizer))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasActivationsSymmetricQuantizer))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasActivationsUniformQuantizer))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasActivationsLUTPOTQuantizer))
 
         # Keras test layers are supported in TF2.6 or higher versions
         if version.parse(tf.__version__) >= version.parse("2.6"):

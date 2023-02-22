@@ -213,7 +213,6 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                             self.unit_test.assertTrue(len(q) == 1)
                             self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q[0]))
 
-
                 # Check Weight quantizers
                 if layer.is_weights_quantization:
                     for name, quantizer in layer.weights_quantizers.items():
@@ -233,10 +232,8 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                             self.unit_test.assertTrue(isinstance(layer.weights_quantizers[KERNEL], q[0]))
 
 
-
-
 class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
-    def __init__(self, unit_test, kpi_weights=np.inf, kpi_activation=np.inf, expected_mp_cfg=[0,0,0,0]):
+    def __init__(self, unit_test, kpi_weights=np.inf, kpi_activation=np.inf, expected_mp_cfg=[0, 0, 0, 0]):
         self.kpi_weights = kpi_weights
         self.kpi_activation = kpi_activation
         self.expected_mp_cfg = expected_mp_cfg
@@ -264,8 +261,8 @@ class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
         for layer in qat_ready_model.layers:
             if isinstance(layer, qi.KerasQuantizationWrapper):
                 if layer.is_weights_quantization:
-                    self.unit_test.assertTrue(len(layer.weights_quantizers['kernel'].quantization_config.weights_bits_candidates) > 1)
+                    self.unit_test.assertTrue(
+                        len(layer.weights_quantizers['kernel'].quantization_config.weights_bits_candidates) > 1)
                 if layer.is_activation_quantization:
-                    self.unit_test.assertTrue(len(layer.activation_quantizers[0].quantization_config.activation_bits_candidates) > 1)
-
-
+                    self.unit_test.assertTrue(
+                        len(layer.activation_quantizers[0].quantization_config.activation_bits_candidates) > 1)
