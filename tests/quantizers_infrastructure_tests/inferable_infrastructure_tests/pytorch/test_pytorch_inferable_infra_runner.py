@@ -21,11 +21,13 @@ from model_compression_toolkit.quantizers_infrastructure import QuantizationTarg
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers import \
     BasePyTorchInferableQuantizer
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.pytorch.inferable_pytorch.test_activations_inferable_quantizer import \
-    TestActivationPOTQuantizer, TestActivationSymmetricQuantizer, TestActivationUniformQuantizer
+    TestActivationPOTQuantizer, TestActivationSymmetricQuantizer, TestActivationUniformQuantizer, \
+    TestActivationLUTPOTQuantizer
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.pytorch.inferable_pytorch.test_get_quantizers import \
     TestGetInferableQuantizer
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.pytorch.inferable_pytorch.test_weights_inferable_quantizer import \
-    TestWeightsPOTQuantizer, TestWeightsSymmetricQuantizer, TestWeightsUniformQuantizer
+    TestWeightsPOTQuantizer, TestWeightsSymmetricQuantizer, TestWeightsUniformQuantizer, \
+    TestPyTorchWeightsLUTPOTQuantizer, TestPyTorchWeightsLUTSymmetricQuantizer
 
 
 class PytorchInferableInfrastructureTestRunner(unittest.TestCase):
@@ -34,11 +36,14 @@ class PytorchInferableInfrastructureTestRunner(unittest.TestCase):
         TestWeightsPOTQuantizer()
         TestWeightsSymmetricQuantizer()
         TestWeightsUniformQuantizer()
+        TestPyTorchWeightsLUTPOTQuantizer()
+        TestPyTorchWeightsLUTSymmetricQuantizer()
 
     def test_activation_inferable_quantizers(self):
         TestActivationPOTQuantizer()
         TestActivationSymmetricQuantizer()
         TestActivationUniformQuantizer()
+        TestActivationLUTPOTQuantizer()
 
     def test_pytorch_get_quantizers(self):
         TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Weights,

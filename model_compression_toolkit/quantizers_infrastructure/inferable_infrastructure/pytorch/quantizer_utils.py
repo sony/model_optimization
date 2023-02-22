@@ -84,3 +84,69 @@ def fix_range_to_include_zero(range_min: torch.Tensor,
     return min_range_adj, max_range_adj
 
 
+def lut_quantizer(tensor_data: torch.Tensor,
+                  cluster_centers: torch.Tensor,
+                  signed: bool,
+                  threshold: torch.Tensor,
+                  multiplier_n_bits: int,
+                  eps: float) -> torch.Tensor:
+    """
+    Quantize a tensor using a non-uniform quantization based on the pre-defined clusters.
+    1. Scales tensor_data with the threshold into n-bit quantization range.
+    2. Assigns cluster centers to each value.
+    3. Scales back by multiplying the result by threshold and dividing with the quantization range max value.
+    The result is the quantized tensor.
+
+    Args:
+        tensor_data: Input activation tensor.
+        cluster_centers: The cluster centers to assign the tensor values.
+        signed: Whether the quantization is signed or not.
+        threshold: Threshold for quantization.
+        multiplier_n_bits: Number of bits that determines the quantization range
+        eps: Small value for numerical stability in division.
+
+    Returns: Quantized tensor.
+    """
+
+    tensor = int_quantization_with_threshold(tensor_data, n_bits=multiplier_n_bits, signed=signed, threshold=threshold,
+                                             eps=eps)
+    tensor = tensor.unsqueeze(-1)
+
+    expanded_cluster_centers = cluster_centers.reshape([*[1 for _ in range(len(tensor.shape) - 1)], -1])
+    cluster_assignments = torch.argmin(torch.abs(tensor - expanded_cluster_centers), dim=-1)
+    centers = cluster_centers.flatten()[cluster_assignments]
+
+    quant_tensor = (centers / (2 ** (multiplier_n_bits - int(signed)))) * threshold
+
+    return quant_tensor
+
+
+def int_quantization_with_threshold(data: torch.Tensor,
+                                    n_bits: int,
+                                    signed: bool,
+                                    threshold: torch.Tensor,
+                                    eps: float) -> torch.Tensor:
+    """
+    Divides data by threshold and quantize it to integers in the quantization range (depends on signed value).
+
+    Args:
+        data: Tensor data.
+        n_bits: Number of bits that determines the quantization range.
+        signed: Whether the quantization is signed or not.
+        threshold: Threshold for quantization.
+        eps: Small value for numerical stability in division.
+
+    Returns:
+        Uniform Quantized tensor.
+
+    """
+
+    if signed:
+        clip_max = 2 ** (n_bits - 1) - 1
+        clip_min = -2 ** (n_bits - 1)
+    else:
+        clip_max = 2 ** n_bits - 1
+        clip_min = 0
+
+    return torch.clip((data / (threshold + eps)) * (2 ** (n_bits - int(signed))),
+                      min=clip_min, max=clip_max)
