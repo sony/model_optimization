@@ -19,7 +19,7 @@ from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructur
 
 class TestGetInferableQuantizer:
 
-    def __init__(self, unit_test, quant_target, quant_method, quantizer_base_class,  expected_quantizer_class=None):
+    def __init__(self, unit_test, quant_target, quant_method, quantizer_base_class, expected_quantizer_class=None):
         self.unit_test = unit_test
         self.quant_target = quant_target
         self.quant_method = quant_method
@@ -31,5 +31,5 @@ class TestGetInferableQuantizer:
                                                   quant_method=self.quant_method,
                                                   quantizer_base_class=self.quantizer_base_class)
 
-        self.unit_test.assertTrue(isinstance(quantizer, self.quantizer_base_class))
-        self.unit_test.assertEqual(type(quantizer), self.expected_quantizer_class)
+        self.unit_test.assertTrue(issubclass(quantizer, self.quantizer_base_class))
+        self.unit_test.assertEqual(quantizer, self.expected_quantizer_class)

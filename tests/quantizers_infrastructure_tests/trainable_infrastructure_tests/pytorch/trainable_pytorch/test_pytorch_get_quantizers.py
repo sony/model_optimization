@@ -33,5 +33,5 @@ class TestGetTrainableQuantizer:
                                                   quant_method=self.quant_method,
                                                   quantizer_base_class=self.quantizer_base_class)
 
-        self.unit_test.assertTrue(isinstance(quantizer, self.quantizer_base_class))
-        self.unit_test.assertEqual(type(quantizer), self.expected_quantizer_class)
+        self.unit_test.assertTrue(issubclass(quantizer, self.quantizer_base_class))
+        self.unit_test.assertEqual(quantizer, self.expected_quantizer_class)

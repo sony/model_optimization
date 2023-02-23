@@ -27,9 +27,9 @@ class TestGetInferableQuantizer:
         self.expected_quantizer_class = expected_quantizer_class
 
     def run_test(self):
-        quantizer = get_inferable_quantizer_class(quant_target=self.quant_target,
-                                                  quant_method=self.quant_method,
-                                                  quantizer_base_class=self.quantizer_base_class)
+        quantizer_class = get_inferable_quantizer_class(quant_target=self.quant_target,
+                                                        quant_method=self.quant_method,
+                                                        quantizer_base_class=self.quantizer_base_class)
 
-        self.unit_test.assertTrue(isinstance(quantizer, self.quantizer_base_class))
-        self.unit_test.assertEqual(type(quantizer), self.expected_quantizer_class)
+        self.unit_test.assertTrue(issubclass(quantizer_class, self.quantizer_base_class))
+        self.unit_test.assertEqual(quantizer_class, self.expected_quantizer_class)

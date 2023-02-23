@@ -18,15 +18,28 @@ import tensorflow as tf
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
-    BaseKerasInferableQuantizer
+    BaseKerasInferableQuantizer, WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, \
+    WeightsUniformInferableQuantizer, ActivationPOTInferableQuantizer, ActivationSymmetricInferableQuantizer, \
+    ActivationUniformInferableQuantizer
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_activation_inferable_quantizers import \
-    TestKerasActivationsPOTQuantizer, TestKerasActivationsSymmetricQuantizer, TestKerasActivationsUniformQuantizer, \
-    TestKerasActivationsLUTPOTQuantizer
+    TestKerasActivationsSymmetricInferableQuantizer, \
+    TestKerasActivationsUnsignedSymmetricInferableQuantizer, TestKerasActivationsIllegalPOTInferableQuantizer, \
+    TestKerasActivationsPOTInferableQuantizer, TestKerasActivationsUnsignedPOTInferableQuantizer, \
+    TestKerasActivationsUniformInferableQuantizer, TestKerasActivationsUniformInferableZeroNotInRange
+from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_activation_lut_inferable_quantizer import \
+    TestKerasActivationPOTLUTQuantizerAssertions, TestKerasActivationPOTLUTQuantizer
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_get_quantizers import \
     TestGetInferableQuantizer
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_weights_inferable_quantizer import \
-    TestKerasWeightsPOTQuantizer, TestKerasWeightsSymmetricQuantizer, TestKerasWeightsUniformQuantizer, \
-    TestKerasWeightsLUTSymmetricQuantizer, TestKerasWeightsLUTPOTQuantizer
+    TestKerasWeightsPOTInferableQuantizerRaise, \
+    TestKerasWeightsPOTInferableSignedPerTensorQuantizer, TestKerasWeightsPOTInferableSignedPerChannelQuantizer, \
+    TestKerasWeightsSymmetricInferableQuantizerRaise, TestKerasWeightsSymmetricInferableSignedPerTensorQuantizer, \
+    TestKerasWeightsSymmetricInferableSignedPerChannelQuantizer, TestKerasWeightsUniformInferableQuantizerRaise, \
+    TestKerasWeightsUniformInferableSignedPerTensorQuantizer, TestKerasWeightsUniformInferableSignedPerChannelQuantizer, \
+    TestKerasWeightsUniformInferableZeroNotInRange
+from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_weights_lut_inferable_quantizer import \
+    TestKerasWeightsSymmetricLUTQuantizer, TestKerasWeightsPOTLUTQuantizer, \
+    TestKerasWeightsSymmetricLUTQuantizerAssertions, TestKerasWeightsLUTPOTQuantizerAssertions
 
 layers = tf.keras.layers
 
@@ -34,37 +47,61 @@ layers = tf.keras.layers
 class KerasInferableInfrastructureTestRunner(unittest.TestCase):
 
     def test_weights_inferable_quantizers(self):
-        TestKerasWeightsPOTQuantizer()
-        TestKerasWeightsSymmetricQuantizer()
-        TestKerasWeightsUniformQuantizer()
-        TestKerasWeightsLUTPOTQuantizer()
-        TestKerasWeightsLUTSymmetricQuantizer()
+        TestKerasWeightsPOTInferableQuantizerRaise(self).run_test()
+        TestKerasWeightsPOTInferableSignedPerTensorQuantizer(self).run_test()
+        TestKerasWeightsPOTInferableSignedPerChannelQuantizer(self).run_test()
+        TestKerasWeightsSymmetricInferableQuantizerRaise(self).run_test()
+        TestKerasWeightsSymmetricInferableSignedPerTensorQuantizer(self).run_test()
+        TestKerasWeightsSymmetricInferableSignedPerChannelQuantizer(self).run_test()
+        TestKerasWeightsUniformInferableQuantizerRaise(self).run_test()
+        TestKerasWeightsUniformInferableSignedPerTensorQuantizer(self).run_test()
+        TestKerasWeightsUniformInferableSignedPerChannelQuantizer(self).run_test()
+        TestKerasWeightsUniformInferableZeroNotInRange(self).run_test()
 
     def test_activation_inferable_quantizers(self):
-        TestKerasActivationsPOTQuantizer()
-        TestKerasActivationsSymmetricQuantizer()
-        TestKerasActivationsUniformQuantizer()
-        TestKerasActivationsLUTPOTQuantizer()
+        TestKerasActivationsSymmetricInferableQuantizer(self).run_test()
+        TestKerasActivationsUnsignedSymmetricInferableQuantizer(self).run_test()
+        TestKerasActivationsIllegalPOTInferableQuantizer(self).run_test()
+        TestKerasActivationsPOTInferableQuantizer(self).run_test()
+        TestKerasActivationsUnsignedPOTInferableQuantizer(self).run_test()
+        TestKerasActivationsUniformInferableQuantizer(self).run_test()
+        TestKerasActivationsUniformInferableZeroNotInRange(self).run_test()
+
+    def test_weights_inferable_lut_quantizer(self):
+        TestKerasWeightsSymmetricLUTQuantizerAssertions(self).run_test()
+        TestKerasWeightsSymmetricLUTQuantizer(self).run_test()
+        TestKerasWeightsLUTPOTQuantizerAssertions(self).run_test()
+        TestKerasWeightsPOTLUTQuantizer(self).run_test()
+
+    def test_activation_inferable_lut_quantizer(self):
+        TestKerasActivationPOTLUTQuantizerAssertions(self).run_test()
+        TestKerasActivationPOTLUTQuantizer(self).run_test()
 
     def test_get_quantizers(self):
         TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Weights,
                                   quant_method=QuantizationMethod.POWER_OF_TWO,
-                                  quantizer_base_class=BaseKerasInferableQuantizer)
+                                  quantizer_base_class=BaseKerasInferableQuantizer,
+                                  expected_quantizer_class=WeightsPOTInferableQuantizer).run_test()
         TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Weights,
                                   quant_method=QuantizationMethod.SYMMETRIC,
-                                  quantizer_base_class=BaseKerasInferableQuantizer)
+                                  quantizer_base_class=BaseKerasInferableQuantizer,
+                                  expected_quantizer_class=WeightsSymmetricInferableQuantizer).run_test()
         TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Weights,
                                   quant_method=QuantizationMethod.UNIFORM,
-                                  quantizer_base_class=BaseKerasInferableQuantizer)
+                                  quantizer_base_class=BaseKerasInferableQuantizer,
+                                  expected_quantizer_class=WeightsUniformInferableQuantizer).run_test()
         TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.POWER_OF_TWO,
-                                  quantizer_base_class=BaseKerasInferableQuantizer)
+                                  quantizer_base_class=BaseKerasInferableQuantizer,
+                                  expected_quantizer_class=ActivationPOTInferableQuantizer).run_test()
         TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.SYMMETRIC,
-                                  quantizer_base_class=BaseKerasInferableQuantizer)
+                                  quantizer_base_class=BaseKerasInferableQuantizer,
+                                  expected_quantizer_class=ActivationSymmetricInferableQuantizer).run_test()
         TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.UNIFORM,
-                                  quantizer_base_class=BaseKerasInferableQuantizer)
+                                  quantizer_base_class=BaseKerasInferableQuantizer,
+                                  expected_quantizer_class=ActivationUniformInferableQuantizer).run_test()
 
 
 if __name__ == '__main__':

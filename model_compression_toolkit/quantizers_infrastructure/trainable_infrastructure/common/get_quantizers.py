@@ -48,10 +48,11 @@ def get_trainable_quantizer_class(quant_target: QuantizationTarget,
     if len(qat_quantizer_classes) == 0:
         Logger.error(f"No quantizers were found that inherit from {quantizer_base_class}.")  # pragma: no cover
 
-    filtered_quantizers = list(filter(lambda q_class: getattr(q_class, QUANTIZATION_TARGET) == quant_target and
-                                                      getattr(q_class, QUANTIZATION_METHOD) is not None and
-                                                       quant_method in getattr(q_class, QUANTIZATION_METHOD) and
-                                                      getattr(q_class, QUANTIZER_TYPE) == quantizer_type,
+    filtered_quantizers = list(filter(lambda q_class: getattr(q_class, QUANTIZATION_TARGET, None) is not None and
+                                                      getattr(q_class, QUANTIZATION_TARGET) == quant_target and
+                                                      getattr(q_class, QUANTIZATION_METHOD, None) is not None and
+                                                       quant_method in getattr(q_class, QUANTIZATION_METHOD, []) and
+                                                      getattr(q_class, QUANTIZER_TYPE, None) == quantizer_type,
                                       qat_quantizer_classes))
 
     if len(filtered_quantizers) != 1:
