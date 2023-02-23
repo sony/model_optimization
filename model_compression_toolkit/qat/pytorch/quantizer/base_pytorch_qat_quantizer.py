@@ -17,9 +17,10 @@ from typing import Union
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 
-from model_compression_toolkit.quantizers_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
-    TrainableQuantizerActivationConfig, BasePytorchTrainableQuantizer
+    TrainableQuantizerActivationConfig
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
+    BasePytorchTrainableQuantizer
 
 if FOUND_TORCH:
 
@@ -39,7 +40,7 @@ if FOUND_TORCH:
             super().__init__(quantization_config)
 
 else:
-    class BasePytorchTrainableQuantizer(BasePytorchTrainableQuantizer):
+    class BasePytorchQATTrainableQuantizer(BasePytorchTrainableQuantizer):
         def __init__(self,
                      quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
             super().__init__(quantization_config)

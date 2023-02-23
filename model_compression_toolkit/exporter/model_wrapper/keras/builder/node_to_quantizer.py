@@ -17,12 +17,12 @@ from typing import Dict, Any
 from model_compression_toolkit.core.common import BaseNode, Logger
 from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MIN, RANGE_MAX, SIGNED
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure.common.get_quantizers import get_inferable_quantizer_class
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.keras.inferable_quantizers.base_keras_inferable_quantizer \
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import QuantizationTarget
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_quantizers import \
+    get_inferable_quantizer_class
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.base_keras_inferable_quantizer \
     import \
     BaseKerasInferableQuantizer
-import numpy as np
 
 
 def get_inferable_quantizer_kwargs(node: BaseNode,
@@ -32,10 +32,8 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
     Args:
         node: The node for which the quantizer is being created.
         quantization_target: The target of the quantization (weights or activations).
-
     Returns:
         The quantization parameters as a dictionary.
-
     """
 
     if quantization_target == QuantizationTarget.Weights:
@@ -89,13 +87,10 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
 def get_weights_quantizer_for_node(node: BaseNode) -> BaseKerasInferableQuantizer:
     """
     Get weights quantizer for a node.
-
     Args:
         node: Node to create a weight quantizer for.
-
     Returns:
         Quantizer for the node's weights.
-
     """
     if node.final_weights_quantization_cfg is None:
         Logger.critical(f'Can not set quantizer for a node with no final weights quantization configuration')  # pragma:
@@ -114,13 +109,10 @@ def get_weights_quantizer_for_node(node: BaseNode) -> BaseKerasInferableQuantize
 def get_activations_quantizer_for_node(node: BaseNode) -> BaseKerasInferableQuantizer:
     """
     Get activation quantizer for a node.
-
     Args:
         node: Node to create an activation quantizer for.
-
     Returns:
         Quantizer for the node's activations.
-
     """
     if node.final_activation_quantization_cfg is None:
         Logger.critical(f'Can not set quantizer for a node with no final activation quantization configuration')  #

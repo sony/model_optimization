@@ -25,7 +25,9 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 
 from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
-from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers import \
+    ActivationPOTInferableQuantizer, WeightsPOTInferableQuantizer
+
 tp = mct.target_platform
 
 
@@ -117,20 +119,20 @@ class TestFullyQuantizedExporter(unittest.TestCase):
 
     def test_weights_qc(self):
         self.assertTrue(len(self.fully_quantized_mbv2.features_0_0_bn.weights_quantizers)==1)
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.weights_quantizers['weight'], qi.pytorch_inferable_quantizers.WeightsPOTInferableQuantizer))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.weights_quantizers['weight'], WeightsPOTInferableQuantizer))
 
     def test_weights_activation_qc(self):
         self.assertTrue(len(self.fully_quantized_mbv2.classifier_1.weights_quantizers) == 1)
         self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.weights_quantizers['weight'],
-                                   qi.pytorch_inferable_quantizers.WeightsPOTInferableQuantizer))
+                                   WeightsPOTInferableQuantizer))
         self.assertTrue(len(self.fully_quantized_mbv2.classifier_1.activation_quantizers) == 1)
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.activation_quantizers[0], qi.pytorch_inferable_quantizers.ActivationPOTInferableQuantizer))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.activation_quantizers[0], ActivationPOTInferableQuantizer))
 
     def test_activation_qc(self):
         self.assertTrue(len(self.fully_quantized_mbv2.features_0_2.weights_quantizers) == 0)
         self.assertTrue(len(self.fully_quantized_mbv2.features_0_2.activation_quantizers) == 1)
         self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_2.activation_quantizers[0],
-                                   qi.pytorch_inferable_quantizers.ActivationPOTInferableQuantizer))
+                                   ActivationPOTInferableQuantizer))
 
     def test_no_quantization_qc(self):
         self.assertTrue(len(self.fully_quantized_mbv2.classifier_0.activation_quantizers) == 0)

@@ -14,7 +14,8 @@
 # ==============================================================================
 from typing import Any
 
-from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper, \
+from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers import \
     BasePyTorchInferableQuantizer
 
 

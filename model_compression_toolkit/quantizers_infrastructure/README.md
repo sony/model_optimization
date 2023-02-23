@@ -20,15 +20,15 @@ The "Inferable Quantizer" is used for emulating inference-time quantization, and
 
 More details and "how to" examples for TensorFlow can be found in:
 
-[Inferable quantizers for TensorFlow](keras/inferable_quantizers/README.md)
+[Inferable quantizers for TensorFlow](inferable_infrastructure/keras/quantizers/README.md)
 
-[Trainable quantizers for TensorFlow](keras/README.md)
+[Trainable quantizers for TensorFlow](trainable_infrastructure/keras/README.md)
 
 And for PyTorch:
 
-[Inferable quantizers for PyTorch](pytorch/inferable_quantizers/README.md)
+[Inferable quantizers for PyTorch](inferable_infrastructure/pytorch/quantizers/README.md)
 
-[Trainable quantizers for PyTorch](pytorch/README.md)
+[Trainable quantizers for PyTorch](trainable_infrastructure/pytorch/README.md)
 
   
 

@@ -28,8 +28,11 @@ from model_compression_toolkit.gptq.pytorch.quantizer import quant_utils as quti
 from model_compression_toolkit.gptq.common.gptq_constants import AUXVAR, PTQ_THRESHOLD, MAX_LSB_CHANGE
 from model_compression_toolkit.core.common.constants import THRESHOLD
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
-from model_compression_toolkit.quantizers_infrastructure.common.quant_utils import get_threshold_reshape_shape
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import \
+    mark_quantizer
+
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.quant_utils import \
+    get_threshold_reshape_shape
 
 
 def pertubation_symmetric_quantizer(input_tensor: torch.Tensor,

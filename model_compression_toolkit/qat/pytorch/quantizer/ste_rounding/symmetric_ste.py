@@ -22,19 +22,21 @@ from model_compression_toolkit.core.common.target_platform import QuantizationMe
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
 from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
-from model_compression_toolkit.quantizers_infrastructure.pytorch import inferable_quantizers as iq
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.core.common import constants as C
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import ste_round, ste_clip, symmetric_quantizer
-from model_compression_toolkit.quantizers_infrastructure.common.trainable_quantizer_config import \
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers import \
+    WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, ActivationPOTInferableQuantizer, \
+    ActivationSymmetricInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.STE)
-class STEWeightQuantizer(BasePytorchQATTrainableQuantizer):
+class STEWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer weights.
     """
@@ -107,7 +109,7 @@ class STEWeightQuantizer(BasePytorchQATTrainableQuantizer):
         w_q = self.delta_tensor * w1
         return w_q
 
-    def convert2inferable(self) -> Union[iq.WeightsPOTInferableQuantizer, iq.WeightsSymmetricInferableQuantizer]:
+    def convert2inferable(self) -> Union[WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer]:
         """
         Convert quantizer to inferable quantizer.
 
@@ -117,22 +119,22 @@ class STEWeightQuantizer(BasePytorchQATTrainableQuantizer):
         np_threshold = self.quantizer_parameters[THRESHOLD_TENSOR].cpu().detach().numpy().flatten()
         if self.power_of_two:
             pot_threshold = 2 ** np.ceil(np.log2(np_threshold))
-            return iq.WeightsPOTInferableQuantizer(num_bits=self.num_bits,
-                                                   threshold=pot_threshold,
-                                                   per_channel=self.quantization_config.weights_per_channel_threshold,
-                                                   channel_axis=self.quantization_config.weights_channels_axis)
+            return WeightsPOTInferableQuantizer(num_bits=self.num_bits,
+                                                threshold=pot_threshold,
+                                                per_channel=self.quantization_config.weights_per_channel_threshold,
+                                                channel_axis=self.quantization_config.weights_channels_axis)
         else:
-            return iq.WeightsSymmetricInferableQuantizer(num_bits=self.num_bits,
-                                                         threshold=np_threshold,
-                                                         per_channel=self.quantization_config.weights_per_channel_threshold,
-                                                         channel_axis=self.quantization_config.weights_channels_axis)
+            return WeightsSymmetricInferableQuantizer(num_bits=self.num_bits,
+                                                      threshold=np_threshold,
+                                                      per_channel=self.quantization_config.weights_per_channel_threshold,
+                                                      channel_axis=self.quantization_config.weights_channels_axis)
 
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.STE)
-class STEActivationQuantizer(BasePytorchQATTrainableQuantizer):
+class STEActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer activations.
     """
@@ -183,7 +185,7 @@ class STEActivationQuantizer(BasePytorchQATTrainableQuantizer):
         q_tensor = symmetric_quantizer(inputs, _t, self.num_bits, sign=self.sign)
         return q_tensor
 
-    def convert2inferable(self) -> Union[iq.ActivationPOTInferableQuantizer, iq.ActivationSymmetricInferableQuantizer]:
+    def convert2inferable(self) -> Union[ActivationPOTInferableQuantizer, ActivationSymmetricInferableQuantizer]:
         """
         Convert quantizer to inferable quantizer.
 
@@ -193,10 +195,10 @@ class STEActivationQuantizer(BasePytorchQATTrainableQuantizer):
         np_threshold = self.quantizer_parameters[THRESHOLD_TENSOR].cpu().detach().numpy()
         if self.power_of_two:
             pot_threshold = np.power(2.0, np.ceil(np.log2(np_threshold)))
-            return iq.ActivationPOTInferableQuantizer(num_bits=self.num_bits,
-                                                      threshold=pot_threshold,
-                                                      signed=self.sign)
+            return ActivationPOTInferableQuantizer(num_bits=self.num_bits,
+                                                   threshold=pot_threshold,
+                                                   signed=self.sign)
         else:
-            return iq.ActivationSymmetricInferableQuantizer(num_bits=self.num_bits,
-                                                            threshold=np_threshold,
-                                                            signed=self.sign)
+            return ActivationSymmetricInferableQuantizer(num_bits=self.num_bits,
+                                                         threshold=np_threshold,
+                                                         signed=self.sign)
