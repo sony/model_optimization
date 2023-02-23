@@ -36,7 +36,7 @@ from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructur
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.STE)
-class STEWeightQuantizer(BasePytorchQATTrainableQuantizer):
+class STEWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer weights.
     """
@@ -134,14 +134,14 @@ class STEWeightQuantizer(BasePytorchQATTrainableQuantizer):
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.STE)
-class STEActivationQuantizer(BasePytorchQATTrainableQuantizer):
+class STEActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer activations.
     """
 
     def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         """
-        Initialize a STEActivationQuantizer object with parameters to use
+        Initialize a STEActivationQATQuantizer object with parameters to use
         for symmetric or power of two quantization.
 
         Args:

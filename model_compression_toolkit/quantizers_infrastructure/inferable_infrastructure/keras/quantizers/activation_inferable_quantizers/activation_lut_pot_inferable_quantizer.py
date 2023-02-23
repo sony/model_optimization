@@ -29,7 +29,7 @@ if FOUND_TF:
     import tensorflow as tf
     from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.base_keras_inferable_quantizer \
         import BaseKerasInferableQuantizer
-    from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.quantizer_utils import lut_quantizer
+    from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizer_utils import lut_quantizer
 
 
     @mark_quantizer(quantization_target=QuantizationTarget.Activation,

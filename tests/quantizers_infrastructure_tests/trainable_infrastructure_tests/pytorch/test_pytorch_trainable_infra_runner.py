@@ -18,10 +18,10 @@ import unittest
 
 from model_compression_toolkit import TrainingMethod
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste import STEWeightQuantizer, \
-    STEActivationQuantizer
-from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.uniform_ste import STEUniformWeightQuantizer, \
-    STEUniformActivationQuantizer
+from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste import STEWeightQATQuantizer, \
+    STEActivationQATQuantizer
+from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.uniform_ste import STEUniformWeightQATQuantizer, \
+    STEUniformActivationQATQuantizer
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
     BasePytorchTrainableQuantizer
@@ -50,32 +50,32 @@ class PytorchTrainableInfrastructureTestRunner(unittest.TestCase):
                                   quant_method=QuantizationMethod.POWER_OF_TWO,
                                   quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_type=TrainingMethod.STE,
-                                  expected_quantizer_class=STEWeightQuantizer).run_test()
+                                  expected_quantizer_class=STEWeightQATQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
                                   quant_method=QuantizationMethod.SYMMETRIC,
                                   quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_type=TrainingMethod.STE,
-                                  expected_quantizer_class=STEWeightQuantizer).run_test()
+                                  expected_quantizer_class=STEWeightQATQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
                                   quant_method=QuantizationMethod.UNIFORM,
                                   quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_type=TrainingMethod.STE,
-                                  expected_quantizer_class=STEUniformWeightQuantizer).run_test()
+                                  expected_quantizer_class=STEUniformWeightQATQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.POWER_OF_TWO,
                                   quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_type=TrainingMethod.STE,
-                                  expected_quantizer_class=STEActivationQuantizer).run_test()
+                                  expected_quantizer_class=STEActivationQATQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.SYMMETRIC,
                                   quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_type=TrainingMethod.STE,
-                                  expected_quantizer_class=STEActivationQuantizer).run_test()
+                                  expected_quantizer_class=STEActivationQATQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.UNIFORM,
                                   quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_type=TrainingMethod.STE,
-                                  expected_quantizer_class=STEUniformActivationQuantizer).run_test()
+                                  expected_quantizer_class=STEUniformActivationQATQuantizer).run_test()
 
 
 if __name__ == '__main__':
