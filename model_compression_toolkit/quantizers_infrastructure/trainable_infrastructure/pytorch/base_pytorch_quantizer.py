@@ -12,16 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Union
+from typing import Union, List
 
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
-
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
     TrainableQuantizerActivationConfig
 
 if FOUND_TORCH:
+
+    import torch
 
     class BasePytorchTrainableQuantizer(BaseTrainableQuantizer):
         def __init__(self,
@@ -34,6 +36,23 @@ if FOUND_TORCH:
                 quantization_config: quantizer config class contains all the information about the quantizer configuration.
             """
             super().__init__(quantization_config)
+            self.quantizer_parameters = {}
+
+        def get_trainable_variables(self, group: VariableGroup) -> List[torch.Tensor]:
+            """
+            Get trainable parameters with specific group from quantizer
+
+            Args:
+                group: Enum of variable group
+
+            Returns:
+                List of trainable variables
+            """
+            quantizer_trainable = []
+            for name, (quantizer_parameter, parameter_group) in self.quantizer_parameters.items():
+                if quantizer_parameter.requires_grad and parameter_group == group:
+                    quantizer_trainable.append(quantizer_parameter)
+            return quantizer_trainable
 
 else:
     class BasePytorchTrainableQuantizer(BaseTrainableQuantizer):

@@ -14,7 +14,7 @@
 # ==============================================================================
 import torch
 import torch.nn as nn
-from typing import List, Dict
+from typing import Tuple, Dict
 import numpy as np
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 
@@ -30,7 +30,7 @@ from model_compression_toolkit.core.common.constants import THRESHOLD
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import \
     mark_quantizer
-
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.quant_utils import \
     get_threshold_reshape_shape
 
@@ -110,7 +110,7 @@ class STEWeightGPTQQuantizer(BasePytorchGPTQTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, nn.Parameter]:
+                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, Tuple[nn.Parameter, VariableGroup]]:
         """
         Return a dictionary of quantizer parameters and their names.
 
@@ -131,27 +131,10 @@ class STEWeightGPTQQuantizer(BasePytorchGPTQTrainableQuantizer):
                                                                   requires_grad=True))
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {PTQ_THRESHOLD: layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"),
-                                     AUXVAR: layer.get_parameter(f"{name}_{AUXVAR}")}
+        self.quantizer_parameters = {PTQ_THRESHOLD: (layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"), VariableGroup.THRESHOLDS),
+                                     AUXVAR: (layer.get_parameter(f"{name}_{AUXVAR}"), VariableGroup.WEIGHTS)}
 
         return self.quantizer_parameters
-
-
-    def get_aux_variable(self) -> List[torch.Tensor]:
-        """
-        This function return a list with the quantizer's quantization auxiliary variables.
-
-        Returns: A list with the quantization auxiliary variables.
-        """
-        return [self.quantizer_parameters.get(AUXVAR)]
-
-    def get_quantization_variable(self) -> List[torch.Tensor]:
-        """
-        This function return a list with the quantizer's quantization parameters variables.
-
-        Returns: A list with the quantization parameters.
-        """
-        return [self.quantizer_parameters.get(PTQ_THRESHOLD)]
 
     def get_quant_config(self) -> Dict[str, np.ndarray]:
         """
@@ -162,7 +145,7 @@ class STEWeightGPTQQuantizer(BasePytorchGPTQTrainableQuantizer):
             Keys must match NodeQuantizationConfig attributes
 
         """
-        old_threshold = self.quantizer_parameters[PTQ_THRESHOLD]
+        old_threshold = self.quantizer_parameters[PTQ_THRESHOLD][0]
         return {THRESHOLD: torch_tensor_to_numpy(old_threshold).reshape(self.threshold_shape)}
 
     def __call__(self,
@@ -178,8 +161,8 @@ class STEWeightGPTQQuantizer(BasePytorchGPTQTrainableQuantizer):
         Returns:
             quantized tensor
         """
-        auxvar = self.quantizer_parameters[AUXVAR]
-        ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD]
+        auxvar = self.quantizer_parameters[AUXVAR][0]
+        ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD][0]
 
         if self.per_channel:
             reshape_shape = get_threshold_reshape_shape(inputs.shape,

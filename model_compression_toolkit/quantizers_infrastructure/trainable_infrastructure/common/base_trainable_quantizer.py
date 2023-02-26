@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-from typing import Union
+from enum import Enum
+from typing import Union, List, Any
 from inspect import signature
 
 from model_compression_toolkit.core import common
@@ -25,6 +25,16 @@ from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructur
     TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import QUANTIZATION_METHOD, \
     QUANTIZATION_TARGET
+
+
+class VariableGroup(Enum):
+    """
+    An enum for choosing training variable group
+    0. WEIGHTS
+    1. THRESHOLDS
+    """
+    WEIGHTS = 0
+    THRESHOLDS = 1
 
 
 class BaseTrainableQuantizer(BaseInferableQuantizer):
@@ -145,5 +155,18 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
 
         Returns:
             BaseInferableQuantizer object.
+        """
+        raise NotImplemented  # pragma: no cover
+
+
+    def get_trainable_variables(self, group: VariableGroup) -> List[Any]:
+        """
+        Get trainable parameters with specific group from quantizer
+
+        Args:
+            group: Enum of variable group
+
+        Returns:
+            List of trainable variables
         """
         raise NotImplemented  # pragma: no cover

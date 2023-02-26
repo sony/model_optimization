@@ -32,6 +32,7 @@ from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructur
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
     WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, ActivationPOTInferableQuantizer, \
     ActivationSymmetricInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
@@ -115,8 +116,9 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         fq_max.assign(self.max)
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {THRESHOLD_TENSOR: ptq_threshold_tensor,
-                                     FQ_MIN: fq_min, FQ_MAX: fq_max}
+        self.quantizer_parameters = {THRESHOLD_TENSOR: (ptq_threshold_tensor, VariableGroup.THRESHOLDS),
+                                     FQ_MIN: (fq_min, VariableGroup.WEIGHTS),
+                                     FQ_MAX: (fq_max, VariableGroup.WEIGHTS)}
         return self.quantizer_parameters
 
     def __call__(self,
@@ -134,8 +136,8 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
             The quantized tensor.
         """
 
-        _min = self.quantizer_parameters[FQ_MIN]
-        _max = self.quantizer_parameters[FQ_MAX]
+        _min = self.quantizer_parameters[FQ_MIN][0]
+        _max = self.quantizer_parameters[FQ_MAX][0]
         if self.channel_axis:
             if self.perm_vec:
                 inputs = tf.transpose(inputs, perm=self.perm_vec)
@@ -157,7 +159,7 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
             BaseKerasInferableQuantizer object.
         """
         if self.power_of_two:
-            pot_threshold = 2 ** np.ceil(np.log2(self.quantizer_parameters[THRESHOLD_TENSOR]))
+            pot_threshold = 2 ** np.ceil(np.log2(self.quantizer_parameters[THRESHOLD_TENSOR][0]))
             return WeightsPOTInferableQuantizer(num_bits=self.num_bits,
                                                 threshold=list(pot_threshold.flatten()),
                                                 per_channel=self.per_channel,
@@ -166,7 +168,7 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         else:
             return WeightsSymmetricInferableQuantizer(num_bits=self.num_bits,
                                                       threshold=list(self.quantizer_parameters[
-                                                                         THRESHOLD_TENSOR].numpy().flatten()),
+                                                                         THRESHOLD_TENSOR][0].numpy().flatten()),
                                                       per_channel=self.per_channel,
                                                       channel_axis=self.channel_axis,
                                                       input_rank=len(self.threshold_shape))
@@ -242,8 +244,9 @@ class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         fq_max.assign(self.max)
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {THRESHOLD_TENSOR: ptq_threshold_tensor,
-                                     FQ_MIN: fq_min, FQ_MAX: fq_max}
+        self.quantizer_parameters = {THRESHOLD_TENSOR: (ptq_threshold_tensor, VariableGroup.THRESHOLDS),
+                                     FQ_MIN: (fq_min, VariableGroup.WEIGHTS),
+                                     FQ_MAX: (fq_max, VariableGroup.WEIGHTS)}
         return self.quantizer_parameters
 
     def __call__(self,
@@ -259,8 +262,8 @@ class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
             The quantized tensor.
         """
 
-        _min = self.quantizer_parameters[FQ_MIN]
-        _max = self.quantizer_parameters[FQ_MAX]
+        _min = self.quantizer_parameters[FQ_MIN][0]
+        _max = self.quantizer_parameters[FQ_MAX][0]
         q_tensor = tf.quantization.fake_quant_with_min_max_vars(inputs, _min, _max,
                                                                 num_bits=self.num_bits)
 
@@ -275,7 +278,7 @@ class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         """
 
         if self.power_of_two:
-            pot_threshold = 2 ** np.ceil(np.log2(self.quantizer_parameters[THRESHOLD_TENSOR]))
+            pot_threshold = 2 ** np.ceil(np.log2(self.quantizer_parameters[THRESHOLD_TENSOR][0]))
             return ActivationPOTInferableQuantizer(num_bits=self.num_bits,
                                                       # In activation quantization is per-tensor only - thus we pass
                                                       # the threshold as a list with a len of 1
@@ -286,5 +289,5 @@ class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
                                                          # In activation quantization is per-tensor only - thus we
                                                          # pass the threshold as a list with a len of 1
                                                          threshold=[
-                                                             self.quantizer_parameters[THRESHOLD_TENSOR].numpy()],
+                                                             self.quantizer_parameters[THRESHOLD_TENSOR][0].numpy()],
                                                          signed=self.signed)

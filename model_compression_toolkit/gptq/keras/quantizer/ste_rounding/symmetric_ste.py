@@ -30,6 +30,7 @@ from model_compression_toolkit.quantizers_infrastructure import TrainableQuantiz
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.quant_utils import \
     get_threshold_reshape_shape
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
 
 def pertubation_symmetric_quantizer(input_tensor: tf.Tensor,
@@ -135,9 +136,9 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
             trainable=True)
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {PTQ_THRESHOLD: ptq_threshold_tensor,
-                                     AUXVAR: auxvar_tensor,
-                                     GPTQ_ITER: ar_iter}
+        self.quantizer_parameters = {PTQ_THRESHOLD: (ptq_threshold_tensor, VariableGroup.THRESHOLDS),
+                                     AUXVAR: (auxvar_tensor, VariableGroup.WEIGHTS),
+                                     GPTQ_ITER: (ar_iter, VariableGroup.WEIGHTS)}
         return self.quantizer_parameters
 
     def __call__(self,
@@ -154,8 +155,8 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
             The quantized tensor.
         """
 
-        auxvar = self.quantizer_parameters[AUXVAR]
-        ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD]
+        auxvar = self.quantizer_parameters[AUXVAR][0]
+        ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD][0]
 
         if self.per_channel:
             reshape_shape = get_threshold_reshape_shape(inputs.shape,
@@ -178,25 +179,6 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
                                                    signed=True,
                                                    power_of_two=self.power_of_two)
 
-    def get_aux_variable(self) -> List[tf.Tensor]:
-        """
-        This function return a list with the quantizer's quantization auxiliary variables.
-
-        Returns: A list with the quantization auxiliary variables.
-
-        """
-
-        return [self.quantizer_parameters[AUXVAR]]
-
-    def get_quantization_variable(self) -> List[tf.Tensor]:
-        """
-        This function return a list with the quantizer's quantization parameters variables.
-
-        Returns: A list with the quantization parameters.
-
-        """
-
-        return [self.quantizer_parameters[PTQ_THRESHOLD]]
 
     def get_quant_config(self) -> Dict[str, np.ndarray]:
         """
@@ -207,5 +189,5 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
             Keys must match NodeQuantizationConfig attributes
 
         """
-        old_threshold = self.quantizer_parameters[PTQ_THRESHOLD]
+        old_threshold = self.quantizer_parameters[PTQ_THRESHOLD][0]
         return {THRESHOLD: old_threshold.numpy().reshape(self.threshold_shape)}

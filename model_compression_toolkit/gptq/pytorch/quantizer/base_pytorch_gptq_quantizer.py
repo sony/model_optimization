@@ -71,26 +71,6 @@ if FOUND_TORCH:
 
             return weights, quant_config, {}
 
-        def get_aux_variable(self) -> List[Tensor]:
-            """
-            This function return a list with the quantizer's quantization auxiliary variables.
-
-            Returns: A list with the quantization auxiliary variables.
-
-            """
-
-            return []  # pragma: no cover
-
-        def get_quantization_variable(self) -> List[Tensor]:
-            """
-            This function return a list with the quantizer's quantization parameters variables.
-
-            Returns: A list with the quantization parameters.
-
-            """
-
-            return []  # pragma: no cover
-
         @abstractmethod
         def get_quant_config(self):
             """

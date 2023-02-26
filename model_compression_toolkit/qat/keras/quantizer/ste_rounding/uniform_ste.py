@@ -32,6 +32,7 @@ from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructur
     mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
     BaseKerasInferableQuantizer, WeightsUniformInferableQuantizer, ActivationUniformInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
@@ -102,7 +103,8 @@ class STEUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         fq_max.assign(self.max)
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {FQ_MIN: fq_min, FQ_MAX: fq_max}
+        self.quantizer_parameters = {FQ_MIN: (fq_min, VariableGroup.WEIGHTS),
+                                     FQ_MAX: (fq_max, VariableGroup.WEIGHTS)}
         return self.quantizer_parameters
 
     def __call__(self, inputs: tf.Tensor,
@@ -117,8 +119,8 @@ class STEUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
             The quantized tensor.
         """
 
-        _min = self.quantizer_parameters[FQ_MIN]
-        _max = self.quantizer_parameters[FQ_MAX]
+        _min = self.quantizer_parameters[FQ_MIN][0]
+        _max = self.quantizer_parameters[FQ_MAX][0]
         _min, _max = adjust_range_to_include_zero(_min, _max, self.num_bits)
 
         if self.per_channel:
@@ -142,8 +144,8 @@ class STEUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         Returns:
             BaseKerasInferableQuantizer object.
         """
-        min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN].numpy(),
-                                                         self.quantizer_parameters[FQ_MAX].numpy(),
+        min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN][0].numpy(),
+                                                         self.quantizer_parameters[FQ_MAX][0].numpy(),
                                                          self.num_bits)
         return WeightsUniformInferableQuantizer(num_bits=self.num_bits,
                                                 min_range=list(min_range.flatten()),
@@ -206,7 +208,8 @@ class STEUniformActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         fq_max.assign(self.max_range)
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {FQ_MIN: fq_min, FQ_MAX: fq_max}
+        self.quantizer_parameters = {FQ_MIN: (fq_min, VariableGroup.WEIGHTS),
+                                     FQ_MAX: (fq_max, VariableGroup.WEIGHTS)}
         return self.quantizer_parameters
 
     def __call__(self,
@@ -222,8 +225,8 @@ class STEUniformActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
             The quantized tensor.
         """
 
-        _min = self.quantizer_parameters[FQ_MIN]
-        _max = self.quantizer_parameters[FQ_MAX]
+        _min = self.quantizer_parameters[FQ_MIN][0]
+        _max = self.quantizer_parameters[FQ_MAX][0]
         _min, _max = adjust_range_to_include_zero(_min, _max, self.num_bits)
         q_tensor = tf.quantization.fake_quant_with_min_max_vars(inputs, _min, _max,
                                                                 num_bits=self.num_bits)
@@ -237,8 +240,8 @@ class STEUniformActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         Returns:
             BaseKerasInferableQuantizer object.
         """
-        min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN].numpy(),
-                                                         self.quantizer_parameters[FQ_MAX].numpy(),
+        min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN][0].numpy(),
+                                                         self.quantizer_parameters[FQ_MAX][0].numpy(),
                                                          self.num_bits)
         return ActivationUniformInferableQuantizer(num_bits=self.num_bits,
                                                    # In activation quantization is per-tensor only - thus we pass

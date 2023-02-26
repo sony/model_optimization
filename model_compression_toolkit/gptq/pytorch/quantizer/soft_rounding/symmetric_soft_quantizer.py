@@ -14,7 +14,7 @@
 # ==============================================================================
 import torch
 import torch.nn as nn
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import numpy as np
 
 from model_compression_toolkit.core.common import Logger, max_power_of_two
@@ -32,6 +32,7 @@ from model_compression_toolkit.quantizers_infrastructure import TrainableQuantiz
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.quant_utils import \
     get_threshold_reshape_shape
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
 
 def soft_rounding_symmetric_quantizer(input_tensor: torch.Tensor,
@@ -162,7 +163,7 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, nn.Parameter]:
+                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, Tuple[nn.Parameter, VariableGroup]]:
         """
         Return a dictionary of quantizer parameters and their names.
 
@@ -195,16 +196,16 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         layer.register_parameter(f"{name}_{AUXVAR}", nn.Parameter(alpha, requires_grad=True))
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {PTQ_THRESHOLD: layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"),
-                                     AUXVAR: layer.get_parameter(f"{name}_{AUXVAR}"),
-                                     GPTQ_ITER: layer.get_parameter(f"{name}_{GPTQ_ITER}")}
+        self.quantizer_parameters = {PTQ_THRESHOLD: (layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"), VariableGroup.THRESHOLDS),
+                                     AUXVAR: (layer.get_parameter(f"{name}_{AUXVAR}"), VariableGroup.WEIGHTS),
+                                     GPTQ_ITER: (layer.get_parameter(f"{name}_{GPTQ_ITER}"), VariableGroup.WEIGHTS)}
 
         if self.quantization_parameter_learning:
             layer.register_parameter(f"{name}_{SCALE_PTQ}",
                                      nn.Parameter(torch.ones_like(torch.Tensor(self.threshold_values)),
                                                   requires_grad=True))
 
-            self.quantizer_parameters.update({SCALE_PTQ: layer.get_parameter(f"{name}_{SCALE_PTQ}")})
+            self.quantizer_parameters.update({SCALE_PTQ: (layer.get_parameter(f"{name}_{SCALE_PTQ}"), VariableGroup.THRESHOLDS)})
 
         return self.quantizer_parameters
 
@@ -217,7 +218,7 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         """
 
         st = self.get_soft_targets()
-        ar_iter = self.quantizer_parameters[GPTQ_ITER]
+        ar_iter = self.quantizer_parameters[GPTQ_ITER][0]
         b = self.linear_decay(ar_iter)
         return (1 - torch.pow(torch.abs(st - .5) * 2, b)).sum()
 
@@ -229,27 +230,8 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
             A tensor with the soft rounding targets values.
 
         """
-        scaled_sigmoid = torch.sigmoid(self.quantizer_parameters[AUXVAR]) * (self.zeta - self.gamma) + self.gamma
+        scaled_sigmoid = torch.sigmoid(self.quantizer_parameters[AUXVAR][0]) * (self.zeta - self.gamma) + self.gamma
         return torch.clip(scaled_sigmoid, min=0, max=1)
-
-    def get_aux_variable(self) -> List[torch.Tensor]:
-        """
-        This function return a list with the quantizer's quantization auxiliary variables.
-
-        Returns: A list with the quantization auxiliary variables.
-        """
-        return [self.quantizer_parameters.get(AUXVAR)]
-
-    def get_quantization_variable(self) -> List[torch.Tensor]:
-        """
-        This function return a list with the quantizer's quantization parameters variables.
-
-        Returns: A list with the quantization parameters.
-        """
-        if self.quantization_parameter_learning and not self.power_of_two:
-            return [self.quantizer_parameters[SCALE_PTQ]]
-        else:
-            return []
 
     def get_quant_config(self) -> Dict[str, np.ndarray]:
         """
@@ -260,12 +242,12 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
             Keys must match NodeQuantizationConfig attributes
 
         """
-        old_threshold = torch_tensor_to_numpy(self.quantizer_parameters[PTQ_THRESHOLD])
+        old_threshold = torch_tensor_to_numpy(self.quantizer_parameters[PTQ_THRESHOLD][0])
         if self.power_of_two:
             old_threshold = max_power_of_two(old_threshold, MIN_THRESHOLD)
         else:
             if self.quantization_parameter_learning:
-                scale = torch.reshape(self.quantizer_parameters[SCALE_PTQ], self.threshold_shape)
+                scale = torch.reshape(self.quantizer_parameters[SCALE_PTQ][0], self.threshold_shape)
                 old_threshold = old_threshold * torch_tensor_to_numpy(scale)
         old_threshold = old_threshold.reshape(self.threshold_shape)
         return {THRESHOLD: old_threshold}
@@ -283,9 +265,9 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         Returns:
             quantized tensor
         """
-        ar_iter = self.quantizer_parameters[GPTQ_ITER]
-        auxvar = self.quantizer_parameters[AUXVAR]
-        ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD]
+        ar_iter = self.quantizer_parameters[GPTQ_ITER][0]
+        auxvar = self.quantizer_parameters[AUXVAR][0]
+        ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD][0]
 
         #####################################################
         # Soft Rounding
@@ -317,7 +299,7 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
                                                          power_of_two=self.power_of_two)
 
             if self.quantization_parameter_learning and not self.power_of_two:
-                scale = torch.reshape(self.quantizer_parameters[SCALE_PTQ], reshape_shape)
+                scale = torch.reshape(self.quantizer_parameters[SCALE_PTQ][0], reshape_shape)
                 q_tensor *= scale
 
         else:
