@@ -58,7 +58,8 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
         self.num_conv_channels = 4
         self.kernel = 3
         self.conv_w = weight_fn(self.kernel, self.num_conv_channels, self.num_conv_channels)
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
+        # No KMEANS inferable quantizer -> use old exporter
+        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32, experimental_exporter=False)
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_quantization_method': self.quantization_method,

@@ -39,10 +39,10 @@ class DecomposeSeparableConvTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(len(quantized_model.layers) == 6)
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.DepthwiseConv2D))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[4], layers.Conv2D))
+        self.unit_test.assertTrue(len(quantized_model.layers) == 4)
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.DepthwiseConv2D))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.Conv2D))
         self.unit_test.assertTrue(quantized_model.layers[2].weights[0].shape == (2, 2, 3, 1 * self.depth_multiplier))
-        self.unit_test.assertTrue(quantized_model.layers[4].weights[0].shape == (1, 1, 3 * self.depth_multiplier, 1))
+        self.unit_test.assertTrue(quantized_model.layers[3].weights[0].shape == (1, 1, 3 * self.depth_multiplier, 1))
         self.unit_test.assertTrue(quantized_model.output_shape == float_model.output_shape)
 

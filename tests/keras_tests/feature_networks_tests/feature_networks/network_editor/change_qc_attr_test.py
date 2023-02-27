@@ -40,9 +40,9 @@ class ChangeFinalWeightQCAttrTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.Conv2D))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
         self.unit_test.assertTrue(quantized_model.layers[
-                                      2].bias is None)  # If bias correction is enabled, a bias should be added -
+                                      2].layer.bias is None)  # If bias correction is enabled, a bias should be added -
         # This asserts the editing occured
 
 
@@ -59,5 +59,5 @@ class ChangeFinalActivationQCAttrTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.Conv2D))
-        self.unit_test.assertTrue(quantized_model.layers[3].inbound_nodes[0].call_kwargs['num_bits'] == 7)
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
+        self.unit_test.assertTrue(quantized_model.layers[2].activation_quantizers[0].get_config()['num_bits'] == 7)

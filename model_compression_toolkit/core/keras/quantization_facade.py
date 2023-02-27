@@ -104,6 +104,8 @@ if FOUND_TF:
             >>> quantized_model, quantization_info = mct.keras_post_training_quantization(model, repr_datagen, n_iter=1)
 
         """
+        raise Exception
+
         KerasModelValidation(model=in_model,
                              fw_info=fw_info).validate()
 

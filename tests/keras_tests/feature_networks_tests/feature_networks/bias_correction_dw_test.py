@@ -50,9 +50,9 @@ class BiasCorrectionDepthwiseTest(BaseKerasFeatureNetworkTest):
         return np.ones(*self.get_input_shapes())
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        error = float_model.layers[1].depthwise_kernel - quantized_model.layers[2].depthwise_kernel
+        error = float_model.layers[1].depthwise_kernel - quantized_model.layers[2].weights_quantizers['depthwise_kernel'](quantized_model.layers[2].weights[0])
         error = np.sum(error, axis=(0,1)).flatten()
-        bias = quantized_model.layers[2].bias
+        bias = quantized_model.layers[2].weights[2]
         # Input mean is 1 so correction_term = quant_error * 1
         self.unit_test.assertTrue(np.isclose(error, bias).all())
 
