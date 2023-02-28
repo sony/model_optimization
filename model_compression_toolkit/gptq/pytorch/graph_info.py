@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import torch
 import torch.nn as nn
 from typing import List
 
@@ -55,7 +56,7 @@ def get_gptq_trainable_parameters(fxp_model: nn.Module,
     return trainable_aux_weights, trainable_bias, trainable_threshold, trainable_temperature
 
 
-def get_weights_for_loss(fxp_model: nn.Module) -> [List, List]:
+def get_weights_for_loss(fxp_model: nn.Module) -> [List[nn.Parameter], List[torch.Tensor]]:
     """
     Get all float and quantized kernels for the GPTQ loss
 
@@ -76,3 +77,25 @@ def get_weights_for_loss(fxp_model: nn.Module) -> [List, List]:
                 fxp_weights_list.append(quantizer(training=False, inputs=quantizer_vars))
 
     return flp_weights_list, fxp_weights_list
+
+
+# TODO: this function need to move to location that is relevant only for soft quantizer -
+#  once deciding how to handle GPTQ quantizers regularization.
+def get_soft_rounding_reg(fxp_model: nn.Module) -> List[torch.Tensor]:
+    """
+    This function returns the soft quantizer regularization values for SoftRounding.
+
+    Args:
+        fxp_model: A model to be quantized with SoftRounding.
+
+    Returns: A list of tensors.
+    """
+
+    soft_reg_aux: List[torch.Tensor] = []
+    for layer in fxp_model.modules():
+        if isinstance(layer, PytorchQuantizationWrapper):
+            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
+                                                                  fw_info=DEFAULT_PYTORCH_INFO)
+
+            soft_reg_aux.append(layer.weights_quantizers[kernel_attribute].get_regularization())
+    return soft_reg_aux
