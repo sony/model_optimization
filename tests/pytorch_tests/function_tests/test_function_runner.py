@@ -14,6 +14,8 @@
 # ==============================================================================
 import unittest
 
+from model_compression_toolkit import RoundingType
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from tests.pytorch_tests.function_tests.bn_info_collection_test import BNInfoCollectionTest, \
     Conv2D2BNInfoCollectionTest, Conv2DBNChainInfoCollectionTest, BNChainInfoCollectionTest, \
     BNLayerInfoCollectionTest, INP2BNInfoCollectionTest
@@ -137,6 +139,11 @@ class FunctionTestRunner(unittest.TestCase):
         This test checks the GPTQ config.
         """
         TestGetGPTQConfig(self).run_test()
+        TestGetGPTQConfig(self, quantization_method=QuantizationMethod.POWER_OF_TWO).run_test()
+        TestGetGPTQConfig(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+        TestGetGPTQConfig(self, quantization_method=QuantizationMethod.POWER_OF_TWO,
+                          rounding_type=RoundingType.SoftQuantizer).run_test()
+
 
 
 if __name__ == '__main__':
