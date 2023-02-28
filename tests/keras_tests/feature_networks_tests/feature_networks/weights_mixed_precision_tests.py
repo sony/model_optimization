@@ -291,10 +291,10 @@ class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
                                                           0]).all()  # kpi is infinity -> should give best model - 8bits
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[2].weights_quantizers['kernel'](quantized_model.layers[2].weights[0])[:, :, :, i]).flatten().shape[0] <= 256)
+                np.unique(quantized_model.layers[1].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[3].weights_quantizers['kernel'](quantized_model.layers[3].weights[0])[:, :, :, i]).flatten().shape[0] <= 256)
+                np.unique(quantized_model.layers[2].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
 
 
 class MixedPercisionSearchLastLayerDistanceTest(MixedPercisionBaseTest):

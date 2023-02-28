@@ -44,7 +44,7 @@ def get_new_weights_for_identity_dw_conv2d_layer(weights={}, activation_quantiza
 
 class DwConv2dReplacementTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def get_tpc(self):
         return get_quantization_disabled_keras_tpc("depthwise_conv2d_replacement_test")

@@ -27,7 +27,7 @@ from model_compression_toolkit import quantizers_infrastructure as qi
 
 class ExportableModelTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

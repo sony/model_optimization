@@ -30,14 +30,16 @@ class BaseKerasFeatureNetworkTest(BaseFeatureNetworkTest):
                  val_batch_size=1,
                  num_of_inputs=1,
                  input_shape=(8, 8, 3),
-                 experimental_exporter=True):
+                 experimental_exporter=False,
+                 experimental_facade=False):
 
         super().__init__(unit_test=unit_test,
                          val_batch_size=val_batch_size,
                          num_calibration_iter=num_calibration_iter,
                          num_of_inputs=num_of_inputs,
                          input_shape=input_shape,
-                         experimental_exporter=experimental_exporter)
+                         experimental_exporter=experimental_exporter,
+                         experimental_facade=experimental_facade)
 
     def get_tpc(self):
         return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
@@ -48,8 +50,8 @@ class BaseKerasFeatureNetworkTest(BaseFeatureNetworkTest):
     def get_experimental_ptq_facade(self):
         return keras_post_training_quantization_experimental
 
-    # def get_mixed_precision_ptq_facade(self):
-    #     return keras_post_training_quantization_mixed_precision
+    def get_mixed_precision_ptq_facade(self):
+        return keras_post_training_quantization_mixed_precision
 
     def get_fw_info(self) -> FrameworkInfo:
         return DEFAULT_KERAS_INFO

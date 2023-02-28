@@ -314,7 +314,12 @@ if FOUND_TF:
 
             return self._weights_vars
 
-        def get_quantized_weights(self):
+        def get_quantized_weights(self) -> Dict[str, tf.Tensor]:
+            """
+
+            Returns: A dictionary of weights attributes to quantized weights.
+
+            """
             quantized_weights = {}
             weights_var = self.get_weights_vars()
             for name, w, quantizer in weights_var:

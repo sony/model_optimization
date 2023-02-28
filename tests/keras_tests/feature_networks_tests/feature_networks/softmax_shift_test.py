@@ -56,7 +56,7 @@ class SoftmaxShiftTest(BaseKerasFeatureNetworkTest):
             mean_diff_bias = np.mean(diff_bias)
             self.unit_test.assertTrue(np.allclose(diff_bias, mean_diff_bias, atol=1e-1))
         else:
-            quant_bias = quantized_model.layers[2].layer.bias
+            quant_bias = quantized_model.layers[-5].bias
             float_bias = float_model.layers[1].bias
             diff_bias = float_bias - quant_bias
             mean_diff_bias = np.mean(diff_bias)

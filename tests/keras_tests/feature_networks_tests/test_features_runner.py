@@ -225,13 +225,13 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPercisionDepthwiseTest(self).run_test()
 
     def test_mixed_precision_search_with_last_layer_distance(self):
-        MixedPercisionSearchLastLayerDistanceTest(self).run_test(experimental_facade=True)
+        MixedPercisionSearchLastLayerDistanceTest(self).run_test()
 
     def test_mixed_precision_search_activation_non_conf_nodes(self):
-        MixedPercisionSearchActivationKPINonConfNodesTest(self).run_test(experimental_facade=True)
+        MixedPercisionSearchActivationKPINonConfNodesTest(self).run_test()
 
     def test_mixed_precision_search_total_non_conf_nodes(self):
-        MixedPercisionSearchTotalKPINonConfNodesTest(self).run_test(experimental_facade=True)
+        MixedPercisionSearchTotalKPINonConfNodesTest(self).run_test()
 
     def test_mixed_precision_activation_search(self):
         MixedPrecisionActivationSearchTest(self).run_test()
@@ -273,15 +273,15 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPrecisionReducedTotalKPISearchTest(self).run_test()
 
     def test_mixed_precision_bops_kpi(self):
-        MixedPrecisionBopsBasicTest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAllWeightsLayersTest(self).run_test(experimental_facade=True)
-        MixedPrecisionWeightsOnlyBopsTest(self).run_test(experimental_facade=True)
-        MixedPrecisionActivationOnlyBopsTest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAndWeightsKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAndActivationKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAndTotalKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsWeightsActivationKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsMultipleOutEdgesTest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsBasicTest(self).run_test()
+        MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
+        MixedPrecisionWeightsOnlyBopsTest(self).run_test()
+        MixedPrecisionActivationOnlyBopsTest(self).run_test()
+        MixedPrecisionBopsAndWeightsKPITest(self).run_test()
+        MixedPrecisionBopsAndActivationKPITest(self).run_test()
+        MixedPrecisionBopsAndTotalKPITest(self).run_test()
+        MixedPrecisionBopsWeightsActivationKPITest(self).run_test()
+        MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
     def test_name_filter(self):
         NameFilterTest(self).run_test()
@@ -468,8 +468,7 @@ class FeatureNetworkTest(unittest.TestCase):
         ActivationDecompositionTest(self, activation_function='softmax').run_test()
 
     def test_experimental_exporter(self):
-        ExportableModelTest(self).run_test(experimental_exporter=True,
-                                           experimental_facade=True)
+        ExportableModelTest(self).run_test()
 
     def test_conv2d_bn_concant(self):
         Conv2DBNConcatnFoldingTest(self).run_test()

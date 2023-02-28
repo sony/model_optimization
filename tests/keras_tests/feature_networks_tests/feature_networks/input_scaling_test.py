@@ -18,6 +18,8 @@ import model_compression_toolkit as mct
 import tensorflow as tf
 
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
+    ActivationPOTInferableQuantizer
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
@@ -29,7 +31,7 @@ layers = keras.layers
 
 class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def get_tpc(self):
         return get_16bit_tpc("input_scaling_range_test")
@@ -43,10 +45,11 @@ class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         qi = 3 if isinstance(quantized_model.layers[2].layer, layers.ZeroPadding2D) else 2
         fi = 2 if isinstance(float_model.layers[1], layers.ZeroPadding2D) else 1
-        self.unit_test.assertTrue(len(quantized_model.layers[1].activation_quantizers)==1)
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[1].activation_quantizers[0], ActivationPOTInferableQuantizer))
         self.unit_test.assertTrue(quantization_info.input_scale != 1)
+
         # If quantized weight has zeros, the division is inf, and we ignore it by masking these values when computing mean
-        attr = 'depthwise_kernel' if isinstance(quantized_model.layers[qi].layer, DepthwiseConv2D) else 'kernel'
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[qi].layer.__class__)[0]
         alpha = np.ma.masked_invalid((float_model.layers[fi].weights[0] / quantized_model.layers[qi].weights_quantizers[attr](quantized_model.layers[qi].weights[0])).numpy()).mean()
         self.unit_test.assertTrue(np.allclose(alpha, quantization_info.input_scale, atol=1e-1))
 

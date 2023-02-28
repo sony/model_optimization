@@ -16,15 +16,14 @@
 
 import numpy as np
 import tensorflow as tf
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from keras import backend as K
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig, MixedPrecisionQuantizationConfigV2
+    MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
-from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
 keras = tf.keras
@@ -402,7 +401,7 @@ class MixedPrecisionActivationAddLayerTest(MixedPrecisionActivationBaseTest):
 
 class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, num_calibration_iter=3, activation_layers_idx=[4, 5, 6, 7, 8, 9, 10, 11, 12])
+        super().__init__(unit_test, num_calibration_iter=3, activation_layers_idx=[4, 5, 6, 7, 12, 13, 14, 15])
         self.num_of_inputs = 4
         self.val_batch_size = 2
 
@@ -420,12 +419,8 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
                                     weights_per_channel_threshold=True,
                                     input_scaling=False,
                                     activation_channel_equalization=False)
-        return qc
-        # return MixedPrecisionQuantizationConfig(qc, num_of_images=self.num_of_inputs)
 
-    def get_mixed_precision_v2_config(self):
-        return MixedPrecisionQuantizationConfigV2(num_of_images=self.num_of_inputs)
-
+        return MixedPrecisionQuantizationConfig(qc, num_of_images=self.num_of_inputs)
 
     def create_networks(self):
         inputs_1 = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -443,9 +438,8 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # kpi is infinity -> should give best model - 8bits
-        activation_bits = [l.activation_quantizers[0].get_config()['num_bits'] for l in quantized_model.layers if isinstance(l,KerasQuantizationWrapper)]
-        # activation_bits = [quantized_model.layers[i].inbound_nodes[0].call_kwargs.get('num_bits') for i in self.activation_layers_idx]
-        self.unit_test.assertTrue((activation_bits == [8, 8, 8, 8, 8, 8, 8, 8, 8]))
+        activation_bits = [quantized_model.layers[i].inbound_nodes[0].call_kwargs.get('num_bits') for i in self.activation_layers_idx]
+        self.unit_test.assertTrue((activation_bits == [8, 8, 8, 8, 8, 8, 8, 8]))
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[],

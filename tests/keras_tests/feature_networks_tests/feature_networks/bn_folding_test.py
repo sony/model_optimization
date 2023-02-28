@@ -83,10 +83,10 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
             float_kernel = float_conv.weights[0]
             float_bias = float_conv.weights[1]
 
-            quant_conv = quantized_model.layers[2]
+            quant_conv = quantized_model.layers[1]
 
         quant_kernel = quant_conv.weights[0]
-        quant_bias = quant_conv.layer.bias
+        quant_bias = quant_conv.weights[1]
 
         float_bn = float_model.layers[2]
         float_gamma = float_bn.weights[0]

@@ -55,7 +55,9 @@ class BaseSecondMomentTest(BaseKerasFeatureNetworkTest, ABC):
 
     def __init__(self, unit_test):
         super(BaseSecondMomentTest, self).__init__(unit_test=unit_test, val_batch_size=128,
-                                                   num_calibration_iter=100, input_shape=(32, 32, 1))
+                                                   num_calibration_iter=100, input_shape=(32, 32, 1),
+                                                   experimental_exporter=True,
+                                                   experimental_facade=True)
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 16,
@@ -77,7 +79,7 @@ class BaseSecondMomentTest(BaseKerasFeatureNetworkTest, ABC):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[2].layer.__class__)[0]
-        quantized_model_kernel = quantized_model.layers[2].weights_quantizers[attr](quantized_model.layers[2].weights[0])
+        quantized_model_kernel = quantized_model.layers[2].get_quantized_weights()[attr]
         quantized_model_bias = quantized_model.layers[2].weights[2]
         float_model_gamma = float_model.layers[2].weights[0]
         float_model_beta = float_model.layers[2].weights[1]
@@ -320,22 +322,18 @@ class POTSecondMomentTest(BaseSecondMomentTest):
         x = layers.Activation('relu')(x)
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
-    def run_test(self, experimental_facade=False, experimental_exporter=False):
+    def run_test(self):
         with self.unit_test.assertLogs(level='WARNING') as cm:
             feature_networks = self.create_networks()
             feature_networks = feature_networks if isinstance(feature_networks, list) else [feature_networks]
             for model_float in feature_networks:
-                # qc = self.get_quantization_config()
                 core_cfg = self.get_core_config()
                 ptq_model, quantization_info = self.get_experimental_ptq_facade()(model_float,
-                                                                     self.representative_data_gen,
-                                                                                core_config=core_cfg,
-                                                                     # n_iter=self.num_calibration_iter,
-                                                                     # quant_config=qc,
-                                                                     # fw_info=self.get_fw_info(),
-                                                                     # network_editor=self.get_network_editor(),
-                                                                     # gptq_config=self.get_gptq_config(),
-                                                                     target_platform_capabilities=self.get_tpc())
+                                                                                  self.representative_data_gen,
+                                                                                  core_config=core_cfg,
+                                                                                  target_platform_capabilities=self.get_tpc(),
+                                                                                  new_experimental_exporter=True)
+
                 self.compare(ptq_model, model_float, cm=cm, input_x=self.representative_data_gen(),
                              quantization_info=quantization_info)
 
@@ -346,7 +344,8 @@ class POTSecondMomentTest(BaseSecondMomentTest):
         self.unit_test.assertTrue(any(warn_msg in s for s in cm.output))
 
         # Check that the SMC feature is not working
-        quantized_model_kernel = quantized_model.layers[2].weights[0]
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[2].layer.__class__)[0]
+        quantized_model_kernel = quantized_model.layers[2].get_quantized_weights()[attr]
         quantized_model_bias = quantized_model.layers[2].weights[2]
         float_model_gamma = float_model.layers[2].weights[0]
         float_model_beta = float_model.layers[2].weights[1]
@@ -385,7 +384,8 @@ class NoBNSecondMomentTest(BaseSecondMomentTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Check that the SMC feature is not working
-        quantized_model_kernel = quantized_model.layers[2].weights[0]
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[2].layer.__class__)[0]
+        quantized_model_kernel = quantized_model.layers[2].get_quantized_weights()[attr]
         quantized_model_bias = quantized_model.layers[2].weights[2]
         float_model_kernel = float_model.layers[1].weights[0]
         float_model_bias = float_model.layers[1].weights[1]
@@ -420,7 +420,8 @@ class ReusedConvSecondMomentTest(BaseSecondMomentTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Check that the SMC feature is not working
-        quantized_model_kernel = quantized_model.layers[2].weights[0]
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[2].layer.__class__)[0]
+        quantized_model_kernel = quantized_model.layers[2].get_quantized_weights()[attr]
         quantized_model_bias = quantized_model.layers[2].weights[2]
         float_model_kernel = float_model.layers[1].weights[0]
         float_model_bias = float_model.layers[1].weights[1]
@@ -456,7 +457,8 @@ class UniformSecondMomentTest(BaseSecondMomentTest):
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        quantized_model_kernel = quantized_model.layers[2].weights[0]
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[2].layer.__class__)[0]
+        quantized_model_kernel = quantized_model.layers[2].get_quantized_weights()[attr]
         quantized_model_bias = quantized_model.layers[2].weights[2]
         float_model_gamma = float_model.layers[2].weights[0]
         float_model_beta = float_model.layers[2].weights[1]

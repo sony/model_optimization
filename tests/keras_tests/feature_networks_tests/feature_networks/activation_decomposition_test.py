@@ -31,7 +31,7 @@ layers = keras.layers
 class ActivationDecompositionTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, activation_function: str):
         self.activation_function = activation_function
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def get_tpc(self):
         return get_quantization_disabled_keras_tpc("activation_decomp_test")
