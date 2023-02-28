@@ -12,9 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import random
 
+import numpy as np
+import torch
 import torch.nn as nn
 
+import model_compression_toolkit as mct
+from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
@@ -23,13 +29,13 @@ This test checks the MultiHeadAttentionDecomposition feature.
 
 
 class MHABaseTest(BasePytorchTest):
-    def __init__(self, unit_test, num_heads, q_seq_len, embed_dim, kv_seq_len, kdim, vdim, bias=True,
+    def __init__(self, unit_test, num_heads, q_seq_len, embed_dim, kv_seq_len, kdim=None, vdim=None, bias=True,
                  add_bias_kv=False, add_zero_attn=False, batch_first=True, float_reconstruction_error=1e-6):
         super().__init__(unit_test, float_reconstruction_error)
 
         self.num_heads = num_heads
         self.embed_dim = embed_dim
-        self.q_dim = int(embed_dim/num_heads)
+        self.q_dim = int(embed_dim / num_heads)
         self.query_input_shape = (q_seq_len, self.embed_dim)
         self.kdim = kdim
         self.vdim = vdim
@@ -74,3 +80,45 @@ class MHALayerNetTest(MHABaseTest):
         return MHANet(embed_dim=self.embed_dim, num_heads=self.num_heads, kdim=self.kdim,
                       vdim=self.vdim, bias=self.bias, add_bias_kv=self.add_bias_kv,
                       add_zero_attn=self.add_zero_attn, batch_first=self.batch_first)
+
+
+class MHALayerNetFeatureTest(MHALayerNetTest):
+    """
+    This test checks the MultiHeadAttention as a single layer with add_bias_kv feature.
+    """
+
+    def run_test(self, seed=0, experimental_facade=False):
+        np.random.seed(seed)
+        random.seed(a=seed)
+        torch.random.manual_seed(seed)
+        input_shapes = self.create_inputs_shape()
+        x = self.generate_inputs(input_shapes)
+
+        def representative_data_gen():
+            return x
+
+        model_float = self.create_feature_network(input_shapes)
+        quant_config_dict = self.get_quantization_configs()
+        tpc_dict = self.get_tpc()
+        assert isinstance(tpc_dict, dict), "Pytorch tests get_tpc should return a dictionary " \
+                                           "mapping the test model name to a TPC object."
+        for model_name in tpc_dict.keys():
+            tpc = tpc_dict[model_name]
+            assert isinstance(tpc, TargetPlatformCapabilities)
+
+            quant_config = quant_config_dict.get(model_name)
+            assert quant_config is not None, f"Model name {model_name} does not exists in the test's " \
+                                             f"quantization configs dictionary keys"
+            core_config = self.get_core_config()
+            core_config.quantization_config = quant_config
+
+            with self.unit_test.assertRaises(Exception) as e:
+                ptq_model, quantization_info = mct.pytorch_post_training_quantization(model_float,
+                                                                                      representative_data_gen,
+                                                                                      n_iter=self.num_calibration_iter,
+                                                                                      quant_config=quant_config,
+                                                                                      fw_info=DEFAULT_PYTORCH_INFO,
+                                                                                      network_editor=
+                                                                                      self.get_network_editor(),
+                                                                                      target_platform_capabilities=tpc)
+            self.unit_test.assertEqual('Add BIAS_KV feature is Not Implemented', str(e.exception))
