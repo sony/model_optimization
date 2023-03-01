@@ -15,13 +15,17 @@ class BaseTest:
                  val_batch_size=1,
                  num_calibration_iter=1,
                  num_of_inputs=1,
-                 input_shape=(8, 8, 3)):
+                 input_shape=(8, 8, 3),
+                 experimental_exporter=False,
+                 experimental_facade=False):
 
         self.unit_test = unit_test
         self.val_batch_size = val_batch_size
         self.num_calibration_iter = num_calibration_iter
         self.num_of_inputs = num_of_inputs
         self.input_shape = (val_batch_size,) + input_shape
+        self.experimental_exporter = experimental_exporter
+        self.experimental_facade = experimental_facade
 
     def get_mixed_precision_v2_config(self):
         return None

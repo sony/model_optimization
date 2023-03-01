@@ -29,6 +29,10 @@ layers = keras.layers
 
 class ChangeFinalWeightQCAttrTest(BaseKerasFeatureNetworkTest):
 
+    def __init__(self, unit_test):
+        super().__init__(unit_test,
+                         experimental_exporter=True)
+
     def get_network_editor(self):
         return [EditRule(filter=NodeTypeFilter(layers.Conv2D),
                          action=ChangeFinalWeightsQuantConfigAttr(weights_bias_correction=False))]
@@ -40,13 +44,16 @@ class ChangeFinalWeightQCAttrTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.Conv2D))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
         self.unit_test.assertTrue(quantized_model.layers[
-                                      2].bias is None)  # If bias correction is enabled, a bias should be added -
+                                      2].layer.bias is None)  # If bias correction is enabled, a bias should be added -
         # This asserts the editing occured
 
 
 class ChangeFinalActivationQCAttrTest(BaseKerasFeatureNetworkTest):
+
+    def __init__(self, unit_test):
+        super().__init__(unit_test, experimental_exporter=True)
 
     def get_network_editor(self):
         return [EditRule(filter=NodeTypeFilter(layers.Conv2D),
@@ -59,5 +66,5 @@ class ChangeFinalActivationQCAttrTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.Conv2D))
-        self.unit_test.assertTrue(quantized_model.layers[3].inbound_nodes[0].call_kwargs['num_bits'] == 7)
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
+        self.unit_test.assertTrue(quantized_model.layers[2].activation_quantizers[0].get_config()['num_bits'] == 7)

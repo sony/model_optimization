@@ -44,7 +44,7 @@ def get_new_weights_for_identity_dw_conv2d_layer(weights={}, activation_quantiza
 
 class DwConv2dReplacementTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def get_tpc(self):
         return get_quantization_disabled_keras_tpc("depthwise_conv2d_replacement_test")
@@ -56,8 +56,8 @@ class DwConv2dReplacementTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(np.isclose(0, np.mean(quantized_model.predict(input_x) - input_x)))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[1], layers.DepthwiseConv2D))
-        self.unit_test.assertTrue(np.all(quantized_model.layers[1].depthwise_kernel.numpy() == 1))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.DepthwiseConv2D))
+        self.unit_test.assertTrue(np.all(quantized_model.layers[2].layer.depthwise_kernel.numpy() == 1))
 
     def get_network_editor(self):
         return [EditRule(filter=NodeTypeFilter(layers.DepthwiseConv2D),
