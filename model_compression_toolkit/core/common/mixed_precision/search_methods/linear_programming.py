@@ -22,6 +22,8 @@ from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
 
+# Limit ILP solver runtime in seconds
+SOLVER_TIME_LIMIT = 60
 
 def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
                                   target_kpi: KPI = None) -> List[int]:
@@ -64,7 +66,10 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
                                     target_kpi,
                                     search_manager)
 
-    lp_problem.solve()  # Try to solve the problem.
+    # Use default PULP solver. Limit runtime in seconds
+    solver = PULP_CBC_CMD(timeLimit=SOLVER_TIME_LIMIT)
+    lp_problem.solve(solver=solver)  # Try to solve the problem.
+
     assert lp_problem.status == LpStatusOptimal, Logger.critical(
         "No solution was found during solving the LP problem")
     Logger.info(LpStatus[lp_problem.status])
