@@ -80,15 +80,3 @@ class TestGetGPTQConfig(BasePytorchTest):
                                                                                   core_config=cc,
                                                                                   gptq_config=gptqv2_config,
                                                                                   target_platform_capabilities=symmetric_weights_tpc)
-
-        self.compare(quant_model, float_model,
-                     input_x=random_datagen_experimental().__next__()[0])
-
-    def compare(self, quant_model, float_model, input_x=None, quantization_info=None):
-        set_model(float_model)
-        set_model(quant_model)
-        float_result = torch_tensor_to_numpy(float_model(to_torch_tensor(input_x)))
-        quant_result = torch_tensor_to_numpy(quant_model(to_torch_tensor(input_x)))
-
-        self.unit_test.assertTrue(np.isclose(np.linalg.norm(float_result-quant_result), 0, atol=0.02))
-

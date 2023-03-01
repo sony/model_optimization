@@ -17,7 +17,7 @@ import torch.nn as nn
 from typing import List, Dict
 import numpy as np
 
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.core.common import Logger, max_power_of_two
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
@@ -27,7 +27,7 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_
 from model_compression_toolkit.gptq.pytorch.quantizer import quant_utils as qutils
 from model_compression_toolkit.gptq.common.gptq_constants import PTQ_THRESHOLD, SCALE_PTQ, N_EPOCHS, \
     MAX_ITERATIONS_DEFAULT, SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, SOFT_ROUNDING_BETA, GPTQ_ITER, AUXVAR
-from model_compression_toolkit.core.common.constants import THRESHOLD
+from model_compression_toolkit.core.common.constants import THRESHOLD, MIN_THRESHOLD
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.quant_utils import \
@@ -130,6 +130,9 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
             n_epochs (int): number of epochs the representative dataset is run during fine-tuning
         """
 
+        if n_batches is None:
+            Logger.error("SymmetricSoftRoundingGPTQ got an uninitialized n_batches argument.")
+
         super().__init__(quantization_config)
         self.num_bits = quantization_config.weights_n_bits
         self.per_channel = quantization_config.weights_per_channel_threshold
@@ -153,10 +156,6 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         self.quantizer_parameters = {}
 
         # Initializing the temperature decay according to the number of expected gradient steps
-        if n_batches is None:
-            Logger.warning(f"Number of batches is not set correctly for the Soft Quantizer. A default value of "  # pragma: no cover
-                           f"{MAX_ITERATIONS_DEFAULT} is used to set the temperature decay which may affect the results.")
-
         num_iterations = MAX_ITERATIONS_DEFAULT if n_batches is None else n_epochs * n_batches
         self.linear_decay = LinearTempDecay(num_iterations)
 
@@ -178,26 +177,34 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         layer.register_parameter(f"{name}_{GPTQ_ITER}",
                                  nn.Parameter(to_torch_tensor(np.array([0])), requires_grad=False))
 
+        if self.per_channel:
+            threshold_tensor = to_torch_tensor(self.threshold_values)
+        else:
+            threshold_tensor = torch.tensor(self.threshold_values)
         layer.register_parameter(f"{name}_{PTQ_THRESHOLD}",
-                                 nn.Parameter(torch.tensor(self.threshold_values, requires_grad=False)
-                                              if not self.per_channel
-                                              else to_torch_tensor(self.threshold_values), requires_grad=False))
+                                 nn.Parameter(threshold_tensor, requires_grad=False))
 
-        w = layer.layer.weight.detach().cpu().numpy()
-        delta = qutils.calculate_delta(self.threshold_values.reshape(self.threshold_shape), self.num_bits, signed=True)
-        w_clipped_normed = np.clip(w / delta, -2**(self.num_bits-1), 2**(self.num_bits-1)-1)
-        rest = w_clipped_normed - np.floor(w_clipped_normed)  # rest of rounding [0, 1)
+        w = layer.layer.weight
+        delta = qutils.calculate_delta(threshold_tensor.reshape(self.threshold_shape), self.num_bits, signed=True)
+        w_clipped_normed = torch.clip(w / delta, -2**(self.num_bits-1), 2**(self.num_bits-1)-1)
+        rest = w_clipped_normed - torch.floor(w_clipped_normed)  # rest of rounding [0, 1)
         # Note that (rest - self.gamma) can't be zero since rest is positive and gamma is negative, so the division
         # is safe
-        alpha = -np.log((self.zeta - self.gamma) / (rest - self.gamma) - 1)  # => sigmoid(alpha) = rest
+        alpha = -torch.log((self.zeta - self.gamma) / (rest - self.gamma) - 1)  # => sigmoid(alpha) = rest
 
-        layer.register_parameter(f"{name}_{AUXVAR}", nn.Parameter(to_torch_tensor(alpha),
-                                                                  requires_grad=True))
+        layer.register_parameter(f"{name}_{AUXVAR}", nn.Parameter(alpha, requires_grad=True))
 
         # save the quantizer added parameters for later calculations
         self.quantizer_parameters = {PTQ_THRESHOLD: layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"),
                                      AUXVAR: layer.get_parameter(f"{name}_{AUXVAR}"),
                                      GPTQ_ITER: layer.get_parameter(f"{name}_{GPTQ_ITER}")}
+
+        if self.quantization_parameter_learning:
+            layer.register_parameter(f"{name}_{SCALE_PTQ}",
+                                     nn.Parameter(torch.ones_like(torch.Tensor(self.threshold_values)),
+                                                  requires_grad=True))
+
+            self.quantizer_parameters.update({SCALE_PTQ: layer.get_parameter(f"{name}_{SCALE_PTQ}")})
 
         return self.quantizer_parameters
 
@@ -223,7 +230,7 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
 
         """
         scaled_sigmoid = torch.sigmoid(self.quantizer_parameters[AUXVAR]) * (self.zeta - self.gamma) + self.gamma
-        return qutils.ste_clip(scaled_sigmoid, min_val=0, max_val=1)
+        return torch.clip(scaled_sigmoid, min=0, max=1)
 
     def get_aux_variable(self) -> List[torch.Tensor]:
         """
@@ -239,7 +246,10 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
 
         Returns: A list with the quantization parameters.
         """
-        return [self.quantizer_parameters.get(PTQ_THRESHOLD)]
+        if self.quantization_parameter_learning and not self.power_of_two:
+            return [self.quantizer_parameters[SCALE_PTQ]]
+        else:
+            return []
 
     def get_quant_config(self) -> Dict[str, np.ndarray]:
         """
@@ -250,8 +260,15 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
             Keys must match NodeQuantizationConfig attributes
 
         """
-        old_threshold = self.quantizer_parameters[PTQ_THRESHOLD]
-        return {THRESHOLD: torch_tensor_to_numpy(old_threshold).reshape(self.threshold_shape)}
+        old_threshold = torch_tensor_to_numpy(self.quantizer_parameters[PTQ_THRESHOLD])
+        if self.power_of_two:
+            old_threshold = max_power_of_two(old_threshold, MIN_THRESHOLD)
+        else:
+            if self.quantization_parameter_learning:
+                scale = torch.reshape(self.quantizer_parameters[SCALE_PTQ], self.threshold_shape)
+                old_threshold = old_threshold * torch_tensor_to_numpy(scale)
+        old_threshold = old_threshold.reshape(self.threshold_shape)
+        return {THRESHOLD: old_threshold}
 
     def __call__(self,
                  inputs: nn.Parameter,

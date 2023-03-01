@@ -111,7 +111,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         self.gptq_compare(ptq_model, gptq_model, input_x=x)
 
 
-class STEAccuracyTest(GPTQBaseTest):
+class GPTQAccuracyTest(GPTQBaseTest):
 
     def get_gptq_config(self):
         return GradientPTQConfig(5,
@@ -140,7 +140,7 @@ class STEAccuracyTest(GPTQBaseTest):
                                   msg='PTQ model number of weights different from GPTQ model!')
 
 
-class STEWeightsUpdateTest(GPTQBaseTest):
+class GPTQWeightsUpdateTest(GPTQBaseTest):
 
     def get_gptq_config(self):
         return GradientPTQConfig(50,
@@ -173,7 +173,7 @@ class STEWeightsUpdateTest(GPTQBaseTest):
         self.unit_test.assertTrue(all(w_diff), msg="GPTQ: some weights weren't updated")
 
 
-class STELearnRateZeroTest(GPTQBaseTest):
+class GPTQLearnRateZeroTest(GPTQBaseTest):
 
     def get_gptq_config(self):
         return GradientPTQConfig(5,

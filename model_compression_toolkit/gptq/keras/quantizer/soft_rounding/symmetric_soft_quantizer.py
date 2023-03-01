@@ -157,10 +157,6 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
         self.quantizer_parameters = {}
 
         # Initializing the temperature decay according to the number of expected gradient steps
-        if n_batches is None:
-            Logger.warning(f"Number of batches is not set correctly for the Soft Quantizer. A default value of "  # pragma: no cover
-                           f"{MAX_ITERATIONS_DEFAULT} is used to set the temperature decay which may affect the results.")
-
         init_decay = MAX_ITERATIONS_DEFAULT if n_batches is None else n_epochs * n_batches
         self.linear_decay = LinearTempDecay(init_decay)
 
@@ -309,7 +305,7 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
             if training:
                 self.ar_iter.assign_add(1.0)
             else:
-                aux_var = tf.cast(self.quantizer_parameters[AUXVAR] >= 0, tf.float32)
+                aux_var = tf.cast(tf.math.greater_equal(aux_var, 0.5), tf.float32)
 
             #####################################################
             # Quantized Input
