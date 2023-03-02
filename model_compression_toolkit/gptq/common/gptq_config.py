@@ -75,7 +75,7 @@ class GradientPTQConfig:
             num_samples_for_loss (int): Number of samples to use for computing the jacobian-based weights.
             norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
-            optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
+            optimizer_bias (Any): Optimizer to override the rest optimizer for bias.
             log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
             weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
             quantizer_config (GPTQQuantizerConfig): A class that contains the quantizer specific config.
@@ -108,7 +108,6 @@ class GradientPTQConfig:
         else:
             common.Logger.error(f"Quantizer config of type {type(quantizer_config)} "
                                 f"is not suitable for rounding type {rounding_type}")
-
 
     def _verify_quantizer_config(self, quantizer_config, rounding_type) -> bool:
         """

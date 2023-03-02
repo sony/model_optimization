@@ -15,6 +15,8 @@
 import unittest
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.gptq.common.gptq_config import RoundingType
+from model_compression_toolkit.gptq.common.gptq_quantizer_config import SoftQuantizerConfig
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
@@ -69,7 +71,7 @@ from tests.pytorch_tests.model_tests.feature_models.shift_negative_activation_te
 from tests.pytorch_tests.model_tests.feature_models.split_concat_net_test import SplitConcatNetTest
 from tests.pytorch_tests.model_tests.feature_models.torch_tensor_attr_net_test import TorchTensorAttrNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_function_test import BNFNetTest
-from tests.pytorch_tests.model_tests.feature_models.gptq_test import STEAccuracyTest, STEWeightsUpdateTest, STELearnRateZeroTest
+from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccuracyTest, GPTQWeightsUpdateTest, GPTQLearnRateZeroTest
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
 
@@ -448,10 +450,19 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the GPTQ feature.
         """
-        STEAccuracyTest(self).run_test()
-        STEAccuracyTest(self, per_channel=False).run_test()
-        STEWeightsUpdateTest(self).run_test()
-        STELearnRateZeroTest(self).run_test()
+        GPTQAccuracyTest(self).run_test()
+        GPTQAccuracyTest(self, per_channel=False).run_test()
+        GPTQWeightsUpdateTest(self).run_test()
+        GPTQLearnRateZeroTest(self).run_test()
+
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         quantizer_config=SoftQuantizerConfig()).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         quantizer_config=SoftQuantizerConfig(), per_channel=False).run_test()
+        GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer,
+                              quantizer_config=SoftQuantizerConfig()).run_test()
+        GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer,
+                              quantizer_config=SoftQuantizerConfig()).run_test()
 
     def test_qat(self):
         """

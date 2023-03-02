@@ -18,11 +18,13 @@ from torch import nn
 
 import model_compression_toolkit as mct
 from model_compression_toolkit import get_pytorch_gptq_config, pytorch_gradient_post_training_quantization_experimental, \
-    CoreConfig, QuantizationConfig, QuantizationErrorMethod
+    CoreConfig, QuantizationConfig, QuantizationErrorMethod, RoundingType
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
+from model_compression_toolkit.core.pytorch.utils import get_working_device, set_model, to_torch_tensor, \
+    torch_tensor_to_numpy
 
 tp = mct.target_platform
 
@@ -48,13 +50,16 @@ class TestModel(nn.Module):
 
 
 def random_datagen_experimental():
-    yield [np.random.random((1, 3, 8, 8))]
+    for _ in range(20):
+        yield [np.random.random((1, 3, 8, 8))]
 
 
 class TestGetGPTQConfig(BasePytorchTest):
 
-    def __init__(self, unit_test):
+    def __init__(self, unit_test, quantization_method=QuantizationMethod.SYMMETRIC, rounding_type=RoundingType.STE):
         super().__init__(unit_test)
+        self.quantization_method = quantization_method
+        self.rounding_type = rounding_type
 
     def run_test(self):
         qc = QuantizationConfig(QuantizationErrorMethod.MSE,
@@ -62,15 +67,16 @@ class TestGetGPTQConfig(BasePytorchTest):
                                 weights_bias_correction=False)  # disable bias correction when working with GPTQ
         cc = CoreConfig(quantization_config=qc)
 
-        gptqv2_configurations = [get_pytorch_gptq_config(n_epochs=1,
-                                                         optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4))]
+        gptqv2_config = get_pytorch_gptq_config(n_epochs=1,
+                                                optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4))
+        gptqv2_config.rounding_type = self.rounding_type
 
-        tp = generate_test_tp_model({'weights_quantization_method': QuantizationMethod.SYMMETRIC})
+        tp = generate_test_tp_model({'weights_quantization_method': self.quantization_method})
         symmetric_weights_tpc = generate_pytorch_tpc(name="gptq_config_test", tp_model=tp)
 
-        for i, gptq_config in enumerate(gptqv2_configurations):
-            pytorch_gradient_post_training_quantization_experimental(model=TestModel(),
-                                                                     representative_data_gen=random_datagen_experimental,
-                                                                     core_config=cc,
-                                                                     gptq_config=gptq_config,
-                                                                     target_platform_capabilities=symmetric_weights_tpc)
+        float_model = TestModel()
+        quant_model, _ = pytorch_gradient_post_training_quantization_experimental(model=float_model,
+                                                                                  representative_data_gen=random_datagen_experimental,
+                                                                                  core_config=cc,
+                                                                                  gptq_config=gptqv2_config,
+                                                                                  target_platform_capabilities=symmetric_weights_tpc)
