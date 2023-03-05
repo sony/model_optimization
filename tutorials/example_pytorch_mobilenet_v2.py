@@ -32,18 +32,35 @@ def np_to_pil(img):
 
 def argument_handler():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--representative_dataset_dir', type=str, required=True, default=None,
-                        help='folder path for the representative dataset.')
-    parser.add_argument('--batch_size', type=int, default=50,
-                        help='batch size for the representative data.')
-    parser.add_argument('--num_calibration_iterations', type=int, default=10,
-                        help='number of iterations for calibration.')
-    parser.add_argument('--z_threshold', type=int, default=16,
-                        help='set z threshold for outlier removal algorithm.')
+    parser.add_argument(
+        "--representative_dataset_dir",
+        type=str,
+        required=True,
+        default=None,
+        help="folder path for the representative dataset.",
+    )
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=50,
+        help="batch size for the representative data.",
+    )
+    parser.add_argument(
+        "--num_calibration_iterations",
+        type=int,
+        default=10,
+        help="number of iterations for calibration.",
+    )
+    parser.add_argument(
+        "--z_threshold",
+        type=int,
+        default=16,
+        help="set z threshold for outlier removal algorithm.",
+    )
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # Parse arguments
     args = argument_handler()
@@ -59,17 +76,23 @@ if __name__ == '__main__':
     # The images can be preprocessed using a list of preprocessing functions.
     from model_compression_toolkit import FolderImageLoader
 
-    image_data_loader = FolderImageLoader(folder,
-                                          preprocessing=[np_to_pil,
-                                                         transforms.Compose([
-                                                             transforms.Resize(256),
-                                                             transforms.CenterCrop(224),
-                                                             transforms.ToTensor(),
-                                                             transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                                                                  std=[0.229, 0.224, 0.225]),
-                                                         ])
-                                                         ],
-                                          batch_size=batch_size)
+    image_data_loader = FolderImageLoader(
+        folder,
+        preprocessing=[
+            np_to_pil,
+            transforms.Compose(
+                [
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                    ),
+                ]
+            ),
+        ],
+        batch_size=batch_size,
+    )
 
     # Create a Callable representative dataset for calibration purposes.
     # The function should be called without any arguments, and should return a list numpy arrays (array for each
@@ -85,8 +108,7 @@ if __name__ == '__main__':
     # The model determines the quantization methods to use during the MCT optimization process.
     # Here, for example, we use the default model that is attached to a Pytorch
     # layers representation.
-    target_platform_cap = mct.get_target_platform_capabilities('pytorch', 'default')
-
+    target_platform_cap = mct.get_target_platform_capabilities("pytorch", "default")
 
     # Create a model and quantize it using the representative_data_gen as the calibration images.
     model = mobilenet_v2(pretrained=True)
@@ -95,9 +117,10 @@ if __name__ == '__main__':
     # Configure z threshold algorithm for outlier removal. Set z threshold.
     quantization_config.z_threshold = args.z_threshold
     # run post training quantization on the model to get the quantized model output
-    quantized_model, quantization_info = mct.pytorch_post_training_quantization(model,
-                                                                                representative_data_gen,
-                                                                                target_platform_capabilities=target_platform_cap,
-                                                                                n_iter=args.num_calibration_iterations)
-
-
+    quantized_model, quantization_info = mct.pytorch_post_training_quantization(
+        in_module=model,
+        representative_data_gen=representative_data_gen,
+        quant_config=quantization_config,
+        target_platform_capabilities=target_platform_cap,
+        n_iter=args.num_calibration_iterations,
+    )
