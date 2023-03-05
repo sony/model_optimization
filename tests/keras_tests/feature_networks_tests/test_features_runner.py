@@ -140,41 +140,27 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_edit_error_method(self):
         EditActivationErrorMethod(self).run_test()
-        EditActivationErrorMethod(self).run_test()
 
     def test_change_qc_attr(self):
-        ChangeFinalWeightQCAttrTest(self).run_test()
-        ChangeFinalActivationQCAttrTest(self).run_test()
         ChangeFinalWeightQCAttrTest(self).run_test()
         ChangeFinalActivationQCAttrTest(self).run_test()
 
     def test_edit_candidate_qc(self):
         ChangeCandidatesWeightsQuantConfigAttrTest(self).run_test()
-        ChangeCandidatesWeightsQuantConfigAttrTest(self).run_test()
-        ChangeCandidatesActivationQCAttrTest(self).run_test()
         ChangeCandidatesActivationQCAttrTest(self).run_test()
         ChangeCandidatesActivationQuantizationMethodQCAttrTest(self).run_test()
-        ChangeCandidatesActivationQuantizationMethodQCAttrTest(self).run_test()
-        ChangeCandidatesWeightsQuantizationMethodQCAttrTest(self).run_test()
         ChangeCandidatesWeightsQuantizationMethodQCAttrTest(self).run_test()
 
     def test_edit_final_qc(self):
         ChangeFinalsWeightsQuantConfigAttrTest(self).run_test()
-        ChangeFinalsWeightsQuantConfigAttrTest(self).run_test()
-        ChangeFinalsActivationQCAttrTest(self).run_test()
         ChangeFinalsActivationQCAttrTest(self).run_test()
         ChangeFinalsActivationQuantizationMethodQCAttrTest(self).run_test()
-        ChangeFinalsActivationQuantizationMethodQCAttrTest(self).run_test()
-        ChangeFinalsWeightsQuantizationMethodQCAttrTest(self).run_test()
         ChangeFinalsWeightsQuantizationMethodQCAttrTest(self).run_test()
 
     def test_bias_correction_dw(self):
         BiasCorrectionDepthwiseTest(self).run_test()
 
     def test_lut_quantizer(self):
-        LUTWeightsQuantizerTest(self).run_test()
-        LUTWeightsQuantizerTest(self, is_symmetric=True).run_test()
-        LUTActivationQuantizerTest(self).run_test()
         LUTWeightsQuantizerTest(self).run_test()
         LUTWeightsQuantizerTest(self, is_symmetric=True).run_test()
         LUTActivationQuantizerTest(self).run_test()
@@ -200,7 +186,6 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_reused_separable_mixed_precision(self):
         ReusedSeparableMixedPrecisionTest(self).run_test()
-        ReusedSeparableMixedPrecisionTest(self).run_test()
 
     def test_reused_layer_mixed_precision(self):
         ReusedLayerMixedPrecisionTest(self).run_test()
@@ -209,7 +194,6 @@ class FeatureNetworkTest(unittest.TestCase):
         ReusedSeparableTest(self).run_test()
 
     def test_mixed_precision_search_kpi_2bits_avg(self):
-        MixedPercisionSearchKPI2BitsAvgTest(self).run_test()
         MixedPercisionSearchKPI2BitsAvgTest(self).run_test()
 
     def test_mixed_precision_search_kpi_4bits_avg(self):

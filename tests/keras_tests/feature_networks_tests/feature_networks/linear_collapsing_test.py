@@ -33,7 +33,7 @@ tp = mct.target_platform
 class BaseConv2DCollapsingTest(BaseKerasFeatureNetworkTest, ABC):
 
     def __init__(self, unit_test):
-        super(BaseConv2DCollapsingTest, self).__init__(unit_test=unit_test, input_shape=(32,32,16))
+        super(BaseConv2DCollapsingTest, self).__init__(unit_test=unit_test, input_shape=(32,32,16), experimental_exporter=True)
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 32,
