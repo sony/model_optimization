@@ -28,7 +28,7 @@ layers = keras.layers
 
 class AddSameTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -38,5 +38,5 @@ class AddSameTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(len(quantized_model.layers[4].input) == 2)
-        self.unit_test.assertTrue(quantized_model.layers[4].input[0].ref()==quantized_model.layers[4].input[1].ref())
+        self.unit_test.assertTrue(len(quantized_model.layers[3].input) == 2)
+        self.unit_test.assertTrue(quantized_model.layers[3].input[0].ref()==quantized_model.layers[3].input[1].ref())

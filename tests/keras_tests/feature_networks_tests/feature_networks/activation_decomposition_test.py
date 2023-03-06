@@ -18,6 +18,7 @@ import tensorflow as tf
 import numpy as np
 
 from model_compression_toolkit.core.keras.constants import ACTIVATION, LINEAR
+from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -30,7 +31,7 @@ layers = keras.layers
 class ActivationDecompositionTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, activation_function: str):
         self.activation_function = activation_function
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def get_tpc(self):
         return get_quantization_disabled_keras_tpc("activation_decomp_test")
@@ -41,10 +42,12 @@ class ActivationDecompositionTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[1], layers.Conv2D))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.Activation))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], KerasQuantizationWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3], KerasQuantizationWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.Activation))
         self.unit_test.assertTrue(
-            quantized_model.layers[1].get_config().get(ACTIVATION) == LINEAR)
+            quantized_model.layers[2].layer.get_config().get(ACTIVATION) == LINEAR)
         self.unit_test.assertTrue(
-            quantized_model.layers[2].get_config().get(ACTIVATION) == self.activation_function)
+            quantized_model.layers[3].layer.get_config().get(ACTIVATION) == self.activation_function)
 

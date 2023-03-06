@@ -91,7 +91,6 @@ from tests.keras_tests.feature_networks_tests.feature_networks.qat.qat_test impo
     QuantizationAwareTrainingQuantizersTest, QATWrappersMixedPrecisionCfgTest
 from tests.keras_tests.feature_networks_tests.feature_networks.relu_replacement_test import ReluReplacementTest, \
     SingleReluReplacementTest, ReluReplacementWithAddBiasTest
-from tests.keras_tests.feature_networks_tests.feature_networks.remove_upper_bound_test import RemoveUpperBoundTest
 from tests.keras_tests.feature_networks_tests.feature_networks.residual_collapsing_test import ResidualCollapsingTest1, \
     ResidualCollapsingTest2
 from tests.keras_tests.feature_networks_tests.feature_networks.reused_layer_mixed_precision_test import \
@@ -140,48 +139,32 @@ class FeatureNetworkTest(unittest.TestCase):
         DwConv2dReplacementTest(self).run_test()
 
     def test_edit_error_method(self):
-        EditActivationErrorMethod(self).run_test(experimental_facade=True)
         EditActivationErrorMethod(self).run_test()
 
     def test_change_qc_attr(self):
         ChangeFinalWeightQCAttrTest(self).run_test()
         ChangeFinalActivationQCAttrTest(self).run_test()
-        ChangeFinalWeightQCAttrTest(self).run_test(experimental_facade=True)
-        ChangeFinalActivationQCAttrTest(self).run_test(experimental_facade=True)
 
     def test_edit_candidate_qc(self):
         ChangeCandidatesWeightsQuantConfigAttrTest(self).run_test()
-        ChangeCandidatesWeightsQuantConfigAttrTest(self).run_test(experimental_facade=True)
         ChangeCandidatesActivationQCAttrTest(self).run_test()
-        ChangeCandidatesActivationQCAttrTest(self).run_test(experimental_facade=True)
         ChangeCandidatesActivationQuantizationMethodQCAttrTest(self).run_test()
-        ChangeCandidatesActivationQuantizationMethodQCAttrTest(self).run_test(experimental_facade=True)
         ChangeCandidatesWeightsQuantizationMethodQCAttrTest(self).run_test()
-        ChangeCandidatesWeightsQuantizationMethodQCAttrTest(self).run_test(experimental_facade=True)
 
     def test_edit_final_qc(self):
         ChangeFinalsWeightsQuantConfigAttrTest(self).run_test()
-        ChangeFinalsWeightsQuantConfigAttrTest(self).run_test(experimental_facade=True)
         ChangeFinalsActivationQCAttrTest(self).run_test()
-        ChangeFinalsActivationQCAttrTest(self).run_test(experimental_facade=True)
         ChangeFinalsActivationQuantizationMethodQCAttrTest(self).run_test()
-        ChangeFinalsActivationQuantizationMethodQCAttrTest(self).run_test(experimental_facade=True)
         ChangeFinalsWeightsQuantizationMethodQCAttrTest(self).run_test()
-        ChangeFinalsWeightsQuantizationMethodQCAttrTest(self).run_test(experimental_facade=True)
 
     def test_bias_correction_dw(self):
         BiasCorrectionDepthwiseTest(self).run_test()
 
     def test_lut_quantizer(self):
-        LUTWeightsQuantizerTest(self).run_test(experimental_facade=True)
-        LUTWeightsQuantizerTest(self, is_symmetric=True).run_test(experimental_facade=True)
-        LUTActivationQuantizerTest(self).run_test(experimental_facade=True)
         LUTWeightsQuantizerTest(self).run_test()
         LUTWeightsQuantizerTest(self, is_symmetric=True).run_test()
         LUTActivationQuantizerTest(self).run_test()
 
-    def test_remove_upper_bound(self):
-        RemoveUpperBoundTest(self).run_test()
 
     def test_kmeans_quantizer(self):
         # This test checks that the Kmeans quantization has a different result than symmetric uniform quantization
@@ -202,7 +185,6 @@ class FeatureNetworkTest(unittest.TestCase):
                                        weights_n_bits=8).run_test()
 
     def test_reused_separable_mixed_precision(self):
-        ReusedSeparableMixedPrecisionTest(self).run_test(experimental_facade=True)
         ReusedSeparableMixedPrecisionTest(self).run_test()
 
     def test_reused_layer_mixed_precision(self):
@@ -212,7 +194,6 @@ class FeatureNetworkTest(unittest.TestCase):
         ReusedSeparableTest(self).run_test()
 
     def test_mixed_precision_search_kpi_2bits_avg(self):
-        MixedPercisionSearchKPI2BitsAvgTest(self).run_test(experimental_facade=True)
         MixedPercisionSearchKPI2BitsAvgTest(self).run_test()
 
     def test_mixed_precision_search_kpi_4bits_avg(self):
@@ -228,13 +209,13 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPercisionDepthwiseTest(self).run_test()
 
     def test_mixed_precision_search_with_last_layer_distance(self):
-        MixedPercisionSearchLastLayerDistanceTest(self).run_test(experimental_facade=True)
+        MixedPercisionSearchLastLayerDistanceTest(self).run_test()
 
     def test_mixed_precision_search_activation_non_conf_nodes(self):
-        MixedPercisionSearchActivationKPINonConfNodesTest(self).run_test(experimental_facade=True)
+        MixedPercisionSearchActivationKPINonConfNodesTest(self).run_test()
 
     def test_mixed_precision_search_total_non_conf_nodes(self):
-        MixedPercisionSearchTotalKPINonConfNodesTest(self).run_test(experimental_facade=True)
+        MixedPercisionSearchTotalKPINonConfNodesTest(self).run_test()
 
     def test_mixed_precision_activation_search(self):
         MixedPrecisionActivationSearchTest(self).run_test()
@@ -276,15 +257,15 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPrecisionReducedTotalKPISearchTest(self).run_test()
 
     def test_mixed_precision_bops_kpi(self):
-        MixedPrecisionBopsBasicTest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAllWeightsLayersTest(self).run_test(experimental_facade=True)
-        MixedPrecisionWeightsOnlyBopsTest(self).run_test(experimental_facade=True)
-        MixedPrecisionActivationOnlyBopsTest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAndWeightsKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAndActivationKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAndTotalKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsWeightsActivationKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsMultipleOutEdgesTest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsBasicTest(self).run_test()
+        MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
+        MixedPrecisionWeightsOnlyBopsTest(self).run_test()
+        MixedPrecisionActivationOnlyBopsTest(self).run_test()
+        MixedPrecisionBopsAndWeightsKPITest(self).run_test()
+        MixedPrecisionBopsAndActivationKPITest(self).run_test()
+        MixedPrecisionBopsAndTotalKPITest(self).run_test()
+        MixedPrecisionBopsWeightsActivationKPITest(self).run_test()
+        MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
     def test_name_filter(self):
         NameFilterTest(self).run_test()
@@ -471,8 +452,7 @@ class FeatureNetworkTest(unittest.TestCase):
         ActivationDecompositionTest(self, activation_function='softmax').run_test()
 
     def test_experimental_exporter(self):
-        ExportableModelTest(self).run_test(experimental_exporter=True,
-                                           experimental_facade=True)
+        ExportableModelTest(self).run_test()
 
     def test_conv2d_bn_concant(self):
         Conv2DBNConcatnFoldingTest(self).run_test()

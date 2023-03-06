@@ -17,6 +17,8 @@ from abc import ABC
 import model_compression_toolkit as mct
 import tensorflow as tf
 from tensorflow.keras.layers import Conv2D
+
+from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -31,7 +33,7 @@ tp = mct.target_platform
 class BaseConv2DCollapsingTest(BaseKerasFeatureNetworkTest, ABC):
 
     def __init__(self, unit_test):
-        super(BaseConv2DCollapsingTest, self).__init__(unit_test=unit_test, input_shape=(32,32,16))
+        super(BaseConv2DCollapsingTest, self).__init__(unit_test=unit_test, input_shape=(32,32,16), experimental_exporter=True)
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 32,
@@ -48,7 +50,7 @@ class BaseConv2DCollapsingTest(BaseKerasFeatureNetworkTest, ABC):
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
-        self.unit_test.assertTrue(len(quantized_model.layers) < len(float_model.layers), msg=f'fail number of layers should decrease!')
+        self.unit_test.assertTrue(len([l for l in quantized_model.layers if isinstance(l, KerasQuantizationWrapper) and isinstance(l.layer, Conv2D)]) < len([l for l in float_model.layers if isinstance(l, Conv2D)]), msg=f'fail number of layers should decrease!')
         cs = cosine_similarity(y, y_hat)
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
 

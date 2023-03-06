@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 
 import tensorflow as tf
@@ -28,7 +29,7 @@ class ReLUBoundToPOTNetTest(BaseKerasFeatureNetworkTest):
     This test checks the ReLU Bound To POT feature.
     """
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def get_quantization_config(self):
         qc = QuantizationConfig(QuantizationErrorMethod.MSE,
@@ -47,10 +48,17 @@ class ReLUBoundToPOTNetTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        alpha_1 = (quantized_model.layers[2].weights[0] / float_model.layers[1].weights[0]).numpy().mean()
-        beta_1 = (quantized_model.layers[5].weights[0] / float_model.layers[3].weights[0]).numpy().mean()
-        alpha_2 = (quantized_model.layers[7].weights[0] / float_model.layers[4].weights[0]).numpy().mean()
-        beta_2 = (quantized_model.layers[10].weights[0] / float_model.layers[6].weights[0]).numpy().mean()
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[2].layer.__class__)[0]
+        alpha_1 = (quantized_model.layers[2].get_quantized_weights()[attr] / float_model.layers[1].weights[0]).numpy().mean()
+
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[4].layer.__class__)[0]
+        beta_1 = (quantized_model.layers[4].get_quantized_weights()[attr] / float_model.layers[3].weights[0]).numpy().mean()
+
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[5].layer.__class__)[0]
+        alpha_2 = (quantized_model.layers[5].get_quantized_weights()[attr] / float_model.layers[4].weights[0]).numpy().mean()
+
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[7].layer.__class__)[0]
+        beta_2 = (quantized_model.layers[7].get_quantized_weights()[attr] / float_model.layers[6].weights[0]).numpy().mean()
 
         self.unit_test.assertTrue(np.allclose(alpha_1 * beta_1, 1, atol=1e-1))
         self.unit_test.assertTrue(np.allclose(alpha_1 * 6 / 8, 1, atol=1e-1))
