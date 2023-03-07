@@ -49,6 +49,7 @@ class BaseConstantConvSubstitutionTest(BasePytorchFeatureNetworkTest):
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
         self.unit_test.assertTrue(np.isclose(y.cpu().detach().numpy(), y_hat.cpu().detach().numpy(), atol=1e-8).all(), msg=f'out samples are not as expected!')
 
+
 class ConstantConvSubstitutionTest(BaseConstantConvSubstitutionTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
@@ -68,6 +69,7 @@ class ConstantConvSubstitutionTest(BaseConstantConvSubstitutionTest):
 
     def create_networks(self):
         return self.ConvNet()
+
 
 class ConstantConvReuseSubstitutionTest(BaseConstantConvSubstitutionTest):
     def __init__(self, unit_test):
@@ -92,6 +94,7 @@ class ConstantConvReuseSubstitutionTest(BaseConstantConvSubstitutionTest):
 
     def create_networks(self):
         return self.ConvNet()
+
 
 class ConstantConvTransposeSubstitutionTest(BaseConstantConvSubstitutionTest):
     def __init__(self, unit_test):

@@ -24,8 +24,8 @@ else:
         UpSampling2D, InputLayer, Concatenate, Softmax, PReLU, Flatten, Cropping2D, Dot, ELU, LeakyReLU, Permute, \
         LayerNormalization
 
-from model_compression_toolkit import FrameworkInfo, keras_post_training_quantization, \
-    keras_post_training_quantization_mixed_precision
+from model_compression_toolkit import FrameworkInfo, keras_post_training_quantization_experimental, \
+    keras_gradient_post_training_quantization_experimental
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import is_layer_fake_quant
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -90,10 +90,10 @@ class BaseKerasLayerTest(BaseLayerTest):
         return KerasImplementation()
 
     def get_ptq_facade(self):
-        return keras_post_training_quantization
+        return keras_post_training_quantization_experimental
 
-    def get_mixed_precision_ptq_facade(self):
-        return keras_post_training_quantization_mixed_precision
+    def get_gptq_facade(self):
+        return keras_gradient_post_training_quantization_experimental
 
     def predict(self, model: Model, input: List[np.ndarray]):
         if self.use_cpu:

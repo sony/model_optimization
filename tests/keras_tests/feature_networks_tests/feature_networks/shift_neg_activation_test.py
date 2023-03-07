@@ -115,10 +115,10 @@ class ShiftNegActivationPostAddTest(ShiftNegActivationTest):
     def get_tpc(self):
         return get_keras_tpc_latest()
 
-    def get_network_editor(self):
-        return [EditRule(filter=node_filters.NodeNameScopeFilter('activation'),
-                         action=actions.ChangeCandidatesActivationQuantConfigAttr(
-                             activation_n_bits=self.post_add_nbits))]
+    def get_debug_config(self):
+        return mct.DebugConfig(network_editor=[EditRule(filter=node_filters.NodeNameScopeFilter('activation'),
+                                                        action=actions.ChangeCandidatesActivationQuantConfigAttr(
+                                                            activation_n_bits=self.post_add_nbits))])
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(float_model.output.shape.as_list() == quantized_model.output.shape.as_list(),

@@ -38,7 +38,8 @@ class BaseResidualCollapsingTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="linear_collapsing_test", tp_model=tp)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
+                                      mct.QuantizationErrorMethod.NOCLIPPING,
                                       False, False, True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):

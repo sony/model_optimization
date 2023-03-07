@@ -54,7 +54,7 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
                        weights_quantization_method=self.weights_quantization_method,
                        activation_quantization_method=self.activation_quantization_method)
 
-    def run_test(self, experimental_facade=False, **kwargs):
+    def run_test(self, **kwargs):
         model_float = self.create_networks()
         ptq_model, quantization_info, custom_objects = mct.keras_quantization_aware_training_init(model_float,
                                                                                                   self.representative_data_gen,
@@ -151,7 +151,7 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         outputs = self.layer(inputs)
         return keras.Model(inputs=inputs, outputs=outputs)
 
-    def run_test(self, experimental_facade=False, **kwargs):
+    def run_test(self, **kwargs):
         model_float = self.create_networks()
         ptq_model, quantization_info, custom_objects = mct.keras_quantization_aware_training_init(model_float,
                                                                                                   self.representative_data_gen,
@@ -239,7 +239,7 @@ class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
         self.expected_mp_cfg = expected_mp_cfg
         super().__init__(unit_test, activation_layers_idx=[1, 3, 6])
 
-    def run_test(self, experimental_facade=False, **kwargs):
+    def run_test(self, **kwargs):
         model_float = self.create_networks()
         config = mct.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
         qat_ready_model, quantization_info, custom_objects = mct.keras_quantization_aware_training_init(

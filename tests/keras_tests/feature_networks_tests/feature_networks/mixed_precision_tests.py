@@ -21,8 +21,6 @@ from keras import backend as K
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
-from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.user_info import UserInformation
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
@@ -70,15 +68,16 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
                                                 name="mixed_precision_activation_test")
 
     def get_quantization_config(self):
-        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                    mct.QuantizationErrorMethod.MSE,
-                                    relu_bound_to_power_of_2=False,
-                                    weights_bias_correction=True,
-                                    weights_per_channel_threshold=True,
-                                    input_scaling=False,
-                                    activation_channel_equalization=False)
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationErrorMethod.MSE,
+                                      relu_bound_to_power_of_2=False,
+                                      weights_bias_correction=True,
+                                      weights_per_channel_threshold=True,
+                                      input_scaling=False,
+                                      activation_channel_equalization=False)
 
-        return MixedPrecisionQuantizationConfig(qc, num_of_images=1)
+    def get_mixed_precision_v2_config(self):
+        return mct.MixedPrecisionQuantizationConfigV2(num_of_images=1)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, 3]]
@@ -412,15 +411,16 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
         return [[self.val_batch_size, 224, 244, 3] for _ in range(self.num_of_inputs)]
 
     def get_quantization_config(self):
-        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                    mct.QuantizationErrorMethod.MSE,
-                                    relu_bound_to_power_of_2=False,
-                                    weights_bias_correction=True,
-                                    weights_per_channel_threshold=True,
-                                    input_scaling=False,
-                                    activation_channel_equalization=False)
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationErrorMethod.MSE,
+                                      relu_bound_to_power_of_2=False,
+                                      weights_bias_correction=True,
+                                      weights_per_channel_threshold=True,
+                                      input_scaling=False,
+                                      activation_channel_equalization=False)
 
-        return MixedPrecisionQuantizationConfig(qc, num_of_images=self.num_of_inputs)
+    def get_mixed_precision_v2_config(self):
+        return mct.MixedPrecisionQuantizationConfigV2(num_of_images=self.num_of_inputs)
 
     def create_networks(self):
         inputs_1 = layers.Input(shape=self.get_input_shapes()[0][1:])

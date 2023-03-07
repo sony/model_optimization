@@ -534,7 +534,6 @@ class FeatureNetworkTest(unittest.TestCase):
         GradientPTQTest(self, per_channel=True).run_test()
         GradientPTQTest(self, per_channel=True, hessian_weights=False).run_test()
         GradientPTQTest(self, per_channel=True, log_norm_weights=False).run_test()
-        GradientPTQTest(self, per_channel=True).run_test(experimental_facade=True)
         GradientPTQWeightsUpdateTest(self).run_test()
         GradientPTQLearnRateZeroTest(self).run_test()
         GradientPTQWeightedLossTest(self).run_test()
@@ -546,10 +545,6 @@ class FeatureNetworkTest(unittest.TestCase):
                         rounding_type=RoundingType.SoftQuantizer,
                         quantizer_config=SoftQuantizerConfig(),
                         per_channel=True).run_test()
-        GradientPTQTest(self,
-                        rounding_type=RoundingType.SoftQuantizer,
-                        quantizer_config=SoftQuantizerConfig(),
-                        per_channel=True).run_test(experimental_facade=True)
         GradientPTQNoTempLearningTest(self,
                                       rounding_type=RoundingType.SoftQuantizer,
                                       quantizer_config=SoftQuantizerConfig()).run_test()
@@ -567,8 +562,7 @@ class FeatureNetworkTest(unittest.TestCase):
 
     # TODO: reuven - new experimental facade needs to be tested regardless the exporter.
     # def test_gptq_new_exporter(self):
-    #     self.test_gptq(experimental_facade=True,
-    #                    experimental_exporter=True)
+    #     self.test_gptq(experimental_exporter=True)
 
     # Comment out due to problem in Tensorflow 2.8
     # def test_gptq_conv_group(self):

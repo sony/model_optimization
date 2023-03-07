@@ -86,7 +86,7 @@ class ReshapeNetTest(BasePytorchTest):
         super(ReshapeNetTest, self).compare(quantized_models, float_model, input_x=input_x,
                                             quantization_info=quantization_info)
 
-    def run_test(self, seed=0, experimental_facade=False):
+    def run_test(self, seed=0):
         np.random.seed(seed)
         random.seed(a=seed)
         torch.random.manual_seed(seed)
@@ -100,9 +100,9 @@ class ReshapeNetTest(BasePytorchTest):
             for _ in range(self.num_calibration_iter):
                 yield x
 
-        ptq_models = {}
+        ptq_models, quantization_info = {}, None
         model_float = self.create_feature_network(input_shapes)
-        quant_config_dict = self.get_quantization_configs()
+        core_config_dict = self.get_core_configs()
         tpc_dict = self.get_tpc()
         assert isinstance(tpc_dict, dict), "Pytorch tests get_tpc should return a dictionary " \
                                            "mapping the test model name to a TPC object."
@@ -110,43 +110,18 @@ class ReshapeNetTest(BasePytorchTest):
             tpc = tpc_dict[model_name]
             assert isinstance(tpc, TargetPlatformCapabilities)
 
-            quant_config = quant_config_dict.get(model_name)
-            assert quant_config is not None, f"Model name {model_name} does not exists in the test's " \
+            core_config = core_config_dict.get(model_name)
+            assert core_config is not None, f"Model name {model_name} does not exists in the test's " \
                                              f"quantization configs dictionary keys"
-            core_config = self.get_core_config()
-            core_config.quantization_config = quant_config
 
-            if experimental_facade:
-                ptq_model, quantization_info = mct.pytorch_post_training_quantization_experimental(
-                    in_module=model_float,
-                    representative_data_gen=representative_data_gen_experimental,
-                    target_kpi=self.get_kpi(),
-                    core_config=core_config,
-                    target_platform_capabilities=tpc,
-                    new_experimental_exporter=self.experimental_exporter
-                )
-            else:
-                if isinstance(quant_config, MixedPrecisionQuantizationConfig):
-                    ptq_model, quantization_info = \
-                        mct.pytorch_post_training_quantization_mixed_precision(model_float,
-                                                                               representative_data_gen,
-                                                                               n_iter=self.num_calibration_iter,
-                                                                               quant_config=quant_config,
-                                                                               fw_info=DEFAULT_PYTORCH_INFO,
-                                                                               network_editor=self.get_network_editor(),
-                                                                               gptq_config=self.get_gptq_config(),
-                                                                               target_kpi=self.get_kpi(),
-                                                                               target_platform_capabilities=tpc)
-
-                else:
-                    ptq_model, quantization_info = \
-                        mct.pytorch_post_training_quantization(model_float,
-                                                               representative_data_gen,
-                                                               n_iter=self.num_calibration_iter,
-                                                               quant_config=quant_config,
-                                                               fw_info=DEFAULT_PYTORCH_INFO,
-                                                               network_editor=self.get_network_editor(),
-                                                               target_platform_capabilities=tpc)
+            ptq_model, quantization_info = mct.pytorch_post_training_quantization_experimental(
+                in_module=model_float,
+                representative_data_gen=representative_data_gen_experimental,
+                target_kpi=self.get_kpi(),
+                core_config=core_config,
+                target_platform_capabilities=tpc,
+                new_experimental_exporter=self.experimental_exporter
+            )
 
             ptq_models.update({model_name: ptq_model})
 

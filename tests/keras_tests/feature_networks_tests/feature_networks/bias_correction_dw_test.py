@@ -37,9 +37,7 @@ class BiasCorrectionDepthwiseTest(BaseKerasFeatureNetworkTest):
                          experimental_exporter=True)
 
     def get_quantization_config(self):
-        qc = copy.deepcopy(mct.DEFAULTCONFIG)
-        qc.weights_bias_correction = True
-        return qc
+        return mct.QuantizationConfig(weights_bias_correction=True)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

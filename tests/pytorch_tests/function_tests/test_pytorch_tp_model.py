@@ -221,21 +221,21 @@ class TestGetPytorchTPC(unittest.TestCase):
         model = mobilenet_v2(pretrained=True)
 
         def rep_data():
-            return [np.random.randn(1, 3, 224, 224)]
+            yield [np.random.randn(1, 3, 224, 224)]
 
-        quantized_model, _ = mct.pytorch_post_training_quantization(model,
-                                                                    rep_data,
-                                                                    n_iter=1,
-                                                                    target_platform_capabilities=tpc)
+        quantized_model, _ = mct.pytorch_post_training_quantization_experimental(model,
+                                                                                 rep_data,
+                                                                                 target_platform_capabilities=tpc)
 
         mp_qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
         mp_qc.num_of_images = 1
-        quantized_model, _ = mct.pytorch_post_training_quantization_mixed_precision(model,
-                                                                                    rep_data,
-                                                                                    target_kpi=mct.KPI(np.inf),
-                                                                                    n_iter=1,
-                                                                                    target_platform_capabilities=tpc,
-                                                                                    quant_config=mp_qc)
+        quant_config, mp_config = mp_qc.separate_configs()
+        core_config = mct.CoreConfig(quantization_config=quant_config, mixed_precision_config=mp_config)
+        quantized_model, _ = mct.pytorch_post_training_quantization_experimental(model,
+                                                                                 rep_data,
+                                                                                 target_kpi=mct.KPI(np.inf),
+                                                                                 target_platform_capabilities=tpc,
+                                                                                 core_config=core_config)
 
     def test_get_pytorch_supported_version(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)  # Latest

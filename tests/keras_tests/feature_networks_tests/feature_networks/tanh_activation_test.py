@@ -32,9 +32,7 @@ class TanhActivationTest(BaseKerasFeatureNetworkTest):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
                                       model_compression_toolkit.target_platform.QuantizationMethod.POWER_OF_TWO,
                                       model_compression_toolkit.target_platform.op_quantization_config.QuantizationMethod.POWER_OF_TWO,
-                                      16, 16,
-                                      True, True, True)
-
+                                      16, 16, True, True, True)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

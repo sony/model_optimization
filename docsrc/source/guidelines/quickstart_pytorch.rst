@@ -61,11 +61,13 @@ Initialize data loader:
     # The function should be called without any arguments, and should return a list numpy arrays (array for each
     # model's input).
     # For example: A model has two input tensors - one with input shape of [3 X 32 X 32] and the second with
-    # an input shape of [3 X 224 X 224]. We calibrate the model using batches of 20 images.
+    # an input shape of [3 X 224 X 224]. We calibrate the model using batches of 50 images.
     # Calling representative_data_gen() should return a list
-    # of two numpy.ndarray objects where the arrays' shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].
+    # of two numpy.ndarray objects where the arrays' shapes are [(50, 3, 32, 32), (50, 3, 224, 224)].
+    n_iter = 20
     def representative_data_gen() -> list:
-        return [image_data_loader.sample()]
+        for _ in range(n_iter):
+            yield [image_data_loader.sample()]
 
 
 |
@@ -98,11 +100,9 @@ Run Post Training Quantization:
     quantization_config.z_threshold = 16
 
     # run post training quantization on the model to get the quantized model output
-    quantized_model, quantization_info = mct.pytorch_post_training_quantization(model,
-                                                                                representative_data_gen,
-                                                                                target_platform_capabilities=target_platform_cap,
-                                                                                n_iter=20)
-
+    quantized_model, quantization_info = mct.pytorch_post_training_quantization_experimental(model,
+                                                                                             representative_data_gen,
+                                                                                             target_platform_capabilities=target_platform_cap)
 |
 
 

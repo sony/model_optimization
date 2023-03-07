@@ -20,9 +20,8 @@ import numpy as np
 import torch
 from torch.nn import Module
 
-from model_compression_toolkit import QuantizationConfig, DEFAULTCONFIG, FrameworkInfo, CoreConfig, DebugConfig
+from model_compression_toolkit import FrameworkInfo, CoreConfig
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.network_editors import EditRule
 from model_compression_toolkit.core.common.statistics_correction.apply_second_moment_correction_to_graph import \
     quantized_model_builder_for_second_moment_correction
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod, TargetPlatformCapabilities
@@ -91,10 +90,10 @@ class BaseSecondMomentTest(BasePytorchTest):
                                          test_name='8bit_second_moment_correction',
                                          ftp_name='second_moment_correction_pytorch_test')
 
-    def get_quantization_configs(self):
-        quant_config = self.get_quantization_config()
-        quant_config.weights_second_moment_correction = True
-        return {"8bit_second_moment_correction": quant_config}
+    def get_core_configs(self):
+        core_config = self.get_core_config()
+        core_config.quantization_config.weights_second_moment_correction = True
+        return {"8bit_second_moment_correction": core_config}
 
     # Check the Re-fusing of the reconstructed BN
     # new_kernel = kernel * gamma/sqrt(moving_var+eps)
@@ -293,7 +292,7 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
     def create_feature_network(self, input_shape):
         return ConvSecondMomentNet()
 
-    def run_test(self, seed=0, experimental_facade=False, ):
+    def run_test(self, seed=0):
         np.random.seed(seed)
         random.seed(a=seed)
         torch.random.manual_seed(seed)
@@ -306,16 +305,15 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
             yield x
 
         model_float = self.create_feature_network(input_shapes)
-        quant_config_dict = self.get_quantization_configs()
+        core_config_dict = self.get_core_configs()
+        tpc_dict = self.get_tpc()
 
-        for model_name in quant_config_dict.keys():
-            quant_config = quant_config_dict[model_name]
-            tpc = self.get_tpc()[model_name]
+        for model_name, core_config in core_config_dict.items():
+            tpc = tpc_dict[model_name]
             tg, graph_after_second_moment_correction = self.prepare_graph(model_float,
                                                                           representative_data_gen,
-                                                                          quant_config=quant_config,
+                                                                          core_config=core_config,
                                                                           fw_info=DEFAULT_PYTORCH_INFO,
-                                                                          network_editor=self.get_network_editor(),
                                                                           target_platform_capabilities=tpc)
             for node in graph_after_second_moment_correction.nodes:
                 if node.layer_class == torch.nn.BatchNorm2d:
@@ -342,18 +340,10 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
     def prepare_graph(self,
                       in_model: Module,
                       representative_data_gen: Callable,
-                      n_iter: int = 500,
-                      quant_config: QuantizationConfig = DEFAULTCONFIG,
+                      core_config: CoreConfig = CoreConfig(),
                       fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
-                      network_editor: List[EditRule] = [],
-                      analyze_similarity: bool = False,
                       target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_INFO) -> \
             Tuple[Graph, Graph]:
-
-        core_config = CoreConfig(quantization_config=quant_config,
-                                 debug_config=DebugConfig(analyze_similarity=analyze_similarity,
-                                                          network_editor=network_editor)
-                                 )
 
         tb_w = _init_tensorboard_writer(fw_info)
 

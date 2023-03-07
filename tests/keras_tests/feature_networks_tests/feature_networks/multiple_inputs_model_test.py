@@ -29,7 +29,6 @@ class MultipleInputsModelTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, num_of_inputs=3)
 
-
     def create_networks(self):
         inputs_1 = layers.Input(shape=self.get_input_shapes()[0][1:])
         inputs_2 = layers.Input(shape=self.get_input_shapes()[0][1:])

@@ -20,11 +20,11 @@ import numpy as np
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-import model_compression_toolkit as cmo
+import model_compression_toolkit as mct
 
 keras = tf.keras
 layers = keras.layers
-tp = cmo.target_platform
+tp = mct.target_platform
 
 
 class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
@@ -36,7 +36,7 @@ class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
         return [np.random.uniform(low=-7, high=7, size=in_shape) for in_shape in self.get_input_shapes()]
 
     def get_quantization_config(self):
-        return cmo.QuantizationConfig(activation_error_method=self.activation_threshold_method)
+        return mct.QuantizationConfig(activation_error_method=self.activation_threshold_method)
 
     def get_tpc(self):
         tp_model = generate_test_tp_model({

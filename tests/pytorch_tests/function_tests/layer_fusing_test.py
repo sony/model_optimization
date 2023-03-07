@@ -79,7 +79,7 @@ class LayerFusingTest1(BaseLayerFusingTest):
                                                  nn.ReLU])
         return pytorch_tpc
 
-    def run_test(self, seed=0, experimental_facade=False):
+    def run_test(self, seed=0):
         model_float = self.LayerFusingNetTest()
 
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
@@ -120,7 +120,7 @@ class LayerFusingTest2(BaseLayerFusingTest):
             tp.OperationsSetToLayers("AnyAct", [ReLU,relu6,relu,SiLU,Sigmoid, LayerFilterParams(Hardtanh, min_val=0)])
         return pytorch_tpc
 
-    def run_test(self, seed=0, experimental_facade=False):
+    def run_test(self, seed=0):
         model_float = self.LayerFusingNetTest()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, lambda name, _tp: self.get_tpc())
@@ -172,7 +172,7 @@ class LayerFusingTest3(BaseLayerFusingTest):
             tp.OperationsSetToLayers("AnyAct", [ReLU,relu6,relu])
         return pytorch_tpc
 
-    def run_test(self, seed=0, experimental_facade=False):
+    def run_test(self, seed=0):
         model_float = self.LayerFusingNetTest()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, lambda name, _tp: self.get_tpc())
@@ -234,7 +234,7 @@ class LayerFusingTest4(BaseLayerFusingTest):
             tp.OperationsSetToLayers("Swish", [SiLU])
         return pytorch_tpc
 
-    def run_test(self, seed=0, experimental_facade=False):
+    def run_test(self, seed=0):
         model_float = self.LayerFusingNetTest()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, lambda name, _tp: self.get_tpc())

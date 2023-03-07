@@ -379,7 +379,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the Mixed Precision search with last layer distance function.
         """
-        MixedPercisionSearchLastLayerDistance(self).run_test(experimental_facade=True)
+        MixedPercisionSearchLastLayerDistance(self).run_test()
 
     def test_mixed_precision_activation_disabled(self):
         """
@@ -415,21 +415,21 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the activation Mixed Precision search with multiple inputs to model.
         """
-        MixedPercisionActivationMultipleInputs(self).run_test(experimental_facade=True)
+        MixedPercisionActivationMultipleInputs(self).run_test()
 
     def test_mixed_precision_bops_kpi(self):
         """
         This test checks different scenarios for mixed-precision quantization with bit-operations constraint.
         """
-        MixedPrecisionBopsBasicTest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAllWeightsLayersTest(self).run_test(experimental_facade=True)
-        MixedPrecisionWeightsOnlyBopsTest(self).run_test(experimental_facade=True)
-        MixedPrecisionActivationOnlyBopsTest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAndWeightsKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAndActivationKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAndTotalKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsWeightsActivationKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsMultipleOutEdgesTest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsBasicTest(self).run_test()
+        MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
+        MixedPrecisionWeightsOnlyBopsTest(self).run_test()
+        MixedPrecisionActivationOnlyBopsTest(self).run_test()
+        MixedPrecisionBopsAndWeightsKPITest(self).run_test()
+        MixedPrecisionBopsAndActivationKPITest(self).run_test()
+        MixedPrecisionBopsAndTotalKPITest(self).run_test()
+        MixedPrecisionBopsWeightsActivationKPITest(self).run_test()
+        MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
     def test_mha_layer_test(self):
         """

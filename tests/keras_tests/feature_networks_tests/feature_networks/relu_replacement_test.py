@@ -70,10 +70,10 @@ class SingleReluReplacementTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(isinstance(quantized_model.layers[1], Identity))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.ReLU))
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeNameFilter('ReLU_1'),
-                         action=ReplaceLayer(Identity, get_identity_params_from_relu))
-                ]
+    def get_debug_config(self):
+        return mct.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter('ReLU_1'),
+                                                        action=ReplaceLayer(Identity, get_identity_params_from_relu))
+                                               ])
 
 
 class ReluReplacementTest(SingleReluReplacementTest):
@@ -88,11 +88,11 @@ class ReluReplacementTest(SingleReluReplacementTest):
         self.unit_test.assertTrue(isinstance(quantized_model.layers[1], Identity))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[2], Identity))
 
-    def get_network_editor(self):
+    def get_debug_config(self):
         #   replace all Relu's with identity custom layer
-        return [EditRule(filter=NodeTypeFilter(layers.ReLU),
-                         action=ReplaceLayer(Identity, get_identity_params_from_relu))
-                ]
+        return mct.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.ReLU),
+                                                        action=ReplaceLayer(Identity, get_identity_params_from_relu))
+                                               ])
 
 
 class AddBias(keras.layers.Layer):
@@ -137,7 +137,7 @@ class ReluReplacementWithAddBiasTest(SingleReluReplacementTest):
         self.unit_test.assertTrue(quantized_model.layers[1].bias == 0)
         self.unit_test.assertTrue(quantized_model.layers[2].bias == 6)
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeTypeFilter(layers.ReLU),
-                         action=ReplaceLayer(AddBias, get_add_bias_params_from_relu))
-                ]
+    def get_debug_config(self):
+        return mct.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.ReLU),
+                                                        action=ReplaceLayer(AddBias, get_add_bias_params_from_relu))
+                                               ])

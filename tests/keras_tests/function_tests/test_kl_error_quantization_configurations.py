@@ -36,7 +36,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
         x = np.random.randn(1, 4, 4, 3)
 
         def representative_data_gen():
-            return [x]
+            yield [x]
 
         quantizer_methods = [mct.target_platform.QuantizationMethod.POWER_OF_TWO,
                              mct.target_platform.QuantizationMethod.SYMMETRIC,
@@ -67,13 +67,12 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                         weights_bias_correction=True,
                                         weights_per_channel_threshold=per_channel,
                                         input_scaling=False)
+            core_config = mct.CoreConfig(quantization_config=qc)
 
-            q_model, quantization_info = mct.keras_post_training_quantization(model,
-                                                                              representative_data_gen,
-                                                                              n_iter=1,
-                                                                              quant_config=qc,
-                                                                              fw_info=DEFAULT_KERAS_INFO,
-                                                                              target_platform_capabilities=tpc)
+            q_model, quantization_info = mct.keras_post_training_quantization_experimental(model,
+                                                                                           representative_data_gen,
+                                                                                           core_config=core_config,
+                                                                                           target_platform_capabilities=tpc)
 
         model = model_gen()
         for quantize_method, error_method, relu_bound_to_power_of_2 in activation_test_combinations:
@@ -87,13 +86,12 @@ class TestQuantizationConfigurations(unittest.TestCase):
             qc = mct.QuantizationConfig(activation_error_method=error_method,
                                         relu_bound_to_power_of_2=relu_bound_to_power_of_2,
                                         shift_negative_activation_correction=False)
+            core_config = mct.CoreConfig(quantization_config=qc)
 
-            q_model, quantization_info = mct.keras_post_training_quantization(model,
-                                                                              representative_data_gen,
-                                                                              n_iter=1,
-                                                                              quant_config=qc,
-                                                                              fw_info=DEFAULT_KERAS_INFO,
-                                                                              target_platform_capabilities=tpc)
+            q_model, quantization_info = mct.keras_post_training_quantization_experimental(model,
+                                                                                           representative_data_gen,
+                                                                                           core_config=core_config,
+                                                                                           target_platform_capabilities=tpc)
 
 
 if __name__ == '__main__':
