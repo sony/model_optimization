@@ -18,6 +18,7 @@ from model_compression_toolkit.core.common.graph.graph_matchers import NodeOpera
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
+from model_compression_toolkit.core.pytorch.constants import BATCH_DIM_VALUE
 
 
 class ReshapeWithStaticShapes(common.BaseSubstitution):
@@ -47,14 +48,23 @@ class ReshapeWithStaticShapes(common.BaseSubstitution):
         Returns:
             Graph after applying the substitution.
         """
+        # we want the batch size value to infer from the length of the array and remaining dimensions
+        node.output_shape = [[BATCH_DIM_VALUE] + inner_output_shape[1:] if inner_output_shape else inner_output_shape
+                             for inner_output_shape in node.output_shape]
+
         # configure the new static output shape attribute
         node.op_call_args = node.output_shape
 
         # modify the node input info
         node.input_shape = [node.input_shape[0]]
+
+        # the first input is the tensor to be reshaped, we want his batch size value to infer
+        # from the length of the array and remaining dimensions
+        node.input_shape[0][0] = BATCH_DIM_VALUE
+
         nodes_to_check = []
         for in_edge in graph.incoming_edges(node):
-            if in_edge.sink_index > 0: # the first input is the tensor to be reshaped
+            if in_edge.sink_index > 0:  # the first input is the tensor to be reshaped
                 nodes_to_check.append(in_edge.source_node)
                 graph.remove_edge(in_edge.source_node, node)
         for n in nodes_to_check:

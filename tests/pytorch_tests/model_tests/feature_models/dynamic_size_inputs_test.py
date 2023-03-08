@@ -12,7 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import random
+
+import numpy as np
 import torch
+
+import model_compression_toolkit as mct
+from model_compression_toolkit import MixedPrecisionQuantizationConfig
+from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
@@ -20,6 +28,8 @@ This tests checks the 'reshape_with_static_shapes' substitution.
 We create a model with dynamic input shape attributes to the operators 'reshape' and 'view'.
 We check that the model after conversion replaces the attributes with static-list-of-ints attributes.
 """
+
+
 class ReshapeNet(torch.nn.Module):
     def __init__(self):
         super(ReshapeNet, self).__init__()
@@ -46,6 +56,7 @@ class ReshapeNetTest(BasePytorchTest):
     We create a model with dynamic input shape attributes to the operators 'reshape' and 'view'.
     We check that the model after conversion replaces the attributes with static-list-of-ints attributes.
     """
+
     def __init__(self, unit_test):
         super().__init__(unit_test, convert_to_fx=False)
 
@@ -72,4 +83,78 @@ class ReshapeNetTest(BasePytorchTest):
         ######################################################
         # check the all other comparisons:
         ######################################################
-        super(ReshapeNetTest, self).compare(quantized_models, float_model, input_x=input_x, quantization_info=quantization_info)
+        super(ReshapeNetTest, self).compare(quantized_models, float_model, input_x=input_x,
+                                            quantization_info=quantization_info)
+
+    def run_test(self, seed=0, experimental_facade=False):
+        np.random.seed(seed)
+        random.seed(a=seed)
+        torch.random.manual_seed(seed)
+        input_shapes = self.create_inputs_shape()
+        x = self.generate_inputs(input_shapes)
+
+        def representative_data_gen():
+            return x
+
+        def representative_data_gen_experimental():
+            for _ in range(self.num_calibration_iter):
+                yield x
+
+        ptq_models = {}
+        model_float = self.create_feature_network(input_shapes)
+        quant_config_dict = self.get_quantization_configs()
+        tpc_dict = self.get_tpc()
+        assert isinstance(tpc_dict, dict), "Pytorch tests get_tpc should return a dictionary " \
+                                           "mapping the test model name to a TPC object."
+        for model_name in tpc_dict.keys():
+            tpc = tpc_dict[model_name]
+            assert isinstance(tpc, TargetPlatformCapabilities)
+
+            quant_config = quant_config_dict.get(model_name)
+            assert quant_config is not None, f"Model name {model_name} does not exists in the test's " \
+                                             f"quantization configs dictionary keys"
+            core_config = self.get_core_config()
+            core_config.quantization_config = quant_config
+
+            if experimental_facade:
+                ptq_model, quantization_info = mct.pytorch_post_training_quantization_experimental(
+                    in_module=model_float,
+                    representative_data_gen=representative_data_gen_experimental,
+                    target_kpi=self.get_kpi(),
+                    core_config=core_config,
+                    target_platform_capabilities=tpc,
+                    new_experimental_exporter=self.experimental_exporter
+                )
+            else:
+                if isinstance(quant_config, MixedPrecisionQuantizationConfig):
+                    ptq_model, quantization_info = \
+                        mct.pytorch_post_training_quantization_mixed_precision(model_float,
+                                                                               representative_data_gen,
+                                                                               n_iter=self.num_calibration_iter,
+                                                                               quant_config=quant_config,
+                                                                               fw_info=DEFAULT_PYTORCH_INFO,
+                                                                               network_editor=self.get_network_editor(),
+                                                                               gptq_config=self.get_gptq_config(),
+                                                                               target_kpi=self.get_kpi(),
+                                                                               target_platform_capabilities=tpc)
+
+                else:
+                    ptq_model, quantization_info = \
+                        mct.pytorch_post_training_quantization(model_float,
+                                                               representative_data_gen,
+                                                               n_iter=self.num_calibration_iter,
+                                                               quant_config=quant_config,
+                                                               fw_info=DEFAULT_PYTORCH_INFO,
+                                                               network_editor=self.get_network_editor(),
+                                                               target_platform_capabilities=tpc)
+
+            ptq_models.update({model_name: ptq_model})
+
+        # We want to test that the quantized model accepts inputs with different batch size than the
+        # input representative_data_gen
+        test_batch_size = [self.val_batch_size, 1, 13, 20, 50]
+        for batch_size in test_batch_size:
+            self.val_batch_size = batch_size
+            input_shapes = self.create_inputs_shape()
+            x = self.generate_inputs(input_shapes)
+            self.compare(ptq_models, model_float, input_x=x, quantization_info=quantization_info)
