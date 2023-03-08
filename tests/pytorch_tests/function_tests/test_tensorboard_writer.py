@@ -36,6 +36,10 @@ class PytorchTestLogger(unittest.TestCase):
         core_config = mct.CoreConfig(debug_config=mct.DebugConfig(analyze_similarity=True))
         mct.pytorch_post_training_quantization_experimental(model, random_datagen, core_config=core_config)
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        mct.core.common.Logger.LOG_PATH = None
+
     def test_tensorboard_log_dir(self):
         self.assertTrue(os.path.exists(os.path.join(mct.core.common.Logger.LOG_PATH, 'tensorboard_logs')))
 

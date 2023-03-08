@@ -74,7 +74,7 @@ from tests.pytorch_tests.model_tests.feature_models.bn_function_test import BNFN
 from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccuracyTest, GPTQWeightsUpdateTest, GPTQLearnRateZeroTest
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
-
+from tests.pytorch_tests.model_tests.feature_models.old_api_test import OldApiTest
 
 class FeatureModelsTestRunner(unittest.TestCase):
 
@@ -490,6 +490,12 @@ class FeatureModelsTestRunner(unittest.TestCase):
                                       finalize=True).run_test()
         QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionKpiCfgTest(self).run_test()
+
+    def test_old_api(self):
+        OldApiTest(self).run_test()
+        OldApiTest(self, mp_enable=True).run_test()
+        OldApiTest(self, mp_enable=True, gptq_enable=True).run_test()
+        OldApiTest(self, gptq_enable=True).run_test()
 
 
 if __name__ == '__main__':
