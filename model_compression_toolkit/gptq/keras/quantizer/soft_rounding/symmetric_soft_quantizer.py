@@ -66,46 +66,6 @@ def soft_rounding_symmetric_quantizer(input_tensor: tf.Tensor,
     return delta * clip(tensor_q, max_val=max_int, min_val=min_int)
 
 
-class LinearTempDecay:
-    """
-    Annealing process for the soft quantizer regularization temperature term.
-    """
-
-    def __init__(self, t_max: int, rel_start_decay: float = 0.2, start_b: int = 20, end_b: int = 2):
-        """
-        Initializes a LinearTempDecay object.
-
-        Args:
-            t_max: maximal time step.
-            rel_start_decay: Decay step size at the beginning of the process.
-            start_b: Starting value of the regularization term.
-            end_b: Target value of the regularization term.
-        """
-
-        self.t_max = t_max
-        self.start_decay = rel_start_decay * t_max
-        self.start_b = start_b
-        self.end_b = end_b
-
-    def __call__(self, t: int) -> float:
-        """
-        Cosine annealing scheduler for soft quantizer regularization temperature term.
-
-        Args:
-            t: The current time step.
-
-        Returns: Scheduled temperature.
-        """
-
-        is_before_start_decay = tf.cast(t < self.start_decay, tf.float32)
-
-        rel_t = (t - self.start_decay) / (self.t_max - self.start_decay)
-
-        return self.start_b * is_before_start_decay + \
-               (1 - is_before_start_decay) * \
-               (self.end_b + (self.start_b - self.end_b) * tf.math.maximum(0.0, (1 - rel_t)))
-
-
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=RoundingType.SoftQuantizer)

@@ -40,7 +40,7 @@ from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2, RoundingType
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.gptq.keras.graph_info import get_weights_for_loss, \
-    get_soft_rounding_reg, get_gptq_trainable_parameters
+    get_soft_rounding_reg, get_gptq_trainable_parameters, get_regularization
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 import numpy as np
@@ -113,6 +113,8 @@ class KerasGPTQTrainer(GPTQTrainer):
             self.input_scale = self.gptq_user_info.input_scale
 
         self.weights_for_average_loss = self.compute_jacobian_based_weights(representative_data_gen)
+
+        self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
 
     def _is_gptq_applicable(self,
                             node: common.BaseNode) -> bool:
@@ -195,9 +197,11 @@ class KerasGPTQTrainer(GPTQTrainer):
                                                self.compare_points_std,
                                                self.weights_for_average_loss)
 
-            reg_value = self.gptq_config.quantizer_config.get_regularization_value(
-                self.fxp_model,
-                **{REGULARIZATION_VALUES: self._get_quantizer_regularization_values(self.gptq_config.rounding_type)})
+            reg_value = self.reg_func(self.fxp_model, self.gptq_config.entrogpy_reg)
+
+            # reg_value = self.gptq_config.quantizer_config.get_regularization_value(
+            #     self.fxp_model,
+            #     **{REGULARIZATION_VALUES: self._get_quantizer_regularization_values(self.gptq_config.rounding_type)})
 
             loss_value += reg_value
 

@@ -17,7 +17,7 @@ from typing import Callable, Any, Dict
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.common.gptq_constants import N_BATCHES_STR, QUANT_PARAM_LEARNING_STR, N_EPOCHS_STR, \
-    MAX_LSB_STR
+    MAX_LSB_STR, REG_DEFAULT
 from model_compression_toolkit.gptq.common.gptq_quantizer_config import GPTQQuantizerConfig, SoftQuantizerConfig
 
 
@@ -54,7 +54,8 @@ class GradientPTQConfig:
                  optimizer_bias: Any = None,
                  log_norm: bool = True,
                  weights_n_iter: int = 50,
-                 quantizer_config: GPTQQuantizerConfig = SoftQuantizerConfig()):
+                 quantizer_config: GPTQQuantizerConfig = SoftQuantizerConfig(),
+                 entropy_reg: float = REG_DEFAULT):
         """
         Initialize a GradientPTQConfig.
 
@@ -102,6 +103,7 @@ class GradientPTQConfig:
         self.optimizer_bias = optimizer_bias
         self.log_norm = log_norm
         self.weights_n_iter = weights_n_iter
+        self.entropy_reg = entropy_reg
 
         if self._verify_quantizer_config(quantizer_config, rounding_type):
             self.quantizer_config = quantizer_config
@@ -149,7 +151,8 @@ class GradientPTQConfigV2(GradientPTQConfig):
                  optimizer_bias: Any = None,
                  log_norm: bool = True,
                  weights_n_iter: int = 50,
-                 quantizer_config: GPTQQuantizerConfig = SoftQuantizerConfig()):
+                 quantizer_config: GPTQQuantizerConfig = SoftQuantizerConfig(),
+                 entropy_reg: float = REG_DEFAULT):
         """
         Initialize a GradientPTQConfigV2.
 
@@ -194,7 +197,8 @@ class GradientPTQConfigV2(GradientPTQConfig):
                          optimizer_bias=optimizer_bias,
                          log_norm=log_norm,
                          weights_n_iter=weights_n_iter,
-                         quantizer_config=quantizer_config)
+                         quantizer_config=quantizer_config,
+                         entropy_reg=entropy_reg)
         self.n_epochs = n_epochs
 
     @classmethod
