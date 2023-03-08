@@ -14,6 +14,8 @@
 # ==============================================================================
 from torch import reshape
 import torch
+
+from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import Graph
@@ -49,8 +51,10 @@ class ReshapeWithStaticShapes(common.BaseSubstitution):
             Graph after applying the substitution.
         """
         # we want the batch size value to infer from the length of the array and remaining dimensions
-        node.output_shape = [[BATCH_DIM_VALUE] + inner_output_shape[1:] if inner_output_shape else inner_output_shape
-                             for inner_output_shape in node.output_shape]
+        if len(node.output_shape) == 1:
+            node.output_shape[0][0] = BATCH_DIM_VALUE
+        else:
+            Logger.error('Reshape or view nodes should have a single output shape')  # pragma: no cover
 
         # configure the new static output shape attribute
         node.op_call_args = node.output_shape
