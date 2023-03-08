@@ -92,3 +92,7 @@ IN_PROJ_WEIGHT = 'in_proj_weight'
 IN_PROJ_BIAS = 'in_proj_bias'
 BIAS_K = 'bias_k'
 BIAS_V = 'bias_v'
+
+# # Batch size value for 'reshape' and 'view' operators,
+# # the value is -1 so the batch size is inferred from the length of the array and remaining dimensions.
+BATCH_DIM_VALUE = -1
