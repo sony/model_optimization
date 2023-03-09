@@ -62,7 +62,8 @@ class BaseKerasLayerTest(BaseLayerTest):
                  input_shape: Tuple[int, int, int] = (8, 8, 3),
                  quantization_modes: List[LayerTestMode] = [LayerTestMode.FLOAT, LayerTestMode.QUANTIZED_8_BITS],
                  is_inputs_a_list: bool = False,
-                 use_cpu: bool = False):
+                 use_cpu: bool = False,
+                 experimental_exporter: bool = True):
 
         super().__init__(unit_test=unit_test,
                          layers=layers,
@@ -72,7 +73,8 @@ class BaseKerasLayerTest(BaseLayerTest):
                          input_shape=input_shape,
                          quantization_modes=quantization_modes,
                          is_inputs_a_list=is_inputs_a_list,
-                         use_cpu=use_cpu)
+                         use_cpu=use_cpu,
+                         experimental_exporter=experimental_exporter)
 
     def get_tpc(self):
         if self.current_mode == LayerTestMode.FLOAT:
