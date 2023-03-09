@@ -17,7 +17,6 @@
 import logging
 import os
 from datetime import datetime
-from os import path
 from pathlib import Path
 
 LOGGER_NAME = 'Constrained Model Optimization'
@@ -43,7 +42,7 @@ class Logger:
 
         """
 
-        if not path.exists(log_path):
+        if not os.path.exists(log_path):
             Path(log_path).mkdir(parents=True, exist_ok=True)
 
     @staticmethod
@@ -92,6 +91,16 @@ class Logger:
         logger.addHandler(fh)
 
         print(f'log file is in {log_name}')
+
+    @staticmethod
+    def shutdown(remove_log_files=False):
+        logger = Logger.get_logger()
+        if remove_log_files and logger.hasHandlers():
+            for fh in logger.handlers:
+                if isinstance(fh, logging.FileHandler):
+                    os.remove(fh.baseFilename)
+        Logger.LOG_PATH = None
+        logging.shutdown()
 
     ########################################
     # Delegating methods to wrapped logger
