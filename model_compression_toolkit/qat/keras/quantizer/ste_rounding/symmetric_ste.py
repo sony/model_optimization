@@ -82,7 +82,7 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: qi.KerasQuantizationWrapper) -> Dict[str, tf.Variable]:
+                                layer: qi.KerasQuantizationWrapper) -> Dict[str, Dict[str, Union[tf.Variable,VariableGroup]]]:
         """
         Add min and max variables to layer.
         Args:
@@ -116,9 +116,9 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         fq_max.assign(self.max)
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {THRESHOLD_TENSOR: (ptq_threshold_tensor, VariableGroup.THRESHOLDS),
-                                     FQ_MIN: (fq_min, VariableGroup.WEIGHTS),
-                                     FQ_MAX: (fq_max, VariableGroup.WEIGHTS)}
+        self.quantizer_parameters = {THRESHOLD_TENSOR: {'var':ptq_threshold_tensor, 'group':VariableGroup.THRESHOLDS},
+                                     FQ_MIN: {'var':fq_min, 'group':VariableGroup.THRESHOLDS},
+                                     FQ_MAX: {'var':fq_max, 'group':VariableGroup.THRESHOLDS}}
         return self.quantizer_parameters
 
     def __call__(self,
@@ -136,8 +136,8 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
             The quantized tensor.
         """
 
-        _min = self.quantizer_parameters[FQ_MIN][0]
-        _max = self.quantizer_parameters[FQ_MAX][0]
+        _min = self.quantizer_parameters[FQ_MIN]['var']
+        _max = self.quantizer_parameters[FQ_MAX]['var']
         if self.channel_axis:
             if self.perm_vec:
                 inputs = tf.transpose(inputs, perm=self.perm_vec)
@@ -159,7 +159,7 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
             BaseKerasInferableQuantizer object.
         """
         if self.power_of_two:
-            pot_threshold = 2 ** np.ceil(np.log2(self.quantizer_parameters[THRESHOLD_TENSOR][0]))
+            pot_threshold = 2 ** np.ceil(np.log2(self.quantizer_parameters[THRESHOLD_TENSOR]['var']))
             return WeightsPOTInferableQuantizer(num_bits=self.num_bits,
                                                 threshold=list(pot_threshold.flatten()),
                                                 per_channel=self.per_channel,
@@ -168,7 +168,7 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         else:
             return WeightsSymmetricInferableQuantizer(num_bits=self.num_bits,
                                                       threshold=list(self.quantizer_parameters[
-                                                                         THRESHOLD_TENSOR][0].numpy().flatten()),
+                                                                         THRESHOLD_TENSOR]['var'].numpy().flatten()),
                                                       per_channel=self.per_channel,
                                                       channel_axis=self.channel_axis,
                                                       input_rank=len(self.threshold_shape))
@@ -205,12 +205,11 @@ class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         max_int = (2 ** (self.num_bits - int(self.signed))) - 1
         self.min = delta * min_int
         self.max = delta * max_int
-        self.quantizer_parameters = {}
 
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: qi.KerasQuantizationWrapper) -> Dict[str, tf.Variable]:
+                                layer: qi.KerasQuantizationWrapper) -> Dict[str, Dict[str, Union[tf.Variable,VariableGroup]]]:
         """
         Add min and max variables to layer.
         Args:
@@ -244,9 +243,9 @@ class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         fq_max.assign(self.max)
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {THRESHOLD_TENSOR: (ptq_threshold_tensor, VariableGroup.THRESHOLDS),
-                                     FQ_MIN: (fq_min, VariableGroup.WEIGHTS),
-                                     FQ_MAX: (fq_max, VariableGroup.WEIGHTS)}
+        self.quantizer_parameters = {THRESHOLD_TENSOR: {'var':ptq_threshold_tensor, 'group':VariableGroup.THRESHOLDS},
+                                     FQ_MIN: {'var':fq_min, 'group':VariableGroup.THRESHOLDS},
+                                     FQ_MAX: {'var':fq_max, 'group':VariableGroup.THRESHOLDS}}
         return self.quantizer_parameters
 
     def __call__(self,
@@ -262,8 +261,8 @@ class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
             The quantized tensor.
         """
 
-        _min = self.quantizer_parameters[FQ_MIN][0]
-        _max = self.quantizer_parameters[FQ_MAX][0]
+        _min = self.quantizer_parameters[FQ_MIN]['var']
+        _max = self.quantizer_parameters[FQ_MAX]['var']
         q_tensor = tf.quantization.fake_quant_with_min_max_vars(inputs, _min, _max,
                                                                 num_bits=self.num_bits)
 
@@ -278,7 +277,7 @@ class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         """
 
         if self.power_of_two:
-            pot_threshold = 2 ** np.ceil(np.log2(self.quantizer_parameters[THRESHOLD_TENSOR][0]))
+            pot_threshold = 2 ** np.ceil(np.log2(self.quantizer_parameters[THRESHOLD_TENSOR]['var']))
             return ActivationPOTInferableQuantizer(num_bits=self.num_bits,
                                                       # In activation quantization is per-tensor only - thus we pass
                                                       # the threshold as a list with a len of 1
@@ -289,5 +288,5 @@ class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
                                                          # In activation quantization is per-tensor only - thus we
                                                          # pass the threshold as a list with a len of 1
                                                          threshold=[
-                                                             self.quantizer_parameters[THRESHOLD_TENSOR][0].numpy()],
+                                                             self.quantizer_parameters[THRESHOLD_TENSOR]['var'].numpy()],
                                                          signed=self.signed)

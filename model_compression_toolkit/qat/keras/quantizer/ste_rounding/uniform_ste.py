@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict
+from typing import Dict, Union
 
 import numpy as np
 import tensorflow as tf
@@ -71,12 +71,10 @@ class STEUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         else:
             self.perm_vec = None
 
-        self.quantizer_parameters = {}
-
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: qi.KerasQuantizationWrapper) -> Dict[str, tf.Variable]:
+                                layer: qi.KerasQuantizationWrapper) -> Dict[str, Dict[str, Union[tf.Variable,VariableGroup]]]:
         """
         Add min and max variables to layer.
         Args:
@@ -103,8 +101,8 @@ class STEUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         fq_max.assign(self.max)
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {FQ_MIN: (fq_min, VariableGroup.WEIGHTS),
-                                     FQ_MAX: (fq_max, VariableGroup.WEIGHTS)}
+        self.quantizer_parameters = {FQ_MIN: {'var':fq_min, 'group':VariableGroup.THRESHOLDS},
+                                     FQ_MAX: {'var':fq_max, 'group':VariableGroup.THRESHOLDS}}
         return self.quantizer_parameters
 
     def __call__(self, inputs: tf.Tensor,
@@ -119,8 +117,8 @@ class STEUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
             The quantized tensor.
         """
 
-        _min = self.quantizer_parameters[FQ_MIN][0]
-        _max = self.quantizer_parameters[FQ_MAX][0]
+        _min = self.quantizer_parameters[FQ_MIN]['var']
+        _max = self.quantizer_parameters[FQ_MAX]['var']
         _min, _max = adjust_range_to_include_zero(_min, _max, self.num_bits)
 
         if self.per_channel:
@@ -144,8 +142,8 @@ class STEUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         Returns:
             BaseKerasInferableQuantizer object.
         """
-        min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN][0].numpy(),
-                                                         self.quantizer_parameters[FQ_MAX][0].numpy(),
+        min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN]['var'].numpy(),
+                                                         self.quantizer_parameters[FQ_MAX]['var'].numpy(),
                                                          self.num_bits)
         return WeightsUniformInferableQuantizer(num_bits=self.num_bits,
                                                 min_range=list(min_range.flatten()),
@@ -176,12 +174,11 @@ class STEUniformActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         self.num_bits = quantization_config.activation_n_bits
         self.min_range = quantization_config.activation_quantization_params[C.RANGE_MIN]
         self.max_range = quantization_config.activation_quantization_params[C.RANGE_MAX]
-        self.quantizer_parameters = {}
 
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: qi.KerasQuantizationWrapper) -> Dict[str, tf.Variable]:
+                                layer: qi.KerasQuantizationWrapper) -> Dict[str, Dict[str, Union[tf.Variable,VariableGroup]]]:
         """
         Add min and max variables to layer.
         Args:
@@ -208,8 +205,8 @@ class STEUniformActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         fq_max.assign(self.max_range)
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {FQ_MIN: (fq_min, VariableGroup.WEIGHTS),
-                                     FQ_MAX: (fq_max, VariableGroup.WEIGHTS)}
+        self.quantizer_parameters = {FQ_MIN: {'var':fq_min, 'group':VariableGroup.THRESHOLDS},
+                                     FQ_MAX: {'var':fq_max, 'group':VariableGroup.THRESHOLDS}}
         return self.quantizer_parameters
 
     def __call__(self,
@@ -225,8 +222,8 @@ class STEUniformActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
             The quantized tensor.
         """
 
-        _min = self.quantizer_parameters[FQ_MIN][0]
-        _max = self.quantizer_parameters[FQ_MAX][0]
+        _min = self.quantizer_parameters[FQ_MIN]['var']
+        _max = self.quantizer_parameters[FQ_MAX]['var']
         _min, _max = adjust_range_to_include_zero(_min, _max, self.num_bits)
         q_tensor = tf.quantization.fake_quant_with_min_max_vars(inputs, _min, _max,
                                                                 num_bits=self.num_bits)
@@ -240,8 +237,8 @@ class STEUniformActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         Returns:
             BaseKerasInferableQuantizer object.
         """
-        min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN][0].numpy(),
-                                                         self.quantizer_parameters[FQ_MAX][0].numpy(),
+        min_range, max_range = fix_range_to_include_zero(self.quantizer_parameters[FQ_MIN]['var'].numpy(),
+                                                         self.quantizer_parameters[FQ_MAX]['var'].numpy(),
                                                          self.num_bits)
         return ActivationUniformInferableQuantizer(num_bits=self.num_bits,
                                                    # In activation quantization is per-tensor only - thus we pass

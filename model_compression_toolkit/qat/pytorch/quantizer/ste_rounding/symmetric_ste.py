@@ -72,7 +72,7 @@ class STEWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, Tuple[nn.Parameter, VariableGroup]]:
+                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, Dict[str, Union[nn.Parameter, VariableGroup]]]:
         """
         Add min and max variables to layer.
         Args:
@@ -90,7 +90,7 @@ class STEWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
                                                                              requires_grad=False))
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {THRESHOLD_TENSOR: (layer.get_parameter(name + "_" + THRESHOLD_TENSOR), VariableGroup.THRESHOLDS)}
+        self.quantizer_parameters = {THRESHOLD_TENSOR: {'var':layer.get_parameter(name + "_" + THRESHOLD_TENSOR), 'group':VariableGroup.THRESHOLDS}}
 
         return self.quantizer_parameters
 
@@ -117,7 +117,7 @@ class STEWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
         Returns:
             A pytorch inferable quanizer object.
         """
-        np_threshold = self.quantizer_parameters[THRESHOLD_TENSOR][0].cpu().detach().numpy().flatten()
+        np_threshold = self.quantizer_parameters[THRESHOLD_TENSOR]['var'].cpu().detach().numpy().flatten()
         if self.power_of_two:
             pot_threshold = 2 ** np.ceil(np.log2(np_threshold))
             return WeightsPOTInferableQuantizer(num_bits=self.num_bits,
@@ -159,14 +159,14 @@ class STEActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, Tuple[nn.Parameter, VariableGroup]]:
+                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, Dict[str, Union[nn.Parameter, VariableGroup]]]:
         """
         Add threshold variables to layer.
         """
         layer.register_parameter(name, nn.Parameter(to_torch_tensor(self.threshold_tensor), requires_grad=True))
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {THRESHOLD_TENSOR: (layer.get_parameter(name), VariableGroup.THRESHOLDS)}
+        self.quantizer_parameters = {THRESHOLD_TENSOR: {'var':layer.get_parameter(name), 'group':VariableGroup.THRESHOLDS}}
         return self.quantizer_parameters
 
     def __call__(self,
@@ -182,7 +182,7 @@ class STEActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
             The quantized tensor.
         """
 
-        _t = self.quantizer_parameters[THRESHOLD_TENSOR][0]
+        _t = self.quantizer_parameters[THRESHOLD_TENSOR]['var']
         q_tensor = symmetric_quantizer(inputs, _t, self.num_bits, sign=self.sign)
         return q_tensor
 
@@ -193,7 +193,7 @@ class STEActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
         Returns:
             A pytorch inferable quanizer object.
         """
-        np_threshold = self.quantizer_parameters[THRESHOLD_TENSOR][0].cpu().detach().numpy()
+        np_threshold = self.quantizer_parameters[THRESHOLD_TENSOR]['var'].cpu().detach().numpy()
         if self.power_of_two:
             pot_threshold = np.power(2.0, np.ceil(np.log2(np_threshold)))
             return ActivationPOTInferableQuantizer(num_bits=self.num_bits,

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 
 import numpy as np
 import torch
@@ -70,7 +70,7 @@ class STEUniformWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, Tuple[nn.Parameter, VariableGroup]]:
+                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, Dict[str, Union[nn.Parameter, VariableGroup]]]:
         """
         Add min and max variables to layer.
         Args:
@@ -88,8 +88,8 @@ class STEUniformWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
         layer.register_parameter(name+"_"+FQ_MAX, nn.Parameter(to_torch_tensor(self.max_values), requires_grad=False))
 
         # Save the quantizer parameters for later calculations
-        self.quantizer_parameters = {FQ_MIN: (layer.get_parameter(name+"_"+FQ_MIN), VariableGroup.WEIGHTS),
-                                     FQ_MAX: (layer.get_parameter(name+"_"+FQ_MAX), VariableGroup.WEIGHTS)}
+        self.quantizer_parameters = {FQ_MIN: {'var':layer.get_parameter(name+"_"+FQ_MIN), 'group':VariableGroup.THRESHOLDS},
+                                     FQ_MAX: {'var':layer.get_parameter(name+"_"+FQ_MAX), 'group':VariableGroup.THRESHOLDS}}
 
         return self.quantizer_parameters
 
@@ -104,7 +104,7 @@ class STEUniformWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
         Returns:
             quantized tensor
         """
-        return uniform_quantizer(inputs, self.quantizer_parameters[FQ_MIN][0], self.quantizer_parameters[FQ_MAX][0], self.num_bits)
+        return uniform_quantizer(inputs, self.quantizer_parameters[FQ_MIN]['var'], self.quantizer_parameters[FQ_MAX]['var'], self.num_bits)
 
     def convert2inferable(self) -> WeightsUniformInferableQuantizer:
         """
@@ -113,8 +113,8 @@ class STEUniformWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
         Returns:
             A pytorch inferable quanizer object.
         """
-        _min = self.quantizer_parameters[FQ_MIN][0].cpu().detach().numpy()
-        _max = self.quantizer_parameters[FQ_MAX][0].cpu().detach().numpy()
+        _min = self.quantizer_parameters[FQ_MIN]['var'].cpu().detach().numpy()
+        _max = self.quantizer_parameters[FQ_MAX]['var'].cpu().detach().numpy()
 
         return WeightsUniformInferableQuantizer(num_bits=self.num_bits,
                                                 min_range=_min, max_range=_max,
@@ -150,7 +150,7 @@ class STEUniformActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, Tuple[nn.Parameter,VariableGroup]]:
+                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, Dict[str, Union[nn.Parameter, VariableGroup]]]:
         """
         Add min and max variables to layer.
         """
@@ -158,8 +158,8 @@ class STEUniformActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
         layer.register_parameter(name+"_"+FQ_MAX, nn.Parameter(to_torch_tensor(self.max_range_tensor), requires_grad=True))
 
         # Save the quantizer parameters for later calculations
-        self.quantizer_parameters = {FQ_MIN: (layer.get_parameter(name+"_"+FQ_MIN), VariableGroup.WEIGHTS),
-                                     FQ_MAX: (layer.get_parameter(name+"_"+FQ_MAX), VariableGroup.WEIGHTS)}
+        self.quantizer_parameters = {FQ_MIN: {'var':layer.get_parameter(name+"_"+FQ_MIN), 'group':VariableGroup.THRESHOLDS},
+                                     FQ_MAX: {'var':layer.get_parameter(name+"_"+FQ_MAX), 'group':VariableGroup.THRESHOLDS}}
         return self.quantizer_parameters
 
     def __call__(self,
@@ -175,8 +175,8 @@ class STEUniformActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
             The quantized tensor.
         """
 
-        _min = self.quantizer_parameters[FQ_MIN][0]
-        _max = self.quantizer_parameters[FQ_MAX][0]
+        _min = self.quantizer_parameters[FQ_MIN]['var']
+        _max = self.quantizer_parameters[FQ_MAX]['var']
         q_tensor = uniform_quantizer(inputs, _min, _max, self.num_bits)
         return q_tensor
 
@@ -187,8 +187,8 @@ class STEUniformActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
         Returns:
             A pytorch inferable quanizer object.
         """
-        _min = self.quantizer_parameters[FQ_MIN][0].cpu().detach().numpy()
-        _max = self.quantizer_parameters[FQ_MAX][0].cpu().detach().numpy()
+        _min = self.quantizer_parameters[FQ_MIN]['var'].cpu().detach().numpy()
+        _max = self.quantizer_parameters[FQ_MAX]['var'].cpu().detach().numpy()
 
         return ActivationUniformInferableQuantizer(num_bits=self.num_bits,
                                                    min_range=_min, max_range=_max)

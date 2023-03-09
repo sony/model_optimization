@@ -136,9 +136,9 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
             trainable=True)
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {PTQ_THRESHOLD: (ptq_threshold_tensor, VariableGroup.THRESHOLDS),
-                                     AUXVAR: (auxvar_tensor, VariableGroup.WEIGHTS),
-                                     GPTQ_ITER: (ar_iter, VariableGroup.WEIGHTS)}
+        self.quantizer_parameters = {PTQ_THRESHOLD: {'var':ptq_threshold_tensor, 'group':VariableGroup.THRESHOLDS},
+                                     AUXVAR: {'var':auxvar_tensor, 'group':VariableGroup.WEIGHTS},
+                                     GPTQ_ITER: {'var':ar_iter, 'group':VariableGroup.WEIGHTS}}
         return self.quantizer_parameters
 
     def __call__(self,
@@ -155,8 +155,8 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
             The quantized tensor.
         """
 
-        auxvar = self.quantizer_parameters[AUXVAR][0]
-        ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD][0]
+        auxvar = self.quantizer_parameters[AUXVAR]['var']
+        ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD]['var']
 
         if self.per_channel:
             reshape_shape = get_threshold_reshape_shape(inputs.shape,
@@ -189,5 +189,5 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
             Keys must match NodeQuantizationConfig attributes
 
         """
-        old_threshold = self.quantizer_parameters[PTQ_THRESHOLD][0]
+        old_threshold = self.quantizer_parameters[PTQ_THRESHOLD]['var']
         return {THRESHOLD: old_threshold.numpy().reshape(self.threshold_shape)}

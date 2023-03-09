@@ -36,7 +36,7 @@ if FOUND_TORCH:
                 quantization_config: quantizer config class contains all the information about the quantizer configuration.
             """
             super().__init__(quantization_config)
-            self.quantizer_parameters = {}
+
 
         def get_trainable_variables(self, group: VariableGroup) -> List[torch.Tensor]:
             """
@@ -49,7 +49,8 @@ if FOUND_TORCH:
                 List of trainable variables
             """
             quantizer_trainable = []
-            for name, (quantizer_parameter, parameter_group) in self.quantizer_parameters.items():
+            for name, parameter_dict in self.quantizer_parameters.items():
+                quantizer_parameter, parameter_group = parameter_dict['var'], parameter_dict['group']
                 if quantizer_parameter.requires_grad and parameter_group == group:
                     quantizer_trainable.append(quantizer_parameter)
             return quantizer_trainable

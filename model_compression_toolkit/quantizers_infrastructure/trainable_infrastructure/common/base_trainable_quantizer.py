@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from abc import abstractmethod
 from enum import Enum
 from typing import Union, List, Any
 from inspect import signature
@@ -79,6 +80,8 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         else:
             common.Logger.error(
                 f'Unknown Quantization Part:{static_quantization_target}')  # pragma: no cover
+
+        self.quantizer_parameters = {}
 
     @classmethod
     def get_sig(cls):
@@ -158,7 +161,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         """
         raise NotImplemented  # pragma: no cover
 
-
+    @abstractmethod
     def get_trainable_variables(self, group: VariableGroup) -> List[Any]:
         """
         Get trainable parameters with specific group from quantizer
