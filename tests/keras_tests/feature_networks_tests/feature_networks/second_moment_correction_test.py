@@ -322,7 +322,7 @@ class POTSecondMomentTest(BaseSecondMomentTest):
                                                                      self.representative_data_gen_experimental,
                                                                      core_config=self.get_core_config(),
                                                                      target_platform_capabilities=self.get_tpc(),
-                                                                     new_experimental_exporter=True)
+                                                                     new_experimental_exporter=self.experimental_exporter)
                 self.compare(ptq_model, model_float, cm=cm, input_x=self.representative_data_gen(),
                              quantization_info=quantization_info)
 

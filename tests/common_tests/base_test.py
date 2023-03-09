@@ -59,7 +59,7 @@ class BaseTest:
         raise NotImplementedError(f'{self.__class__} did not implement get_ptq_facade')
 
     def get_gptq_facade(self):
-        raise NotImplementedError(f'{self.__class__} did not implement get_mixed_precision_ptq_facade')
+        raise NotImplementedError(f'{self.__class__} did not implement get_gptq_facade')
 
     def create_networks(self):
         raise Exception('create_networks is not implemented')
