@@ -18,7 +18,6 @@ from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.common.gptq_constants import N_BATCHES_STR, QUANT_PARAM_LEARNING_STR, N_EPOCHS_STR, \
     MAX_LSB_STR, REG_DEFAULT
-from model_compression_toolkit.gptq.common.gptq_quantizer_config import GPTQQuantizerConfig, SoftQuantizerConfig
 
 
 class RoundingType(Enum):
@@ -54,7 +53,6 @@ class GradientPTQConfig:
                  optimizer_bias: Any = None,
                  log_norm: bool = True,
                  weights_n_iter: int = 50,
-                 quantizer_config: GPTQQuantizerConfig = SoftQuantizerConfig(),
                  entropy_reg: float = REG_DEFAULT):
         """
         Initialize a GradientPTQConfig.
@@ -79,7 +77,7 @@ class GradientPTQConfig:
             optimizer_bias (Any): Optimizer to override the rest optimizer for bias.
             log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
             weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
-            quantizer_config (GPTQQuantizerConfig): A class that contains the quantizer specific config.
+            entropy_reg (float): A floating point number that defines the gumbel regularization factor.
 
         """
         self.n_iter = n_iter
@@ -105,29 +103,6 @@ class GradientPTQConfig:
         self.weights_n_iter = weights_n_iter
         self.entropy_reg = entropy_reg
 
-        if self._verify_quantizer_config(quantizer_config, rounding_type):
-            self.quantizer_config = quantizer_config
-        else:
-            common.Logger.error(f"Quantizer config of type {type(quantizer_config)} "
-                                f"is not suitable for rounding type {rounding_type}")
-
-    def _verify_quantizer_config(self, quantizer_config, rounding_type) -> bool:
-        """
-        Verifies that the given quantizer config matches the given rounding type.
-
-        Args:
-            quantizer_config: A quantizer config.
-            rounding_type: A RoundingType.
-
-        Returns: True if the quantizer config matches the rounding type, False otherwise.
-
-        """
-        if rounding_type == RoundingType.SoftQuantizer:
-            return type(quantizer_config) == SoftQuantizerConfig
-
-        # Here, we compare type() and not isinstance to exclude instance equality because of inheritance
-        return type(quantizer_config) == GPTQQuantizerConfig
-
 
 class GradientPTQConfigV2(GradientPTQConfig):
     """
@@ -151,7 +126,6 @@ class GradientPTQConfigV2(GradientPTQConfig):
                  optimizer_bias: Any = None,
                  log_norm: bool = True,
                  weights_n_iter: int = 50,
-                 quantizer_config: GPTQQuantizerConfig = SoftQuantizerConfig(),
                  entropy_reg: float = REG_DEFAULT):
         """
         Initialize a GradientPTQConfigV2.
@@ -176,7 +150,7 @@ class GradientPTQConfigV2(GradientPTQConfig):
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
             log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
             weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
-            quantizer_config (Any): A class that contains the quantizer specific config.
+            entropy_reg (float): A floating point number that defines the gumbel regularization factor.
 
         """
 
@@ -197,7 +171,6 @@ class GradientPTQConfigV2(GradientPTQConfig):
                          optimizer_bias=optimizer_bias,
                          log_norm=log_norm,
                          weights_n_iter=weights_n_iter,
-                         quantizer_config=quantizer_config,
                          entropy_reg=entropy_reg)
         self.n_epochs = n_epochs
 
@@ -225,9 +198,7 @@ class GradientPTQConfigV2(GradientPTQConfig):
         """
 
         if self.rounding_type == RoundingType.SoftQuantizer:
-            return {N_BATCHES_STR: self.quantizer_config.n_batches,
-                    QUANT_PARAM_LEARNING_STR: self.quantization_parameters_learning,
-                    N_EPOCHS_STR: self.n_epochs}
+            return {QUANT_PARAM_LEARNING_STR: self.quantization_parameters_learning}
         elif self.rounding_type == RoundingType.STE:
             return {MAX_LSB_STR: self.lsb_change_per_bit_width}
 

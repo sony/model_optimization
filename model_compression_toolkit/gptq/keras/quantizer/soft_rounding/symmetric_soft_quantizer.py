@@ -76,23 +76,15 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
 
     def __init__(self,
                  quantization_config: TrainableQuantizerWeightsConfig,
-                 n_batches: int = None,
-                 quantization_parameter_learning: bool = False,
-                 n_epochs: int = N_EPOCHS):
+                 quantization_parameter_learning: bool = False):
         """
         Initialize a SymmetricSoftRoundingGPTQ object with parameters to use
         for the quantization.
 
         Args:
             quantization_config: Trainable weights quantizer config.
-            n_batches: The expected number of batches for each training epoch.
             quantization_parameter_learning: Whether to train the quantization threshold.
-            n_epochs: Number of epochs to run training for.
         """
-
-        if n_batches is None:
-            Logger.error("SymmetricSoftRoundingGPTQ got an uninitialized n_batches argument.")
-
         super().__init__(quantization_config)
         self.num_bits = quantization_config.weights_n_bits
         self.per_channel = quantization_config.weights_per_channel_threshold
@@ -108,17 +100,11 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
         self.num_channels = len(self.threshold_values) if self.per_channel else 1
 
         # gamma and zeta are stretch parameters for computing the rectified sigmoind function.
-        # beta is used to set the regularization term.
         # See: https://arxiv.org/pdf/2004.10568.pdf
         self.gamma = SOFT_ROUNDING_GAMMA
         self.zeta = SOFT_ROUNDING_ZETA
-        self.beta = SOFT_ROUNDING_BETA
 
         self.quantizer_parameters = {}
-
-        # Initializing the temperature decay according to the number of expected gradient steps
-        init_decay = MAX_ITERATIONS_DEFAULT if n_batches is None else n_epochs * n_batches
-        self.linear_decay = LinearTempDecay(init_decay)
 
     def initialize_quantization(self,
                                 tensor_shape: Any,
@@ -199,17 +185,14 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
         else:
             return []
 
-    def get_regularization(self) -> tf.Tensor:
+    def get_aux_variable(self) -> List[tf.Tensor]:
         """
-        Computes the regularization term for the soft rounding loss.
+        This function return a list with the quantizer's quantization auxiliary variables.
 
-        Returns:
-            regularization term.
+        Returns: A list with the quantization auxiliary variables.
+
         """
-
-        st = self.get_soft_targets()
-        b = self.linear_decay(self.ar_iter.value())
-        return tf.reduce_sum(1 - tf.pow(tf.math.abs(st - .5) * 2, b))
+        return [self.quantizer_parameters[AUXVAR]]
 
     def get_soft_targets(self) -> tf.Tensor:
         """
@@ -221,15 +204,6 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
         """
         return qutils.clip(
             tf.sigmoid(self.quantizer_parameters[AUXVAR]) * (self.zeta - self.gamma) + self.gamma, 1, 0)
-
-    def get_aux_variable(self) -> List[tf.Tensor]:
-        """
-        This function return a list with the quantizer's quantization auxiliary variables.
-
-        Returns: A list with the quantization auxiliary variables.
-
-        """
-        return [self.quantizer_parameters[AUXVAR]]
 
     def __call__(self,
                  inputs: tf.Tensor,

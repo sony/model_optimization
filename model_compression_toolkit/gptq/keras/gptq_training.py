@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from functools import partial
 from typing import Callable, List, Tuple, Union
 
 import tensorflow as tf
@@ -23,7 +22,6 @@ from tqdm import tqdm
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
-from model_compression_toolkit.gptq.common.gptq_constants import REGULARIZATION_VALUES
 from packaging import version
 
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
@@ -37,15 +35,14 @@ else:
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2, RoundingType
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.gptq.keras.graph_info import get_weights_for_loss, \
-    get_soft_rounding_reg, get_gptq_trainable_parameters, get_regularization
+from model_compression_toolkit.gptq.keras.graph_info import get_weights_for_loss, get_gptq_trainable_parameters, get_regularization
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 import numpy as np
 import copy
-from model_compression_toolkit.core.keras.constants import BIAS, USE_BIAS, KERNEL
+from model_compression_toolkit.core.keras.constants import BIAS, USE_BIAS
 from model_compression_toolkit import quantizers_infrastructure as qi
 
 
@@ -197,11 +194,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                                                self.compare_points_std,
                                                self.weights_for_average_loss)
 
-            reg_value = self.reg_func(self.fxp_model, self.gptq_config.entrogpy_reg)
-
-            # reg_value = self.gptq_config.quantizer_config.get_regularization_value(
-            #     self.fxp_model,
-            #     **{REGULARIZATION_VALUES: self._get_quantizer_regularization_values(self.gptq_config.rounding_type)})
+            reg_value = self.reg_func(self.fxp_model, self.gptq_config.entropy_reg)
 
             loss_value += reg_value
 
@@ -323,18 +316,3 @@ class KerasGPTQTrainer(GPTQTrainer):
                         node.set_weights_by_keys(BIAS, new_bias)
 
         return graph
-
-    def _get_quantizer_regularization_values(self, rounding_type: RoundingType) -> List[tf.Tensor]:
-        """
-        Mapping between a rounding type to its matching regularization method.
-
-        Args:
-            rounding_type: GPTQ rounding type.
-
-        Returns: A regularization computation method.
-
-        """
-        if rounding_type == RoundingType.SoftQuantizer:
-            return get_soft_rounding_reg(self.fxp_model)
-        else:
-            return []

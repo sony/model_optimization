@@ -112,25 +112,3 @@ def get_regularization(gptq_config: GradientPTQConfig, representative_data_gen: 
         return partial(soft_quantizer_regularization, n_batches=num_batches, n_epochs=n_epochs)
     else:
         return lambda m, e_reg: 0
-
-
-# TODO: this function need to move to location that is relevant only for soft quantizer -
-#  once deciding how to handle GPTQ quantizers regularization.
-def get_soft_rounding_reg(fxp_model: Model) -> List[tf.Tensor]:
-    """
-    This function returns the soft quantizer regularization values for SoftRounding.
-
-    Args:
-        fxp_model: A model to be quantized with SoftRounding.
-
-    Returns: A list of tensors.
-    """
-
-    soft_reg_aux: List[tf.Tensor] = []
-    for layer in fxp_model.layers:
-        if isinstance(layer, KerasQuantizationWrapper):
-            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
-                                                                  fw_info=DEFAULT_KERAS_INFO)
-
-            soft_reg_aux.append(layer.weights_quantizers[kernel_attribute].get_regularization())
-    return soft_reg_aux

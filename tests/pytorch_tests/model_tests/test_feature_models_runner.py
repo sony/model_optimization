@@ -16,7 +16,6 @@ import unittest
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
-from model_compression_toolkit.gptq.common.gptq_quantizer_config import SoftQuantizerConfig
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \

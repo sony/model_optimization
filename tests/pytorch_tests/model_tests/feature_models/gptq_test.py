@@ -16,7 +16,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from model_compression_toolkit.gptq.common.gptq_quantizer_config import GPTQQuantizerConfig
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO

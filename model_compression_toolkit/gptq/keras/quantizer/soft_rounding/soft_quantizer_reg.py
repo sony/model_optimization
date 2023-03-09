@@ -19,7 +19,7 @@ from keras import Model
 
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.common.gptq_constants import AUXVAR, SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, \
-    SOFT_ROUNDING_BETA, MAX_ITERATIONS_DEFAULT, GPTQ_ITER
+    MAX_ITERATIONS_DEFAULT, GPTQ_ITER
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
@@ -76,12 +76,6 @@ def soft_quantizer_regularization(model: Model, entropy_reg: float, n_batches: i
     Returns: Regularization value.
     """
 
-    # gamma and zeta are stretch parameters for computing the rectified sigmoind function.
-    # beta is used to set the regularization term.
-    # See: https://arxiv.org/pdf/2004.10568.pdf
-    gamma = SOFT_ROUNDING_GAMMA
-    zeta = SOFT_ROUNDING_ZETA
-
     # Initializing the temperature decay according to the number of expected gradient steps
     init_decay = MAX_ITERATIONS_DEFAULT if n_batches is None else n_epochs * n_batches
     linear_decay = LinearTempDecay(init_decay)
@@ -92,7 +86,10 @@ def soft_quantizer_regularization(model: Model, entropy_reg: float, n_batches: i
             kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
                                                                   fw_info=DEFAULT_KERAS_INFO)
 
-            soft_targets = tf.sigmoid(layer.weights_quantizers[kernel_attribute].quantizer_parameters[AUXVAR])
+            zeta = layer.weights_quantizers[kernel_attribute].zeta
+            gamma = layer.weights_quantizers[kernel_attribute].gamma
+            soft_targets = layer.weights_quantizers[kernel_attribute].get_soft_targets()
+
             st = qutils.clip(soft_targets * (zeta - gamma) + gamma, 1, 0)
             b = linear_decay(layer.weights_quantizers[kernel_attribute].quantizer_parameters[GPTQ_ITER].value())
 
