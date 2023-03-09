@@ -59,9 +59,10 @@ class DwConv2dReplacementTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.DepthwiseConv2D))
         self.unit_test.assertTrue(np.all(quantized_model.layers[2].layer.depthwise_kernel.numpy() == 1))
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeTypeFilter(layers.DepthwiseConv2D),
-                         action=ReplaceLayer(layers.DepthwiseConv2D, get_new_weights_for_identity_dw_conv2d_layer))
-                ]
+    def get_debug_config(self):
+        return mct.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.DepthwiseConv2D),
+                                                        action=ReplaceLayer(layers.DepthwiseConv2D,
+                                                                            get_new_weights_for_identity_dw_conv2d_layer))
+                                               ])
 
 

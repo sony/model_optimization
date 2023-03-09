@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod
+from model_compression_toolkit import QuantizationConfig
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import tensorflow as tf
 import numpy as np
-from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
 layers = keras.layers
@@ -32,10 +31,7 @@ class ReLUBoundToPOTNetTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, experimental_exporter=True)
 
     def get_quantization_config(self):
-        qc = QuantizationConfig(QuantizationErrorMethod.MSE,
-                                QuantizationErrorMethod.MSE,
-                                relu_bound_to_power_of_2=True)
-        return qc
+        return QuantizationConfig(relu_bound_to_power_of_2=True)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

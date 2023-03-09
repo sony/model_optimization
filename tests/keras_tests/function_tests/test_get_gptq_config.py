@@ -17,7 +17,7 @@ import unittest
 from typing import List
 
 import numpy as np
-from model_compression_toolkit import get_keras_gptq_config, keras_post_training_quantization, \
+from model_compression_toolkit import get_keras_gptq_config, \
     keras_gradient_post_training_quantization_experimental, \
     QuantizationConfig, QuantizationErrorMethod, GradientPTQConfig, RoundingType, CoreConfig, SoftQuantizerConfig
 import tensorflow as tf
@@ -121,14 +121,6 @@ class TestGetGPTQConfig(unittest.TestCase):
         # enabled tracing for code coverage.
         tf.config.run_functions_eagerly(True)
 
-        for i, gptq_config in enumerate(self.gptq_configurations):
-            keras_post_training_quantization(in_model=build_model(SHAPE[1:]),
-                                             representative_data_gen=random_datagen,
-                                             n_iter=1,
-                                             quant_config=self.qc,
-                                             gptq_config=gptq_config,
-                                             target_platform_capabilities=self.pot_weights_tpc)
-
         for i, gptq_config in enumerate(self.gptqv2_configurations):
             keras_gradient_post_training_quantization_experimental(in_model=build_model(SHAPE[1:]),
                                                                    representative_data_gen=random_datagen_experimental,
@@ -142,14 +134,6 @@ class TestGetGPTQConfig(unittest.TestCase):
         # This call removes the effect of @tf.function decoration and executes the decorated function eagerly, which
         # enabled tracing for code coverage.
         tf.config.run_functions_eagerly(True)
-
-        for i, gptq_config in enumerate(self.gptq_configurations):
-            keras_post_training_quantization(in_model=build_model(SHAPE[1:]),
-                                             representative_data_gen=random_datagen,
-                                             n_iter=1,
-                                             quant_config=self.qc,
-                                             gptq_config=gptq_config,
-                                             target_platform_capabilities=self.symmetric_weights_tpc)
 
         for i, gptq_config in enumerate(self.gptqv2_configurations):
             keras_gradient_post_training_quantization_experimental(in_model=build_model(SHAPE[1:]),

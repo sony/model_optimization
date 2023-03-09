@@ -61,22 +61,24 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="scope_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationErrorMethod.MSE,
                                       False, False, True)
 
-    def get_network_editor(self):
+    def get_debug_config(self):
         # first rule is to check that the scope filter catches the 2 convs with
         # second and third rule- they both do opperations on the same node.The goels are:
         #   1- to check "or" opperation. 2- to see that the last rule in the list is the last rule applied
-        return [EditRule(filter=NodeNameScopeFilter(self.scope),
-                         action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
-                EditRule(filter=NodeNameScopeFilter(self.scope),
-                         action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits)),
-                EditRule(filter=NodeNameScopeFilter('2'),
-                         action=ChangeCandidatesWeightsQuantConfigAttr(enable_weights_quantization=True)),
-                EditRule(filter=NodeNameScopeFilter('2') or NodeNameScopeFilter('does_not_exist'),
-                         action=ChangeCandidatesWeightsQuantConfigAttr(enable_weights_quantization=False))
-                ]
+        network_editor = [EditRule(filter=NodeNameScopeFilter(self.scope),
+                                   action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
+                          EditRule(filter=NodeNameScopeFilter(self.scope),
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits)),
+                          EditRule(filter=NodeNameScopeFilter('2'),
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(enable_weights_quantization=True)),
+                          EditRule(filter=NodeNameScopeFilter('2') or NodeNameScopeFilter('does_not_exist'),
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(enable_weights_quantization=False))
+                          ]
+        return mct.DebugConfig(network_editor=network_editor)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, self.num_conv_channels]]
@@ -139,15 +141,17 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="name_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationErrorMethod.MSE,
                                       False, False, True)
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
-                         action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
-                EditRule(filter=NodeNameFilter(self.node_to_change_name),
-                         action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits))
-                ]
+    def get_debug_config(self):
+        network_editor = [EditRule(filter=NodeNameFilter(self.node_to_change_name),
+                                   action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
+                          EditRule(filter=NodeNameFilter(self.node_to_change_name),
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits))
+                          ]
+        return mct.DebugConfig(network_editor=network_editor)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, self.num_conv_channels]]
@@ -207,21 +211,23 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="type_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationErrorMethod.MSE,
                                       False, False, False)
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeTypeFilter(self.type_to_change),
-                         action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits)),
-                EditRule(filter=NodeTypeFilter(self.type_to_change),
-                         action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
-                EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
-                         action=ChangeQuantizationParamFunction(weights_quantization_params_fn=self.weights_params_fn())),
-                EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
-                         action=ChangeQuantizationParamFunction(
-                             activation_quantization_params_fn=self.activations_params_fn())),
-                EditRule(filter=NodeNameFilter(self.node_to_change_name) and NodeTypeFilter(layers.ReLU),
-                         action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=16))]
+    def get_debug_config(self):
+        network_editor = [EditRule(filter=NodeTypeFilter(self.type_to_change),
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits)),
+                          EditRule(filter=NodeTypeFilter(self.type_to_change),
+                                   action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
+                          EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
+                                   action=ChangeQuantizationParamFunction(weights_quantization_params_fn=self.weights_params_fn())),
+                          EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
+                                   action=ChangeQuantizationParamFunction(
+                                       activation_quantization_params_fn=self.activations_params_fn())),
+                          EditRule(filter=NodeNameFilter(self.node_to_change_name) and NodeTypeFilter(layers.ReLU),
+                                   action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=16))]
+        return mct.DebugConfig(network_editor=network_editor)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 224, self.num_conv_channels]]

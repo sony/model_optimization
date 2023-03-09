@@ -38,13 +38,12 @@ class UniformActivationTest(BasePytorchTest):
             'activation_n_bits': 2})
         return {'act_2bit': generate_pytorch_tpc(name="uniform_layer_test", tp_model=tp)}
 
-    def get_quantization_configs(self):
-        return {
-            'act_2bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
-                                               mct.QuantizationErrorMethod.NOCLIPPING,
-                                               shift_negative_activation_correction=True,
-                                               shift_negative_ratio=np.inf),
-        }
+    def get_core_configs(self):
+        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
+                                    mct.QuantizationErrorMethod.NOCLIPPING,
+                                    shift_negative_activation_correction=True,
+                                    shift_negative_ratio=np.inf)
+        return {'act_2bit': mct.CoreConfig(quantization_config=qc)}
 
     def create_feature_network(self, input_shape):
         return UniformActivationNet(input_shape)

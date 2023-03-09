@@ -41,7 +41,6 @@ class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
                                       mct.QuantizationErrorMethod.NOCLIPPING,
                                       input_scaling=True)
 
-
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         qi = 3 if isinstance(quantized_model.layers[2].layer, layers.ZeroPadding2D) else 2
         fi = 2 if isinstance(float_model.layers[1], layers.ZeroPadding2D) else 1
@@ -52,7 +51,6 @@ class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
         attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[qi].layer.__class__)[0]
         alpha = np.ma.masked_invalid((float_model.layers[fi].weights[0] / quantized_model.layers[qi].weights_quantizers[attr](quantized_model.layers[qi].weights[0])).numpy()).mean()
         self.unit_test.assertTrue(np.allclose(alpha, quantization_info.input_scale, atol=1e-1))
-
 
 
 class InputScalingDenseTest(BaseInputScalingTest):

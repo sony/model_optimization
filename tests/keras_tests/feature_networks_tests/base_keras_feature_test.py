@@ -16,8 +16,8 @@ from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit import keras_post_training_quantization, \
-    keras_post_training_quantization_mixed_precision, FrameworkInfo, keras_post_training_quantization_experimental
+from model_compression_toolkit import FrameworkInfo, keras_post_training_quantization_experimental, \
+    keras_gradient_post_training_quantization_experimental
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
@@ -30,28 +30,23 @@ class BaseKerasFeatureNetworkTest(BaseFeatureNetworkTest):
                  val_batch_size=1,
                  num_of_inputs=1,
                  input_shape=(8, 8, 3),
-                 experimental_exporter=False,
-                 experimental_facade=False):
+                 experimental_exporter=False):
 
         super().__init__(unit_test=unit_test,
                          val_batch_size=val_batch_size,
                          num_calibration_iter=num_calibration_iter,
                          num_of_inputs=num_of_inputs,
                          input_shape=input_shape,
-                         experimental_exporter=experimental_exporter,
-                         experimental_facade=experimental_facade)
+                         experimental_exporter=experimental_exporter)
 
     def get_tpc(self):
         return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def get_ptq_facade(self):
-        return keras_post_training_quantization
-
-    def get_experimental_ptq_facade(self):
         return keras_post_training_quantization_experimental
 
-    def get_mixed_precision_ptq_facade(self):
-        return keras_post_training_quantization_mixed_precision
+    def get_gptq_facade(self):
+        return keras_gradient_post_training_quantization_experimental
 
     def get_fw_info(self) -> FrameworkInfo:
         return DEFAULT_KERAS_INFO

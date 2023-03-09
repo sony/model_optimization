@@ -51,7 +51,6 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
                  quantizer_config=GPTQQuantizerConfig(), per_channel=True):
         super().__init__(unit_test, input_shape=(3, 16, 16))
         self.seed = 0
-        self.experimental = True
         self.experimental_exporter = experimental_exporter
         self.rounding_type = rounding_type
         self.quantizer_config = quantizer_config
@@ -72,21 +71,12 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         # Create model
         self.float_model = self.create_networks()
 
-        # Create quantization config
-        qConfig = self.get_quantization_config()
-
         # Run MCT with PTQ
         np.random.seed(self.seed)
         ptq_model, _ = mct.pytorch_post_training_quantization_experimental(self.float_model,
                                                                            self.representative_data_gen_experimental,
                                                                            core_config=self.get_core_config(),
-                                                                           target_platform_capabilities=self.get_tpc()) if self.experimental \
-            else mct.pytorch_post_training_quantization(self.float_model,
-                                                        self.representative_data_gen,
-                                                        n_iter=self.num_calibration_iter,
-                                                        quant_config=qConfig,
-                                                        fw_info=DEFAULT_PYTORCH_INFO,
-                                                        network_editor=self.get_network_editor())
+                                                                           target_platform_capabilities=self.get_tpc())
 
         # Run MCT with GPTQ
         np.random.seed(self.seed)
@@ -95,14 +85,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
                                                                                                      core_config=self.get_core_config(),
                                                                                                      target_platform_capabilities=self.get_tpc(),
                                                                                                      gptq_config=self.get_gptq_configv2(),
-                                                                                                     new_experimental_exporter=self.experimental_exporter) if self.experimental \
-            else mct.pytorch_post_training_quantization(self.float_model,
-                                                        self.representative_data_gen,
-                                                        n_iter=self.num_calibration_iter,
-                                                        quant_config=qConfig,
-                                                        fw_info=DEFAULT_PYTORCH_INFO,
-                                                        network_editor=self.get_network_editor(),
-                                                        gptq_config=self.get_gptq_config())
+                                                                                                     new_experimental_exporter=self.experimental_exporter)
 
         # Generate inputs
         x = to_torch_tensor(self.representative_data_gen())

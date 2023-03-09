@@ -92,14 +92,13 @@ class LUTWeightsQuantizerTest(BasePytorchTest):
             test_name='lut_quantizer_test',
             ftp_name='lut_quantizer_pytorch_test')
 
-    def get_quantization_configs(self):
-        return {'lut_quantizer_test': mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                                             mct.QuantizationErrorMethod.MSE)}
-
-    def get_network_editor(self):
-        return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
-                         action=ChangeCandidatesWeightsQuantizationMethod(
-                             weights_quantization_method=tp.QuantizationMethod.LUT_POT_QUANTIZER))]
+    def get_core_configs(self):
+        network_editor = [EditRule(filter=NodeNameFilter(self.node_to_change_name),
+                                   action=ChangeCandidatesWeightsQuantizationMethod(
+                                       weights_quantization_method=tp.QuantizationMethod.LUT_POT_QUANTIZER))]
+        return {'lut_quantizer_test': mct.CoreConfig(quantization_config=mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                                                                                mct.QuantizationErrorMethod.MSE),
+                                                     debug_config=mct.DebugConfig(network_editor=network_editor))}
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 16, 16], [self.val_batch_size, 3, 16, 16]]
@@ -133,8 +132,8 @@ class LUTActivationQuantizerTest(BasePytorchTest):
             test_name='lut_quantizer_test',
             ftp_name='lut_quantizer_pytorch_test')
 
-    def get_quantization_configs(self):
-        return {'lut_quantizer_test': mct.QuantizationConfig()}
+    def get_core_configs(self):
+        return {'lut_quantizer_test': mct.CoreConfig()}
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 16, 16], [self.val_batch_size, 3, 16, 16]]

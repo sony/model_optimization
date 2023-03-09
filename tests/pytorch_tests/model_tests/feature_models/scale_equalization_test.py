@@ -18,6 +18,7 @@ import torch
 from torch.nn import Conv2d, ReLU, ZeroPad2d, BatchNorm2d, ConvTranspose2d
 from torch.nn.functional import relu
 
+import model_compression_toolkit
 from model_compression_toolkit.core.common.substitutions.scale_equalization import fixed_second_moment_after_relu, \
     fixed_mean_after_relu
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_tp_model
@@ -50,10 +51,9 @@ class ScaleEqualizationBaseTest(BasePytorchTest):
                                          test_name='8bit_scale_equalization',
                                          ftp_name='8bit_scale_equalization_pytorch_test')
 
-    def get_quantization_configs(self):
-        quant_config = self.get_quantization_config()
-        quant_config.activation_channel_equalization = True
-        return {"8bit_scale_equalization": quant_config}
+    def get_core_configs(self):
+        quant_config = model_compression_toolkit.QuantizationConfig(activation_channel_equalization=True)
+        return {"8bit_scale_equalization": model_compression_toolkit.CoreConfig(quantization_config=quant_config)}
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         set_model(float_model)

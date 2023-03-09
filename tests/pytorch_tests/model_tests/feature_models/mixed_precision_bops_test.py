@@ -112,7 +112,7 @@ class BaseMixedPrecisionBopsTest(BasePytorchTest):
             test_name='mixed_precision_bops_model',
             tpc_name='mixed_precision_bops_pytorch_test')
 
-    def get_quantization_configs(self):
+    def get_core_configs(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
                                     mct.QuantizationErrorMethod.MSE,
                                     weights_bias_correction=True,
@@ -120,11 +120,9 @@ class BaseMixedPrecisionBopsTest(BasePytorchTest):
                                     activation_channel_equalization=False,
                                     relu_bound_to_power_of_2=False,
                                     input_scaling=False)
+        mpc = MixedPrecisionQuantizationConfigV2(num_of_images=1)
 
-        return {"mixed_precision_bops_model": MixedPrecisionQuantizationConfig(qc, num_of_images=1)}
-
-    def get_mixed_precision_v2_config(self):
-        return MixedPrecisionQuantizationConfigV2(num_of_images=1)
+        return {"mixed_precision_bops_model": mct.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, 3]]

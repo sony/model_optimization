@@ -56,23 +56,13 @@ class BaseSecondMomentTest(BaseKerasFeatureNetworkTest, ABC):
     def __init__(self, unit_test):
         super(BaseSecondMomentTest, self).__init__(unit_test=unit_test, val_batch_size=128,
                                                    num_calibration_iter=100, input_shape=(32, 32, 1),
-                                                   experimental_exporter=True,
-                                                   experimental_facade=True)
+                                                   experimental_exporter=True)
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 16,
                                      'activation_n_bits': 16,
                                      'weights_quantization_method': QuantizationMethod.SYMMETRIC})
         return generate_keras_tpc(name="second_moment_correction_test", tp_model=tp)
-
-    def get_debug_config(self):
-        return DebugConfig(analyze_similarity=self.analyze_similarity(),
-                           network_editor=self.get_network_editor())
-
-    def get_core_config(self):
-        return CoreConfig(quantization_config=self.get_quantization_config(),
-                          mixed_precision_config=self.get_mixed_precision_v2_config(),
-                          debug_config=self.get_debug_config())
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(weights_second_moment_correction=True)
@@ -223,16 +213,17 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
         x = layers.Activation('relu')(x)
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
-    def run_test(self, experimental_facade=False, experimental_exporter=False):
+    def run_test(self, experimental_exporter=False):
         feature_networks = self.create_networks()
         feature_networks = feature_networks if isinstance(feature_networks, list) else [feature_networks]
         for model_float in feature_networks:
             qc = self.get_quantization_config()
+            dc = self.get_debug_config()
             tg, graph_after_second_moment_correction = self.prepare_graph(model_float,
                                                                           self.representative_data_gen,
                                                                           quant_config=qc,
                                                                           fw_info=self.get_fw_info(),
-                                                                          network_editor=self.get_network_editor(),
+                                                                          network_editor=dc.network_editor,
                                                                           target_platform_capabilities=self.get_tpc())
             for node in graph_after_second_moment_correction.nodes:
                 if node.layer_class == layers.BatchNormalization:
@@ -327,13 +318,11 @@ class POTSecondMomentTest(BaseSecondMomentTest):
             feature_networks = self.create_networks()
             feature_networks = feature_networks if isinstance(feature_networks, list) else [feature_networks]
             for model_float in feature_networks:
-                core_cfg = self.get_core_config()
-                ptq_model, quantization_info = self.get_experimental_ptq_facade()(model_float,
-                                                                                  self.representative_data_gen,
-                                                                                  core_config=core_cfg,
-                                                                                  target_platform_capabilities=self.get_tpc(),
-                                                                                  new_experimental_exporter=True)
-
+                ptq_model, quantization_info = self.get_ptq_facade()(model_float,
+                                                                     self.representative_data_gen_experimental,
+                                                                     core_config=self.get_core_config(),
+                                                                     target_platform_capabilities=self.get_tpc(),
+                                                                     new_experimental_exporter=self.experimental_exporter)
                 self.compare(ptq_model, model_float, cm=cm, input_x=self.representative_data_gen(),
                              quantization_info=quantization_info)
 

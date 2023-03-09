@@ -44,7 +44,7 @@ class MixedPercisionActivationBaseTest(BasePytorchTest):
             test_name='mixed_precision_activation_model',
             tpc_name='mixed_precision_activation_pytorch_test')
 
-    def get_quantization_configs(self):
+    def get_core_configs(self):
         qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
                                     mct.QuantizationErrorMethod.MSE,
                                     weights_bias_correction=True,
@@ -52,11 +52,9 @@ class MixedPercisionActivationBaseTest(BasePytorchTest):
                                     activation_channel_equalization=False,
                                     relu_bound_to_power_of_2=False,
                                     input_scaling=False)
+        mpc = mct.MixedPrecisionQuantizationConfigV2(num_of_images=1)
 
-        return {"mixed_precision_activation_model": MixedPrecisionQuantizationConfig(qc, num_of_images=1)}
-
-    def get_mixed_precision_v2_config(self):
-        return mct.MixedPrecisionQuantizationConfigV2(num_of_images=1)
+        return {"mixed_precision_activation_model": mct.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}
 
     def create_feature_network(self, input_shape):
         return MixedPrecisionNet(input_shape)
@@ -131,8 +129,8 @@ class MixedPercisionActivationMultipleInputs(MixedPercisionActivationBaseTest):
     def get_kpi(self):
         return KPI(np.inf, np.inf)
 
-    def get_core_config(self):
-        return CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2(num_of_images=4))
+    def get_mixed_precision_v2_config(self):
+        return MixedPrecisionQuantizationConfigV2(num_of_images=4)
 
     def create_feature_network(self, input_shape):
         return MixedPrecisionMultipleInputsNet(input_shape)

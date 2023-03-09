@@ -3,7 +3,7 @@ from enum import Enum
 from typing import List, Any
 import numpy as np
 
-from model_compression_toolkit import MixedPrecisionQuantizationConfig, QuantizationConfig, QuantizationErrorMethod
+from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod, CoreConfig
 from tests.common_tests.base_test import BaseTest
 
 
@@ -48,16 +48,7 @@ class BaseLayerTest(BaseTest):
         raise NotImplemented
 
     def get_quantization_config(self):
-        qc = QuantizationConfig(QuantizationErrorMethod.MSE,
-                                QuantizationErrorMethod.MSE,
-                                weights_bias_correction=False)
-        if self.current_mode == LayerTestMode.FLOAT:
-            # Disable all features that are enabled by default:
-            qc = QuantizationConfig(QuantizationErrorMethod.MSE,
-                                    QuantizationErrorMethod.MSE,
-                                    weights_bias_correction=False,
-                                    )
-        return qc
+        return QuantizationConfig(weights_bias_correction=False)
 
     def run_test(self):
         feature_networks = self.create_networks()
@@ -65,21 +56,11 @@ class BaseLayerTest(BaseTest):
         for model_float in feature_networks:
             for mode in self.quantization_modes:
                 self.current_mode = mode
-                qc = self.get_quantization_config()
-                if isinstance(qc, MixedPrecisionQuantizationConfig):
-                    ptq_model, quantization_info = self.get_mixed_precision_ptq_facade()(model_float,
-                                                                                         self.representative_data_gen,
-                                                                                         n_iter=self.num_calibration_iter,
-                                                                                         quant_config=qc,
-                                                                                         fw_info=self.get_fw_info(),
-                                                                                         target_platform_capabilities=self.get_tpc())
-                else:
-                    ptq_model, quantization_info = self.get_ptq_facade()(model_float,
-                                                                         self.representative_data_gen,
-                                                                         n_iter=self.num_calibration_iter,
-                                                                         quant_config=qc,
-                                                                         fw_info=self.get_fw_info(),
-                                                                         target_platform_capabilities=self.get_tpc())
+                core_config = self.get_core_config()
+                ptq_model, quantization_info = self.get_ptq_facade()(model_float,
+                                                                     self.representative_data_gen_experimental,
+                                                                     core_config=core_config,
+                                                                     target_platform_capabilities=self.get_tpc())
 
                 self.compare(ptq_model, model_float, input_x=self.representative_data_gen(),
                              quantization_info=quantization_info)

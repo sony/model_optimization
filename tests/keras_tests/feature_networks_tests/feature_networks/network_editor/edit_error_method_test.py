@@ -17,7 +17,7 @@ import numpy as np
 import tensorflow as tf
 from keras.engine.input_layer import InputLayer
 
-from model_compression_toolkit import QuantizationErrorMethod
+from model_compression_toolkit import QuantizationErrorMethod, DebugConfig
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesActivationQuantConfigAttr
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeTypeFilter
@@ -43,10 +43,10 @@ class EditActivationErrorMethod(BaseKerasFeatureNetworkTest):
         input_data[0][0, 0, 0, 0] = 2
         return input_data
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeTypeFilter(InputLayer),
-                         action=ChangeCandidatesActivationQuantConfigAttr(
-                             activation_error_method=QuantizationErrorMethod.NOCLIPPING))]
+    def get_debug_config(self):
+        return DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(InputLayer),
+                                                    action=ChangeCandidatesActivationQuantConfigAttr(
+                                                        activation_error_method=QuantizationErrorMethod.NOCLIPPING))])
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

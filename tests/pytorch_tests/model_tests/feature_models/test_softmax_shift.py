@@ -17,6 +17,7 @@ import numpy as np
 import torch
 from torch.nn.functional import softmax
 
+import model_compression_toolkit
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_tp_model
 from model_compression_toolkit.core.pytorch.utils import set_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
@@ -39,10 +40,9 @@ class SoftmaxBaseTest(BasePytorchTest):
                                          test_name='8bit_softmax_shift',
                                          ftp_name='softmax_shift_pytorch_test')
 
-    def get_quantization_configs(self):
-        quant_config = self.get_quantization_config()
-        quant_config.softmax_shift = True
-        return {"8bit_softmax_shift": quant_config}
+    def get_core_configs(self):
+        quant_config = model_compression_toolkit.QuantizationConfig(softmax_shift=True)
+        return {"8bit_softmax_shift": model_compression_toolkit.CoreConfig(quantization_config=quant_config)}
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         set_model(float_model)

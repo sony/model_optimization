@@ -44,10 +44,7 @@ class NestedModelMultipleOutputsTest(BaseKerasFeatureNetworkTest):
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
                                       mct.QuantizationErrorMethod.MSE,
-                                      True,
-                                      True,
-                                      True)
-
+                                      True, True, True)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 236, 236, 3]]
