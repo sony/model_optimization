@@ -72,7 +72,8 @@ class TestQuantizationConfigurations(unittest.TestCase):
             q_model, quantization_info = mct.keras_post_training_quantization_experimental(model,
                                                                                            representative_data_gen,
                                                                                            core_config=core_config,
-                                                                                           target_platform_capabilities=tpc)
+                                                                                           target_platform_capabilities=tpc,
+                                                                                           new_experimental_exporter=True)
 
         model = model_gen()
         for quantize_method, error_method, relu_bound_to_power_of_2 in activation_test_combinations:
@@ -91,7 +92,8 @@ class TestQuantizationConfigurations(unittest.TestCase):
             q_model, quantization_info = mct.keras_post_training_quantization_experimental(model,
                                                                                            representative_data_gen,
                                                                                            core_config=core_config,
-                                                                                           target_platform_capabilities=tpc)
+                                                                                           target_platform_capabilities=tpc,
+                                                                                           new_experimental_exporter=True)
 
 
 if __name__ == '__main__':

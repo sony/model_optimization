@@ -60,7 +60,8 @@ class BaseLayerTest(BaseTest):
                 ptq_model, quantization_info = self.get_ptq_facade()(model_float,
                                                                      self.representative_data_gen_experimental,
                                                                      core_config=core_config,
-                                                                     target_platform_capabilities=self.get_tpc())
+                                                                     target_platform_capabilities=self.get_tpc(),
+                                                                     new_experimental_exporter=True)
 
                 self.compare(ptq_model, model_float, input_x=self.representative_data_gen(),
                              quantization_info=quantization_info)

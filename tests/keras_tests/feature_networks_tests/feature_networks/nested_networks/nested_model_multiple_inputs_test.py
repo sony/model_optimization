@@ -36,7 +36,7 @@ layers = keras.layers
 
 class NestedModelMultipleInputsTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def get_tpc(self):
         return get_16bit_tpc("nested_multi_inputs_test")
@@ -76,7 +76,7 @@ class NestedModelMultipleInputsTest(BaseKerasFeatureNetworkTest):
             else:
                 self.unit_test.assertFalse(isinstance(l, Functional) or isinstance(l, Sequential))
         num_layers = 8
-        num_fq_layers = 7
+        num_fq_layers = 1
         self.unit_test.assertTrue(len(quantized_model.layers) == (num_layers+num_fq_layers))
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)

@@ -29,7 +29,7 @@ tp = mct.target_platform
 
 class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, activation_threshold_method):
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
         self.activation_threshold_method = activation_threshold_method
 
     def generate_inputs(self):
@@ -52,11 +52,11 @@ class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify quantization range contains zero
-        fake_layer_input_args = quantized_model.layers[1].inbound_nodes[0].call_kwargs
-        fake_layer_add_args = quantized_model.layers[5].inbound_nodes[0].call_kwargs
+        fake_layer_input_args = quantized_model.layers[1].activation_quantizers[0].get_config()
+        fake_layer_add_args = quantized_model.layers[3].activation_quantizers[0].get_config()
 
-        input_layer_min, input_layer_max = fake_layer_input_args['min'], fake_layer_input_args['max']
-        add_layer_min, add_layer_max = fake_layer_add_args['min'], fake_layer_add_args['max']
+        input_layer_min, input_layer_max = fake_layer_input_args['min_range'], fake_layer_input_args['max_range']
+        add_layer_min, add_layer_max = fake_layer_add_args['min_range'], fake_layer_add_args['max_range']
 
         self.unit_test.assertTrue(input_layer_min <= 0.0 <= input_layer_max,
                                   msg=f"0.0 is not within the quantization range ({input_layer_min}, {input_layer_max}) "
@@ -77,11 +77,11 @@ class UniformRangeSelectionBoundedActivationTest(UniformRangeSelectionActivation
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        fake_layer_input_args = quantized_model.layers[1].inbound_nodes[0].call_kwargs
-        fake_layer_softmax_args = quantized_model.layers[3].inbound_nodes[0].call_kwargs
+        fake_layer_input_args = quantized_model.layers[1].activation_quantizers[0].get_config()
+        fake_layer_softmax_args = quantized_model.layers[2].activation_quantizers[0].get_config()
 
-        input_layer_min, input_layer_max = fake_layer_input_args['min'], fake_layer_input_args['max']
-        softmax_layer_min, softmax_layer_max = fake_layer_softmax_args['min'], fake_layer_softmax_args['max']
+        input_layer_min, input_layer_max = fake_layer_input_args['min_range'], fake_layer_input_args['max_range']
+        softmax_layer_min, softmax_layer_max = fake_layer_softmax_args['min_range'], fake_layer_softmax_args['max_range']
 
         # Verify quantization range contains zero
         self.unit_test.assertTrue(input_layer_min <= 0.0 <= input_layer_max,

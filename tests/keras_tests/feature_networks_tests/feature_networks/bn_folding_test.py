@@ -57,7 +57,7 @@ def update_kernel_for_bn_folding_fn(conv_layer: layers.Conv2D,
 class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
 
     def __init__(self, unit_test):
-        super(BaseBatchNormalizationFolding, self).__init__(unit_test=unit_test)
+        super(BaseBatchNormalizationFolding, self).__init__(unit_test=unit_test, experimental_exporter=True)
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 16,
@@ -79,15 +79,16 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
             float_kernel = float_conv.weights[1]
             float_bias = float_conv.weights[2]
 
-            quant_conv = quantized_model.layers[2]
+            quant_conv = quantized_model.layers[3]
         else:
             float_kernel = float_conv.weights[0]
             float_bias = float_conv.weights[1]
 
-            quant_conv = quantized_model.layers[1]
+            quant_conv = quantized_model.layers[2]
 
-        quant_kernel = quant_conv.weights[0]
-        quant_bias = quant_conv.weights[1]
+        attr = 'depthwise_kernel' if isinstance(quant_conv.layer, layers.DepthwiseConv2D) else 'kernel'
+        quant_kernel = getattr(quant_conv.layer, attr)
+        quant_bias = quant_conv.layer.bias
 
         float_bn = float_model.layers[2]
         float_gamma = float_bn.weights[0]

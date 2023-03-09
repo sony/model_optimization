@@ -34,7 +34,7 @@ tp = mct.target_platform
 
 class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, val_batch_size=1):
-        super().__init__(unit_test, val_batch_size=val_batch_size)
+        super().__init__(unit_test, val_batch_size=val_batch_size, experimental_exporter=True)
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
@@ -109,10 +109,10 @@ class MixedPercisionSearchTest(MixedPercisionBaseTest):
                                                           0]).all()  # kpi is infinity -> should give best model - 8bits
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[2].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
+                np.unique(quantized_model.layers[2].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[4].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
+                np.unique(quantized_model.layers[3].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
 
         # Verify final KPI
         self.unit_test.assertTrue(
@@ -134,10 +134,10 @@ class MixedPercisionSearchKPI4BitsAvgTest(MixedPercisionBaseTest):
         assert (quantization_info.mixed_precision_cfg == [1, 1]).all()
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[2].weights[0][:, :, :, i]).flatten().shape[0] <= 16)
+                np.unique(quantized_model.layers[2].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16)
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[4].weights[0][:, :, :, i]).flatten().shape[0] <= 16)
+                np.unique(quantized_model.layers[3].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16)
 
         # Verify final KPI
         self.unit_test.assertTrue(
@@ -159,10 +159,10 @@ class MixedPercisionSearchKPI2BitsAvgTest(MixedPercisionBaseTest):
         assert (quantization_info.mixed_precision_cfg == [2, 2]).all()
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[2].weights[0][:, :, :, i]).flatten().shape[0] <= 4)
+                np.unique(quantized_model.layers[2].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 4)
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[4].weights[0][:, :, :, i]).flatten().shape[0] <= 4)
+                np.unique(quantized_model.layers[3].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 4)
 
         # Verify final KPI
         self.unit_test.assertTrue(
@@ -230,10 +230,10 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], DepthwiseConv2D))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, DepthwiseConv2D))
         self.unit_test.assertTrue(len(quantization_info.mixed_precision_cfg) == 1)
         self.unit_test.assertTrue(quantization_info.mixed_precision_cfg[0] == 0) # Assert model is quantized using 16 bits as KPI is inf
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[3], ReLU))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, ReLU))
 
     def get_tpc(self):
         base_config, _ = get_op_quantization_configs()
@@ -290,10 +290,10 @@ class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
                                                           0]).all()  # kpi is infinity -> should give best model - 8bits
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[1].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
+                np.unique(quantized_model.layers[2].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[2].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
+                np.unique(quantized_model.layers[3].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
 
 
 class MixedPercisionSearchLastLayerDistanceTest(MixedPercisionBaseTest):
@@ -314,10 +314,10 @@ class MixedPercisionSearchLastLayerDistanceTest(MixedPercisionBaseTest):
                                                           0]).all()  # kpi is infinity -> should give best model - 8bits
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[2].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
+                np.unique(quantized_model.layers[2].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
-                np.unique(quantized_model.layers[4].weights[0][:, :, :, i]).flatten().shape[0] <= 256)
+                np.unique(quantized_model.layers[3].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
 
         # Verify final KPI
         self.unit_test.assertTrue(

@@ -32,7 +32,7 @@ class SoftmaxShiftTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, kernel_op_layer, activation_function):
         self.activation_function = activation_function
         self.kernel_op_layer = kernel_op_layer
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -49,13 +49,13 @@ class SoftmaxShiftTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         if self.kernel_op_layer.__getattribute__('activation') == keras_softmax:
-            quant_bias = quantized_model.layers[-4].bias
+            quant_bias = quantized_model.layers[2].layer.bias
             float_bias = float_model.layers[-1].bias
             diff_bias = float_bias - quant_bias
             mean_diff_bias = np.mean(diff_bias)
             self.unit_test.assertTrue(np.allclose(diff_bias, mean_diff_bias, atol=1e-1))
         else:
-            quant_bias = quantized_model.layers[-5].bias
+            quant_bias = quantized_model.layers[2].layer.bias
             float_bias = float_model.layers[1].bias
             diff_bias = float_bias - quant_bias
             mean_diff_bias = np.mean(diff_bias)

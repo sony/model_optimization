@@ -59,7 +59,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                  quantizer_config=GPTQQuantizerConfig(), per_channel=True, input_shape=(1, 16, 16, 3),
                  hessian_weights=True, log_norm_weights=True):
         super().__init__(unit_test,
-                         input_shape=input_shape)
+                         input_shape=input_shape, experimental_exporter=True)
 
         self.quant_method = quant_method
         self.rounding_type = rounding_type
@@ -98,7 +98,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
     def compare(self, ptq_model, model_float, input_x=None, quantization_info: UserInformation = None):
         raise NotImplementedError(f'{self.__class__} did not implement compare')
 
-    def run_test(self, experimental_exporter=False):
+    def run_test(self):
         x = self.generate_inputs()
 
         def representative_data_gen():
@@ -115,7 +115,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
             target_kpi=self.get_kpi(),
             core_config=core_config,
             target_platform_capabilities=tpc,
-            new_experimental_exporter=experimental_exporter
+            new_experimental_exporter=self.experimental_exporter
         )
         ptq_gptq_model, quantization_info = mct.keras_gradient_post_training_quantization_experimental(
             model_float,
@@ -124,7 +124,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
             target_kpi=self.get_kpi(),
             core_config=core_config,
             target_platform_capabilities=tpc,
-            new_experimental_exporter=experimental_exporter
+            new_experimental_exporter=self.experimental_exporter
         )
 
         self.compare(ptq_model, ptq_gptq_model, input_x=x, quantization_info=quantization_info)

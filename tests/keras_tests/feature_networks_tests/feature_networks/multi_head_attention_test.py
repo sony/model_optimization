@@ -29,7 +29,7 @@ layers = keras.layers
 class MultiHeadAttentionTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, input_shapes, num_heads, query_key_dim, value_dim,
                  attention_axes=None, separate_key_value=False, output_dim=None):
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
         self.num_calibration_iter = 100
 
         query_input_shape, key_input_shape, value_input_shape = input_shapes

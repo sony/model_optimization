@@ -36,7 +36,8 @@ class EditActivationErrorMethod(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test):
         super().__init__(unit_test=unit_test,
-                         input_shape=(224, 224, 3))
+                         input_shape=(224, 224, 3),
+                         experimental_exporter=True)
 
     def generate_inputs(self):
         input_data = [np.full(shape=in_shape, fill_value=0.2) for in_shape in self.get_input_shapes()]
@@ -55,9 +56,8 @@ class EditActivationErrorMethod(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        input_q_params = quantized_model.layers[1].inbound_nodes[0].call_kwargs
-        threshold = input_q_params['max'] + (input_q_params['max'] - input_q_params['min']) / (
-                    2 ** input_q_params['num_bits'] - 1)
+        input_q_params = quantized_model.layers[1].activation_quantizers[0].get_config()
+        threshold = input_q_params['threshold']
         self.unit_test.assertTrue(threshold == 2,
                                   f'After editing input layer to no clipping error method,'
                                   f'threshold should be 2, but is {threshold}')
