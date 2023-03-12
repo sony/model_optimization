@@ -12,21 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from functools import partial
 
 import tensorflow as tf
-from typing import Tuple, List, Callable
+from typing import Tuple, List
 
-from model_compression_toolkit import RoundingType, GradientPTQConfigV2, GradientPTQConfig
 from model_compression_toolkit.core.keras.constants import USE_BIAS
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from tensorflow.keras.models import Model
 
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.gptq.common.gptq_constants import N_EPOCHS
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
-from model_compression_toolkit.gptq.keras.quantizer.soft_rounding.soft_quantizer_reg import \
-    soft_quantizer_regularization
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 
 
@@ -99,16 +94,3 @@ def get_weights_for_loss(fxp_model: Model) -> Tuple[List[list], List[list]]:
             fxp_weights_list.append(_layer_fxp_weights)
 
     return flp_weights_list, fxp_weights_list
-
-
-def get_regularization(gptq_config: GradientPTQConfig, representative_data_gen: Callable) -> Callable:
-    if gptq_config.rounding_type == RoundingType.SoftQuantizer:
-        # dry run on the representative dataset to count number of batches
-        num_batches = 0
-        for _ in representative_data_gen():
-            num_batches += 1
-
-        n_epochs = N_EPOCHS if not type(gptq_config) == GradientPTQConfigV2 else gptq_config.n_epochs
-        return partial(soft_quantizer_regularization, n_batches=num_batches, n_epochs=n_epochs)
-    else:
-        return lambda m, e_reg: 0
