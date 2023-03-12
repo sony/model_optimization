@@ -17,8 +17,8 @@ import torch
 from torch import nn
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import get_pytorch_gptq_config, pytorch_gradient_post_training_quantization_experimental, \
-    CoreConfig, QuantizationConfig, QuantizationErrorMethod, RoundingType
+from model_compression_toolkit.gptq import get_pytorch_gptq_config, pytorch_gradient_post_training_quantization_experimental, RoundingType
+from model_compression_toolkit import CoreConfig, QuantizationConfig, QuantizationErrorMethod
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
