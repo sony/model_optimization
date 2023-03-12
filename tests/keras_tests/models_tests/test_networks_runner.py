@@ -109,12 +109,14 @@ class NetworkTest:
                                                                                                       core_config=core_config,
                                                                                                       fw_info=DEFAULT_KERAS_INFO,
                                                                                                       gptq_config=arc2,
-                                                                                                      target_platform_capabilities=tpc)
+                                                                                                      target_platform_capabilities=tpc,
+                                                                                                      new_experimental_exporter=True)
         else:
             ptq_model, quantization_info = mct.keras_post_training_quantization_experimental(self.model_float,
                                                                                              representative_data_gen,
                                                                                              core_config=core_config,
-                                                                                             target_platform_capabilities=tpc)
+                                                                                             target_platform_capabilities=tpc,
+                                                                                             new_experimental_exporter=True)
         self.compare(inputs_list, ptq_model, qc, tpc)
 
 

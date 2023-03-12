@@ -1,12 +1,14 @@
 from typing import List, Any, Tuple
 
+import keras.layers
 import tensorflow as tf
-
+from keras.engine.base_layer import Layer
 
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 from packaging import version
+import model_compression_toolkit as mct
 
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers.core import TFOpLambda
@@ -60,7 +62,8 @@ class BaseKerasLayerTest(BaseLayerTest):
                  input_shape: Tuple[int, int, int] = (8, 8, 3),
                  quantization_modes: List[LayerTestMode] = [LayerTestMode.FLOAT, LayerTestMode.QUANTIZED_8_BITS],
                  is_inputs_a_list: bool = False,
-                 use_cpu: bool = False):
+                 use_cpu: bool = False,
+                 experimental_exporter: bool = True):
 
         super().__init__(unit_test=unit_test,
                          layers=layers,
@@ -70,7 +73,8 @@ class BaseKerasLayerTest(BaseLayerTest):
                          input_shape=input_shape,
                          quantization_modes=quantization_modes,
                          is_inputs_a_list=is_inputs_a_list,
-                         use_cpu=use_cpu)
+                         use_cpu=use_cpu,
+                         experimental_exporter=experimental_exporter)
 
     def get_tpc(self):
         if self.current_mode == LayerTestMode.FLOAT:
@@ -140,44 +144,52 @@ class BaseKerasLayerTest(BaseLayerTest):
     def __compare_8bits_quantization_mode(self, float_model, quantized_model):
         fw_info = self.get_fw_info()
         for layer in quantized_model.layers:
-            op = layer.function if isinstance(layer, TFOpLambda) else type(layer)
-            if op in KERAS_LAYER_TEST_OPS['kernel_ops']:
-                for attr in fw_info.get_kernel_op_attributes(type(layer)):
-                    self.unit_test.assertTrue(np.sum(np.abs(
-                        getattr(layer, attr) - getattr(float_model.get_layer(layer.name), attr))) > 0.0)
-                for next_layer in [node.layer for node in layer.outbound_nodes]:
-                    self.unit_test.assertTrue(is_layer_fake_quant(next_layer))
+            if not isinstance(layer, InputLayer):
+                assert isinstance(layer, mct.quantizers_infrastructure.KerasQuantizationWrapper)
+                internal_layer = layer.layer
+                op = internal_layer.function if isinstance(internal_layer, TFOpLambda) else type(internal_layer)
+                if op in KERAS_LAYER_TEST_OPS['kernel_ops']:
+                    assert len(layer.activation_quantizers) > 0
+                    for q in layer.activation_quantizers:
+                        assert q.get_config()['num_bits'] == 8
+                    for attr in fw_info.get_kernel_op_attributes(type(internal_layer)):
+                        self.unit_test.assertTrue(np.sum(np.abs(
+                            layer.get_quantized_weights()[attr] - getattr(float_model.get_layer(internal_layer.name), attr))) > 0.0)
 
-            elif op in KERAS_LAYER_TEST_OPS['activation']:
-                for next_layer in [node.layer for node in layer.outbound_nodes]:
-                    self.unit_test.assertTrue(is_layer_fake_quant(next_layer))
+                elif op in KERAS_LAYER_TEST_OPS['no_quantization']:
+                    assert len(layer.activation_quantizers) == 0
 
-            elif op in KERAS_LAYER_TEST_OPS['no_quantization']:
-                for next_layer in [node.layer for node in layer.outbound_nodes]:
-                    self.unit_test.assertFalse(is_layer_fake_quant(next_layer))
+                elif op in KERAS_LAYER_TEST_OPS['activation'] or type(internal_layer)==Layer:
+                    assert len(layer.activation_quantizers) > 0
+                    for q in layer.activation_quantizers:
+                        assert q.get_config()['num_bits'] == 8
 
-            else:
-                raise Exception('Layer is not in framework info')
+                else:
+                    raise Exception('Layer is not in framework info')
 
     def __compare_float_mode(self, float_model, quantized_model):
         for layer_index, layer in enumerate(quantized_model.layers):
             # Check there are no fake-quant layers
             self.unit_test.assertFalse(is_layer_fake_quant(layer))
-            # check unchanged weights
-            if hasattr(layer, 'weights') and len(layer.weights) > 0:
-                for i, w in enumerate(layer.weights):
-                    self.unit_test.assertTrue(np.sum(np.abs(w - float_model.layers[layer_index].weights[i])) == 0.0)
+            if not isinstance(layer, InputLayer):
+                assert isinstance(layer, mct.quantizers_infrastructure.KerasQuantizationWrapper)
+                assert len(layer.activation_quantizers) == 0
+                assert len(layer.weights_quantizers.keys()) == 0
+                # check unchanged weights
+                if hasattr(layer.layer, 'weights') and len(layer.layer.weights) > 0:
+                    for i, w in enumerate(layer.layer.weights):
+                        self.unit_test.assertTrue(np.sum(np.abs(w - float_model.layers[layer_index-1].weights[i])) == 0.0)
 
-            input_tensors = self.generate_inputs()
-            y = self.predict(float_model, input_tensors)
-            y_hat = self.predict(quantized_model, input_tensors)
-            if isinstance(y, list):
-                for fo, qo in zip(y, y_hat):
-                    distance = np.sum(np.abs(fo - qo))
-                    self.unit_test.assertTrue(distance == 0,
-                                              msg=f'Outputs should be identical. Observed distance: {distance}')
-
-            else:
-                distance = np.sum(np.abs(y - y_hat))
+        input_tensors = self.generate_inputs()
+        y = self.predict(float_model, input_tensors)
+        y_hat = self.predict(quantized_model, input_tensors)
+        if isinstance(y, list):
+            for fo, qo in zip(y, y_hat):
+                distance = np.sum(np.abs(fo - qo))
                 self.unit_test.assertTrue(distance == 0,
                                           msg=f'Outputs should be identical. Observed distance: {distance}')
+
+        else:
+            distance = np.sum(np.abs(y - y_hat))
+            self.unit_test.assertTrue(distance == 0,
+                                      msg=f'Outputs should be identical. Observed distance: {distance}')

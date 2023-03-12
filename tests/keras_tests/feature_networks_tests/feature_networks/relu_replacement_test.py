@@ -55,7 +55,7 @@ class SingleReluReplacementTest(BaseKerasFeatureNetworkTest):
     Test1: replacing a single Relu layer with identity layer
     """
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def get_tpc(self):
         return get_quantization_disabled_keras_tpc("single_relu_replacement_test")
@@ -67,8 +67,8 @@ class SingleReluReplacementTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[1], Identity))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.ReLU))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, Identity))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.ReLU))
 
     def get_debug_config(self):
         return mct.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter('ReLU_1'),
@@ -85,8 +85,8 @@ class ReluReplacementTest(SingleReluReplacementTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(np.isclose(0, np.mean(quantized_model.predict(input_x) - input_x)))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[1], Identity))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], Identity))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, Identity))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, Identity))
 
     def get_debug_config(self):
         #   replace all Relu's with identity custom layer
@@ -132,10 +132,10 @@ class ReluReplacementWithAddBiasTest(SingleReluReplacementTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(np.isclose(6, np.mean(quantized_model.predict(input_x) - input_x)))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[1], AddBias))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], AddBias))
-        self.unit_test.assertTrue(quantized_model.layers[1].bias == 0)
-        self.unit_test.assertTrue(quantized_model.layers[2].bias == 6)
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, AddBias))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, AddBias))
+        self.unit_test.assertTrue(quantized_model.layers[2].layer.bias == 0)
+        self.unit_test.assertTrue(quantized_model.layers[3].layer.bias == 6)
 
     def get_debug_config(self):
         return mct.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.ReLU),

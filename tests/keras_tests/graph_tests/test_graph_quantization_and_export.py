@@ -29,7 +29,7 @@ class TestTFLiteExport(unittest.TestCase):
         def rep_data():
             yield [np.random.randn(1, 224, 224, 3)]
 
-        quantized_model, _ = mct.keras_post_training_quantization_experimental(model, rep_data)
+        quantized_model, _ = mct.keras_post_training_quantization_experimental(model, rep_data, new_experimental_exporter=True)
 
         converter = tf.lite.TFLiteConverter.from_keras_model(quantized_model)
         quantized_tflite_model = converter.convert()

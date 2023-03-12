@@ -234,14 +234,16 @@ class TestGetKerasTPC(unittest.TestCase):
 
         quantized_model, _ = mct.keras_post_training_quantization_experimental(model,
                                                                                rep_data,
-                                                                               target_platform_capabilities=tpc)
+                                                                               target_platform_capabilities=tpc,
+                                                                               new_experimental_exporter=True)
 
         core_config = mct.CoreConfig(mixed_precision_config=mct.MixedPrecisionQuantizationConfigV2(num_of_images=1))
         quantized_model, _ = mct.keras_post_training_quantization_experimental(model,
                                                                                rep_data,
                                                                                core_config=core_config,
                                                                                target_kpi=mct.KPI(np.inf),
-                                                                               target_platform_capabilities=tpc)
+                                                                               target_platform_capabilities=tpc,
+                                                                               new_experimental_exporter=True)
 
     def test_get_keras_supported_version(self):
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)  # Latest

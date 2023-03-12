@@ -27,7 +27,7 @@ layers = keras.layers
 
 class ReusedSeparableTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def create_networks(self):
         reused_layer = layers.SeparableConv2D(3, 3)
@@ -38,8 +38,8 @@ class ReusedSeparableTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        assert len(quantized_model.layers) == 8  # input, fq_input, dw, fq1_dw, fq2_dw, pw, fq1_pw, fq2_pw,
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.DepthwiseConv2D))
+        assert len(quantized_model.layers) == 4  # input, fq_input, dw, pw
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.DepthwiseConv2D))
         self.unit_test.assertFalse(hasattr(quantized_model.layers[2], 'input_shape'))  # assert it's reused
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[4], layers.Conv2D))
-        self.unit_test.assertFalse(hasattr(quantized_model.layers[4], 'input_shape'))  # assert it's reused
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.Conv2D))
+        self.unit_test.assertFalse(hasattr(quantized_model.layers[3], 'input_shape'))  # assert it's reused

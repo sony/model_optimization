@@ -49,7 +49,7 @@ class LUTWeightsQuantizerTest(BaseKerasFeatureNetworkTest):
         self.kernel = 3
         self.conv_w = get_uniform_weights(self.kernel, self.num_conv_channels, self.num_conv_channels)
         self.is_symmetric = is_symmetric
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
+        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32, experimental_exporter=False)
 
     def get_tpc(self):
         qmethod = tp.QuantizationMethod.LUT_SYM_QUANTIZER if self.is_symmetric else tp.QuantizationMethod.LUT_POT_QUANTIZER
@@ -102,7 +102,7 @@ class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
         self.activation_n_bits = activation_n_bits
         self.num_conv_channels = 4
         self.kernel = 3
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
+        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32, experimental_exporter=False)
 
     def get_tpc(self):
         qco = tp.QuantizationConfigOptions(

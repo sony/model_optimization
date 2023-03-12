@@ -27,7 +27,7 @@ layers = keras.layers
 
 class OutputInMiddleTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -39,5 +39,5 @@ class OutputInMiddleTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.outputs) == 2)
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.Conv2D))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
         self.unit_test.assertTrue(quantized_model.layers[2].output.ref() in [t.ref() for t in quantized_model.outputs])

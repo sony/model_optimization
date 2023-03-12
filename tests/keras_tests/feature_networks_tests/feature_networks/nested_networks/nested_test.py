@@ -39,7 +39,8 @@ class NestedTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, is_inner_functional=True):
         self.is_inner_functional = is_inner_functional
         super().__init__(unit_test,
-                         input_shape=(16,16,3))
+                         input_shape=(16,16,3),
+                         experimental_exporter=True)
 
     def get_tpc(self):
         return get_quantization_disabled_keras_tpc("nested_test")
@@ -86,9 +87,9 @@ class NestedTest(BaseKerasFeatureNetworkTest):
             else:
                 self.unit_test.assertFalse(isinstance(l, Functional) or isinstance(l, Sequential))
         if self.is_inner_functional:
-            num_layers = 8
+            num_layers = 9
         else:
-            num_layers = 5
+            num_layers = 6
         self.unit_test.assertTrue(len(quantized_model.layers) == num_layers)
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)

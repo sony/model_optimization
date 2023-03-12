@@ -139,7 +139,8 @@ class TestFileLogger(unittest.TestCase):
                                                                                rep_data,
                                                                                target_kpi=mct.KPI(np.inf),
                                                                                core_config=core_config,
-                                                                               target_platform_capabilities=tpc)
+                                                                               target_platform_capabilities=tpc,
+                                                                               new_experimental_exporter=True)
 
         self.tensorboard_initial_graph_num_of_nodes(num_event_files=1, event_to_test=0)
 
@@ -152,7 +153,8 @@ class TestFileLogger(unittest.TestCase):
                                                                                rep_data,
                                                                                target_kpi=mct.KPI(np.inf),
                                                                                core_config=core_config,
-                                                                               target_platform_capabilities=tpc)
+                                                                               target_platform_capabilities=tpc,
+                                                                               new_experimental_exporter=True)
 
         # Test tensor size plotting
         self.plot_tensor_sizes()

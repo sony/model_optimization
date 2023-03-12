@@ -16,6 +16,8 @@
 import tensorflow as tf
 from packaging import version
 
+from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
+
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.engine.functional import Functional
     from tensorflow.python.keras.engine.sequential import Sequential
@@ -34,7 +36,8 @@ layers = keras.layers
 class MultipleOutputNodesMultipleTensors(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test,
-                         input_shape=(20,20,3)) # Increase shape as the test has many convolutions
+                         input_shape=(20,20,3),
+                         experimental_exporter=True) # Increase shape as the test has many convolutions
 
     def inner_functional_model(self, input_shape):
         inputs = layers.Input(shape=input_shape[1:])
@@ -56,7 +59,7 @@ class MultipleOutputNodesMultipleTensors(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        num_conv_layers = len([x for x in quantized_model.layers if isinstance(x, layers.Conv2D)])
+        num_conv_layers = len([x for x in quantized_model.layers if isinstance(x, KerasQuantizationWrapper) and isinstance(x.layer, layers.Conv2D)])
         self.unit_test.assertTrue(num_conv_layers == 10)
         for l in quantized_model.layers:
             if hasattr(l, 'layer'):
