@@ -72,12 +72,12 @@ if FOUND_TORCH:
             Import MCT and Create a GradientPTQConfigV2 to run for 5 epochs:
 
             >>> import model_compression_toolkit as mct
-            >>> gptq_conf = mct.get_pytorch_gptq_config(n_epochs=5)
+            >>> gptq_conf = mct.gptq.get_pytorch_gptq_config(n_epochs=5)
 
             Other PyTorch optimizers can be passed with dummy params:
 
             >>> import torch
-            >>> gptq_conf = mct.get_pytorch_gptq_config(n_epochs=3, optimizer=torch.optim.Adam([torch.Tensor(1)]))
+            >>> gptq_conf = mct.gptq.get_pytorch_gptq_config(n_epochs=3, optimizer=torch.optim.Adam([torch.Tensor(1)]))
 
             The configuration can be passed to :func:`~model_compression_toolkit.pytorch_post_training_quantization` in order to quantize a pytorch model using gptq.
 
@@ -160,7 +160,7 @@ if FOUND_TORCH:
 
             Pass the module, the representative dataset generator and the configuration (optional) to get a quantized module
 
-            >>> quantized_module, quantization_info = mct.pytorch_gradient_post_training_quantization_experimental(module, repr_datagen, core_config=config, gptq_config=gptq_conf)
+            >>> quantized_module, quantization_info = mct.gptq.pytorch_gradient_post_training_quantization_experimental(module, repr_datagen, core_config=config, gptq_config=gptq_conf)
 
         """
 

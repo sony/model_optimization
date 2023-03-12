@@ -80,7 +80,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
 
         # Run MCT with GPTQ
         np.random.seed(self.seed)
-        gptq_model, quantization_info = mct.pytorch_gradient_post_training_quantization_experimental(self.float_model,
+        gptq_model, quantization_info = mct.gptq.pytorch_gradient_post_training_quantization_experimental(self.float_model,
                                                                                                      self.representative_data_gen_experimental,
                                                                                                      core_config=self.get_core_config(),
                                                                                                      target_platform_capabilities=self.get_tpc(),
