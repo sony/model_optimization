@@ -14,15 +14,16 @@
 # ==============================================================================
 from typing import List
 
-import tensorflow as tf
-from keras import Model
+import torch
+import numpy as np
+from torch import nn
 
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.gptq.common.gptq_constants import AUXVAR, SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, \
     MAX_ITERATIONS_DEFAULT, GPTQ_ITER
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
-from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
-from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
+from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
 
 
 class LinearTempDecay:
@@ -46,7 +47,7 @@ class LinearTempDecay:
         self.start_b = start_b
         self.end_b = end_b
 
-    def __call__(self, t: int) -> float:
+    def __call__(self, t: nn.Parameter) -> float:
         """
         Cosine annealing scheduler for soft quantizer regularization temperature term.
 
@@ -56,16 +57,17 @@ class LinearTempDecay:
         Returns: Scheduled temperature.
         """
 
-        is_before_start_decay = tf.cast(t < self.start_decay, tf.float32)
+        is_before_start_decay = (t < self.start_decay).to(torch.float32)
 
         rel_t = (t - self.start_decay) / (self.t_max - self.start_decay)
 
         return self.start_b * is_before_start_decay + \
                (1 - is_before_start_decay) * \
-               (self.end_b + (self.start_b - self.end_b) * tf.math.maximum(0.0, (1 - rel_t)))
+               (self.end_b + (self.start_b - self.end_b) * torch.maximum(to_torch_tensor(np.array([0.0])), (1 - rel_t)))
 
 
-def soft_quantizer_regularization(model: Model, entropy_reg: float, n_batches: int, n_epochs: int) -> float:
+
+def soft_quantizer_regularization(model: nn.Module, entropy_reg: float, n_batches: int, n_epochs: int) -> float:
     """
     Returns the soft quantizer regularization value for SoftRounding.
 
@@ -80,16 +82,16 @@ def soft_quantizer_regularization(model: Model, entropy_reg: float, n_batches: i
     init_decay = MAX_ITERATIONS_DEFAULT if n_batches is None else n_epochs * n_batches
     linear_decay = LinearTempDecay(init_decay)
 
-    soft_reg_aux: List[tf.Tensor] = []
-    for layer in model.layers:
-        if isinstance(layer, KerasQuantizationWrapper):
+    soft_reg_aux: List[torch.Tensor] = []
+    for layer in model.modules():
+        if isinstance(layer, PytorchQuantizationWrapper):
             kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
-                                                                  fw_info=DEFAULT_KERAS_INFO)
+                                                                  fw_info=DEFAULT_PYTORCH_INFO)
 
             st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
-            b = linear_decay(layer.weights_quantizers[kernel_attribute].quantizer_parameters[GPTQ_ITER].value())
+            b = linear_decay(layer.weights_quantizers[kernel_attribute].quantizer_parameters[GPTQ_ITER])
 
-            soft_reg_aux.append(tf.reduce_sum(1 - tf.pow(tf.math.abs(st - .5) * 2, b)))
+            soft_reg_aux.append((1 - torch.pow(torch.abs(st - .5) * 2, b)).sum())
 
     reg = 0
 

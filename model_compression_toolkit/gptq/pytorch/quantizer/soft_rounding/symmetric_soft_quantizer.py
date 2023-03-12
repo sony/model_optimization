@@ -67,46 +67,6 @@ def soft_rounding_symmetric_quantizer(input_tensor: torch.Tensor,
                                    max_val=int_threshold - 1)
 
 
-class LinearTempDecay:
-    """
-    Annealing process for the soft quantizer regularization temperature term.
-    """
-
-    def __init__(self, t_max: int, rel_start_decay: float = 0.2, start_b: int = 20, end_b: int = 2):
-        """
-        Initializes a LinearTempDecay object.
-
-        Args:
-            t_max: maximal time step.
-            rel_start_decay: Decay step size at the beginning of the process.
-            start_b: Starting value of the regularization term.
-            end_b: Target value of the regularization term.
-        """
-
-        self.t_max = t_max
-        self.start_decay = rel_start_decay * t_max
-        self.start_b = start_b
-        self.end_b = end_b
-
-    def __call__(self, t: nn.Parameter) -> float:
-        """
-        Cosine annealing scheduler for soft quantizer regularization temperature term.
-
-        Args:
-            t: The current time step.
-
-        Returns: Scheduled temperature.
-        """
-
-        is_before_start_decay = (t < self.start_decay).to(torch.float32)
-
-        rel_t = (t - self.start_decay) / (self.t_max - self.start_decay)
-
-        return self.start_b * is_before_start_decay + \
-               (1 - is_before_start_decay) * \
-               (self.end_b + (self.start_b - self.end_b) * torch.maximum(to_torch_tensor(np.array([0.0])), (1 - rel_t)))
-
-
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=RoundingType.SoftQuantizer)
@@ -117,21 +77,14 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
 
     def __init__(self,
                  quantization_config: TrainableQuantizerWeightsConfig,
-                 n_batches: int = None,
-                 quantization_parameter_learning: bool = False,
-                 n_epochs: int = N_EPOCHS):
+                 quantization_parameter_learning: bool = False):
         """
         Construct a Pytorch model that utilize a fake weight quantizer of soft-quantizer for symmetric quantizer.
 
         Args:
             quantization_config: Trainable weights quantizer config.
-            n_batches (int): number of batches in representative dataset
             quantization_parameter_learning (Bool): Whether to learn the threshold or not
-            n_epochs (int): number of epochs the representative dataset is run during fine-tuning
         """
-
-        if n_batches is None:
-            Logger.error("SymmetricSoftRoundingGPTQ got an uninitialized n_batches argument.")
 
         super().__init__(quantization_config)
         self.num_bits = quantization_config.weights_n_bits
@@ -147,17 +100,11 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         self.quantization_parameter_learning = quantization_parameter_learning
 
         # gamma and zeta are stretch parameters for computing the rectified sigmoind function.
-        # beta is used to set the regularization term.
         # See: https://arxiv.org/pdf/2004.10568.pdf
         self.gamma = SOFT_ROUNDING_GAMMA
         self.zeta = SOFT_ROUNDING_ZETA
-        self.beta = SOFT_ROUNDING_BETA
 
         self.quantizer_parameters = {}
-
-        # Initializing the temperature decay according to the number of expected gradient steps
-        num_iterations = MAX_ITERATIONS_DEFAULT if n_batches is None else n_epochs * n_batches
-        self.linear_decay = LinearTempDecay(num_iterations)
 
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
@@ -207,19 +154,6 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
             self.quantizer_parameters.update({SCALE_PTQ: layer.get_parameter(f"{name}_{SCALE_PTQ}")})
 
         return self.quantizer_parameters
-
-    def get_regularization(self) -> torch.Tensor:
-        """
-        Computes the regularization term for the soft rounding loss.
-
-        Returns:
-            regularization term.
-        """
-
-        st = self.get_soft_targets()
-        ar_iter = self.quantizer_parameters[GPTQ_ITER]
-        b = self.linear_decay(ar_iter)
-        return (1 - torch.pow(torch.abs(st - .5) * 2, b)).sum()
 
     def get_soft_targets(self) -> torch.Tensor:
         """

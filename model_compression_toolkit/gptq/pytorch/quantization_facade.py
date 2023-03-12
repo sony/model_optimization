@@ -95,7 +95,6 @@ if FOUND_TORCH:
                                    optimizer_quantization_parameter=optimizer_quantization_parameter,
                                    optimizer_bias=bias_optimizer,
                                    rounding_type=RoundingType.STE,
-                                   quantizer_config=GPTQQuantizerConfig(),
                                    quantization_parameters_learning=False,
                                    )
 

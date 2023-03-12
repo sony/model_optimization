@@ -454,14 +454,10 @@ class FeatureModelsTestRunner(unittest.TestCase):
         GPTQWeightsUpdateTest(self).run_test()
         GPTQLearnRateZeroTest(self).run_test()
 
-        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-                         quantizer_config=SoftQuantizerConfig()).run_test()
-        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-                         quantizer_config=SoftQuantizerConfig(), per_channel=False).run_test()
-        GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer,
-                              quantizer_config=SoftQuantizerConfig()).run_test()
-        GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer,
-                              quantizer_config=SoftQuantizerConfig()).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False).run_test()
+        GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+        GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
 
     def test_qat(self):
         """

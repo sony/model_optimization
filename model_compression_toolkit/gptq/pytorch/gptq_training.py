@@ -23,17 +23,17 @@ from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2, RoundingType
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.pytorch.constants import BIAS
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_model, torch_tensor_to_numpy
 from model_compression_toolkit.gptq.pytorch.graph_info import get_gptq_trainable_parameters, \
-    get_weights_for_loss, get_soft_rounding_reg
+    get_weights_for_loss
 from model_compression_toolkit.gptq.pytorch.quantizer.quantization_builder import quantization_builder
-from model_compression_toolkit.gptq.common.gptq_constants import REGULARIZATION_VALUES
 from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.gptq.pytorch.quantizer.regularization_factory import get_regularization
 from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
 
 
@@ -87,6 +87,8 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                                                   trainable_threshold)
 
         self.weights_for_average_loss = to_torch_tensor(self.compute_jacobian_based_weights(representative_data_gen))
+
+        self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
 
     def _is_gptq_applicable(self,
                             node: BaseNode) -> bool:
@@ -184,9 +186,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                            self.compare_points_std,
                                            self.weights_for_average_loss)
 
-        reg_value = self.gptq_config.quantizer_config.get_regularization_value(
-            self.fxp_model,
-            **{REGULARIZATION_VALUES: self._get_quantizer_regularization_values(self.gptq_config.rounding_type)})
+        reg_value = self.reg_func(self.fxp_model, self.gptq_config.entropy_reg)
 
         loss_value += reg_value
 
@@ -272,18 +272,3 @@ class PytorchGPTQTrainer(GPTQTrainer):
                 if hasattr(layer.layer, BIAS):
                     bias = getattr(layer.layer, BIAS)
                     bias.requires_grad = self.gptq_config.train_bias
-
-    def _get_quantizer_regularization_values(self, rounding_type: RoundingType) -> List[torch.Tensor]:
-        """
-        Mapping between a rounding type to its matching regularization method.
-
-        Args:
-            rounding_type: GPTQ rounding type.
-
-        Returns: A regularization computation method.
-
-        """
-        if rounding_type == RoundingType.SoftQuantizer:
-            return get_soft_rounding_reg(self.fxp_model)
-        else:
-            return []
