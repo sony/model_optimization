@@ -38,7 +38,7 @@ class PytorchTestLogger(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        mct.core.common.Logger.shutdown(remove_log_files=True)
+        mct.core.common.Logger.shutdown()
 
     def test_tensorboard_log_dir(self):
         self.assertTrue(os.path.exists(os.path.join(mct.core.common.Logger.LOG_PATH, 'tensorboard_logs')))

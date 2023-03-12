@@ -93,12 +93,11 @@ class Logger:
         print(f'log file is in {log_name}')
 
     @staticmethod
-    def shutdown(remove_log_files=False):
-        logger = Logger.get_logger()
-        if remove_log_files and logger.hasHandlers():
-            for fh in logger.handlers:
-                if isinstance(fh, logging.FileHandler):
-                    os.remove(fh.baseFilename)
+    def shutdown():
+        """
+        An orderly command to shutdown by flushing and closing all logging handlers.
+
+        """
         Logger.LOG_PATH = None
         logging.shutdown()
 
