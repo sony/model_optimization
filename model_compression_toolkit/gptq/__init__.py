@@ -12,3 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType, GradientPTQConfigV2
+from model_compression_toolkit.gptq.common.gptq_quantizer_config import GPTQQuantizerConfig, SoftQuantizerConfig
+from model_compression_toolkit.gptq.keras.quantization_facade import keras_gradient_post_training_quantization_experimental
+from model_compression_toolkit.gptq.keras.quantization_facade import get_keras_gptq_config
+from model_compression_toolkit.gptq.pytorch.quantization_facade import pytorch_gradient_post_training_quantization_experimental
+from model_compression_toolkit.gptq.pytorch.quantization_facade import get_pytorch_gptq_config

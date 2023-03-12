@@ -24,7 +24,8 @@ from model_compression_toolkit.core.runner import core_runner, _init_tensorboard
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
-from model_compression_toolkit import CoreConfig, GPTQQuantizerConfig
+from model_compression_toolkit.gptq import GPTQQuantizerConfig
+from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
 

@@ -18,7 +18,7 @@ from typing import Dict, Any
 import numpy as np
 import tensorflow as tf
 
-from model_compression_toolkit import RoundingType
+from model_compression_toolkit.gptq import RoundingType
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_constants import GPTQ_ITER, AUXVAR, PTQ_THRESHOLD

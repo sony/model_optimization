@@ -53,7 +53,7 @@ class OldApiTest(BaseKerasFeatureNetworkTest):
         model_float = self.create_networks()
         core_config = self.get_core_config()
         quant_config = core_config.quantization_config
-        gptq_config = mct.GradientPTQConfig(1, keras.optimizers.Adam(learning_rate=1e-12)) if self.gptq_enable else None
+        gptq_config = mct.gptq.GradientPTQConfig(1, keras.optimizers.Adam(learning_rate=1e-12)) if self.gptq_enable else None
         if self.mp_enable:
             quant_config = mct.MixedPrecisionQuantizationConfig(quant_config, num_of_images=1)
             facade_fn = mct.keras_post_training_quantization_mixed_precision
