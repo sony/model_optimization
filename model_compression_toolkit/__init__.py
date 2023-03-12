@@ -55,6 +55,6 @@ from model_compression_toolkit.core.pytorch.kpi_data_facade import pytorch_kpi_d
 
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.load_model import keras_load_quantized_model
 
-from model_compression_toolkit.exporter.model_exporter import tflite_export_model, TFLiteExportMode, keras_export_model, KerasExportMode, pytorch_export_model, PyTorchExportMode
+from model_compression_toolkit import exporter
 
 __version__ = "1.8.0"

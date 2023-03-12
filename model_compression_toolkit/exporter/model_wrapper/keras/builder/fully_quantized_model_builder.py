@@ -14,46 +14,52 @@
 # ==============================================================================
 from typing import Tuple
 
-import tensorflow as tf
-from tensorflow.keras.layers import Layer
 
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common import Graph, Logger
+from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
-from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizers import \
-    get_quantization_quantizers
+
+if FOUND_TF:
+    import tensorflow as tf
+    from tensorflow.keras.layers import Layer
+    from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
+    from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizers import get_quantization_quantizers
+
+    def _get_wrapper(node: common.BaseNode,
+                     layer: Layer) -> qi.KerasQuantizationWrapper:
+        """
+        A function which takes a computational graph node and a keras layer and perform the quantization wrapping
+        Args:
+            n: A node of mct graph.
+            layer: A keras layer
+
+        Returns: Wrapped layer with weights quantizers and activation quantizers
+
+        """
+        weights_quantizers, activation_quantizers = get_quantization_quantizers(node)
+        return qi.KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
 
 
-def _get_wrapper(node: common.BaseNode,
-                 layer: Layer) -> qi.KerasQuantizationWrapper:
-    """
-    A function which takes a computational graph node and a keras layer and perform the quantization wrapping
-    Args:
-        n: A node of mct graph.
-        layer: A keras layer
+    def get_exportable_keras_model(graph: Graph) -> Tuple[tf.keras.models.Model,UserInformation]:
+        """
+        Convert graph to an exportable Keras model (model with all quantization parameters).
+        An exportable model can then be exported using model_exporter, to retrieve the
+        final exported model.
 
-    Returns: Wrapped layer with weights quantizers and activation quantizers
+        Args:
+            graph: Graph to convert to an exportable Keras model.
 
-    """
-    weights_quantizers, activation_quantizers = get_quantization_quantizers(node)
-    return qi.KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
-
-
-def get_exportable_keras_model(graph: Graph) -> Tuple[tf.keras.models.Model,UserInformation]:
-    """
-    Convert graph to an exportable Keras model (model with all quantization parameters).
-    An exportable model can then be exported using model_exporter, to retrieve the
-    final exported model.
-
-    Args:
-        graph: Graph to convert to an exportable Keras model.
-
-    Returns:
-        Exportable Keras model and user information.
-    """
-    exportable_model, user_info = KerasModelBuilder(graph=graph,
-                                         wrapper=_get_wrapper).build_model()
-    exportable_model.trainable = False
-    return exportable_model, user_info
+        Returns:
+            Exportable Keras model and user information.
+        """
+        exportable_model, user_info = KerasModelBuilder(graph=graph,
+                                             wrapper=_get_wrapper).build_model()
+        exportable_model.trainable = False
+        return exportable_model, user_info
+else:
+    def get_exportable_keras_model(*args, **kwargs):  # pragma: no cover
+        Logger.error('Installing tensorflow and tensorflow_model_optimization is mandatory '
+                     'when using get_exportable_keras_model. '
+                     'Could not find Tensorflow package.')

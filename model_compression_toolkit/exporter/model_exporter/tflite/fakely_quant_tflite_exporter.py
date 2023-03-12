@@ -19,7 +19,7 @@ from typing import Callable
 import keras.models
 import tensorflow as tf
 
-from model_compression_toolkit import keras_load_quantized_model
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.load_model import keras_load_quantized_model
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import FakelyQuantKerasExporter
 
