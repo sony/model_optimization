@@ -183,7 +183,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         if name in self.quantizer_parameters:
             return self.quantizer_parameters[name][VAR]
         else:
-            common.Logger.error(f'Variable {name} does not exist in quantizers parameters!') # pragma: no cover
+            common.Logger.error(f'Variable {name} is not exist in quantizers parameters!') # pragma: no cover
             return None
 
     @abstractmethod
