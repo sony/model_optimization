@@ -211,9 +211,10 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
 
         auxvar_tensor.assign(alpha)
 
-        self.quantizer_parameters.update({AUXVAR: {'var':auxvar_tensor, 'group':VariableGroup.WEIGHTS},
-                                          PTQ_THRESHOLD: {'var':ptq_threshold_tensor, 'group':VariableGroup.THRESHOLDS},
-                                          GPTQ_ITER: {'var':ar_iter, 'group':VariableGroup.WEIGHTS}})
+        # Add quantization variables
+        self.set_quantizer_variable(AUXVAR, auxvar_tensor, VariableGroup.WEIGHTS)
+        self.set_quantizer_variable(PTQ_THRESHOLD, ptq_threshold_tensor, VariableGroup.THRESHOLDS)
+        self.set_quantizer_variable(GPTQ_ITER, ar_iter, VariableGroup.WEIGHTS)
 
         if self.quantization_parameter_learning and not self.power_of_two:
             scale = layer.add_weight(
@@ -221,7 +222,7 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
                 shape=self.num_channels,
                 initializer=tf.keras.initializers.Constant(1.0),
                 trainable=True)
-            self.quantizer_parameters.update({SCALE_PTQ: {'var':scale, 'group':VariableGroup.THRESHOLDS}})
+            self.set_quantizer_variable(SCALE_PTQ, scale, VariableGroup.THRESHOLDS)
 
         return self.quantizer_parameters
 
@@ -247,7 +248,7 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
 
         """
         return qutils.clip(
-            tf.sigmoid(self.quantizer_parameters[AUXVAR]['var']) * (self.zeta - self.gamma) + self.gamma, 1, 0)
+            tf.sigmoid(self.get_quantizer_variable(AUXVAR)) * (self.zeta - self.gamma) + self.gamma, 1, 0)
 
 
     def __call__(self,
@@ -264,8 +265,8 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
             The quantized tensor.
         """
 
-        self.ar_iter = self.quantizer_parameters[GPTQ_ITER]['var']
-        ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD]['var']
+        self.ar_iter = self.get_quantizer_variable(GPTQ_ITER)
+        ptq_threshold_tensor = self.get_quantizer_variable(PTQ_THRESHOLD)
 
         if self.per_channel:
             reshape_shape = get_threshold_reshape_shape(inputs.shape,
@@ -297,7 +298,7 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
                                                          power_of_two=self.power_of_two)
 
             if self.quantization_parameter_learning and not self.power_of_two:
-                scale = tf.reshape(self.quantizer_parameters[SCALE_PTQ]['var'], reshape_shape)
+                scale = tf.reshape(self.get_quantizer_variable(SCALE_PTQ), reshape_shape)
                 q_tensor *= scale
 
             return q_tensor
@@ -319,13 +320,13 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
         """
 
         if self.power_of_two:
-            old_threshold = self.quantizer_parameters[PTQ_THRESHOLD]['var']
+            old_threshold = self.get_quantizer_variable(PTQ_THRESHOLD)
             old_threshold = max_power_of_two(old_threshold, MIN_THRESHOLD)
 
         else:
-            old_threshold = self.quantizer_parameters[PTQ_THRESHOLD]['var']
+            old_threshold = self.get_quantizer_variable(PTQ_THRESHOLD)
             if self.quantization_parameter_learning:
-                scale = tf.reshape(self.quantizer_parameters[SCALE_PTQ]['var'], self.threshold_shape)
+                scale = tf.reshape(self.get_quantizer_variable(SCALE_PTQ), self.threshold_shape)
                 old_threshold = old_threshold * scale
             old_threshold = old_threshold.numpy()
         old_threshold = old_threshold.reshape(self.threshold_shape)

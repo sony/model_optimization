@@ -17,7 +17,7 @@ from typing import Dict, Any, Union, List
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer, VAR, GROUP
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
     TrainableQuantizerActivationConfig
 
@@ -73,7 +73,7 @@ if FOUND_TF:
             """
             quantizer_trainable = []
             for name, parameter_dict in self.quantizer_parameters.items():
-                quantizer_parameter, parameter_group = parameter_dict['var'], parameter_dict['group']
+                quantizer_parameter, parameter_group = parameter_dict[VAR], parameter_dict[GROUP]
                 if quantizer_parameter.trainable and parameter_group == group:
                     quantizer_trainable.append(quantizer_parameter)
             return quantizer_trainable

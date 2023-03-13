@@ -28,6 +28,9 @@ from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructur
     QUANTIZATION_TARGET
 
 
+VAR = 'var'
+GROUP = 'group'
+
 class VariableGroup(Enum):
     """
     An enum for choosing training variable group
@@ -160,6 +163,28 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
             BaseInferableQuantizer object.
         """
         raise NotImplemented  # pragma: no cover
+
+    def set_quantizer_variable(self, name: str, variable: Any, group: VariableGroup = VariableGroup.WEIGHTS):
+        """
+        Add a quantizer variable to quantizer_parameters dictionary
+        """
+        self.quantizer_parameters.update({name: {VAR: variable, GROUP: group}})
+
+    def get_quantizer_variable(self, name: str) -> Any:
+        """
+        Get a quantizer variable by name
+
+        Args:
+            name: variable name
+
+        Returns:
+            trainable variable
+        """
+        if name in self.quantizer_parameters:
+            return self.quantizer_parameters[name][VAR]
+        else:
+            common.Logger.error(f'Variable {name} does not exist in quantizers parameters!')
+            return None
 
     @abstractmethod
     def get_trainable_variables(self, group: VariableGroup) -> List[Any]:

@@ -67,7 +67,7 @@ class STEWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
         self.max_int = (2 ** n_pos_bits) - 1
         self.min = delta * self.min_int
         self.max = delta * self.max_int
-        self.quantizer_parameters = {}
+
 
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
@@ -90,7 +90,7 @@ class STEWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
                                                                              requires_grad=False))
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {THRESHOLD_TENSOR: {'var':layer.get_parameter(name + "_" + THRESHOLD_TENSOR), 'group':VariableGroup.THRESHOLDS}}
+        self.set_quantizer_variable(THRESHOLD_TENSOR, layer.get_parameter(name + "_" + THRESHOLD_TENSOR), VariableGroup.THRESHOLDS)
 
         return self.quantizer_parameters
 
@@ -117,7 +117,7 @@ class STEWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
         Returns:
             A pytorch inferable quanizer object.
         """
-        np_threshold = self.quantizer_parameters[THRESHOLD_TENSOR]['var'].cpu().detach().numpy().flatten()
+        np_threshold = self.get_quantizer_variable(THRESHOLD_TENSOR).cpu().detach().numpy().flatten()
         if self.power_of_two:
             pot_threshold = 2 ** np.ceil(np.log2(np_threshold))
             return WeightsPOTInferableQuantizer(num_bits=self.num_bits,
@@ -166,7 +166,8 @@ class STEActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
         layer.register_parameter(name, nn.Parameter(to_torch_tensor(self.threshold_tensor), requires_grad=True))
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {THRESHOLD_TENSOR: {'var':layer.get_parameter(name), 'group':VariableGroup.THRESHOLDS}}
+        self.set_quantizer_variable(THRESHOLD_TENSOR, layer.get_parameter(name), VariableGroup.THRESHOLDS)
+
         return self.quantizer_parameters
 
     def __call__(self,
@@ -182,7 +183,7 @@ class STEActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
             The quantized tensor.
         """
 
-        _t = self.quantizer_parameters[THRESHOLD_TENSOR]['var']
+        _t = self.get_quantizer_variable(THRESHOLD_TENSOR)
         q_tensor = symmetric_quantizer(inputs, _t, self.num_bits, sign=self.sign)
         return q_tensor
 
@@ -193,7 +194,7 @@ class STEActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
         Returns:
             A pytorch inferable quanizer object.
         """
-        np_threshold = self.quantizer_parameters[THRESHOLD_TENSOR]['var'].cpu().detach().numpy()
+        np_threshold = self.get_quantizer_variable(THRESHOLD_TENSOR).cpu().detach().numpy()
         if self.power_of_two:
             pot_threshold = np.power(2.0, np.ceil(np.log2(np_threshold)))
             return ActivationPOTInferableQuantizer(num_bits=self.num_bits,

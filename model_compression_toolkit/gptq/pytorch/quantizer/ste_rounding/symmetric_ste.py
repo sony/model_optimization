@@ -130,8 +130,8 @@ class STEWeightGPTQQuantizer(BasePytorchGPTQTrainableQuantizer):
                                                                   requires_grad=True))
 
         # save the quantizer added parameters for later calculations
-        self.quantizer_parameters = {PTQ_THRESHOLD: {'var':layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"),'group':VariableGroup.THRESHOLDS},
-                                     AUXVAR: {'var':layer.get_parameter(f"{name}_{AUXVAR}"), 'group':VariableGroup.WEIGHTS}}
+        self.set_quantizer_variable(PTQ_THRESHOLD, layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"), VariableGroup.THRESHOLDS)
+        self.set_quantizer_variable(AUXVAR, layer.get_parameter(f"{name}_{AUXVAR}"), VariableGroup.WEIGHTS)
 
         return self.quantizer_parameters
 
@@ -144,7 +144,7 @@ class STEWeightGPTQQuantizer(BasePytorchGPTQTrainableQuantizer):
             Keys must match NodeQuantizationConfig attributes
 
         """
-        old_threshold = self.quantizer_parameters[PTQ_THRESHOLD]['var']
+        old_threshold = self.get_quantizer_variable(PTQ_THRESHOLD)
         return {THRESHOLD: torch_tensor_to_numpy(old_threshold).reshape(self.threshold_shape)}
 
     def __call__(self,
@@ -160,8 +160,8 @@ class STEWeightGPTQQuantizer(BasePytorchGPTQTrainableQuantizer):
         Returns:
             quantized tensor
         """
-        auxvar = self.quantizer_parameters[AUXVAR]['var']
-        ptq_threshold_tensor = self.quantizer_parameters[PTQ_THRESHOLD]['var']
+        auxvar = self.get_quantizer_variable(AUXVAR)
+        ptq_threshold_tensor = self.get_quantizer_variable(PTQ_THRESHOLD)
 
         if self.per_channel:
             reshape_shape = get_threshold_reshape_shape(inputs.shape,
