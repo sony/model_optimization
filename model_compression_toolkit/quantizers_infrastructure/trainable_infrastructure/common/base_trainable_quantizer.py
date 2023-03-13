@@ -184,7 +184,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
             return self.quantizer_parameters[name][VAR]
         else:
             common.Logger.error(f'Variable {name} is not exist in quantizers parameters!') # pragma: no cover
-            return None
+
 
     @abstractmethod
     def get_trainable_variables(self, group: VariableGroup) -> List[Any]:
