@@ -101,17 +101,14 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: Any,
                                 name: str,
-                                layer: Any) -> Dict[Any, Any]:
+                                layer: Any):
         """
-        Return a dictionary of quantizer parameters and their names.
+        Add quantizer parameters to the quantizer parameters dictionary
 
         Args:
             tensor_shape: tensor shape of the quantized tensor.
             name: Tensor name.
             layer: Layer to quantize.
-
-        Returns:
-            Dictionary of parameters names to the variables.
         """
 
         ar_iter = layer.add_weight(
@@ -135,11 +132,10 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
             trainable=True)
 
         # save the quantizer added parameters for later calculations
-        self.set_quantizer_variable(PTQ_THRESHOLD, ptq_threshold_tensor, VariableGroup.THRESHOLDS)
-        self.set_quantizer_variable(AUXVAR, auxvar_tensor, VariableGroup.WEIGHTS)
-        self.set_quantizer_variable(GPTQ_ITER, ar_iter, VariableGroup.WEIGHTS)
+        self.add_quantizer_variable(PTQ_THRESHOLD, ptq_threshold_tensor, VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(AUXVAR, auxvar_tensor, VariableGroup.WEIGHTS)
+        self.add_quantizer_variable(GPTQ_ITER, ar_iter, VariableGroup.WEIGHTS)
 
-        return self.quantizer_parameters
 
     def __call__(self,
                  inputs: tf.Tensor,

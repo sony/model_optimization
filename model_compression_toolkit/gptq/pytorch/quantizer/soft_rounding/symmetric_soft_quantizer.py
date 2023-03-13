@@ -14,7 +14,7 @@
 # ==============================================================================
 import torch
 import torch.nn as nn
-from typing import Dict, Union
+from typing import Dict
 import numpy as np
 
 from model_compression_toolkit.core.common import Logger, max_power_of_two
@@ -163,17 +163,14 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, Dict[str, Union[nn.Parameter, VariableGroup]]]:
+                                layer: qi.PytorchQuantizationWrapper):
         """
-        Return a dictionary of quantizer parameters and their names.
+        Add quantizer parameters to the quantizer parameters dictionary
 
         Args:
             tensor_shape: tensor shape of the quantized tensor.
             name: Tensor name.
             layer: Layer to quantize.
-
-        Returns:
-            Dictionary of parameters names to the variables.
         """
         layer.register_parameter(f"{name}_{GPTQ_ITER}",
                                  nn.Parameter(to_torch_tensor(np.array([0])), requires_grad=False))
@@ -196,17 +193,16 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         layer.register_parameter(f"{name}_{AUXVAR}", nn.Parameter(alpha, requires_grad=True))
 
         # save the quantizer added parameters for later calculations
-        self.set_quantizer_variable(PTQ_THRESHOLD, layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"), VariableGroup.THRESHOLDS)
-        self.set_quantizer_variable(AUXVAR, layer.get_parameter(f"{name}_{AUXVAR}"), VariableGroup.WEIGHTS)
-        self.set_quantizer_variable(GPTQ_ITER, layer.get_parameter(f"{name}_{GPTQ_ITER}"), VariableGroup.WEIGHTS)
+        self.add_quantizer_variable(PTQ_THRESHOLD, layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"), VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(AUXVAR, layer.get_parameter(f"{name}_{AUXVAR}"), VariableGroup.WEIGHTS)
+        self.add_quantizer_variable(GPTQ_ITER, layer.get_parameter(f"{name}_{GPTQ_ITER}"), VariableGroup.WEIGHTS)
 
         if self.quantization_parameter_learning:
             layer.register_parameter(f"{name}_{SCALE_PTQ}",
                                      nn.Parameter(torch.ones_like(torch.Tensor(self.threshold_values)),
                                                   requires_grad=True))
-            self.set_quantizer_variable(SCALE_PTQ, layer.get_parameter(f"{name}_{SCALE_PTQ}"), VariableGroup.THRESHOLDS)
+            self.add_quantizer_variable(SCALE_PTQ, layer.get_parameter(f"{name}_{SCALE_PTQ}"), VariableGroup.THRESHOLDS)
 
-        return self.quantizer_parameters
 
     def get_regularization(self) -> torch.Tensor:
         """

@@ -164,7 +164,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         """
         raise NotImplemented  # pragma: no cover
 
-    def set_quantizer_variable(self, name: str, variable: Any, group: VariableGroup = VariableGroup.WEIGHTS):
+    def add_quantizer_variable(self, name: str, variable: Any, group: VariableGroup = VariableGroup.WEIGHTS):
         """
         Add a quantizer variable to quantizer_parameters dictionary
         """
@@ -183,7 +183,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         if name in self.quantizer_parameters:
             return self.quantizer_parameters[name][VAR]
         else:
-            common.Logger.error(f'Variable {name} does not exist in quantizers parameters!')
+            common.Logger.error(f'Variable {name} does not exist in quantizers parameters!') # pragma: no cover
             return None
 
     @abstractmethod

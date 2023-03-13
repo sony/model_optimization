@@ -14,7 +14,7 @@
 # ==============================================================================
 import torch
 import torch.nn as nn
-from typing import Union, Dict
+from typing import Dict
 import numpy as np
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 
@@ -109,17 +109,14 @@ class STEWeightGPTQQuantizer(BasePytorchGPTQTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, Dict[str, Union[nn.Parameter, VariableGroup]]]:
+                                layer: qi.PytorchQuantizationWrapper):
         """
-        Return a dictionary of quantizer parameters and their names.
+        Add quantizer parameters to the quantizer parameters dictionary
 
         Args:
             tensor_shape: tensor shape of the quantized tensor.
             name: Tensor name.
             layer: Layer to quantize.
-
-        Returns:
-            Dictionary of parameters names to the variables.
         """
 
         layer.register_parameter(f"{name}_{PTQ_THRESHOLD}",
@@ -130,10 +127,9 @@ class STEWeightGPTQQuantizer(BasePytorchGPTQTrainableQuantizer):
                                                                   requires_grad=True))
 
         # save the quantizer added parameters for later calculations
-        self.set_quantizer_variable(PTQ_THRESHOLD, layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"), VariableGroup.THRESHOLDS)
-        self.set_quantizer_variable(AUXVAR, layer.get_parameter(f"{name}_{AUXVAR}"), VariableGroup.WEIGHTS)
+        self.add_quantizer_variable(PTQ_THRESHOLD, layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"), VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(AUXVAR, layer.get_parameter(f"{name}_{AUXVAR}"), VariableGroup.WEIGHTS)
 
-        return self.quantizer_parameters
 
     def get_quant_config(self) -> Dict[str, np.ndarray]:
         """

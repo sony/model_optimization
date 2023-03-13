@@ -162,17 +162,14 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: Any,
                                 name: str,
-                                layer: Any) -> Dict[Any, Any]:
+                                layer: Any):
         """
-        Return a dictionary of quantizer parameters and their names.
+        Add quantizer parameters to the quantizer parameters dictionary
 
         Args:
             tensor_shape: tensor shape of the quantized tensor.
             name: Tensor name.
             layer: Layer to quantize.
-
-        Returns:
-            Dictionary of parameters names to the variables.
         """
 
         if self.per_channel:
@@ -212,9 +209,9 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
         auxvar_tensor.assign(alpha)
 
         # Add quantization variables
-        self.set_quantizer_variable(AUXVAR, auxvar_tensor, VariableGroup.WEIGHTS)
-        self.set_quantizer_variable(PTQ_THRESHOLD, ptq_threshold_tensor, VariableGroup.THRESHOLDS)
-        self.set_quantizer_variable(GPTQ_ITER, ar_iter, VariableGroup.WEIGHTS)
+        self.add_quantizer_variable(AUXVAR, auxvar_tensor, VariableGroup.WEIGHTS)
+        self.add_quantizer_variable(PTQ_THRESHOLD, ptq_threshold_tensor, VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(GPTQ_ITER, ar_iter, VariableGroup.WEIGHTS)
 
         if self.quantization_parameter_learning and not self.power_of_two:
             scale = layer.add_weight(
@@ -222,9 +219,8 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
                 shape=self.num_channels,
                 initializer=tf.keras.initializers.Constant(1.0),
                 trainable=True)
-            self.set_quantizer_variable(SCALE_PTQ, scale, VariableGroup.THRESHOLDS)
+            self.add_quantizer_variable(SCALE_PTQ, scale, VariableGroup.THRESHOLDS)
 
-        return self.quantizer_parameters
 
 
     def get_regularization(self) -> tf.Tensor:

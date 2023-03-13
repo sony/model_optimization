@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, Union
+from typing import Union
 
 import numpy as np
 import tensorflow as tf
@@ -82,17 +82,14 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: qi.KerasQuantizationWrapper) -> Dict[str, Dict[str, Union[tf.Variable,VariableGroup]]]:
+                                layer: qi.KerasQuantizationWrapper):
         """
-        Add min and max variables to layer.
-        Args:
-            tensor_shape: Tensor shape the quantizer quantize.
-            name: Prefix of variables names.
-            layer: Layer to add the variables to. The variables are saved
-            in the layer's scope.
+        Add quantizer parameters to the quantizer parameters dictionary
 
-        Returns:
-            Dictionary of new variables.
+        Args:
+            tensor_shape: tensor shape of the quantized tensor.
+            name: Tensor name.
+            layer: Layer to quantize.
         """
         ptq_threshold_tensor = layer.add_weight(
             name + THRESHOLD_TENSOR,
@@ -116,11 +113,9 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         fq_max.assign(self.max)
 
         # save the quantizer added parameters for later calculations
-        self.set_quantizer_variable(THRESHOLD_TENSOR, ptq_threshold_tensor, VariableGroup.THRESHOLDS)
-        self.set_quantizer_variable(FQ_MIN, fq_min, VariableGroup.THRESHOLDS)
-        self.set_quantizer_variable(FQ_MAX, fq_max, VariableGroup.THRESHOLDS)
-
-        return self.quantizer_parameters
+        self.add_quantizer_variable(THRESHOLD_TENSOR, ptq_threshold_tensor, VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(FQ_MIN, fq_min, VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(FQ_MAX, fq_max, VariableGroup.THRESHOLDS)
 
     def __call__(self,
                  inputs: tf.Tensor,
@@ -209,17 +204,14 @@ class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: qi.KerasQuantizationWrapper) -> Dict[str, Dict[str, Union[tf.Variable,VariableGroup]]]:
+                                layer: qi.KerasQuantizationWrapper):
         """
-        Add min and max variables to layer.
-        Args:
-            tensor_shape: Tensor shape the quantizer quantize.
-            name: Prefix of variables names.
-            layer: Layer to add the variables to. The variables are saved
-            in the layer's scope.
+        Add quantizer parameters to the quantizer parameters dictionary
 
-        Returns:
-            Dictionary of new variables.
+        Args:
+            tensor_shape: tensor shape of the quantized tensor.
+            name: Tensor name.
+            layer: Layer to quantize.
         """
         ptq_threshold_tensor = layer.add_weight(
             name + THRESHOLD_TENSOR,
@@ -243,11 +235,10 @@ class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         fq_max.assign(self.max)
 
         # save the quantizer added parameters for later calculations
-        self.set_quantizer_variable(THRESHOLD_TENSOR, ptq_threshold_tensor, VariableGroup.THRESHOLDS)
-        self.set_quantizer_variable(FQ_MIN, fq_min, VariableGroup.THRESHOLDS)
-        self.set_quantizer_variable(FQ_MAX, fq_max, VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(THRESHOLD_TENSOR, ptq_threshold_tensor, VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(FQ_MIN, fq_min, VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(FQ_MAX, fq_max, VariableGroup.THRESHOLDS)
 
-        return self.quantizer_parameters
 
     def __call__(self,
                  inputs: tf.Tensor,
