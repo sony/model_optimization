@@ -87,7 +87,7 @@ def soft_quantizer_regularization(model: Model, entropy_reg: float, n_batches: i
                                                                   fw_info=DEFAULT_KERAS_INFO)
 
             st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
-            b = linear_decay(layer.weights_quantizers[kernel_attribute].quantizer_parameters[GPTQ_ITER].value())
+            b = linear_decay(layer.weights_quantizers[kernel_attribute].get_quantizer_variable(GPTQ_ITER).value())
 
             soft_reg_aux.append(tf.reduce_sum(1 - tf.pow(tf.math.abs(st - .5) * 2, b)))
 

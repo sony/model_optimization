@@ -89,7 +89,7 @@ def soft_quantizer_regularization(model: nn.Module, entropy_reg: float, n_batche
                                                                   fw_info=DEFAULT_PYTORCH_INFO)
 
             st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
-            b = linear_decay(layer.weights_quantizers[kernel_attribute].quantizer_parameters[GPTQ_ITER])
+            b = linear_decay(layer.weights_quantizers[kernel_attribute].get_quantizer_variable(GPTQ_ITER))
 
             soft_reg_aux.append((1 - torch.pow(torch.abs(st - .5) * 2, b)).sum())
 
