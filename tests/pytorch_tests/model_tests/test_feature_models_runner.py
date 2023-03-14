@@ -451,6 +451,8 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         GPTQAccuracyTest(self).run_test()
         GPTQAccuracyTest(self, per_channel=False).run_test()
+        GPTQAccuracyTest(self, per_channel=True, hessian_weights=False).run_test()
+        GPTQAccuracyTest(self, per_channel=True, log_norm_weights=False).run_test()
         GPTQWeightsUpdateTest(self).run_test()
         GPTQLearnRateZeroTest(self).run_test()
 

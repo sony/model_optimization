@@ -21,6 +21,7 @@ from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV
 from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
+from model_compression_toolkit.gptq.keras.quantization_facade import GPTQ_MOMENTUM
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
@@ -81,22 +82,15 @@ if FOUND_TORCH:
             The configuration can be passed to :func:`~model_compression_toolkit.pytorch_post_training_quantization` in order to quantize a pytorch model using gptq.
 
         """
-        bias_optimizer = Adam([torch.Tensor([])], lr=LR_BIAS_DEFAULT)
-        optimizer_quantization_parameter = Adam([torch.Tensor([])], lr=LR_QUANTIZATION_PARAM_DEFAULT)
-        # TODO: Once implementing Soft Quantizer for GPTQ in Pytorch:
-        #  - change default quantization_parameters_learning to True.
-        #  - remove explicit rounding_type and quantizer_config (and let it use the default GradientPTQConfig).
+        bias_optimizer = torch.optim.SGD([torch.Tensor([])], lr=LR_BIAS_DEFAULT, momentum=GPTQ_MOMENTUM)
         return GradientPTQConfigV2(n_epochs,
                                    optimizer,
                                    optimizer_rest=optimizer_rest,
                                    loss=loss,
                                    log_function=log_function,
                                    train_bias=True,
-                                   optimizer_quantization_parameter=optimizer_quantization_parameter,
-                                   optimizer_bias=bias_optimizer,
-                                   rounding_type=RoundingType.STE,
-                                   quantization_parameters_learning=False,
-                                   )
+                                   quantization_parameters_learning=True,
+                                   optimizer_bias=bias_optimizer)
 
 
     def pytorch_gradient_post_training_quantization_experimental(model: Module,

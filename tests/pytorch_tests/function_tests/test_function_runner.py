@@ -138,47 +138,16 @@ class FunctionTestRunner(unittest.TestCase):
         """
         This test checks the GPTQ config.
         """
-        # TestGetGPTQConfig(self).run_test()
-        # TestGetGPTQConfig(self, quantization_method=QuantizationMethod.POWER_OF_TWO).run_test()
+        TestGetGPTQConfig(self).run_test()
+        TestGetGPTQConfig(self, quantization_method=QuantizationMethod.POWER_OF_TWO).run_test()
+        TestGetGPTQConfig(self, quantization_method=QuantizationMethod.POWER_OF_TWO).run_test()
         TestGetGPTQConfig(self, rounding_type=RoundingType.SoftQuantizer).run_test()
         TestGetGPTQConfig(self, quantization_method=QuantizationMethod.POWER_OF_TWO,
                           rounding_type=RoundingType.SoftQuantizer).run_test()
-
-        # self.gptq_configurations = [
-        #     GradientPTQConfig(1,
-        #                       optimizer=tf.keras.optimizers.RMSprop(),
-        #                       optimizer_rest=tf.keras.optimizers.RMSprop(),
-        #                       train_bias=True,
-        #                       loss=multiple_tensors_mse_loss,
-        #                       rounding_type=RoundingType.SoftQuantizer),
-        #     GradientPTQConfig(1,
-        #                       optimizer=tf.keras.optimizers.Adam(),
-        #                       optimizer_rest=tf.keras.optimizers.Adam(),
-        #                       train_bias=True,
-        #                       loss=multiple_tensors_mse_loss,
-        #                       rounding_type=RoundingType.SoftQuantizer),
-        #     GradientPTQConfig(1,
-        #                       optimizer=tf.keras.optimizers.Adam(),
-        #                       optimizer_rest=tf.keras.optimizers.Adam(),
-        #                       train_bias=True,
-        #                       loss=multiple_tensors_mse_loss,
-        #                       rounding_type=RoundingType.SoftQuantizer,
-        #                       entropy_reg=15),
-        #     GradientPTQConfig(1,
-        #                       optimizer=tf.keras.optimizers.Adam(),
-        #                       optimizer_rest=tf.keras.optimizers.Adam(),
-        #                       train_bias=True,
-        #                       loss=multiple_tensors_mse_loss,
-        #                       rounding_type=RoundingType.SoftQuantizer,
-        #                       quantization_parameters_learning=True),
-        #     GradientPTQConfig(1,
-        #                       optimizer=tf.keras.optimizers.Adam(),
-        #                       optimizer_rest=tf.keras.optimizers.Adam(),
-        #                       train_bias=True,
-        #                       loss=multiple_tensors_mse_loss,
-        #                       rounding_type=RoundingType.STE)
-        # ]
-
+        TestGetGPTQConfig(self, quantization_method=QuantizationMethod.POWER_OF_TWO,
+                          rounding_type=RoundingType.SoftQuantizer, train_bias=True).run_test()
+        TestGetGPTQConfig(self, quantization_method=QuantizationMethod.POWER_OF_TWO,
+                          rounding_type=RoundingType.SoftQuantizer, quantization_parameters_learning=True).run_test()
 
 
 if __name__ == '__main__':
