@@ -17,7 +17,7 @@ import torch.nn as nn
 from typing import Dict
 import numpy as np
 
-from model_compression_toolkit.core.common import Logger, max_power_of_two
+from model_compression_toolkit.core.common import max_power_of_two
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
@@ -25,8 +25,8 @@ from model_compression_toolkit.gptq.pytorch.quantizer.base_pytorch_gptq_quantize
     BasePytorchGPTQTrainableQuantizer
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from model_compression_toolkit.gptq.pytorch.quantizer import quant_utils as qutils
-from model_compression_toolkit.gptq.common.gptq_constants import PTQ_THRESHOLD, SCALE_PTQ, N_EPOCHS, \
-    MAX_ITERATIONS_DEFAULT, SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, SOFT_ROUNDING_BETA, GPTQ_ITER, AUXVAR
+from model_compression_toolkit.gptq.common.gptq_constants import PTQ_THRESHOLD, SCALE_PTQ, \
+    SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, GPTQ_ITER, AUXVAR
 from model_compression_toolkit.core.common.constants import THRESHOLD, MIN_THRESHOLD
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer

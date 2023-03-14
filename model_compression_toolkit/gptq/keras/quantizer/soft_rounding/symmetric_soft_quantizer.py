@@ -20,12 +20,11 @@ from model_compression_toolkit import RoundingType
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common import max_power_of_two
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.gptq.common.gptq_constants import PTQ_THRESHOLD, SCALE_PTQ, N_EPOCHS, \
-    MAX_ITERATIONS_DEFAULT, SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, SOFT_ROUNDING_BETA, GPTQ_ITER, AUXVAR
+from model_compression_toolkit.gptq.common.gptq_constants import PTQ_THRESHOLD, SCALE_PTQ, \
+    SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, GPTQ_ITER, AUXVAR
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
-from typing import Dict, Any, Tuple
+from typing import Dict, Any
 from model_compression_toolkit.core.common.constants import THRESHOLD, MIN_THRESHOLD
-from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer import BaseKerasGPTQTrainableQuantizer
 from model_compression_toolkit.gptq.keras.quantizer.quant_utils import power_of_two_max, clip, calculate_delta
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
