@@ -16,20 +16,19 @@
 
 import tensorflow as tf
 from typing import Tuple, List
-
 from model_compression_toolkit.core.keras.constants import USE_BIAS
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from tensorflow.keras.models import Model
-
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
 
 def get_gptq_trainable_parameters(fxp_model: Model,
                                   fw_info: FrameworkInfo,
                                   add_bias: bool = False) -> (
-        List[tf.Variable], List[tf.Variable], List[tf.Variable], List[tf.Variable], List[tf.Variable]):
+        List[tf.Variable], List[tf.Variable], List[tf.Variable]):
     """
     Get trainable parameters from all layers in a model
 
@@ -45,16 +44,17 @@ def get_gptq_trainable_parameters(fxp_model: Model,
     trainable_weights: List[tf.Tensor] = []
     trainable_threshold: List[tf.Tensor] = []
     bias_weights: List[List[tf.Tensor]] = []
-    temperature_weights: List[tf.Tensor] = []
 
     for layer in fxp_model.layers:
         if isinstance(layer, KerasQuantizationWrapper):
             kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
                                                                   fw_info=DEFAULT_KERAS_INFO)
 
-            # collect trainable weights per layer
-            layer_trainable_weights = layer.weights_quantizers[kernel_attribute].get_aux_variable()
-            layer_trainable_threshold = layer.weights_quantizers[kernel_attribute].get_quantization_variable()
+            # collect trainable weights per quantizer
+            quantizer_trainable_weights = layer.weights_quantizers[kernel_attribute].get_trainable_variables(VariableGroup.WEIGHTS)
+            quantizer_trainable_threshold = layer.weights_quantizers[kernel_attribute].get_trainable_variables(VariableGroup.QPARAMS)
+            trainable_weights.append(quantizer_trainable_weights)
+            trainable_threshold.extend(quantizer_trainable_threshold)
 
             if add_bias:
                 kernel_ops_attrs = fw_info.kernel_ops_attributes_mapping.get(type(layer.layer))
@@ -62,10 +62,8 @@ def get_gptq_trainable_parameters(fxp_model: Model,
                            and layer.layer.get_config().get(USE_BIAS)
                 if use_bias is not None and use_bias:
                     bias_weights.append([layer.layer.bias])
-            trainable_weights.append(layer_trainable_weights)
-            trainable_threshold.extend(layer_trainable_threshold)
 
-    return trainable_weights, bias_weights, trainable_threshold, temperature_weights
+    return trainable_weights, bias_weights, trainable_threshold
 
 
 def get_weights_for_loss(fxp_model: Model) -> Tuple[List[list], List[list]]:

@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-from typing import Union
+from abc import abstractmethod
+from enum import Enum
+from typing import Union, List, Any
 from inspect import signature
 
 from model_compression_toolkit.core import common
@@ -25,6 +26,19 @@ from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructur
     TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import QUANTIZATION_METHOD, \
     QUANTIZATION_TARGET
+
+
+VAR = 'var'
+GROUP = 'group'
+
+class VariableGroup(Enum):
+    """
+    An enum for choosing trainable variable group
+    0. WEIGHTS
+    1. QPARAMS
+    """
+    WEIGHTS = 0
+    QPARAMS = 1
 
 
 class BaseTrainableQuantizer(BaseInferableQuantizer):
@@ -69,6 +83,8 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         else:
             common.Logger.error(
                 f'Unknown Quantization Part:{static_quantization_target}')  # pragma: no cover
+
+        self.quantizer_parameters = {}
 
     @classmethod
     def get_sig(cls):
@@ -145,5 +161,40 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
 
         Returns:
             BaseInferableQuantizer object.
+        """
+        raise NotImplemented  # pragma: no cover
+
+    def add_quantizer_variable(self, name: str, variable: Any, group: VariableGroup = VariableGroup.WEIGHTS):
+        """
+        Add a quantizer variable to quantizer_parameters dictionary
+        """
+        self.quantizer_parameters.update({name: {VAR: variable, GROUP: group}})
+
+    def get_quantizer_variable(self, name: str) -> Any:
+        """
+        Get a quantizer variable by name
+
+        Args:
+            name: variable name
+
+        Returns:
+            trainable variable
+        """
+        if name in self.quantizer_parameters:
+            return self.quantizer_parameters[name][VAR]
+        else:
+            common.Logger.error(f'Variable {name} is not exist in quantizers parameters!') # pragma: no cover
+
+
+    @abstractmethod
+    def get_trainable_variables(self, group: VariableGroup) -> List[Any]:
+        """
+        Get trainable parameters with specific group from quantizer
+
+        Args:
+            group: Enum of variable group
+
+        Returns:
+            List of trainable variables
         """
         raise NotImplemented  # pragma: no cover

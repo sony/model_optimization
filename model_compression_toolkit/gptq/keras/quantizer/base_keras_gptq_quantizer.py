@@ -45,7 +45,6 @@ if FOUND_TF:
 
             super().__init__(quantization_config)
 
-            self.quantizer_parameters = None
 
         def update_layer_quantization_params(self, layer: KerasQuantizationWrapper
                                              ) -> (Dict[str, tf.Tensor], Dict[str, Dict], Dict):
