@@ -42,7 +42,7 @@ if FOUND_TF:
         return qi.KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
 
 
-    def get_exportable_keras_model(graph: Graph) -> Tuple[tf.keras.models.Model,UserInformation]:
+    def get_exportable_keras_model(graph: Graph) -> Tuple[tf.keras.models.Model, UserInformation]:
         """
         Convert graph to an exportable Keras model (model with all quantization parameters).
         An exportable model can then be exported using model_exporter, to retrieve the
