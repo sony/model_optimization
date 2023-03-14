@@ -57,6 +57,16 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
                     'max_range': list(node_w_qc.weights_quantization_params[RANGE_MAX].flatten()),
                     'channel_axis': node_w_qc.weights_channels_axis,
                     'input_rank': len(node_w_qc.weights_quantization_params[RANGE_MIN].shape)}
+
+        elif quantization_method in [QuantizationMethod.LUT_SYM_QUANTIZER, QuantizationMethod.LUT_POT_QUANTIZER]:
+            return {'num_bits': node_w_qc.weights_n_bits,
+                    'per_channel': node_w_qc.weights_per_channel_threshold,
+                    'cluster_centers': node_w_qc.weights_quantization_params['cluster_centers'],
+                    'threshold': list(node_w_qc.weights_quantization_params['scale_per_channel'].flatten()),
+                    'channel_axis': node_w_qc.weights_channels_axis,
+                    # TODO: how to pass multiplier nbits and eps for a specific node?
+                    'input_rank': len(node_w_qc.weights_quantization_params['scale_per_channel'].shape)}
+
         else:
             Logger.critical(f'Not supported quantization method for inferable quantizers.')  # pragma: no cover
 
@@ -78,6 +88,14 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
                     # In activation quantization is per-tensor only - thus we hold the min/max as a list with a len of 1
                     'min_range': [node_qc.activation_quantization_params[RANGE_MIN]],
                     'max_range': [node_qc.activation_quantization_params[RANGE_MAX]]}
+
+        elif quantization_method in [QuantizationMethod.LUT_POT_QUANTIZER]:
+            return {'num_bits': node_qc.activation_n_bits,
+                    'signed': node_qc.activation_quantization_params[SIGNED],
+                    'cluster_centers': node_qc.activation_quantization_params['cluster_centers'],
+                    'threshold': [node_qc.activation_quantization_params['threshold']]
+                    # TODO: how to pass multiplier nbits and eps for a specific node?
+                    }
         else:
             Logger.critical(f'Not supported quantization method for inferable quantizers.')  # pragma: no cover
     else:
