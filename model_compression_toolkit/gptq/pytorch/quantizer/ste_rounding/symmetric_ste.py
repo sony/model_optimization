@@ -127,7 +127,7 @@ class STEWeightGPTQQuantizer(BasePytorchGPTQTrainableQuantizer):
                                                                   requires_grad=True))
 
         # save the quantizer added parameters for later calculations
-        self.add_quantizer_variable(PTQ_THRESHOLD, layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"), VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(PTQ_THRESHOLD, layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"), VariableGroup.QPARAMS)
         self.add_quantizer_variable(AUXVAR, layer.get_parameter(f"{name}_{AUXVAR}"), VariableGroup.WEIGHTS)
 
 

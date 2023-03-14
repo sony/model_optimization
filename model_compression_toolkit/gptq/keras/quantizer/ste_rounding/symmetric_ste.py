@@ -132,9 +132,9 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
             trainable=True)
 
         # save the quantizer added parameters for later calculations
-        self.add_quantizer_variable(PTQ_THRESHOLD, ptq_threshold_tensor, VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(PTQ_THRESHOLD, ptq_threshold_tensor, VariableGroup.QPARAMS)
         self.add_quantizer_variable(AUXVAR, auxvar_tensor, VariableGroup.WEIGHTS)
-        self.add_quantizer_variable(GPTQ_ITER, ar_iter, VariableGroup.WEIGHTS)
+        self.add_quantizer_variable(GPTQ_ITER, ar_iter, VariableGroup.QPARAMS)
 
 
     def __call__(self,

@@ -87,7 +87,7 @@ class STEWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
                                                                              requires_grad=False))
 
         # save the quantizer added parameters for later calculations
-        self.add_quantizer_variable(THRESHOLD_TENSOR, layer.get_parameter(name + "_" + THRESHOLD_TENSOR), VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(THRESHOLD_TENSOR, layer.get_parameter(name + "_" + THRESHOLD_TENSOR), VariableGroup.QPARAMS)
 
 
     def __call__(self,
@@ -166,7 +166,7 @@ class STEActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
         layer.register_parameter(name, nn.Parameter(to_torch_tensor(self.threshold_tensor), requires_grad=True))
 
         # save the quantizer added parameters for later calculations
-        self.add_quantizer_variable(THRESHOLD_TENSOR, layer.get_parameter(name), VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(THRESHOLD_TENSOR, layer.get_parameter(name), VariableGroup.QPARAMS)
 
     def __call__(self,
                  inputs: torch.Tensor,

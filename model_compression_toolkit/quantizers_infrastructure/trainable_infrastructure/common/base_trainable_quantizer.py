@@ -33,12 +33,12 @@ GROUP = 'group'
 
 class VariableGroup(Enum):
     """
-    An enum for choosing training variable group
+    An enum for choosing trainable variable group
     0. WEIGHTS
-    1. THRESHOLDS
+    1. QPARAMS
     """
     WEIGHTS = 0
-    THRESHOLDS = 1
+    QPARAMS = 1
 
 
 class BaseTrainableQuantizer(BaseInferableQuantizer):

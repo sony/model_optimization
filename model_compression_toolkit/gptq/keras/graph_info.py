@@ -52,7 +52,7 @@ def get_gptq_trainable_parameters(fxp_model: Model,
 
             # collect trainable weights per quantizer
             quantizer_trainable_weights = layer.weights_quantizers[kernel_attribute].get_trainable_variables(VariableGroup.WEIGHTS)
-            quantizer_trainable_threshold = layer.weights_quantizers[kernel_attribute].get_trainable_variables(VariableGroup.THRESHOLDS)
+            quantizer_trainable_threshold = layer.weights_quantizers[kernel_attribute].get_trainable_variables(VariableGroup.QPARAMS)
             trainable_weights.append(quantizer_trainable_weights)
             trainable_threshold.extend(quantizer_trainable_threshold)
 

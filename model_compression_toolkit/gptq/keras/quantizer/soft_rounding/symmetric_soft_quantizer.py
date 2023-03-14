@@ -210,8 +210,8 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
 
         # Add quantization variables
         self.add_quantizer_variable(AUXVAR, auxvar_tensor, VariableGroup.WEIGHTS)
-        self.add_quantizer_variable(PTQ_THRESHOLD, ptq_threshold_tensor, VariableGroup.THRESHOLDS)
-        self.add_quantizer_variable(GPTQ_ITER, ar_iter, VariableGroup.WEIGHTS)
+        self.add_quantizer_variable(PTQ_THRESHOLD, ptq_threshold_tensor, VariableGroup.QPARAMS)
+        self.add_quantizer_variable(GPTQ_ITER, ar_iter, VariableGroup.QPARAMS)
 
         if self.quantization_parameter_learning and not self.power_of_two:
             scale = layer.add_weight(
@@ -219,7 +219,7 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
                 shape=self.num_channels,
                 initializer=tf.keras.initializers.Constant(1.0),
                 trainable=True)
-            self.add_quantizer_variable(SCALE_PTQ, scale, VariableGroup.THRESHOLDS)
+            self.add_quantizer_variable(SCALE_PTQ, scale, VariableGroup.QPARAMS)
 
 
 

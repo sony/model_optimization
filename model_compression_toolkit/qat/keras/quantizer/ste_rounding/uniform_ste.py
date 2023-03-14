@@ -95,8 +95,8 @@ class STEUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         fq_max.assign(self.max)
 
         # save the quantizer added parameters for later calculations
-        self.add_quantizer_variable(FQ_MIN, fq_min, VariableGroup.THRESHOLDS)
-        self.add_quantizer_variable(FQ_MAX, fq_max, VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(FQ_MIN, fq_min, VariableGroup.QPARAMS)
+        self.add_quantizer_variable(FQ_MAX, fq_max, VariableGroup.QPARAMS)
 
 
     def __call__(self, inputs: tf.Tensor,
@@ -196,8 +196,8 @@ class STEUniformActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         fq_max.assign(self.max_range)
 
         # save the quantizer added parameters for later calculations
-        self.add_quantizer_variable(FQ_MIN, fq_min, VariableGroup.THRESHOLDS)
-        self.add_quantizer_variable(FQ_MAX, fq_max, VariableGroup.THRESHOLDS)
+        self.add_quantizer_variable(FQ_MIN, fq_min, VariableGroup.QPARAMS)
+        self.add_quantizer_variable(FQ_MAX, fq_max, VariableGroup.QPARAMS)
 
 
     def __call__(self,
