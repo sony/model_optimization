@@ -22,9 +22,12 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
+from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import LUTFakeQuant
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
     ActivationLutPOTInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.constants import \
+    THRESHOLD, CLUSTER_CENTERS
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
@@ -92,7 +95,7 @@ class LUTWeightsQuantizerTest(BaseKerasFeatureNetworkTest):
         # check that the two conv's weights have different values since they where quantized
         # using different methods (but started as the same value)
         self.unit_test.assertTrue(np.sum(
-            np.abs(quantized_model.layers[2].get_quantized_weights()['kernel']) - quantized_model.layers[3].get_quantized_weights()['kernel']) > 0)
+            np.abs(quantized_model.layers[2].get_quantized_weights()[KERNEL]) - quantized_model.layers[3].get_quantized_weights()[KERNEL]) > 0)
 
 
 class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
@@ -145,10 +148,10 @@ class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
             # Check that lut quantizer layer is added where expected (after each layer, for quantizing activation)
             self.unit_test.assertTrue(isinstance(ll.activation_quantizers[0], ActivationLutPOTInferableQuantizer))
             # Check layer's thresholds are power of two
-            self.unit_test.assertTrue(math.log2(ll.activation_quantizers[0].get_config()['threshold']).is_integer())
+            self.unit_test.assertTrue(math.log2(ll.activation_quantizers[0].get_config()[THRESHOLD]).is_integer())
             # Check layers number of clusters and clusters values
-            self.unit_test.assertTrue(ll.activation_quantizers[0].get_config()['cluster_centers'].shape[0] <= 2 ** self.activation_n_bits)
-            self.unit_test.assertTrue(np.all(np.mod(ll.activation_quantizers[0].get_config()['cluster_centers'], 1) == 0))
+            self.unit_test.assertTrue(ll.activation_quantizers[0].get_config()[CLUSTER_CENTERS].shape[0] <= 2 ** self.activation_n_bits)
+            self.unit_test.assertTrue(np.all(np.mod(ll.activation_quantizers[0].get_config()[CLUSTER_CENTERS], 1) == 0))
 
 
 if __name__ == '__main__':
