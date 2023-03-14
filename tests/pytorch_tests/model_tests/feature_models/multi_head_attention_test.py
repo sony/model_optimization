@@ -87,7 +87,7 @@ class MHALayerNetFeatureTest(MHALayerNetTest):
     This test checks the MultiHeadAttention as a single layer with add_bias_kv feature.
     """
 
-    def run_test(self, seed=0, experimental_facade=False):
+    def run_test(self, seed=0):
         np.random.seed(seed)
         random.seed(a=seed)
         torch.random.manual_seed(seed)
@@ -95,30 +95,22 @@ class MHALayerNetFeatureTest(MHALayerNetTest):
         x = self.generate_inputs(input_shapes)
 
         def representative_data_gen():
-            return x
+            for _ in range(self.num_calibration_iter):
+                yield x
 
         model_float = self.create_feature_network(input_shapes)
-        quant_config_dict = self.get_quantization_configs()
         tpc_dict = self.get_tpc()
+        core_configs_dict = self.get_core_configs()
         assert isinstance(tpc_dict, dict), "Pytorch tests get_tpc should return a dictionary " \
                                            "mapping the test model name to a TPC object."
-        for model_name in tpc_dict.keys():
-            tpc = tpc_dict[model_name]
+        for model_name, tpc in tpc_dict.items():
             assert isinstance(tpc, TargetPlatformCapabilities)
-
-            quant_config = quant_config_dict.get(model_name)
-            assert quant_config is not None, f"Model name {model_name} does not exists in the test's " \
-                                             f"quantization configs dictionary keys"
-            core_config = self.get_core_config()
-            core_config.quantization_config = quant_config
+            assert model_name in core_configs_dict
+            core_config = core_configs_dict[model_name]
 
             with self.unit_test.assertRaises(Exception) as e:
-                ptq_model, quantization_info = mct.pytorch_post_training_quantization(model_float,
-                                                                                      representative_data_gen,
-                                                                                      n_iter=self.num_calibration_iter,
-                                                                                      quant_config=quant_config,
-                                                                                      fw_info=DEFAULT_PYTORCH_INFO,
-                                                                                      network_editor=
-                                                                                      self.get_network_editor(),
-                                                                                      target_platform_capabilities=tpc)
+                ptq_model, quant_info = mct.pytorch_post_training_quantization_experimental(model_float,
+                                                                                            representative_data_gen,
+                                                                                            core_config=core_config,
+                                                                                            target_platform_capabilities=tpc)
             self.unit_test.assertEqual('Add BIAS_KV feature is Not Implemented', str(e.exception))

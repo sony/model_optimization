@@ -184,9 +184,9 @@ class BaseChangeQuantConfigAttrTest(BaseKerasFeatureNetworkTest):
         self.prepare_graph_func = prepare_graph_func
         super().__init__(unit_test)
 
-    def get_network_editor(self):
-        return [EditRule(filter=self.edit_filter,
-                         action=self.action)]
+    def get_debug_config(self):
+        return DebugConfig(network_editor=[EditRule(filter=self.edit_filter,
+                                                    action=self.action)])
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -194,48 +194,19 @@ class BaseChangeQuantConfigAttrTest(BaseKerasFeatureNetworkTest):
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 
-    def run_test(self, experimental_facade=False, experimental_exporter=False):
+    def run_test(self, experimental_exporter=False):
         feature_networks = self.create_networks()
         feature_networks = feature_networks if isinstance(feature_networks, list) else [feature_networks]
         for model_float in feature_networks:
-            if experimental_facade:
-                core_config = self.get_core_config()
-                ptq_graph = self.prepare_graph_func(in_model=model_float,
-                                                    representative_data_gen=
-                                                    self.representative_data_gen_experimental,
-                                                    core_config=core_config,
-                                                    fw_info=self.get_fw_info(),
-                                                    fw_impl=self.get_fw_impl(),
-                                                    target_kpi=self.get_kpi(),
-                                                    tpc=self.get_tpc())
-            else:
-                qc = self.get_quantization_config()
-                if isinstance(qc, MixedPrecisionQuantizationConfig):
-                    quantization_config, mp_config = qc.separate_configs()
-                    core_config = CoreConfig(
-                        quantization_config=quantization_config,
-                        mixed_precision_config=mp_config,
-                        debug_config=DebugConfig(network_editor=self.get_network_editor())
-                    )
-                    ptq_graph = self.prepare_graph_func(in_model=model_float,
-                                                        representative_data_gen=
-                                                        self.representative_data_gen,
-                                                        core_config=core_config,
-                                                        fw_info=self.get_fw_info(),
-                                                        fw_impl=self.get_fw_impl(),
-                                                        target_kpi=self.get_kpi(),
-                                                        tpc=self.get_tpc())
-                else:
-                    core_config = CoreConfig(quantization_config=qc,
-                                             debug_config=DebugConfig(network_editor=self.get_network_editor()))
-                    ptq_graph = self.prepare_graph_func(in_model=model_float,
-                                                        representative_data_gen=
-                                                        self.representative_data_gen_experimental,
-                                                        core_config=core_config,
-                                                        fw_info=self.get_fw_info(),
-                                                        fw_impl=self.get_fw_impl(),
-                                                        target_kpi=self.get_kpi(),
-                                                        tpc=self.get_tpc())
+            core_config = self.get_core_config()
+            ptq_graph = self.prepare_graph_func(in_model=model_float,
+                                                representative_data_gen=
+                                                self.representative_data_gen_experimental,
+                                                core_config=core_config,
+                                                fw_info=self.get_fw_info(),
+                                                fw_impl=self.get_fw_impl(),
+                                                target_kpi=self.get_kpi(),
+                                                tpc=self.get_tpc())
 
             filtered_nodes = ptq_graph.filter(self.edit_filter)
             for node in filtered_nodes:
@@ -301,9 +272,9 @@ class BaseChangeQuantizationMethodQCAttrTest(BaseKerasFeatureNetworkTest):
         self.prepare_graph_func = prepare_graph_func
         super().__init__(unit_test)
 
-    def get_network_editor(self):
-        return [EditRule(filter=self.edit_filter,
-                         action=self.action)]
+    def get_debug_config(self):
+        return DebugConfig(network_editor=[EditRule(filter=self.edit_filter,
+                                                    action=self.action)])
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -311,48 +282,19 @@ class BaseChangeQuantizationMethodQCAttrTest(BaseKerasFeatureNetworkTest):
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 
-    def run_test(self, experimental_facade=False, experimental_exporter=False):
+    def run_test(self, experimental_exporter=False):
         feature_networks = self.create_networks()
         feature_networks = feature_networks if isinstance(feature_networks, list) else [feature_networks]
         for model_float in feature_networks:
-            if experimental_facade:
-                core_config = self.get_core_config()
-                ptq_graph = self.prepare_graph_func(in_model=model_float,
-                                                    representative_data_gen=
-                                                    self.representative_data_gen_experimental,
-                                                    core_config=core_config,
-                                                    fw_info=self.get_fw_info(),
-                                                    fw_impl=self.get_fw_impl(),
-                                                    target_kpi=self.get_kpi(),
-                                                    tpc=self.get_tpc())
-            else:
-                qc = self.get_quantization_config()
-                if isinstance(qc, MixedPrecisionQuantizationConfig):
-                    quantization_config, mp_config = qc.separate_configs()
-                    core_config = CoreConfig(
-                        quantization_config=quantization_config,
-                        mixed_precision_config=mp_config,
-                        debug_config=DebugConfig(network_editor=self.get_network_editor())
-                    )
-                    ptq_graph = self.prepare_graph_func(in_model=model_float,
-                                                        representative_data_gen=
-                                                        self.representative_data_gen,
-                                                        core_config=core_config,
-                                                        fw_info=self.get_fw_info(),
-                                                        fw_impl=self.get_fw_impl(),
-                                                        target_kpi=self.get_kpi(),
-                                                        tpc=self.get_tpc())
-                else:
-                    core_config = CoreConfig(quantization_config=qc,
-                                             debug_config=DebugConfig(network_editor=self.get_network_editor()))
-                    ptq_graph = self.prepare_graph_func(in_model=model_float,
-                                                        representative_data_gen=
-                                                        self.representative_data_gen_experimental,
-                                                        core_config=core_config,
-                                                        fw_info=self.get_fw_info(),
-                                                        fw_impl=self.get_fw_impl(),
-                                                        target_kpi=self.get_kpi(),
-                                                        tpc=self.get_tpc())
+            core_config = self.get_core_config()
+            ptq_graph = self.prepare_graph_func(in_model=model_float,
+                                                representative_data_gen=
+                                                self.representative_data_gen_experimental,
+                                                core_config=core_config,
+                                                fw_info=self.get_fw_info(),
+                                                fw_impl=self.get_fw_impl(),
+                                                target_kpi=self.get_kpi(),
+                                                tpc=self.get_tpc())
 
             filtered_nodes = ptq_graph.filter(self.edit_filter)
             for node in filtered_nodes:

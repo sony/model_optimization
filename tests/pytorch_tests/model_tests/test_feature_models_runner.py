@@ -73,7 +73,7 @@ from tests.pytorch_tests.model_tests.feature_models.bn_function_test import BNFN
 from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccuracyTest, GPTQWeightsUpdateTest, GPTQLearnRateZeroTest
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
-
+from tests.pytorch_tests.model_tests.feature_models.old_api_test import OldApiTest
 
 class FeatureModelsTestRunner(unittest.TestCase):
 
@@ -378,7 +378,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the Mixed Precision search with last layer distance function.
         """
-        MixedPercisionSearchLastLayerDistance(self).run_test(experimental_facade=True)
+        MixedPercisionSearchLastLayerDistance(self).run_test()
 
     def test_mixed_precision_activation_disabled(self):
         """
@@ -414,21 +414,21 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the activation Mixed Precision search with multiple inputs to model.
         """
-        MixedPercisionActivationMultipleInputs(self).run_test(experimental_facade=True)
+        MixedPercisionActivationMultipleInputs(self).run_test()
 
     def test_mixed_precision_bops_kpi(self):
         """
         This test checks different scenarios for mixed-precision quantization with bit-operations constraint.
         """
-        MixedPrecisionBopsBasicTest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAllWeightsLayersTest(self).run_test(experimental_facade=True)
-        MixedPrecisionWeightsOnlyBopsTest(self).run_test(experimental_facade=True)
-        MixedPrecisionActivationOnlyBopsTest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAndWeightsKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAndActivationKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsAndTotalKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsWeightsActivationKPITest(self).run_test(experimental_facade=True)
-        MixedPrecisionBopsMultipleOutEdgesTest(self).run_test(experimental_facade=True)
+        MixedPrecisionBopsBasicTest(self).run_test()
+        MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
+        MixedPrecisionWeightsOnlyBopsTest(self).run_test()
+        MixedPrecisionActivationOnlyBopsTest(self).run_test()
+        MixedPrecisionBopsAndWeightsKPITest(self).run_test()
+        MixedPrecisionBopsAndActivationKPITest(self).run_test()
+        MixedPrecisionBopsAndTotalKPITest(self).run_test()
+        MixedPrecisionBopsWeightsActivationKPITest(self).run_test()
+        MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
     def test_mha_layer_test(self):
         """
@@ -485,6 +485,12 @@ class FeatureModelsTestRunner(unittest.TestCase):
                                       finalize=True).run_test()
         QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionKpiCfgTest(self).run_test()
+
+    def test_old_api(self):
+        OldApiTest(self).run_test()
+        OldApiTest(self, mp_enable=True).run_test()
+        OldApiTest(self, mp_enable=True, gptq_enable=True).run_test()
+        OldApiTest(self, gptq_enable=True).run_test()
 
 
 if __name__ == '__main__':

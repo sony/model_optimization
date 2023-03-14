@@ -71,7 +71,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
-        trainable_weights, trainable_bias, trainable_threshold, trainable_temperature = get_gptq_trainable_parameters(
+        trainable_weights, trainable_bias, trainable_threshold = get_gptq_trainable_parameters(
             self.fxp_model,
             add_bias=self.gptq_config.train_bias)
 

@@ -27,13 +27,14 @@ layers = keras.layers
 
 class MultipleInputsNodeTests(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def get_tpc(self):
         return get_16bit_tpc("multiple_inputs_test")
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
+                                      mct.QuantizationErrorMethod.NOCLIPPING,
                                       True, False, True)
 
     def get_input_shapes(self):

@@ -27,8 +27,7 @@ layers = keras.layers
 
 class ReusedLayerTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
-
+        super().__init__(unit_test, experimental_exporter=True)
 
     def create_networks(self):
         conv_layer = layers.Conv2D(3, 4)
@@ -39,5 +38,6 @@ class ReusedLayerTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.Conv2D))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
         self.unit_test.assertFalse(hasattr(quantized_model.layers[2], 'input_shape'))  # assert it's reused
+        self.unit_test.assertFalse(hasattr(quantized_model.layers[2].layer, 'input_shape'))  # assert it's reused

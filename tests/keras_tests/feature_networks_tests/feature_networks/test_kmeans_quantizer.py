@@ -18,7 +18,7 @@ import unittest
 from model_compression_toolkit import target_platform
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, ChangeCandidatesWeightsQuantConfigAttr
-import model_compression_toolkit as cmo
+import model_compression_toolkit as mct
 import tensorflow as tf
 
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
@@ -58,7 +58,7 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
         self.num_conv_channels = 4
         self.kernel = 3
         self.conv_w = weight_fn(self.kernel, self.num_conv_channels, self.num_conv_channels)
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
+        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32, experimental_exporter=False)
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_quantization_method': self.quantization_method,
@@ -67,11 +67,9 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="kmean_quantizer_test", tp_model=tp)
 
     def get_quantization_config(self):
-        return cmo.QuantizationConfig(cmo.QuantizationErrorMethod.MSE,
-                                      cmo.QuantizationErrorMethod.MSE,
-                                      False,
-                                      False,
-                                      True)
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationErrorMethod.MSE,
+                                      False, False, True)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, self.num_conv_channels]]
@@ -88,9 +86,10 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
         model.layers[3].set_weights([self.conv_w])
         return model
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
-                         action=ChangeCandidatesWeightsQuantConfigAttr(weights_quantization_method=target_platform.QuantizationMethod.POWER_OF_TWO))]
+    def get_debug_config(self):
+        return mct.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
+                                                        action=ChangeCandidatesWeightsQuantConfigAttr(
+                                                            weights_quantization_method=target_platform.QuantizationMethod.POWER_OF_TWO))])
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv's weights have different values since they were quantized
@@ -130,8 +129,8 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
     def get_quantization_config(self):
-        return cmo.QuantizationConfig(activation_error_method=cmo.QuantizationErrorMethod.MSE,
-                                      weights_error_method=cmo.QuantizationErrorMethod.MSE,
+        return mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.MSE,
+                                      weights_error_method=mct.QuantizationErrorMethod.MSE,
                                       relu_bound_to_power_of_2=False,
                                       weights_bias_correction=False,
                                       weights_per_channel_threshold=False)

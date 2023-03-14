@@ -58,7 +58,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                  per_channel=True, input_shape=(1, 16, 16, 3),
                  hessian_weights=True, log_norm_weights=True):
         super().__init__(unit_test,
-                         input_shape=input_shape)
+                         input_shape=input_shape, experimental_exporter=True)
 
         self.quant_method = quant_method
         self.rounding_type = rounding_type
@@ -95,50 +95,34 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
     def compare(self, ptq_model, model_float, input_x=None, quantization_info: UserInformation = None):
         raise NotImplementedError(f'{self.__class__} did not implement compare')
 
-    def run_test(self, experimental_facade=False, experimental_exporter=False):
+    def run_test(self):
         x = self.generate_inputs()
 
         def representative_data_gen():
-            return x
+            for _ in range(self.num_calibration_iter):
+                yield x
 
         model_float = self.create_networks()
 
-        qc = self.get_quantization_config()
         tpc = self.get_tpc()
-        if experimental_facade:
-            core_config = self.get_core_config()
-            ptq_model, quantization_info = mct.keras_post_training_quantization_experimental(
-                model_float,
-                self.representative_data_gen_experimental,
-                target_kpi=self.get_kpi(),
-                core_config=core_config,
-                target_platform_capabilities=self.get_tpc(),
-                new_experimental_exporter=experimental_exporter
-            )
-            ptq_gptq_model, quantization_info = mct.keras_gradient_post_training_quantization_experimental(
-                model_float,
-                self.representative_data_gen_experimental,
-                gptq_config=GradientPTQConfigV2.from_v1(self.num_calibration_iter, self.get_gptq_config()),
-                target_kpi=self.get_kpi(),
-                core_config=core_config,
-                target_platform_capabilities=self.get_tpc(),
-                new_experimental_exporter=experimental_exporter
-            )
-        else:
-
-            ptq_model, quantization_info = mct.keras_post_training_quantization(model_float, representative_data_gen,
-                                                                                n_iter=self.num_calibration_iter,
-                                                                                quant_config=qc,
-                                                                                fw_info=DEFAULT_KERAS_INFO,
-                                                                                network_editor=self.get_network_editor(),
-                                                                                target_platform_capabilities=tpc)
-            ptq_gptq_model, quantization_info = mct.keras_post_training_quantization(model_float, representative_data_gen,
-                                                                                     n_iter=self.num_calibration_iter,
-                                                                                     quant_config=qc,
-                                                                                     fw_info=DEFAULT_KERAS_INFO,
-                                                                                     network_editor=self.get_network_editor(),
-                                                                                     gptq_config=self.get_gptq_config(),
-                                                                                     target_platform_capabilities=tpc)
+        core_config = self.get_core_config()
+        ptq_model, quantization_info = mct.keras_post_training_quantization_experimental(
+            model_float,
+            representative_data_gen,
+            target_kpi=self.get_kpi(),
+            core_config=core_config,
+            target_platform_capabilities=tpc,
+            new_experimental_exporter=self.experimental_exporter
+        )
+        ptq_gptq_model, quantization_info = mct.keras_gradient_post_training_quantization_experimental(
+            model_float,
+            representative_data_gen,
+            gptq_config=GradientPTQConfigV2.from_v1(self.num_calibration_iter, self.get_gptq_config()),
+            target_kpi=self.get_kpi(),
+            core_config=core_config,
+            target_platform_capabilities=tpc,
+            new_experimental_exporter=self.experimental_exporter
+        )
 
         self.compare(ptq_model, ptq_gptq_model, input_x=x, quantization_info=quantization_info)
 

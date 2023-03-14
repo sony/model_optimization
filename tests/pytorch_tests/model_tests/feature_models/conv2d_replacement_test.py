@@ -55,10 +55,9 @@ class DwConv2dReplacementTest(BasePytorchTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeTypeFilter(torch.nn.Conv2d),
-                         action=ReplaceLayer(torch.nn.Conv2d, get_new_weights_for_identity_dw_conv2d_layer))
-                ]
+    def get_debug_config(self):
+        return mct.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(torch.nn.Conv2d),
+                                                        action=ReplaceLayer(torch.nn.Conv2d, get_new_weights_for_identity_dw_conv2d_layer))])
 
     def create_feature_network(self, input_shape):
         return OneLayerConv2dNet()

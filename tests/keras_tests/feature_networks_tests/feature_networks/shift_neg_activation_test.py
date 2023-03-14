@@ -17,6 +17,7 @@ import tensorflow as tf
 
 from model_compression_toolkit.core.common.constants import SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.core.common.network_editors import EditRule, node_filters, actions
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_keras_tpc_latest
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 from packaging import version
@@ -41,7 +42,7 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
         self.use_pad_layer = use_pad_layer
         self.bypass_op_list = bypass_op_list
         self.param_search = param_search
-        super().__init__(unit_test, input_shape=input_shape, num_calibration_iter=100)
+        super().__init__(unit_test, input_shape=input_shape, num_calibration_iter=100, experimental_exporter=True)
 
     def get_tpc(self):
         return get_16bit_tpc("shift_negative_test")
@@ -71,24 +72,22 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
             _, w, b = float_model.get_weights()
         else:
             w, b = float_model.get_weights()
-        linear_op_index = 3 + (4 if self.use_pad_layer else 3)
+        linear_op_index = 3 + (2 if self.use_pad_layer else 1)
         if self.bypass_op_list:
             for bypass_op in self.bypass_op_list:
                 # add bypass nodes
                 linear_op_index = linear_op_index + 1
                 if isinstance(bypass_op, layers.GlobalAveragePooling2D):
-                    fq_layer = quantized_model.layers[linear_op_index]
-                    self.unit_test.assertTrue(isinstance(fq_layer, TFOpLambda) and
-                                              fq_layer.function is tf.quantization.fake_quant_with_min_max_vars)
-                    self.unit_test.assertTrue(fq_layer.inbound_nodes[0].call_kwargs['min'] == 0)
-                    linear_op_index = linear_op_index + 1
+                    avg_layer = quantized_model.layers[linear_op_index-1]
+                    self.unit_test.assertTrue(avg_layer.activation_quantizers[0].get_config()['signed'] == False)
 
         linear_op_index = linear_op_index + int(self.linear_op_to_test.get_config().get('padding') == 'same')
-        q_w, q_b = quantized_model.layers[linear_op_index].weights[0].numpy(), \
-                   quantized_model.layers[linear_op_index].weights[1].numpy()
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[linear_op_index].layer.__class__)[0]
+        q_w, q_b = quantized_model.layers[linear_op_index].get_quantized_weights()[attr].numpy(), \
+                   quantized_model.layers[linear_op_index].layer.bias.numpy()
         # Take the ACTUAL value the activations were shifted by, from the Add layer the substitution needs to insert
-        add_layer_index = 4  # should be always the fourth layer (input, fq, swish, add)
-        shift_nl_out = quantized_model.layers[add_layer_index].inbound_nodes[0].call_args[1]
+        add_layer_index = 3  # should be always the fourth layer (input, fq, swish, add)
+        shift_nl_out = quantized_model.layers[add_layer_index].layer.inbound_nodes[0].call_args[1]
         if isinstance(self.linear_op_to_test, layers.DepthwiseConv2D):
             self.unit_test.assertTrue(np.allclose(b - q_b, shift_nl_out * np.sum(w, axis=(0, 1)).flatten()))
         elif isinstance(self.linear_op_to_test, layers.Conv2D):
@@ -115,23 +114,23 @@ class ShiftNegActivationPostAddTest(ShiftNegActivationTest):
     def get_tpc(self):
         return get_keras_tpc_latest()
 
-    def get_network_editor(self):
-        return [EditRule(filter=node_filters.NodeNameScopeFilter('activation'),
-                         action=actions.ChangeCandidatesActivationQuantConfigAttr(
-                             activation_n_bits=self.post_add_nbits))]
+    def get_debug_config(self):
+        return mct.DebugConfig(network_editor=[EditRule(filter=node_filters.NodeNameScopeFilter('activation'),
+                                                        action=actions.ChangeCandidatesActivationQuantConfigAttr(
+                                                            activation_n_bits=self.post_add_nbits))])
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(float_model.output.shape.as_list() == quantized_model.output.shape.as_list(),
                                   msg=f'Outputs shape mismatch: {float_model.output.shape} != {quantized_model.output.shape}')
 
-        non_linear_layer_fake_quant = quantized_model.layers[3]
-        non_linear_nbits = non_linear_layer_fake_quant.inbound_nodes[0].call_kwargs.get('num_bits')
+        non_linear_layer_fake_quant = quantized_model.layers[2]
+        non_linear_nbits = non_linear_layer_fake_quant.activation_quantizers[0].get_config()['num_bits']
         self.unit_test.assertTrue(non_linear_nbits == SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS,
                                   f"The non-linear node's activation_n_bits after applying snc should be "
                                   f"{SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS}, but activation_n_bits is {non_linear_nbits}")
 
-        post_add_layer_fake_quant = quantized_model.layers[5]
-        post_add_nbits = post_add_layer_fake_quant.inbound_nodes[0].call_kwargs.get('num_bits')
+        post_add_layer_fake_quant = quantized_model.layers[3]
+        post_add_nbits = post_add_layer_fake_quant.activation_quantizers[0].get_config()['num_bits']
         self.unit_test.assertTrue(post_add_nbits == self.post_add_nbits,
                                   f"The post_add layer that's added after the non-linear node "
                                   f"should be quantized with {self.post_add_nbits}, "

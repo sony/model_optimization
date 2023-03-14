@@ -51,7 +51,7 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         self.num_conv_channels = 4
         self.scope = 'scope'
         self.conv_w = get_uniform_weights(self.kernel, self.num_conv_channels, self.num_conv_channels)
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def get_tpc(self):
         tp_model = generate_test_tp_model({
@@ -61,22 +61,24 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="scope_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationErrorMethod.MSE,
                                       False, False, True)
 
-    def get_network_editor(self):
+    def get_debug_config(self):
         # first rule is to check that the scope filter catches the 2 convs with
         # second and third rule- they both do opperations on the same node.The goels are:
         #   1- to check "or" opperation. 2- to see that the last rule in the list is the last rule applied
-        return [EditRule(filter=NodeNameScopeFilter(self.scope),
-                         action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
-                EditRule(filter=NodeNameScopeFilter(self.scope),
-                         action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits)),
-                EditRule(filter=NodeNameScopeFilter('2'),
-                         action=ChangeCandidatesWeightsQuantConfigAttr(enable_weights_quantization=True)),
-                EditRule(filter=NodeNameScopeFilter('2') or NodeNameScopeFilter('does_not_exist'),
-                         action=ChangeCandidatesWeightsQuantConfigAttr(enable_weights_quantization=False))
-                ]
+        network_editor = [EditRule(filter=NodeNameScopeFilter(self.scope),
+                                   action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
+                          EditRule(filter=NodeNameScopeFilter(self.scope),
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits)),
+                          EditRule(filter=NodeNameScopeFilter('2'),
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(enable_weights_quantization=True)),
+                          EditRule(filter=NodeNameScopeFilter('2') or NodeNameScopeFilter('does_not_exist'),
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(enable_weights_quantization=False))
+                          ]
+        return mct.DebugConfig(network_editor=network_editor)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, self.num_conv_channels]]
@@ -100,17 +102,17 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that this conv's weights had changed due to change in number of bits
         self.unit_test.assertTrue(
-            len(np.unique(quantized_model.layers[4].weights[0].numpy())) in [2 ** (self.weights_n_bits) - 1,
+            len(np.unique(quantized_model.layers[3].get_quantized_weights()['kernel'].numpy())) in [2 ** (self.weights_n_bits) - 1,
                                                                              2 ** (self.weights_n_bits)])
         # check that this conv's weights did not change
-        self.unit_test.assertTrue(np.all(quantized_model.layers[2].weights[0].numpy() == self.conv_w))
+        self.unit_test.assertTrue(np.all(quantized_model.layers[2].get_quantized_weights()['kernel'].numpy() == self.conv_w))
         # check that this conv's weights did not change
-        self.unit_test.assertTrue(np.all(quantized_model.layers[6].weights[0].numpy() == self.conv_w))
-        self.unit_test.assertTrue(quantized_model.layers[3].inbound_nodes[0].call_kwargs['num_bits'] == 16)
+        self.unit_test.assertTrue(np.all(quantized_model.layers[4].layer.kernel == self.conv_w))
+        self.unit_test.assertTrue(quantized_model.layers[2].activation_quantizers[0].get_config()['num_bits'] == 16)
         self.unit_test.assertTrue(
-            quantized_model.layers[5].inbound_nodes[0].call_kwargs['num_bits'] == self.activation_n_bits)
+            quantized_model.layers[3].activation_quantizers[0].get_config()['num_bits'] == self.activation_n_bits)
         self.unit_test.assertTrue(
-            quantized_model.layers[7].inbound_nodes[0].call_kwargs['num_bits'] == self.activation_n_bits)
+            quantized_model.layers[4].activation_quantizers[0].get_config()['num_bits'] == self.activation_n_bits)
 
 
 class NameFilterTest(BaseKerasFeatureNetworkTest):
@@ -129,7 +131,7 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
         # -(kernel*kernel*num_conv_channels*num_conv_channels)/2 : +(
         # kernel*kernel*num_conv_channels*num_conv_channels)/2
         self.conv_w = get_uniform_weights(self.kernel, self.num_conv_channels, self.num_conv_channels)
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def get_tpc(self):
         tp_model = generate_test_tp_model({
@@ -139,15 +141,17 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="name_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationErrorMethod.MSE,
                                       False, False, True)
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeNameFilter(self.node_to_change_name),
-                         action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
-                EditRule(filter=NodeNameFilter(self.node_to_change_name),
-                         action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits))
-                ]
+    def get_debug_config(self):
+        network_editor = [EditRule(filter=NodeNameFilter(self.node_to_change_name),
+                                   action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
+                          EditRule(filter=NodeNameFilter(self.node_to_change_name),
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits))
+                          ]
+        return mct.DebugConfig(network_editor=network_editor)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, self.num_conv_channels]]
@@ -164,13 +168,13 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that this conv's weights had changed due to change in number of bits
         self.unit_test.assertTrue(
-            len(np.unique(quantized_model.layers[2].weights[0].numpy())) in [2 ** (self.weights_n_bits) - 1,
+            len(np.unique(quantized_model.layers[2].get_quantized_weights()['kernel'].numpy())) in [2 ** (self.weights_n_bits) - 1,
                                                                              2 ** (self.weights_n_bits)])
         # check that this conv's weights did not change
-        self.unit_test.assertTrue(np.all(quantized_model.layers[4].weights[0].numpy() == self.conv_w))
+        self.unit_test.assertTrue(np.all(quantized_model.layers[3].get_quantized_weights()['kernel'].numpy() == self.conv_w))
         self.unit_test.assertTrue(
-            quantized_model.layers[3].inbound_nodes[0].call_kwargs['num_bits'] == self.activation_n_bits)
-        self.unit_test.assertTrue(quantized_model.layers[5].inbound_nodes[0].call_kwargs['num_bits'] == 16)
+            quantized_model.layers[2].activation_quantizers[0].get_config()['num_bits'] == self.activation_n_bits)
+        self.unit_test.assertTrue(quantized_model.layers[3].activation_quantizers[0].get_config()['num_bits'] == 16)
 
 
 class TypeFilterTest(BaseKerasFeatureNetworkTest):
@@ -191,7 +195,7 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
                                         [self.kernel, self.kernel, self.num_conv_channels, self.num_conv_channels])
         # set a weight above 1
         self.conv_w[0, 0, 0, 0] = 1.1
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def weights_params_fn(self):
         return get_weights_quantization_params_fn(tp.QuantizationMethod.POWER_OF_TWO)
@@ -207,21 +211,23 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="type_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationErrorMethod.MSE,
                                       False, False, False)
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeTypeFilter(self.type_to_change),
-                         action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits)),
-                EditRule(filter=NodeTypeFilter(self.type_to_change),
-                         action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
-                EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
-                         action=ChangeQuantizationParamFunction(weights_quantization_params_fn=self.weights_params_fn())),
-                EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
-                         action=ChangeQuantizationParamFunction(
-                             activation_quantization_params_fn=self.activations_params_fn())),
-                EditRule(filter=NodeNameFilter(self.node_to_change_name) and NodeTypeFilter(layers.ReLU),
-                         action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=16))]
+    def get_debug_config(self):
+        network_editor = [EditRule(filter=NodeTypeFilter(self.type_to_change),
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits)),
+                          EditRule(filter=NodeTypeFilter(self.type_to_change),
+                                   action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
+                          EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
+                                   action=ChangeQuantizationParamFunction(weights_quantization_params_fn=self.weights_params_fn())),
+                          EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
+                                   action=ChangeQuantizationParamFunction(
+                                       activation_quantization_params_fn=self.activations_params_fn())),
+                          EditRule(filter=NodeNameFilter(self.node_to_change_name) and NodeTypeFilter(layers.ReLU),
+                                   action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=16))]
+        return mct.DebugConfig(network_editor=network_editor)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 224, self.num_conv_channels]]
@@ -242,8 +248,8 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv in the network same weights.
         self.unit_test.assertTrue(
-            quantized_model.layers[2].weights[0].numpy().max() == quantized_model.layers[4].weights[0].numpy().max())
+            quantized_model.layers[2].get_quantized_weights()['kernel'].numpy().max() == quantized_model.layers[3].get_quantized_weights()['kernel'].numpy().max())
         self.unit_test.assertTrue(
-            quantized_model.layers[3].inbound_nodes[0].call_kwargs['num_bits'] == self.activation_n_bits)
+            quantized_model.layers[2].activation_quantizers[0].get_config()['num_bits'] == self.activation_n_bits)
         self.unit_test.assertTrue(
-            quantized_model.layers[5].inbound_nodes[0].call_kwargs['num_bits'] == self.activation_n_bits)
+            quantized_model.layers[3].activation_quantizers[0].get_config()['num_bits'] == self.activation_n_bits)

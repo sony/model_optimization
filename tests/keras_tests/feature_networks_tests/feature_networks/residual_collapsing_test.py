@@ -28,7 +28,9 @@ tp = mct.target_platform
 class BaseResidualCollapsingTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test):
-        super(BaseResidualCollapsingTest, self).__init__(unit_test=unit_test, input_shape=(16,16,3))
+        super(BaseResidualCollapsingTest, self).__init__(unit_test=unit_test,
+                                                         input_shape=(16,16,3),
+                                                         experimental_exporter=True)
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 32,
@@ -38,7 +40,8 @@ class BaseResidualCollapsingTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="linear_collapsing_test", tp_model=tp)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING, mct.QuantizationErrorMethod.NOCLIPPING,
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
+                                      mct.QuantizationErrorMethod.NOCLIPPING,
                                       False, False, True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):

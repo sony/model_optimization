@@ -27,9 +27,9 @@ class TestTFLiteExport(unittest.TestCase):
         model = MobileNetV2()
 
         def rep_data():
-            return [np.random.randn(1, 224, 224, 3)]
+            yield [np.random.randn(1, 224, 224, 3)]
 
-        quantized_model, _ = mct.keras_post_training_quantization(model, rep_data, n_iter=1)
+        quantized_model, _ = mct.keras_post_training_quantization_experimental(model, rep_data, new_experimental_exporter=True)
 
         converter = tf.lite.TFLiteConverter.from_keras_model(quantized_model)
         quantized_tflite_model = converter.convert()

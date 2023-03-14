@@ -17,7 +17,7 @@ import numpy as np
 import tensorflow as tf
 from keras.engine.input_layer import InputLayer
 
-from model_compression_toolkit import QuantizationErrorMethod, QuantizationConfig
+from model_compression_toolkit import DebugConfig
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, ChangeFinalWeightsQuantConfigAttr, \
     ChangeFinalActivationQuantConfigAttr, ChangeCandidatesActivationQuantConfigAttr
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeTypeFilter
@@ -33,9 +33,9 @@ class ChangeFinalWeightQCAttrTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test,
                          experimental_exporter=True)
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeTypeFilter(layers.Conv2D),
-                         action=ChangeFinalWeightsQuantConfigAttr(weights_bias_correction=False))]
+    def get_debug_config(self):
+        return DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.Conv2D),
+                                                    action=ChangeFinalWeightsQuantConfigAttr(weights_bias_correction=False))])
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -55,9 +55,9 @@ class ChangeFinalActivationQCAttrTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, experimental_exporter=True)
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeTypeFilter(layers.Conv2D),
-                         action=ChangeFinalActivationQuantConfigAttr(activation_n_bits=7))]
+    def get_debug_config(self):
+        return DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.Conv2D),
+                                                    action=ChangeFinalActivationQuantConfigAttr(activation_n_bits=7))])
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

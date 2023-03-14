@@ -61,7 +61,7 @@ def run_mode(tpc):
         return RunMode.TWO
 
 
-class NetworkTest(object):
+class NetworkTest:
     def __init__(self, unit_test, model_float, input_shapes, num_calibration_iter, gptq=False):
         self.unit_test = unit_test
         self.model_float = model_float
@@ -91,30 +91,32 @@ class NetworkTest(object):
 
     def run_network(self, inputs_list, qc, tpc):
         def representative_data_gen():
-            return inputs_list
+            for _ in range(self.num_calibration_iter):
+                yield inputs_list
 
+        core_config = mct.CoreConfig(quantization_config=qc)
         if self.gptq:
-            arc = model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig(n_iter=2,
-                                                                                      optimizer=tf.keras.optimizers.Adam(
-                                                                                          learning_rate=0.0001),
-                                                                                      optimizer_rest=tf.keras.optimizers.Adam(
-                                                                                          learning_rate=0.0001),
+            arc = mct.GradientPTQConfig(n_iter=2,
+                                        optimizer=tf.keras.optimizers.Adam(
+                                            learning_rate=0.0001),
+                                        optimizer_rest=tf.keras.optimizers.Adam(
+                                            learning_rate=0.0001),
                                                                                       loss=multiple_tensors_mse_loss)
+            arc2 = mct.GradientPTQConfigV2.from_v1(self.num_calibration_iter, arc)
 
-            ptq_model, quantization_info = mct.keras_post_training_quantization(self.model_float,
-                                                                                representative_data_gen,
-                                                                                quant_config=qc,
-                                                                                fw_info=DEFAULT_KERAS_INFO,
-                                                                                n_iter=self.num_calibration_iter,
-                                                                                gptq_config=arc,
-                                                                                target_platform_capabilities=tpc)
+            ptq_model, quantization_info = mct.keras_gradient_post_training_quantization_experimental(self.model_float,
+                                                                                                      representative_data_gen,
+                                                                                                      core_config=core_config,
+                                                                                                      fw_info=DEFAULT_KERAS_INFO,
+                                                                                                      gptq_config=arc2,
+                                                                                                      target_platform_capabilities=tpc,
+                                                                                                      new_experimental_exporter=True)
         else:
-            ptq_model, quantization_info = mct.keras_post_training_quantization(self.model_float,
-                                                                                representative_data_gen,
-                                                                                quant_config=qc,
-                                                                                fw_info=DEFAULT_KERAS_INFO,
-                                                                                n_iter=self.num_calibration_iter,
-                                                                                target_platform_capabilities=tpc)
+            ptq_model, quantization_info = mct.keras_post_training_quantization_experimental(self.model_float,
+                                                                                             representative_data_gen,
+                                                                                             core_config=core_config,
+                                                                                             target_platform_capabilities=tpc,
+                                                                                             new_experimental_exporter=True)
         self.compare(inputs_list, ptq_model, qc, tpc)
 
 

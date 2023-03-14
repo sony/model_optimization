@@ -67,10 +67,9 @@ class SingleLayerReplacementTest(BasePytorchTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeNameFilter('activation1'),
-                         action=ReplaceLayer(Identity, get_identity_params_from_relu))
-                ]
+    def get_debug_config(self):
+        return mct.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter('activation1'),
+                                                        action=ReplaceLayer(Identity, get_identity_params_from_relu))])
 
     def create_feature_network(self, input_shape):
         return TwoLayersReluNet()
@@ -92,10 +91,9 @@ class ReluReplacementTest(SingleLayerReplacementTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeTypeFilter(torch.nn.ReLU),
-                         action=ReplaceLayer(Identity, get_identity_params_from_relu))
-                ]
+    def get_debug_config(self):
+        return mct.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(torch.nn.ReLU),
+                                                        action=ReplaceLayer(Identity, get_identity_params_from_relu))])
 
     def create_feature_network(self, input_shape):
         return TwoLayersReluNet()
@@ -142,10 +140,9 @@ class ReluReplacementWithAddBiasTest(SingleLayerReplacementTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_network_editor(self):
-        return [EditRule(filter=NodeTypeFilter(torch.nn.ReLU),
-                         action=ReplaceLayer(AddBias, get_add_bias_params_from_relu))
-                ]
+    def get_debug_config(self):
+        return mct.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(torch.nn.ReLU),
+                                                        action=ReplaceLayer(AddBias, get_add_bias_params_from_relu))])
 
     def create_feature_network(self, input_shape):
         return TwoLayersReluNet()

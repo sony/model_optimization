@@ -60,12 +60,12 @@ class ShiftNegaviteActivationNetTest(BasePytorchTest):
                                          test_name='all_8bit',
                                          ftp_name='sn_pytorch_test')
 
-    def get_quantization_configs(self):
+    def get_core_configs(self):
         return {
-            'all_8bit': mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
-                                               mct.QuantizationErrorMethod.NOCLIPPING,
-                                               shift_negative_activation_correction=True,
-                                               shift_negative_ratio=np.inf),
+            'all_8bit': mct.CoreConfig(quantization_config=mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
+                                                                                  mct.QuantizationErrorMethod.NOCLIPPING,
+                                                                                  shift_negative_activation_correction=True,
+                                                                                  shift_negative_ratio=np.inf)),
         }
 
     def create_inputs_shape(self):

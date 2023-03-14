@@ -46,7 +46,9 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
         self.second_op2d.kernel_initializer = w_init()
         self.zero_pad = zero_pad
         super().__init__(unit_test,
-                         input_shape=(16, 16, 3))
+                         input_shape=(16, 16, 3),
+                         # TODO: fix with new_experimental_exporter
+                         experimental_exporter=False)
 
     def get_tpc(self):
         return get_16bit_tpc("scale_equalization_bound_test")

@@ -30,7 +30,7 @@ layers = keras.layers
 
 class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, experimental_exporter=True)
 
     def get_tpc(self):
         base_config, _ = get_op_quantization_configs()
@@ -42,15 +42,13 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
                                              name="reused_layer_mp_test")
 
     def get_quantization_config(self):
-        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                    mct.QuantizationErrorMethod.MSE,
-                                    relu_bound_to_power_of_2=True,
-                                    weights_bias_correction=True,
-                                    weights_per_channel_threshold=True,
-                                    input_scaling=True,
-                                    activation_channel_equalization=True)
-
-        return MixedPrecisionQuantizationConfig(qc)
+        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
+                                      mct.QuantizationErrorMethod.MSE,
+                                      relu_bound_to_power_of_2=True,
+                                      weights_bias_correction=True,
+                                      weights_per_channel_threshold=True,
+                                      input_scaling=True,
+                                      activation_channel_equalization=True)
 
     def get_mixed_precision_v2_config(self):
         return MixedPrecisionQuantizationConfigV2()
@@ -68,13 +66,13 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         if isinstance(float_model.layers[1], layers.Conv2D):
-            self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.Conv2D))
+            self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
             self.unit_test.assertFalse(hasattr(quantized_model.layers[2], 'input_shape'))  # assert it's reused
         if isinstance(float_model.layers[1], layers.SeparableConv2D):
-            self.unit_test.assertTrue(isinstance(quantized_model.layers[2], layers.DepthwiseConv2D))
+            self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.DepthwiseConv2D))
             self.unit_test.assertFalse(hasattr(quantized_model.layers[2], 'input_shape'))  # assert it's reused
-            self.unit_test.assertTrue(isinstance(quantized_model.layers[4], layers.Conv2D))
-            self.unit_test.assertFalse(hasattr(quantized_model.layers[4], 'input_shape'))  # assert it's reused
+            self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.Conv2D))
+            self.unit_test.assertFalse(hasattr(quantized_model.layers[3].layer, 'input_shape'))  # assert it's reused
 
 
 class ReusedSeparableMixedPrecisionTest(ReusedLayerMixedPrecisionTest):

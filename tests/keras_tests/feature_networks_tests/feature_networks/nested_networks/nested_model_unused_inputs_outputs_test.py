@@ -38,7 +38,7 @@ class NestedModelUnusedInputsOutputsTest(BaseKerasFeatureNetworkTest):
     """
 
     def __init__(self, unit_test):
-        super().__init__(unit_test, input_shape=(16,16,3))
+        super().__init__(unit_test, input_shape=(16,16,3), experimental_exporter=True)
 
     def get_tpc(self):
         return get_quantization_disabled_keras_tpc("nested_model_unused_inputs_test")

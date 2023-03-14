@@ -18,8 +18,6 @@ from typing import List
 from functools import partial
 
 import numpy as np
-from model_compression_toolkit import get_keras_gptq_config, keras_post_training_quantization, keras_gradient_post_training_quantization_experimental, \
-    QuantizationConfig, QuantizationErrorMethod, GradientPTQConfig, RoundingType, CoreConfig
 import tensorflow as tf
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss, GPTQMultipleTensorsLoss
 import model_compression_toolkit as mct
