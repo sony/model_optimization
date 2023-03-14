@@ -103,8 +103,14 @@ class GPTQTrainer(ABC):
                     w2train_res.extend(trainable_quantization_parameters)
                 if self.gptq_config.optimizer_rest is None:
                     Logger.error(  # pragma: no cover
-                        "To enable bias micro training an additional optimizer is required, please define the optimizer_rest")
-            optimizer_with_param.append((self.gptq_config.optimizer_rest, w2train_res))
+                        "To enable quantization parameters micro training an additional optimizer is required, please define the optimizer_rest")
+            if len(w2train_res) > 0:
+                # Either bias or quantization parameters are trainable but did not provide a specific optimizer,
+                # so we should use optimizer_rest to train them
+                if self.gptq_config.optimizer_rest is None:
+                    Logger.error(  # pragma: no cover
+                        "To enable bias or quantization parameters micro training an additional optimizer is required, please define the optimizer_rest")
+                optimizer_with_param.append((self.gptq_config.optimizer_rest, w2train_res))
 
         return optimizer_with_param
 
