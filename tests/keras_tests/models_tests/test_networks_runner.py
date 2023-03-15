@@ -88,7 +88,7 @@ class NetworkTest:
             try:
                 # New inferable model, thus 'classic' tflite conversion will not work. We use exporter instead
                 _, tflite_file_path = tempfile.mkstemp('.tflite')
-                mct.tflite_export_model(quantized_model, tflite_file_path, mct.TFLiteExportMode.FAKELY_QUANT)
+                mct.exporter.tflite_export_model(quantized_model, tflite_file_path, mct.exporter.TFLiteExportMode.FAKELY_QUANT)
                 os.remove(tflite_file_path)
             except Exception as e:
                 error_msg = e.message if hasattr(e, 'message') else str(e)
