@@ -15,15 +15,12 @@
 from typing import Dict, Any
 
 from model_compression_toolkit.core.common import BaseNode, Logger
-from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MIN, RANGE_MAX, SIGNED
+from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MIN, RANGE_MAX, SIGNED, CLUSTER_CENTERS, SCALE_PER_CHANNEL
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_quantizers import \
-    get_inferable_quantizer_class
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.base_keras_inferable_quantizer \
-    import \
-    BaseKerasInferableQuantizer
-
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_quantizers import get_inferable_quantizer_class
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.base_keras_inferable_quantizer import BaseKerasInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import constants as qi_keras_consts
 
 def get_inferable_quantizer_kwargs(node: BaseNode,
                                    quantization_target: QuantizationTarget) -> Dict[str, Any]:
@@ -44,19 +41,29 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
         # Return the appropriate quantization parameters based on the quantization method
         if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                    QuantizationMethod.SYMMETRIC]:
-            return {'num_bits': node_w_qc.weights_n_bits,
-                    'threshold': list(node_w_qc.weights_quantization_params[THRESHOLD].flatten()),
-                    'per_channel': node_w_qc.weights_per_channel_threshold,
-                    'channel_axis': node_w_qc.weights_channels_axis,
-                    'input_rank': len(node_w_qc.weights_quantization_params[THRESHOLD].shape)}
+            return {qi_keras_consts.NUM_BITS: node_w_qc.weights_n_bits,
+                    qi_keras_consts.THRESHOLD: list(node_w_qc.weights_quantization_params[THRESHOLD].flatten()),
+                    qi_keras_consts.PER_CHANNEL: node_w_qc.weights_per_channel_threshold,
+                    qi_keras_consts.CHANNEL_AXIS: node_w_qc.weights_channels_axis,
+                    qi_keras_consts.INPUT_RANK: len(node_w_qc.weights_quantization_params[THRESHOLD].shape)}
 
         elif quantization_method in [QuantizationMethod.UNIFORM]:
-            return {'num_bits': node_w_qc.weights_n_bits,
-                    'per_channel': node_w_qc.weights_per_channel_threshold,
-                    'min_range': list(node_w_qc.weights_quantization_params[RANGE_MIN].flatten()),
-                    'max_range': list(node_w_qc.weights_quantization_params[RANGE_MAX].flatten()),
-                    'channel_axis': node_w_qc.weights_channels_axis,
-                    'input_rank': len(node_w_qc.weights_quantization_params[RANGE_MIN].shape)}
+            return {qi_keras_consts.NUM_BITS: node_w_qc.weights_n_bits,
+                    qi_keras_consts.PER_CHANNEL: node_w_qc.weights_per_channel_threshold,
+                    qi_keras_consts.MIN_RANGE: list(node_w_qc.weights_quantization_params[RANGE_MIN].flatten()),
+                    qi_keras_consts.MAX_RANGE: list(node_w_qc.weights_quantization_params[RANGE_MAX].flatten()),
+                    qi_keras_consts.CHANNEL_AXIS: node_w_qc.weights_channels_axis,
+                    qi_keras_consts.INPUT_RANK: len(node_w_qc.weights_quantization_params[RANGE_MIN].shape)}
+
+        elif quantization_method in [QuantizationMethod.LUT_SYM_QUANTIZER, QuantizationMethod.LUT_POT_QUANTIZER]:
+            return {qi_keras_consts.NUM_BITS: node_w_qc.weights_n_bits,
+                    qi_keras_consts.PER_CHANNEL: node_w_qc.weights_per_channel_threshold,
+                    qi_keras_consts.CLUSTER_CENTERS: node_w_qc.weights_quantization_params[CLUSTER_CENTERS],
+                    qi_keras_consts.THRESHOLD: list(node_w_qc.weights_quantization_params[SCALE_PER_CHANNEL].flatten()),
+                    qi_keras_consts.CHANNEL_AXIS: node_w_qc.weights_channels_axis,
+                    # TODO: how to pass multiplier nbits and eps for a specific node?
+                    qi_keras_consts.INPUT_RANK: len(node_w_qc.weights_quantization_params[SCALE_PER_CHANNEL].shape)}
+
         else:
             Logger.critical(f'Not supported quantization method for inferable quantizers.')  # pragma: no cover
 
@@ -68,16 +75,24 @@ def get_inferable_quantizer_kwargs(node: BaseNode,
         # Return the appropriate quantization parameters based on the quantization method
         if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                    QuantizationMethod.SYMMETRIC]:
-            return {'num_bits': node_qc.activation_n_bits,
+            return {qi_keras_consts.NUM_BITS: node_qc.activation_n_bits,
                     # In activation quantization is per-tensor only - thus we hold the threshold as a list with a len of 1
-                    'threshold': [node_qc.activation_quantization_params[THRESHOLD]],
-                    'signed': node_qc.activation_quantization_params[SIGNED]}
+                    qi_keras_consts.THRESHOLD: [node_qc.activation_quantization_params[THRESHOLD]],
+                    qi_keras_consts.SIGNED: node_qc.activation_quantization_params[SIGNED]}
 
         elif quantization_method in [QuantizationMethod.UNIFORM]:
-            return {'num_bits': node_qc.activation_n_bits,
+            return {qi_keras_consts.NUM_BITS: node_qc.activation_n_bits,
                     # In activation quantization is per-tensor only - thus we hold the min/max as a list with a len of 1
-                    'min_range': [node_qc.activation_quantization_params[RANGE_MIN]],
-                    'max_range': [node_qc.activation_quantization_params[RANGE_MAX]]}
+                    qi_keras_consts.MIN_RANGE: [node_qc.activation_quantization_params[RANGE_MIN]],
+                    qi_keras_consts.MAX_RANGE: [node_qc.activation_quantization_params[RANGE_MAX]]}
+
+        elif quantization_method in [QuantizationMethod.LUT_POT_QUANTIZER]:
+            return {qi_keras_consts.NUM_BITS: node_qc.activation_n_bits,
+                    qi_keras_consts.SIGNED: node_qc.activation_quantization_params[SIGNED],
+                    qi_keras_consts.CLUSTER_CENTERS: node_qc.activation_quantization_params[CLUSTER_CENTERS],
+                    qi_keras_consts.THRESHOLD: [node_qc.activation_quantization_params[THRESHOLD]]
+                    # TODO: how to pass multiplier nbits and eps for a specific node?
+                    }
         else:
             Logger.critical(f'Not supported quantization method for inferable quantizers.')  # pragma: no cover
     else:
