@@ -49,6 +49,7 @@ from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructur
 from model_compression_toolkit import exporter
 
 from model_compression_toolkit import gptq
+from model_compression_toolkit.gptq import GradientPTQConfig
 
 
 __version__ = "1.8.0"
