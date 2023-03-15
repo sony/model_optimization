@@ -22,6 +22,18 @@ from model_compression_toolkit.gptq.pytorch.quantizer.soft_rounding.soft_quantiz
 
 
 def get_regularization(gptq_config: GradientPTQConfig, representative_data_gen: Callable) -> Callable:
+    """
+    Returns a function that computes the regularization term for GPTQ training based on the given
+    rounding type in the GPTQ configuration.
+
+    Args:
+        gptq_config: A GPTQ configuration.
+        representative_data_gen: Dataset used for the GPTQ training.
+
+    Returns: A function for computing the regularization. If there is no regularization function defined for the given
+        rounding type, then it returns a function that just returns 0.
+
+    """
     if gptq_config.rounding_type == RoundingType.SoftQuantizer:
         # dry run on the representative dataset to count number of batches
         num_batches = 0
