@@ -166,7 +166,6 @@ class FeatureNetworkTest(unittest.TestCase):
         LUTWeightsQuantizerTest(self, is_symmetric=True).run_test()
         LUTActivationQuantizerTest(self).run_test()
 
-
     def test_kmeans_quantizer(self):
         # This test checks that the Kmeans quantization has a different result than symmetric uniform quantization
         KmeansQuantizerTest(self, QuantizationMethod.KMEANS).run_test()

@@ -16,7 +16,8 @@
 from typing import Dict, Any
 
 from model_compression_toolkit.core.common import BaseNode, Logger
-from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
+from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX, \
+    SCALE_PER_CHANNEL, CLUSTER_CENTERS
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_quantizers import \
@@ -45,6 +46,15 @@ def get_weights_inferable_quantizer_kwargs(node: BaseNode) -> Dict[str, Any]:
                 qi_inferable_quantizers_constants.MIN_RANGE: node_w_qc.weights_quantization_params[RANGE_MIN].flatten(),
                 qi_inferable_quantizers_constants.MAX_RANGE: node_w_qc.weights_quantization_params[RANGE_MAX].flatten(),
                 qi_inferable_quantizers_constants.CHANNEL_AXIS: node_w_qc.weights_channels_axis}
+
+    elif quantization_method in [QuantizationMethod.LUT_POT_QUANTIZER, QuantizationMethod.LUT_SYM_QUANTIZER]:
+        return {qi_inferable_quantizers_constants.NUM_BITS: node_w_qc.weights_n_bits,
+                qi_inferable_quantizers_constants.CLUSTER_CENTERS: node_w_qc.weights_quantization_params[CLUSTER_CENTERS].flatten(),
+                qi_inferable_quantizers_constants.THRESHOLD: node_w_qc.weights_quantization_params[SCALE_PER_CHANNEL].flatten(),
+                qi_inferable_quantizers_constants.PER_CHANNEL: node_w_qc.weights_per_channel_threshold,
+                qi_inferable_quantizers_constants.CHANNEL_AXIS: node_w_qc.weights_channels_axis}
+                # TODO: Add MULTIPLIER_N_BITS & EPS to node quantization config
+
     else:
         Logger.critical(f'Not supported quantization method for weights inferable quantizers.')  # pragma: no cover
 
@@ -111,10 +121,10 @@ def get_activations_quantizer_for_node(node: BaseNode) -> BasePyTorchInferableQu
     node_act_qc = node.final_activation_quantization_cfg
     activation_quantization_method = node_act_qc.activation_quantization_method
 
-    quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Activation,
-                                                      activation_quantization_method,
-                                                      BasePyTorchInferableQuantizer)
+    quantizer_for_node = get_inferable_quantizer_class(QuantizationTarget.Activation,
+                                                       activation_quantization_method,
+                                                       BasePyTorchInferableQuantizer)
     kwargs = get_activation_inferable_quantizer_kwargs(node)
 
-    return quantier_for_node(**kwargs)
+    return quantizer_for_node(**kwargs)
 

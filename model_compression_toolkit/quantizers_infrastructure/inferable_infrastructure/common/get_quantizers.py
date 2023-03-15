@@ -41,7 +41,7 @@ def get_inferable_quantizer_class(quant_target: QuantizationTarget,
     qat_quantizer_classes = get_all_subclasses(quantizer_base_class)
     filtered_quantizers = list(filter(lambda q_class: getattr(q_class, QUANTIZATION_TARGET) == quant_target and
                                                       getattr(q_class, QUANTIZATION_METHOD) is not None and
-                                                       quant_method in getattr(q_class, QUANTIZATION_METHOD),
+                                                      quant_method in getattr(q_class, QUANTIZATION_METHOD),
                                       qat_quantizer_classes))
 
     if len(filtered_quantizers) != 1:
