@@ -84,7 +84,7 @@ class TestGetGPTQConfig(unittest.TestCase):
                               train_bias=True,
                               loss=multiple_tensors_mse_loss,
                               rounding_type=RoundingType.SoftQuantizer,
-                              entropy_reg=15),
+                              regularization_factor=15),
             GradientPTQConfig(1,
                               optimizer=tf.keras.optimizers.Adam(),
                               optimizer_rest=tf.keras.optimizers.Adam(),
