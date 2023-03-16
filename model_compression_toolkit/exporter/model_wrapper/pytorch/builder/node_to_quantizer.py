@@ -75,6 +75,15 @@ def get_activation_inferable_quantizer_kwargs(node: BaseNode) -> Dict[str, Any]:
         return {qi_inferable_quantizers_constants.NUM_BITS: node_qc.activation_n_bits,
                 qi_inferable_quantizers_constants.MIN_RANGE: np.asarray([node_qc.activation_quantization_params[RANGE_MIN]]),
                 qi_inferable_quantizers_constants.MAX_RANGE: np.asarray([node_qc.activation_quantization_params[RANGE_MAX]])}
+
+    elif quantization_method in [QuantizationMethod.LUT_POT_QUANTIZER]:
+        return {qi_inferable_quantizers_constants.NUM_BITS: node_qc.activation_n_bits,
+                qi_inferable_quantizers_constants.CLUSTER_CENTERS: np.asarray(
+                    [node_qc.activation_quantization_params[CLUSTER_CENTERS]]),
+                qi_inferable_quantizers_constants.THRESHOLD: np.asarray(
+                    [node_qc.activation_quantization_params[THRESHOLD]]),
+                qi_inferable_quantizers_constants.SIGNED: node_qc.activation_quantization_params.get(SIGNED)}
+        # TODO: Add MULTIPLIER_N_BITS & EPS to node quantization config
     else:
         Logger.critical(f'Not supported quantization method for inferable quantizers.')  # pragma: no cover
 
