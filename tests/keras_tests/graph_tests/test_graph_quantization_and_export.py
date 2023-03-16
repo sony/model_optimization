@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
+import os
+import tempfile
 import unittest
 import numpy as np
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
@@ -31,8 +31,9 @@ class TestTFLiteExport(unittest.TestCase):
 
         quantized_model, _ = mct.keras_post_training_quantization_experimental(model, rep_data, new_experimental_exporter=True)
 
-        converter = tf.lite.TFLiteConverter.from_keras_model(quantized_model)
-        quantized_tflite_model = converter.convert()
+        _, tflite_file_path = tempfile.mkstemp('.tflite')
+        mct.exporter.tflite_export_model(quantized_model, tflite_file_path, mct.exporter.TFLiteExportMode.FAKELY_QUANT)
+        os.remove(tflite_file_path)
 
 
 if __name__ == '__main__':
