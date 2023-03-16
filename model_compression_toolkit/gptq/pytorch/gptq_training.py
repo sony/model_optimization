@@ -63,7 +63,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
             fw_info: Framework information
             representative_data_gen: Dataset to use for inputs of the models.
         """
-        super().__init__(graph_float, graph_quant, gptq_config, fw_impl, fw_info, representative_data_gen)
+        super().__init__(graph_float, graph_quant, gptq_config, fw_impl, fw_info)
         self.loss_list = []
         self.input_scale = 1
         if self.float_user_info.input_scale != self.gptq_user_info.input_scale:
@@ -186,7 +186,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                            self.compare_points_std,
                                            self.weights_for_average_loss)
 
-        reg_value = self.reg_func(self.fxp_model, self.gptq_config.entropy_reg)
+        reg_value = self.reg_func(self.fxp_model, self.gptq_config.regularization_factor)
 
         loss_value += reg_value
 

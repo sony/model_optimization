@@ -16,8 +16,7 @@ from enum import Enum
 from typing import Callable, Any, Dict
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core import common
-from model_compression_toolkit.gptq.common.gptq_constants import N_BATCHES_STR, QUANT_PARAM_LEARNING_STR, N_EPOCHS_STR, \
-    MAX_LSB_STR, REG_DEFAULT
+from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR, REG_DEFAULT
 
 
 class RoundingType(Enum):
@@ -53,7 +52,7 @@ class GradientPTQConfig:
                  optimizer_bias: Any = None,
                  log_norm: bool = True,
                  weights_n_iter: int = 50,
-                 entropy_reg: float = REG_DEFAULT):
+                 regularization_factor: float = REG_DEFAULT):
         """
         Initialize a GradientPTQConfig.
 
@@ -77,7 +76,7 @@ class GradientPTQConfig:
             optimizer_bias (Any): Optimizer to override the rest optimizer for bias.
             log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
             weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
-            entropy_reg (float): A floating point number that defines the gumbel regularization factor.
+            regularization_factor (float): A floating point number that defines the regularization factor.
 
         """
         self.n_iter = n_iter
@@ -101,7 +100,7 @@ class GradientPTQConfig:
         self.optimizer_bias = optimizer_bias
         self.log_norm = log_norm
         self.weights_n_iter = weights_n_iter
-        self.entropy_reg = entropy_reg
+        self.regularization_factor = regularization_factor
 
 
 class GradientPTQConfigV2(GradientPTQConfig):
@@ -126,7 +125,7 @@ class GradientPTQConfigV2(GradientPTQConfig):
                  optimizer_bias: Any = None,
                  log_norm: bool = True,
                  weights_n_iter: int = 50,
-                 entropy_reg: float = REG_DEFAULT):
+                 regularization_factor: float = REG_DEFAULT):
         """
         Initialize a GradientPTQConfigV2.
 
@@ -150,7 +149,7 @@ class GradientPTQConfigV2(GradientPTQConfig):
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
             log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
             weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
-            entropy_reg (float): A floating point number that defines the gumbel regularization factor.
+            regularization_factor (float): A floating point number that defines the regularization factor.
 
         """
 
@@ -171,7 +170,7 @@ class GradientPTQConfigV2(GradientPTQConfig):
                          optimizer_bias=optimizer_bias,
                          log_norm=log_norm,
                          weights_n_iter=weights_n_iter,
-                         entropy_reg=entropy_reg)
+                         regularization_factor=regularization_factor)
         self.n_epochs = n_epochs
 
     @classmethod

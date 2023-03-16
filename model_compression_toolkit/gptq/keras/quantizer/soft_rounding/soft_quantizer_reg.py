@@ -65,20 +65,20 @@ class LinearTempDecay:
                (self.end_b + (self.start_b - self.end_b) * tf.math.maximum(0.0, (1 - rel_t)))
 
 
-def soft_quantizer_regularization(model: Model, entropy_reg: float, n_batches: int, n_epochs: int) -> float:
+def soft_quantizer_regularization(model: Model, entropy_reg: float, total_gradient_steps: int) -> float:
     """
     Returns the soft quantizer regularization value for SoftRounding.
 
     Args:
         model: A model to be quantized with SoftRounding.
         entropy_reg: Entropy value to scale the quantizer regularization.
+        total_gradient_steps: The number of gradient steps during optimization.
 
     Returns: Regularization value.
     """
 
     # Initializing the temperature decay according to the number of expected gradient steps
-    init_decay = MAX_ITERATIONS_DEFAULT if n_batches is None else n_epochs * n_batches
-    linear_decay = LinearTempDecay(init_decay)
+    linear_decay = LinearTempDecay(total_gradient_steps)
 
     soft_reg_aux: List[tf.Tensor] = []
     for layer in model.layers:

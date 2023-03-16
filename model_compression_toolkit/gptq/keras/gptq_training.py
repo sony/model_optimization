@@ -77,8 +77,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                          graph_quant,
                          gptq_config,
                          fw_impl,
-                         fw_info,
-                         representative_data_gen)
+                         fw_info)
 
         self.loss_list = []
         self.input_scale = 1
@@ -195,7 +194,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                                                self.compare_points_std,
                                                self.weights_for_average_loss)
 
-            reg_value = self.reg_func(self.fxp_model, self.gptq_config.entropy_reg)
+            reg_value = self.reg_func(self.fxp_model, self.gptq_config.regularization_factor)
 
             loss_value += reg_value
 

@@ -34,8 +34,7 @@ class GPTQTrainer(ABC):
                  graph_quant: Graph,
                  gptq_config: GradientPTQConfig,
                  fw_impl: FrameworkImplementation,
-                 fw_info: FrameworkInfo,
-                 representative_data_gen: Callable):
+                 fw_info: FrameworkInfo):
         """
         Build two models from a graph: A teacher network (float model) and a student network (quantized model).
         Use the dataset generator to pass images through the teacher and student networks to get intermediate
@@ -48,7 +47,6 @@ class GPTQTrainer(ABC):
             gptq_config: GradientPTQConfig with parameters about the tuning process.
             fw_impl: Framework implementation
             fw_info: Framework information
-            representative_data_gen: Dataset to use for inputs of the models.
         """
         self.graph_float = copy.deepcopy(graph_float)
         self.graph_quant = copy.deepcopy(graph_quant)
