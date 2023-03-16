@@ -18,11 +18,9 @@ import tensorflow as tf
 from keras import Model
 
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.gptq.common.gptq_constants import AUXVAR, SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, \
-    MAX_ITERATIONS_DEFAULT, GPTQ_ITER
+from model_compression_toolkit.gptq.common.gptq_constants import GPTQ_ITER
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
-from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 
 
 class LinearTempDecay:
