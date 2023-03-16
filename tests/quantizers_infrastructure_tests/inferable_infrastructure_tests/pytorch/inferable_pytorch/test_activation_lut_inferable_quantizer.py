@@ -17,7 +17,7 @@ import warnings
 import numpy as np
 import torch
 
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.activation_lut_pot_inferable_quantizer import \
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers.activation_inferable_quantizers.activation_lut_pot_inferable_quantizer import \
     ActivationLutPOTInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizer_utils import \
     get_working_device
