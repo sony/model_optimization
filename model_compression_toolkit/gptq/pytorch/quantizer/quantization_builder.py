@@ -14,7 +14,7 @@
 # ==============================================================================
 from typing import List, Dict, Tuple
 
-from model_compression_toolkit import GradientPTQConfigV2
+from model_compression_toolkit.gptq import GradientPTQConfigV2
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizer import \

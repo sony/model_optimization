@@ -16,7 +16,7 @@
 import tensorflow as tf
 import numpy as np
 
-from model_compression_toolkit import RoundingType
+from model_compression_toolkit.gptq import RoundingType
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common import max_power_of_two
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod

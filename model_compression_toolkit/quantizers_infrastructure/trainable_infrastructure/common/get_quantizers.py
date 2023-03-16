@@ -14,7 +14,8 @@
 # ==============================================================================
 from typing import Union
 
-from model_compression_toolkit import TrainingMethod, RoundingType
+from model_compression_toolkit.gptq import RoundingType
+from model_compression_toolkit import TrainingMethod
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget

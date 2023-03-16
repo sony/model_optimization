@@ -19,7 +19,7 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GradientPTQConfigV2
+from model_compression_toolkit.gptq import GradientPTQConfig, GradientPTQConfigV2
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.network_editors.actions import EditRule

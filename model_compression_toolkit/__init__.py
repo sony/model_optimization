@@ -14,8 +14,7 @@
 # ==============================================================================
 
 from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType, GradientPTQConfigV2
-from model_compression_toolkit.gptq.common.gptq_quantizer_config import GPTQQuantizerConfig, SoftQuantizerConfig
+
 from model_compression_toolkit.core.common.quantization import quantization_config
 from model_compression_toolkit.core.common.mixed_precision import mixed_precision_quantization_config
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, \
@@ -36,25 +35,21 @@ from model_compression_toolkit.core.common import network_editors as network_edi
 from model_compression_toolkit.core.keras.quantization_facade import keras_post_training_quantization, \
     keras_post_training_quantization_mixed_precision
 from model_compression_toolkit.ptq.keras.quantization_facade import keras_post_training_quantization_experimental
-from model_compression_toolkit.gptq.keras.quantization_facade import \
-    keras_gradient_post_training_quantization_experimental
-from model_compression_toolkit.gptq.keras.quantization_facade import get_keras_gptq_config
-from model_compression_toolkit.qat.keras.quantization_facade import keras_quantization_aware_training_init, \
-    keras_quantization_aware_training_finalize
-from model_compression_toolkit.qat.pytorch.quantization_facade import pytorch_quantization_aware_training_init, \
-    pytorch_quantization_aware_training_finalize
-from model_compression_toolkit.core.pytorch.quantization_facade import pytorch_post_training_quantization, \
-    pytorch_post_training_quantization_mixed_precision
+from model_compression_toolkit.qat.keras.quantization_facade import keras_quantization_aware_training_init, keras_quantization_aware_training_finalize
+from model_compression_toolkit.qat.pytorch.quantization_facade import pytorch_quantization_aware_training_init, pytorch_quantization_aware_training_finalize
+from model_compression_toolkit.core.pytorch.quantization_facade import pytorch_post_training_quantization, pytorch_post_training_quantization_mixed_precision
 from model_compression_toolkit.ptq.pytorch.quantization_facade import pytorch_post_training_quantization_experimental
-from model_compression_toolkit.gptq.pytorch.quantization_facade import \
-    pytorch_gradient_post_training_quantization_experimental
-from model_compression_toolkit.gptq.pytorch.quantization_facade import get_pytorch_gptq_config
 
 from model_compression_toolkit.core.keras.kpi_data_facade import keras_kpi_data, keras_kpi_data_experimental
 from model_compression_toolkit.core.pytorch.kpi_data_facade import pytorch_kpi_data, pytorch_kpi_data_experimental
 
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.load_model import keras_load_quantized_model
 
+
 from model_compression_toolkit import exporter
+
+from model_compression_toolkit import gptq
+from model_compression_toolkit.gptq import GradientPTQConfig
+
 
 __version__ = "1.8.0"
