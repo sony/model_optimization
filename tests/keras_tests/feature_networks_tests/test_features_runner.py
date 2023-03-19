@@ -20,7 +20,8 @@ import tensorflow as tf
 from tensorflow.keras.layers import PReLU, ELU
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import QuantizationErrorMethod, RoundingType
+from model_compression_toolkit import RoundingType
+from model_compression_toolkit import QuantizationErrorMethod
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
     ActivationDecompositionTest
@@ -165,7 +166,6 @@ class FeatureNetworkTest(unittest.TestCase):
         LUTWeightsQuantizerTest(self).run_test()
         LUTWeightsQuantizerTest(self, is_symmetric=True).run_test()
         LUTActivationQuantizerTest(self).run_test()
-
 
     def test_kmeans_quantizer(self):
         # This test checks that the Kmeans quantization has a different result than symmetric uniform quantization

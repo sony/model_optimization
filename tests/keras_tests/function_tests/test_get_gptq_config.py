@@ -16,9 +16,9 @@ import unittest
 from typing import List
 
 import numpy as np
-from model_compression_toolkit import get_keras_gptq_config, \
-    keras_gradient_post_training_quantization_experimental, \
-    QuantizationConfig, QuantizationErrorMethod, GradientPTQConfig, RoundingType, CoreConfig
+
+from model_compression_toolkit.gptq import get_keras_gptq_config, keras_gradient_post_training_quantization_experimental, GradientPTQConfig, RoundingType
+from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod, CoreConfig
 import tensorflow as tf
 
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod

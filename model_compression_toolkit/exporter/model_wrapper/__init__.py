@@ -13,12 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.core.common.constants import FOUND_TF, FOUND_TORCH
+from model_compression_toolkit.exporter.model_wrapper.keras.validate_layer import is_keras_layer_exportable
+from model_compression_toolkit.exporter.model_wrapper.keras.builder.fully_quantized_model_builder import get_exportable_keras_model
 
-if FOUND_TF:
-    from model_compression_toolkit.exporter.model_wrapper.keras.validate_layer import is_keras_layer_exportable
-    from model_compression_toolkit.exporter.model_wrapper.keras.builder.fully_quantized_model_builder import get_exportable_keras_model
-
-if FOUND_TORCH:
-    from model_compression_toolkit.exporter.model_wrapper.pytorch.validate_layer import is_pytorch_layer_exportable
-    from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_exportable_pytorch_model
+from model_compression_toolkit.exporter.model_wrapper.pytorch.validate_layer import is_pytorch_layer_exportable
+from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_exportable_pytorch_model

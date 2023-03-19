@@ -88,7 +88,7 @@ class NetworkTest:
             try:
                 # New inferable model, thus 'classic' tflite conversion will not work. We use exporter instead
                 _, tflite_file_path = tempfile.mkstemp('.tflite')
-                mct.tflite_export_model(quantized_model, tflite_file_path, mct.TFLiteExportMode.FAKELY_QUANT)
+                mct.exporter.tflite_export_model(quantized_model, tflite_file_path, mct.exporter.TFLiteExportMode.FAKELY_QUANT)
                 os.remove(tflite_file_path)
             except Exception as e:
                 error_msg = e.message if hasattr(e, 'message') else str(e)
@@ -101,15 +101,15 @@ class NetworkTest:
 
         core_config = mct.CoreConfig(quantization_config=qc)
         if self.gptq:
-            arc = mct.GradientPTQConfig(n_iter=2,
+            arc = mct.gptq.GradientPTQConfig(n_iter=2,
                                         optimizer=tf.keras.optimizers.Adam(
                                             learning_rate=0.0001),
                                         optimizer_rest=tf.keras.optimizers.Adam(
                                             learning_rate=0.0001),
                                                                                       loss=multiple_tensors_mse_loss)
-            arc2 = mct.GradientPTQConfigV2.from_v1(self.num_calibration_iter, arc)
+            arc2 = mct.gptq.GradientPTQConfigV2.from_v1(self.num_calibration_iter, arc)
 
-            ptq_model, quantization_info = mct.keras_gradient_post_training_quantization_experimental(self.model_float,
+            ptq_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization_experimental(self.model_float,
                                                                                                       representative_data_gen,
                                                                                                       core_config=core_config,
                                                                                                       fw_info=DEFAULT_KERAS_INFO,

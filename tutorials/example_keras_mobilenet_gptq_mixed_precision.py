@@ -132,9 +132,9 @@ if __name__ == '__main__':
     kpi = mct.KPI(kpi_data.weights_memory * args.weights_compression_ratio)
 
     # Create a GPTQ quantization configuration and set the number of training iterations.
-    gptq_config = mct.get_keras_gptq_config(n_epochs=args.num_gptq_training_iterations)
+    gptq_config = mct.gptq.get_keras_gptq_config(n_epochs=args.num_gptq_training_iterations)
 
-    quantized_model, quantization_info = mct.keras_gradient_post_training_quantization_experimental(model,
+    quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization_experimental(model,
                                                                                                     representative_data_gen,
                                                                                                     gptq_config=gptq_config,
                                                                                                     core_config=config,

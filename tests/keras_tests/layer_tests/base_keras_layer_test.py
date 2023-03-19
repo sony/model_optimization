@@ -26,8 +26,8 @@ else:
         UpSampling2D, InputLayer, Concatenate, Softmax, PReLU, Flatten, Cropping2D, Dot, ELU, LeakyReLU, Permute, \
         LayerNormalization
 
-from model_compression_toolkit import FrameworkInfo, keras_post_training_quantization_experimental, \
-    keras_gradient_post_training_quantization_experimental
+from model_compression_toolkit import FrameworkInfo, keras_post_training_quantization_experimental
+from model_compression_toolkit.gptq import keras_gradient_post_training_quantization_experimental
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import is_layer_fake_quant
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO

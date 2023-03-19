@@ -21,7 +21,8 @@ from model_compression_toolkit.quantizers_infrastructure import QuantizationTarg
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers import \
     BasePyTorchInferableQuantizer, WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, \
     WeightsUniformInferableQuantizer, ActivationPOTInferableQuantizer, ActivationSymmetricInferableQuantizer, \
-    ActivationUniformInferableQuantizer
+    ActivationUniformInferableQuantizer, WeightsLUTPOTInferableQuantizer, WeightsLUTSymmetricInferableQuantizer, \
+    ActivationLutPOTInferableQuantizer
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.pytorch.inferable_pytorch.test_activation_lut_inferable_quantizer import \
     TestPytorchActivationPOTLUTQuantizerAssertions, TestPytorchActivationPOTLUTQuantizer
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.pytorch.inferable_pytorch.test_activations_inferable_quantizer import \
@@ -85,6 +86,14 @@ class PytorchInferableInfrastructureTestRunner(unittest.TestCase):
                                   quant_method=QuantizationMethod.UNIFORM,
                                   quantizer_base_class=BasePyTorchInferableQuantizer,
                                   expected_quantizer_class=WeightsUniformInferableQuantizer).run_test()
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.LUT_SYM_QUANTIZER,
+                                  quantizer_base_class=BasePyTorchInferableQuantizer,
+                                  expected_quantizer_class=WeightsLUTSymmetricInferableQuantizer).run_test()
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.LUT_POT_QUANTIZER,
+                                  quantizer_base_class=BasePyTorchInferableQuantizer,
+                                  expected_quantizer_class=WeightsLUTPOTInferableQuantizer).run_test()
         TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.POWER_OF_TWO,
                                   quantizer_base_class=BasePyTorchInferableQuantizer,
@@ -97,6 +106,10 @@ class PytorchInferableInfrastructureTestRunner(unittest.TestCase):
                                   quant_method=QuantizationMethod.UNIFORM,
                                   quantizer_base_class=BasePyTorchInferableQuantizer,
                                   expected_quantizer_class=ActivationUniformInferableQuantizer).run_test()
+        TestGetInferableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.LUT_POT_QUANTIZER,
+                                  quantizer_base_class=BasePyTorchInferableQuantizer,
+                                  expected_quantizer_class=ActivationLutPOTInferableQuantizer).run_test()
 
 
 if __name__ == '__main__':

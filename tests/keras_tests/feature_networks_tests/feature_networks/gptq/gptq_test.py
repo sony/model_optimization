@@ -114,7 +114,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
             target_platform_capabilities=tpc,
             new_experimental_exporter=self.experimental_exporter
         )
-        ptq_gptq_model, quantization_info = mct.keras_gradient_post_training_quantization_experimental(
+        ptq_gptq_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization_experimental(
             model_float,
             representative_data_gen,
             gptq_config=GradientPTQConfigV2.from_v1(self.num_calibration_iter, self.get_gptq_config()),

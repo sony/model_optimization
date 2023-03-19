@@ -22,7 +22,12 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
+from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import LUTFakeQuant
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
+    ActivationLutPOTInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.constants import \
+    THRESHOLD, CLUSTER_CENTERS
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
@@ -49,7 +54,7 @@ class LUTWeightsQuantizerTest(BaseKerasFeatureNetworkTest):
         self.kernel = 3
         self.conv_w = get_uniform_weights(self.kernel, self.num_conv_channels, self.num_conv_channels)
         self.is_symmetric = is_symmetric
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32, experimental_exporter=False)
+        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32, experimental_exporter=True)
 
     def get_tpc(self):
         qmethod = tp.QuantizationMethod.LUT_SYM_QUANTIZER if self.is_symmetric else tp.QuantizationMethod.LUT_POT_QUANTIZER
@@ -90,7 +95,7 @@ class LUTWeightsQuantizerTest(BaseKerasFeatureNetworkTest):
         # check that the two conv's weights have different values since they where quantized
         # using different methods (but started as the same value)
         self.unit_test.assertTrue(np.sum(
-            np.abs(quantized_model.layers[2].weights[0].numpy()) - quantized_model.layers[4].weights[0].numpy()) > 0)
+            np.abs(quantized_model.layers[2].get_quantized_weights()[KERNEL]) - quantized_model.layers[3].get_quantized_weights()[KERNEL]) > 0)
 
 
 class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
@@ -102,7 +107,7 @@ class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
         self.activation_n_bits = activation_n_bits
         self.num_conv_channels = 4
         self.kernel = 3
-        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32, experimental_exporter=False)
+        super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32, experimental_exporter=True)
 
     def get_tpc(self):
         qco = tp.QuantizationConfigOptions(
@@ -136,16 +141,17 @@ class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         all_expected_lut_layers = np.array(quantized_model.layers)[
-            [i for i in range(1, len(quantized_model.layers), 2)]]
+            [i for i in range(2, len(quantized_model.layers))]]
 
         for ll in all_expected_lut_layers:
+            assert len(ll.activation_quantizers)==1
             # Check that lut quantizer layer is added where expected (after each layer, for quantizing activation)
-            self.unit_test.assertTrue(isinstance(ll, LUTFakeQuant))
+            self.unit_test.assertTrue(isinstance(ll.activation_quantizers[0], ActivationLutPOTInferableQuantizer))
             # Check layer's thresholds are power of two
-            self.unit_test.assertTrue(math.log2(ll.threshold).is_integer())
+            self.unit_test.assertTrue(math.log2(ll.activation_quantizers[0].get_config()[THRESHOLD]).is_integer())
             # Check layers number of clusters and clusters values
-            self.unit_test.assertTrue(ll.cluster_centers.shape[0] <= 2 ** self.activation_n_bits)
-            self.unit_test.assertTrue(np.all(np.mod(ll.cluster_centers, 1) == 0))
+            self.unit_test.assertTrue(ll.activation_quantizers[0].get_config()[CLUSTER_CENTERS].shape[0] <= 2 ** self.activation_n_bits)
+            self.unit_test.assertTrue(np.all(np.mod(ll.activation_quantizers[0].get_config()[CLUSTER_CENTERS], 1) == 0))
 
 
 if __name__ == '__main__':

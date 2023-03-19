@@ -24,9 +24,6 @@ from keras.layers import Conv2D, BatchNormalization, ReLU, Dropout, Dense, Activ
 
 import model_compression_toolkit as mct
 from model_compression_toolkit import keras_load_quantized_model
-from model_compression_toolkit.exporter.model_exporter import keras_export_model, KerasExportMode, \
-    tflite_export_model, \
-    TFLiteExportMode
 from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_exportable
 
 _, SAVED_EXPORTABLE_MODEL_PATH_TF = tempfile.mkstemp('.h5')
@@ -83,16 +80,16 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         keras_load_quantized_model(SAVED_EXPORTABLE_MODEL_PATH_TF)
 
     def save_and_load_exported_tf_fakequant_model(self):
-        keras_export_model(model=self.exportable_model,
+        mct.exporter.keras_export_model(model=self.exportable_model,
                            is_layer_exportable_fn=is_keras_layer_exportable,
-                           mode=KerasExportMode.FAKELY_QUANT,
+                           mode=mct.exporter.KerasExportMode.FAKELY_QUANT,
                            save_model_path=SAVED_MODEL_PATH_TF)
         keras_load_quantized_model(SAVED_MODEL_PATH_TF)
 
     def save_and_load_exported_tflite_fakequant_model(self):
-        tflite_export_model(model=self.exportable_model,
+        mct.exporter.tflite_export_model(model=self.exportable_model,
                             is_layer_exportable_fn=is_keras_layer_exportable,
-                            mode=TFLiteExportMode.FAKELY_QUANT,
+                            mode=mct.exporter.TFLiteExportMode.FAKELY_QUANT,
                             save_model_path=SAVED_MODEL_PATH_TFLITE)
         interpreter = tf.lite.Interpreter(model_path=SAVED_MODEL_PATH_TFLITE)
         interpreter.allocate_tensors()

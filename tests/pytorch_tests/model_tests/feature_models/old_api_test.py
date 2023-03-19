@@ -80,7 +80,7 @@ class OldApiTest(BasePytorchTest):
         return OneLayerConv2dNet()
 
     def get_gptq_config(self):
-        return mct.GradientPTQConfig(5, optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-14))
+        return mct.gptq.GradientPTQConfig(5, optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-14))
 
     def generate_inputs(self):
         return to_torch_tensor([torch.randn(*self.input_shape) for in_shape in self.input_shape])

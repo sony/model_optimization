@@ -240,6 +240,18 @@ if FOUND_TORCH:
 
             return outputs
 
+        def get_quantized_weights(self) -> Dict[str, torch.Tensor]:
+            """
+
+            Returns: A dictionary of weights attributes to quantized weights.
+
+            """
+            quantized_weights = {}
+            weights_var = self.get_weights_vars()
+            for name, w, quantizer in weights_var:
+                quantized_weights[name] = quantizer(w)
+            return quantized_weights
+
 else:
     class PytorchQuantizationWrapper(object):
         def __init__(self,

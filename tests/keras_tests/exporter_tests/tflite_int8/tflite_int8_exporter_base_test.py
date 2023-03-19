@@ -26,9 +26,6 @@ import model_compression_toolkit as mct
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
-from model_compression_toolkit.exporter.model_exporter import tflite_export_model, \
-    TFLiteExportMode
-from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_exportable
 import tests.keras_tests.exporter_tests.constants as constants
 
 class TFLiteINT8ExporterBaseTest:
@@ -57,8 +54,8 @@ class TFLiteINT8ExporterBaseTest:
 
         # Export model in INT8 format
         _, self.int8_model_file_path = tempfile.mkstemp('.tflite')
-        tflite_export_model(model=self.exportable_model,
-                            mode=TFLiteExportMode.INT8,
+        mct.exporter.tflite_export_model(model=self.exportable_model,
+                            mode=mct.exporter.TFLiteExportMode.INT8,
                             save_model_path=self.int8_model_file_path)
 
         # Load model

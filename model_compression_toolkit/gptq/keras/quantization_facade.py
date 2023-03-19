@@ -85,11 +85,11 @@ if common.constants.FOUND_TF:
 
             Create a GradientPTQConfigV2 to run for 5 epochs:
 
-            >>> gptq_conf = mct.get_keras_gptq_config(n_epochs=5)
+            >>> gptq_conf = mct.gptq.get_keras_gptq_config(n_epochs=5)
 
             Other Tensorflow optimizers can be passed:
 
-            >>> gptq_conf = mct.get_keras_gptq_config(n_epochs=3, optimizer=tf.keras.optimizers.Nadam())
+            >>> gptq_conf = mct.gptq.get_keras_gptq_config(n_epochs=3, optimizer=tf.keras.optimizers.Nadam())
 
             The configuration can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization` in order to quantize a keras model using gptq.
 
@@ -181,11 +181,11 @@ if common.constants.FOUND_TF:
 
             Create GPTQ config:
 
-            >>> gptq_config = mct.get_keras_gptq_config(n_epochs=1)
+            >>> gptq_config = mct.gptq.get_keras_gptq_config(n_epochs=1)
 
             Pass the model with the representative dataset generator to get a quantized model:
 
-            >>> quantized_model, quantization_info = mct.keras_gradient_post_training_quantization_experimental(model, repr_datagen, gptq_config, target_kpi=kpi, core_config=config)
+            >>> quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization_experimental(model, repr_datagen, gptq_config, target_kpi=kpi, core_config=config)
 
         """
         KerasModelValidation(model=in_model,

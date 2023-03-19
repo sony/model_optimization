@@ -14,7 +14,7 @@
 # ==============================================================================
 from typing import Dict, List, Tuple
 
-from model_compression_toolkit import GradientPTQConfigV2
+from model_compression_toolkit.gptq import GradientPTQConfigV2
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
