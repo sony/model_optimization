@@ -16,15 +16,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from model_compression_toolkit.gptq.common.gptq_quantizer_config import GPTQQuantizerConfig
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GradientPTQConfigV2, RoundingType
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
+
 
 tp = mct.target_platform
 
@@ -47,14 +46,17 @@ class TestModel(nn.Module):
 
 
 class GPTQBaseTest(BasePytorchFeatureNetworkTest):
-    def __init__(self, unit_test, experimental_exporter=False, rounding_type=RoundingType.STE,
-                 quantizer_config=GPTQQuantizerConfig(), per_channel=True):
+    def __init__(self, unit_test, experimental_exporter=False, quant_method=QuantizationMethod.SYMMETRIC,
+                 rounding_type=RoundingType.STE, per_channel=True,
+                 hessian_weights=True, log_norm_weights=True):
         super().__init__(unit_test, input_shape=(3, 16, 16))
         self.seed = 0
         self.experimental_exporter = experimental_exporter
         self.rounding_type = rounding_type
-        self.quantizer_config = quantizer_config
         self.per_channel = per_channel
+        self.quant_method = quant_method
+        self.hessian_weights = hessian_weights
+        self.log_norm_weights = log_norm_weights
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
@@ -100,21 +102,21 @@ class GPTQAccuracyTest(GPTQBaseTest):
         return GradientPTQConfig(5,
                                  optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
                                  loss=multiple_tensors_mse_loss,
-                                 train_bias=False,
-                                 use_jac_based_weights=True,
+                                 train_bias=True,
+                                 use_jac_based_weights=self.hessian_weights,
                                  optimizer_bias=torch.optim.Adam([torch.Tensor([])], lr=0.4),
                                  rounding_type=self.rounding_type,
-                                 quantizer_config=self.quantizer_config)
+                                 log_norm=self.log_norm_weights)
 
     def get_gptq_configv2(self):
         return GradientPTQConfigV2(5,
                                    optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
                                    loss=multiple_tensors_mse_loss,
-                                   train_bias=False,
-                                   use_jac_based_weights=True,
+                                   train_bias=True,
+                                   use_jac_based_weights=self.hessian_weights,
                                    optimizer_bias=torch.optim.Adam([torch.Tensor([])], lr=0.4),
                                    rounding_type=self.rounding_type,
-                                   quantizer_config=self.quantizer_config)
+                                   log_norm=self.log_norm_weights)
 
     def gptq_compare(self, ptq_model, gptq_model, input_x=None):
         ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))
@@ -131,8 +133,7 @@ class GPTQWeightsUpdateTest(GPTQBaseTest):
                                  loss=multiple_tensors_mse_loss,
                                  train_bias=True,
                                  optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=0.5),
-                                 rounding_type=self.rounding_type,
-                                 quantizer_config=self.quantizer_config)
+                                 rounding_type=self.rounding_type)
 
     def get_gptq_configv2(self):
         return GradientPTQConfigV2(50,
@@ -140,8 +141,7 @@ class GPTQWeightsUpdateTest(GPTQBaseTest):
                                    loss=multiple_tensors_mse_loss,
                                    train_bias=True,
                                    optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=0.5),
-                                   rounding_type=self.rounding_type,
-                                   quantizer_config=self.quantizer_config)
+                                   rounding_type=self.rounding_type)
 
     def compare(self, ptq_model, gptq_model, input_x=None, max_change=None):
         ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))
@@ -163,16 +163,14 @@ class GPTQLearnRateZeroTest(GPTQBaseTest):
                                  optimizer=torch.optim.Adam([torch.Tensor([])], lr=0),
                                  loss=multiple_tensors_mse_loss,
                                  train_bias=False,
-                                 rounding_type=self.rounding_type,
-                                 quantizer_config=self.quantizer_config)
+                                 rounding_type=self.rounding_type)
 
     def get_gptq_configv2(self):
         return GradientPTQConfigV2(5,
                                    optimizer=torch.optim.Adam([torch.Tensor([])], lr=0),
                                    loss=multiple_tensors_mse_loss,
                                    train_bias=False,
-                                   rounding_type=self.rounding_type,
-                                   quantizer_config=self.quantizer_config)
+                                   rounding_type=self.rounding_type)
 
     def compare(self, ptq_model, gptq_model, input_x=None, quantization_info=None):
         ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))

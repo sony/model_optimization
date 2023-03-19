@@ -140,10 +140,14 @@ class FunctionTestRunner(unittest.TestCase):
         """
         TestGetGPTQConfig(self).run_test()
         TestGetGPTQConfig(self, quantization_method=QuantizationMethod.POWER_OF_TWO).run_test()
+        TestGetGPTQConfig(self, quantization_method=QuantizationMethod.POWER_OF_TWO).run_test()
         TestGetGPTQConfig(self, rounding_type=RoundingType.SoftQuantizer).run_test()
         TestGetGPTQConfig(self, quantization_method=QuantizationMethod.POWER_OF_TWO,
                           rounding_type=RoundingType.SoftQuantizer).run_test()
-
+        TestGetGPTQConfig(self, quantization_method=QuantizationMethod.POWER_OF_TWO,
+                          rounding_type=RoundingType.SoftQuantizer, train_bias=True).run_test()
+        TestGetGPTQConfig(self, quantization_method=QuantizationMethod.POWER_OF_TWO,
+                          rounding_type=RoundingType.SoftQuantizer, quantization_parameters_learning=True).run_test()
 
 
 if __name__ == '__main__':

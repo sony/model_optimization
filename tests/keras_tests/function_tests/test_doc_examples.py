@@ -17,8 +17,8 @@ import unittest
 import doctest
 
 from model_compression_toolkit import ptq
-from model_compression_toolkit import gptq
 from model_compression_toolkit import core
+from model_compression_toolkit.gptq import keras
 
 RAISE_ON_ERROR = False
 
@@ -29,7 +29,7 @@ class TestKerasDocsExamples(unittest.TestCase):
         doctest.testfile("quantization_facade.py", package=ptq.keras, verbose=True, raise_on_error=RAISE_ON_ERROR)
 
     def test_keras_gptq_facade(self):
-        doctest.testfile("quantization_facade.py", package=gptq.keras, verbose=True, raise_on_error=RAISE_ON_ERROR)
+        doctest.testfile("quantization_facade.py", package=keras, verbose=True, raise_on_error=RAISE_ON_ERROR)
 
     def test_keras_kpi_data_facade(self):
         doctest.testfile("kpi_data_facade.py", package=core.keras, verbose=True, raise_on_error=RAISE_ON_ERROR)

@@ -22,6 +22,7 @@ from tensorflow.keras.layers import PReLU, ELU
 import model_compression_toolkit as mct
 from model_compression_toolkit import QuantizationErrorMethod
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.gptq import RoundingType
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
     ActivationDecompositionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_bound_to_power_of_2_test import \
@@ -538,25 +539,19 @@ class FeatureNetworkTest(unittest.TestCase):
         GradientPTQLearnRateZeroTest(self).run_test()
         GradientPTQWeightedLossTest(self).run_test()
         GradientPTQTest(self,
-                        rounding_type=mct.gptq.RoundingType.SoftQuantizer,
-                        quantizer_config=mct.gptq.SoftQuantizerConfig(),
+                        rounding_type=RoundingType.SoftQuantizer,
                         per_channel=False).run_test()
         GradientPTQTest(self,
-                        rounding_type=mct.gptq.RoundingType.SoftQuantizer,
-                        quantizer_config=mct.gptq.SoftQuantizerConfig(),
+                        rounding_type=RoundingType.SoftQuantizer,
                         per_channel=True).run_test()
         GradientPTQNoTempLearningTest(self,
-                                      rounding_type=mct.gptq.RoundingType.SoftQuantizer,
-                                      quantizer_config=mct.gptq.SoftQuantizerConfig()).run_test()
+                                      rounding_type=RoundingType.SoftQuantizer).run_test()
         GradientPTQWeightsUpdateTest(self,
-                                     rounding_type=mct.gptq.RoundingType.SoftQuantizer,
-                                     quantizer_config=mct.gptq.SoftQuantizerConfig()).run_test()
+                                     rounding_type=RoundingType.SoftQuantizer).run_test()
         GradientPTQLearnRateZeroTest(self,
-                                     rounding_type=mct.gptq.RoundingType.SoftQuantizer,
-                                     quantizer_config=mct.gptq.SoftQuantizerConfig()).run_test()
+                                     rounding_type=RoundingType.SoftQuantizer).run_test()
         GradientPTQWithDepthwiseTest(self,
-                                     rounding_type=mct.gptq.RoundingType.SoftQuantizer,
-                                     quantizer_config=mct.gptq.SoftQuantizerConfig()).run_test()
+                                     rounding_type=RoundingType.SoftQuantizer).run_test()
 
         tf.config.run_functions_eagerly(False)
 
@@ -573,10 +568,8 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_gptq_conv_group_dilation(self):
         GradientPTQLearnRateZeroConvGroupDilationTest(self).run_test()
         GradientPTQWeightsUpdateConvGroupDilationTest(self).run_test()
-        GradientPTQLearnRateZeroConvGroupDilationTest(self, rounding_type=mct.gptq.RoundingType.SoftQuantizer,
-                                                      quantizer_config=mct.gptq.SoftQuantizerConfig()).run_test()
-        GradientPTQWeightsUpdateConvGroupDilationTest(self, rounding_type=mct.gptq.RoundingType.SoftQuantizer,
-                                                      quantizer_config=mct.gptq.SoftQuantizerConfig()).run_test()
+        GradientPTQLearnRateZeroConvGroupDilationTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+        GradientPTQWeightsUpdateConvGroupDilationTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
 
     def test_split_conv_bug(self):
         SplitConvBugTest(self).run_test()

@@ -56,10 +56,13 @@ def random_datagen_experimental():
 
 class TestGetGPTQConfig(BasePytorchTest):
 
-    def __init__(self, unit_test, quantization_method=QuantizationMethod.SYMMETRIC, rounding_type=RoundingType.STE):
+    def __init__(self, unit_test, quantization_method=QuantizationMethod.SYMMETRIC, rounding_type=RoundingType.STE,
+                 train_bias=False, quantization_parameters_learning=False):
         super().__init__(unit_test)
         self.quantization_method = quantization_method
         self.rounding_type = rounding_type
+        self.train_bias = train_bias
+        self.quantization_parameters_learning = quantization_parameters_learning
 
     def run_test(self):
         qc = QuantizationConfig(QuantizationErrorMethod.MSE,
@@ -70,11 +73,14 @@ class TestGetGPTQConfig(BasePytorchTest):
         gptqv2_config = get_pytorch_gptq_config(n_epochs=1,
                                                 optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4))
         gptqv2_config.rounding_type = self.rounding_type
+        gptqv2_config.train_bias = self.train_bias
+        gptqv2_config.quantization_parameters_learning = self.quantization_parameters_learning
 
         tp = generate_test_tp_model({'weights_quantization_method': self.quantization_method})
         symmetric_weights_tpc = generate_pytorch_tpc(name="gptq_config_test", tp_model=tp)
 
         float_model = TestModel()
+
         quant_model, _ = pytorch_gradient_post_training_quantization_experimental(model=float_model,
                                                                                   representative_data_gen=random_datagen_experimental,
                                                                                   core_config=cc,

@@ -16,7 +16,6 @@ import unittest
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
-from model_compression_toolkit.gptq.common.gptq_quantizer_config import SoftQuantizerConfig
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
@@ -452,17 +451,15 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         GPTQAccuracyTest(self).run_test()
         GPTQAccuracyTest(self, per_channel=False).run_test()
+        GPTQAccuracyTest(self, per_channel=True, hessian_weights=False).run_test()
+        GPTQAccuracyTest(self, per_channel=True, log_norm_weights=False).run_test()
         GPTQWeightsUpdateTest(self).run_test()
         GPTQLearnRateZeroTest(self).run_test()
 
-        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-                         quantizer_config=SoftQuantizerConfig()).run_test()
-        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-                         quantizer_config=SoftQuantizerConfig(), per_channel=False).run_test()
-        GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer,
-                              quantizer_config=SoftQuantizerConfig()).run_test()
-        GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer,
-                              quantizer_config=SoftQuantizerConfig()).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False).run_test()
+        GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+        GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
 
     def test_qat(self):
         """

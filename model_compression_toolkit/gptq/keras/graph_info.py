@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-
 import tensorflow as tf
 from typing import Tuple, List
 from model_compression_toolkit.core.keras.constants import USE_BIAS
@@ -93,25 +92,3 @@ def get_weights_for_loss(fxp_model: Model) -> Tuple[List[list], List[list]]:
             fxp_weights_list.append(_layer_fxp_weights)
 
     return flp_weights_list, fxp_weights_list
-
-
-# TODO: this function need to move to location that is relevant only for soft quantizer -
-#  once deciding how to handle GPTQ quantizers regularization.
-def get_soft_rounding_reg(fxp_model: Model) -> List[tf.Tensor]:
-    """
-    This function returns the soft quantizer regularization values for SoftRounding.
-
-    Args:
-        fxp_model: A model to be quantized with SoftRounding.
-
-    Returns: A list of tensors.
-    """
-
-    soft_reg_aux: List[tf.Tensor] = []
-    for layer in fxp_model.layers:
-        if isinstance(layer, KerasQuantizationWrapper):
-            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
-                                                                  fw_info=DEFAULT_KERAS_INFO)
-
-            soft_reg_aux.append(layer.weights_quantizers[kernel_attribute].get_regularization())
-    return soft_reg_aux

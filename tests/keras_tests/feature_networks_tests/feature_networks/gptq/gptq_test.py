@@ -22,7 +22,6 @@ from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig,
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.gptq.common.gptq_quantizer_config import GPTQQuantizerConfig
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -56,14 +55,13 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
 
 class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, quant_method=QuantizationMethod.SYMMETRIC, rounding_type=RoundingType.STE,
-                 quantizer_config=GPTQQuantizerConfig(), per_channel=True, input_shape=(1, 16, 16, 3),
+                 per_channel=True, input_shape=(1, 16, 16, 3),
                  hessian_weights=True, log_norm_weights=True):
         super().__init__(unit_test,
                          input_shape=input_shape, experimental_exporter=True)
 
         self.quant_method = quant_method
         self.rounding_type = rounding_type
-        self.quantizer_config = quantizer_config
         self.per_channel = per_channel
         self.hessian_weights = hessian_weights
         self.log_norm_weights = log_norm_weights
@@ -87,7 +85,6 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                                  loss=multiple_tensors_mse_loss,
                                  rounding_type=self.rounding_type,
                                  train_bias=True,
-                                 quantizer_config=self.quantizer_config,
                                  use_jac_based_weights=self.hessian_weights,
                                  log_norm=self.log_norm_weights)
 
@@ -149,8 +146,7 @@ class GradientPTQNoTempLearningTest(GradientPTQBaseTest):
                                      learning_rate=0.0001),
                                  loss=multiple_tensors_mse_loss,
                                  rounding_type=self.rounding_type,
-                                 train_bias=True,
-                                 quantizer_config=self.quantizer_config)
+                                 train_bias=True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         y = float_model(input_x)
@@ -169,8 +165,7 @@ class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
                                      learning_rate=1e-1),
                                  train_bias=True,
                                  loss=multiple_tensors_mse_loss,
-                                 rounding_type=self.rounding_type,
-                                 quantizer_config=self.quantizer_config)
+                                 rounding_type=self.rounding_type)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.weights) == len(quantized_gptq_model.weights),
@@ -197,8 +192,7 @@ class GradientPTQLearnRateZeroTest(GradientPTQBaseTest):
                                      learning_rate=0.0),
                                  train_bias=True,
                                  loss=multiple_tensors_mse_loss,
-                                 rounding_type=self.rounding_type,
-                                 quantizer_config=self.quantizer_config)
+                                 rounding_type=self.rounding_type)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.weights) == len(quantized_gptq_model.weights),
@@ -225,8 +219,7 @@ class GradientPTQWeightedLossTest(GradientPTQBaseTest):
                                  use_jac_based_weights=True,
                                  num_samples_for_loss=16,
                                  norm_weights=False,
-                                 rounding_type=self.rounding_type,
-                                 quantizer_config=self.quantizer_config)
+                                 rounding_type=self.rounding_type)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         y = float_model.predict(input_x)
@@ -237,8 +230,8 @@ class GradientPTQWeightedLossTest(GradientPTQBaseTest):
 
 class GradientPTQWithDepthwiseTest(GradientPTQTest):
 
-    def __init__(self, unit_test, rounding_type, quantizer_config):
-        super().__init__(unit_test, rounding_type=rounding_type, quantizer_config=quantizer_config,
+    def __init__(self, unit_test, rounding_type):
+        super().__init__(unit_test, rounding_type=rounding_type,
                          input_shape=(16, 16, 3))
 
     def create_networks(self):

@@ -16,7 +16,7 @@ import copy
 from abc import ABC, abstractmethod
 import numpy as np
 from typing import Callable, List, Any
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common import Graph, Logger, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -34,8 +34,7 @@ class GPTQTrainer(ABC):
                  graph_quant: Graph,
                  gptq_config: GradientPTQConfig,
                  fw_impl: FrameworkImplementation,
-                 fw_info: FrameworkInfo,
-                 representative_data_gen: Callable):
+                 fw_info: FrameworkInfo):
         """
         Build two models from a graph: A teacher network (float model) and a student network (quantized model).
         Use the dataset generator to pass images through the teacher and student networks to get intermediate
@@ -48,7 +47,6 @@ class GPTQTrainer(ABC):
             gptq_config: GradientPTQConfig with parameters about the tuning process.
             fw_impl: Framework implementation
             fw_info: Framework information
-            representative_data_gen: Dataset to use for inputs of the models.
         """
         self.graph_float = copy.deepcopy(graph_float)
         self.graph_quant = copy.deepcopy(graph_quant)
@@ -65,10 +63,6 @@ class GPTQTrainer(ABC):
                                                                        mode=ModelBuilderMode.FLOAT,
                                                                        append2output=self.compare_points,
                                                                        fw_info=self.fw_info)
-
-        if self.gptq_config.rounding_type == RoundingType.SoftQuantizer:
-            # dry run on the representative dataset to count number of batches
-            self.count_num_batches_for_training(representative_data_gen)
 
         self.fxp_model, self.gptq_user_info = self.build_gptq_model()
 
@@ -254,21 +248,6 @@ class GPTQTrainer(ABC):
                 prev_node = prev_node[0]
             replacement_outputs.append(prev_node)
         return replacement_outputs
-
-    def count_num_batches_for_training(self, representative_data_gen):
-        """
-        Runs a "dry-run" of the representative dataset to count the number of batches for each training epoch.
-
-        Args:
-            representative_data_gen: A callable method to retrieve images from Dataset.
-
-        Returns: The number of batches for each training epoch.
-
-        """
-        num_batches = 0
-        for _ in representative_data_gen():
-            num_batches += 1
-        self.gptq_config.quantizer_config.set_num_batches(num_batches)
 
 
 def gptq_training(graph_float: Graph,
