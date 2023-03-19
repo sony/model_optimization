@@ -39,8 +39,8 @@ def get_regularization(gptq_config: GradientPTQConfig, representative_data_gen: 
         for _ in representative_data_gen():
             num_batches += 1
 
-        gptqv2 = GradientPTQConfigV2.from_v1(n_ptq_iter=num_batches, config_v1=gptq_config)
-        n_epochs = gptqv2.n_epochs
+        n_epochs = GradientPTQConfigV2.from_v1(n_ptq_iter=num_batches, config_v1=gptq_config).n_epochs if \
+            not type(gptq_config) == GradientPTQConfigV2 else gptq_config.n_epochs
         return partial(soft_quantizer_regularization, total_gradient_steps=num_batches * n_epochs)
     else:
         return lambda m, e_reg: 0
