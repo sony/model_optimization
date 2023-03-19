@@ -15,7 +15,7 @@
 from functools import partial
 from typing import Callable
 
-from model_compression_toolkit import GradientPTQConfig, RoundingType, GradientPTQConfigV2
+from model_compression_toolkit.gptq import RoundingType, GradientPTQConfigV2, GradientPTQConfig
 from model_compression_toolkit.gptq.keras.quantizer.soft_rounding.soft_quantizer_reg import \
     soft_quantizer_regularization
 

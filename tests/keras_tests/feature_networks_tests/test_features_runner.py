@@ -20,9 +20,9 @@ import tensorflow as tf
 from tensorflow.keras.layers import PReLU, ELU
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import RoundingType
 from model_compression_toolkit import QuantizationErrorMethod
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.gptq import RoundingType
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
     ActivationDecompositionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_bound_to_power_of_2_test import \
