@@ -86,7 +86,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                                                   trainable_bias,
                                                                   trainable_threshold)
 
-        self.weights_for_average_loss = to_torch_tensor(self.compute_jacobian_based_weights(representative_data_gen))
+        self.weights_for_average_loss = to_torch_tensor(self.compute_hessian_based_weights(representative_data_gen))
 
         self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
 

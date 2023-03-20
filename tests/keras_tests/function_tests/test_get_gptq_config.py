@@ -22,6 +22,7 @@ from model_compression_toolkit import QuantizationConfig, QuantizationErrorMetho
 import tensorflow as tf
 
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.gptq.common.gptq_config import GPTQHessianWeightsConfig
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
@@ -65,6 +66,12 @@ class TestGetGPTQConfig(unittest.TestCase):
                                      weights_bias_correction=False)  # disable bias correction when working with GPTQ
         self.cc = CoreConfig(quantization_config=self.qc)
 
+        test_hessian_weights_config = GPTQHessianWeightsConfig(hessians_num_samples=2,
+                                                               norm_weights=False,
+                                                               log_norm=True,
+                                                               scale_log_norm=True,
+                                                               hessians_n_iter=20)
+
         self.gptqv2_configurations = [GradientPTQConfigV2(1,
                                                           optimizer=tf.keras.optimizers.RMSprop(),
                                                           optimizer_rest=tf.keras.optimizers.RMSprop(),
@@ -91,6 +98,13 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                           loss=multiple_tensors_mse_loss,
                                                           rounding_type=RoundingType.SoftQuantizer,
                                                           quantization_parameters_learning=True),
+                                      GradientPTQConfigV2(1,
+                                                          optimizer=tf.keras.optimizers.Adam(),
+                                                          optimizer_rest=tf.keras.optimizers.Adam(),
+                                                          train_bias=True,
+                                                          loss=multiple_tensors_mse_loss,
+                                                          rounding_type=RoundingType.SoftQuantizer,
+                                                          hessian_weights_config=test_hessian_weights_config),
                                       GradientPTQConfigV2(1,
                                                           optimizer=tf.keras.optimizers.Adam(),
                                                           optimizer_rest=tf.keras.optimizers.Adam(),
