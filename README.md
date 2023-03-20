@@ -23,8 +23,8 @@ MCT is developed by researchers and engineers working at Sony Semiconductor Isra
 ## Supported Features
 
 MCT supports different quantization methods:
-* Post training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental)
-* Gradient-based post training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_gradient_post_training_quantization_experimental.html#ug-pytorch-gradient-post-training-quantization-experimental)
+* Post-training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental)
+* Gradient-based post-training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_gradient_post_training_quantization_experimental.html#ug-pytorch-gradient-post-training-quantization-experimental)
 * Quantization aware training (QAT)[*](#experimental-features)
 
 
@@ -81,15 +81,15 @@ A nightly package is also available (unstable):
 pip install mct-nightly
 ```
 
-### Requierments
+### Requirements
 
-To run MCT, one of the supported frameworks, Tenosflow/Pytorch, needs to be installed.
+To run MCT, one of the supported frameworks, Tensorflow/Pytorch, needs to be installed.
 
-For using with Tensorflow please install the packages: 
+For use with Tensorflow please install the packages: 
 [tensorflow](https://www.tensorflow.org/install), 
 [tensorflow-model-optimization](https://www.tensorflow.org/model_optimization/guide/install)
 
-For using with PyTorch please install the packages: 
+For use with PyTorch please install the packages: 
 [torch](https://pytorch.org/)
 
 Also, a [requirements](requirements.txt) file can be used to set up your environment.
