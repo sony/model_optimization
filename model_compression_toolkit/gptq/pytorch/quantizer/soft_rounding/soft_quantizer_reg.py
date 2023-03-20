@@ -65,36 +65,47 @@ class LinearTempDecay:
                (self.end_b + (self.start_b - self.end_b) * torch.maximum(to_torch_tensor(np.array([0.0])), (1 - rel_t)))
 
 
-
-def soft_quantizer_regularization(model: nn.Module, entropy_reg: float, total_gradient_steps: int) -> float:
+class SoftQuantizerRegularization:
     """
-    Returns the soft quantizer regularization value for SoftRounding.
-
-    Args:
-        model: A model to be quantized with SoftRounding.
-        entropy_reg: Entropy value to scale the quantizer regularization.
-        total_gradient_steps: The number of gradient steps during optimization.
-
-    Returns: Regularization value.
+    A class to handle the computation of soft quantizer regularization for GPTQ training.
     """
 
-    # Initializing the temperature decay according to the number of expected gradient steps
-    linear_decay = LinearTempDecay(total_gradient_steps)
+    def __init__(self, total_gradient_steps: int):
+        """
+        Initializes the regularization computation object with a LinearDecay object.
 
-    soft_reg_aux: List[torch.Tensor] = []
-    for layer in model.modules():
-        if isinstance(layer, PytorchQuantizationWrapper):
-            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
-                                                                  fw_info=DEFAULT_PYTORCH_INFO)
+        Args:
+            total_gradient_steps: The number of gradient steps during optimization.
+        """
 
-            st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
-            b = linear_decay(layer.weights_quantizers[kernel_attribute].get_quantizer_variable(GPTQ_ITER))
+        # Initializing the temperature decay according to the number of expected gradient steps
+        self.linear_decay = LinearTempDecay(total_gradient_steps)
 
-            soft_reg_aux.append((1 - torch.pow(torch.abs(st - .5) * 2, b)).sum())
+    def __call__(self, model: nn.Module, entropy_reg: float):
+        """
+        Returns the soft quantizer regularization value for SoftRounding.
 
-    reg = 0
+        Args:
+            model: A model to be quantized with SoftRounding.
+            entropy_reg: Entropy value to scale the quantizer regularization.
 
-    for sq in soft_reg_aux:
-        reg += sq
+        Returns: Regularization value.
+        """
 
-    return entropy_reg * reg
+        soft_reg_aux: List[torch.Tensor] = []
+        for layer in model.modules():
+            if isinstance(layer, PytorchQuantizationWrapper):
+                kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
+                                                                      fw_info=DEFAULT_PYTORCH_INFO)
+
+                st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
+                b = self.linear_decay(layer.weights_quantizers[kernel_attribute].get_quantizer_variable(GPTQ_ITER))
+
+                soft_reg_aux.append((1 - torch.pow(torch.abs(st - .5) * 2, b)).sum())
+
+        reg = 0
+
+        for sq in soft_reg_aux:
+            reg += sq
+
+        return entropy_reg * reg
