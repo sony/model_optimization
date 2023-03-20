@@ -146,7 +146,7 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
 
         if self.quantization_parameter_learning:
             layer.register_parameter(f"{name}_{SCALE_PTQ}",
-                                     nn.Parameter(torch.ones_like(torch.Tensor(self.threshold_values)),
+                                     nn.Parameter(to_torch_tensor(torch.ones_like(torch.Tensor(self.threshold_values))),
                                                   requires_grad=True))
             self.add_quantizer_variable(SCALE_PTQ, layer.get_parameter(f"{name}_{SCALE_PTQ}"), VariableGroup.QPARAMS)
 
@@ -171,6 +171,7 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
 
         """
         old_threshold = torch_tensor_to_numpy(self.get_quantizer_variable(PTQ_THRESHOLD))
+        old_threshold = np.resize(old_threshold, self.threshold_shape)
         if self.power_of_two:
             old_threshold = max_power_of_two(old_threshold, MIN_THRESHOLD)
         else:
