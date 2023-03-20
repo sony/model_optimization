@@ -18,11 +18,12 @@ from typing import List
 import numpy as np
 
 from model_compression_toolkit.gptq import get_keras_gptq_config, keras_gradient_post_training_quantization_experimental, GradientPTQConfigV2, RoundingType
-from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod, CoreConfig
+from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod, CoreConfig, DefaultDict
 import tensorflow as tf
 
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_config import GPTQHessianWeightsConfig
+from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
@@ -72,45 +73,40 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                                scale_log_norm=True,
                                                                hessians_n_iter=20)
 
-        self.gptqv2_configurations = [GradientPTQConfigV2(1,
-                                                          optimizer=tf.keras.optimizers.RMSprop(),
+        self.gptqv2_configurations = [GradientPTQConfigV2(1, optimizer=tf.keras.optimizers.RMSprop(),
                                                           optimizer_rest=tf.keras.optimizers.RMSprop(),
                                                           train_bias=True,
                                                           loss=multiple_tensors_mse_loss,
                                                           rounding_type=RoundingType.SoftQuantizer),
-                                      GradientPTQConfigV2(1,
-                                                          optimizer=tf.keras.optimizers.Adam(),
+                                      GradientPTQConfigV2(1, optimizer=tf.keras.optimizers.Adam(),
                                                           optimizer_rest=tf.keras.optimizers.Adam(),
                                                           train_bias=True,
                                                           loss=multiple_tensors_mse_loss,
                                                           rounding_type=RoundingType.SoftQuantizer),
-                                      GradientPTQConfigV2(1,
-                                                          optimizer=tf.keras.optimizers.Adam(),
+                                      GradientPTQConfigV2(1, optimizer=tf.keras.optimizers.Adam(),
                                                           optimizer_rest=tf.keras.optimizers.Adam(),
                                                           train_bias=True,
                                                           loss=multiple_tensors_mse_loss,
                                                           rounding_type=RoundingType.SoftQuantizer,
                                                           regularization_factor=15),
-                                      GradientPTQConfigV2(1,
-                                                          optimizer=tf.keras.optimizers.Adam(),
+                                      GradientPTQConfigV2(1, optimizer=tf.keras.optimizers.Adam(),
                                                           optimizer_rest=tf.keras.optimizers.Adam(),
                                                           train_bias=True,
                                                           loss=multiple_tensors_mse_loss,
                                                           rounding_type=RoundingType.SoftQuantizer,
-                                                          quantization_parameters_learning=True),
-                                      GradientPTQConfigV2(1,
-                                                          optimizer=tf.keras.optimizers.Adam(),
+                                                          gptq_quantizer_params_override={QUANT_PARAM_LEARNING_STR: True}),
+                                      GradientPTQConfigV2(1, optimizer=tf.keras.optimizers.Adam(),
                                                           optimizer_rest=tf.keras.optimizers.Adam(),
                                                           train_bias=True,
                                                           loss=multiple_tensors_mse_loss,
                                                           rounding_type=RoundingType.SoftQuantizer,
                                                           hessian_weights_config=test_hessian_weights_config),
-                                      GradientPTQConfigV2(1,
-                                                          optimizer=tf.keras.optimizers.Adam(),
+                                      GradientPTQConfigV2(1, optimizer=tf.keras.optimizers.Adam(),
                                                           optimizer_rest=tf.keras.optimizers.Adam(),
                                                           train_bias=True,
                                                           loss=multiple_tensors_mse_loss,
-                                                          rounding_type=RoundingType.STE),
+                                                          rounding_type=RoundingType.STE,
+                                                          gptq_quantizer_params_override={MAX_LSB_STR: DefaultDict({}, lambda: 1)}),
                                       get_keras_gptq_config(n_epochs=1,
                                                             optimizer=tf.keras.optimizers.Adam())]
 
@@ -148,28 +144,6 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                                    new_experimental_exporter=True)
 
         tf.config.run_functions_eagerly(False)
-
-    def test_get_keras_unsupported_configs_raises(self):
-
-        with self.assertRaises(Exception) as e:
-            GradientPTQConfigV2(1,
-                                optimizer=tf.keras.optimizers.Adam(),
-                                optimizer_rest=tf.keras.optimizers.Adam(),
-                                train_bias=True,
-                                quantization_parameters_learning=True,
-                                loss=multiple_tensors_mse_loss,
-                                rounding_type=RoundingType.STE)
-        self.assertEqual('Quantization parameters learning is not supported with STE rounding.', str(e.exception))
-
-        with self.assertRaises(Exception) as e:
-            GradientPTQConfigV2(1,
-                                optimizer=tf.keras.optimizers.Adam(),
-                                optimizer_rest=tf.keras.optimizers.Adam(),
-                                train_bias=True,
-                                quantization_parameters_learning=True,
-                                loss=multiple_tensors_mse_loss,
-                                rounding_type=RoundingType.STE)
-        self.assertEqual('Quantization parameters learning is not supported with STE rounding.', str(e.exception))
 
 
 if __name__ == '__main__':

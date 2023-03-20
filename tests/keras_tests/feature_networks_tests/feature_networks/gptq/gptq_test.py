@@ -18,10 +18,12 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
+from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType, GradientPTQConfigV2, \
     GPTQHessianWeightsConfig
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
+from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -66,6 +68,8 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         self.hessian_weights = hessian_weights
         self.log_norm_weights = log_norm_weights
         self.scaled_log_norm = scaled_log_norm
+        self.override_params = {QUANT_PARAM_LEARNING_STR: True} if rounding_type == RoundingType.SoftQuantizer else \
+            {MAX_LSB_STR: DefaultDict({}, lambda: 1)} if rounding_type == RoundingType.STE else None
 
     def get_tpc(self):
         return get_tpc("gptq_test", 16, 16, self.quant_method)
@@ -78,17 +82,13 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                                       weights_per_channel_threshold=self.per_channel)
 
     def get_gptq_config(self):
-        return GradientPTQConfig(5,
-                                 optimizer=tf.keras.optimizers.Adam(
-                                     learning_rate=0.0001),
-                                 optimizer_rest=tf.keras.optimizers.Adam(
-                                     learning_rate=0.0001),
-                                 loss=multiple_tensors_mse_loss,
-                                 rounding_type=self.rounding_type,
-                                 train_bias=True,
+        return GradientPTQConfig(5, optimizer=tf.keras.optimizers.Adam(
+            learning_rate=0.0001), optimizer_rest=tf.keras.optimizers.Adam(
+            learning_rate=0.0001), loss=multiple_tensors_mse_loss, train_bias=True, rounding_type=self.rounding_type,
                                  use_hessian_based_weights=self.hessian_weights,
                                  hessian_weights_config=GPTQHessianWeightsConfig(log_norm=self.log_norm_weights,
-                                                                                 scale_log_norm=self.scaled_log_norm))
+                                                                                 scale_log_norm=self.scaled_log_norm),
+                                 gptq_quantizer_params_override=self.override_params)
 
     def create_networks(self):
         in_shape = self.get_input_shapes()[0][1:]
@@ -141,14 +141,10 @@ class GradientPTQTest(GradientPTQBaseTest):
 class GradientPTQNoTempLearningTest(GradientPTQBaseTest):
 
     def get_gptq_config(self):
-        return GradientPTQConfig(1,
-                                 optimizer=tf.keras.optimizers.Adam(
-                                     learning_rate=0.0001),
-                                 optimizer_rest=tf.keras.optimizers.Adam(
-                                     learning_rate=0.0001),
-                                 loss=multiple_tensors_mse_loss,
-                                 rounding_type=self.rounding_type,
-                                 train_bias=True)
+        return GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(
+            learning_rate=0.0001), optimizer_rest=tf.keras.optimizers.Adam(
+            learning_rate=0.0001), loss=multiple_tensors_mse_loss, train_bias=True, rounding_type=self.rounding_type,
+                                 gptq_quantizer_params_override=self.override_params)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         y = float_model(input_x)
@@ -160,14 +156,10 @@ class GradientPTQNoTempLearningTest(GradientPTQBaseTest):
 class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
 
     def get_gptq_config(self):
-        return GradientPTQConfig(50,
-                                 optimizer=tf.keras.optimizers.Adam(
-                                     learning_rate=1e-2),
-                                 optimizer_rest=tf.keras.optimizers.Adam(
-                                     learning_rate=1e-1),
-                                 train_bias=True,
-                                 loss=multiple_tensors_mse_loss,
-                                 rounding_type=self.rounding_type)
+        return GradientPTQConfig(50, optimizer=tf.keras.optimizers.Adam(
+            learning_rate=1e-2), optimizer_rest=tf.keras.optimizers.Adam(
+            learning_rate=1e-1), loss=multiple_tensors_mse_loss, train_bias=True, rounding_type=self.rounding_type,
+                                 gptq_quantizer_params_override=self.override_params)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.weights) == len(quantized_gptq_model.weights),
@@ -187,14 +179,10 @@ class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
 class GradientPTQLearnRateZeroTest(GradientPTQBaseTest):
 
     def get_gptq_config(self):
-        return GradientPTQConfig(1,
-                                 optimizer=tf.keras.optimizers.SGD(
-                                     learning_rate=0.0),
-                                 optimizer_rest=tf.keras.optimizers.SGD(
-                                     learning_rate=0.0),
-                                 train_bias=True,
-                                 loss=multiple_tensors_mse_loss,
-                                 rounding_type=self.rounding_type)
+        return GradientPTQConfig(1, optimizer=tf.keras.optimizers.SGD(
+            learning_rate=0.0), optimizer_rest=tf.keras.optimizers.SGD(
+            learning_rate=0.0), loss=multiple_tensors_mse_loss, train_bias=True, rounding_type=self.rounding_type,
+                                 gptq_quantizer_params_override=self.override_params)
 
     def compare(self, quantized_model, quantized_gptq_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.weights) == len(quantized_gptq_model.weights),
@@ -211,19 +199,15 @@ class GradientPTQLearnRateZeroTest(GradientPTQBaseTest):
 class GradientPTQWeightedLossTest(GradientPTQBaseTest):
 
     def get_gptq_config(self):
-        return GradientPTQConfig(5,
-                                 optimizer=tf.keras.optimizers.Adam(
-                                     learning_rate=0.0001),
-                                 optimizer_rest=tf.keras.optimizers.Adam(
-                                     learning_rate=0.0001),
-                                 loss=multiple_tensors_mse_loss,
-                                 train_bias=True,
+        return GradientPTQConfig(5, optimizer=tf.keras.optimizers.Adam(
+            learning_rate=0.0001), optimizer_rest=tf.keras.optimizers.Adam(
+            learning_rate=0.0001), loss=multiple_tensors_mse_loss, train_bias=True, rounding_type=self.rounding_type,
                                  use_hessian_based_weights=True,
-                                 rounding_type=self.rounding_type,
                                  hessian_weights_config=GPTQHessianWeightsConfig(hessians_num_samples=16,
                                                                                  norm_weights=False,
                                                                                  log_norm=self.log_norm_weights,
-                                                                                 scale_log_norm=self.scaled_log_norm))
+                                                                                 scale_log_norm=self.scaled_log_norm),
+                                 gptq_quantizer_params_override=self.override_params)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         y = float_model.predict(input_x)

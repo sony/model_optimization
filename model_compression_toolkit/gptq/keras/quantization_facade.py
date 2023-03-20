@@ -95,14 +95,8 @@ if common.constants.FOUND_TF:
 
         """
         bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT, momentum=GPTQ_MOMENTUM)
-        return GradientPTQConfigV2(n_epochs,
-                                   optimizer,
-                                   optimizer_rest=optimizer_rest,
-                                   loss=loss,
-                                   log_function=log_function,
-                                   train_bias=True,
-                                   quantization_parameters_learning=True,
-                                   optimizer_bias=bias_optimizer)
+        return GradientPTQConfigV2(n_epochs, optimizer, optimizer_rest=optimizer_rest, loss=loss,
+                                   log_function=log_function, train_bias=True, optimizer_bias=bias_optimizer)
 
 
     def keras_gradient_post_training_quantization_experimental(in_model: Model,

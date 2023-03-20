@@ -18,8 +18,9 @@ from torch import nn
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.gptq import get_pytorch_gptq_config, pytorch_gradient_post_training_quantization_experimental, RoundingType
-from model_compression_toolkit import CoreConfig, QuantizationConfig, QuantizationErrorMethod
+from model_compression_toolkit import CoreConfig, QuantizationConfig, QuantizationErrorMethod, DefaultDict
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -74,7 +75,15 @@ class TestGetGPTQConfig(BasePytorchTest):
                                                 optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4))
         gptqv2_config.rounding_type = self.rounding_type
         gptqv2_config.train_bias = self.train_bias
-        gptqv2_config.quantization_parameters_learning = self.quantization_parameters_learning
+
+        if self.rounding_type == RoundingType.SoftQuantizer:
+            gptqv2_config.gptq_quantizer_params_override = \
+                {QUANT_PARAM_LEARNING_STR: self.quantization_parameters_learning}
+        elif self.rounding_type == RoundingType.STE:
+            gptqv2_config.gptq_quantizer_params_override = \
+                {MAX_LSB_STR: DefaultDict({}, lambda: 1)}
+        else:
+            gptqv2_config.gptq_quantizer_params_override = None
 
         tp = generate_test_tp_model({'weights_quantization_method': self.quantization_method})
         symmetric_weights_tpc = generate_pytorch_tpc(name="gptq_config_test", tp_model=tp)

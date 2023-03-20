@@ -63,21 +63,19 @@ class GradientPTQConfig:
     Configuration to use for quantization with GradientPTQ (experimental).
     """
 
-    def __init__(self,
-                 n_iter: int,
+    def __init__(self, n_iter: int,
                  optimizer: Any,
                  optimizer_rest: Any = None,
                  loss: Callable = None,
                  log_function: Callable = None,
                  train_bias: bool = True,
-                 quantization_parameters_learning: bool = False,
                  rounding_type: RoundingType = RoundingType.SoftQuantizer,
-                 lsb_change_per_bit_width: dict = DefaultDict({}, lambda: 1),
                  use_hessian_based_weights: bool = True,
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
                  regularization_factor: float = REG_DEFAULT,
-                 hessian_weights_config: GPTQHessianWeightsConfig = GPTQHessianWeightsConfig()):
+                 hessian_weights_config: GPTQHessianWeightsConfig = GPTQHessianWeightsConfig(),
+                 gptq_quantizer_params_override: Dict[str, Any] = None):
         """
         Initialize a GradientPTQConfig.
 
@@ -90,14 +88,13 @@ class GradientPTQConfig:
              accordingly. see example in multiple_tensors_mse_loss
             log_function (Callable): Function to log information about the GPTQ process.
             train_bias (bool): Whether to update the bias during the training or not.
-            quantization_parameters_learning (bool): Whether to update the quantization param during the training or not.
             rounding_type (RoundingType): An enum that defines the rounding type.
-            lsb_change_per_bit_width (dict): Whether to update the bias during the training or not.
             use_hessian_based_weights (bool): Whether to use Hessian-based weights for weighted average loss.
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizer for bias.
             regularization_factor (float): A floating point number that defines the regularization factor.
             hessian_weights_config (GPTQHessianWeightsConfig): A configuration that include all necessary arguments to run a computation of Hessian weights for the GPTQ loss.
+            gptq_quantizer_params_override (dict): A dictionary of parameters to override in GPTQ quantizer instantiation. Defaults to None (no parameters).
 
         """
         self.n_iter = n_iter
@@ -107,38 +104,36 @@ class GradientPTQConfig:
         self.log_function = log_function
         self.train_bias = train_bias
 
-        if quantization_parameters_learning and rounding_type == RoundingType.STE:
-            common.Logger.error("Quantization parameters learning is not supported with STE rounding.")
-
-        self.quantization_parameters_learning = quantization_parameters_learning
         self.rounding_type = rounding_type
-        self.lsb_change_per_bit_width = lsb_change_per_bit_width
         self.use_hessian_based_weights = use_hessian_based_weights
         self.optimizer_quantization_parameter = optimizer_quantization_parameter
         self.optimizer_bias = optimizer_bias
         self.regularization_factor = regularization_factor
         self.hessian_weights_config = hessian_weights_config
 
+        # Since the default quantizer is soft quantizer, we initialize the gptq_quantizer_params_override dictionary
+        # with its extended params
+        self.gptq_quantizer_params_override = {QUANT_PARAM_LEARNING_STR: False} \
+            if gptq_quantizer_params_override is None else gptq_quantizer_params_override
+
 
 class GradientPTQConfigV2(GradientPTQConfig):
     """
     Configuration to use for quantization with GradientPTQV2 (experimental).
     """
-    def __init__(self,
-                 n_epochs: int,
+    def __init__(self, n_epochs: int,
                  optimizer: Any,
                  optimizer_rest: Any = None,
                  loss: Callable = None,
                  log_function: Callable = None,
                  train_bias: bool = True,
-                 quantization_parameters_learning: bool = False,
                  rounding_type: RoundingType = RoundingType.SoftQuantizer,
-                 lsb_change_per_bit_width: dict = DefaultDict({}, lambda: 1),
                  use_hessian_based_weights: bool = True,
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
                  regularization_factor: float = REG_DEFAULT,
-                 hessian_weights_config: GPTQHessianWeightsConfig = GPTQHessianWeightsConfig()):
+                 hessian_weights_config: GPTQHessianWeightsConfig = GPTQHessianWeightsConfig(),
+                 gptq_quantizer_params_override: Dict[str, Any] = None):
         """
         Initialize a GradientPTQConfigV2.
 
@@ -151,14 +146,13 @@ class GradientPTQConfigV2(GradientPTQConfig):
              accordingly. see example in multiple_tensors_mse_loss
             log_function (Callable): Function to log information about the GPTQ process.
             train_bias (bool): Whether to update the bias during the training or not.
-            quantization_parameters_learning (bool): Whether to update the quantization param during the training or not.
             rounding_type (RoundingType): An enum that defines the rounding type.
-            lsb_change_per_bit_width (dict): Whether to update the bias during the training or not.
             use_hessian_based_weights (bool): Whether to use Hessian-based weights for weighted average loss.
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
             regularization_factor (float): A floating point number that defines the regularization factor.
             hessian_weights_config (GPTQHessianWeightsConfig): A configuration that include all necessary arguments to run a computation of Hessian weights for the GPTQ loss.
+            gptq_quantizer_params_override (dict): A dictionary of parameters to override in GPTQ quantizer instantiation. Defaults to None (no parameters).
 
         """
 
@@ -168,14 +162,13 @@ class GradientPTQConfigV2(GradientPTQConfig):
                          loss=loss,
                          log_function=log_function,
                          train_bias=train_bias,
-                         quantization_parameters_learning=quantization_parameters_learning,
                          rounding_type=rounding_type,
-                         lsb_change_per_bit_width=lsb_change_per_bit_width,
                          use_hessian_based_weights=use_hessian_based_weights,
                          optimizer_quantization_parameter=optimizer_quantization_parameter,
                          optimizer_bias=optimizer_bias,
                          regularization_factor=regularization_factor,
-                         hessian_weights_config=hessian_weights_config)
+                         hessian_weights_config=hessian_weights_config,
+                         gptq_quantizer_params_override=gptq_quantizer_params_override)
         self.n_epochs = n_epochs
 
     @classmethod
@@ -192,20 +185,3 @@ class GradientPTQConfigV2(GradientPTQConfig):
         v1_params = config_v1.__dict__
         v1_params = {k: v for k, v in v1_params.items() if k != 'n_iter'}
         return cls(n_epochs, **v1_params)
-
-    def get_extended_quantizer_parametes(self) -> Dict[str, Any]:
-        """
-        Return a dictionary with a mapping to necessary additional parameters for initializing the GPTQ quantizer.
-
-        Returns: A dictionary with parameters for initializing a quantizer.
-
-        """
-
-        if self.rounding_type == RoundingType.SoftQuantizer:
-            return {QUANT_PARAM_LEARNING_STR: self.quantization_parameters_learning}
-        elif self.rounding_type == RoundingType.STE:
-            return {MAX_LSB_STR: self.lsb_change_per_bit_width}
-
-        return {}
-
-
