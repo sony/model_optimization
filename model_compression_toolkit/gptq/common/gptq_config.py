@@ -76,8 +76,6 @@ class GradientPTQConfig:
                  use_hessian_based_weights: bool = True,
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
-                 log_norm: bool = True,
-                 weights_n_iter: int = 50,
                  regularization_factor: float = REG_DEFAULT,
                  hessian_weights_config: GPTQHessianWeightsConfig = GPTQHessianWeightsConfig()):
         """
@@ -98,8 +96,6 @@ class GradientPTQConfig:
             use_hessian_based_weights (bool): Whether to use Hessian-based weights for weighted average loss.
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizer for bias.
-            log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
-            weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
             regularization_factor (float): A floating point number that defines the regularization factor.
             hessian_weights_config (GPTQHessianWeightsConfig): A configuration that include all necessary arguments to run a computation of Hessian weights for the GPTQ loss.
 
@@ -141,8 +137,6 @@ class GradientPTQConfigV2(GradientPTQConfig):
                  use_hessian_based_weights: bool = True,
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
-                 log_norm: bool = True,
-                 weights_n_iter: int = 50,
                  regularization_factor: float = REG_DEFAULT,
                  hessian_weights_config: GPTQHessianWeightsConfig = GPTQHessianWeightsConfig()):
         """
@@ -163,8 +157,6 @@ class GradientPTQConfigV2(GradientPTQConfig):
             use_hessian_based_weights (bool): Whether to use Hessian-based weights for weighted average loss.
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
-            log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
-            weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
             regularization_factor (float): A floating point number that defines the regularization factor.
             hessian_weights_config (GPTQHessianWeightsConfig): A configuration that include all necessary arguments to run a computation of Hessian weights for the GPTQ loss.
 
@@ -182,8 +174,6 @@ class GradientPTQConfigV2(GradientPTQConfig):
                          use_hessian_based_weights=use_hessian_based_weights,
                          optimizer_quantization_parameter=optimizer_quantization_parameter,
                          optimizer_bias=optimizer_bias,
-                         log_norm=log_norm,
-                         weights_n_iter=weights_n_iter,
                          regularization_factor=regularization_factor,
                          hessian_weights_config=hessian_weights_config)
         self.n_epochs = n_epochs
