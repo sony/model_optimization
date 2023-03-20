@@ -19,8 +19,8 @@ import torch.nn as nn
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GradientPTQConfigV2, RoundingType
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GradientPTQConfigV2, RoundingType, \
+    GPTQHessianWeightsConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
 
@@ -48,7 +48,7 @@ class TestModel(nn.Module):
 class GPTQBaseTest(BasePytorchFeatureNetworkTest):
     def __init__(self, unit_test, experimental_exporter=False, quant_method=QuantizationMethod.SYMMETRIC,
                  rounding_type=RoundingType.STE, per_channel=True,
-                 hessian_weights=True, log_norm_weights=True):
+                 hessian_weights=True, log_norm_weights=True, scaled_log_norm=False):
         super().__init__(unit_test, input_shape=(3, 16, 16))
         self.seed = 0
         self.experimental_exporter = experimental_exporter
@@ -57,6 +57,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         self.quant_method = quant_method
         self.hessian_weights = hessian_weights
         self.log_norm_weights = log_norm_weights
+        self.scaled_log_norm = scaled_log_norm
 
     def get_quantization_config(self):
         return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
@@ -82,12 +83,13 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
 
         # Run MCT with GPTQ
         np.random.seed(self.seed)
-        gptq_model, quantization_info = mct.gptq.pytorch_gradient_post_training_quantization_experimental(self.float_model,
-                                                                                                     self.representative_data_gen_experimental,
-                                                                                                     core_config=self.get_core_config(),
-                                                                                                     target_platform_capabilities=self.get_tpc(),
-                                                                                                     gptq_config=self.get_gptq_configv2(),
-                                                                                                     new_experimental_exporter=self.experimental_exporter)
+        gptq_model, quantization_info = mct.gptq.pytorch_gradient_post_training_quantization_experimental(
+            self.float_model,
+            self.representative_data_gen_experimental,
+            core_config=self.get_core_config(),
+            target_platform_capabilities=self.get_tpc(),
+            gptq_config=self.get_gptq_configv2(),
+            new_experimental_exporter=self.experimental_exporter)
 
         # Generate inputs
         x = to_torch_tensor(self.representative_data_gen())
@@ -103,20 +105,22 @@ class GPTQAccuracyTest(GPTQBaseTest):
                                  optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
                                  loss=multiple_tensors_mse_loss,
                                  train_bias=True,
-                                 use_jac_based_weights=self.hessian_weights,
+                                 use_hessian_based_weights=self.hessian_weights,
                                  optimizer_bias=torch.optim.Adam([torch.Tensor([])], lr=0.4),
                                  rounding_type=self.rounding_type,
-                                 log_norm=self.log_norm_weights)
+                                 hessian_weights_config=GPTQHessianWeightsConfig(log_norm=self.log_norm_weights,
+                                                                                 scale_log_norm=self.scaled_log_norm))
 
     def get_gptq_configv2(self):
         return GradientPTQConfigV2(5,
                                    optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
                                    loss=multiple_tensors_mse_loss,
                                    train_bias=True,
-                                   use_jac_based_weights=self.hessian_weights,
+                                   use_hessian_based_weights=self.hessian_weights,
                                    optimizer_bias=torch.optim.Adam([torch.Tensor([])], lr=0.4),
                                    rounding_type=self.rounding_type,
-                                   log_norm=self.log_norm_weights)
+                                   hessian_weights_config=GPTQHessianWeightsConfig(log_norm=self.log_norm_weights,
+                                                                                   scale_log_norm=self.scaled_log_norm))
 
     def gptq_compare(self, ptq_model, gptq_model, input_x=None):
         ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))

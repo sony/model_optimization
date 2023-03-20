@@ -113,19 +113,20 @@ class GPTQTrainer(ABC):
         return optimizer_with_param
 
 
-    def compute_jacobian_based_weights(self,
-                                       representative_data_gen: Callable) -> np.ndarray:
+    def compute_hessian_based_weights(self,
+                                      representative_data_gen: Callable) -> np.ndarray:
         """
-        Computes the jacobian-based weights using the framework's model_grad method per batch of images.
+        Computes the Hessian-based weights using the framework's model_grad method per batch of images.
 
         Args:
-            representative_data_gen: Dataset used for inference to compute the jacobian-based weights.
+            representative_data_gen: Dataset used for inference to compute the Hessian-based weights.
 
         Returns: A vector of weights, one for each compare point,
         to be used for the loss metric weighted average computation when running GPTQ training.
         """
-        if self.gptq_config.use_jac_based_weights:
-            images = self._generate_images_batch(representative_data_gen, self.gptq_config.num_samples_for_loss)
+        if self.gptq_config.use_hessian_based_weights:
+            images = self._generate_images_batch(representative_data_gen,
+                                                 self.gptq_config.hessian_weights_config.hessians_num_samples)
 
             model_output_replacement = self._get_model_output_replacement()
 
@@ -143,17 +144,18 @@ class GPTQTrainer(ABC):
                                                              output_list=model_output_replacement,
                                                              all_outputs_indices=[],
                                                              alpha=0,
-                                                             norm_weights=self.gptq_config.norm_weights,
-                                                             n_iter=self.gptq_config.weights_n_iter)
+                                                             norm_weights=self.gptq_config.hessian_weights_config.norm_weights,
+                                                             n_iter=self.gptq_config.hessian_weights_config.hessians_n_iter)
                 points_apprx_jacobians_weights.append(image_ip_gradients)
-            if self.gptq_config.log_norm:
+            if self.gptq_config.hessian_weights_config.log_norm:
                 mean_jacobian_weights = np.mean(points_apprx_jacobians_weights, axis=0)
                 mean_jacobian_weights = np.where(mean_jacobian_weights != 0, mean_jacobian_weights,
                                                  np.partition(mean_jacobian_weights, 1)[1])
                 log_weights = np.log10(mean_jacobian_weights)
 
-                # To add scaling to the normalized weights replace return statement with the following line:
-                # return log_weights - np.min(log_weights) / (np.max(log_weights) - np.min(log_weights))
+                if self.gptq_config.hessian_weights_config.scale_log_norm:
+                    return (log_weights - np.min(log_weights)) / (np.max(log_weights) - np.min(log_weights))
+
                 return log_weights - np.min(log_weights)
             else:
                 return np.mean(points_apprx_jacobians_weights, axis=0)

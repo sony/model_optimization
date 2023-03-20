@@ -109,7 +109,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
-        self.weights_for_average_loss = self.compute_jacobian_based_weights(representative_data_gen)
+        self.weights_for_average_loss = self.compute_hessian_based_weights(representative_data_gen)
 
         self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
 

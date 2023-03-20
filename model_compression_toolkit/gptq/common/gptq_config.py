@@ -29,6 +29,35 @@ class RoundingType(Enum):
     SoftQuantizer = 1
 
 
+class GPTQHessianWeightsConfig:
+    """
+    Configuration to use for computing the Hessian-based weights for GPTQ loss metric.
+    """
+
+    def __init__(self,
+                 hessians_num_samples: int = 16,
+                 norm_weights: bool = True,
+                 log_norm: bool = True,
+                 scale_log_norm: bool = False,
+                 hessians_n_iter: int = 50):
+
+        """
+        Initialize a GPTQHessianWeightsConfig.
+        Args:
+            hessians_num_samples (int): Number of samples to use for computing the Hessian-based weights.
+            norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
+            log_norm (bool): Whether to use log normalization to the GPTQ Hessian-based weights.
+            scale_log_norm (bool): Whether to scale the final vector of the Hessian weights.
+            hessians_n_iter (int): Number of random iterations to run Hessian approximation for GPTQ weights.
+        """
+
+        self.hessians_num_samples = hessians_num_samples
+        self.norm_weights = norm_weights
+        self.log_norm = log_norm
+        self.scale_log_norm = scale_log_norm
+        self.hessians_n_iter = hessians_n_iter
+
+
 class GradientPTQConfig:
     """
     Configuration to use for quantization with GradientPTQ (experimental).
@@ -44,15 +73,11 @@ class GradientPTQConfig:
                  quantization_parameters_learning: bool = False,
                  rounding_type: RoundingType = RoundingType.SoftQuantizer,
                  lsb_change_per_bit_width: dict = DefaultDict({}, lambda: 1),
-                 eps: float = 1e-6,
-                 use_jac_based_weights: bool = True,
-                 num_samples_for_loss: int = 16,
-                 norm_weights: bool = False,
+                 use_hessian_based_weights: bool = True,
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
-                 log_norm: bool = True,
-                 weights_n_iter: int = 50,
-                 regularization_factor: float = REG_DEFAULT):
+                 regularization_factor: float = REG_DEFAULT,
+                 hessian_weights_config: GPTQHessianWeightsConfig = GPTQHessianWeightsConfig()):
         """
         Initialize a GradientPTQConfig.
 
@@ -68,15 +93,11 @@ class GradientPTQConfig:
             quantization_parameters_learning (bool): Whether to update the quantization param during the training or not.
             rounding_type (RoundingType): An enum that defines the rounding type.
             lsb_change_per_bit_width (dict): Whether to update the bias during the training or not.
-            eps (float): A floating point value for numeric stability.
-            use_jac_based_weights (bool): Whether to use jacobian-based weights for weighted average loss.
-            num_samples_for_loss (int): Number of samples to use for computing the jacobian-based weights.
-            norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
+            use_hessian_based_weights (bool): Whether to use Hessian-based weights for weighted average loss.
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizer for bias.
-            log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
-            weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
             regularization_factor (float): A floating point number that defines the regularization factor.
+            hessian_weights_config (GPTQHessianWeightsConfig): A configuration that include all necessary arguments to run a computation of Hessian weights for the GPTQ loss.
 
         """
         self.n_iter = n_iter
@@ -92,15 +113,11 @@ class GradientPTQConfig:
         self.quantization_parameters_learning = quantization_parameters_learning
         self.rounding_type = rounding_type
         self.lsb_change_per_bit_width = lsb_change_per_bit_width
-        self.eps = eps
-        self.use_jac_based_weights = use_jac_based_weights
-        self.num_samples_for_loss = num_samples_for_loss
-        self.norm_weights = norm_weights
+        self.use_hessian_based_weights = use_hessian_based_weights
         self.optimizer_quantization_parameter = optimizer_quantization_parameter
         self.optimizer_bias = optimizer_bias
-        self.log_norm = log_norm
-        self.weights_n_iter = weights_n_iter
         self.regularization_factor = regularization_factor
+        self.hessian_weights_config = hessian_weights_config
 
 
 class GradientPTQConfigV2(GradientPTQConfig):
@@ -117,15 +134,11 @@ class GradientPTQConfigV2(GradientPTQConfig):
                  quantization_parameters_learning: bool = False,
                  rounding_type: RoundingType = RoundingType.SoftQuantizer,
                  lsb_change_per_bit_width: dict = DefaultDict({}, lambda: 1),
-                 eps: float = 1e-6,
-                 use_jac_based_weights: bool = True,
-                 num_samples_for_loss: int = 16,
-                 norm_weights: bool = False,
+                 use_hessian_based_weights: bool = True,
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
-                 log_norm: bool = True,
-                 weights_n_iter: int = 50,
-                 regularization_factor: float = REG_DEFAULT):
+                 regularization_factor: float = REG_DEFAULT,
+                 hessian_weights_config: GPTQHessianWeightsConfig = GPTQHessianWeightsConfig()):
         """
         Initialize a GradientPTQConfigV2.
 
@@ -141,15 +154,11 @@ class GradientPTQConfigV2(GradientPTQConfig):
             quantization_parameters_learning (bool): Whether to update the quantization param during the training or not.
             rounding_type (RoundingType): An enum that defines the rounding type.
             lsb_change_per_bit_width (dict): Whether to update the bias during the training or not.
-            eps (float): A floating point value for numeric stability.
-            use_jac_based_weights (bool): Whether to use jacobian-based weights for weighted average loss.
-            num_samples_for_loss (int): Number of samples to use for computing the jacobian-based weights.
-            norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
+            use_hessian_based_weights (bool): Whether to use Hessian-based weights for weighted average loss.
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
-            log_norm (bool): Whether to use log normalization to the GPTQ Jacobian-based weights.
-            weights_n_iter (int): Number of random iterations to run Jacobian approximation for GPTQ weights.
             regularization_factor (float): A floating point number that defines the regularization factor.
+            hessian_weights_config (GPTQHessianWeightsConfig): A configuration that include all necessary arguments to run a computation of Hessian weights for the GPTQ loss.
 
         """
 
@@ -162,15 +171,11 @@ class GradientPTQConfigV2(GradientPTQConfig):
                          quantization_parameters_learning=quantization_parameters_learning,
                          rounding_type=rounding_type,
                          lsb_change_per_bit_width=lsb_change_per_bit_width,
-                         eps=eps,
-                         use_jac_based_weights=use_jac_based_weights,
-                         num_samples_for_loss=num_samples_for_loss,
-                         norm_weights=norm_weights,
+                         use_hessian_based_weights=use_hessian_based_weights,
                          optimizer_quantization_parameter=optimizer_quantization_parameter,
                          optimizer_bias=optimizer_bias,
-                         log_norm=log_norm,
-                         weights_n_iter=weights_n_iter,
-                         regularization_factor=regularization_factor)
+                         regularization_factor=regularization_factor,
+                         hessian_weights_config=hessian_weights_config)
         self.n_epochs = n_epochs
 
     @classmethod
