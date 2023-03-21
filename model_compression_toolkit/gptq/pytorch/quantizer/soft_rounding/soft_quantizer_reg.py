@@ -20,7 +20,6 @@ from torch import nn
 
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-from model_compression_toolkit.gptq.common.gptq_constants import GPTQ_ITER
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
 
@@ -46,7 +45,7 @@ class LinearTempDecay:
         self.start_b = start_b
         self.end_b = end_b
 
-    def __call__(self, t: nn.Parameter) -> float:
+    def __call__(self, t: float) -> float:
         """
         Cosine annealing scheduler for soft quantizer regularization temperature term.
 
@@ -56,13 +55,14 @@ class LinearTempDecay:
         Returns: Scheduled temperature.
         """
 
-        is_before_start_decay = (t < self.start_decay).to(torch.float32)
+        is_before_start_decay = (t < self.start_decay)
 
         rel_t = (t - self.start_decay) / (self.t_max - self.start_decay)
 
         return self.start_b * is_before_start_decay + \
                (1 - is_before_start_decay) * \
-               (self.end_b + (self.start_b - self.end_b) * torch.maximum(to_torch_tensor(np.array([0.0])), (1 - rel_t)))
+               (self.end_b + (self.start_b - self.end_b) * torch.maximum(to_torch_tensor(np.array([0.0])),
+                                                                         to_torch_tensor(np.array((1 - rel_t)))))
 
 
 class SoftQuantizerRegularization:
@@ -80,6 +80,8 @@ class SoftQuantizerRegularization:
 
         # Initializing the temperature decay according to the number of expected gradient steps
         self.linear_decay = LinearTempDecay(total_gradient_steps)
+
+        self.count_iter = 0
 
     def __call__(self, model: nn.Module, entropy_reg: float):
         """
@@ -99,7 +101,7 @@ class SoftQuantizerRegularization:
                                                                       fw_info=DEFAULT_PYTORCH_INFO)
 
                 st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
-                b = self.linear_decay(layer.weights_quantizers[kernel_attribute].get_quantizer_variable(GPTQ_ITER))
+                b = self.linear_decay(self.count_iter)
 
                 soft_reg_aux.append((1 - torch.pow(torch.abs(st - .5) * 2, b)).sum())
 
@@ -107,5 +109,7 @@ class SoftQuantizerRegularization:
 
         for sq in soft_reg_aux:
             reg += sq
+
+        self.count_iter += 1
 
         return entropy_reg * reg

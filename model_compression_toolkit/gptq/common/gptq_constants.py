@@ -2,7 +2,6 @@
 AUXVAR = 'auxvar_tensor'
 ITERVAR = 'iteration_variable'
 SCALE_TENSOR = "scale_ptq_tensor"
-GPTQ_ITER = "gptq_iter"
 AUXSHIFT = 'shift'
 WEIGHTS_QUANTIZATION_PARAMS = 'weights_quantization_params'
 PTQ_MIN_RANGE = "min_range"

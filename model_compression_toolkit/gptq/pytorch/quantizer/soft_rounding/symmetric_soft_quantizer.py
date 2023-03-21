@@ -26,7 +26,7 @@ from model_compression_toolkit.gptq.pytorch.quantizer.base_pytorch_gptq_quantize
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from model_compression_toolkit.gptq.pytorch.quantizer import quant_utils as qutils
 from model_compression_toolkit.gptq.common.gptq_constants import PTQ_THRESHOLD, SCALE_PTQ, \
-    SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, GPTQ_ITER, AUXVAR
+    SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, AUXVAR
 from model_compression_toolkit.core.common.constants import THRESHOLD, MIN_THRESHOLD
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
@@ -119,8 +119,6 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
             name: Tensor name.
             layer: Layer to quantize.
         """
-        layer.register_parameter(f"{name}_{GPTQ_ITER}",
-                                 nn.Parameter(to_torch_tensor(np.array([0])), requires_grad=False))
 
         if self.per_channel:
             threshold_tensor = to_torch_tensor(self.threshold_values)
@@ -142,7 +140,6 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         # save the quantizer added parameters for later calculations
         self.add_quantizer_variable(PTQ_THRESHOLD, layer.get_parameter(f"{name}_{PTQ_THRESHOLD}"), VariableGroup.QPARAMS)
         self.add_quantizer_variable(AUXVAR, layer.get_parameter(f"{name}_{AUXVAR}"), VariableGroup.WEIGHTS)
-        self.add_quantizer_variable(GPTQ_ITER, layer.get_parameter(f"{name}_{GPTQ_ITER}"), VariableGroup.WEIGHTS)
 
         if self.quantization_parameter_learning:
             layer.register_parameter(f"{name}_{SCALE_PTQ}",
@@ -194,7 +191,6 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         Returns:
             quantized tensor
         """
-        ar_iter = self.get_quantizer_variable(GPTQ_ITER)
         auxvar = self.get_quantizer_variable(AUXVAR)
         ptq_threshold_tensor = self.get_quantizer_variable(PTQ_THRESHOLD)
 
@@ -202,9 +198,7 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         # Soft Rounding
         #####################################################
         aux_var = self.get_soft_targets()
-        if training:
-            ar_iter.set_(ar_iter + 1)
-        else:
+        if not training:
             aux_var = (aux_var >= 0.5).to(auxvar.dtype)
 
         if self.per_channel:

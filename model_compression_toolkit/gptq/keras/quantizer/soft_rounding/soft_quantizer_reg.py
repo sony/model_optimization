@@ -18,7 +18,6 @@ import tensorflow as tf
 from keras import Model
 
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.gptq.common.gptq_constants import GPTQ_ITER
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 
@@ -78,6 +77,8 @@ class SoftQuantizerRegularization:
         # Initializing the temperature decay according to the number of expected gradient steps
         self.linear_decay = LinearTempDecay(total_gradient_steps)
 
+        self.count_iter = 0
+
 
     def __call__(self, model: Model, entropy_reg: float):
         """
@@ -97,7 +98,7 @@ class SoftQuantizerRegularization:
                                                                       fw_info=DEFAULT_KERAS_INFO)
 
                 st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
-                b = self.linear_decay(layer.weights_quantizers[kernel_attribute].get_quantizer_variable(GPTQ_ITER).value())
+                b = self.linear_decay(self.count_iter)
 
                 soft_reg_aux.append(tf.reduce_sum(1 - tf.pow(tf.math.abs(st - .5) * 2, b)))
 
@@ -105,5 +106,7 @@ class SoftQuantizerRegularization:
 
         for sq in soft_reg_aux:
             reg += sq
+
+        self.count_iter += 1
 
         return entropy_reg * reg
