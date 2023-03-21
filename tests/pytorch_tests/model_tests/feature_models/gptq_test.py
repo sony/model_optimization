@@ -25,7 +25,8 @@ from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig,
     GPTQHessianWeightsConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
-
+from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 tp = mct.target_platform
 
@@ -48,15 +49,16 @@ class TestModel(nn.Module):
 
 
 class GPTQBaseTest(BasePytorchFeatureNetworkTest):
-    def __init__(self, unit_test, experimental_exporter=False, quant_method=QuantizationMethod.SYMMETRIC,
+    def __init__(self, unit_test, experimental_exporter=False, weights_bits=8, weights_quant_method=QuantizationMethod.SYMMETRIC,
                  rounding_type=RoundingType.STE, per_channel=True,
                  hessian_weights=True, log_norm_weights=True, scaled_log_norm=False, params_learning=True):
         super().__init__(unit_test, input_shape=(3, 16, 16))
         self.seed = 0
         self.experimental_exporter = experimental_exporter
         self.rounding_type = rounding_type
+        self.weights_bits = weights_bits
+        self.weights_quant_method = weights_quant_method
         self.per_channel = per_channel
-        self.quant_method = quant_method
         self.hessian_weights = hessian_weights
         self.log_norm_weights = log_norm_weights
         self.scaled_log_norm = scaled_log_norm
@@ -71,6 +73,12 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
 
     def create_networks(self):
         return TestModel()
+
+    def get_tpc(self):
+        return generate_pytorch_tpc(
+            name="gptq_test",
+            tp_model=generate_test_tp_model({'weights_n_bits': self.weights_bits,
+                                             'weights_quantization_method': self.weights_quant_method}))
 
     def gptq_compare(self, ptq_model, gptq_model, input_x=None):
         pass
