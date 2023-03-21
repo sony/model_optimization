@@ -21,7 +21,7 @@ import tensorflow as tf
 from model_compression_toolkit.gptq import RoundingType
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.gptq.common.gptq_constants import GPTQ_ITER, AUXVAR, PTQ_THRESHOLD
+from model_compression_toolkit.gptq.common.gptq_constants import AUXVAR, PTQ_THRESHOLD
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 from model_compression_toolkit.core.common.constants import THRESHOLD
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
@@ -111,12 +111,6 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
             layer: Layer to quantize.
         """
 
-        ar_iter = layer.add_weight(
-            f"{name}_{GPTQ_ITER}",
-            shape=(),
-            initializer=tf.keras.initializers.Constant(0.0),
-            trainable=False)
-
         ptq_threshold_tensor = layer.add_weight(
             f"{name}_{PTQ_THRESHOLD}",
             shape=len(self.threshold_values) if self.per_channel else (),
@@ -134,8 +128,6 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
         # save the quantizer added parameters for later calculations
         self.add_quantizer_variable(PTQ_THRESHOLD, ptq_threshold_tensor, VariableGroup.QPARAMS)
         self.add_quantizer_variable(AUXVAR, auxvar_tensor, VariableGroup.WEIGHTS)
-        self.add_quantizer_variable(GPTQ_ITER, ar_iter, VariableGroup.QPARAMS)
-
 
     def __call__(self,
                  inputs: tf.Tensor,

@@ -18,7 +18,6 @@ import tensorflow as tf
 from keras import Model
 
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.gptq.common.gptq_constants import GPTQ_ITER
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 
@@ -63,35 +62,51 @@ class LinearTempDecay:
                (self.end_b + (self.start_b - self.end_b) * tf.math.maximum(0.0, (1 - rel_t)))
 
 
-def soft_quantizer_regularization(model: Model, entropy_reg: float, total_gradient_steps: int) -> float:
+class SoftQuantizerRegularization:
     """
-    Returns the soft quantizer regularization value for SoftRounding.
-
-    Args:
-        model: A model to be quantized with SoftRounding.
-        entropy_reg: Entropy value to scale the quantizer regularization.
-        total_gradient_steps: The number of gradient steps during optimization.
-
-    Returns: Regularization value.
+    A class to handle the computation of soft quantizer regularization for GPTQ training.
     """
 
-    # Initializing the temperature decay according to the number of expected gradient steps
-    linear_decay = LinearTempDecay(total_gradient_steps)
+    def __init__(self, total_gradient_steps: int):
+        """
+        Initializes the regularization computation object with a LinearDecay object.
 
-    soft_reg_aux: List[tf.Tensor] = []
-    for layer in model.layers:
-        if isinstance(layer, KerasQuantizationWrapper):
-            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
-                                                                  fw_info=DEFAULT_KERAS_INFO)
+        Args:
+            total_gradient_steps: The number of gradient steps during optimization.
+        """
+        # Initializing the temperature decay according to the number of expected gradient steps
+        self.linear_decay = LinearTempDecay(total_gradient_steps)
 
-            st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
-            b = linear_decay(layer.weights_quantizers[kernel_attribute].get_quantizer_variable(GPTQ_ITER).value())
+        self.count_iter = 0
 
-            soft_reg_aux.append(tf.reduce_sum(1 - tf.pow(tf.math.abs(st - .5) * 2, b)))
 
-    reg = 0
+    def __call__(self, model: Model, entropy_reg: float):
+        """
+        Returns the soft quantizer regularization value for SoftRounding.
 
-    for sq in soft_reg_aux:
-        reg += sq
+        Args:
+            model: A model to be quantized with SoftRounding.
+            entropy_reg: Entropy value to scale the quantizer regularization.
 
-    return entropy_reg * reg
+        Returns: Regularization value.
+        """
+
+        soft_reg_aux: List[tf.Tensor] = []
+        for layer in model.layers:
+            if isinstance(layer, KerasQuantizationWrapper):
+                kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
+                                                                      fw_info=DEFAULT_KERAS_INFO)
+
+                st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
+                b = self.linear_decay(self.count_iter)
+
+                soft_reg_aux.append(tf.reduce_sum(1 - tf.pow(tf.math.abs(st - .5) * 2, b)))
+
+        reg = 0
+
+        for sq in soft_reg_aux:
+            reg += sq
+
+        self.count_iter += 1
+
+        return entropy_reg * reg

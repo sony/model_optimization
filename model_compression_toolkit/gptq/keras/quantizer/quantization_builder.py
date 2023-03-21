@@ -61,7 +61,7 @@ def quantization_builder(n: common.BaseNode,
                                                               fw_info=DEFAULT_KERAS_INFO)
 
         weights_quantizers.update({kernel_attribute: quantizer_class(get_trainable_quantizer_weights_config(n),
-                                                                     **gptq_config.get_extended_quantizer_parametes())})
+                                                                     **gptq_config.gptq_quantizer_params_override)})
 
     activation_quantizers = []
     if n.is_activation_quantization_enabled():

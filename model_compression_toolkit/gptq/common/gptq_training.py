@@ -20,6 +20,7 @@ from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common import Graph, Logger, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR
 from model_compression_toolkit.gptq.common.gptq_graph import get_compare_points
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 
@@ -82,8 +83,10 @@ class GPTQTrainer(ABC):
 
         w2train = [*flattened_trainable_weights]
 
+        quant_params_learning = self.gptq_config.gptq_quantizer_params_override.get(QUANT_PARAM_LEARNING_STR, False)
+
         optimizer_with_param = [(self.gptq_config.optimizer, w2train)]
-        if self.gptq_config.train_bias or self.gptq_config.quantization_parameters_learning:
+        if self.gptq_config.train_bias or quant_params_learning:
             w2train_res = []
             if self.gptq_config.train_bias:
                 if self.gptq_config.optimizer_bias is not None:
@@ -93,7 +96,7 @@ class GPTQTrainer(ABC):
                     if self.gptq_config.optimizer_rest is None:
                         Logger.error(  # pragma: no cover
                             "To enable bias micro training an additional optimizer is required, please define the optimizer_rest")
-            if self.gptq_config.quantization_parameters_learning:
+            if quant_params_learning:
                 if self.gptq_config.optimizer_quantization_parameter is not None:  # Ability to override optimizer
                     optimizer_with_param.append((self.gptq_config.optimizer_quantization_parameter,
                                                  trainable_quantization_parameters))

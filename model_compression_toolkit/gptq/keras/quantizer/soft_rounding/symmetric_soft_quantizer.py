@@ -21,7 +21,7 @@ from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common import max_power_of_two
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_constants import PTQ_THRESHOLD, SCALE_PTQ, \
-    SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, GPTQ_ITER, AUXVAR
+    SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, AUXVAR
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 from typing import Dict, Any
 from model_compression_toolkit.core.common.constants import THRESHOLD, MIN_THRESHOLD
@@ -126,12 +126,6 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
         else:
             reshape_shape = [self.num_channels]
 
-        ar_iter = layer.add_weight(
-            f"{name}_{GPTQ_ITER}",
-            shape=(),
-            initializer=tf.keras.initializers.Constant(0.0),
-            trainable=False)
-
         ptq_threshold_tensor = layer.add_weight(
             f"{name}_{PTQ_THRESHOLD}",
             shape=reshape_shape,
@@ -158,7 +152,6 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
         # Add quantization variables
         self.add_quantizer_variable(AUXVAR, auxvar_tensor, VariableGroup.WEIGHTS)
         self.add_quantizer_variable(PTQ_THRESHOLD, ptq_threshold_tensor, VariableGroup.QPARAMS)
-        self.add_quantizer_variable(GPTQ_ITER, ar_iter, VariableGroup.QPARAMS)
 
         if self.quantization_parameter_learning and not self.power_of_two:
             scale = layer.add_weight(
@@ -193,7 +186,6 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
             The quantized tensor.
         """
 
-        self.ar_iter = self.get_quantizer_variable(GPTQ_ITER)
         ptq_threshold_tensor = self.get_quantizer_variable(PTQ_THRESHOLD)
 
         if self.per_channel:
@@ -210,9 +202,7 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
             #####################################################
             # Soft Rounding
             #####################################################
-            if training:
-                self.ar_iter.assign_add(1.0)
-            else:
+            if not training:
                 aux_var = tf.cast(tf.math.greater_equal(aux_var, 0.5), tf.float32)
 
             #####################################################

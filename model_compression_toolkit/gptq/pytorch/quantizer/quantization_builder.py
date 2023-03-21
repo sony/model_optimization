@@ -59,7 +59,7 @@ def quantization_builder(n: common.BaseNode,
                                                         quant_method=quant_method,
                                                         quantizer_base_class=BasePytorchGPTQTrainableQuantizer)
         weights_quantizers.update({KERNEL: quantizer_class(get_trainable_quantizer_weights_config(n),
-                                                           **gptq_config.get_extended_quantizer_parametes())})
+                                                           **gptq_config.gptq_quantizer_params_override)})
     activation_quantizers = []
     if n.is_activation_quantization_enabled():
         quant_method = n.final_activation_quantization_cfg.activation_quantization_method
