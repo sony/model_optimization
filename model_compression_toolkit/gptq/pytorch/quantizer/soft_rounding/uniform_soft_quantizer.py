@@ -17,7 +17,6 @@ import torch.nn as nn
 from typing import Dict
 import numpy as np
 
-from model_compression_toolkit.core.common import max_power_of_two
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
@@ -27,11 +26,10 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_
 from model_compression_toolkit.gptq.pytorch.quantizer import quant_utils as qutils
 from model_compression_toolkit.gptq.common.gptq_constants import SCALE_PTQ, \
     SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, AUXVAR
+from model_compression_toolkit.gptq.pytorch.quantizer.quant_utils import fix_range_to_include_zero
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import \
     mark_quantizer
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.quant_utils import \
-    get_threshold_reshape_shape
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import \
     VariableGroup
 from model_compression_toolkit.core.common.constants import RANGE_MAX, RANGE_MIN
@@ -55,7 +53,9 @@ def soft_rounding_unifrom_quantizer(input_tensor: torch.Tensor,
     Returns:
         A quantized tensor.
     """
-    delta = qutils.calculate_delta(max_range-min_range, num_bits, False)
+    # adjusts the quantization range so the quantization grid includes zero.
+    min_range, max_range = fix_range_to_include_zero(min_range, max_range, num_bits)
+    delta = qutils.calculate_delta_uniform(max_range, min_range, num_bits)
     with torch.no_grad():
         input_tensor_int = torch.floor(input_tensor / delta)
     tensor_q = input_tensor_int + auxvar_tensor
@@ -80,7 +80,7 @@ class UniformSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
 
         Args:
             quantization_config: Trainable weights quantizer config.
-            quantization_parameter_learning (Bool): Whether to learn the threshold or not
+            quantization_parameter_learning (Bool): Whether to learn the min/max ranges or not
         """
 
         super().__init__(quantization_config)
