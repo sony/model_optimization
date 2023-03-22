@@ -30,9 +30,18 @@ def calculate_delta(max_tensor: torch.Tensor,
                     num_bits: int,
                     signed: bool) -> torch.Tensor:
     """
-    Compute the step size for the quantization.
+    Compute the step size for the symmetric quantization.
     """
     return max_tensor / (2 ** (num_bits - int(signed)))
+
+
+def calculate_delta_uniform(min_tensor: torch.Tensor,
+                            max_tensor: torch.Tensor,
+                            num_bits: int) -> torch.Tensor:
+    """
+    Compute the step size for the uniform quantization.
+    """
+    return (max_tensor-min_tensor) / (2 ** num_bits - 1)
 
 
 def ste_ceil(x: torch.Tensor) -> torch.Tensor:

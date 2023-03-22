@@ -74,6 +74,7 @@ from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccurac
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
 from tests.pytorch_tests.model_tests.feature_models.old_api_test import OldApiTest
+from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 
 class FeatureModelsTestRunner(unittest.TestCase):
 
@@ -462,6 +463,14 @@ class FeatureModelsTestRunner(unittest.TestCase):
                          per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
         GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
         GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, weights_quant_method=QuantizationMethod.UNIFORM).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, weights_quant_method=QuantizationMethod.UNIFORM, per_channel=False, params_learning=False).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, weights_quant_method=QuantizationMethod.UNIFORM,
+                         per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
+        GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer, weights_quant_method=QuantizationMethod.UNIFORM).run_test()
+        GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer, weights_quant_method=QuantizationMethod.UNIFORM).run_test()
+
 
     def test_qat(self):
         """
