@@ -24,8 +24,7 @@ from model_compression_toolkit.gptq.pytorch.quantizer.base_pytorch_gptq_quantize
     BasePytorchGPTQTrainableQuantizer
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from model_compression_toolkit.gptq.pytorch.quantizer import quant_utils as qutils
-from model_compression_toolkit.gptq.common.gptq_constants import SCALE_PTQ, \
-    SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, AUXVAR
+from model_compression_toolkit.gptq.common.gptq_constants import SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, AUXVAR
 from model_compression_toolkit.gptq.pytorch.quantizer.quant_utils import fix_range_to_include_zero
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import \
@@ -119,8 +118,8 @@ class UniformSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
             min_values = torch.tensor(self.min_values)
             max_values = torch.tensor(self.max_values)
 
-        layer.register_parameter(name+"_"+FQ_MIN, nn.Parameter(min_values, requires_grad=False))
-        layer.register_parameter(name+"_"+FQ_MAX, nn.Parameter(max_values, requires_grad=False))
+        layer.register_parameter(name+"_"+FQ_MIN, nn.Parameter(min_values, requires_grad=self.quantization_parameter_learning))
+        layer.register_parameter(name+"_"+FQ_MAX, nn.Parameter(max_values, requires_grad=self.quantization_parameter_learning))
 
         w = layer.layer.weight
         delta = qutils.calculate_delta(max_values-min_values, self.num_bits, signed=False)
@@ -134,9 +133,6 @@ class UniformSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         self.add_quantizer_variable(FQ_MAX, layer.get_parameter(name+"_"+FQ_MAX), VariableGroup.QPARAMS)
         self.add_quantizer_variable(AUXVAR, layer.get_parameter(f"{name}_{AUXVAR}"), VariableGroup.WEIGHTS)
 
-        if self.quantization_parameter_learning:
-            layer.register_parameter(f"{name}_{SCALE_PTQ}", nn.Parameter(torch.ones_like(torch.Tensor(min_values)), requires_grad=True))
-            self.add_quantizer_variable(SCALE_PTQ, layer.get_parameter(f"{name}_{SCALE_PTQ}"), VariableGroup.QPARAMS)
 
     def get_soft_targets(self) -> torch.Tensor:
         """
@@ -160,11 +156,6 @@ class UniformSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         """
         min_values = torch_tensor_to_numpy(self.get_quantizer_variable(FQ_MIN))
         max_values = torch_tensor_to_numpy(self.get_quantizer_variable(FQ_MAX))
-        if self.quantization_parameter_learning:
-            scale = torch_tensor_to_numpy(self.get_quantizer_variable(SCALE_PTQ))
-            min_values = scale * min_values
-            max_values = scale * max_values
-
         return {RANGE_MIN:  min_values,
                 RANGE_MAX:  max_values}
 
@@ -200,10 +191,6 @@ class UniformSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
                                                    min_range=min_range,
                                                    max_range=max_range,
                                                    num_bits=self.num_bits)
-
-        if self.quantization_parameter_learning:
-            scale = self.get_quantizer_variable(SCALE_PTQ)
-            q_tensor *= scale
 
 
         return q_tensor
