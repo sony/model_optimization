@@ -188,6 +188,13 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
 
         ptq_threshold_tensor = self.get_quantizer_variable(PTQ_THRESHOLD)
 
+        #####################################################
+        # Soft Rounding
+        #####################################################
+        aux_var = self.get_soft_targets()
+        if not training:
+            aux_var = tf.cast(tf.math.greater_equal(aux_var, 0.5), tf.float32)
+
         if self.per_channel:
             reshape_shape = get_threshold_reshape_shape(inputs.shape,
                                                         quant_axis=self.quantization_axis,
@@ -197,13 +204,6 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
             # Calculate soft rounding targets and optimized threshold
             ##########################################################
             ptq_threshold_tensor_hat = tf.reshape(ptq_threshold_tensor, reshape_shape)
-            aux_var = self.get_soft_targets()
-
-            #####################################################
-            # Soft Rounding
-            #####################################################
-            if not training:
-                aux_var = tf.cast(tf.math.greater_equal(aux_var, 0.5), tf.float32)
 
             #####################################################
             # Quantized Input
@@ -219,14 +219,19 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
                 scale = tf.reshape(self.get_quantizer_variable(SCALE_PTQ), reshape_shape)
                 q_tensor *= scale
 
-            return q_tensor
         else:
-            return soft_rounding_symmetric_quantizer(input_tensor=inputs,
-                                                     auxvar_tensor=self.get_quantizer_variable(AUXVAR),
-                                                     threshold_tensor=ptq_threshold_tensor.value(),
-                                                     num_bits=self.num_bits,
-                                                     signed=True,
-                                                     power_of_two=self.power_of_two)
+            q_tensor = soft_rounding_symmetric_quantizer(input_tensor=inputs,
+                                                         auxvar_tensor=self.get_quantizer_variable(AUXVAR),
+                                                         threshold_tensor=ptq_threshold_tensor.value(),
+                                                         num_bits=self.num_bits,
+                                                         signed=True,
+                                                         power_of_two=self.power_of_two)
+
+            if self.quantization_parameter_learning and not self.power_of_two:
+                scale = self.get_quantizer_variable(SCALE_PTQ)
+                q_tensor *= scale
+
+        return q_tensor
 
     def get_quant_config(self) -> Dict[str, np.ndarray]:
         """
