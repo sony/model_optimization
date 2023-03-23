@@ -221,7 +221,7 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
 
         else:
             q_tensor = soft_rounding_symmetric_quantizer(input_tensor=inputs,
-                                                         auxvar_tensor=self.get_quantizer_variable(AUXVAR),
+                                                         auxvar_tensor=aux_var,
                                                          threshold_tensor=ptq_threshold_tensor.value(),
                                                          num_bits=self.num_bits,
                                                          signed=True,
