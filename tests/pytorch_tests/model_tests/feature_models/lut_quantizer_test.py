@@ -79,9 +79,10 @@ class LUTWeightsQuantizerTest(BasePytorchTest):
     We check that the weights have different values for conv1 and conv2, and that conv2 and conv3 have the same
     values.
     """
-    def __init__(self, unit_test, weights_n_bits=4):
+    def __init__(self, unit_test, weights_n_bits=4, quant_method=tp.QuantizationMethod.LUT_POT_QUANTIZER):
         super().__init__(unit_test)
         self.weights_n_bits = weights_n_bits
+        self.quant_method = quant_method
         self.node_to_change_name = 'conv1'
         self.num_conv_channels = 3
         self.kernel = 3
@@ -95,7 +96,7 @@ class LUTWeightsQuantizerTest(BasePytorchTest):
     def get_core_configs(self):
         network_editor = [EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                    action=ChangeCandidatesWeightsQuantizationMethod(
-                                       weights_quantization_method=tp.QuantizationMethod.LUT_POT_QUANTIZER))]
+                                       weights_quantization_method=self.quant_method))]
         return {'lut_quantizer_test': mct.CoreConfig(quantization_config=mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
                                                                                                 mct.QuantizationErrorMethod.MSE),
                                                      debug_config=mct.DebugConfig(network_editor=network_editor))}
@@ -108,11 +109,13 @@ class LUTWeightsQuantizerTest(BasePytorchTest):
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         quantized_model = quantized_models.get('lut_quantizer_test')
-        self.unit_test.assertTrue(np.sum(
-            np.abs(torch_tensor_to_numpy(quantized_model.conv1.weight) - torch_tensor_to_numpy(
-                quantized_model.conv2.weight))) > 0)
-        self.unit_test.assertFalse(np.sum(
-            np.abs(torch_tensor_to_numpy(quantized_model.conv2.weight) - torch_tensor_to_numpy(quantized_model.conv3.weight))) > 0)
+        q_weight1 = quantized_model.conv1.get_quantized_weights()['weight']
+        q_weight2 = quantized_model.conv2.get_quantized_weights()['weight']
+        self.unit_test.assertTrue(np.sum(np.abs(torch_tensor_to_numpy(q_weight1) -
+                                                torch_tensor_to_numpy(q_weight2))) > 0)
+        q_weight3 = quantized_model.conv3.get_quantized_weights()['weight']
+        self.unit_test.assertFalse(np.sum(np.abs(torch_tensor_to_numpy(q_weight3) -
+                                                 torch_tensor_to_numpy(q_weight3))) > 0)
 
 
 class LUTActivationQuantizerTest(BasePytorchTest):
@@ -120,7 +123,8 @@ class LUTActivationQuantizerTest(BasePytorchTest):
     This test checks that activation are quantized correctly using LUT quantizer
     """
     def __init__(self, unit_test, activation_n_bits=4):
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         experimental_exporter=False)  # remove experimental_exporter when activation lut quantizer is added to inferable quantizers
         self.activation_n_bits = activation_n_bits
         self.kernel = 3
         self.num_conv_channels = 3

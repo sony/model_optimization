@@ -274,6 +274,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         values.
         """
         LUTWeightsQuantizerTest(self).run_test()
+        LUTWeightsQuantizerTest(self, quant_method=mct.target_platform.QuantizationMethod.LUT_SYM_QUANTIZER).run_test()
 
     def test_lut_activation_quantizer(self):
         """
