@@ -65,13 +65,9 @@ class DwConv2dReplacementTest(BasePytorchTest):
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         quantized_model = quantized_models.get('no_quantization')
-        if self.experimental_exporter:
-            self.unit_test.assertTrue(isinstance(quantized_model.conv1, PytorchQuantizationWrapper))
-            self.unit_test.assertTrue(isinstance(quantized_model.conv1.layer, torch.nn.Conv2d))
-            self.unit_test.assertTrue(torch.all(quantized_model.conv1.layer.weight == 1))
-        else:
-            self.unit_test.assertTrue(isinstance(quantized_model.conv1, torch.nn.Conv2d))
-            self.unit_test.assertTrue(torch.all(quantized_model.conv1.weight == 1))
+        self.unit_test.assertTrue(isinstance(quantized_model.conv1, PytorchQuantizationWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.conv1.layer, torch.nn.Conv2d))
+        self.unit_test.assertTrue(torch.all(quantized_model.conv1.layer.weight == 1))
         self.unit_test.assertTrue(torch.all(torch.eq(quantized_model(input_x), input_x[0])))
 
 
