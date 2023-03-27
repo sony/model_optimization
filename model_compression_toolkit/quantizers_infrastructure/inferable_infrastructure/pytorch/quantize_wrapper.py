@@ -184,13 +184,11 @@ if FOUND_TORCH:
             return self._weights_vars
 
         def forward(self,
-                    x: torch.Tensor,
                     *args: List[Any],
                     **kwargs: Dict[str, Any]) -> Union[torch.Tensor, List[torch.Tensor]]:
             """
             PytorchQuantizationWrapper forward functions
             Args:
-                x: layer's inputs
                 args: arguments to pass to internal layer.
                 kwargs: key-word dictionary to pass to the internal layer.
 
@@ -218,7 +216,7 @@ if FOUND_TORCH:
             # ----------------------------------
             # Layer operation
             # ----------------------------------
-            outputs = self.layer(x, *args, **kwargs)
+            outputs = self.layer(*args, **kwargs)
 
             # ----------------------------------
             # Quantize all activations
