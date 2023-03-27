@@ -111,10 +111,8 @@ class GradientPTQConfig:
         self.regularization_factor = regularization_factor
         self.hessian_weights_config = hessian_weights_config
 
-        # Since the default quantizer is soft quantizer, we initialize the gptq_quantizer_params_override dictionary
-        # with its extended params
-        self.gptq_quantizer_params_override = {QUANT_PARAM_LEARNING_STR: False} \
-            if gptq_quantizer_params_override is None else gptq_quantizer_params_override
+        self.gptq_quantizer_params_override = {} if gptq_quantizer_params_override is None \
+            else gptq_quantizer_params_override
 
 
 class GradientPTQConfigV2(GradientPTQConfig):
