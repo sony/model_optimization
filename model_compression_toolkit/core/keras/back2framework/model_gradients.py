@@ -171,8 +171,9 @@ def keras_iterative_approx_jacobian_trace(graph_float: common.Graph,
 
                     # If the change to the mean Jacobian approximation is insignificant we stop the calculation
                     if j > MIN_JACOBIANS_ITER:
-                        delta = np.mean([jac_trace_approx, *trace_jv]) - np.mean(trace_jv)
-                        if np.abs(delta) / (np.abs(np.mean(trace_jv)) + 1e-6) < JACOBIANS_COMP_TOLERANCE:
+                        new_mean = np.mean([jac_trace_approx, *trace_jv])
+                        delta = new_mean - np.mean(trace_jv)
+                        if np.abs(delta) / (np.abs(new_mean) + 1e-6) < JACOBIANS_COMP_TOLERANCE:
                             trace_jv.append(jac_trace_approx)
                             break
 
