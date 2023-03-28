@@ -24,10 +24,6 @@ def model_test(input_shape, per_channel, num_channels=3, kernel_size=1):
     return wrap_test_model(model, per_channel)
 
 
-def generate_input():
-    return [np.ones([1, 2, 2, 2]).astype(np.float32)]
-
-
 def wrap_test_model(model, per_channel=False):
     tqwc = TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod.SYMMETRIC,
                                            weights_n_bits=8,
@@ -54,9 +50,26 @@ class TestGPTQSoftQuantizer(unittest.TestCase):
         input_shape = (1, 1, 1)
         in_model = model_test(input_shape, per_channel=False)
 
+        def _generate_input():
+            return [np.ones([1, 1, 1, 1]).astype(np.float32)]
+
         float_weights = [x[1] for x in in_model.layers[1]._weights_vars if x[0] == KERNEL][0]
-        out = in_model(generate_input())
+        out = in_model(_generate_input())
         self.assertTrue(np.any(float_weights != out))
 
-        out_t = in_model(generate_input(), training=True)
+        out_t = in_model(_generate_input(), training=True)
         self.assertTrue(np.all(float_weights == out_t))
+
+    def test_soft_targets_symmetric_per_channel(self):
+        input_shape = (2, 2, 2)
+        in_model = model_test(input_shape, per_channel=True, num_channels=1, kernel_size=2)
+
+        def _generate_input():
+            return [np.ones([1, 2, 2, 2]).astype(np.float32)]
+
+        float_weights = [x[1] for x in in_model.layers[1]._weights_vars if x[0] == KERNEL][0]
+        out = in_model(_generate_input())
+        self.assertFalse(np.isclose(np.sum(float_weights), out))
+
+        out_t = in_model(_generate_input(), training=True)
+        self.assertTrue(np.isclose(np.sum(float_weights), out_t))
