@@ -29,6 +29,7 @@ from tests.common_tests.function_tests.test_kpi_object import TestKPIObject
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
+from tests.pytorch_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer
 
 if FOUND_ONNX:
     from tests.pytorch_tests.function_tests.test_export_pytorch_fully_quantized_model import TestPyTorchFakeQuantExporter
@@ -152,6 +153,7 @@ if __name__ == '__main__':
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_resnet18', ModelTest))
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_shufflenet_v2_x1_0', ModelTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchTPModel))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQSoftQuantizer))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchInferableInfrastructureTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchTrainableInfrastructureTestRunner))
     # ----------------   Join them together and run them
