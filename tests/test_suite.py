@@ -29,7 +29,6 @@ from tests.common_tests.function_tests.test_kpi_object import TestKPIObject
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
-from tests.pytorch_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer
 
 if FOUND_ONNX:
     from tests.pytorch_tests.function_tests.test_export_pytorch_fully_quantized_model import TestPyTorchFakeQuantExporter
@@ -77,6 +76,7 @@ if found_tf:
         KerasInferableInfrastructureTestRunner
     from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.test_keras_trainable_infra_runner import \
         KerasTrainableInfrastructureTestRunner
+    from tests.keras_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -88,6 +88,7 @@ if found_pytorch:
         PytorchInferableInfrastructureTestRunner
     from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.pytorch.test_pytorch_trainable_infra_runner import \
         PytorchTrainableInfrastructureTestRunner
+    from tests.pytorch_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer
 
 
 if __name__ == '__main__':
@@ -135,6 +136,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQLossFunctions))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasInferableInfrastructureTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasTrainableInfrastructureTestRunner))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQSoftQuantizer))
 
         # Keras test layers are supported in TF2.6 or higher versions
         if version.parse(tf.__version__) >= version.parse("2.6"):
