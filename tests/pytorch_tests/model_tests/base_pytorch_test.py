@@ -35,7 +35,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                  unit_test,
                  float_reconstruction_error=1e-7,
                  convert_to_fx=True,
-                 experimental_exporter=False):
+                 experimental_exporter=True):
 
         super().__init__(unit_test)
         self.float_reconstruction_error = float_reconstruction_error

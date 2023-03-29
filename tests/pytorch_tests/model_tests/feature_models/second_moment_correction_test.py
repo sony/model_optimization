@@ -102,8 +102,8 @@ class BaseSecondMomentTest(BasePytorchTest):
         set_model(float_model)
         for model_name, quantized_model in quantized_models.items():
             set_model(quantized_model)
-            quantized_model_conv1_weight = quantized_model.conv1_bn_refused.weight.detach().cpu()
-            quantized_model_conv1_bias = quantized_model.conv1_bn_refused.bias.detach().cpu()
+            quantized_model_conv1_weight = quantized_model.conv1_bn_refused.layer.weight.detach().cpu()
+            quantized_model_conv1_bias = quantized_model.conv1_bn_refused.layer.bias.detach().cpu()
             float_model_weight = float_model.conv1.weight.detach().cpu()
             float_model_bias = float_model.conv1.bias.detach().cpu()
             float_model_gamma = float_model.bn.weight.detach().cpu()
@@ -230,8 +230,8 @@ class MultipleInputsConvSecondMomentNetTest(BaseSecondMomentTest):
         set_model(float_model)
         for model_name, quantized_model in quantized_models.items():
             set_model(quantized_model)
-            quantized_model_conv1_weight = quantized_model.conv1_bn_refused.weight.detach().cpu()
-            quantized_model_conv1_bias = quantized_model.conv1_bn_refused.bias.detach().cpu()
+            quantized_model_conv1_weight = quantized_model.conv1_bn_refused.layer.weight.detach().cpu()
+            quantized_model_conv1_bias = quantized_model.conv1_bn_refused.layer.bias.detach().cpu()
             float_model_weight1 = float_model.conv1.weight.detach().cpu()
             float_model_bias1 = float_model.conv1.bias.detach().cpu()
             float_model_gamma1 = float_model.bn1.weight.detach().cpu()
@@ -245,8 +245,8 @@ class MultipleInputsConvSecondMomentNetTest(BaseSecondMomentTest):
             calculated_kernel1 = float_model_weight1 * weight_scale1
             calculated_bias1 = float_model_beta1 + (float_model_bias1 - input_mean1) * weight_scale1
 
-            quantized_model_conv2_weight = quantized_model.conv2_bn_refused.weight.detach().cpu()
-            quantized_model_conv2_bias = quantized_model.conv2_bn_refused.bias.detach().cpu()
+            quantized_model_conv2_weight = quantized_model.conv2_bn_refused.layer.weight.detach().cpu()
+            quantized_model_conv2_bias = quantized_model.conv2_bn_refused.layer.bias.detach().cpu()
             float_model_weight2 = float_model.conv2.weight.detach().cpu()
             float_model_bias2 = float_model.conv2.bias.detach().cpu()
             float_model_gamma2 = float_model.bn2.weight.detach().cpu()
@@ -260,8 +260,8 @@ class MultipleInputsConvSecondMomentNetTest(BaseSecondMomentTest):
             calculated_kernel2 = float_model_weight2 * weight_scale2
             calculated_bias2 = float_model_beta2 + (float_model_bias2 - input_mean2) * weight_scale2
 
-            quantized_model_conv3_weight = quantized_model.conv3_bn_refused.weight.detach().cpu()
-            quantized_model_conv3_bias = quantized_model.conv3_bn_refused.bias.detach().cpu()
+            quantized_model_conv3_weight = quantized_model.conv3_bn_refused.layer.weight.detach().cpu()
+            quantized_model_conv3_bias = quantized_model.conv3_bn_refused.layer.bias.detach().cpu()
             float_model_weight3 = float_model.conv3.weight.detach().cpu()
             float_model_bias3 = float_model.conv3.bias.detach().cpu()
             float_model_gamma3 = float_model.bn3.weight.detach().cpu()

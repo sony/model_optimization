@@ -142,9 +142,13 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         self.add_quantizer_variable(AUXVAR, layer.get_parameter(f"{name}_{AUXVAR}"), VariableGroup.WEIGHTS)
 
         if self.quantization_parameter_learning:
-            layer.register_parameter(f"{name}_{SCALE_PTQ}",
-                                     nn.Parameter(to_torch_tensor(torch.ones_like(torch.Tensor(self.threshold_values))),
-                                                  requires_grad=True))
+            if self.per_channel:
+                layer.register_parameter(f"{name}_{SCALE_PTQ}",
+                                         nn.Parameter(to_torch_tensor(torch.ones_like(torch.Tensor(self.threshold_values))),
+                                                      requires_grad=True))
+            else:
+                layer.register_parameter(f"{name}_{SCALE_PTQ}",
+                                         nn.Parameter(to_torch_tensor((torch.tensor([1.0], requires_grad=True)))))
             self.add_quantizer_variable(SCALE_PTQ, layer.get_parameter(f"{name}_{SCALE_PTQ}"), VariableGroup.QPARAMS)
 
     def get_soft_targets(self) -> torch.Tensor:
@@ -232,5 +236,9 @@ class SymmetricSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
                                                          num_bits=self.num_bits,
                                                          signed=True,
                                                          power_of_two=self.power_of_two)
+
+            if self.quantization_parameter_learning and not self.power_of_two:
+                scale = self.get_quantizer_variable(SCALE_PTQ)
+                q_tensor *= scale
 
         return q_tensor
