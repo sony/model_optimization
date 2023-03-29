@@ -26,8 +26,9 @@ from model_compression_toolkit.core.common.constants import EPS, MIN_JACOBIANS_I
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder
-from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
-from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
+from model_compression_toolkit.core.pytorch.constants import BUFFER
+from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, BufferHolder
+from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy, get_working_device
 from model_compression_toolkit.core.common.logger import Logger
 
 
@@ -133,7 +134,13 @@ class PytorchModelGradients(torch.nn.Module):
 
         for n in self.node_sort:
             if not isinstance(n, FunctionalNode):
-                self.add_module(n.name, node_builder(n))
+                if n.type == BufferHolder:
+                    self.add_module(n.name, node_builder(n))
+                    self.get_submodule(n.name). \
+                        register_buffer(n.name,
+                                        torch.Tensor(n.get_weights_by_keys(BUFFER)).to(get_working_device()))
+                else:
+                    self.add_module(n.name, node_builder(n))
 
     def forward(self,
                 *args: Any) -> Any:
@@ -289,9 +296,9 @@ def pytorch_iterative_approx_jacobian_trace(graph_float: common.Graph,
 
             # If the change to the mean Jacobian approximation is insignificant we stop the calculation
             if j > MIN_JACOBIANS_ITER:
-                delta = torch.mean(torch.stack([jac_trace_approx, *trace_jv])) - torch.mean(
-                    torch.stack(trace_jv))
-                if torch.abs(delta) / (torch.abs(torch.mean(torch.stack(trace_jv))) + 1e-6) < JACOBIANS_COMP_TOLERANCE:
+                new_mean = torch.mean(torch.stack([jac_trace_approx, *trace_jv]))
+                delta = new_mean - torch.mean(torch.stack(trace_jv))
+                if torch.abs(delta) / (torch.abs(new_mean) + 1e-6) < JACOBIANS_COMP_TOLERANCE:
                     trace_jv.append(jac_trace_approx)
                     break
 
