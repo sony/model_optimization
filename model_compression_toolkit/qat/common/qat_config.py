@@ -42,6 +42,7 @@ class TrainingMethod(Enum):
     STE - Standard straight-through estimator. Includes PowerOfTwo, symmetric & uniform quantizers
     """
     STE = "STE",
+    DQA = "DQA"
 
 
 class QATConfig:
