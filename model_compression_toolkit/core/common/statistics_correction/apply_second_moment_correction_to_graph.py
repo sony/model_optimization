@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import copy
 from typing import Callable, Any
 
 from tqdm import tqdm
@@ -92,7 +91,7 @@ def quantized_model_builder_for_second_moment_correction(graph: common.Graph,
     return quantized_model
 
 
-def apply_second_moment_correction_to_graph(graph_to_apply_second_moment_correction: Graph,
+def apply_second_moment_correction_to_graph(graph: Graph,
                                             representative_data_gen: Callable,
                                             core_config: CoreConfig,
                                             fw_info: FrameworkInfo,
@@ -100,7 +99,7 @@ def apply_second_moment_correction_to_graph(graph_to_apply_second_moment_correct
     """
      Apply second moment correction on graph.
      Args:
-        graph_to_apply_second_moment_correction: Graph to apply second moment correction.
+        graph: Graph to apply second moment correction.
         representative_data_gen (Callable): Dataset used for calibration.
         core_config (CoreConfig): Configuration object containing parameters of how the model should be
          quantized, including mixed precision parameters.
@@ -110,7 +109,6 @@ def apply_second_moment_correction_to_graph(graph_to_apply_second_moment_correct
      Returns:
          Graph after second moment correction.
      """
-    graph = copy.deepcopy(graph_to_apply_second_moment_correction)
     semi_quantized_model = quantized_model_builder_for_second_moment_correction(graph, fw_info, fw_impl)
     fw_impl.apply_second_moment_correction(semi_quantized_model, core_config, representative_data_gen, graph)
     graph = substitute(graph, fw_impl.get_substitutions_after_second_moment_correction(core_config.quantization_config))

@@ -26,7 +26,7 @@ from model_compression_toolkit.core.common.quantization.quantize_node import get
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 
 
-def compute_bias_correction_of_graph(graph_co_compute_bias: Graph,
+def compute_bias_correction_of_graph(graph: Graph,
                                      core_config: CoreConfig,
                                      fw_info: FrameworkInfo,
                                      fw_impl: FrameworkImplementation) -> Graph:
@@ -35,7 +35,7 @@ def compute_bias_correction_of_graph(graph_co_compute_bias: Graph,
     compute the bias-correction term, and store it in the candidate weights quantization configuration.
 
     Args:
-        graph_co_compute_bias: Graph with nodes to compute the bias correction for
+        graph: Graph with nodes to compute the bias correction for
         each node's weights quantization configuration candidates.
         core_config: CoreConfig containing parameters of how the model should be quantized.
         fw_info: Framework info like lists of nodes their kernel should quantized.
@@ -46,7 +46,6 @@ def compute_bias_correction_of_graph(graph_co_compute_bias: Graph,
         for each node.
     """
 
-    graph = copy.deepcopy(graph_co_compute_bias)
     for n in graph.nodes:
         if n.is_weights_quantization_enabled() and core_config.quantization_config.weights_bias_correction:
             _compute_bias_correction_per_candidate_qc(n,

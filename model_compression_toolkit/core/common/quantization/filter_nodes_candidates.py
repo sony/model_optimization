@@ -21,7 +21,7 @@ from model_compression_toolkit.core.common.quantization.candidate_node_quantizat
     CandidateNodeQuantizationConfig
 
 
-def filter_nodes_candidates(graph_to_filter: Graph):
+def filter_nodes_candidates(graph: Graph):
     """
     Filters the graph's nodes candidates configuration list.
     We apply this after mark activation operation to eliminate nodes that their activation are no longer being quantized
@@ -29,9 +29,8 @@ def filter_nodes_candidates(graph_to_filter: Graph):
     Updating the lists is preformed inplace on the graph object.
 
     Args:
-        graph_to_filter: Graph for which to add quantization info to each node.
+        graph: Graph for which to add quantization info to each node.
     """
-    graph = copy.deepcopy(graph_to_filter)
     nodes = list(graph.nodes)
     for n in nodes:
         n.candidates_quantization_cfg = filter_node_candidates(node=n)

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 
 import keras
 import unittest
@@ -106,7 +107,7 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
                                                          fw_info=fw_info, graph=graph)
     graph = substitute(graph, keras_impl.get_substitutions_pre_statistics_collection(qc))
 
-    graph = set_quantization_configuration_to_graph(graph=graph,
+    graph = set_quantization_configuration_to_graph(graph_with_qcs=graph,
                                                     quant_config=qc,
                                                     mixed_precision_enable=True)
     graph = fusion(graph, tpc)
@@ -147,7 +148,7 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config)
 
         # Nodes composition substitution
-        v_graph = substitute(graph, [VirtualActivationWeightsComposition()])
+        v_graph = substitute(copy.deepcopy(graph), [VirtualActivationWeightsComposition()])
 
         self.assertTrue(len(v_graph.nodes) == len(graph.nodes) - 2,
                         "Both convolution nodes should be composed with their predecessor activation node.")

@@ -64,7 +64,7 @@ def prepare_graph(in_model, base_config, bitwidth_candidates):
     graph = keras_impl.model_reader(in_model, None)  # model reading
     graph.set_tpc(tpc)
     graph.set_fw_info(fw_info)
-    graph = set_quantization_configuration_to_graph(graph=graph,
+    graph = set_quantization_configuration_to_graph(graph_with_qcs=graph,
                                                     quant_config=DEFAULT_MIXEDPRECISION_CONFIG,
                                                     mixed_precision_enable=True)
     graph = fusion(graph, tpc)

@@ -217,7 +217,7 @@ def get_finalized_graph(initial_graph: Graph,
     ######################################
     # Add quantization configurations
     ######################################
-    transformed_graph = set_quantization_configuration_to_graph(graph=transformed_graph,
+    transformed_graph = set_quantization_configuration_to_graph(graph_with_qcs=transformed_graph,
                                                                 quant_config=quant_config,
                                                                 mixed_precision_enable=mixed_precision_enable)
 
