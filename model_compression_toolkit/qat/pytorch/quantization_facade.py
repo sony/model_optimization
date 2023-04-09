@@ -205,7 +205,6 @@ if FOUND_TORCH:
              >>> quantized_model = mct.pytorch_quantization_aware_training_finalize(quantized_model)
 
          """
-        # TODO copy: check use of graph outside this function
         exported_model = copy.deepcopy(in_model)
         for _, layer in exported_model.named_children():
             if isinstance(layer, PytorchQuantizationWrapper):

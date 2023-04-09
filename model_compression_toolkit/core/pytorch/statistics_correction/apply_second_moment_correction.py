@@ -40,7 +40,6 @@ def pytorch_apply_second_moment_correction(quantized_model: Any,
     Returns:
         A function that applies second moment correction.
     """
-    # TODO copy: check use of graph outside this function
     model = copy.deepcopy(quantized_model)
     set_model(model)
 

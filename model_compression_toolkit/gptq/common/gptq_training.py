@@ -49,7 +49,6 @@ class GPTQTrainer(ABC):
             fw_impl: Framework implementation
             fw_info: Framework information
         """
-        # TODO copy: check use of graph outside this function
         self.graph_float = copy.deepcopy(graph_float)
         self.graph_quant = copy.deepcopy(graph_quant)
         self.gptq_config = gptq_config
