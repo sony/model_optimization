@@ -28,7 +28,7 @@ from keras.datasets import mnist
 from keras import Model, layers, datasets
 import model_compression_toolkit as mct
 import numpy as np
-
+tf.config.run_functions_eagerly(True)
 
 def get_tpc():
     """
