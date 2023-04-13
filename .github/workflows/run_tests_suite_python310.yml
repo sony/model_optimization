@@ -25,7 +25,7 @@ jobs:
           pip install -r requirements.txt
           pip install tensorflow==2.11.*
           pip install tensorflow_model_optimization
-          pip install torch torchvision
+          pip install torch==1.13.* torchvision
           pip install coverage
       - name: Run unittests
         run: coverage run -m --omit "./tests*,*__init__.py" unittest tests/test_suite.py -v

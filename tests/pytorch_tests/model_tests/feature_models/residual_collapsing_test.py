@@ -43,15 +43,15 @@ class BaseResidualCollapsingTest(BasePytorchFeatureNetworkTest):
                                       False, False, True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        # TODO copy: remove debug code
-        import pickle
-        import os
-
-        print('Working folder:', os.getcwd())
-        with open('debug.pickle', 'wb') as f:
-            pickle.dump(input_x[0], f)
-        torch.save(float_model.state_dict(), 'float_model.pth')
-        torch.save(quantized_model.state_dict(), 'quant_model.pth')
+        # # TODO copy: remove debug code
+        # import pickle
+        # import os
+        #
+        # print('Working folder:', os.getcwd())
+        # with open('debug.pickle', 'wb') as f:
+        #     pickle.dump(input_x[0], f)
+        # torch.save(float_model.state_dict(), 'float_model.pth')
+        # torch.save(quantized_model.state_dict(), 'quant_model.pth')
 
         # with open('/data/projects/swat/users/eladc/tmp/debug.pickle', 'rb') as f:
         #     input_x = [pickle.load(f)]
