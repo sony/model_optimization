@@ -144,7 +144,7 @@ class UniformSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
         w = layer.layer.depthwise_kernel if isinstance(layer.layer, (tf.keras.layers.DepthwiseConv2D,
                                                                      tf.keras.layers.DepthwiseConv1D)) \
             else layer.layer.kernel
-        delta = qutils.calculate_delta_uniform(max_tensor, min_tensor, self.num_bits)
+        delta = qutils.calculate_delta_uniform(min_tensor, max_tensor, self.num_bits)
         w_clipped_normed = qutils.clip(w / delta, 0, 2 ** self.num_bits - 1)
         rest = w_clipped_normed - tf.floor(w_clipped_normed)  # rest of rounding [0, 1)
         alpha = -qutils.safe_log((self.zeta - self.gamma) / (rest - self.gamma) - 1, 1e-16)  # => sigmoid(alpha) = rest
