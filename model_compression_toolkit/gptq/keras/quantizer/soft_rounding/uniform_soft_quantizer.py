@@ -98,8 +98,6 @@ class UniformSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
         self.gamma = SOFT_ROUNDING_GAMMA
         self.zeta = SOFT_ROUNDING_ZETA
 
-        self.quantizer_parameters = {}
-
     def initialize_quantization(self,
                                 tensor_shape: Any,
                                 name: str,
@@ -145,7 +143,7 @@ class UniformSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
                                                                      tf.keras.layers.DepthwiseConv1D)) \
             else layer.layer.kernel
         delta = qutils.calculate_delta_uniform(min_tensor, max_tensor, self.num_bits)
-        w_clipped_normed = qutils.clip(w / delta, 0, 2 ** self.num_bits - 1)
+        w_clipped_normed = qutils.clip((w - min_tensor)/ delta, 0, 2 ** self.num_bits - 1)
         rest = w_clipped_normed - tf.floor(w_clipped_normed)  # rest of rounding [0, 1)
         alpha = -qutils.safe_log((self.zeta - self.gamma) / (rest - self.gamma) - 1, 1e-16)  # => sigmoid(alpha) = rest
         auxvar_tensor.assign(alpha)
@@ -195,19 +193,13 @@ class UniformSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
                                                         quant_axis=self.quantization_axis,
                                                         quant_axis_dim=-1)
 
-            ##########################################################
-            # Calculate soft rounding targets and optimized threshold
-            ##########################################################
-            min_tensor_hat = tf.reshape(min_tensor, reshape_shape)
-            max_tensor_hat = tf.reshape(max_tensor, reshape_shape)
-
             #####################################################
             # Quantized Input
             #####################################################
             q_tensor = soft_rounding_uniform_quantizer(input_tensor=inputs,
                                                        auxvar_tensor=aux_var,
-                                                       min_tensor=min_tensor_hat,
-                                                       max_tensor=max_tensor_hat,
+                                                       min_tensor=tf.reshape(min_tensor, reshape_shape),
+                                                       max_tensor=tf.reshape(max_tensor, reshape_shape),
                                                        num_bits=self.num_bits)
 
         else:

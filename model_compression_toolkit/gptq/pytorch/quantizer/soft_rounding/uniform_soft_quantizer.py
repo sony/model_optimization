@@ -123,7 +123,7 @@ class UniformSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
 
         w = layer.layer.weight
         delta = qutils.calculate_delta_uniform(min_values, max_values, self.num_bits)
-        w_clipped_normed = torch.clip(w / delta, 0, 2 ** self.num_bits - 1)
+        w_clipped_normed = torch.clip((w - min_values) / delta, 0, 2 ** self.num_bits - 1)
         rest = w_clipped_normed - torch.floor(w_clipped_normed)  # rest of rounding [0, 1)
         alpha = -torch.log((self.zeta - self.gamma) / (rest - self.gamma) - 1)  # => sigmoid(alpha) = rest
         layer.register_parameter(f"{name}_{AUXVAR}", nn.Parameter(alpha, requires_grad=True))
