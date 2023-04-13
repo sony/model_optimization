@@ -92,14 +92,13 @@ class SoftQuantizerRegularization:
         """
 
         soft_reg_aux: List[tf.Tensor] = []
+        b = self.linear_decay(self.count_iter)
         for layer in model.layers:
             if isinstance(layer, KerasQuantizationWrapper):
                 kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
                                                                       fw_info=DEFAULT_KERAS_INFO)
 
                 st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
-                b = self.linear_decay(self.count_iter)
-
                 soft_reg_aux.append(tf.reduce_sum(1 - tf.pow(tf.math.abs(st - .5) * 2, b)))
 
         reg = 0
