@@ -34,6 +34,7 @@ from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructur
 from model_compression_toolkit.core.common.constants import RANGE_MAX, RANGE_MIN
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 
+
 def soft_rounding_unifrom_quantizer(input_tensor: torch.Tensor,
                                     auxvar_tensor: torch.Tensor,
                                     min_range: torch.Tensor,
@@ -54,13 +55,12 @@ def soft_rounding_unifrom_quantizer(input_tensor: torch.Tensor,
     """
     # adjusts the quantization range so the quantization grid includes zero.
     min_range, max_range = fix_range_to_include_zero(min_range, max_range, num_bits)
-    delta = qutils.calculate_delta_uniform(max_range, min_range, num_bits)
-    with torch.no_grad():
-        input_tensor_int = torch.floor(input_tensor / delta)
+    delta = qutils.calculate_delta_uniform(min_range, max_range, num_bits)
+    input_tensor_int = qutils.ste_floor((input_tensor - min_range) / delta)
     tensor_q = input_tensor_int + auxvar_tensor
     return delta * qutils.ste_clip(tensor_q,
                                    min_val=0,
-                                   max_val=2 ** num_bits - 1)
+                                   max_val=2 ** num_bits - 1) + min_range
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,

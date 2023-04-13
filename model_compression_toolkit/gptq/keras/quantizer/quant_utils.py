@@ -26,6 +26,14 @@ def ste_ceil(x: tf.Tensor) -> tf.Tensor:
     return error + x
 
 
+def ste_floor(x: tf.Tensor) -> tf.Tensor:
+    """
+    Return the floor values of a tensor.
+    """
+    error = tf.stop_gradient(tf.math.floor(x) - x)
+    return error + x
+
+
 def safe_log(x: tf.Tensor, eps: float) -> tf.Tensor:
     """
     Computes log function of x unless x is smaller than some small value, so the log function would not fail.
@@ -70,6 +78,15 @@ def calculate_delta(max_tensor: tf.Tensor,
     Compute the step size for the quantization.
     """
     return max_tensor / (2 ** (num_bits - int(signed)))
+
+
+def calculate_delta_uniform(min_tensor: tf.Tensor,
+                            max_tensor: tf.Tensor,
+                            num_bits: int) -> tf.Tensor:
+    """
+    Compute the step size for the uniform quantization.
+    """
+    return (max_tensor-min_tensor) / (2 ** num_bits - 1)
 
 
 def ste_clip(x: [tf.Tensor, tf.Variable], max_val=1, min_val=None) -> tf.Tensor:

@@ -58,7 +58,8 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
 class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, quant_method=QuantizationMethod.SYMMETRIC, rounding_type=RoundingType.STE,
                  per_channel=True, input_shape=(1, 16, 16, 3),
-                 hessian_weights=True, log_norm_weights=True, scaled_log_norm=False):
+                 hessian_weights=True, log_norm_weights=True, scaled_log_norm=False,
+                 quantization_parameter_learning=True):
         super().__init__(unit_test,
                          input_shape=input_shape, experimental_exporter=True)
 
@@ -68,8 +69,12 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         self.hessian_weights = hessian_weights
         self.log_norm_weights = log_norm_weights
         self.scaled_log_norm = scaled_log_norm
-        self.override_params = {QUANT_PARAM_LEARNING_STR: True} if rounding_type == RoundingType.SoftQuantizer else \
-            {MAX_LSB_STR: DefaultDict({}, lambda: 1)} if rounding_type == RoundingType.STE else None
+        if rounding_type == RoundingType.SoftQuantizer:
+            self.override_params = {QUANT_PARAM_LEARNING_STR: quantization_parameter_learning}
+        elif rounding_type == RoundingType.STE:
+            self.override_params = {MAX_LSB_STR: DefaultDict({}, lambda: 1)}
+        else:
+            self.override_params = None
 
     def get_tpc(self):
         return get_tpc("gptq_test", 16, 16, self.quant_method)
