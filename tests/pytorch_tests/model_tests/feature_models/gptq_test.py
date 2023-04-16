@@ -188,15 +188,13 @@ class GPTQLearnRateZeroTest(GPTQBaseTest):
         self.unit_test.assertTrue(np.isclose(np.linalg.norm(ptq_out - float_output),
                                              np.linalg.norm(gptq_out - float_output), atol=1e-3))
 
-        # TODO: check why weights change
-        # ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))
-        # gptq_weights = torch_tensor_to_numpy(list(gptq_model.parameters()))
-        #
-        # # check number of weights are equal
-        # self.unit_test.assertTrue(len(ptq_weights) == len(gptq_weights),
-        #                           msg='PTQ model number of weights different from GPTQ model!')
-        #
-        # # check all weights were not updated in gptq model compared to ptq model
-        # w_diffs = [np.isclose(np.max(np.abs(w_ptq - w_gptq)), 0) for w_ptq, w_gptq in zip(ptq_weights, gptq_weights)]
-        # for w_diff in w_diffs:
-        #     self.unit_test.assertTrue(np.all(w_diff), msg="GPTQ: some weights were updated")
+        ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))
+        gptq_weights = torch_tensor_to_numpy(list(gptq_model.parameters()))
+
+        # check number of weights are equal
+        self.unit_test.assertTrue(len(ptq_weights) == len(gptq_weights),
+                                  msg='PTQ model number of weights different from GPTQ model!')
+
+        # check all weights were not updated in gptq model compared to ptq model
+        w_diffs = [np.isclose(np.max(np.abs(w_ptq - w_gptq)), 0) for w_ptq, w_gptq in zip(ptq_weights, gptq_weights)]
+        self.unit_test.assertTrue(np.all(w_diffs), msg="GPTQ: some weights were updated in zero learning rate test")

@@ -133,7 +133,6 @@ class UniformSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         self.add_quantizer_variable(FQ_MAX, layer.get_parameter(name+"_"+FQ_MAX), VariableGroup.QPARAMS)
         self.add_quantizer_variable(AUXVAR, layer.get_parameter(f"{name}_{AUXVAR}"), VariableGroup.WEIGHTS)
 
-
     def get_soft_targets(self) -> torch.Tensor:
         """
         Computes the rectified sigmoid function for the quantization target parameters.
@@ -191,6 +190,5 @@ class UniformSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
                                                    min_range=min_range,
                                                    max_range=max_range,
                                                    num_bits=self.num_bits)
-
 
         return q_tensor
