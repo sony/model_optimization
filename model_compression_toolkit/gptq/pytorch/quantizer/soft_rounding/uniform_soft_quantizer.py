@@ -34,6 +34,7 @@ from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructur
 from model_compression_toolkit.core.common.constants import RANGE_MAX, RANGE_MIN
 from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 
+
 def soft_rounding_unifrom_quantizer(input_tensor: torch.Tensor,
                                     auxvar_tensor: torch.Tensor,
                                     min_range: torch.Tensor,
@@ -54,13 +55,12 @@ def soft_rounding_unifrom_quantizer(input_tensor: torch.Tensor,
     """
     # adjusts the quantization range so the quantization grid includes zero.
     min_range, max_range = fix_range_to_include_zero(min_range, max_range, num_bits)
-    delta = qutils.calculate_delta_uniform(max_range, min_range, num_bits)
-    with torch.no_grad():
-        input_tensor_int = torch.floor(input_tensor / delta)
+    delta = qutils.calculate_delta_uniform(min_range, max_range, num_bits)
+    input_tensor_int = qutils.ste_floor((input_tensor - min_range) / delta)
     tensor_q = input_tensor_int + auxvar_tensor
     return delta * qutils.ste_clip(tensor_q,
                                    min_val=0,
-                                   max_val=2 ** num_bits - 1)
+                                   max_val=2 ** num_bits - 1) + min_range
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
@@ -122,8 +122,8 @@ class UniformSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         layer.register_parameter(name+"_"+FQ_MAX, nn.Parameter(max_values, requires_grad=self.quantization_parameter_learning))
 
         w = layer.layer.weight
-        delta = qutils.calculate_delta_uniform(max_values, min_values, self.num_bits)
-        w_clipped_normed = torch.clip(w / delta, 0, 2 ** self.num_bits - 1)
+        delta = qutils.calculate_delta_uniform(min_values, max_values, self.num_bits)
+        w_clipped_normed = torch.clip((w - min_values) / delta, 0, 2 ** self.num_bits - 1)
         rest = w_clipped_normed - torch.floor(w_clipped_normed)  # rest of rounding [0, 1)
         alpha = -torch.log((self.zeta - self.gamma) / (rest - self.gamma) - 1)  # => sigmoid(alpha) = rest
         layer.register_parameter(f"{name}_{AUXVAR}", nn.Parameter(alpha, requires_grad=True))
@@ -132,7 +132,6 @@ class UniformSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
         self.add_quantizer_variable(FQ_MIN, layer.get_parameter(name+"_"+FQ_MIN), VariableGroup.QPARAMS)
         self.add_quantizer_variable(FQ_MAX, layer.get_parameter(name+"_"+FQ_MAX), VariableGroup.QPARAMS)
         self.add_quantizer_variable(AUXVAR, layer.get_parameter(f"{name}_{AUXVAR}"), VariableGroup.WEIGHTS)
-
 
     def get_soft_targets(self) -> torch.Tensor:
         """
@@ -191,6 +190,5 @@ class UniformSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
                                                    min_range=min_range,
                                                    max_range=max_range,
                                                    num_bits=self.num_bits)
-
 
         return q_tensor

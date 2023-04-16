@@ -51,6 +51,13 @@ def ste_ceil(x: torch.Tensor) -> torch.Tensor:
     return (torch.ceil(x) - x).detach() + x
 
 
+def ste_floor(x: torch.Tensor) -> torch.Tensor:
+    """
+    Return the floor values of a tensor.
+    """
+    return (torch.floor(x) - x).detach() + x
+
+
 def ste_round(x: torch.Tensor) -> torch.Tensor:
     """
     Calculate the rounded values of a tensor

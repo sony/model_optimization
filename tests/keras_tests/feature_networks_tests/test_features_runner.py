@@ -539,6 +539,20 @@ class FeatureNetworkTest(unittest.TestCase):
         GradientPTQLearnRateZeroTest(self).run_test()
         GradientPTQWeightedLossTest(self).run_test()
         GradientPTQTest(self,
+                        quant_method=QuantizationMethod.UNIFORM,
+                        rounding_type=RoundingType.SoftQuantizer,
+                        per_channel=False,
+                        quantization_parameter_learning=False).run_test()
+        GradientPTQTest(self,
+                        quant_method=QuantizationMethod.UNIFORM,
+                        rounding_type=RoundingType.SoftQuantizer,
+                        per_channel=True,
+                        quantization_parameter_learning=False).run_test()
+        GradientPTQLearnRateZeroTest(self,
+                                     quant_method=QuantizationMethod.UNIFORM,
+                                     rounding_type=RoundingType.SoftQuantizer,
+                                     quantization_parameter_learning=False).run_test()
+        GradientPTQTest(self,
                         rounding_type=RoundingType.SoftQuantizer,
                         per_channel=False).run_test()
         GradientPTQTest(self,

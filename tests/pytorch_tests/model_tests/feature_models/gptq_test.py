@@ -181,7 +181,13 @@ class GPTQLearnRateZeroTest(GPTQBaseTest):
                                    loss=multiple_tensors_mse_loss, train_bias=False, rounding_type=self.rounding_type,
                                    gptq_quantizer_params_override=self.override_params)
 
-    def compare(self, ptq_model, gptq_model, input_x=None, quantization_info=None):
+    def gptq_compare(self, ptq_model, gptq_model, input_x=None):
+        ptq_out = torch_tensor_to_numpy(ptq_model(input_x))
+        gptq_out = torch_tensor_to_numpy(gptq_model(input_x))
+        float_output = torch_tensor_to_numpy(self.float_model(torch.Tensor(input_x[0])))
+        self.unit_test.assertTrue(np.isclose(np.linalg.norm(ptq_out - float_output),
+                                             np.linalg.norm(gptq_out - float_output), atol=1e-3))
+
         ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))
         gptq_weights = torch_tensor_to_numpy(list(gptq_model.parameters()))
 
@@ -191,6 +197,4 @@ class GPTQLearnRateZeroTest(GPTQBaseTest):
 
         # check all weights were not updated in gptq model compared to ptq model
         w_diffs = [np.isclose(np.max(np.abs(w_ptq - w_gptq)), 0) for w_ptq, w_gptq in zip(ptq_weights, gptq_weights)]
-        for w_diff in w_diffs:
-            self.unit_test.assertTrue(np.all(w_diff), msg="GPTQ: some weights were updated")
-
+        self.unit_test.assertTrue(np.all(w_diffs), msg="GPTQ: some weights were updated in zero learning rate test")

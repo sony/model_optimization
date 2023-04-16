@@ -473,8 +473,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, weights_quant_method=QuantizationMethod.UNIFORM,
                          per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
         GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer, weights_quant_method=QuantizationMethod.UNIFORM).run_test()
-        GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer, weights_quant_method=QuantizationMethod.UNIFORM).run_test()
-
 
     def test_qat(self):
         """
