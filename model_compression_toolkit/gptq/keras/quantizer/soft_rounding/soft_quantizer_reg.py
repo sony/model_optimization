@@ -77,7 +77,7 @@ class SoftQuantizerRegularization:
         # Initializing the temperature decay according to the number of expected gradient steps
         self.linear_decay = LinearTempDecay(total_gradient_steps)
 
-        self.count_iter = 0
+        self.count_iter = tf.Variable(0.)
 
 
     def __call__(self, model: Model, entropy_reg: float):
@@ -90,9 +90,9 @@ class SoftQuantizerRegularization:
 
         Returns: Regularization value.
         """
-
+        # print("running soft reg...")
         soft_reg_aux: List[tf.Tensor] = []
-        b = self.linear_decay(self.count_iter)
+        b = self.linear_decay(self.count_iter.value())
         for layer in model.layers:
             if isinstance(layer, KerasQuantizationWrapper):
                 kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
@@ -106,6 +106,6 @@ class SoftQuantizerRegularization:
         for sq in soft_reg_aux:
             reg += sq
 
-        self.count_iter += 1
+        self.count_iter.assign_add(1.0)
 
         return entropy_reg * reg
