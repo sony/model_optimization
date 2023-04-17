@@ -119,7 +119,7 @@ class KerasImplementation(FrameworkImplementation):
         Returns:
             Graph representing the input model.
         """
-        return model_reader(deepcopy(model))
+        return model_reader(model)
 
     def to_numpy(self, tensor: tf.Tensor) -> np.ndarray:
         """
