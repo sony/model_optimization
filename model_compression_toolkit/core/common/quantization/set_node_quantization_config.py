@@ -33,14 +33,14 @@ from model_compression_toolkit.core.common.target_platform.op_quantization_confi
     QuantizationConfigOptions
 
 
-def set_quantization_configuration_to_graph(graph_with_qcs: Graph,
+def set_quantization_configuration_to_graph(graph: Graph,
                                             quant_config: QuantizationConfig,
                                             mixed_precision_enable: bool = False) -> Graph:
     """
     Add quantization configuration for each graph node.
 
     Args:
-        graph_with_qcs: Graph for which to add quantization info to each node.
+        graph: Graph for which to add quantization info to each node.
         quant_config: Quantization configuration containing parameters for how the graph should be quantized.
         mixed_precision_enable: is mixed precision enabled
 
@@ -48,13 +48,13 @@ def set_quantization_configuration_to_graph(graph_with_qcs: Graph,
         The graph with quantization configurations attached to each node in it.
     """
 
-    for n in graph_with_qcs.nodes:
+    for n in graph.nodes:
         set_quantization_configs_to_node(node=n,
                                          quant_config=quant_config,
-                                         fw_info=graph_with_qcs.fw_info,
-                                         tpc=graph_with_qcs.tpc,
+                                         fw_info=graph.fw_info,
+                                         tpc=graph.tpc,
                                          mixed_precision_enable=mixed_precision_enable)
-    return graph_with_qcs
+    return graph
 
 
 def set_quantization_configs_to_node(node: BaseNode,

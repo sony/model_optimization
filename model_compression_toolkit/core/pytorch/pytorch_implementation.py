@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import operator
+from copy import deepcopy
 from typing import List, Any, Tuple, Callable, Type, Dict
 
 import numpy as np
@@ -127,7 +128,7 @@ class PytorchImplementation(FrameworkImplementation):
         Returns:
             Graph representing the input module.
         """
-        return model_reader(module, representative_data_gen, self.to_numpy, self.to_tensor)
+        return model_reader(deepcopy(module), representative_data_gen, self.to_numpy, self.to_tensor)
 
     def model_builder(self,
                       graph: Graph,

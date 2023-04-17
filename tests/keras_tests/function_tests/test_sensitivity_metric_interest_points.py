@@ -53,7 +53,7 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
                                         name="sem_test")
 
     graph.set_tpc(tpc)
-    graph = set_quantization_configuration_to_graph(graph_with_qcs=graph,
+    graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=qc,
                                                     mixed_precision_enable=True)
 

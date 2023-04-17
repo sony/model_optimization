@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from typing import List, Any, Tuple, Callable, Type, Dict
+from copy import deepcopy
 
 import numpy as np
 import tensorflow as tf
@@ -118,7 +119,7 @@ class KerasImplementation(FrameworkImplementation):
         Returns:
             Graph representing the input model.
         """
-        return model_reader(model)
+        return model_reader(deepcopy(model))
 
     def to_numpy(self, tensor: tf.Tensor) -> np.ndarray:
         """

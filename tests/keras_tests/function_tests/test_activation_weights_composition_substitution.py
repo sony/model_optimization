@@ -107,7 +107,7 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
                                                          fw_info=fw_info, graph=graph)
     graph = substitute(graph, keras_impl.get_substitutions_pre_statistics_collection(qc))
 
-    graph = set_quantization_configuration_to_graph(graph_with_qcs=graph,
+    graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=qc,
                                                     mixed_precision_enable=True)
     graph = fusion(graph, tpc)

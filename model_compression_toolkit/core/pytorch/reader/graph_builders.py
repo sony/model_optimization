@@ -64,6 +64,7 @@ def nodes_builder(model: GraphModule,
     Args:
         model: Pytorch FX model.
         module_dict: A dictionary of the Pyotrch model's named modules.
+        to_numpy: A function to convert a Tensor to numpy array
 
     Returns:
         A list of Graph nodes that were built from the fx GraphModule nodes.
