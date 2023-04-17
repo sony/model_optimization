@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 from typing import List, Any, Tuple, Callable, Type, Dict
-from copy import deepcopy
 
 import numpy as np
 import tensorflow as tf
