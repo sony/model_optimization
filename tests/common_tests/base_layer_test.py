@@ -56,7 +56,6 @@ class BaseLayerTest(BaseTest):
         feature_networks = self.create_networks()
         feature_networks = feature_networks if isinstance(feature_networks, list) else [feature_networks]
         for model_float in feature_networks:
-            model_float.eval()
             for mode in self.quantization_modes:
                 self.current_mode = mode
                 core_config = self.get_core_config()
