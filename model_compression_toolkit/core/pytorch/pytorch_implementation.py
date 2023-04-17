@@ -75,8 +75,7 @@ from model_compression_toolkit.core.pytorch.pytorch_node_prior_info import creat
 from model_compression_toolkit.core.pytorch.reader.reader import model_reader
 from model_compression_toolkit.core.pytorch.statistics_correction.apply_second_moment_correction import \
     pytorch_apply_second_moment_correction
-from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.gptq.pytorch.gptq_training import PytorchGPTQTrainer
 
@@ -128,7 +127,9 @@ class PytorchImplementation(FrameworkImplementation):
         Returns:
             Graph representing the input module.
         """
-        return model_reader(deepcopy(module), representative_data_gen, self.to_numpy, self.to_tensor)
+        _module = deepcopy(module)
+        _module.eval()
+        return model_reader(_module, representative_data_gen, self.to_numpy, self.to_tensor)
 
     def model_builder(self,
                       graph: Graph,

@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_model
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
@@ -44,6 +44,7 @@ class BaseConstantConvSubstitutionTest(BasePytorchFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         in_torch_tensor = to_torch_tensor(input_x[0])
+        set_model(float_model)
         y = float_model(in_torch_tensor)
         y_hat = quantized_model(in_torch_tensor)
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')

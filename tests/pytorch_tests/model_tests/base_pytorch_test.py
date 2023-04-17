@@ -132,6 +132,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
 
         ptq_models, quantization_info = {}, None
         model_float = self.create_feature_network(input_shapes)
+        model_float.eval()
         core_config_dict = self.get_core_configs()
         tpc_dict = self.get_tpc()
         assert isinstance(tpc_dict, dict), "Pytorch tests get_tpc should return a dictionary " \
