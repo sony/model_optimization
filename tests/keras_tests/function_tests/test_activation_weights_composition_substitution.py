@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 
 import keras
 import unittest
@@ -147,7 +148,7 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config)
 
         # Nodes composition substitution
-        v_graph = substitute(graph, [VirtualActivationWeightsComposition()])
+        v_graph = substitute(copy.deepcopy(graph), [VirtualActivationWeightsComposition()])
 
         self.assertTrue(len(v_graph.nodes) == len(graph.nodes) - 2,
                         "Both convolution nodes should be composed with their predecessor activation node.")

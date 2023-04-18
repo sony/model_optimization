@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 
 import keras
 import unittest
@@ -80,7 +81,7 @@ def test_setup(in_model, keras_impl, mixed_precision_candidates_list):
                                        mixed_precision_enabled=True)
 
     # Split graph substitution
-    split_graph = substitute(graph, [WeightsActivationSplit()])
+    split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
 
     return graph, split_graph
 

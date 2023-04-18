@@ -48,14 +48,13 @@ def set_quantization_configuration_to_graph(graph: Graph,
         The graph with quantization configurations attached to each node in it.
     """
 
-    graph_with_qcs = copy.deepcopy(graph)
-    for n in graph_with_qcs.nodes:
+    for n in graph.nodes:
         set_quantization_configs_to_node(node=n,
                                          quant_config=quant_config,
                                          fw_info=graph.fw_info,
                                          tpc=graph.tpc,
                                          mixed_precision_enable=mixed_precision_enable)
-    return graph_with_qcs
+    return graph
 
 
 def set_quantization_configs_to_node(node: BaseNode,

@@ -22,7 +22,7 @@ from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.quantize_node import get_quantized_kernel_by_weights_qc
 
 
-def quantize_graph_weights(graph_to_quantize: Graph,
+def quantize_graph_weights(graph: Graph,
                            fw_info: FrameworkInfo,
                            fw_impl: FrameworkImplementation) -> Graph:
     """
@@ -32,12 +32,11 @@ def quantize_graph_weights(graph_to_quantize: Graph,
     is calculated and subtracted from the original node's bias. The graph is quantized in-place.
 
     Args:
-        graph_to_quantize: Graph to quantize its nodes.
+        graph: Graph to quantize its nodes.
         fw_info: Framework information needed for quantizing the graph's nodes' weights and activations.
         fw_impl: FrameworkImplementation with specific framework implementations.
 
     """
-    graph = copy.deepcopy(graph_to_quantize)
     # Iterate over nodes in the graph and quantize each node's weights and activations
     # (according to operators groups in framework info).
     for n in graph.nodes():

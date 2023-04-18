@@ -48,4 +48,3 @@ class BasePytorchFeatureNetworkTest(BaseFeatureNetworkTest):
     def get_fw_impl(self) -> FrameworkImplementation:
         return PytorchImplementation()
 
-

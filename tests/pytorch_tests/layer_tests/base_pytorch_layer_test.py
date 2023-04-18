@@ -171,9 +171,13 @@ class BasePytorchLayerTest(BaseLayerTest):
         models = []
         for layer in self.get_layers():
             if self.num_of_inputs > 1:
-                models.append(OperationTestModel(layer))
+                _model = OperationTestModel(layer)
+                _model.eval()
+                models.append(_model)
             else:
-                models.append(LayerTestModel(layer))
+                _model = LayerTestModel(layer)
+                _model.eval()
+                models.append(_model)
         return models
 
     def compare(self, quantized_model: Module, float_model: Module, input_x=None, quantization_info=None):

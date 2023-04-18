@@ -18,7 +18,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod
-from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -151,6 +151,7 @@ class LUTActivationQuantizerTest(BasePytorchTest):
         quantized_model = quantized_models.get('lut_quantizer_test')
 
         # Check that quantization occurred and the number of quantization clusters
+        set_model(float_model)
         self.unit_test.assertFalse(np.all(torch_tensor_to_numpy(float_model(input_x[0]) == quantized_model(input_x[0]))))
         self.unit_test.assertTrue(len(np.unique(torch_tensor_to_numpy(quantized_model(input_x[0])).flatten())) <=
                                   2 ** self.activation_n_bits)

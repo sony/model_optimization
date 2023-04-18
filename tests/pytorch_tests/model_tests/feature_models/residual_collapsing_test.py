@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
@@ -28,7 +28,7 @@ tp = mct.target_platform
 class BaseResidualCollapsingTest(BasePytorchFeatureNetworkTest):
 
     def __init__(self, unit_test):
-        super().__init__(unit_test=unit_test, input_shape=(3,16,16))
+        super().__init__(unit_test=unit_test, input_shape=(3, 16, 16))
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 32,
@@ -44,6 +44,7 @@ class BaseResidualCollapsingTest(BasePytorchFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         in_torch_tensor = to_torch_tensor(input_x[0])
+        set_model(float_model)
         y = float_model(in_torch_tensor)
         y_hat = quantized_model(in_torch_tensor)
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
@@ -51,6 +52,7 @@ class BaseResidualCollapsingTest(BasePytorchFeatureNetworkTest):
             self.unit_test.assertFalse(type(layer) == torch.add, msg=f'fail: add residual is still in the model')
         cs = cosine_similarity(torch_tensor_to_numpy(y), torch_tensor_to_numpy(y_hat))
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail: cosine similarity check:{cs}')
+
 
 class ResidualCollapsingTest1(BaseResidualCollapsingTest):
     def __init__(self, unit_test):

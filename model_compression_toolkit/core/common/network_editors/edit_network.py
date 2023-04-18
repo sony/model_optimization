@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import copy
 from typing import List
 
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -36,7 +35,6 @@ def edit_network_graph(graph: Graph,
         The graph after it has been applied the edit rules from the network editor list.
 
     """
-    # graph = copy.deepcopy(graph_to_edit)
     for edit_rule in network_editor:
         filtered_nodes = graph.filter(edit_rule.filter)
         for node in filtered_nodes:

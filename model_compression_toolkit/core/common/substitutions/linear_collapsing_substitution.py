@@ -13,8 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-import copy
-
 from model_compression_toolkit.core import common
 
 
@@ -32,7 +30,6 @@ def linear_collapsing_substitute(graph: common.Graph,
     Returns:
         Transformed graph after applying all linear collapsing substitutions.
     """
-    graph = copy.deepcopy(graph)
     matched_nodes = graph.filter(linear_collapsing_substitution.matcher_instance)
     matched_nodes_list = []
     match_indicator = True

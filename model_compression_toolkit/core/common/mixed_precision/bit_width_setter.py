@@ -22,7 +22,7 @@ from model_compression_toolkit.core.common.logger import Logger
 
 
 def set_bit_widths(mixed_precision_enable: bool,
-                   graph_to_set_bit_widths: Graph,
+                   graph: Graph,
                    bit_widths_config: List[int] = None) -> Graph:
     """
     Set bit widths configuration to nodes in a graph. For each node, use the desired index
@@ -30,13 +30,11 @@ def set_bit_widths(mixed_precision_enable: bool,
 
     Args:
         mixed_precision_enable: Is mixed precision enabled.
-        graph_to_set_bit_widths: A prepared for quantization graph to set its bit widths.
+        graph: A prepared for quantization graph to set its bit widths.
         bit_widths_config: MP configuration (a list of indices: one for each node's candidate
         quantization configuration).
 
     """
-    graph = copy.deepcopy(graph_to_set_bit_widths)
-
     if mixed_precision_enable:
         assert all([len(n.candidates_quantization_cfg) > 0 for n in graph.get_configurable_sorted_nodes()]), \
             "All configurable nodes in graph should have at least one candidate configuration in mixed precision mode"

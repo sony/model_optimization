@@ -16,7 +16,7 @@ import torch
 import numpy as np
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from model_compression_toolkit.core.tpc_models.default_tpc.v4.tp_model import generate_tp_model
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -115,6 +115,7 @@ class OldApiTest(BasePytorchTest):
                      quantization_info=quantization_info)
 
     def compare(self, quant_model, float_model, input_x=None, quantization_info=None):
+        set_model(float_model)
         out_float = torch_tensor_to_numpy(float_model(input_x[0]))
         out_quant = torch_tensor_to_numpy(quant_model(input_x[0]))
         self.unit_test.assertTrue(np.isclose(np.linalg.norm(np.abs(out_float-out_quant)), 0, atol=0.01))
