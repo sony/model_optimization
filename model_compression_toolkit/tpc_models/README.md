@@ -21,9 +21,9 @@ Currently, MCT contains three target-platform models
 
 The default target-platform model quantizes operators using 8 bits with power-of-two thresholds.
 For mixed-precision quantization it uses either 2, 4, or 8 bits for quantizing the operators.
-One may view the full default target-platform model and its parameters [here](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/tpc_models/default_tpc/v3/tp_model.py).
+One may view the full default target-platform model and its parameters [here](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/tpc_models/default_tpc/v3/tp_model.py).
 
-[IMX500](https://developer.sony.com/develop/imx500/), [TFLite](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/tpc_models/tflite_tpc/v1/tp_model.py) and [QNNPACK](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/tpc_models/qnnpack_tpc/v1/tp_model.py) models were created similarly and were used to create two TPCs: One for Keras TPC and one for PyTorch TPC (for each model, this 8 in total).
+[IMX500](https://developer.sony.com/develop/imx500/), [TFLite](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/tpc_models/tflite_tpc/v1/tp_model.py) and [QNNPACK](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/tpc_models/qnnpack_tpc/v1/tp_model.py) models were created similarly and were used to create two TPCs: One for Keras TPC and one for PyTorch TPC (for each model, this 8 in total).
 
 ## Usage
 
