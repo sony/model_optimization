@@ -21,7 +21,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
+from model_compression_toolkit.tpc_models.default_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 

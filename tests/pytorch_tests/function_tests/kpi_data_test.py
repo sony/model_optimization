@@ -19,7 +19,7 @@ import numpy as np
 import torch
 from torch.nn import Conv2d, BatchNorm2d, ReLU
 
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.tpc_models.default_tpc.latest import get_op_quantization_configs
 from model_compression_toolkit.core.pytorch.constants import KERNEL
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest

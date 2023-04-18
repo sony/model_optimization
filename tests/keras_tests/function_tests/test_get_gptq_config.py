@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.target_platform import QuantizationMe
 from model_compression_toolkit.gptq.common.gptq_config import GPTQHessianWeightsConfig
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
+from model_compression_toolkit.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 layers = tf.keras.layers
