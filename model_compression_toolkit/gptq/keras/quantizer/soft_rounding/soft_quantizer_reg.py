@@ -90,7 +90,6 @@ class SoftQuantizerRegularization:
 
         Returns: Regularization value.
         """
-        # print("running soft reg...")
         soft_reg_aux: List[tf.Tensor] = []
         b = self.linear_decay(self.count_iter.value())
         for layer in model.layers:
