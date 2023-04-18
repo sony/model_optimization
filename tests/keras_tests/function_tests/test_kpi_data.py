@@ -22,7 +22,7 @@ import keras
 import unittest
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, SeparableConv2D
 
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.tpc_models.default_tpc.latest import get_op_quantization_configs
 from model_compression_toolkit.core.keras.constants import DEPTHWISE_KERNEL, KERNEL
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.separableconv_decomposition import \
     POINTWISE_KERNEL

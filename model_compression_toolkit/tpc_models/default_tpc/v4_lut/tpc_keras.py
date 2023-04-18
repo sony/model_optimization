@@ -14,7 +14,7 @@
 # ==============================================================================
 import tensorflow as tf
 from packaging import version
-from model_compression_toolkit.core.tpc_models.default_tpc.v4_lut import __version__ as TPC_VERSION
+from model_compression_toolkit.tpc_models.default_tpc.v4_lut import __version__ as TPC_VERSION
 
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
@@ -25,7 +25,7 @@ else:
         MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
         Conv2DTranspose
 
-from model_compression_toolkit.core.tpc_models.default_tpc.v4_lut.tp_model import get_tp_model
+from model_compression_toolkit.tpc_models.default_tpc.v4_lut.tp_model import get_tp_model
 import model_compression_toolkit as mct
 
 tp = mct.target_platform

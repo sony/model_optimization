@@ -16,9 +16,9 @@ import torch
 from torch.nn import Conv2d, Linear, BatchNorm2d, ConvTranspose2d, Hardtanh, ReLU, ReLU6
 from torch.nn.functional import relu, relu6, hardtanh
 
-from model_compression_toolkit.core.tpc_models.qnnpack_tpc.v1.tp_model import get_tp_model
+from model_compression_toolkit.tpc_models.qnnpack_tpc.v1.tp_model import get_tp_model
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.tpc_models.qnnpack_tpc.v1 import __version__ as TPC_VERSION
+from model_compression_toolkit.tpc_models.qnnpack_tpc.v1 import __version__ as TPC_VERSION
 
 tp = mct.target_platform
 

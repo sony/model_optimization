@@ -24,9 +24,9 @@ else:
         MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
         Conv2DTranspose
 
-from model_compression_toolkit.core.tpc_models.imx500_tpc.v1.tp_model import get_tp_model
+from model_compression_toolkit.tpc_models.imx500_tpc.v1.tp_model import get_tp_model
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.tpc_models.imx500_tpc.v1 import __version__ as TPC_VERSION
+from model_compression_toolkit.tpc_models.imx500_tpc.v1 import __version__ as TPC_VERSION
 
 tp = mct.target_platform
 

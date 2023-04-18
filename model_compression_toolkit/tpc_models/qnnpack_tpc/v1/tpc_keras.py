@@ -15,7 +15,7 @@
 import tensorflow as tf
 
 from packaging import version
-from model_compression_toolkit.core.tpc_models.qnnpack_tpc.v1 import __version__ as TPC_VERSION
+from model_compression_toolkit.tpc_models.qnnpack_tpc.v1 import __version__ as TPC_VERSION
 
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense, BatchNormalization, ReLU, \
@@ -23,7 +23,7 @@ if version.parse(tf.__version__) < version.parse("2.6"):
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense, BatchNormalization, ReLU, Activation
 
-from model_compression_toolkit.core.tpc_models.qnnpack_tpc.v1.tp_model import get_tp_model
+from model_compression_toolkit.tpc_models.qnnpack_tpc.v1.tp_model import get_tp_model
 import model_compression_toolkit as mct
 
 tp = mct.target_platform

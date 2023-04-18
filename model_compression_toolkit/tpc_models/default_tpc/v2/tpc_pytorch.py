@@ -22,9 +22,9 @@ from torch.nn import Dropout, Flatten, Hardtanh
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish
 
-from model_compression_toolkit.core.tpc_models.default_tpc.v2.tp_model import get_tp_model
+from model_compression_toolkit.tpc_models.default_tpc.v2.tp_model import get_tp_model
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.tpc_models.default_tpc.v2 import __version__ as TPC_VERSION
+from model_compression_toolkit.tpc_models.default_tpc.v2 import __version__ as TPC_VERSION
 
 tp = mct.target_platform
 

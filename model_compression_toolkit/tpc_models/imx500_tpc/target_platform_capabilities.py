@@ -20,8 +20,8 @@ from model_compression_toolkit.core.common.constants import FOUND_TF, FOUND_TORC
 ###############################
 keras_tpc_models_dict = None
 if FOUND_TF:
-    from model_compression_toolkit.core.tpc_models.imx500_tpc.latest import get_keras_tpc_latest
-    from model_compression_toolkit.core.tpc_models.imx500_tpc.v1.tpc_keras import get_keras_tpc as get_keras_tpc_v1
+    from model_compression_toolkit.tpc_models.imx500_tpc.latest import get_keras_tpc_latest
+    from model_compression_toolkit.tpc_models.imx500_tpc.v1.tpc_keras import get_keras_tpc as get_keras_tpc_v1
 
     # Keras: TPC versioning
     keras_tpc_models_dict = {'v1': get_keras_tpc_v1(),
@@ -32,8 +32,8 @@ if FOUND_TF:
 ###############################
 pytorch_tpc_models_dict = None
 if FOUND_TORCH:
-    from model_compression_toolkit.core.tpc_models.imx500_tpc.latest import get_pytorch_tpc_latest
-    from model_compression_toolkit.core.tpc_models.imx500_tpc.v1.tpc_pytorch import \
+    from model_compression_toolkit.tpc_models.imx500_tpc.latest import get_pytorch_tpc_latest
+    from model_compression_toolkit.tpc_models.imx500_tpc.v1.tpc_pytorch import \
         get_pytorch_tpc as get_pytorch_tpc_v1
 
     # Pytorch: TPC versioning

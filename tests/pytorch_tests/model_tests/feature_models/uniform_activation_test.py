@@ -19,7 +19,7 @@ import torch
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_pytorch_tpc
+from model_compression_toolkit.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 

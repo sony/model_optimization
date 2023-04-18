@@ -15,13 +15,13 @@
 
 from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
 
-from model_compression_toolkit.core.tpc_models.default_tpc.target_platform_capabilities import \
+from model_compression_toolkit.tpc_models.default_tpc.target_platform_capabilities import \
     tpc_dict as default_tpc_dict
-from model_compression_toolkit.core.tpc_models.imx500_tpc.target_platform_capabilities import \
+from model_compression_toolkit.tpc_models.imx500_tpc.target_platform_capabilities import \
     tpc_dict as imx500_tpc_dict
-from model_compression_toolkit.core.tpc_models.tflite_tpc.target_platform_capabilities import \
+from model_compression_toolkit.tpc_models.tflite_tpc.target_platform_capabilities import \
     tpc_dict as tflite_tpc_dict
-from model_compression_toolkit.core.tpc_models.qnnpack_tpc.target_platform_capabilities import \
+from model_compression_toolkit.tpc_models.qnnpack_tpc.target_platform_capabilities import \
     tpc_dict as qnnpack_tpc_dict
 from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, TFLITE_TP_MODEL, \
     QNNPACK_TP_MODEL

@@ -20,14 +20,14 @@ from model_compression_toolkit.core.common.constants import FOUND_TF, FOUND_TORC
 ###############################
 keras_tpc_models_dict = None
 if FOUND_TF:
-    from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_keras_tpc_latest
-    from model_compression_toolkit.core.tpc_models.default_tpc.v1.tpc_keras import get_keras_tpc as get_keras_tpc_v1
-    from model_compression_toolkit.core.tpc_models.default_tpc.v2.tpc_keras import get_keras_tpc as get_keras_tpc_v2
-    from model_compression_toolkit.core.tpc_models.default_tpc.v3.tpc_keras import get_keras_tpc as get_keras_tpc_v3
-    from model_compression_toolkit.core.tpc_models.default_tpc.v4.tpc_keras import get_keras_tpc as get_keras_tpc_v4
-    from model_compression_toolkit.core.tpc_models.default_tpc.v3_lut.tpc_keras import get_keras_tpc as get_keras_tpc_v3_lut
-    from model_compression_toolkit.core.tpc_models.default_tpc.v4_lut.tpc_keras import get_keras_tpc as get_keras_tpc_v4_lut
-    from model_compression_toolkit.core.tpc_models.default_tpc.v5.tpc_keras import get_keras_tpc as get_keras_tpc_v5
+    from model_compression_toolkit.tpc_models.default_tpc.latest import get_keras_tpc_latest
+    from model_compression_toolkit.tpc_models.default_tpc.v1.tpc_keras import get_keras_tpc as get_keras_tpc_v1
+    from model_compression_toolkit.tpc_models.default_tpc.v2.tpc_keras import get_keras_tpc as get_keras_tpc_v2
+    from model_compression_toolkit.tpc_models.default_tpc.v3.tpc_keras import get_keras_tpc as get_keras_tpc_v3
+    from model_compression_toolkit.tpc_models.default_tpc.v4.tpc_keras import get_keras_tpc as get_keras_tpc_v4
+    from model_compression_toolkit.tpc_models.default_tpc.v3_lut.tpc_keras import get_keras_tpc as get_keras_tpc_v3_lut
+    from model_compression_toolkit.tpc_models.default_tpc.v4_lut.tpc_keras import get_keras_tpc as get_keras_tpc_v4_lut
+    from model_compression_toolkit.tpc_models.default_tpc.v5.tpc_keras import get_keras_tpc as get_keras_tpc_v5
 
     # Keras: TPC versioning
     keras_tpc_models_dict = {'v1': get_keras_tpc_v1(),
@@ -44,20 +44,20 @@ if FOUND_TF:
 ###############################
 pytorch_tpc_models_dict = None
 if FOUND_TORCH:
-    from model_compression_toolkit.core.tpc_models.default_tpc.latest import get_pytorch_tpc_latest
-    from model_compression_toolkit.core.tpc_models.default_tpc.v1.tpc_pytorch import \
+    from model_compression_toolkit.tpc_models.default_tpc.latest import get_pytorch_tpc_latest
+    from model_compression_toolkit.tpc_models.default_tpc.v1.tpc_pytorch import \
         get_pytorch_tpc as get_pytorch_tpc_v1
-    from model_compression_toolkit.core.tpc_models.default_tpc.v2.tpc_pytorch import \
+    from model_compression_toolkit.tpc_models.default_tpc.v2.tpc_pytorch import \
         get_pytorch_tpc as get_pytorch_tpc_v2
-    from model_compression_toolkit.core.tpc_models.default_tpc.v3.tpc_pytorch import \
+    from model_compression_toolkit.tpc_models.default_tpc.v3.tpc_pytorch import \
         get_pytorch_tpc as get_pytorch_tpc_v3
-    from model_compression_toolkit.core.tpc_models.default_tpc.v4.tpc_pytorch import \
+    from model_compression_toolkit.tpc_models.default_tpc.v4.tpc_pytorch import \
         get_pytorch_tpc as get_pytorch_tpc_v4
-    from model_compression_toolkit.core.tpc_models.default_tpc.v3_lut.tpc_pytorch import \
+    from model_compression_toolkit.tpc_models.default_tpc.v3_lut.tpc_pytorch import \
         get_pytorch_tpc as get_pytorch_tpc_v3_lut
-    from model_compression_toolkit.core.tpc_models.default_tpc.v4_lut.tpc_pytorch import \
+    from model_compression_toolkit.tpc_models.default_tpc.v4_lut.tpc_pytorch import \
         get_pytorch_tpc as get_pytorch_tpc_v4_lut
-    from model_compression_toolkit.core.tpc_models.default_tpc.v5.tpc_pytorch import \
+    from model_compression_toolkit.tpc_models.default_tpc.v5.tpc_pytorch import \
         get_pytorch_tpc as get_pytorch_tpc_v5
 
     # Pytorch: TPC versioning

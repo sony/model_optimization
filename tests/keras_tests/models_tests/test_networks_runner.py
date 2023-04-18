@@ -16,7 +16,7 @@ import os
 import tempfile
 
 import model_compression_toolkit.gptq.common.gptq_config
-from model_compression_toolkit.core.tpc_models.default_tpc.latest import generate_keras_tpc
+from model_compression_toolkit.tpc_models.default_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 import tensorflow as tf
 import numpy as np

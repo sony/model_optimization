@@ -23,9 +23,9 @@ else:
     from keras.layers import Conv2D, DepthwiseConv2D, Reshape, ZeroPadding2D, \
         Dropout, MaxPooling2D, Activation, ReLU, Flatten, Cropping2D
 
-from model_compression_toolkit.core.tpc_models.default_tpc.v1.tp_model import get_tp_model
+from model_compression_toolkit.tpc_models.default_tpc.v1.tp_model import get_tp_model
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.tpc_models.default_tpc.v1 import __version__ as TPC_VERSION
+from model_compression_toolkit.tpc_models.default_tpc.v1 import __version__ as TPC_VERSION
 
 tp = mct.target_platform
 
