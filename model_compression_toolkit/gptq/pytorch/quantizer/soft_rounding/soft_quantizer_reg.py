@@ -95,14 +95,13 @@ class SoftQuantizerRegularization:
         """
 
         soft_reg_aux: List[torch.Tensor] = []
+        b = self.linear_decay(self.count_iter)
         for layer in model.modules():
             if isinstance(layer, PytorchQuantizationWrapper):
                 kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
                                                                       fw_info=DEFAULT_PYTORCH_INFO)
 
                 st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
-                b = self.linear_decay(self.count_iter)
-
                 soft_reg_aux.append((1 - torch.pow(torch.abs(st - .5) * 2, b)).sum())
 
         reg = 0
