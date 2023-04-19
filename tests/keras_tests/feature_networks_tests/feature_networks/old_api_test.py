@@ -18,7 +18,7 @@ import numpy as np
 import model_compression_toolkit as mct
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
-from model_compression_toolkit.target_platform_capabilities.default_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs
 
 
 keras = tf.keras

@@ -28,11 +28,11 @@ from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_m
     generate_tp_model_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 import model_compression_toolkit as mct
-from model_compression_toolkit.target_platform_capabilities.default_tpc.latest import generate_pytorch_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit import MixedPrecisionQuantizationConfigV2
 from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
-from model_compression_toolkit.target_platform_capabilities.default_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs
 
 
 class TestModel(nn.Module):

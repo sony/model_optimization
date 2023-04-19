@@ -21,7 +21,7 @@ from keras.layers import Conv2D, Conv2DTranspose
 import model_compression_toolkit as mct
 from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod
 from model_compression_toolkit.core.common.constants import THRESHOLD
-from model_compression_toolkit.target_platform_capabilities.default_tpc.latest import generate_keras_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
