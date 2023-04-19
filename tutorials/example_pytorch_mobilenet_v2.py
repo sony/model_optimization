@@ -102,7 +102,8 @@ if __name__ == "__main__":
     # Calling representative_data_gen() should return a list
     # of two numpy.ndarray objects where the arrays' shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].
     def representative_data_gen() -> list:
-        return [image_data_loader.sample()]
+        for _ in range(args.num_calibration_iterations):
+            yield [image_data_loader.sample()]
 
     # Get a TargetPlatformModel object that models the hardware for the quantized model inference.
     # The model determines the quantization methods to use during the MCT optimization process.
@@ -112,15 +113,12 @@ if __name__ == "__main__":
 
     # Create a model and quantize it using the representative_data_gen as the calibration images.
     model = mobilenet_v2(pretrained=True)
-    # set quantization configuration
-    quantization_config = mct.DEFAULTCONFIG
-    # Configure z threshold algorithm for outlier removal. Set z threshold.
-    quantization_config.z_threshold = args.z_threshold
+    # set configuration and Configure z threshold algorithm for outlier removal.
+    core_config = mct.CoreConfig(quantization_config=mct.QuantizationConfig(z_threshold=args.z_threshold))
     # run post training quantization on the model to get the quantized model output
-    quantized_model, quantization_info = mct.pytorch_post_training_quantization(
+    quantized_model, quantization_info = mct.pytorch_post_training_quantization_experimental(
         in_module=model,
         representative_data_gen=representative_data_gen,
-        quant_config=quantization_config,
-        target_platform_capabilities=target_platform_cap,
-        n_iter=args.num_calibration_iterations,
+        core_config=core_config,
+        target_platform_capabilities=target_platform_cap
     )

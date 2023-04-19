@@ -46,8 +46,6 @@ def argument_handler():
                         help='number of iterations for calibration.')
     parser.add_argument('--weights_compression_ratio', type=float, default=0.75,
                         help='weights compression ratio.')
-    parser.add_argument('--activations_compression_ratio', type=float, default=0.5,
-                        help='activations compression ratio.')
     return parser.parse_args()
 
 
@@ -65,7 +63,7 @@ if __name__ == '__main__':
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
-    from model_compression_toolkit import FolderImageLoader, MixedPrecisionQuantizationConfig
+    from model_compression_toolkit import FolderImageLoader, CoreConfig, MixedPrecisionQuantizationConfigV2
 
     image_data_loader = FolderImageLoader(folder,
                                           preprocessing=[np_to_pil,
@@ -87,19 +85,17 @@ if __name__ == '__main__':
     # calling representative_data_gen() should return a list
     # of two numpy.ndarray objects where the arrays' shapes are [(20, 32, 32, 3), (20, 224, 224, 3)].
     def representative_data_gen() -> list:
-        return [image_data_loader.sample()]
+        for _ in range(args.num_calibration_iterations):
+            yield [image_data_loader.sample()]
 
     # Create a model to quantize.
     model = mobilenet_v2()
-
-    # Set the number of calibration iterations.
-    num_iter = args.num_calibration_iterations
 
     # Create a mixed-precision quantization configuration with possible mixed-precision search options.
     # MCT will search a mixed-precision configuration (namely, bit-width for each layer)
     # and quantize the model according to this configuration.
     # The candidates bit-width for quantization should be defined in the target platform model:
-    configuration = MixedPrecisionQuantizationConfig()
+    configuration = CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
 
     # Get a TargetPlatformCapabilities object that models the hardware for the quantized model inference.
     # Here, for example, we use the default platform that is attached to a Pytorch layers representation.
@@ -108,10 +104,10 @@ if __name__ == '__main__':
     # Get KPI information to constraint your model's memory size.
     # Retrieve a KPI object with helpful information of each KPI metric,
     # to constraint the quantized model to the desired memory size.
-    kpi_data = mct.pytorch_kpi_data(model,
-                                    representative_data_gen,
-                                    configuration,
-                                    target_platform_capabilities=target_platform_cap)
+    kpi_data = mct.pytorch_kpi_data_experimental(model,
+                                                 representative_data_gen,
+                                                 configuration,
+                                                 target_platform_capabilities=target_platform_cap)
 
     # Set a constraint for each of the KPI metrics.
     # Create a KPI object to limit our returned model's size. Note that this values affects only layers and attributes
@@ -119,16 +115,13 @@ if __name__ == '__main__':
     # while the bias will not)
     # examples:
     # weights_compression_ratio = 0.75 - About 0.75 of the model's weights memory size when quantized with 8 bits.
-    # activations_compression_ratio = 0.5 - About 0.5 of the model's activation size when quantized with 8 bits.
-    kpi = mct.KPI(kpi_data.weights_memory * args.weights_compression_ratio,
-                  kpi_data.activation_memory * args.activations_compression_ratio)
+    kpi = mct.KPI(kpi_data.weights_memory * args.weights_compression_ratio)
 
     # It is also possible to constraint only part of the KPI metric, e.g., by providing only weights_memory target
     # in the past KPI object, e.g., kpi = mct.KPI(kpi_data.weights_memory * 0.75)
 
-    quantized_model, quantization_info = mct.pytorch_post_training_quantization_mixed_precision(model,
-                                                                                                representative_data_gen,
-                                                                                                target_kpi=kpi,
-                                                                                                n_iter=num_iter,
-                                                                                                quant_config=configuration,
-                                                                                                target_platform_capabilities=target_platform_cap)
+    quantized_model, quantization_info = mct.pytorch_post_training_quantization_experimental(model,
+                                                                                             representative_data_gen,
+                                                                                             target_kpi=kpi,
+                                                                                             core_config=configuration,
+                                                                                             target_platform_capabilities=target_platform_cap)
