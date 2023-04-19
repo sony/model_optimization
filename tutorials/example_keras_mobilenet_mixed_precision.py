@@ -62,8 +62,6 @@ def argument_handler():
                         help='number of iterations for calibration.')
     parser.add_argument('--weights_compression_ratio', type=float, default=0.75,
                         help='weights compression ratio.')
-    parser.add_argument('--activations_compression_ratio', type=float, default=0.5,
-                        help='activations compression ratio.')
     return parser.parse_args()
 
 
@@ -125,13 +123,10 @@ if __name__ == '__main__':
     # while the bias will not)
     # examples:
     # weights_compression_ratio = 0.75 - About 0.75 of the model's weights memory size when quantized with 8 bits.
-    # activations_compression_ratio = 0.5 - About 0.5 of the model's activation size when quantized with 8 bits.
-    kpi = mct.KPI(kpi_data.weights_memory * args.weights_compression_ratio,
-                  kpi_data.activation_memory * args.activations_compression_ratio)
+    kpi = mct.KPI(kpi_data.weights_memory * args.weights_compression_ratio)
 
     # It is also possible to constraint only part of the KPI metric, e.g., by providing only weights_memory target
     # in the past KPI object, e.g., kpi = mct.KPI(kpi_data.weights_memory * 0.75)
-
     quantized_model, quantization_info = mct.keras_post_training_quantization_experimental(model,
                                                                                            representative_data_gen,
                                                                                            target_kpi=kpi,
