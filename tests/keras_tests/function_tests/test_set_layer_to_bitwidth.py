@@ -23,7 +23,7 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapp
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-from model_compression_toolkit.tpc_models.default_tpc.latest import generate_keras_tpc
+from model_compression_toolkit.target_platform_capabilities.default_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.quantizer.mixed_precision.quantization_config_factory import \
     quantization_config_builder_mixed_precision
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters

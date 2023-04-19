@@ -17,7 +17,7 @@ from typing import Dict, List, Any
 
 from model_compression_toolkit.core.common.constants import OPS_SET_LIST
 from model_compression_toolkit.core.common.target_platform import OpQuantizationConfig, QuantizationConfigOptions
-from model_compression_toolkit.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_tp_model
+from model_compression_toolkit.target_platform_capabilities.default_tpc.latest import get_op_quantization_configs, generate_tp_model
 import model_compression_toolkit as mct
 
 tp = mct.target_platform

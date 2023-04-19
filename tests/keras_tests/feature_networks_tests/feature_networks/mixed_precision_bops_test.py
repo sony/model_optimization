@@ -17,7 +17,7 @@ from model_compression_toolkit import KPI, MixedPrecisionQuantizationConfigV2
 from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add
 
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-from model_compression_toolkit.tpc_models.default_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.target_platform_capabilities.default_tpc.latest import get_op_quantization_configs
 import tensorflow as tf
 
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras

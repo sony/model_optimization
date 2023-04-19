@@ -25,7 +25,7 @@ from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig,
     GPTQHessianWeightsConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
-from model_compression_toolkit.tpc_models.default_tpc.latest import generate_pytorch_tpc
+from model_compression_toolkit.target_platform_capabilities.default_tpc.latest import generate_pytorch_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 tp = mct.target_platform

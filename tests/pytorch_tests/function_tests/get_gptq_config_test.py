@@ -22,7 +22,7 @@ from model_compression_toolkit import CoreConfig, QuantizationConfig, Quantizati
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
-from model_compression_toolkit.tpc_models.default_tpc.latest import generate_pytorch_tpc
+from model_compression_toolkit.target_platform_capabilities.default_tpc.latest import generate_pytorch_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from model_compression_toolkit.core.pytorch.utils import get_working_device, set_model, to_torch_tensor, \
     torch_tensor_to_numpy

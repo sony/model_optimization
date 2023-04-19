@@ -4,7 +4,7 @@ import keras.layers
 import tensorflow as tf
 from keras.engine.base_layer import Layer
 
-from model_compression_toolkit.tpc_models.default_tpc.latest import generate_keras_tpc
+from model_compression_toolkit.target_platform_capabilities.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 from packaging import version

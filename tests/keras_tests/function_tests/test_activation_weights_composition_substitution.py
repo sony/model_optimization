@@ -34,7 +34,7 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weig
     WeightsActivationSplit
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.tpc_models.default_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.target_platform_capabilities.default_tpc.latest import get_op_quantization_configs
 
 import model_compression_toolkit as mct
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
