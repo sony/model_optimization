@@ -16,7 +16,7 @@ import unittest
 import tensorflow as tf
 
 from model_compression_toolkit import TrainingMethod
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste import STEWeightQATQuantizer, \
     STEActivationQATQuantizer
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste import STEUniformWeightQATQuantizer, \

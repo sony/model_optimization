@@ -24,7 +24,7 @@ else:
 
 from tensorflow.python.keras.layers.core import SlicingOpLambda
 from tensorflow.python.ops.image_ops_impl import ResizeMethod
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework.attribute_filter import Eq
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import Eq
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.tflite_tpc.v1.tp_model import get_tp_model
 import model_compression_toolkit as mct

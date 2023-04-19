@@ -21,7 +21,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import max_power_of_two, get_tensor_max
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import \
     get_threshold_selection_tensor_error_function, get_threshold_selection_histogram_error_function
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 
 
 def power_of_two_selection_tensor(tensor_data: np.ndarray,

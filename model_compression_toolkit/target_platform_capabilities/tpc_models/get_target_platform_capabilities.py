@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.target_platform_capabilities import \
     tpc_dict as default_tpc_dict

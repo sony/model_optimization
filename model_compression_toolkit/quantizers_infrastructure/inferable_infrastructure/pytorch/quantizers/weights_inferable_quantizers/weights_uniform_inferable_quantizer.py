@@ -17,7 +17,7 @@ import numpy as np
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.logger import Logger
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import QuantizationTarget, \
     mark_quantizer
 

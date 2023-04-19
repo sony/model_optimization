@@ -15,7 +15,7 @@
 from enum import Enum
 from typing import Any, Dict, List
 
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 
 
 class QuantizationTarget(Enum):

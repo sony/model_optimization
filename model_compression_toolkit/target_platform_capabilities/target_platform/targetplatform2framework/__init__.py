@@ -13,13 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework.current_tpc import get_current_tpc
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework.target_platform_capabilities import TargetPlatformCapabilities
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework.attribute_filter import \
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import get_current_tpc
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import \
     Eq, GreaterEq, NotEq, SmallerEq, Greater, Smaller
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework.layer_filter_params import \
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.layer_filter_params import \
     LayerFilterParams
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework.operations_to_layers import \
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.operations_to_layers import \
     OperationsToLayers, OperationsSetToLayers
 
 

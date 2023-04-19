@@ -15,7 +15,7 @@
 import random
 from torch.fx import symbolic_trace
 
-from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit.core.pytorch.utils import set_model, to_torch_tensor, \
     torch_tensor_to_numpy

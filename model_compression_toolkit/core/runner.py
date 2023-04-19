@@ -48,7 +48,7 @@ from model_compression_toolkit.core.common.statistics_correction.statistics_corr
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.common.substitutions.linear_collapsing_substitution import \
     linear_collapsing_substitute
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
     WeightsFinalBitwidthConfigVisualizer, \
     ActivationFinalBitwidthConfigVisualizer

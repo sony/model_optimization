@@ -30,7 +30,7 @@ from model_compression_toolkit.core.runner import core_runner, _init_tensorboard
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
 LR_DEFAULT = 0.15
 LR_REST_DEFAULT = 1e-4

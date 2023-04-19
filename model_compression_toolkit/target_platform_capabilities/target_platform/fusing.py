@@ -16,8 +16,8 @@
 
 from typing import Any
 
-from model_compression_toolkit.core.common.target_platform.operators import OperatorSetConcat
-from model_compression_toolkit.core.common.target_platform.target_platform_model_component import TargetPlatformModelComponent
+from model_compression_toolkit.target_platform_capabilities.target_platform.operators import OperatorSetConcat
+from model_compression_toolkit.target_platform_capabilities.target_platform.target_platform_model_component import TargetPlatformModelComponent
 
 
 class Fusing(TargetPlatformModelComponent):

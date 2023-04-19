@@ -16,14 +16,14 @@
 import pprint
 from typing import Any, Dict
 
-from model_compression_toolkit.core.common.target_platform.current_tp_model import _current_tp_model, \
+from model_compression_toolkit.target_platform_capabilities.target_platform.current_tp_model import _current_tp_model, \
     get_current_tp_model
-from model_compression_toolkit.core.common.target_platform.fusing import Fusing
-from model_compression_toolkit.core.common.target_platform.target_platform_model_component import \
+from model_compression_toolkit.target_platform_capabilities.target_platform.fusing import Fusing
+from model_compression_toolkit.target_platform_capabilities.target_platform.target_platform_model_component import \
     TargetPlatformModelComponent
-from model_compression_toolkit.core.common.target_platform.op_quantization_config import OpQuantizationConfig, \
+from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import OpQuantizationConfig, \
     QuantizationConfigOptions
-from model_compression_toolkit.core.common.target_platform.operators import OperatorsSetBase
+from model_compression_toolkit.target_platform_capabilities.target_platform.operators import OperatorsSetBase
 from model_compression_toolkit.core.common.immutable import ImmutableClass
 from model_compression_toolkit.core.common.logger import Logger
 

@@ -27,7 +27,7 @@ from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.network_editors import EditRule
 from model_compression_toolkit.core.common.statistics_correction.apply_second_moment_correction_to_graph import \
     quantized_model_builder_for_second_moment_correction
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod, TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod, TargetPlatformCapabilities
 from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.core.keras.constants import EPSILON_VAL, GAMMA, BETA, MOVING_MEAN, MOVING_VARIANCE
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO

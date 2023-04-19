@@ -28,8 +28,8 @@ from model_compression_toolkit.core.common.quantization.quantization_params_fn_s
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
 from model_compression_toolkit.core.common.quantization.quantization_fn_selection import \
     get_weights_quantization_fn
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
-from model_compression_toolkit.core.common.target_platform.op_quantization_config import OpQuantizationConfig, \
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import OpQuantizationConfig, \
     QuantizationConfigOptions
 
 

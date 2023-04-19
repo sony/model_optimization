@@ -12,29 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Any, Dict
 
-from model_compression_toolkit.core.common.target_platform.current_tp_model import _current_tp_model
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import  _current_tpc
 
 
-class TargetPlatformModelComponent:
-    """
-    Component of TargetPlatformModel (Fusing, OperatorsSet, etc.)
-    """
+class TargetPlatformCapabilitiesComponent:
     def __init__(self, name: str):
-        """
-
-        Args:
-            name: Name of component.
-        """
         self.name = name
-        _current_tp_model.get().append_component(self)
+        _current_tpc.get().append_component(self)
 
-    def get_info(self) -> Dict[str, Any]:
-        """
-
-        Returns: Get information about the component to display (return an empty dictionary.
-        the actual component should fill it with info).
-
-        """
+    def get_info(self):
         return {}

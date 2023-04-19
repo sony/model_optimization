@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.constants import TENSORFLOW, FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
 from model_compression_toolkit.ptq.runner import ptq_runner

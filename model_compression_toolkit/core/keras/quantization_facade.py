@@ -35,7 +35,7 @@ from model_compression_toolkit.ptq.runner import ptq_runner
 from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 
-from model_compression_toolkit.core.common.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.constants import FOUND_TF
 
 if FOUND_TF:
