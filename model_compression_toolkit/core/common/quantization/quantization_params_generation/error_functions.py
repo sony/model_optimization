@@ -17,9 +17,10 @@ from typing import Tuple, Callable
 import numpy as np
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_mae, compute_lp_norm
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.constants import FLOAT_32
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import uniform_quantize_tensor
+
 
 def _mse_error_histogram(q_bins: np.ndarray,
                          q_count: np.ndarray,

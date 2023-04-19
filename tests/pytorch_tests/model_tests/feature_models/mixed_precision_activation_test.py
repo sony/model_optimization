@@ -18,7 +18,7 @@ import numpy as np
 from model_compression_toolkit import MixedPrecisionQuantizationConfig, KPI, CoreConfig, \
     MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.tpc_models.default_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct

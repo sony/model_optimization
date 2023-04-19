@@ -18,7 +18,7 @@ from model_compression_toolkit.core.common.constants import FOUND_TORCH
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.constants import PYTORCH
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
-from model_compression_toolkit.core.common.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
 from model_compression_toolkit.gptq.keras.quantization_facade import GPTQ_MOMENTUM
@@ -118,7 +118,7 @@ if FOUND_TORCH:
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             gptq_config (GradientPTQConfigV2): Configuration for using gptq (e.g. optimizer).
             gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
-            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to. `Default PyTorch TPC <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/tpc_models/pytorch_tp_models/pytorch_default.py>`_
+            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to.
             new_experimental_exporter (bool): Whether exporting the quantized model using new exporter or not (in progress. Avoiding it for now is recommended).
 
         Returns:

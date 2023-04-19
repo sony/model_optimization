@@ -17,7 +17,7 @@ import torch
 import torch.nn as nn
 
 from model_compression_toolkit import DefaultDict
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 import model_compression_toolkit as mct
@@ -25,7 +25,7 @@ from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig,
     GPTQHessianWeightsConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
-from model_compression_toolkit.tpc_models.default_tpc.latest import generate_pytorch_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 tp = mct.target_platform

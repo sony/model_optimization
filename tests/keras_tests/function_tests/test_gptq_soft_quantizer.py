@@ -6,7 +6,7 @@ from tensorflow.keras.layers import Conv2D, Input
 import numpy as np
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.constants import THRESHOLD
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.gptq.keras.quantizer.soft_rounding.symmetric_soft_quantizer import \
     SymmetricSoftRoundingGPTQ

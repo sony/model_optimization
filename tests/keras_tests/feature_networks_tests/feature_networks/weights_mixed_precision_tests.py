@@ -19,7 +19,7 @@ import tensorflow as tf
 from keras.layers import DepthwiseConv2D, ReLU
 
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_last_layer_weights
-from model_compression_toolkit.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_keras_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import model_compression_toolkit as mct

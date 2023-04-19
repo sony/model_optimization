@@ -24,7 +24,7 @@ from model_compression_toolkit import FrameworkInfo, CoreConfig
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.statistics_correction.apply_second_moment_correction_to_graph import \
     quantized_model_builder_for_second_moment_correction
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod, TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod, TargetPlatformCapabilities
 from model_compression_toolkit.core.pytorch.constants import EPSILON_VAL, GAMMA, BETA, MOVING_MEAN, MOVING_VARIANCE
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation

@@ -20,7 +20,7 @@ from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common import FrameworkInfo, Graph, BaseNode
 from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import create_node_activation_qc, \
     set_quantization_configs_to_node
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig

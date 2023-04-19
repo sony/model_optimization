@@ -22,7 +22,7 @@ from model_compression_toolkit.core.common.network_editors.node_filters import N
     NodeTypeFilter
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
     get_weights_quantization_params_fn, get_activation_quantization_params_fn
-from model_compression_toolkit.tpc_models.default_tpc.v4.tpc_keras import generate_keras_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.v4.tpc_keras import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 

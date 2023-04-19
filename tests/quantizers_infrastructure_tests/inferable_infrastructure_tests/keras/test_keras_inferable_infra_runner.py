@@ -15,7 +15,7 @@
 import unittest
 import tensorflow as tf
 
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
     BaseKerasInferableQuantizer, WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, \

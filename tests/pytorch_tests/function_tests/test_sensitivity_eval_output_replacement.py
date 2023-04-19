@@ -19,7 +19,7 @@ from model_compression_toolkit.core.pytorch.default_framework_info import DEFAUL
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
-from model_compression_toolkit.tpc_models.default_tpc.latest import generate_pytorch_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc
 
 
 class argmax_output_model(torch.nn.Module):

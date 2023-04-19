@@ -20,7 +20,7 @@ from tensorflow.keras.layers import Conv2D
 
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
-from model_compression_toolkit.tpc_models.default_tpc.latest import generate_keras_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
