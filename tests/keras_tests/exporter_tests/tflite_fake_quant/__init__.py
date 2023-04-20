@@ -12,12 +12,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-# TFLite tensor details keys:
-QUANTIZATION_PARAMETERS = 'quantization_parameters'
-SCALES = "scales"
-ZERO_POINTS = "zero_points"
-INDEX = "index"
-NAME = "name"
-SHAPE = "shape"
-DTYPE = "dtype"
