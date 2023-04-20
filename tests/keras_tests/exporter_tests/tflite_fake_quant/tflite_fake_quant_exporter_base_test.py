@@ -15,7 +15,7 @@
 
 import os
 import tempfile
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 import numpy as np
 import tensorflow as tf
@@ -26,7 +26,7 @@ from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
 
 
-class TFLiteFakeQuantExporterBaseTest:
+class TFLiteFakeQuantExporterBaseTest(ABC):
 
     def run_test(self):
         # Get float model and save it
@@ -67,8 +67,7 @@ class TFLiteFakeQuantExporterBaseTest:
         return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def __get_repr_dataset(self):
-        for _ in range(1):
-            yield [np.random.randn(*((1,) + shape)) for shape in self.get_input_shape()]
+        yield [np.random.randn(*((1,) + shape)) for shape in self.get_input_shape()]
 
     @abstractmethod
     def get_model(self):
@@ -77,6 +76,6 @@ class TFLiteFakeQuantExporterBaseTest:
     @abstractmethod
     def run_checks(self):
         """
-        Tests can implement it for specific checks on the exported model
+        Tests must implement it for specific checks on the exported model
         """
-        pass
+        raise Exception(f'Exporter test must implement run_checks method')
