@@ -256,7 +256,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         self.weights_n_bits = op_cfg.weights_n_bits
         self.weights_bias_correction = qc.weights_bias_correction
         self.weights_second_moment_correction = qc.weights_second_moment_correction
-        self.weights_per_channel_threshold = qc.weights_per_channel_threshold
+        self.weights_per_channel_threshold = op_cfg.weights_per_channel_threshold
         self.enable_weights_quantization = op_cfg.enable_weights_quantization
         self.min_threshold = qc.min_threshold
         self.l_p_value = qc.l_p_value

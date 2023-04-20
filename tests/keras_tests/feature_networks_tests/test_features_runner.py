@@ -88,6 +88,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.ed
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.node_filter_test import NameFilterTest, \
     ScopeFilterTest, TypeFilterTest
 from tests.keras_tests.feature_networks_tests.feature_networks.output_in_middle_test import OutputInMiddleTest
+from tests.keras_tests.feature_networks_tests.feature_networks.per_tensor_weight_quantization_test import \
+    PerTensorWeightQuantizationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.qat.qat_test import QATWrappersTest, \
     QuantizationAwareTrainingQuantizersTest, QATWrappersMixedPrecisionCfgTest
 from tests.keras_tests.feature_networks_tests.feature_networks.relu_replacement_test import ReluReplacementTest, \
@@ -127,6 +129,9 @@ layers = tf.keras.layers
 
 
 class FeatureNetworkTest(unittest.TestCase):
+
+    def test_per_tensor_weight_quantization(self):
+        PerTensorWeightQuantizationTest(self).run_test()
 
     def test_single_relu_replacement(self):
         SingleReluReplacementTest(self).run_test()
