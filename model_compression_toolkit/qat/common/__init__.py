@@ -13,4 +13,4 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.qat.common.constants import THRESHOLD_TENSOR, WEIGHTS_QUANTIZATION_PARAMS
+from model_compression_toolkit.core.common.constants import THRESHOLD_TENSOR, WEIGHTS_QUANTIZATION_PARAMS

@@ -76,8 +76,6 @@ from model_compression_toolkit.core.pytorch.reader.reader import model_reader
 from model_compression_toolkit.core.pytorch.statistics_correction.apply_second_moment_correction import \
     pytorch_apply_second_moment_correction
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
-from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
-from model_compression_toolkit.gptq.pytorch.gptq_training import PytorchGPTQTrainer
 
 
 class PytorchImplementation(FrameworkImplementation):
@@ -324,12 +322,6 @@ class PytorchImplementation(FrameworkImplementation):
         if quant_config.weights_second_moment_correction:
             substitutions_list.append(pytorch_batchnorm_refusing())
         return substitutions_list
-
-    def get_gptq_trainer_obj(self) -> Type[GPTQTrainer]:
-        """
-        Returns: GPTQTrainer object
-        """
-        return PytorchGPTQTrainer
 
     def get_sensitivity_evaluator(self,
                                   graph: Graph,

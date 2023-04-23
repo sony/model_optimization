@@ -24,7 +24,7 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.get_targe
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig, MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.qat.common.qat_config import QATConfig, TrainingMethod
+
 from model_compression_toolkit.core.common.logger import set_log_folder
 from model_compression_toolkit.core.common.data_loader import FolderImageLoader
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo, ChannelAxis
@@ -34,8 +34,7 @@ from model_compression_toolkit.core.common import network_editors as network_edi
 from model_compression_toolkit.core.keras.quantization_facade import keras_post_training_quantization, \
     keras_post_training_quantization_mixed_precision
 from model_compression_toolkit.ptq.keras.quantization_facade import keras_post_training_quantization_experimental
-from model_compression_toolkit.qat.keras.quantization_facade import keras_quantization_aware_training_init, keras_quantization_aware_training_finalize
-from model_compression_toolkit.qat.pytorch.quantization_facade import pytorch_quantization_aware_training_init, pytorch_quantization_aware_training_finalize
+
 from model_compression_toolkit.core.pytorch.quantization_facade import pytorch_post_training_quantization, pytorch_post_training_quantization_mixed_precision
 from model_compression_toolkit.ptq.pytorch.quantization_facade import pytorch_post_training_quantization_experimental
 

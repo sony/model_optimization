@@ -288,13 +288,6 @@ class FrameworkImplementation(ABC):
                              f'framework\'s get_substitutions_after_second_moment_correction '
                              f'method.')  # pragma: no cover
 
-    @abstractmethod
-    def get_gptq_trainer_obj(self):
-        """
-        Returns: GPTQTrainer object
-        """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s get_gptq_trainer method.')  # pragma: no cover
 
     @abstractmethod
     def get_sensitivity_evaluator(self,

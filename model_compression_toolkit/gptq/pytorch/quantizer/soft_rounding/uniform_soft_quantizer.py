@@ -31,8 +31,7 @@ from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructur
     mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import \
     VariableGroup
-from model_compression_toolkit.core.common.constants import RANGE_MAX, RANGE_MIN
-from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
+from model_compression_toolkit.core.common.constants import RANGE_MAX, RANGE_MIN, FQ_MIN, FQ_MAX
 
 
 def soft_rounding_unifrom_quantizer(input_tensor: torch.Tensor,

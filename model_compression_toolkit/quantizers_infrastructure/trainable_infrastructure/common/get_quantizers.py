@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Union
+from typing import Union, Any
 
-from model_compression_toolkit.gptq import RoundingType
-from model_compression_toolkit import TrainingMethod
+# from model_compression_toolkit.gptq import RoundingType
+# from model_compression_toolkit.qat.common.qat_config import TrainingMethod
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
@@ -26,7 +26,7 @@ from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructur
 
 
 def get_trainable_quantizer_class(quant_target: QuantizationTarget,
-                                  quantizer_type: Union[TrainingMethod, RoundingType],
+                                  quantizer_type: Union[Any, Any], # TODO: Fix type hints
                                   quant_method: QuantizationMethod,
                                   quantizer_base_class: type) -> type:
     """

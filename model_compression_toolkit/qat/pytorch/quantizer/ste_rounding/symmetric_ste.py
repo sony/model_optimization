@@ -18,9 +18,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from model_compression_toolkit.qat import TrainingMethod
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
-from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
+from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
 from model_compression_toolkit.core.common import constants as C

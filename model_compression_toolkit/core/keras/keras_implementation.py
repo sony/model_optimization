@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Any, Tuple, Callable, Type, Dict
+from typing import List, Any, Tuple, Callable, Dict
 
 import numpy as np
 import tensorflow as tf
@@ -52,8 +52,6 @@ from model_compression_toolkit.core.common.model_builder_mode import ModelBuilde
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
-from model_compression_toolkit.gptq.keras.gptq_training import KerasGPTQTrainer
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.activation_decomposition import \
     ActivationDecomposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.softmax_shift import \
@@ -347,12 +345,6 @@ class KerasImplementation(FrameworkImplementation):
         if quant_config.weights_second_moment_correction:
             substitutions_list.append(keras_batchnorm_refusing())
         return substitutions_list
-
-    def get_gptq_trainer_obj(self) -> Type[GPTQTrainer]:
-        """
-        Returns:  Keras object of GPTQTrainer
-        """
-        return KerasGPTQTrainer
 
     def get_sensitivity_evaluator(self,
                                   graph: Graph,
