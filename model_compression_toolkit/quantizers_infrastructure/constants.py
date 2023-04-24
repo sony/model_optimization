@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,4 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.quantizers_infrastructure.constants import THRESHOLD_TENSOR, WEIGHTS_QUANTIZATION_PARAMS
+
+# Quantizers constants (for GPTQ, QAT, etc.)
+FQ_MIN = "min"
+FQ_MAX = "max"
+THRESHOLD_TENSOR = "ptq_threshold_tensor"
+WEIGHTS_QUANTIZATION_PARAMS = 'weights_quantization_params'

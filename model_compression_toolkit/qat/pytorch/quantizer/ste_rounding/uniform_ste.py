@@ -17,7 +17,9 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-from model_compression_toolkit.core.common.constants import RANGE_MAX, RANGE_MIN, FQ_MIN, FQ_MAX
+from model_compression_toolkit.core.common.constants import RANGE_MAX, RANGE_MIN
+from model_compression_toolkit.quantizers_infrastructure.constants import FQ_MIN, FQ_MAX
+
 from model_compression_toolkit.qat import TrainingMethod
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common import constants as C

@@ -18,12 +18,13 @@ import numpy as np
 
 from model_compression_toolkit.gptq import RoundingType
 from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.quantizers_infrastructure.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_constants import \
     SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, AUXVAR
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 from typing import Dict, Any
-from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX, FQ_MAX, FQ_MIN
+from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer import BaseKerasGPTQTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer

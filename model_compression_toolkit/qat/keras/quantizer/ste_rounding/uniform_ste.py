@@ -15,7 +15,8 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.framework.tensor_shape import TensorShape
-from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX, FQ_MIN, FQ_MAX
+from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX
+from model_compression_toolkit.quantizers_infrastructure.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit.qat import TrainingMethod
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 

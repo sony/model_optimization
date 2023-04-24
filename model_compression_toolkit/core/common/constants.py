@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
 import importlib
 
 # Supported frameworks in MCT:
@@ -128,9 +129,3 @@ INPUT_BASE_NAME = 'base_input'
 # Jacobian-weights constants
 MIN_JACOBIANS_ITER = 10
 JACOBIANS_COMP_TOLERANCE = 1e-3
-
-# Quantizers constants (for GPTQ, QAT, etc.)
-FQ_MIN = "min"
-FQ_MAX = "max"
-THRESHOLD_TENSOR = "ptq_threshold_tensor"
-WEIGHTS_QUANTIZATION_PARAMS = 'weights_quantization_params'
