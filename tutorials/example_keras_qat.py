@@ -191,7 +191,7 @@ if __name__ == "__main__":
 
     # Evaluate QAT-ready model accuracy from MCT. This model is fully quantized with QuantizeWrappers
     # for weights and tf.quantization.fake_quant_with_min_max_vars for activations
-    qat_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+    qat_model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"], run_eagerly=True)
     score = qat_model.evaluate(x_test, y_test, verbose=0)
     print(f"PTQ model test accuracy: {score[1]:02.4f}")
 
