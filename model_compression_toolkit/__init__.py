@@ -43,7 +43,7 @@ from model_compression_toolkit.core.pytorch.kpi_data_facade import pytorch_kpi_d
 
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.load_model import keras_load_quantized_model
 
-
+from model_compression_toolkit import qat
 from model_compression_toolkit import exporter
 
 from model_compression_toolkit import gptq
