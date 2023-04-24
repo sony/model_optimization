@@ -17,11 +17,15 @@ from typing import Callable
 import torch.nn
 
 from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import BasePyTorchExporter
 from packaging import version
 
 # ONNX opset version 16 is supported from PyTorch 1.12
+from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import LAYER
+
 if version.parse(torch.__version__) < version.parse("1.12"):
     OPSET_VERSION = 15
 else:
@@ -70,6 +74,18 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
 
         Logger.info(f"Exporting PyTorch fake quant onnx model: {self.save_model_path}")
 
+        # Replace float weight with wrapped quantized weights
+        for layer in self.model.modules():
+            if isinstance(layer, PytorchQuantizationWrapper):
+                weights_quantizers = list(layer.weights_quantizers.values())
+                if len(weights_quantizers) > 0:
+                    quantized_weight = torch.nn.Parameter(layer.get_quantized_weights()[KERNEL]).detach()
+                    delattr(layer, KERNEL)
+                    setattr(layer, KERNEL, torch.nn.Parameter(quantized_weight))
+                    linear_layer = getattr(layer, LAYER)
+                    delattr(linear_layer, KERNEL)
+                    setattr(linear_layer, KERNEL, torch.nn.Parameter(quantized_weight))
+                layer.weights_quantizers = []
         torch.onnx.export(self.model,
                           model_input,
                           self.save_model_path,
