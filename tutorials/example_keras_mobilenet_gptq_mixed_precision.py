@@ -14,6 +14,7 @@
 # ==============================================================================
 
 import argparse
+
 from keras.applications.mobilenet_v2 import MobileNetV2
 
 import model_compression_toolkit as mct
@@ -61,6 +62,12 @@ def argument_handler():
                         help='number of iterations for calibration.')
     parser.add_argument('--num_gptq_training_iterations', type=int, default=5000,
                         help='number of iterations for gptq training.')
+    parser.add_argument('--mixed_precision_num_of_images', type=int, default=32,
+                        help='number of images to use for mixed-precision configuration search.')
+    parser.add_argument('--enable_mixed_precision_gradients_weighting', action='store_true', default=False,
+                        help='Whether to use gradients during mixed-precision configuration search or not.')
+    parser.add_argument('--enable_gptq_hessian_based_weights', action='store_true', default=False,
+                        help='Whether to use Hessian-based weights for weighted average loss during GPTQ.')
     parser.add_argument('--weights_compression_ratio', type=float, default=0.75,
                         help='weights compression ratio for model memory size reduction.')
     return parser.parse_args()
@@ -109,7 +116,8 @@ if __name__ == '__main__':
     model = MobileNetV2()
 
     # Create a mixed-precision quantization configuration.
-    mixed_precision_config = mct.MixedPrecisionQuantizationConfigV2()
+    mixed_precision_config = mct.MixedPrecisionQuantizationConfigV2(num_of_images=args.mixed_precision_num_of_images,
+                                                                    use_grad_based_weights=args.enable_mixed_precision_gradients_weighting)
 
     # Create a core quantization configuration, set the mixed-precision configuration,
     # and set the number of calibration iterations.
@@ -132,11 +140,12 @@ if __name__ == '__main__':
     kpi = mct.KPI(kpi_data.weights_memory * args.weights_compression_ratio)
 
     # Create a GPTQ quantization configuration and set the number of training iterations.
-    gptq_config = mct.gptq.get_keras_gptq_config(n_epochs=args.num_gptq_training_iterations)
+    gptq_config = mct.gptq.get_keras_gptq_config(n_epochs=args.num_gptq_training_iterations,
+                                                 use_hessian_based_weights=args.enable_gptq_hessian_based_weights)
 
     quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization_experimental(model,
-                                                                                                    representative_data_gen,
-                                                                                                    gptq_config=gptq_config,
-                                                                                                    core_config=config,
-                                                                                                    target_platform_capabilities=target_platform_cap,
-                                                                                                    target_kpi=kpi)
+                                                                                                         representative_data_gen,
+                                                                                                         gptq_config=gptq_config,
+                                                                                                         core_config=config,
+                                                                                                         target_platform_capabilities=target_platform_cap,
+                                                                                                         target_kpi=kpi)

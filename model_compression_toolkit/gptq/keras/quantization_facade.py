@@ -62,7 +62,8 @@ if common.constants.FOUND_TF:
                               optimizer: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT),
                               optimizer_rest: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_REST_DEFAULT),
                               loss: Callable = GPTQMultipleTensorsLoss(),
-                              log_function: Callable = None) -> GradientPTQConfigV2:
+                              log_function: Callable = None,
+                              use_hessian_based_weights: bool = True) -> GradientPTQConfigV2:
         """
         Create a GradientPTQConfigV2 instance for Keras models.
 
@@ -72,6 +73,7 @@ if common.constants.FOUND_TF:
             optimizer_rest (OptimizerV2): Keras optimizer to use for fine-tuning of the bias variable.
             loss (Callable): loss to use during fine-tuning. should accept 4 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors, the 3rd is a list of quantized weights and the 4th is a list of float weights.
             log_function (Callable): Function to log information about the gptq process.
+            use_hessian_based_weights (bool): Whether to use Hessian-based weights for weighted average loss.
 
         returns:
             a GradientPTQConfigV2 object to use when fine-tuning the quantized model using gptq.
@@ -94,9 +96,16 @@ if common.constants.FOUND_TF:
             The configuration can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization` in order to quantize a keras model using gptq.
 
         """
-        bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT, momentum=GPTQ_MOMENTUM)
-        return GradientPTQConfigV2(n_epochs, optimizer, optimizer_rest=optimizer_rest, loss=loss,
-                                   log_function=log_function, train_bias=True, optimizer_bias=bias_optimizer)
+        bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT,
+                                                 momentum=GPTQ_MOMENTUM)
+        return GradientPTQConfigV2(n_epochs,
+                                   optimizer,
+                                   optimizer_rest=optimizer_rest,
+                                   loss=loss,
+                                   log_function=log_function,
+                                   train_bias=True,
+                                   optimizer_bias=bias_optimizer,
+                                   use_hessian_based_weights=use_hessian_based_weights)
 
 
     def keras_gradient_post_training_quantization_experimental(in_model: Model,
