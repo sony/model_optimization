@@ -17,7 +17,6 @@ from typing import Callable
 import torch.nn
 
 from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import BasePyTorchExporter
 from packaging import version
@@ -77,15 +76,13 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
         # Replace float weight with wrapped quantized weights
         for layer in self.model.modules():
             if isinstance(layer, PytorchQuantizationWrapper):
-                weights_quantizers = list(layer.weights_quantizers.values())
-                if len(weights_quantizers) > 0:
-                    quantized_weight = torch.nn.Parameter(layer.get_quantized_weights()[KERNEL]).detach()
-                    delattr(layer, KERNEL)
-                    setattr(layer, KERNEL, torch.nn.Parameter(quantized_weight))
+                for name in layer.weights_quantizers.keys():
+                    quantized_weight = torch.nn.Parameter(layer.get_quantized_weights()[name]).detach()
                     linear_layer = getattr(layer, LAYER)
-                    delattr(linear_layer, KERNEL)
-                    setattr(linear_layer, KERNEL, torch.nn.Parameter(quantized_weight))
-                layer.weights_quantizers = []
+                    delattr(linear_layer, name)
+                    setattr(linear_layer, name, torch.nn.Parameter(quantized_weight))
+                layer.weights_quantizers = {}
+
         torch.onnx.export(self.model,
                           model_input,
                           self.save_model_path,
