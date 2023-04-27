@@ -16,8 +16,7 @@
 import numpy as np
 import tensorflow as tf
 from keras.engine.input_layer import InputLayer
-
-from model_compression_toolkit import DebugConfig
+import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, ChangeFinalWeightsQuantConfigAttr, \
     ChangeFinalActivationQuantConfigAttr, ChangeCandidatesActivationQuantConfigAttr
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeTypeFilter
@@ -34,7 +33,7 @@ class ChangeFinalWeightQCAttrTest(BaseKerasFeatureNetworkTest):
                          experimental_exporter=True)
 
     def get_debug_config(self):
-        return DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.Conv2D),
+        return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.Conv2D),
                                                     action=ChangeFinalWeightsQuantConfigAttr(weights_bias_correction=False))])
 
     def create_networks(self):
@@ -56,7 +55,7 @@ class ChangeFinalActivationQCAttrTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, experimental_exporter=True)
 
     def get_debug_config(self):
-        return DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.Conv2D),
+        return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.Conv2D),
                                                     action=ChangeFinalActivationQuantConfigAttr(activation_n_bits=7))])
 
     def create_networks(self):

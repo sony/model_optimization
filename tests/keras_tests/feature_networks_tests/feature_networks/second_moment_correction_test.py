@@ -20,8 +20,8 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import CoreConfig, QuantizationConfig, DEFAULTCONFIG, FrameworkInfo, DebugConfig
-from model_compression_toolkit import get_target_platform_capabilities
+from model_compression_toolkit.core import CoreConfig, QuantizationConfig, DEFAULTCONFIG
+from model_compression_toolkit import get_target_platform_capabilities, FrameworkInfo
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.network_editors import EditRule
@@ -65,7 +65,7 @@ class BaseSecondMomentTest(BaseKerasFeatureNetworkTest, ABC):
         return generate_keras_tpc(name="second_moment_correction_test", tp_model=tp)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(weights_second_moment_correction=True)
+        return mct.core.QuantizationConfig(weights_second_moment_correction=True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[2].layer.__class__)[0]
@@ -261,7 +261,7 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
                              fw_info=fw_info).validate()
 
         core_config = CoreConfig(quantization_config=quant_config,
-                                 debug_config=DebugConfig(analyze_similarity=analyze_similarity,
+                                 debug_config=mct.core.DebugConfig(analyze_similarity=analyze_similarity,
                                                           network_editor=network_editor)
                                  )
 

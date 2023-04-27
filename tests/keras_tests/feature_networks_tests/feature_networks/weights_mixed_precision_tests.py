@@ -37,8 +37,8 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, val_batch_size=val_batch_size, experimental_exporter=True)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationErrorMethod.MSE,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
+                                      mct.core.QuantizationErrorMethod.MSE,
                                       relu_bound_to_power_of_2=True,
                                       weights_bias_correction=True,
                                       weights_per_channel_threshold=True,
@@ -76,7 +76,7 @@ class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
                                              name="mp_test")
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
                                       relu_bound_to_power_of_2=True, weights_bias_correction=True,
                                       weights_per_channel_threshold=False, input_scaling=True,
                                       activation_channel_equalization=True)
@@ -245,8 +245,8 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
                                              name="mp_dw_test")
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationErrorMethod.MSE,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
+                                      mct.core.QuantizationErrorMethod.MSE,
                                       relu_bound_to_power_of_2=False,
                                       weights_bias_correction=False,
                                       weights_per_channel_threshold=True,
@@ -262,8 +262,8 @@ class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationErrorMethod.MSE,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
+                                      mct.core.QuantizationErrorMethod.MSE,
                                       relu_bound_to_power_of_2=True,
                                       weights_bias_correction=True,
                                       weights_per_channel_threshold=True,

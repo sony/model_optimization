@@ -19,8 +19,8 @@ from keras import Input, Model
 from keras.layers import Conv2D, Conv2DTranspose
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod
-from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod
+from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \

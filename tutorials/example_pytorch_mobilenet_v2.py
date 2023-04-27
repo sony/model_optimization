@@ -114,7 +114,7 @@ if __name__ == "__main__":
     # Create a model and quantize it using the representative_data_gen as the calibration images.
     model = mobilenet_v2(pretrained=True)
     # set configuration and Configure z threshold algorithm for outlier removal.
-    core_config = mct.CoreConfig(quantization_config=mct.QuantizationConfig(z_threshold=args.z_threshold))
+    core_config = mct.core.CoreConfig(quantization_config=mct.core.QuantizationConfig(z_threshold=args.z_threshold))
     # run post training quantization on the model to get the quantized model output
     quantized_model, quantization_info = mct.pytorch_post_training_quantization_experimental(
         in_module=model,

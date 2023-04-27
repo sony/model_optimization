@@ -48,7 +48,7 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
         return get_16bit_tpc("shift_negative_test")
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
                                       False, False, weights_per_channel_threshold=True,
                                       shift_negative_activation_correction=True,
                                       shift_negative_ratio=np.inf,
@@ -115,7 +115,7 @@ class ShiftNegActivationPostAddTest(ShiftNegActivationTest):
         return get_keras_tpc_latest()
 
     def get_debug_config(self):
-        return mct.DebugConfig(network_editor=[EditRule(filter=node_filters.NodeNameScopeFilter('activation'),
+        return mct.core.DebugConfig(network_editor=[EditRule(filter=node_filters.NodeNameScopeFilter('activation'),
                                                         action=actions.ChangeCandidatesActivationQuantConfigAttr(
                                                             activation_n_bits=self.post_add_nbits))])
 

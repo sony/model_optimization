@@ -14,7 +14,7 @@
 # ==============================================================================
 import numpy as np
 
-from model_compression_toolkit import DEFAULTCONFIG, CoreConfig, DebugConfig
+from model_compression_toolkit.core import DEFAULTCONFIG, CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.model_collector import ModelCollector
@@ -99,7 +99,7 @@ def prepare_graph_set_bit_widths(in_model,
     quantization_config, mp_config = quant_config.separate_configs()
     core_config = CoreConfig(quantization_config=quantization_config,
                              mixed_precision_config=mp_config,
-                             debug_config=DebugConfig(analyze_similarity=analyze_similarity,
+                             debug_config=mct.core.DebugConfig(analyze_similarity=analyze_similarity,
                                                       network_editor=network_editor))
 
     tb_w = _init_tensorboard_writer(fw_info)

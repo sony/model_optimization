@@ -94,7 +94,7 @@ Run Post Training Quantization:
     model = mobilenet_v2(pretrained=True)
 
     # set core configuration with z threshold=16 (an algorithm for outlier removal)
-    core_config = mct.CoreConfig(quantization_config=QuantizationConfig(z_threshold=16)
+    core_config = mct.core.CoreConfig(quantization_config=QuantizationConfig(z_threshold=16)
 
     # run post training quantization on the model to get the quantized model output
     quantized_model, quantization_info = mct.pytorch_post_training_quantization_experimental(model,

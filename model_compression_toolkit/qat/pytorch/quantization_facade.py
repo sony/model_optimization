@@ -18,7 +18,7 @@ from functools import partial
 
 from model_compression_toolkit.core.common.constants import FOUND_TORCH, PYTORCH
 
-from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Logger
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -121,7 +121,7 @@ if FOUND_TORCH:
 
              Create a MCT core config, containing the quantization configuration:
 
-             >>> config = mct.CoreConfig()
+             >>> config = mct.core.CoreConfig()
 
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model. Now the model contains quantizer wrappers for fine tunning the weights:
@@ -193,7 +193,7 @@ if FOUND_TORCH:
 
              Create a MCT core config, containing the quantization configuration:
 
-             >>> config = mct.CoreConfig()
+             >>> config = mct.core.CoreConfig()
 
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:

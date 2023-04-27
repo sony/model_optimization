@@ -71,7 +71,7 @@ class SingleReluReplacementTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.ReLU))
 
     def get_debug_config(self):
-        return mct.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter('ReLU_1'),
+        return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter('ReLU_1'),
                                                         action=ReplaceLayer(Identity, get_identity_params_from_relu))
                                                ])
 
@@ -90,7 +90,7 @@ class ReluReplacementTest(SingleReluReplacementTest):
 
     def get_debug_config(self):
         #   replace all Relu's with identity custom layer
-        return mct.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.ReLU),
+        return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.ReLU),
                                                         action=ReplaceLayer(Identity, get_identity_params_from_relu))
                                                ])
 
@@ -138,6 +138,6 @@ class ReluReplacementWithAddBiasTest(SingleReluReplacementTest):
         self.unit_test.assertTrue(quantized_model.layers[3].layer.bias == 6)
 
     def get_debug_config(self):
-        return mct.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.ReLU),
+        return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.ReLU),
                                                         action=ReplaceLayer(AddBias, get_add_bias_params_from_relu))
                                                ])

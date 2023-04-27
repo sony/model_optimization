@@ -241,7 +241,7 @@ class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
 
     def run_test(self, **kwargs):
         model_float = self.create_networks()
-        config = mct.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
+        config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
         qat_ready_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init(
             model_float,
             self.representative_data_gen_experimental,

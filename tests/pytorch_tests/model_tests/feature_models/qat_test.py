@@ -176,7 +176,7 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
     def run_test(self):
         self._gen_fixed_input()
         model_float = self.create_networks()
-        config = mct.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
+        config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
         kpi = mct.KPI() # inf memory
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init(model_float,
                                                                                           self.representative_data_gen_experimental,
@@ -220,7 +220,7 @@ class QuantizationAwareTrainingMixedPrecisionKpiCfgTest(QuantizationAwareTrainin
     def run_test(self):
         self._gen_fixed_input()
         model_float = self.create_networks()
-        config = mct.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
+        config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
         kpi = mct.KPI(weights_memory=50, activation_memory=40)
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init(model_float,
                                                                                           self.representative_data_gen_experimental,

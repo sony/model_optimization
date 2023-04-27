@@ -1,6 +1,8 @@
 from typing import Any, List
 
-from model_compression_toolkit import CoreConfig, DebugConfig, QuantizationConfig
+import model_compression_toolkit as mct
+from model_compression_toolkit.core import CoreConfig, QuantizationConfig
+
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 import numpy as np
 
@@ -47,7 +49,7 @@ class BaseTest:
         return None
 
     def get_debug_config(self):
-        return DebugConfig()
+        return mct.core.DebugConfig()
 
     def get_fw_impl(self) -> FrameworkImplementation:
         raise Exception('get_fw_impl is not implemented')

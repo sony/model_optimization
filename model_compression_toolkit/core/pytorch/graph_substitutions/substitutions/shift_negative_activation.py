@@ -21,7 +21,9 @@ from torch import reshape
 from torch.nn.functional import hardswish, silu, prelu, elu
 from torch.nn.functional import avg_pool2d
 
-from model_compression_toolkit import CoreConfig, FrameworkInfo
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core import CoreConfig
+
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.graph.graph_matchers import EdgeMatcher

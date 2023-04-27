@@ -16,6 +16,7 @@ import operator
 from copy import deepcopy
 from typing import List, Any, Tuple, Callable, Type, Dict
 
+import model_compression_toolkit as mct
 import numpy as np
 import torch
 from torch import sigmoid, softmax, add, cat, argmax
@@ -23,8 +24,8 @@ from torch.nn import Conv2d, ConvTranspose2d, Linear
 from torch.nn import Module, Sigmoid, Softmax
 
 import model_compression_toolkit.core.pytorch.constants as pytorch_constants
-from model_compression_toolkit import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.core import common
+from model_compression_toolkit import FrameworkInfo, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import common, QuantizationConfig, CoreConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \
@@ -205,7 +206,7 @@ class PytorchImplementation(FrameworkImplementation):
         return create_stats_collector_for_node(node, fw_info)
 
     def get_substitutions_channel_equalization(self,
-                                               quant_config: QuantizationConfig,
+                                               quant_config: mct.core.QuantizationConfig,
                                                fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
         """
         Return a list of the framework substitutions used for channel equalization.

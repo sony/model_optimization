@@ -38,7 +38,7 @@ class TFLiteFakeQuantExporterBaseTest(ABC):
         # Get fully quantized model
         self.exportable_model, _ = mct.keras_post_training_quantization_experimental(
             in_model=self.model,
-            core_config=mct.CoreConfig(),
+            core_config=mct.core.CoreConfig(),
             representative_data_gen=self.__get_repr_dataset,
             target_platform_capabilities=self.get_tpc(),
             new_experimental_exporter=True)

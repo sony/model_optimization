@@ -67,7 +67,7 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         self.tflite_fq_exported_weights()
 
     def run_mct(self, model, new_experimental_exporter):
-        core_config = mct.CoreConfig()
+        core_config = mct.core.CoreConfig()
         new_export_model, _ = mct.keras_post_training_quantization_experimental(
             in_model=model,
             core_config=core_config,

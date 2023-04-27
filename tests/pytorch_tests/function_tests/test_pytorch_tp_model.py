@@ -230,7 +230,7 @@ class TestGetPytorchTPC(unittest.TestCase):
         mp_qc = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
         mp_qc.num_of_images = 1
         quant_config, mp_config = mp_qc.separate_configs()
-        core_config = mct.CoreConfig(quantization_config=quant_config, mixed_precision_config=mp_config)
+        core_config = mct.core.CoreConfig(quantization_config=quant_config, mixed_precision_config=mp_config)
         quantized_model, _ = mct.pytorch_post_training_quantization_experimental(model,
                                                                                  rep_data,
                                                                                  target_kpi=mct.KPI(np.inf),

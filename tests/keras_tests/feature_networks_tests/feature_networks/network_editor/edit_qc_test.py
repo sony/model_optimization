@@ -15,9 +15,7 @@
 
 import tensorflow as tf
 from tqdm import tqdm
-
-from model_compression_toolkit import MixedPrecisionQuantizationConfig, \
-    CoreConfig, DebugConfig
+import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.model_collector import ModelCollector
@@ -185,7 +183,7 @@ class BaseChangeQuantConfigAttrTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_debug_config(self):
-        return DebugConfig(network_editor=[EditRule(filter=self.edit_filter,
+        return mct.core.DebugConfig(network_editor=[EditRule(filter=self.edit_filter,
                                                     action=self.action)])
 
     def create_networks(self):
@@ -273,7 +271,7 @@ class BaseChangeQuantizationMethodQCAttrTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_debug_config(self):
-        return DebugConfig(network_editor=[EditRule(filter=self.edit_filter,
+        return mct.core.DebugConfig(network_editor=[EditRule(filter=self.edit_filter,
                                                     action=self.action)])
 
     def create_networks(self):

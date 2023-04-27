@@ -14,8 +14,9 @@
 # ==============================================================================
 
 
+import model_compression_toolkit as mct
+from model_compression_toolkit.core import DebugConfig
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
-from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfigV2
 
 

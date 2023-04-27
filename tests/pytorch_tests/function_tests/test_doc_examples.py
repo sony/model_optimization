@@ -16,9 +16,10 @@
 import unittest
 import doctest
 
-from model_compression_toolkit import ptq
-from model_compression_toolkit import gptq
-from model_compression_toolkit import core
+import model_compression_toolkit as mct
+# from model_compression_toolkit import ptq
+# from model_compression_toolkit import gptq
+# from model_compression_toolkit import core
 
 RAISE_ON_ERROR = False
 
@@ -26,10 +27,10 @@ RAISE_ON_ERROR = False
 class TestPytorchDocsExamples(unittest.TestCase):
 
     def test_pytorch_ptq_facade(self):
-        doctest.testfile("quantization_facade.py", package=ptq.pytorch, verbose=True, raise_on_error=RAISE_ON_ERROR)
+        doctest.testfile("quantization_facade.py", package=mct.ptq.pytorch, verbose=True, raise_on_error=RAISE_ON_ERROR)
 
     def test_pytorch_gptq_facade(self):
-        doctest.testfile("quantization_facade.py", package=gptq.pytorch, verbose=True, raise_on_error=RAISE_ON_ERROR)
+        doctest.testfile("quantization_facade.py", package=mct.gptq.pytorch, verbose=True, raise_on_error=RAISE_ON_ERROR)
 
     def test_pytorch_kpi_data_facade(self):
-        doctest.testfile("kpi_data_facade.py", package=core.pytorch, verbose=True, raise_on_error=RAISE_ON_ERROR)
+        doctest.testfile("kpi_data_facade.py", package=mct.core.pytorch, verbose=True, raise_on_error=RAISE_ON_ERROR)

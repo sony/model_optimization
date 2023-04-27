@@ -25,7 +25,7 @@ from model_compression_toolkit.gptq.keras.quantization_facade import GPTQ_MOMENT
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
-from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
 
@@ -142,7 +142,7 @@ if FOUND_TORCH:
 
             Create MCT core configurations with number of calibration iterations set to 1:
 
-            >>> config = mct.CoreConfig()
+            >>> config = mct.core.CoreConfig()
 
             Pass the module, the representative dataset generator and the configuration (optional) to get a quantized module
 

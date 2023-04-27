@@ -188,7 +188,7 @@ if __name__ == "__main__":
     # the degradation caused by post training quantization.
     qat_model, _, _ = mct.qat.keras_quantization_aware_training_init(model,
                                                                      representative_dataset,
-                                                                     core_config=mct.CoreConfig(),
+                                                                     core_config=mct.core.CoreConfig(),
                                                                      target_platform_capabilities=get_tpc())
 
     # Evaluate QAT-ready model accuracy from MCT. This model is fully quantized with QuantizeWrappers

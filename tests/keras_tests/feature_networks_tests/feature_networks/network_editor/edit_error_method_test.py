@@ -16,8 +16,8 @@
 import numpy as np
 import tensorflow as tf
 from keras.engine.input_layer import InputLayer
-
-from model_compression_toolkit import QuantizationErrorMethod, DebugConfig
+import model_compression_toolkit as mct
+from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesActivationQuantConfigAttr
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeTypeFilter
@@ -45,7 +45,7 @@ class EditActivationErrorMethod(BaseKerasFeatureNetworkTest):
         return input_data
 
     def get_debug_config(self):
-        return DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(InputLayer),
+        return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(InputLayer),
                                                     action=ChangeCandidatesActivationQuantConfigAttr(
                                                         activation_error_method=QuantizationErrorMethod.NOCLIPPING))])
 

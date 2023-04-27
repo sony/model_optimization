@@ -67,8 +67,8 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
             if rounding_type == RoundingType.STE else None
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.QuantizationErrorMethod.NOCLIPPING,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
+                                      mct.core.QuantizationErrorMethod.NOCLIPPING,
                                       weights_per_channel_threshold=self.per_channel)
 
     def create_networks(self):

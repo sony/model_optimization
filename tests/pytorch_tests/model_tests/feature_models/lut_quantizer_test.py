@@ -97,9 +97,9 @@ class LUTWeightsQuantizerTest(BasePytorchTest):
         network_editor = [EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                    action=ChangeCandidatesWeightsQuantizationMethod(
                                        weights_quantization_method=self.quant_method))]
-        return {'lut_quantizer_test': mct.CoreConfig(quantization_config=mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                                                                                mct.QuantizationErrorMethod.MSE),
-                                                     debug_config=mct.DebugConfig(network_editor=network_editor))}
+        return {'lut_quantizer_test': mct.core.CoreConfig(quantization_config=mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
+                                                                                                mct.core.QuantizationErrorMethod.MSE),
+                                                     debug_config=mct.core.DebugConfig(network_editor=network_editor))}
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 16, 16], [self.val_batch_size, 3, 16, 16]]
@@ -139,7 +139,7 @@ class LUTActivationQuantizerTest(BasePytorchTest):
             ftp_name='lut_quantizer_pytorch_test')
 
     def get_core_configs(self):
-        return {'lut_quantizer_test': mct.CoreConfig()}
+        return {'lut_quantizer_test': mct.core.CoreConfig()}
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 16, 16], [self.val_batch_size, 3, 16, 16]]

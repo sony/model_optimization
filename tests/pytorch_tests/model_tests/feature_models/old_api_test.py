@@ -64,8 +64,8 @@ class OldApiTest(BasePytorchTest):
                                          ftp_name='mixed_precision_pytorch_test')
 
     def get_mp_quant_config(self):
-        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                    mct.QuantizationErrorMethod.MSE,
+        qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
+                                    mct.core.QuantizationErrorMethod.MSE,
                                     weights_bias_correction=True,
                                     weights_per_channel_threshold=True,
                                     activation_channel_equalization=False,

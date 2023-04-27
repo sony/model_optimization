@@ -17,7 +17,7 @@ from torch.nn import Conv2d, BatchNorm2d, ReLU
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 import numpy as np
 
-from model_compression_toolkit import DEFAULTCONFIG
+from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute

@@ -12,3 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
+from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig
+from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, QuantizationErrorMethod, DEFAULTCONFIG
+from model_compression_toolkit.core.common.quantization.core_config import CoreConfig

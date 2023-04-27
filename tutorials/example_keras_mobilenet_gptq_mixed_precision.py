@@ -121,7 +121,7 @@ if __name__ == '__main__':
 
     # Create a core quantization configuration, set the mixed-precision configuration,
     # and set the number of calibration iterations.
-    config = mct.CoreConfig(mixed_precision_config=mixed_precision_config)
+    config = mct.core.CoreConfig(mixed_precision_config=mixed_precision_config)
 
     # Get KPI information to constraint your model's memory size.
     # Retrieve a KPI object with helpful information of each KPI metric,
