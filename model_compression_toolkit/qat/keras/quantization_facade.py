@@ -151,7 +151,7 @@ if FOUND_TF:
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:
 
-             >>> quantized_model, quantization_info, custom_objects = mct.keras_quantization_aware_training_init(model, repr_datagen, kpi, core_config=config)
+             >>> quantized_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init(model, repr_datagen, kpi, core_config=config)
 
              Use the quantized model for fine-tuning. For loading the model from file, use the custom_objects dictionary:
 
@@ -240,12 +240,12 @@ if FOUND_TF:
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:
 
-             >>> quantized_model, quantization_info, custom_objects = mct.keras_quantization_aware_training_init(model, repr_datagen, kpi, core_config=config)
+             >>> quantized_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init(model, repr_datagen, kpi, core_config=config)
 
              Use the quantized model for fine-tuning. For loading the model from file, use the custom_objects dictionary:
 
              >>> quantized_model = tf.keras.models.load_model(model_file, custom_objects=custom_objects)
-             >>> quantized_model = mct.keras_quantization_aware_training_finalize(quantized_model)
+             >>> quantized_model = mct.qat.keras_quantization_aware_training_finalize(quantized_model)
 
          """
         def _export(layer):
