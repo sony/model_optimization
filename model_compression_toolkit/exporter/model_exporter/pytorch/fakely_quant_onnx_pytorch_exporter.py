@@ -21,14 +21,15 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import BasePyTorchExporter
 from packaging import version
 
-# ONNX opset version 16 is supported from PyTorch 1.12
 from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import LAYER
 
+# ONNX opset version 16 is supported from PyTorch 1.12
 if version.parse(torch.__version__) < version.parse("1.12"):
     OPSET_VERSION = 15
 else:
     OPSET_VERSION = 16
+
 
 class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
     """
