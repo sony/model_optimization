@@ -96,7 +96,7 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
                                                                                            target_platform_capabilities=_tpc,
                                                                                            new_experimental_exporter=True)
 
-        qat_ready_model, quantization_info = mct.pytorch_quantization_aware_training_init(model_float,
+        qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init(model_float,
                                                                                           self.representative_data_gen_experimental,
                                                                                           target_platform_capabilities=_tpc)
 
@@ -104,7 +104,7 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
             pass # TODO: need to save and load pytorch model
 
         if self.finalize:
-            qat_finalized_model = mct.pytorch_quantization_aware_training_finalize(qat_ready_model)
+            qat_finalized_model = mct.qat.pytorch_quantization_aware_training_finalize(qat_ready_model)
         else:
             qat_finalized_model = None
 
@@ -120,13 +120,13 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         for _, layer in qat_ready_model.named_children():
             self.unit_test.assertTrue(isinstance(layer, qi.PytorchQuantizationWrapper))
             if isinstance(layer.layer, nn.SiLU):
-                q = [_q for _q in all_trainable_quantizers if _q.quantizer_type == mct.TrainingMethod.STE
+                q = [_q for _q in all_trainable_quantizers if _q.quantizer_type == mct.qat.TrainingMethod.STE
                      and _q.quantization_target == QuantizationTarget.Activation
                      and self.activation_quantization_method in _q.quantization_method]
                 self.unit_test.assertTrue(len(q) == 1)
                 self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q[0]))
             if isinstance(layer.layer, nn.Conv2d):
-                q = [_q for _q in all_trainable_quantizers if _q.quantizer_type == mct.TrainingMethod.STE
+                q = [_q for _q in all_trainable_quantizers if _q.quantizer_type == mct.qat.TrainingMethod.STE
                      and _q.quantization_target == QuantizationTarget.Weights
                      and self.weights_quantization_method in _q.quantization_method]
                 self.unit_test.assertTrue(len(q) == 1)
@@ -178,7 +178,7 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
         model_float = self.create_networks()
         config = mct.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
         kpi = mct.KPI() # inf memory
-        qat_ready_model, quantization_info = mct.pytorch_quantization_aware_training_init(model_float,
+        qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init(model_float,
                                                                                           self.representative_data_gen_experimental,
                                                                                           kpi,
                                                                                           core_config=config,
@@ -222,7 +222,7 @@ class QuantizationAwareTrainingMixedPrecisionKpiCfgTest(QuantizationAwareTrainin
         model_float = self.create_networks()
         config = mct.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
         kpi = mct.KPI(weights_memory=50, activation_memory=40)
-        qat_ready_model, quantization_info = mct.pytorch_quantization_aware_training_init(model_float,
+        qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init(model_float,
                                                                                           self.representative_data_gen_experimental,
                                                                                           kpi,
                                                                                           core_config=config,

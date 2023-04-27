@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.qat.common.qat_config import QATConfig, TrainingMethod
 
-from model_compression_toolkit.qat.keras.quantization_facade import keras_quantization_aware_training_init, keras_quantization_aware_training_finalize
-from model_compression_toolkit.qat.pytorch.quantization_facade import pytorch_quantization_aware_training_init, pytorch_quantization_aware_training_finalize
+from typing import Type
+
+from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.gptq.common.gptq_framework_implementation import GPTQFrameworkImplemantation
+from model_compression_toolkit.gptq.keras.gptq_training import KerasGPTQTrainer
+
+
+class GPTQKerasImplemantation(GPTQFrameworkImplemantation, KerasImplementation):
+
+    def get_gptq_trainer_obj(self) -> Type[KerasGPTQTrainer]:
+        """
+        Returns:  Keras object of GPTQTrainer
+        """
+        return KerasGPTQTrainer

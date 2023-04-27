@@ -41,7 +41,7 @@ GPTQ_MOMENTUM = 0.9
 if common.constants.FOUND_TF:
     import tensorflow as tf
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-    from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+    from model_compression_toolkit.gptq.keras.gptq_keras_implementation import GPTQKerasImplemantation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
     from model_compression_toolkit.gptq.keras.gptq_loss import GPTQMultipleTensorsLoss
@@ -204,7 +204,7 @@ if common.constants.FOUND_TF:
                                "If you encounter an issue please file a bug.")
         tb_w = _init_tensorboard_writer(fw_info)
 
-        fw_impl = KerasImplementation()
+        fw_impl = GPTQKerasImplemantation()
 
         tg, bit_widths_config = core_runner(in_model=in_model,
                                             representative_data_gen=representative_data_gen,

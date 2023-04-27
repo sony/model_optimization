@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+# Quantizers constants (for GPTQ, QAT, etc.)
 FQ_MIN = "min"
 FQ_MAX = "max"
 THRESHOLD_TENSOR = "ptq_threshold_tensor"

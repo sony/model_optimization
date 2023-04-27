@@ -18,6 +18,7 @@ from typing import Dict
 import numpy as np
 
 from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.quantizers_infrastructure.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from model_compression_toolkit.gptq.pytorch.quantizer.base_pytorch_gptq_quantizer import \
@@ -32,7 +33,6 @@ from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructur
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import \
     VariableGroup
 from model_compression_toolkit.core.common.constants import RANGE_MAX, RANGE_MIN
-from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 
 
 def soft_rounding_unifrom_quantizer(input_tensor: torch.Tensor,
