@@ -20,7 +20,7 @@ import unittest
 from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add
 import numpy as np
 
-from model_compression_toolkit import MixedPrecisionQuantizationConfig
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitActivationNode, \

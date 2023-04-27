@@ -15,8 +15,8 @@
 from typing import Callable, Any
 import numpy as np
 
-from model_compression_toolkit import FrameworkInfo, KPI
-from model_compression_toolkit.core import CoreConfig
+from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.core import CoreConfig, KPI
 
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.constants import FLOAT_BITWIDTH

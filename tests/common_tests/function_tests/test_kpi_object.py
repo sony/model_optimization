@@ -16,7 +16,7 @@
 
 import unittest
 import numpy as np
-from model_compression_toolkit import KPI
+from model_compression_toolkit.core import KPI
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPITarget
 
 default_kpi = KPI()

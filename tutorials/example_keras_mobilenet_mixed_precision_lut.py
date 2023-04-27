@@ -135,7 +135,7 @@ if __name__ == '__main__':
     # while the bias will not):
     # examples:
     # weights_compression_ratio = 0.4 - About 0.4 of the model's weights memory size when quantized with 8 bits.
-    kpi = mct.KPI(kpi_data.weights_memory * args.weights_compression_ratio)
+    kpi = mct.core.KPI(kpi_data.weights_memory * args.weights_compression_ratio)
     # Note that in this example, activations are quantized with fixed bit-width (non mixed-precision) of 8-bit.
 
     quantized_model, quantization_info = mct.keras_post_training_quantization_experimental(model,

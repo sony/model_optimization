@@ -111,7 +111,7 @@ class TestFileLogger(unittest.TestCase):
                                           tpc=tpc,
                                           network_editor=[],
                                           quant_config=DEFAULT_MIXEDPRECISION_CONFIG,
-                                          target_kpi=mct.KPI(),
+                                          target_kpi=mct.core.KPI(),
                                           n_iter=1, analyze_similarity=True)
         tensors_sizes = [4.0 * n.get_total_output_params() / 1000000.0
                          for n in tg.get_sorted_activation_configurable_nodes()]  # in MB
@@ -133,11 +133,11 @@ class TestFileLogger(unittest.TestCase):
         def rep_data():
             yield [np.random.randn(1, 8, 8, 3)]
 
-        mp_qc = mct.MixedPrecisionQuantizationConfigV2(num_of_images=1)
+        mp_qc = mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1)
         core_config = mct.core.CoreConfig(mixed_precision_config=mp_qc)
         quantized_model, _ = mct.keras_post_training_quantization_experimental(self.model,
                                                                                rep_data,
-                                                                               target_kpi=mct.KPI(np.inf),
+                                                                               target_kpi=mct.core.KPI(np.inf),
                                                                                core_config=core_config,
                                                                                target_platform_capabilities=tpc,
                                                                                new_experimental_exporter=True)
@@ -151,7 +151,7 @@ class TestFileLogger(unittest.TestCase):
         self.model = MultipleOutputsNet()
         quantized_model, _ = mct.keras_post_training_quantization_experimental(self.model,
                                                                                rep_data,
-                                                                               target_kpi=mct.KPI(np.inf),
+                                                                               target_kpi=mct.core.KPI(np.inf),
                                                                                core_config=core_config,
                                                                                target_platform_capabilities=tpc,
                                                                                new_experimental_exporter=True)

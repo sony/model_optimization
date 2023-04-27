@@ -116,7 +116,7 @@ if __name__ == '__main__':
     model = MobileNetV2()
 
     # Create a mixed-precision quantization configuration.
-    mixed_precision_config = mct.MixedPrecisionQuantizationConfigV2(num_of_images=args.mixed_precision_num_of_images,
+    mixed_precision_config = mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=args.mixed_precision_num_of_images,
                                                                     use_grad_based_weights=args.enable_mixed_precision_gradients_weighting)
 
     # Create a core quantization configuration, set the mixed-precision configuration,
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     # while the bias will not)
     # examples:
     # weights_compression_ratio = 0.75 - About 0.75 of the model's weights memory size when quantized with 8 bits.
-    kpi = mct.KPI(kpi_data.weights_memory * args.weights_compression_ratio)
+    kpi = mct.core.KPI(kpi_data.weights_memory * args.weights_compression_ratio)
 
     # Create a GPTQ quantization configuration and set the number of training iterations.
     gptq_config = mct.gptq.get_keras_gptq_config(n_epochs=args.num_gptq_training_iterations,

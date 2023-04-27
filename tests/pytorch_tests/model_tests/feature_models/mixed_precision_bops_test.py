@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import torch.nn
-from model_compression_toolkit import MixedPrecisionQuantizationConfigV2, KPI, MixedPrecisionQuantizationConfig
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2, KPI, MixedPrecisionQuantizationConfig
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs

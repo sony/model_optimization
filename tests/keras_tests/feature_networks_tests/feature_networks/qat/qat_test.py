@@ -16,6 +16,7 @@
 import tensorflow as tf
 import numpy as np
 
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, BaseKerasTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_all_subclasses import get_all_subclasses
@@ -26,7 +27,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_t
 from tests.keras_tests.tpc_keras import get_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as mct
-from model_compression_toolkit import quantizers_infrastructure as qi, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit import quantizers_infrastructure as qi
+
 import os
 from model_compression_toolkit.core.keras.default_framework_info import KERNEL
 
@@ -245,7 +247,7 @@ class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
         qat_ready_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init(
             model_float,
             self.representative_data_gen_experimental,
-            mct.KPI(weights_memory=self.kpi_weights, activation_memory=self.kpi_activation),
+            mct.core.KPI(weights_memory=self.kpi_weights, activation_memory=self.kpi_activation),
             core_config=config,
             fw_info=self.get_fw_info(),
             target_platform_capabilities=self.get_tpc())

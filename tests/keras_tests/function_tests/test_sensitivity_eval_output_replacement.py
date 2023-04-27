@@ -19,7 +19,7 @@ import tensorflow as tf
 from keras.applications.densenet import DenseNet121
 from keras.applications.mobilenet_v2 import MobileNetV2
 
-from model_compression_toolkit import MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc

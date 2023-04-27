@@ -24,8 +24,8 @@ from torch.nn import Conv2d, ConvTranspose2d, Linear
 from torch.nn import Module, Sigmoid, Softmax
 
 import model_compression_toolkit.core.pytorch.constants as pytorch_constants
-from model_compression_toolkit import FrameworkInfo, MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.core import common, QuantizationConfig, CoreConfig
+from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.core import common, QuantizationConfig, CoreConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \

@@ -15,7 +15,7 @@
 import torch
 import numpy as np
 
-from model_compression_toolkit import MixedPrecisionQuantizationConfig, KPI, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import KPI, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
@@ -51,7 +51,7 @@ class MixedPercisionActivationBaseTest(BasePytorchTest):
                                     activation_channel_equalization=False,
                                     relu_bound_to_power_of_2=False,
                                     input_scaling=False)
-        mpc = mct.MixedPrecisionQuantizationConfigV2(num_of_images=1)
+        mpc = mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1)
 
         return {"mixed_precision_activation_model": mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}
 

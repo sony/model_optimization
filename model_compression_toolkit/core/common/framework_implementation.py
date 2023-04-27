@@ -17,7 +17,7 @@ from typing import Callable, Any, List, Tuple, Dict
 
 import numpy as np
 
-from model_compression_toolkit import MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector

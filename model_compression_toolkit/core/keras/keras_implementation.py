@@ -43,8 +43,8 @@ else:
         Concatenate, Add
     from keras.layers.core import TFOpLambda
 
-from model_compression_toolkit import FrameworkInfo, MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.core import common, CoreConfig, QuantizationConfig
+from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.core import common, CoreConfig, QuantizationConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation

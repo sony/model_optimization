@@ -30,7 +30,7 @@ from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorc
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit import quantizers_infrastructure as qi
-from model_compression_toolkit import MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs
 
@@ -177,7 +177,7 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
         self._gen_fixed_input()
         model_float = self.create_networks()
         config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
-        kpi = mct.KPI() # inf memory
+        kpi = mct.core.KPI() # inf memory
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init(model_float,
                                                                                           self.representative_data_gen_experimental,
                                                                                           kpi,
@@ -221,7 +221,7 @@ class QuantizationAwareTrainingMixedPrecisionKpiCfgTest(QuantizationAwareTrainin
         self._gen_fixed_input()
         model_float = self.create_networks()
         config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
-        kpi = mct.KPI(weights_memory=50, activation_memory=40)
+        kpi = mct.core.KPI(weights_memory=50, activation_memory=40)
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init(model_float,
                                                                                           self.representative_data_gen_experimental,
                                                                                           kpi,

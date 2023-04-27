@@ -233,7 +233,7 @@ class TestGetPytorchTPC(unittest.TestCase):
         core_config = mct.core.CoreConfig(quantization_config=quant_config, mixed_precision_config=mp_config)
         quantized_model, _ = mct.pytorch_post_training_quantization_experimental(model,
                                                                                  rep_data,
-                                                                                 target_kpi=mct.KPI(np.inf),
+                                                                                 target_kpi=mct.core.KPI(np.inf),
                                                                                  target_platform_capabilities=tpc,
                                                                                  core_config=core_config)
 

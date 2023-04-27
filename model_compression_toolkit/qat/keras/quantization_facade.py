@@ -146,7 +146,7 @@ if FOUND_TF:
              that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
              while the bias will not):
 
-             >>> kpi = mct.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
+             >>> kpi = mct.core.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
 
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:
@@ -235,7 +235,7 @@ if FOUND_TF:
              that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
              while the bias will not):
 
-             >>> kpi = mct.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
+             >>> kpi = mct.core.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
 
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:

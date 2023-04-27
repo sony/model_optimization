@@ -71,10 +71,10 @@ class OldApiTest(BasePytorchTest):
                                     activation_channel_equalization=False,
                                     relu_bound_to_power_of_2=False,
                                     input_scaling=False)
-        return mct.MixedPrecisionQuantizationConfig(qc, num_of_images=1)
+        return mct.core.MixedPrecisionQuantizationConfig(qc, num_of_images=1)
 
     def get_kpi(self):
-        return mct.KPI()
+        return mct.core.KPI()
 
     def create_networks(self):
         return OneLayerConv2dNet()

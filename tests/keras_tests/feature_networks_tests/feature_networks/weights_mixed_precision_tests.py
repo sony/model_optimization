@@ -46,7 +46,7 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
                                       activation_channel_equalization=True)
 
     def get_mixed_precision_v2_config(self):
-        return mct.MixedPrecisionQuantizationConfigV2(num_of_images=1)
+        return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, 3]]
@@ -82,7 +82,7 @@ class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
                                       activation_channel_equalization=True)
 
     def get_mixed_precision_v2_config(self):
-        return mct.MixedPrecisionQuantizationConfigV2()
+        return mct.core.MixedPrecisionQuantizationConfigV2()
 
     def get_kpi(self):
         # Return some KPI (it does not really matter the value here as search_methods is not done,
@@ -254,7 +254,7 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
                                       activation_channel_equalization=False)
 
     def get_mixed_precision_v2_config(self):
-        return mct.MixedPrecisionQuantizationConfigV2()
+        return mct.core.MixedPrecisionQuantizationConfigV2()
 
 
 class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
@@ -271,7 +271,7 @@ class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
                                       activation_channel_equalization=False)
 
     def get_mixed_precision_v2_config(self):
-        return mct.MixedPrecisionQuantizationConfigV2(num_of_images=1)
+        return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1)
 
     def get_tpc(self):
         base_config, _ = get_op_quantization_configs()
@@ -301,7 +301,7 @@ class MixedPercisionSearchLastLayerDistanceTest(MixedPercisionBaseTest):
         super().__init__(unit_test, val_batch_size=2)
 
     def get_mixed_precision_v2_config(self):
-        return mct.MixedPrecisionQuantizationConfigV2(num_of_images=1,
+        return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
                                                       distance_weighting_method=get_last_layer_weights,
                                                       use_grad_based_weights=False)
 

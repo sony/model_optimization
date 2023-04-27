@@ -15,7 +15,7 @@
 
 from typing import Callable
 
-from model_compression_toolkit import MixedPrecisionQuantizationConfig, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common import Logger

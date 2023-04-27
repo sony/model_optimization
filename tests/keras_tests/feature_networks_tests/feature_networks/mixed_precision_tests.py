@@ -79,7 +79,7 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
                                       activation_channel_equalization=False)
 
     def get_mixed_precision_v2_config(self):
-        return mct.MixedPrecisionQuantizationConfigV2(num_of_images=1)
+        return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, 3]]
@@ -422,7 +422,7 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
                                       activation_channel_equalization=False)
 
     def get_mixed_precision_v2_config(self):
-        return mct.MixedPrecisionQuantizationConfigV2(num_of_images=self.num_of_inputs)
+        return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=self.num_of_inputs)
 
     def create_networks(self):
         inputs_1 = layers.Input(shape=self.get_input_shapes()[0][1:])

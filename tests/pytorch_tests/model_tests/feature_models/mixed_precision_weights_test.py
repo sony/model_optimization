@@ -16,7 +16,7 @@ import torch
 import numpy as np
 from torch.nn import Conv2d
 
-from model_compression_toolkit import MixedPrecisionQuantizationConfig, KPI
+from model_compression_toolkit.core import KPI
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_last_layer_weights
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_tp_model, get_op_quantization_configs
@@ -47,7 +47,7 @@ class MixedPercisionBaseTest(BasePytorchTest):
                                     activation_channel_equalization=False,
                                     relu_bound_to_power_of_2=False,
                                     input_scaling=False)
-        mpc = mct.MixedPrecisionQuantizationConfigV2(num_of_images=1)
+        mpc = mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1)
 
         return {"mixed_precision_model": mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}
 
@@ -138,7 +138,7 @@ class MixedPercisionSearchLastLayerDistance(MixedPercisionBaseTest):
         return KPI(192)
 
     def get_mixed_precision_v2_config(self):
-        return mct.MixedPrecisionQuantizationConfigV2(num_of_images=1,
+        return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
                                                       use_grad_based_weights=False,
                                                       distance_weighting_method=get_last_layer_weights)
 
