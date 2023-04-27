@@ -23,11 +23,13 @@ MCT replaces the QuantizeWrappers with their native layers and quantized weights
 """
 
 import argparse
-import tensorflow as tf
-from keras.datasets import mnist
-from keras import Model, layers, datasets
-import model_compression_toolkit as mct
+
 import numpy as np
+import tensorflow as tf
+from keras import Model, layers, datasets
+from keras.datasets import mnist
+
+import model_compression_toolkit as mct
 
 
 def get_tpc():
@@ -184,10 +186,10 @@ if __name__ == "__main__":
     # prepare model for QAT with MCT and return to user for fine-tuning. Due to the relatively easy
     # task of quantizing model trained on MNIST, a custom TPC is used in this example to demonstrate
     # the degradation caused by post training quantization.
-    qat_model, _, _ = mct.keras_quantization_aware_training_init(model,
-                                                                 representative_dataset,
-                                                                 core_config=mct.CoreConfig(),
-                                                                 target_platform_capabilities=get_tpc())
+    qat_model, _, _ = mct.qat.keras_quantization_aware_training_init(model,
+                                                                     representative_dataset,
+                                                                     core_config=mct.CoreConfig(),
+                                                                     target_platform_capabilities=get_tpc())
 
     # Evaluate QAT-ready model accuracy from MCT. This model is fully quantized with QuantizeWrappers
     # for weights and tf.quantization.fake_quant_with_min_max_vars for activations
@@ -203,7 +205,7 @@ if __name__ == "__main__":
     print(f"QAT model test accuracy: {score[1]:02.4f}")
 
     # Finalize QAT model: remove QuantizeWrappers and keep weights quantized as fake-quant values
-    quantized_model = mct.keras_quantization_aware_training_finalize(qat_model)
+    quantized_model = mct.qat.keras_quantization_aware_training_finalize(qat_model)
 
     # Re-evaluate accuracy after finalizing the model (should have the same accuracy as QAT model
     # after fine-tuning. Accuracy should be the same as before calling the finalize function.
