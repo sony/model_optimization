@@ -46,6 +46,11 @@ def argument_handler():
                         help='number of iterations for calibration.')
     parser.add_argument('--weights_compression_ratio', type=float, default=0.75,
                         help='weights compression ratio.')
+    parser.add_argument('--mixed_precision_num_of_images', type=int, default=32,
+                        help='number of images to use for mixed-precision configuration search.')
+    parser.add_argument('--enable_mixed_precision_gradients_weighting', action='store_true', default=False,
+                        help='Whether to use gradients during mixed-precision configuration search or not.')
+
     return parser.parse_args()
 
 
@@ -95,7 +100,8 @@ if __name__ == '__main__':
     # MCT will search a mixed-precision configuration (namely, bit-width for each layer)
     # and quantize the model according to this configuration.
     # The candidates bit-width for quantization should be defined in the target platform model:
-    configuration = CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
+    configuration = CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2(num_of_images=args.mixed_precision_num_of_images,
+                                                                                         use_grad_based_weights=args.enable_mixed_precision_gradients_weighting))
 
     # Get a TargetPlatformCapabilities object that models the hardware for the quantized model inference.
     # Here, for example, we use the default platform that is attached to a Pytorch layers representation.

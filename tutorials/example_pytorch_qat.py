@@ -200,7 +200,7 @@ if __name__ == '__main__':
     # Prepare model for QAT with MCT and return to user for fine-tuning. Due to the relatively easy
     # task of quantizing model trained on MNIST, we use a custom TPC in this example to demonstrate the degradation
     # caused by post training quantization
-    qat_model, quantization_info = mct.pytorch_quantization_aware_training_init(
+    qat_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init(
         model,
         representative_data_gen,
         target_platform_capabilities=get_tpc())
@@ -219,7 +219,7 @@ if __name__ == '__main__':
         scheduler.step()
 
     # Finalize QAT model: remove "quantize wrappers" and keep weights quantized as fake-quant values
-    quantized_model = mct.pytorch_quantization_aware_training_finalize(qat_model)
+    quantized_model = mct.qat.pytorch_quantization_aware_training_finalize(qat_model)
 
     # Re-evaluate accuracy after finalizing the model (should have a better accuracy than QAT model, since now the
     # activations are not quantized)
