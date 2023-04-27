@@ -15,6 +15,9 @@
 import tensorflow as tf
 from packaging import version
 
+from model_compression_toolkit.target_platform_capabilities.target_platform.exporter_modes import \
+    TFLiteExportMode
+
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.keras.layers import Conv2D, Dense, Reshape, ZeroPadding2D, AveragePooling2D, Activation, \
         DepthwiseConv2D, MaxPooling2D, ReLU, Add, Softmax, Concatenate, Multiply, Maximum, Minimum, BatchNormalization
@@ -33,22 +36,26 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.tflite_tp
 tp = mct.target_platform
 
 
-def get_keras_tpc() -> tp.TargetPlatformCapabilities:
+def get_keras_tpc(export_mode=TFLiteExportMode.FAKELY_QUANT) -> tp.TargetPlatformCapabilities:
     """
     get a Keras TargetPlatformCapabilities object with default operation sets to layers mapping.
+    Args:
+        export_mode: Mode to export the model according to.
     Returns: a Keras TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
     tflite_tp_model = get_tp_model()
-    return generate_keras_tpc(name='tflite_keras', tp_model=tflite_tp_model)
+    return generate_keras_tpc(name='tflite_keras', tp_model=tflite_tp_model, export_mode=export_mode)
 
 
-def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
+def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel,
+                       export_mode=TFLiteExportMode.FAKELY_QUANT):
     """
     Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
 
     Args:
         name: Name of the TargetPlatformCapabilities.
         tp_model: TargetPlatformModel object.
+        export_mode: Mode to export the model according to.
 
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
@@ -58,6 +65,8 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                               version=TPC_VERSION)
 
     with keras_tpc:
+        keras_tpc.set_export_mode(export_mode=export_mode)
+
         tp.OperationsSetToLayers("NoQuantization", [AveragePooling2D,
                                                                 tf.nn.avg_pool2d,
                                                                 Concatenate,

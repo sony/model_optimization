@@ -15,6 +15,9 @@
 import tensorflow as tf
 
 from packaging import version
+
+from model_compression_toolkit.target_platform_capabilities.target_platform.exporter_modes import \
+    KerasExportMode
 from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_tpc.v1 import __version__ as TPC_VERSION
 
 if version.parse(tf.__version__) < version.parse("2.6"):
@@ -29,22 +32,26 @@ import model_compression_toolkit as mct
 tp = mct.target_platform
 
 
-def get_keras_tpc() -> tp.TargetPlatformCapabilities:
+def get_keras_tpc(export_mode=KerasExportMode.FAKELY_QUANT) -> tp.TargetPlatformCapabilities:
     """
     get a Keras TargetPlatformCapabilities object with default operation sets to layers mapping.
+    Args:
+        export_mode: Mode to export the model according to.
     Returns: a Keras TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
     qnnpack_tp_model = get_tp_model()
-    return generate_keras_tpc(name='qnnpack_keras', tp_model=qnnpack_tp_model)
+    return generate_keras_tpc(name='qnnpack_keras', tp_model=qnnpack_tp_model, export_mode=export_mode)
 
 
-def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
+def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel,
+                       export_mode=KerasExportMode.FAKELY_QUANT):
     """
     Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
 
     Args:
         name: Name of the TargetPlatformCapabilities.
         tp_model: TargetPlatformModel object.
+        export_mode: Mode to export the model according to.
 
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
@@ -54,6 +61,8 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                               version=TPC_VERSION)
 
     with keras_tpc:
+        keras_tpc.set_export_mode(export_mode=export_mode)
+
         tp.OperationsSetToLayers("Conv", [Conv2D,
                                           DepthwiseConv2D,
                                           Conv2DTranspose,

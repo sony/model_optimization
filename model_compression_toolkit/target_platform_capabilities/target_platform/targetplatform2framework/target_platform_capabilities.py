@@ -21,43 +21,56 @@ from typing import List, Any, Dict, Tuple
 from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.operations_to_layers import \
     OperationsToLayers, OperationsSetToLayers
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities_component import \
+    TargetPlatformCapabilitiesComponent
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.layer_filter_params import \
+    LayerFilterParams
 from model_compression_toolkit.core.common.immutable import ImmutableClass
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
-from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import QuantizationConfigOptions, \
+from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import \
+    QuantizationConfigOptions, \
     OpQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform.operators import OperatorsSet, OperatorsSetBase
-from model_compression_toolkit.target_platform_capabilities.target_platform.target_platform_model import TargetPlatformModel
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import _current_tpc
+from model_compression_toolkit.target_platform_capabilities.target_platform.operators import OperatorsSet, \
+    OperatorsSetBase
+from model_compression_toolkit.target_platform_capabilities.target_platform.target_platform_model import \
+    TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import \
+    _current_tpc
 
 
 class TargetPlatformCapabilities(ImmutableClass):
     """
     Attach framework information to a modeled hardware.
     """
+
     def __init__(self,
                  tp_model: TargetPlatformModel,
                  name: str = "base",
-                 version: str = None):
+                 version: str = None,
+                 export_mode: Any = None):
         """
 
         Args:
             tp_model (TargetPlatformModel): Modeled hardware to attach framework information to.
             name (str): Name of the TargetPlatformCapabilities.
             version (str): TPC version.
+            export_mode (framework export mode enum value): Mode to export the model according to.
         """
 
         super().__init__()
         self.name = name
-        assert isinstance(tp_model, TargetPlatformModel), f'Target platform model that was passed to TargetPlatformCapabilities must be of type TargetPlatformModel, but has type of {type(tp_model)}'
+        assert isinstance(tp_model,
+                          TargetPlatformModel), f'Target platform model that was passed to ' \
+                                                f'TargetPlatformCapabilities must be of type TargetPlatformModel,' \
+                                                f' but has type of {type(tp_model)}'
         self.tp_model = tp_model
-        self.op_sets_to_layers = OperationsToLayers() # Init an empty OperationsToLayers
-        self.layer2qco, self.filterlayer2qco = {}, {} # Init empty mappings from layers/LayerFilterParams to QC options
+        self.op_sets_to_layers = OperationsToLayers()  # Init an empty OperationsToLayers
+        self.layer2qco, self.filterlayer2qco = {}, {}  # Init empty mappings from layers/LayerFilterParams to QC options
         # Track the unused opsets for warning purposes.
         self.__tp_model_opsets_not_used = [s.name for s in tp_model.operator_set]
         self.remove_fusing_names_from_not_used_list()
         self.version = version
+        self.export_mode = export_mode
 
     def get_layers_by_opset_name(self, opset_name: str) -> List[Any]:
         """
@@ -100,7 +113,6 @@ class TargetPlatformCapabilities(ImmutableClass):
             res.extend(itertools.product(*ops))
         return [list(x) for x in res]
 
-
     def get_info(self) -> Dict[str, Any]:
         """
 
@@ -110,7 +122,8 @@ class TargetPlatformCapabilities(ImmutableClass):
         return {"Target Platform Capabilities": self.name,
                 "Version": self.version,
                 "Target Platform Model": self.tp_model.get_info(),
-                "Operations to layers": {op2layer.name:[l.__name__ for l in op2layer.layers] for op2layer in self.op_sets_to_layers.op_sets_to_layers}}
+                "Operations to layers": {op2layer.name: [l.__name__ for l in op2layer.layers] for op2layer in
+                                         self.op_sets_to_layers.op_sets_to_layers}}
 
     def show(self):
         """
@@ -235,3 +248,14 @@ class TargetPlatformCapabilities(ImmutableClass):
         """
         for op in self.__tp_model_opsets_not_used:
             Logger.warning(f'{op} is defined in TargetPlatformModel, but is not used in TargetPlatformCapabilities.')
+
+    def set_export_mode(self,
+                        export_mode: Any):
+        """
+
+        Set Mode to export the model according to.
+        Args:
+            export_mode: export_mode from framework export mode enums.
+
+        """
+        self.export_mode = export_mode

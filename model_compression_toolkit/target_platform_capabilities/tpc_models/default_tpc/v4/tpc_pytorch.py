@@ -23,28 +23,36 @@ from torch.nn import Dropout, Flatten, Hardtanh
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, LeakyReLU
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, leaky_relu
 
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.v3.tp_model import get_tp_model
+from model_compression_toolkit.target_platform_capabilities.target_platform.exporter_modes import \
+    PyTorchExportMode
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.v4.tp_model import get_tp_model
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.v4 import __version__ as TPC_VERSION
 
 tp = mct.target_platform
 
 
-def get_pytorch_tpc() -> tp.TargetPlatformCapabilities:
+def get_pytorch_tpc(export_mode: PyTorchExportMode = PyTorchExportMode.FAKELY_QUANT_TORCHSCRIPT) \
+        -> tp.TargetPlatformCapabilities:
     """
     get a Pytorch TargetPlatformCapabilities object with default operation sets to layers mapping.
+    Args:
+        export_mode: Mode to export the model according to.
     Returns: a Pytorch TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
     default_tp_model = get_tp_model()
-    return generate_pytorch_tpc(name='default_pytorch_tpc', tp_model=default_tp_model)
+    return generate_pytorch_tpc(name='default_pytorch_tpc', tp_model=default_tp_model, export_mode=export_mode)
 
 
-def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
+def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel,
+                         export_mode: PyTorchExportMode = PyTorchExportMode.FAKELY_QUANT_TORCHSCRIPT):
     """
     Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
     Args:
         name: Name of the TargetPlatformModel.
         tp_model: TargetPlatformModel object.
+        export_mode: Mode to export the model according to.
+
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
@@ -53,6 +61,8 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                 version=TPC_VERSION)
 
     with pytorch_tpc:
+        pytorch_tpc.set_export_mode(export_mode=export_mode)
+
         tp.OperationsSetToLayers("NoQuantization", [Dropout,
                                                     Flatten,
                                                     dropout,
