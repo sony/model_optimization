@@ -15,7 +15,7 @@
 from typing import Callable, Any
 import numpy as np
 
-from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core import CoreConfig, KPI
 
 from model_compression_toolkit.core.common import Graph

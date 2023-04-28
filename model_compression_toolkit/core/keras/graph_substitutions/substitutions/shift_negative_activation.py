@@ -22,7 +22,7 @@ from tensorflow.python.keras.layers.core import TFOpLambda
 from tensorflow.keras.layers import Activation, Conv2D, Dense, DepthwiseConv2D, ZeroPadding2D, Reshape, \
     GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU
 
-from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode

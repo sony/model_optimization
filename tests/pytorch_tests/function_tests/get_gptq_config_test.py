@@ -17,7 +17,7 @@ import torch
 from torch import nn
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import DefaultDict
+from model_compression_toolkit.core import DefaultDict
 from model_compression_toolkit.gptq import get_pytorch_gptq_config, pytorch_gradient_post_training_quantization_experimental, RoundingType
 from model_compression_toolkit.core import CoreConfig, QuantizationConfig, QuantizationErrorMethod
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod

@@ -20,8 +20,8 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core import CoreConfig, QuantizationConfig, DEFAULTCONFIG
-from model_compression_toolkit import get_target_platform_capabilities, FrameworkInfo
+from model_compression_toolkit.core import CoreConfig, QuantizationConfig, DEFAULTCONFIG, FrameworkInfo
+from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.network_editors import EditRule

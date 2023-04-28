@@ -17,7 +17,7 @@ from typing import List, Any, Tuple
 
 import torch
 
-from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode

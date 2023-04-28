@@ -18,7 +18,7 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import DefaultDict
+from model_compression_toolkit.core import DefaultDict
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType, GradientPTQConfigV2, \
     GPTQHessianWeightsConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod

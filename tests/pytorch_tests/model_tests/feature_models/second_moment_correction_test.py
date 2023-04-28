@@ -20,7 +20,7 @@ import numpy as np
 import torch
 from torch.nn import Module
 
-from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.statistics_correction.apply_second_moment_correction_to_graph import \
