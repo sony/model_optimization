@@ -15,7 +15,7 @@
 from enum import Enum
 from typing import Callable, Dict
 
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.constants import FOUND_TF
 
 

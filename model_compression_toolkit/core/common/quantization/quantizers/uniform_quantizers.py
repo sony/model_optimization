@@ -15,7 +15,7 @@
 
 import numpy as np
 
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.constants import RANGE_MIN, RANGE_MAX, THRESHOLD
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import uniform_quantize_tensor, \
     quantize_tensor

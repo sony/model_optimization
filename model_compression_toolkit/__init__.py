@@ -13,19 +13,21 @@
 # limitations under the License.
 # ==============================================================================
 
+
+from model_compression_toolkit.target_platform_capabilities import target_platform
+from model_compression_toolkit.target_platform_capabilities.tpc_models.get_target_platform_capabilities import get_target_platform_capabilities
+
 from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig
 from model_compression_toolkit.core.common.quantization import quantization_config
 from model_compression_toolkit.core.common.mixed_precision import mixed_precision_quantization_config
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, \
     QuantizationErrorMethod, DEFAULTCONFIG
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
-from model_compression_toolkit.target_platform_capabilities import target_platform
-from model_compression_toolkit.target_platform_capabilities.tpc_models.get_target_platform_capabilities import get_target_platform_capabilities
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig, MixedPrecisionQuantizationConfigV2
 
-from model_compression_toolkit.core.common.logger import set_log_folder
+from model_compression_toolkit.logger import set_log_folder
 from model_compression_toolkit.core.common.data_loader import FolderImageLoader
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo, ChannelAxis
 from model_compression_toolkit.core.common.defaultdict import DefaultDict

@@ -18,16 +18,15 @@ import itertools
 import pprint
 from typing import List, Any, Dict, Tuple
 
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.operations_to_layers import \
     OperationsToLayers, OperationsSetToLayers
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
-from model_compression_toolkit.core.common.immutable import ImmutableClass
-from model_compression_toolkit.core.common.graph.base_node import BaseNode
+from model_compression_toolkit.target_platform_capabilities.immutable import ImmutableClass
 from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import QuantizationConfigOptions, \
     OpQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform.operators import OperatorsSet, OperatorsSetBase
+from model_compression_toolkit.target_platform_capabilities.target_platform.operators import OperatorsSetBase
 from model_compression_toolkit.target_platform_capabilities.target_platform.target_platform_model import TargetPlatformModel
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import _current_tpc
 
@@ -164,7 +163,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         return self.tp_model.get_default_op_quantization_config()
 
     def get_qco_by_node(self,
-                        node: BaseNode) -> QuantizationConfigOptions:
+                        node: Any) -> QuantizationConfigOptions:
         """
         Get the QuantizationConfigOptions of a node in a graph according
         to the mappings from layers/LayerFilterParams to the OperatorsSet in the TargetPlatformModel.

@@ -20,7 +20,7 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.core.common.substitutions.residual_collapsing import ResidualCollapsing
 from model_compression_toolkit.core.pytorch.constants import KERNEL
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 
 def residual_collapsing_node_matchers() -> Tuple[NodeOperationMatcher, NodeOperationMatcher]:

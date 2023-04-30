@@ -20,6 +20,7 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.quantize_node import get_quantized_kernel_by_weights_qc
+from model_compression_toolkit.logger import Logger
 
 
 def quantize_graph_weights(graph: Graph,
@@ -47,7 +48,7 @@ def quantize_graph_weights(graph: Graph,
                                                                                     n.final_weights_quantization_cfg,
                                                                                     fw_impl=fw_impl)
 
-            common.Logger.debug(
+            Logger.debug(
                 f'Node name: {n.name} has the following quantization params: '
                 f'{str(n.final_weights_quantization_cfg.weights_quantization_params)}')
 

@@ -14,7 +14,7 @@
 # ==============================================================================
 
 from model_compression_toolkit.core.common import BaseNode, Graph, BaseSubstitution
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode
 
 

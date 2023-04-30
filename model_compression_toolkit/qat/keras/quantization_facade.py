@@ -18,7 +18,7 @@ from functools import partial
 
 from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW, FOUND_TF
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
@@ -165,11 +165,11 @@ if FOUND_TF:
 
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
-                common.Logger.error("Given quantization config to mixed-precision facade is not of type "
+                Logger.error("Given quantization config to mixed-precision facade is not of type "
                                     "MixedPrecisionQuantizationConfigV2. Please use keras_post_training_quantization API,"
                                     "or pass a valid mixed precision configuration.")
 
-            common.Logger.info("Using experimental mixed-precision quantization. "
+            Logger.info("Using experimental mixed-precision quantization. "
                                "If you encounter an issue please file a bug.")
 
         tb_w = _init_tensorboard_writer(fw_info)

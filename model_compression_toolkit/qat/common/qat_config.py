@@ -31,7 +31,7 @@ def _is_qat_applicable(node: common.BaseNode,
     """
 
     if node.is_weights_quantization_enabled() and not fw_info.is_kernel_op(node.type):
-        common.Logger.error("QAT Error: Quantizing a node without a kernel isn't supported")
+        Logger.error("QAT Error: Quantizing a node without a kernel isn't supported")
     return node.is_weights_quantization_enabled() or node.is_activation_quantization_enabled()
 
 

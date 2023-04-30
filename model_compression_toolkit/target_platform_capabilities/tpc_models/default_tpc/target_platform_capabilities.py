@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.core.common.constants import FOUND_TF, FOUND_TORCH, TENSORFLOW, PYTORCH, LATEST
+from model_compression_toolkit.target_platform_capabilities.constants import FOUND_TF, FOUND_TORCH, TENSORFLOW, PYTORCH, LATEST
 
 ###############################
 # Build Tensorflow TPC models

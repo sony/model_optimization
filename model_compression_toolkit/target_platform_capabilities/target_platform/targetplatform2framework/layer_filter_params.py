@@ -15,7 +15,6 @@
 
 from typing import Any, Dict
 
-from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import AttributeFilter
 
 
@@ -89,7 +88,7 @@ class LayerFilterParams:
         return f'{self.layer.__name__}({params_str})'
 
     def match(self,
-              node: BaseNode) -> bool:
+              node: Any) -> bool:
         """
         Check if a node matches the layer, conditions and keyword-arguments of
         the LayerFilterParams.

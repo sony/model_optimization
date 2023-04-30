@@ -19,7 +19,7 @@ import numpy as np
 from typing import List, Callable, Dict
 
 from model_compression_toolkit import MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.core.common import Graph, Logger
+from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_functions_mapping import kpi_functions_mapping
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation

@@ -17,7 +17,6 @@ from model_compression_toolkit.core.common.base_substitutions import BaseSubstit
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
-from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, DEFAULTCONFIG
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import max_power_of_two
 from model_compression_toolkit.core.common.collectors.statistics_collector import StatsCollector, NoStatsCollector

@@ -16,7 +16,7 @@
 from typing import Callable, List, Tuple
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.constants import TENSORFLOW
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq import GradientPTQConfig, GradientPTQConfigV2
@@ -229,11 +229,11 @@ if FOUND_TF:
                              fw_info=fw_info).validate()
 
         if not isinstance(quant_config, MixedPrecisionQuantizationConfig):
-            common.Logger.error("Given quantization config to mixed-precision facade is not of type "
+            Logger.error("Given quantization config to mixed-precision facade is not of type "
                                 "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization API,"
                                 "or pass a valid mixed precision configuration.")
 
-        common.Logger.info("Using experimental mixed-precision quantization. "
+        Logger.info("Using experimental mixed-precision quantization. "
                            "If you encounter an issue please file a bug.")
 
         quantization_config, mp_config = quant_config.separate_configs()

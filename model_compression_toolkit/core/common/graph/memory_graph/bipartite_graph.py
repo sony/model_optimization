@@ -16,7 +16,7 @@
 from typing import Any, List, Tuple
 import networkx as nx
 
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 
 class DirectedBipartiteGraph(nx.DiGraph):

@@ -32,7 +32,7 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.keras.back2framework.instance_builder import OperationHandler
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 
 def build_input_tensors_list(node: BaseNode,

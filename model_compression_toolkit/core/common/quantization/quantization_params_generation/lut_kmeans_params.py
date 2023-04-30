@@ -26,7 +26,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import \
     power_of_two_selection_tensor
 
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 
 def lut_kmeans_tensor(tensor_data: np.ndarray,

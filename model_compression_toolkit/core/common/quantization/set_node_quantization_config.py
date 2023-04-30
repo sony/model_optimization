@@ -17,7 +17,8 @@
 import copy
 from typing import List
 
-from model_compression_toolkit.core.common import Logger, BaseNode
+from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \

@@ -21,9 +21,10 @@ import numpy as np
 from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common import BaseNode, Logger, Graph
+from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.quantization.quantize_node import get_quantized_kernel_by_weights_qc
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
+from model_compression_toolkit.logger import Logger
 
 
 def compute_bias_correction_of_graph(graph: Graph,

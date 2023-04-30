@@ -29,7 +29,7 @@ from model_compression_toolkit.core.pytorch.back2framework.instance_builder impo
 from model_compression_toolkit.core.pytorch.constants import BUFFER
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, BufferHolder
 from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy, get_working_device
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 
 def build_input_tensors_list(node: BaseNode,

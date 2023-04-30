@@ -16,7 +16,7 @@ import copy
 import numpy as np
 from typing import List, Tuple, Any, Callable
 
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import FrameworkInfo, Graph, BaseNode
 from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher

@@ -29,7 +29,7 @@ else:
     from keras.engine.functional import Functional
     from keras.engine.sequential import Sequential
 
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 
 

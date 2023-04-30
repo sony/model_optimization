@@ -15,7 +15,7 @@
 from typing import Callable
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.constants import FOUND_TORCH
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.constants import PYTORCH
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
@@ -152,11 +152,11 @@ if FOUND_TORCH:
 
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
-                common.Logger.error("Given quantization config to mixed-precision facade is not of type "
+                Logger.error("Given quantization config to mixed-precision facade is not of type "
                                     "MixedPrecisionQuantizationConfigV2. Please use keras_post_training_quantization "
                                     "API, or pass a valid mixed precision configuration.")  # pragma: no cover
 
-            common.Logger.info("Using experimental mixed-precision quantization. "
+            Logger.info("Using experimental mixed-precision quantization. "
                                "If you encounter an issue please file a bug.")
 
         tb_w = _init_tensorboard_writer(DEFAULT_PYTORCH_INFO)

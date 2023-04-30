@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.graph.graph_matchers import EdgeMatch
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.constants import THRESHOLD, RANGE_MIN, RANGE_MAX
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 
 class BatchNormalizationRefusing(common.BaseSubstitution):

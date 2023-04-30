@@ -56,5 +56,5 @@ class RemoveReLUUpperBound(common.BaseSubstitution):
                 node.final_activation_quantization_cfg.activation_quantization_params.get(THRESHOLD) == \
                 node.framework_attr.get(RELU_MAX_VALUE):
             node.framework_attr[RELU_MAX_VALUE] = None
-            common.Logger.info(f'Removing upper bound of {node.name}. Threshold and upper bound are equal.')
+            Logger.info(f'Removing upper bound of {node.name}. Threshold and upper bound are equal.')
         return graph

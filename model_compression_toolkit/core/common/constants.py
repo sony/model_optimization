@@ -48,8 +48,8 @@ LAST_AXIS = -1
 DATA_TYPE = 'dtype'
 FLOAT_32 = 'float32'
 
-# Version
-LATEST = 'latest'
+# # Version
+# LATEST = 'latest'
 
 # Number of Tensorboard cosine-similarity plots to add:
 NUM_SAMPLES_DISTANCE_TENSORBOARD = 20
@@ -120,8 +120,8 @@ WEIGHTS_CHANNELS_AXIS = 'weights_channels_axis'
 DUMMY_NODE = 'dummy_node'
 DUMMY_TENSOR = 'dummy_tensor'
 
-# TP Model constants
-OPS_SET_LIST = 'ops_set_list'
+# # TP Model constants
+# OPS_SET_LIST = 'ops_set_list'
 
 # TF Input node base name
 INPUT_BASE_NAME = 'base_input'

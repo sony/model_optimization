@@ -23,7 +23,7 @@ from keras.layers import Dense, Conv2D, Reshape
 from keras.models import clone_model
 
 from model_compression_toolkit import quantizers_infrastructure as qi
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import FakelyQuantKerasExporter
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
     constants as keras_inferable_constants

@@ -19,7 +19,7 @@ import keras.models
 import tensorflow as tf
 from keras.engine.base_layer import Layer
 
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import \
     BaseKerasExporter
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
