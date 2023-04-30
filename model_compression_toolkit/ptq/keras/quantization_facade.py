@@ -111,7 +111,7 @@ if FOUND_TF:
             Pass the model, the representative dataset generator, the configuration and the target KPI to get a
             quantized model:
 
-            >>> quantized_model, quantization_info = mct.keras_post_training_quantization_experimental(model, repr_datagen, kpi, core_config=config)
+            >>> quantized_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model, repr_datagen, kpi, core_config=config)
 
             For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 

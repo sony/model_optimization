@@ -33,16 +33,16 @@ from model_compression_toolkit.core.common import network_editors as network_edi
 
 from model_compression_toolkit.core.keras.quantization_facade import keras_post_training_quantization, \
     keras_post_training_quantization_mixed_precision
-from model_compression_toolkit.ptq.keras.quantization_facade import keras_post_training_quantization_experimental
+
 
 from model_compression_toolkit.core.pytorch.quantization_facade import pytorch_post_training_quantization, pytorch_post_training_quantization_mixed_precision
-from model_compression_toolkit.ptq.pytorch.quantization_facade import pytorch_post_training_quantization_experimental
 
 from model_compression_toolkit.core.keras.kpi_data_facade import keras_kpi_data, keras_kpi_data_experimental
 from model_compression_toolkit.core.pytorch.kpi_data_facade import pytorch_kpi_data, pytorch_kpi_data_experimental
 
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.load_model import keras_load_quantized_model
 
+from model_compression_toolkit import ptq
 from model_compression_toolkit import qat
 from model_compression_toolkit import exporter
 

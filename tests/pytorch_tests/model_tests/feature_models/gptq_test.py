@@ -90,7 +90,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
 
         # Run MCT with PTQ
         np.random.seed(self.seed)
-        ptq_model, _ = mct.pytorch_post_training_quantization_experimental(self.float_model,
+        ptq_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(self.float_model,
                                                                            self.representative_data_gen_experimental,
                                                                            core_config=self.get_core_config(),
                                                                            target_platform_capabilities=self.get_tpc())

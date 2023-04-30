@@ -78,7 +78,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                         weights_per_channel_threshold=per_channel,
                                         input_scaling=input_scaling)
             core_config = mct.CoreConfig(quantization_config=qc)
-            q_model, quantization_info = mct.keras_post_training_quantization_experimental(model,
+            q_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                                            representative_data_gen,
                                                                                            core_config=core_config,
                                                                                            target_platform_capabilities=tpc,
@@ -100,7 +100,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                         shift_negative_activation_correction=shift_negative_correction)
             core_config = mct.CoreConfig(quantization_config=qc)
 
-            q_model, quantization_info = mct.keras_post_training_quantization_experimental(model,
+            q_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                                            representative_data_gen,
                                                                                            core_config=core_config,
                                                                                            target_platform_capabilities=tpc,

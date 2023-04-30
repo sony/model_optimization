@@ -23,7 +23,7 @@ import model_compression_toolkit as mct
 float_model = ResNet50()
 # Quantize the model. In order to export the model set new_experimental_exporter to True.
 # Notice that here the representative dataset is random. 
-quantized_exportable_model, _ = mct.keras_post_training_quantization_experimental(float_model,
+quantized_exportable_model, _ = mct.ptq.keras_post_training_quantization_experimental(float_model,
                                                                                   representative_data_gen=lambda: [
                                                                                       np.random.random(
                                                                                           (1, 224, 224, 3))],
@@ -129,7 +129,7 @@ def representative_data_gen():
         yield [np.random.random((1, 3, 224, 224))]
 
 
-quantized_exportable_model, _ = mct.pytorch_post_training_quantization_experimental(float_model,
+quantized_exportable_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(float_model,
                                                                                     representative_data_gen=representative_data_gen,
                                                                                     new_experimental_exporter=True)
 ```

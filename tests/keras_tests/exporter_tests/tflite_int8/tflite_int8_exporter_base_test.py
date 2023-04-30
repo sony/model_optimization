@@ -38,7 +38,7 @@ class TFLiteINT8ExporterBaseTest:
         print(f'Float model was saved to: {self.float_model_file_path}')
 
         # Get fully quantized model
-        self.exportable_model, _ = mct.keras_post_training_quantization_experimental(
+        self.exportable_model, _ = mct.ptq.keras_post_training_quantization_experimental(
             in_model=self.model,
             core_config=mct.CoreConfig(),
             representative_data_gen=self.__get_repr_dataset,

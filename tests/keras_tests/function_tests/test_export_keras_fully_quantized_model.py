@@ -68,7 +68,7 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
 
     def run_mct(self, model, new_experimental_exporter):
         core_config = mct.CoreConfig()
-        new_export_model, _ = mct.keras_post_training_quantization_experimental(
+        new_export_model, _ = mct.ptq.keras_post_training_quantization_experimental(
             in_model=model,
             core_config=core_config,
             representative_data_gen=self.representative_data_gen,

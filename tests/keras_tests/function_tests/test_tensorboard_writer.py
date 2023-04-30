@@ -135,7 +135,7 @@ class TestFileLogger(unittest.TestCase):
 
         mp_qc = mct.MixedPrecisionQuantizationConfigV2(num_of_images=1)
         core_config = mct.CoreConfig(mixed_precision_config=mp_qc)
-        quantized_model, _ = mct.keras_post_training_quantization_experimental(self.model,
+        quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(self.model,
                                                                                rep_data,
                                                                                target_kpi=mct.KPI(np.inf),
                                                                                core_config=core_config,
@@ -149,7 +149,7 @@ class TestFileLogger(unittest.TestCase):
 
         # Test Multiple Outputs model Logger
         self.model = MultipleOutputsNet()
-        quantized_model, _ = mct.keras_post_training_quantization_experimental(self.model,
+        quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(self.model,
                                                                                rep_data,
                                                                                target_kpi=mct.KPI(np.inf),
                                                                                core_config=core_config,

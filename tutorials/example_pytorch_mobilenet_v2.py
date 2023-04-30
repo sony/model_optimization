@@ -116,7 +116,7 @@ if __name__ == "__main__":
     # set configuration and Configure z threshold algorithm for outlier removal.
     core_config = mct.CoreConfig(quantization_config=mct.QuantizationConfig(z_threshold=args.z_threshold))
     # run post training quantization on the model to get the quantized model output
-    quantized_model, quantization_info = mct.pytorch_post_training_quantization_experimental(
+    quantized_model, quantization_info = mct.ptq.pytorch_post_training_quantization_experimental(
         in_module=model,
         representative_data_gen=representative_data_gen,
         core_config=core_config,

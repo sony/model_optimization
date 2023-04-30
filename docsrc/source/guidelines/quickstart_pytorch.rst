@@ -97,7 +97,7 @@ Run Post Training Quantization:
     core_config = mct.CoreConfig(quantization_config=QuantizationConfig(z_threshold=16)
 
     # run post training quantization on the model to get the quantized model output
-    quantized_model, quantization_info = mct.pytorch_post_training_quantization_experimental(model,
+    quantized_model, quantization_info = mct.ptq.pytorch_post_training_quantization_experimental(model,
                                                                                              representative_data_gen,
                                                                                              core_config=core_config,
                                                                                              target_platform_capabilities=target_platform_cap)

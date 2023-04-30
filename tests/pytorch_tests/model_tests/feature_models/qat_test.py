@@ -91,7 +91,7 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         self._gen_fixed_input()
         model_float = self.create_networks()
         _tpc = self.get_tpc()
-        ptq_model, quantization_info = mct.pytorch_post_training_quantization_experimental(model_float,
+        ptq_model, quantization_info = mct.ptq.pytorch_post_training_quantization_experimental(model_float,
                                                                                            self.representative_data_gen_experimental,
                                                                                            target_platform_capabilities=_tpc,
                                                                                            new_experimental_exporter=True)
