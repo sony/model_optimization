@@ -100,7 +100,7 @@ Run Post Training Quantization:
     # Set the number of calibration iterations to 10.
     model = MobileNet()
 
-    quantized_model, quantization_info = mct.keras_post_training_quantization_experimental(model,
+    quantized_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                                            representative_data_gen,
                                                                                            target_platform_capabilities=target_platform_cap)
 

@@ -232,13 +232,13 @@ class TestGetKerasTPC(unittest.TestCase):
         def rep_data():
             yield [np.random.randn(1, 224, 224, 3)]
 
-        quantized_model, _ = mct.keras_post_training_quantization_experimental(model,
+        quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                                rep_data,
                                                                                target_platform_capabilities=tpc,
                                                                                new_experimental_exporter=True)
 
         core_config = mct.CoreConfig(mixed_precision_config=mct.MixedPrecisionQuantizationConfigV2(num_of_images=1))
-        quantized_model, _ = mct.keras_post_training_quantization_experimental(model,
+        quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                                rep_data,
                                                                                core_config=core_config,
                                                                                target_kpi=mct.KPI(np.inf),

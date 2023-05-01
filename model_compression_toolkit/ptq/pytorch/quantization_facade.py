@@ -88,7 +88,7 @@ if FOUND_TORCH:
             Set number of clibration iterations to 1:
 
             >>> import model_compression_toolkit as mct
-            >>> quantized_module, quantization_info = mct.pytorch_post_training_quantization_experimental(module, repr_datagen)
+            >>> quantized_module, quantization_info = mct.ptq.pytorch_post_training_quantization_experimental(module, repr_datagen)
 
         """
 

@@ -80,7 +80,7 @@ if FOUND_ONNX:
         def run_mct(self, model, new_experimental_exporter):
             core_config = mct.CoreConfig()
 
-            new_export_model, _ = mct.pytorch_post_training_quantization_experimental(
+            new_export_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(
                 in_module=model,
                 core_config=core_config,
                 representative_data_gen=self.repr_datagen,
@@ -140,7 +140,7 @@ if FOUND_ONNX:
 
         def run_mct(self, model, new_experimental_exporter):
             core_config = mct.CoreConfig()
-            new_export_model, _ = mct.pytorch_post_training_quantization_experimental(
+            new_export_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(
                 in_module=model,
                 core_config=core_config,
                 representative_data_gen=self.repr_datagen,

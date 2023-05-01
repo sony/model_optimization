@@ -126,7 +126,7 @@ if __name__ == '__main__':
     # It is also possible to constraint only part of the KPI metric, e.g., by providing only weights_memory target
     # in the past KPI object, e.g., kpi = mct.KPI(kpi_data.weights_memory * 0.75)
 
-    quantized_model, quantization_info = mct.pytorch_post_training_quantization_experimental(model,
+    quantized_model, quantization_info = mct.ptq.pytorch_post_training_quantization_experimental(model,
                                                                                              representative_data_gen,
                                                                                              target_kpi=kpi,
                                                                                              core_config=configuration,

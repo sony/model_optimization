@@ -12,3 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
+from model_compression_toolkit.ptq.pytorch.quantization_facade import pytorch_post_training_quantization_experimental
+from model_compression_toolkit.ptq.keras.quantization_facade import keras_post_training_quantization_experimental

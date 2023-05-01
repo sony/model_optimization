@@ -109,7 +109,7 @@ class MHALayerNetFeatureTest(MHALayerNetTest):
             core_config = core_configs_dict[model_name]
 
             with self.unit_test.assertRaises(Exception) as e:
-                ptq_model, quant_info = mct.pytorch_post_training_quantization_experimental(model_float,
+                ptq_model, quant_info = mct.ptq.pytorch_post_training_quantization_experimental(model_float,
                                                                                             representative_data_gen,
                                                                                             core_config=core_config,
                                                                                             target_platform_capabilities=tpc)

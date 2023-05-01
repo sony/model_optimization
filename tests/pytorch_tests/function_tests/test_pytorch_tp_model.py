@@ -223,7 +223,7 @@ class TestGetPytorchTPC(unittest.TestCase):
         def rep_data():
             yield [np.random.randn(1, 3, 224, 224)]
 
-        quantized_model, _ = mct.pytorch_post_training_quantization_experimental(model,
+        quantized_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(model,
                                                                                  rep_data,
                                                                                  target_platform_capabilities=tpc)
 
@@ -231,7 +231,7 @@ class TestGetPytorchTPC(unittest.TestCase):
         mp_qc.num_of_images = 1
         quant_config, mp_config = mp_qc.separate_configs()
         core_config = mct.CoreConfig(quantization_config=quant_config, mixed_precision_config=mp_config)
-        quantized_model, _ = mct.pytorch_post_training_quantization_experimental(model,
+        quantized_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(model,
                                                                                  rep_data,
                                                                                  target_kpi=mct.KPI(np.inf),
                                                                                  target_platform_capabilities=tpc,

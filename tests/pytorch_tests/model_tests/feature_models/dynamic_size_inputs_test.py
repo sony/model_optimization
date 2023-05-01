@@ -114,7 +114,7 @@ class ReshapeNetTest(BasePytorchTest):
             assert core_config is not None, f"Model name {model_name} does not exists in the test's " \
                                              f"quantization configs dictionary keys"
 
-            ptq_model, quantization_info = mct.pytorch_post_training_quantization_experimental(
+            ptq_model, quantization_info = mct.ptq.pytorch_post_training_quantization_experimental(
                 in_module=model_float,
                 representative_data_gen=representative_data_gen_experimental,
                 target_kpi=self.get_kpi(),
