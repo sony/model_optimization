@@ -13,7 +13,7 @@ in some operator for its weights/activations, fusing patterns, etc.)
 ## Supported Target Platform Models 
 
 Currently, MCT contains three target-platform models
-(new models can be created and used by users as demonstrated [here](https://sony.github.io/model_optimization/api/experimental_api_docs/modules/target_platform.html#targetplatformmodel-code-example)):
+(new models can be created and used by users as demonstrated [here](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/modules/target_platform.html#targetplatformmodel-code-example)):
 - Default model
 - [IMX500](https://developer.sony.com/develop/imx500/)
 - [TFLite](https://www.tensorflow.org/lite/performance/quantization_spec)
@@ -27,7 +27,7 @@ One may view the full default target-platform model and its parameters [here](ht
 
 ## Usage
 
-The simplest way to initiate a TPC and use it in MCT is by using the function [get_target_platform_capabilities](https://sony.github.io/model_optimization/api/experimental_api_docs/methods/get_target_platform_capabilities.html#ug-get-target-platform-capabilities).
+The simplest way to initiate a TPC and use it in MCT is by using the function [get_target_platform_capabilities](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/get_target_platform_capabilities.html#ug-get-target-platform-capabilities).
 
 For example:
 ```python
@@ -48,4 +48,4 @@ quantized_model, quantization_info = mct.keras_post_training_quantization_experi
 
 Similarly, you can retrieve IMX500, TFLite and QNNPACK target-platform models for Keras and PyTorch frameworks.
 
-For more information and examples, we highly recommend you to visit our [project website](https://sony.github.io/model_optimization/api/experimental_api_docs/modules/target_platform.html#ug-target-platform).
+For more information and examples, we highly recommend you to visit our [project website](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/modules/target_platform.html#ug-target-platform).
