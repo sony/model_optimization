@@ -16,7 +16,7 @@
 from typing import Dict, Any
 
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX, \
+from model_compression_toolkit.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX, \
     SCALE_PER_CHANNEL, CLUSTER_CENTERS
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod

@@ -17,7 +17,7 @@
 from typing import Tuple, List
 import numpy as np
 
-from model_compression_toolkit.core.common.constants import MIN_THRESHOLD, EPS
+from model_compression_toolkit.constants import MIN_THRESHOLD, EPS
 from model_compression_toolkit.core import common
 
 def max_power_of_two(x: np.ndarray,

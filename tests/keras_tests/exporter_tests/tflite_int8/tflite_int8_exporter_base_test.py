@@ -24,7 +24,7 @@ from keras import Input
 
 import model_compression_toolkit as mct
 from model_compression_toolkit import get_target_platform_capabilities
-from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
 import tests.keras_tests.exporter_tests.constants as constants
 

@@ -120,8 +120,6 @@ WEIGHTS_CHANNELS_AXIS = 'weights_channels_axis'
 DUMMY_NODE = 'dummy_node'
 DUMMY_TENSOR = 'dummy_tensor'
 
-# # TP Model constants
-# OPS_SET_LIST = 'ops_set_list'
 
 # TF Input node base name
 INPUT_BASE_NAME = 'base_input'

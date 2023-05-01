@@ -18,7 +18,7 @@ from typing import Callable
 
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common import FrameworkInfo
-from model_compression_toolkit.core.common.constants import NUM_SAMPLES_DISTANCE_TENSORBOARD
+from model_compression_toolkit.constants import NUM_SAMPLES_DISTANCE_TENSORBOARD
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 
 from model_compression_toolkit.core.common.similarity_analyzer import compute_cs

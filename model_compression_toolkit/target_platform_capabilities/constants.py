@@ -13,18 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-import importlib
-
-# Supported frameworks in MCT:
-TENSORFLOW = 'tensorflow'
-PYTORCH = 'pytorch'
-FOUND_TF = importlib.util.find_spec(TENSORFLOW) is not None and importlib.util.find_spec(
-    "tensorflow_model_optimization") is not None
-FOUND_TORCH = importlib.util.find_spec("torch") is not None
-FOUND_ONNX = importlib.util.find_spec("onnx") is not None
-FOUND_ONNXRUNTIME = importlib.util.find_spec("onnxruntime") is not None
-
-
 # TP Model constants
 OPS_SET_LIST = 'ops_set_list'
 

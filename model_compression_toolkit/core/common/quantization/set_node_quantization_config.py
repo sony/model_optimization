@@ -73,7 +73,7 @@ def set_quantization_configs_to_node(node: BaseNode,
         tpc: TargetPlatformCapabilities to get default OpQuantizationConfig.
         mixed_precision_enable: is mixed precision enabled
     """
-    node_qc_options = tpc.get_qco_by_node(node)
+    node_qc_options = node.get_qco(tpc)
 
     # Create QC candidates for weights and activation combined
     weight_channel_axis = fw_info.kernel_channels_mapping.get(node.type)[0]

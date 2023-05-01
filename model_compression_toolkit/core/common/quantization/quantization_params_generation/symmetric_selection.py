@@ -15,7 +15,7 @@
 import numpy as np
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
-from model_compression_toolkit.core.common.constants import MIN_THRESHOLD, THRESHOLD
+from model_compression_toolkit.constants import MIN_THRESHOLD, THRESHOLD
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import \
     get_threshold_selection_tensor_error_function, get_threshold_selection_histogram_error_function, _kl_error_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_search import \

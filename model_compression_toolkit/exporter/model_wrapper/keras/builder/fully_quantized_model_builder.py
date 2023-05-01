@@ -18,7 +18,7 @@ from typing import Tuple
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.constants import FOUND_TF
+from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
 
 if FOUND_TF:

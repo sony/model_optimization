@@ -15,9 +15,8 @@
 
 from typing import Callable, List, Tuple
 
-from model_compression_toolkit.core import common
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq import GradientPTQConfig, GradientPTQConfigV2
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
@@ -36,7 +35,7 @@ from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
-from model_compression_toolkit.core.common.constants import FOUND_TF
+from model_compression_toolkit.constants import FOUND_TF
 
 if FOUND_TF:
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO

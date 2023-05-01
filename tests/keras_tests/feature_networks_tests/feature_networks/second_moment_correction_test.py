@@ -23,7 +23,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit import CoreConfig, QuantizationConfig, DEFAULTCONFIG, FrameworkInfo, DebugConfig
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.common.network_editors import EditRule
 from model_compression_toolkit.core.common.statistics_correction.apply_second_moment_correction_to_graph import \
     quantized_model_builder_for_second_moment_correction

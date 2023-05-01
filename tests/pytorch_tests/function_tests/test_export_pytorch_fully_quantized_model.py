@@ -22,7 +22,7 @@ from torch.nn import Conv2d, ReLU
 from torchvision.models.mobilenetv2 import mobilenet_v2
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.constants import FOUND_ONNX, FOUND_ONNXRUNTIME
+from model_compression_toolkit.constants import FOUND_ONNX, FOUND_ONNXRUNTIME
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.exporter import pytorch_export_model, PyTorchExportMode
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc

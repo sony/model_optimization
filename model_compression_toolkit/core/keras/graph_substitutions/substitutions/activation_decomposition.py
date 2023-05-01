@@ -17,7 +17,7 @@
 from tensorflow.keras.layers import Dense, DepthwiseConv2D, Conv2D, Conv2DTranspose, Activation, SeparableConv2D
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common.constants import FLOAT_32, DATA_TYPE
+from model_compression_toolkit.constants import FLOAT_32, DATA_TYPE
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher, \
     NodeFrameworkAttrMatcher

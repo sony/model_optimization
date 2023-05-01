@@ -26,7 +26,7 @@ else:
 
 from typing import Any, Dict, List, Tuple
 from tensorflow.python.util.object_identity import Reference as TFReference
-from model_compression_toolkit.core.common.constants import EPS, MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE
+from model_compression_toolkit.constants import EPS, MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph

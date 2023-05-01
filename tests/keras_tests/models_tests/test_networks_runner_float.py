@@ -20,7 +20,7 @@ import tensorflow as tf
 
 from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit import get_target_platform_capabilities
-from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph

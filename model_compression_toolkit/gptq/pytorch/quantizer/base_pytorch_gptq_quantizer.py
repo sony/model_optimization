@@ -16,7 +16,7 @@ from abc import abstractmethod
 from typing import Union, Dict
 
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.constants import FOUND_TORCH
+from model_compression_toolkit.constants import FOUND_TORCH
 from model_compression_toolkit.gptq.common.gptq_constants import WEIGHTS_QUANTIZATION_PARAMS
 
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \

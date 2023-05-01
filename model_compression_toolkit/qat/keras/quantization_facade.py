@@ -17,10 +17,8 @@ from typing import Callable
 from functools import partial
 
 from model_compression_toolkit import CoreConfig
-from model_compression_toolkit.core import common
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.constants import TENSORFLOW, FOUND_TF
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
@@ -46,7 +44,7 @@ if FOUND_TF:
     from model_compression_toolkit import get_target_platform_capabilities
     from model_compression_toolkit.core import common
     from model_compression_toolkit.core.common import BaseNode
-    from model_compression_toolkit.core.common.constants import TENSORFLOW
+    from model_compression_toolkit.constants import TENSORFLOW
     from model_compression_toolkit.core.common.framework_info import FrameworkInfo
     from model_compression_toolkit.qat.common.qat_config import _is_qat_applicable
     from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL

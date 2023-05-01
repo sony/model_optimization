@@ -14,9 +14,9 @@
 # ==============================================================================
 from typing import Callable
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common.constants import FOUND_TORCH
+from model_compression_toolkit.constants import FOUND_TORCH
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.constants import PYTORCH
+from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI

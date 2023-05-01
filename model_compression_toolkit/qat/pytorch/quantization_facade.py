@@ -16,7 +16,7 @@ import copy
 from typing import Callable
 from functools import partial
 
-from model_compression_toolkit.core.common.constants import FOUND_TORCH, PYTORCH
+from model_compression_toolkit.constants import FOUND_TORCH, PYTORCH
 
 from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core import common

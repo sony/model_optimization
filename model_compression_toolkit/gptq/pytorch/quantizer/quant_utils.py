@@ -14,9 +14,7 @@
 # ==============================================================================
 from typing import Union, Tuple
 import torch
-from torch.nn.functional import softmax, log_softmax, one_hot
-from model_compression_toolkit.core.common.constants import MIN_THRESHOLD
-from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
+from model_compression_toolkit.constants import MIN_THRESHOLD
 
 
 def power_of_two_max(max_tensor: torch.Tensor) -> torch.Tensor:

@@ -18,7 +18,7 @@ from typing import List, Tuple, Any, Callable
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import FrameworkInfo, Graph, BaseNode
-from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
+from model_compression_toolkit.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import create_node_activation_qc, \
@@ -356,7 +356,7 @@ def shift_negative_function(graph: Graph,
                     bypass_candidate_qc.activation_quantization_cfg.activation_quantization_params[SIGNED] = False
                     graph.shift_stats_collector(bypass_node, np.array(shift_value))
 
-    add_node_qco = graph.tpc.get_qco_by_node(add_node).quantization_config_list
+    add_node_qco = add_node.get_qco(graph.tpc).quantization_config_list
     for op_qc_idx, candidate_qc in enumerate(add_node.candidates_quantization_cfg):
         candidate_qc.weights_quantization_cfg.enable_weights_quantization = False
 
@@ -495,7 +495,7 @@ def apply_shift_negative_correction(graph: Graph,
     nodes = list(graph.nodes())
     for n in nodes:
         # Skip substitution if QuantizationMethod is uniform.
-        node_qco = graph.tpc.get_qco_by_node(n)
+        node_qco = n.get_qco(graph.tpc)
         if any([op_qc.activation_quantization_method is QuantizationMethod.UNIFORM
                 for op_qc in node_qco.quantization_config_list]):
             continue

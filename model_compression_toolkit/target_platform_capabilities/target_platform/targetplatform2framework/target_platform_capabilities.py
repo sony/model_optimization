@@ -162,26 +162,6 @@ class TargetPlatformCapabilities(ImmutableClass):
         """
         return self.tp_model.get_default_op_quantization_config()
 
-    def get_qco_by_node(self,
-                        node: Any) -> QuantizationConfigOptions:
-        """
-        Get the QuantizationConfigOptions of a node in a graph according
-        to the mappings from layers/LayerFilterParams to the OperatorsSet in the TargetPlatformModel.
-
-        Args:
-            node: Node from graph to get its QuantizationConfigOptions.
-
-        Returns:
-            QuantizationConfigOptions of the node.
-        """
-        if node is None:
-            Logger.error(f'Can not retrieve QC options for None node')  # pragma: no cover
-        for fl, qco in self.filterlayer2qco.items():
-            if fl.match(node):
-                return qco
-        if node.type in self.layer2qco:
-            return self.layer2qco.get(node.type)
-        return self.tp_model.default_qco
 
     def _get_config_options_mapping(self) -> Tuple[Dict[Any, QuantizationConfigOptions],
                                                    Dict[LayerFilterParams, QuantizationConfigOptions]]:

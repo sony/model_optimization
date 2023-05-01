@@ -13,11 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
-from typing import Tuple, Dict
+from typing import Dict
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
-from model_compression_toolkit.core.common.constants import SIGNED
+from model_compression_toolkit.constants import SIGNED
 from model_compression_toolkit.core.common.quantization import quantization_params_generation
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeActivationQuantizationConfig

@@ -23,7 +23,7 @@ from torch.nn.functional import hardtanh
 from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.constants import PYTORCH
+from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import Greater, \

@@ -16,7 +16,7 @@
 import numpy as np
 
 from model_compression_toolkit.core.common.collectors.base_collector import BaseCollector
-from model_compression_toolkit.core.common.constants import LAST_AXIS
+from model_compression_toolkit.constants import LAST_AXIS
 
 
 class MinMaxPerChannelCollector(BaseCollector):

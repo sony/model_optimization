@@ -17,7 +17,7 @@
 import unittest
 import numpy as np
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
-from model_compression_toolkit.core.common.constants import THRESHOLD
+from model_compression_toolkit.constants import THRESHOLD
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import _mse_error_histogram
 from model_compression_toolkit.core.common.collectors.histogram_collector import HistogramCollector
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import power_of_two_selection_tensor

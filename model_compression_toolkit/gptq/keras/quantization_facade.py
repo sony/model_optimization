@@ -16,15 +16,13 @@
 from typing import Callable, Tuple
 from packaging import version
 
-from model_compression_toolkit.core import common
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit import CoreConfig
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
 from model_compression_toolkit.gptq.runner import gptq_runner
@@ -38,7 +36,7 @@ LR_BIAS_DEFAULT = 1e-4
 LR_QUANTIZATION_PARAM_DEFAULT = 1e-3
 GPTQ_MOMENTUM = 0.9
 
-if common.constants.FOUND_TF:
+if FOUND_TF:
     import tensorflow as tf
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.gptq.keras.gptq_keras_implementation import GPTQKerasImplemantation

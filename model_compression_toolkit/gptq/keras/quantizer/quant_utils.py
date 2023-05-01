@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import tensorflow as tf
-from model_compression_toolkit.core.common.constants import MIN_THRESHOLD
+from model_compression_toolkit.constants import MIN_THRESHOLD
 from typing import Tuple
 
 

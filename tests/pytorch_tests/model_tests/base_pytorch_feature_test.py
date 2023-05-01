@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.core.common.constants import PYTORCH
+from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit import FrameworkInfo

@@ -17,7 +17,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
-from model_compression_toolkit.core.common.constants import CLUSTER_CENTERS, SCALE_PER_CHANNEL, MIN_THRESHOLD, EPS
+from model_compression_toolkit.constants import CLUSTER_CENTERS, SCALE_PER_CHANNEL, MIN_THRESHOLD, EPS
 
 
 def kmeans_tensor(tensor_data: np.ndarray,

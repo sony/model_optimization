@@ -16,10 +16,9 @@
 from typing import Callable
 
 from model_compression_toolkit import CoreConfig
-from model_compression_toolkit.core import common
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.constants import TENSORFLOW, FOUND_TF
+from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
