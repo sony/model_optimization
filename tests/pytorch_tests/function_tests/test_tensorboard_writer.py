@@ -40,13 +40,13 @@ class PytorchTestLogger(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        mct.core.Logger.shutdown()
+        Logger.shutdown()
 
     def test_tensorboard_log_dir(self):
-        self.assertTrue(os.path.exists(os.path.join(mct.core.Logger.LOG_PATH, 'tensorboard_logs')))
+        self.assertTrue(os.path.exists(os.path.join(Logger.LOG_PATH, 'tensorboard_logs')))
 
     def test_tensorboard_initial_graph(self):
-        events_dir = os.path.join(mct.core.Logger.LOG_PATH, 'tensorboard_logs/')
+        events_dir = os.path.join(Logger.LOG_PATH, 'tensorboard_logs/')
         events_files = glob.glob(events_dir + 'initial_graph/*events*')
         self.assertTrue(len(events_files) == 1)  # Make sure there is only event file in 'initial_graph' subdir
 
