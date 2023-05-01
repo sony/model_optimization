@@ -1,0 +1,19 @@
+# This workflow will verifies all links in markdown files.
+# For more information, see: https://github.com/marketplace/actions/markdown-link-check
+
+name: Check Markdown links
+
+on:
+  workflow_dispatch: # Allow manual triggers
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  markdown-link-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        folder-path: './'
