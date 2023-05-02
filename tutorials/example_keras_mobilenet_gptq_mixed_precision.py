@@ -116,17 +116,17 @@ if __name__ == '__main__':
     model = MobileNetV2()
 
     # Create a mixed-precision quantization configuration.
-    mixed_precision_config = mct.MixedPrecisionQuantizationConfigV2(num_of_images=args.mixed_precision_num_of_images,
+    mixed_precision_config = mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=args.mixed_precision_num_of_images,
                                                                     use_grad_based_weights=args.enable_mixed_precision_gradients_weighting)
 
     # Create a core quantization configuration, set the mixed-precision configuration,
     # and set the number of calibration iterations.
-    config = mct.CoreConfig(mixed_precision_config=mixed_precision_config)
+    config = mct.core.CoreConfig(mixed_precision_config=mixed_precision_config)
 
     # Get KPI information to constraint your model's memory size.
     # Retrieve a KPI object with helpful information of each KPI metric,
     # to constraint the quantized model to the desired memory size.
-    kpi_data = mct.keras_kpi_data_experimental(model,
+    kpi_data = mct.core.keras_kpi_data_experimental(model,
                                                representative_data_gen,
                                                config,
                                                target_platform_capabilities=target_platform_cap)
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     # while the bias will not)
     # examples:
     # weights_compression_ratio = 0.75 - About 0.75 of the model's weights memory size when quantized with 8 bits.
-    kpi = mct.KPI(kpi_data.weights_memory * args.weights_compression_ratio)
+    kpi = mct.core.KPI(kpi_data.weights_memory * args.weights_compression_ratio)
 
     # Create a GPTQ quantization configuration and set the number of training iterations.
     gptq_config = mct.gptq.get_keras_gptq_config(n_epochs=args.num_gptq_training_iterations,

@@ -29,7 +29,7 @@ from model_compression_toolkit.constants import FOUND_TORCH
 if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-    from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from torch.nn import Module
 
     from model_compression_toolkit import get_target_platform_capabilities
@@ -75,7 +75,7 @@ if FOUND_TORCH:
             Import mct and call for KPI data calculation:
 
             >>> import model_compression_toolkit as mct
-            >>> kpi_data = mct.pytorch_kpi_data(module, repr_datagen)
+            >>> kpi_data = mct.core.pytorch_kpi_data(module, repr_datagen)
 
         """
 
@@ -132,7 +132,7 @@ if FOUND_TORCH:
             Import mct and call for KPI data calculation:
 
             >>> import model_compression_toolkit as mct
-            >>> kpi_data = mct.pytorch_kpi_data(module, repr_datagen)
+            >>> kpi_data = mct.core.pytorch_kpi_data(module, repr_datagen)
 
         """
 

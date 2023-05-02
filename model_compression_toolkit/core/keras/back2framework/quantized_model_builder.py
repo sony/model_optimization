@@ -14,7 +14,7 @@
 # ==============================================================================
 from typing import List
 
-from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder

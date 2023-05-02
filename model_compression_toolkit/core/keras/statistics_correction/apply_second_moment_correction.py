@@ -19,7 +19,7 @@ from tensorflow.keras.layers import BatchNormalization
 from tqdm import tqdm
 
 import model_compression_toolkit.core.keras.constants as keras_constants
-from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core import common
 
 

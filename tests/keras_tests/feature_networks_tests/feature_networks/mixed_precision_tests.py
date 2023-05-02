@@ -17,7 +17,7 @@
 import numpy as np
 import tensorflow as tf
 
-from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core import CoreConfig
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from keras import backend as K
 
@@ -70,8 +70,8 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
                                                 name="mixed_precision_activation_test")
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationErrorMethod.MSE,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
+                                      mct.core.QuantizationErrorMethod.MSE,
                                       relu_bound_to_power_of_2=False,
                                       weights_bias_correction=True,
                                       weights_per_channel_threshold=True,
@@ -79,7 +79,7 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
                                       activation_channel_equalization=False)
 
     def get_mixed_precision_v2_config(self):
-        return mct.MixedPrecisionQuantizationConfigV2(num_of_images=1)
+        return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, 3]]
@@ -413,8 +413,8 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
         return [[self.val_batch_size, 224, 244, 3] for _ in range(self.num_of_inputs)]
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationErrorMethod.MSE,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
+                                      mct.core.QuantizationErrorMethod.MSE,
                                       relu_bound_to_power_of_2=False,
                                       weights_bias_correction=True,
                                       weights_per_channel_threshold=True,
@@ -422,7 +422,7 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
                                       activation_channel_equalization=False)
 
     def get_mixed_precision_v2_config(self):
-        return mct.MixedPrecisionQuantizationConfigV2(num_of_images=self.num_of_inputs)
+        return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=self.num_of_inputs)
 
     def create_networks(self):
         inputs_1 = layers.Input(shape=self.get_input_shapes()[0][1:])

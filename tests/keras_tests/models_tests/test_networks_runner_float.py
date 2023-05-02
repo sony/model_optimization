@@ -18,7 +18,7 @@ import unittest
 import numpy as np
 import tensorflow as tf
 
-from model_compression_toolkit import DEFAULTCONFIG
+from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode

@@ -14,7 +14,7 @@
 # ==============================================================================
 import numpy as np
 
-from model_compression_toolkit import DEFAULTCONFIG, CoreConfig, DebugConfig
+from model_compression_toolkit.core import DEFAULTCONFIG, CoreConfig, DebugConfig
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.model_collector import ModelCollector

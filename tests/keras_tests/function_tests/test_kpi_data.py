@@ -88,7 +88,7 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
                                            mp_bitwidth_candidates_list=mp_bitwidth_candidates_list,
                                            name="kpi_data_test")
 
-    kpi_data = mct.keras_kpi_data(in_model=model,
+    kpi_data = mct.core.keras_kpi_data(in_model=model,
                                   representative_data_gen=random_datagen,
                                   target_platform_capabilities=tpc)
 

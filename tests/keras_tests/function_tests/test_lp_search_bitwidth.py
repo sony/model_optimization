@@ -32,7 +32,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.core.common.model_collector import ModelCollector
-from model_compression_toolkit import DEFAULTCONFIG
+from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO

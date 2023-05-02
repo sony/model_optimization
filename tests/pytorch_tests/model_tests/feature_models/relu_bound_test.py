@@ -14,7 +14,7 @@
 # ==============================================================================
 import torch
 
-from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod
+from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_tp_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -110,7 +110,7 @@ class ReLUBoundToPOTNetTest(BasePytorchTest):
         quant_config = QuantizationConfig(QuantizationErrorMethod.MSE,
                                           QuantizationErrorMethod.MSE,
                                           relu_bound_to_power_of_2=True)
-        return {"8bit_relu_bound": mct.CoreConfig(quantization_config=quant_config)}
+        return {"8bit_relu_bound": mct.core.CoreConfig(quantization_config=quant_config)}
 
     def create_feature_network(self, input_shape):
         return ReLUBoundToPOTNet()
@@ -158,7 +158,7 @@ class HardtanhBoundToPOTNetTest(BasePytorchTest):
         quant_config = QuantizationConfig(QuantizationErrorMethod.MSE,
                                           QuantizationErrorMethod.MSE,
                                           relu_bound_to_power_of_2=True)
-        return {"8bit_relu_bound": mct.CoreConfig(quantization_config=quant_config)}
+        return {"8bit_relu_bound": mct.core.CoreConfig(quantization_config=quant_config)}
 
     def create_feature_network(self, input_shape):
         return HardtanhBoundToPOTNet()

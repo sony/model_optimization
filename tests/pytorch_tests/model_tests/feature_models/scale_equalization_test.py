@@ -52,8 +52,8 @@ class ScaleEqualizationBaseTest(BasePytorchTest):
                                          ftp_name='8bit_scale_equalization_pytorch_test')
 
     def get_core_configs(self):
-        quant_config = model_compression_toolkit.QuantizationConfig(activation_channel_equalization=True)
-        return {"8bit_scale_equalization": model_compression_toolkit.CoreConfig(quantization_config=quant_config)}
+        quant_config = model_compression_toolkit.core.QuantizationConfig(activation_channel_equalization=True)
+        return {"8bit_scale_equalization": model_compression_toolkit.core.CoreConfig(quantization_config=quant_config)}
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         set_model(float_model)

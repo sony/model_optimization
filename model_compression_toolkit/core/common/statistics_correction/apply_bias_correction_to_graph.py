@@ -14,7 +14,7 @@
 # ==============================================================================
 import copy
 
-from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 

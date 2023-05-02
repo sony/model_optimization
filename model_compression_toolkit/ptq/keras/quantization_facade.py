@@ -15,7 +15,7 @@
 
 from typing import Callable
 
-from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF
@@ -32,7 +32,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
-    from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.exporter.model_wrapper import get_exportable_keras_model
 
     from model_compression_toolkit import get_target_platform_capabilities
@@ -92,20 +92,20 @@ if FOUND_TF:
 
             Create a MCT core config, containing the quantization configuration:
 
-            >>> config = mct.CoreConfig()
+            >>> config = mct.core.CoreConfig()
 
             If mixed precision is desired, create a MCT core config with a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
             The candidates bitwidth for quantization should be defined in the target platform model.
             In this example we use 1 image to search mixed-precision configuration:
 
-            >>> config = mct.CoreConfig(mixed_precision_config=mct.MixedPrecisionQuantizationConfigV2(num_of_images=1))
+            >>> config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1))
 
             For mixed-precision set a target KPI object:
             Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
             that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
             while the bias will not):
 
-            >>> kpi = mct.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
+            >>> kpi = mct.core.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
 
             Pass the model, the representative dataset generator, the configuration and the target KPI to get a
             quantized model:

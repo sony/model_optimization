@@ -21,7 +21,7 @@ import unittest
 from PIL import Image
 from pathlib import Path
 
-from model_compression_toolkit import FolderImageLoader
+from model_compression_toolkit.core import FolderImageLoader
 
 img_path = "./test_data_loader_dir/test_img.jpeg"
 img_shape = (224, 224, 3)

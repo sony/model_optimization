@@ -18,7 +18,7 @@ from typing import Any, Callable
 import torch
 from tqdm import tqdm
 
-from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.pytorch.constants import GAMMA, BETA, MOVING_MEAN, MOVING_VARIANCE
 from model_compression_toolkit.core.pytorch.utils import set_model, to_torch_tensor

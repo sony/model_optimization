@@ -63,7 +63,7 @@ class SingleLayerReplacementTest(BasePytorchTest):
         super().__init__(unit_test)
 
     def get_debug_config(self):
-        return mct.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter('activation1'),
+        return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter('activation1'),
                                                         action=ReplaceLayer(Identity, get_identity_params_from_relu))])
 
     def create_feature_network(self, input_shape):
@@ -87,7 +87,7 @@ class ReluReplacementTest(SingleLayerReplacementTest):
         super().__init__(unit_test)
 
     def get_debug_config(self):
-        return mct.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(torch.nn.ReLU),
+        return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(torch.nn.ReLU),
                                                         action=ReplaceLayer(Identity, get_identity_params_from_relu))])
 
     def create_feature_network(self, input_shape):
@@ -136,7 +136,7 @@ class ReluReplacementWithAddBiasTest(SingleLayerReplacementTest):
         super().__init__(unit_test)
 
     def get_debug_config(self):
-        return mct.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(torch.nn.ReLU),
+        return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(torch.nn.ReLU),
                                                         action=ReplaceLayer(AddBias, get_add_bias_params_from_relu))])
 
     def create_feature_network(self, input_shape):

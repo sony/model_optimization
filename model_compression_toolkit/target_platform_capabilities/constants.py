@@ -18,3 +18,10 @@ OPS_SET_LIST = 'ops_set_list'
 
 # Version
 LATEST = 'latest'
+
+
+# Supported TP models names:
+DEFAULT_TP_MODEL = 'default'
+IMX500_TP_MODEL = 'imx500'
+TFLITE_TP_MODEL = 'tflite'
+QNNPACK_TP_MODEL = 'qnnpack'

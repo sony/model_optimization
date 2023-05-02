@@ -25,7 +25,7 @@ from model_compression_toolkit.gptq.keras.quantization_facade import GPTQ_MOMENT
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
-from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
 
@@ -37,7 +37,7 @@ LR_QUANTIZATION_PARAM_DEFAULT = 1e-4
 if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.gptq.pytorch.gptq_pytorch_implementation import GPTQPytorchImplemantation
-    from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
     from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_exportable_pytorch_model
     import torch
@@ -142,7 +142,7 @@ if FOUND_TORCH:
 
             Create MCT core configurations with number of calibration iterations set to 1:
 
-            >>> config = mct.CoreConfig()
+            >>> config = mct.core.CoreConfig()
 
             Pass the module, the representative dataset generator and the configuration (optional) to get a quantized module
 

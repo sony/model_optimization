@@ -45,10 +45,10 @@ class TestQuantizationConfigurations(unittest.TestCase):
                              mct.target_platform.QuantizationMethod.SYMMETRIC,
                              mct.target_platform.QuantizationMethod.UNIFORM]
 
-        quantization_error_methods = [mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.QuantizationErrorMethod.MAE,
-                                      mct.QuantizationErrorMethod.LP]
+        quantization_error_methods = [mct.core.QuantizationErrorMethod.MSE,
+                                      mct.core.QuantizationErrorMethod.NOCLIPPING,
+                                      mct.core.QuantizationErrorMethod.MAE,
+                                      mct.core.QuantizationErrorMethod.LP]
         bias_correction = [True, False]
         relu_bound_to_power_of_2 = [True, False]
         input_scaling = [True, False]
@@ -71,13 +71,13 @@ class TestQuantizationConfigurations(unittest.TestCase):
                 'activation_n_bits': 16})
             tpc = generate_keras_tpc(name="quant_config_weights_test", tp_model=tp)
 
-            qc = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
+            qc = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,
                                         weights_error_method=error_method,
                                         relu_bound_to_power_of_2=False,
                                         weights_bias_correction=bias_correction,
                                         weights_per_channel_threshold=per_channel,
                                         input_scaling=input_scaling)
-            core_config = mct.CoreConfig(quantization_config=qc)
+            core_config = mct.core.CoreConfig(quantization_config=qc)
             q_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                                            representative_data_gen,
                                                                                            core_config=core_config,
@@ -92,13 +92,13 @@ class TestQuantizationConfigurations(unittest.TestCase):
                 'activation_n_bits': 8})
             tpc = generate_keras_tpc(name="quant_config_activation_test", tp_model=tp)
 
-            qc = mct.QuantizationConfig(activation_error_method=error_method,
-                                        weights_error_method=mct.QuantizationErrorMethod.NOCLIPPING,
+            qc = mct.core.QuantizationConfig(activation_error_method=error_method,
+                                        weights_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,
                                         relu_bound_to_power_of_2=relu_bound_to_power_of_2,
                                         weights_bias_correction=False,
                                         weights_per_channel_threshold=False,
                                         shift_negative_activation_correction=shift_negative_correction)
-            core_config = mct.CoreConfig(quantization_config=qc)
+            core_config = mct.core.CoreConfig(quantization_config=qc)
 
             q_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                                            representative_data_gen,

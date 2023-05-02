@@ -15,7 +15,7 @@
 
 from typing import List
 
-from model_compression_toolkit import KPI
+from model_compression_toolkit.core import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import \
     MixedPrecisionSearchManager
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \

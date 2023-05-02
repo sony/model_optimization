@@ -117,7 +117,7 @@ if __name__ == '__main__':
     # Get KPI information to constraint your model's memory size.
     # Retrieve a KPI object with helpful information of each KPI metric,
     # to constraint the quantized model to the desired memory size.
-    kpi_data = mct.keras_kpi_data_experimental(model,
+    kpi_data = mct.core.keras_kpi_data_experimental(model,
                                                representative_data_gen,
                                                configuration,
                                                target_platform_capabilities=target_platform_cap)
@@ -128,10 +128,10 @@ if __name__ == '__main__':
     # while the bias will not)
     # examples:
     # weights_compression_ratio = 0.75 - About 0.75 of the model's weights memory size when quantized with 8 bits.
-    kpi = mct.KPI(kpi_data.weights_memory * args.weights_compression_ratio)
+    kpi = mct.core.KPI(kpi_data.weights_memory * args.weights_compression_ratio)
 
     # It is also possible to constraint only part of the KPI metric, e.g., by providing only weights_memory target
-    # in the past KPI object, e.g., kpi = mct.KPI(kpi_data.weights_memory * 0.75)
+    # in the past KPI object, e.g., kpi = mct.core.KPI(kpi_data.weights_memory * 0.75)
     quantized_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                                            representative_data_gen,
                                                                                            target_kpi=kpi,

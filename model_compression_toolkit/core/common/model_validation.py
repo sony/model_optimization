@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Any
 
-from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.core import FrameworkInfo
 
 
 class ModelValidation:

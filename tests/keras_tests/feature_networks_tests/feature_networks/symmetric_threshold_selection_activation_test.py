@@ -42,7 +42,7 @@ class SymmetricThresholdSelectionActivationTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="symmetric_threshold_test", tp_model=tp_model)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(activation_error_method=self.activation_threshold_method)
+        return mct.core.QuantizationConfig(activation_error_method=self.activation_threshold_method)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

@@ -106,7 +106,7 @@ if __name__ == '__main__':
     model = MobileNetV2()
 
     # Create a core quantization configuration and set the number of calibration iterations.
-    config = mct.CoreConfig()
+    config = mct.core.CoreConfig()
 
     # Create a GPTQ quantization configuration and set the number of training iterations.
     gptq_config = mct.gptq.get_keras_gptq_config(n_epochs=args.num_gptq_training_iterations)

@@ -29,7 +29,7 @@ class TanhActivationTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
                                       model_compression_toolkit.target_platform_capabilities.target_platform.QuantizationMethod.POWER_OF_TWO,
                                       model_compression_toolkit.target_platform_capabilities.target_platform.QuantizationMethod.POWER_OF_TWO,
                                       16, 16, True, True, True)

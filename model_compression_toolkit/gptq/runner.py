@@ -15,7 +15,7 @@
 
 from typing import Callable
 
-from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
     apply_statistics_correction

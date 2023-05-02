@@ -18,7 +18,7 @@ from typing import Tuple, Any, Dict, List, Union, Callable
 import torch
 from networkx import topological_sort
 
-from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder

@@ -19,7 +19,7 @@ from keras import Input, Model
 from keras.layers import Conv2D, Conv2DTranspose
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import QuantizationConfig, QuantizationErrorMethod
+from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod
 from model_compression_toolkit.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO

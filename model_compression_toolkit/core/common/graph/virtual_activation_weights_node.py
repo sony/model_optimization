@@ -15,7 +15,7 @@
 
 from typing import Dict, Any, Tuple
 
-from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.constants import VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX, \
     VIRTUAL_WEIGHTS_SUFFIX, VIRTUAL_ACTIVATION_SUFFIX, FLOAT_BITWIDTH
 

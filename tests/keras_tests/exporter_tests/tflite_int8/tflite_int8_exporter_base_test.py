@@ -25,7 +25,7 @@ from keras import Input
 import model_compression_toolkit as mct
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 import tests.keras_tests.exporter_tests.constants as constants
 
 class TFLiteINT8ExporterBaseTest:
@@ -40,7 +40,7 @@ class TFLiteINT8ExporterBaseTest:
         # Get fully quantized model
         self.exportable_model, _ = mct.ptq.keras_post_training_quantization_experimental(
             in_model=self.model,
-            core_config=mct.CoreConfig(),
+            core_config=mct.core.CoreConfig(),
             representative_data_gen=self.__get_repr_dataset,
             target_platform_capabilities=self.get_tpc(),
             new_experimental_exporter=True)
