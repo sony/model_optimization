@@ -15,8 +15,12 @@
 from typing import List, Tuple
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, TargetPlatformModel
-from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
+    TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import \
+    QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format import \
+    QuantizationFormat
 
 tp = mct.target_platform
 
@@ -65,7 +69,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         weights_multiplier_nbits=None
     )
 
-    mixed_precision_cfg_list = [] # No mixed precision
+    mixed_precision_cfg_list = []  # No mixed precision
 
     return eight_bits, mixed_precision_cfg_list
 
@@ -106,28 +110,28 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # differently. For more details:
         # https://www.tensorflow.org/lite/performance/quantization_spec#int8_quantized_operator_specifications
         tp.OperatorsSet("NoQuantization",
-                         tp.get_default_quantization_config_options().clone_and_edit(
-                                  quantization_preserving=True))
+                        tp.get_default_quantization_config_options().clone_and_edit(
+                            quantization_preserving=True))
 
         fc = tp.OperatorsSet("FullyConnected",
-                              tp.get_default_quantization_config_options().clone_and_edit(
-                                       weights_per_channel_threshold=False))
+                             tp.get_default_quantization_config_options().clone_and_edit(
+                                 weights_per_channel_threshold=False))
 
         tp.OperatorsSet("L2Normalization",
-                         tp.get_default_quantization_config_options().clone_and_edit(
-                                  fixed_zero_point=0, fixed_scale=1 / 128))
+                        tp.get_default_quantization_config_options().clone_and_edit(
+                            fixed_zero_point=0, fixed_scale=1 / 128))
         tp.OperatorsSet("LogSoftmax",
-                         tp.get_default_quantization_config_options().clone_and_edit(
-                                  fixed_zero_point=127, fixed_scale=16 / 256))
+                        tp.get_default_quantization_config_options().clone_and_edit(
+                            fixed_zero_point=127, fixed_scale=16 / 256))
         tp.OperatorsSet("Tanh",
-                         tp.get_default_quantization_config_options().clone_and_edit(
-                                  fixed_zero_point=0, fixed_scale=1 / 128))
+                        tp.get_default_quantization_config_options().clone_and_edit(
+                            fixed_zero_point=0, fixed_scale=1 / 128))
         tp.OperatorsSet("Softmax",
-                         tp.get_default_quantization_config_options().clone_and_edit(
-                                  fixed_zero_point=-128, fixed_scale=1 / 256))
+                        tp.get_default_quantization_config_options().clone_and_edit(
+                            fixed_zero_point=-128, fixed_scale=1 / 256))
         tp.OperatorsSet("Logistic",
-                         tp.get_default_quantization_config_options().clone_and_edit(
-                                  fixed_zero_point=-128, fixed_scale=1 / 256))
+                        tp.get_default_quantization_config_options().clone_and_edit(
+                            fixed_zero_point=-128, fixed_scale=1 / 256))
 
         conv2d = tp.OperatorsSet("Conv2d")
         kernel = tp.OperatorSetConcat(conv2d, fc)
@@ -140,7 +144,8 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         bias_add = tp.OperatorsSet("BiasAdd")
         add = tp.OperatorsSet("Add")
         squeeze = tp.OperatorsSet("Squeeze",
-                                   qc_options=tp.get_default_quantization_config_options().clone_and_edit(quantization_preserving=True))
+                                  qc_options=tp.get_default_quantization_config_options().clone_and_edit(
+                                      quantization_preserving=True))
         # ------------------- #
         # Fusions
         # ------------------- #
@@ -151,5 +156,8 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         tp.Fusing([conv2d, squeeze, activations_to_fuse])
         tp.Fusing([batch_norm, activations_to_fuse])
         tp.Fusing([batch_norm, add, activations_to_fuse])
+
+        # Set quantization format to int8
+        generated_tpc.set_quantization_format(QuantizationFormat.INT8)
 
     return generated_tpc
