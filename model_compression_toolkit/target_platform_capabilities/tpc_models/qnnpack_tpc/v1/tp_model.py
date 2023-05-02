@@ -15,7 +15,10 @@
 from typing import List, Tuple
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
+    TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_formats import \
+    QuantizationFormat
 
 tp = mct.target_platform
 
@@ -119,5 +122,8 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         tp.Fusing([conv, batchnorm])
         tp.Fusing([conv, relu])
         tp.Fusing([linear, relu])
+
+        # Set quantization format to fakely quant
+        generated_tpc.set_quantization_format(QuantizationFormat.FAKELY_QUANT)
 
     return generated_tpc

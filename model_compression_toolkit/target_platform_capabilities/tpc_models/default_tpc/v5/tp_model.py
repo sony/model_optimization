@@ -15,7 +15,10 @@
 from typing import List, Tuple
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
+    TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_formats import \
+    QuantizationFormat
 
 tp = mct.target_platform
 
@@ -112,6 +115,9 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # If a quantization configuration options is passed, these options will
         # be used for operations that will be attached to this set's label.
         # Otherwise, it will be a configure-less set (used in fusing):
+
+        # Set quantization format to fakely quant
+        generated_tpc.set_quantization_format(QuantizationFormat.FAKELY_QUANT)
 
         # May suit for operations like: Dropout, Reshape, etc.
         tp.OperatorsSet("NoQuantization",
