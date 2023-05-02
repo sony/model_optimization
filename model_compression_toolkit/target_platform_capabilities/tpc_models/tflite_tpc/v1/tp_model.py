@@ -19,7 +19,7 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
     TargetPlatformModel
 from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import \
     QuantizationMethod
-from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_formats import \
+from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format import \
     QuantizationFormat
 
 tp = mct.target_platform

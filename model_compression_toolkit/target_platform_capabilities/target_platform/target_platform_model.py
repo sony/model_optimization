@@ -229,6 +229,6 @@ class TargetPlatformModel(ImmutableClass):
         """
         Set quantization format.
         Args:
-            quantization_format: quantization_format from quantization format enum.
+            quantization_format: A quantization format (fake-quant, int8 etc.) from enum QuantizationFormat.
         """
         self.quantization_format = quantization_format

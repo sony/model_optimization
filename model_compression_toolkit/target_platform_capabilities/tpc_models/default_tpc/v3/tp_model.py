@@ -17,7 +17,7 @@ from typing import List, Tuple
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
     TargetPlatformModel
-from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_formats import \
+from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format import \
     QuantizationFormat
 
 tp = mct.target_platform
