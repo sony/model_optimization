@@ -23,6 +23,7 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher, WalkMatcher
 from model_compression_toolkit.core.keras.constants import KERNEL, BIAS, RELU_MAX_VALUE, RELU_POT_BOUND
+from model_compression_toolkit.logger import Logger
 
 
 class ReLUBoundToPowerOfTwo(common.BaseSubstitution):
@@ -81,7 +82,7 @@ class ReLUBoundToPowerOfTwo(common.BaseSubstitution):
         scale_factor = max_value / self.threshold
 
         non_linear_node.framework_attr[RELU_MAX_VALUE] = np.float32(self.threshold)
-        common.Logger.debug(
+        Logger.debug(
             f"Node named:{non_linear_node.name} max value change "
             f"to:{non_linear_node.framework_attr[RELU_MAX_VALUE]}")
 

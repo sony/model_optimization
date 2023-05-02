@@ -25,7 +25,7 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_t
     tpc_dict as qnnpack_tpc_dict
 from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, TFLITE_TP_MODEL, \
     QNNPACK_TP_MODEL
-from model_compression_toolkit.core.common.constants import LATEST
+from model_compression_toolkit.target_platform_capabilities.constants import LATEST
 
 tpc_dict = {DEFAULT_TP_MODEL: default_tpc_dict,
             IMX500_TP_MODEL: imx500_tpc_dict,

@@ -20,7 +20,8 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher,NodeFrameworkAttrMatcher
 from model_compression_toolkit.core.keras.constants import RELU_MAX_VALUE
-from model_compression_toolkit.core.common.constants import THRESHOLD
+from model_compression_toolkit.constants import THRESHOLD
+from model_compression_toolkit.logger import Logger
 
 MATCHER = NodeOperationMatcher(ReLU) & NodeFrameworkAttrMatcher(RELU_MAX_VALUE, None).logic_not()
 
@@ -56,5 +57,5 @@ class RemoveReLUUpperBound(common.BaseSubstitution):
                 node.final_activation_quantization_cfg.activation_quantization_params.get(THRESHOLD) == \
                 node.framework_attr.get(RELU_MAX_VALUE):
             node.framework_attr[RELU_MAX_VALUE] = None
-            common.Logger.info(f'Removing upper bound of {node.name}. Threshold and upper bound are equal.')
+            Logger.info(f'Removing upper bound of {node.name}. Threshold and upper bound are equal.')
         return graph

@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,18 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.constants import BITS_TO_BYTES
 
+# TP Model constants
+OPS_SET_LIST = 'ops_set_list'
 
-def compute_quantize_tensor_memory_bytes(tensor_size: float, n_bits: int) -> float:
-    """
-    A utility function to compute the actual memory size of a tensor for a given bit-width.
-
-    Args:
-        tensor_size: The number of parameters in the tensor.
-        n_bits: The bit-width in which the tensor values are represented.
-
-    Returns: The size of the tensor in memory in bytes.
-
-    """
-    return tensor_size * n_bits / BITS_TO_BYTES
+# Version
+LATEST = 'latest'

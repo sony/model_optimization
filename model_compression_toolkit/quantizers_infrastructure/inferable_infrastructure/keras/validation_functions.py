@@ -16,7 +16,7 @@ from typing import Any
 
 import numpy as np
 
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.logger import Logger
 
 
 def validate_uniform_min_max_ranges(min_range: Any, max_range: Any) -> None:

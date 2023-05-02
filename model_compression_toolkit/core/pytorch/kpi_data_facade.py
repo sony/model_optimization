@@ -15,8 +15,8 @@
 
 from typing import Callable
 
-from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.core.common.constants import PYTORCH
+from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_data im
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig, DEFAULT_MIXEDPRECISION_CONFIG, MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.core.common.constants import FOUND_TORCH
+from model_compression_toolkit.constants import FOUND_TORCH
 
 if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO

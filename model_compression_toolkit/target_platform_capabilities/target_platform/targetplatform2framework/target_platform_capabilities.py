@@ -18,16 +18,15 @@ import itertools
 import pprint
 from typing import List, Any, Dict, Tuple
 
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.operations_to_layers import \
     OperationsToLayers, OperationsSetToLayers
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
-from model_compression_toolkit.core.common.immutable import ImmutableClass
-from model_compression_toolkit.core.common.graph.base_node import BaseNode
+from model_compression_toolkit.target_platform_capabilities.immutable import ImmutableClass
 from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import QuantizationConfigOptions, \
     OpQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform.operators import OperatorsSet, OperatorsSetBase
+from model_compression_toolkit.target_platform_capabilities.target_platform.operators import OperatorsSetBase
 from model_compression_toolkit.target_platform_capabilities.target_platform.target_platform_model import TargetPlatformModel
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import _current_tpc
 
@@ -163,26 +162,6 @@ class TargetPlatformCapabilities(ImmutableClass):
         """
         return self.tp_model.get_default_op_quantization_config()
 
-    def get_qco_by_node(self,
-                        node: BaseNode) -> QuantizationConfigOptions:
-        """
-        Get the QuantizationConfigOptions of a node in a graph according
-        to the mappings from layers/LayerFilterParams to the OperatorsSet in the TargetPlatformModel.
-
-        Args:
-            node: Node from graph to get its QuantizationConfigOptions.
-
-        Returns:
-            QuantizationConfigOptions of the node.
-        """
-        if node is None:
-            Logger.error(f'Can not retrieve QC options for None node')  # pragma: no cover
-        for fl, qco in self.filterlayer2qco.items():
-            if fl.match(node):
-                return qco
-        if node.type in self.layer2qco:
-            return self.layer2qco.get(node.type)
-        return self.tp_model.default_qco
 
     def _get_config_options_mapping(self) -> Tuple[Dict[Any, QuantizationConfigOptions],
                                                    Dict[LayerFilterParams, QuantizationConfigOptions]]:

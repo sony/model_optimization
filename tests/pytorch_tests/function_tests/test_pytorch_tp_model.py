@@ -23,7 +23,8 @@ from torch.nn.functional import hardtanh
 from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.constants import PYTORCH
+from model_compression_toolkit.constants import PYTORCH
+from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import Greater, \
@@ -43,34 +44,34 @@ class TestPytorchTPModel(unittest.TestCase):
 
     def test_pytorch_layers_with_params(self):
         hardtanh_with_params = LayerFilterParams(Hardtanh, Greater("max_val", 2))
-        self.assertTrue(hardtanh_with_params.match(get_node(Hardtanh(max_val=3))))
-        self.assertFalse(hardtanh_with_params.match(get_node(Hardtanh(max_val=2))))
-        self.assertFalse(hardtanh_with_params.match(get_node(Hardtanh(max_val=1))))
+        self.assertTrue(get_node(Hardtanh(max_val=3)).is_match_filter_params(hardtanh_with_params))
+        self.assertFalse(get_node(Hardtanh(max_val=2)).is_match_filter_params(hardtanh_with_params))
+        self.assertFalse(get_node(Hardtanh(max_val=1)).is_match_filter_params(hardtanh_with_params))
 
         hardtanh_with_params = LayerFilterParams(hardtanh, Greater("max_val", 2))
-        self.assertTrue(hardtanh_with_params.match(get_node(partial(hardtanh, max_val=3))))
-        self.assertFalse(hardtanh_with_params.match(get_node(partial(hardtanh, max_val=2))))
-        self.assertFalse(hardtanh_with_params.match(get_node(partial(hardtanh, max_val=1))))
+        self.assertTrue(get_node(partial(hardtanh, max_val=3)).is_match_filter_params(hardtanh_with_params))
+        self.assertFalse(get_node(partial(hardtanh, max_val=2)).is_match_filter_params(hardtanh_with_params))
+        self.assertFalse(get_node(partial(hardtanh, max_val=1)).is_match_filter_params(hardtanh_with_params))
 
         hardtanh_with_params = LayerFilterParams(Hardtanh, Greater("max_val", 2) & Smaller("min_val", 1))
-        self.assertTrue(hardtanh_with_params.match(get_node(Hardtanh(max_val=3, min_val=0))))
-        self.assertFalse(hardtanh_with_params.match(get_node(Hardtanh(max_val=3, min_val=1))))
-        self.assertFalse(hardtanh_with_params.match(get_node(Hardtanh(max_val=2, min_val=0.5))))
-        self.assertFalse(hardtanh_with_params.match(get_node(Hardtanh(max_val=2))))
-        self.assertFalse(hardtanh_with_params.match(get_node(Hardtanh(max_val=1, min_val=0.5))))
+        self.assertTrue(get_node(Hardtanh(max_val=3, min_val=0)).is_match_filter_params(hardtanh_with_params))
+        self.assertFalse(get_node(Hardtanh(max_val=3, min_val=1)).is_match_filter_params(hardtanh_with_params))
+        self.assertFalse(get_node(Hardtanh(max_val=2, min_val=0.5)).is_match_filter_params(hardtanh_with_params))
+        self.assertFalse(get_node(Hardtanh(max_val=2)).is_match_filter_params(hardtanh_with_params))
+        self.assertFalse(get_node(Hardtanh(max_val=1, min_val=0.5)).is_match_filter_params(hardtanh_with_params))
 
         hardtanh_with_params = LayerFilterParams(hardtanh, Greater("max_val", 2) & Smaller("min_val", 1))
-        self.assertTrue(hardtanh_with_params.match(get_node(partial(hardtanh, max_val=3, min_val=0))))
-        self.assertFalse(hardtanh_with_params.match(get_node(partial(hardtanh, max_val=3, min_val=1))))
-        self.assertFalse(hardtanh_with_params.match(get_node(partial(hardtanh, max_val=2, min_val=0.5))))
-        self.assertFalse(hardtanh_with_params.match(get_node(partial(hardtanh, max_val=2))))
-        self.assertFalse(hardtanh_with_params.match(get_node(partial(hardtanh, max_val=1, min_val=0.5))))
+        self.assertTrue(get_node(partial(hardtanh, max_val=3, min_val=0)).is_match_filter_params(hardtanh_with_params))
+        self.assertFalse(get_node(partial(hardtanh, max_val=3, min_val=1)).is_match_filter_params(hardtanh_with_params))
+        self.assertFalse(get_node(partial(hardtanh, max_val=2, min_val=0.5)).is_match_filter_params(hardtanh_with_params))
+        self.assertFalse(get_node(partial(hardtanh, max_val=2)).is_match_filter_params(hardtanh_with_params))
+        self.assertFalse(get_node(partial(hardtanh, max_val=1, min_val=0.5)).is_match_filter_params(hardtanh_with_params))
 
         l2norm_tflite_opset = LayerFilterParams(torch.nn.functional.normalize, Eq('p',2) | Eq('p',None))
-        self.assertTrue(l2norm_tflite_opset.match(get_node(partial(torch.nn.functional.normalize, p=2))))
-        self.assertTrue(l2norm_tflite_opset.match(get_node(partial(torch.nn.functional.normalize, p=2.0))))
-        self.assertTrue(l2norm_tflite_opset.match(get_node(torch.nn.functional.normalize)))
-        self.assertFalse(l2norm_tflite_opset.match(get_node(partial(torch.nn.functional.normalize, p=3.0))))
+        self.assertTrue(get_node(partial(torch.nn.functional.normalize, p=2)).is_match_filter_params(l2norm_tflite_opset))
+        self.assertTrue(get_node(partial(torch.nn.functional.normalize, p=2.0)).is_match_filter_params(l2norm_tflite_opset))
+        self.assertTrue(get_node(torch.nn.functional.normalize).is_match_filter_params(l2norm_tflite_opset))
+        self.assertFalse(get_node(partial(torch.nn.functional.normalize, p=3.0)).is_match_filter_params(l2norm_tflite_opset))
 
 
 
@@ -109,10 +110,10 @@ class TestPytorchTPModel(unittest.TestCase):
         avg_pool2d_k2 = get_node(partial(torch.nn.functional.avg_pool2d, kernel_size=2))
         avg_pool2d = get_node(partial(torch.nn.functional.avg_pool2d, kernel_size=1))
 
-        conv_qco = hm_pytorch.get_qco_by_node(conv_node)
-        tanh_qco = hm_pytorch.get_qco_by_node(tanh_node)
-        avg_pool2d_k2_qco = hm_pytorch.get_qco_by_node(avg_pool2d_k2)
-        avg_pool2d_qco = hm_pytorch.get_qco_by_node(avg_pool2d)
+        conv_qco = conv_node.get_qco(hm_pytorch)
+        tanh_qco = tanh_node.get_qco(hm_pytorch)
+        avg_pool2d_k2_qco = avg_pool2d_k2.get_qco(hm_pytorch)
+        avg_pool2d_qco = avg_pool2d.get_qco(hm_pytorch)
 
         self.assertEqual(conv_qco, mixed_precision_configuration_options)
         self.assertEqual(tanh_qco, sevenbit_qco)
@@ -276,7 +277,7 @@ class TestGetPytorchTPC(unittest.TestCase):
         self.assertTrue(e.exception)
 
 
-def get_node(layer):
+def get_node(layer) -> BaseNode:
     model = LayerTestModel(layer)
 
     def rep_data():

@@ -17,7 +17,7 @@
 from abc import abstractmethod
 from typing import Any, Callable
 
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.logger import Logger
 
 
 class Exporter:

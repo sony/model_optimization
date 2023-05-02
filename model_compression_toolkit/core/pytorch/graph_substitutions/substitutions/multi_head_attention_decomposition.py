@@ -20,7 +20,7 @@ import torch.nn as nn
 import operator
 from typing import List
 
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import Graph, BaseNode, OutTensor
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode

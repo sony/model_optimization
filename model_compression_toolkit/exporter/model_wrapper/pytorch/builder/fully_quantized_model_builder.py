@@ -16,8 +16,9 @@
 
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common import Graph, Logger
-from model_compression_toolkit.core.common.constants import FOUND_TORCH
+from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.constants import FOUND_TORCH
+from model_compression_toolkit.logger import Logger
 
 if FOUND_TORCH:
     import torch

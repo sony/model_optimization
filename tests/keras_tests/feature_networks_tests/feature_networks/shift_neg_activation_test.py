@@ -15,7 +15,7 @@
 import model_compression_toolkit as mct
 import tensorflow as tf
 
-from model_compression_toolkit.core.common.constants import SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
+from model_compression_toolkit.constants import SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.core.common.network_editors import EditRule, node_filters, actions
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_keras_tpc_latest

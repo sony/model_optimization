@@ -3,7 +3,7 @@ from typing import Dict, Callable
 import torch
 import numpy as np
 
-from model_compression_toolkit.core.common.constants import SIGNED, CLUSTER_CENTERS, THRESHOLD, MULTIPLIER_N_BITS, EPS
+from model_compression_toolkit.constants import SIGNED, CLUSTER_CENTERS, THRESHOLD, MULTIPLIER_N_BITS, EPS
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 
 

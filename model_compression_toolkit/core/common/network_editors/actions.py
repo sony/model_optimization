@@ -17,7 +17,10 @@ from abc import ABC, abstractmethod
 from collections import namedtuple
 from typing import Callable
 
-from model_compression_toolkit.core.common import Graph, Logger
+from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.logger import Logger
+
+
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \

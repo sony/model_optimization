@@ -18,8 +18,11 @@ from typing import Dict, Any, Tuple, List
 
 import numpy as np
 
-from model_compression_toolkit.core.common.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
+from model_compression_toolkit.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
     ACTIVATION_NBITS_ATTRIBUTE
+from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationConfigOptions, \
+    TargetPlatformCapabilities, LayerFilterParams
 
 
 class BaseNode:
@@ -429,3 +432,56 @@ class BaseNode:
 
         return len(self.candidates_quantization_cfg) > 0 and \
                any([c.activation_quantization_cfg.enable_activation_quantization for c in self.candidates_quantization_cfg])
+
+    def get_qco(self, tpc: TargetPlatformCapabilities) -> QuantizationConfigOptions:
+        """
+        Get the QuantizationConfigOptions of the node according
+        to the mappings from layers/LayerFilterParams to the OperatorsSet in the TargetPlatformModel.
+
+        Args:
+            tpc: TPC to extract the QuantizationConfigOptions for the node
+
+        Returns:
+            QuantizationConfigOptions of the node.
+        """
+
+        if tpc is None:
+            Logger.error(f'Can not retrieve QC options for None TPC')  # pragma: no cover
+
+        for fl, qco in tpc.filterlayer2qco.items():
+            if self.is_match_filter_params(fl):
+                return qco
+        if self.type in tpc.layer2qco:
+            return tpc.layer2qco.get(self.type)
+        return tpc.tp_model.default_qco
+
+
+    def is_match_filter_params(self, layer_filter_params: LayerFilterParams) -> bool:
+        """
+        Check if the node matches a LayerFilterParams according to its
+        layer, conditions and keyword-arguments.
+
+        Args:
+            layer_filter_params: LayerFilterParams to check if the node matches its properties.
+
+        Returns:
+            Whether the node matches to the LayerFilterParams properties.
+        """
+        # Check the node has the same type as the layer in LayerFilterParams
+        if layer_filter_params.layer != self.type:
+            return False
+
+        # Get attributes from node to filter
+        layer_config = self.framework_attr
+        if hasattr(self, "op_call_kwargs"):
+            layer_config.update(self.op_call_kwargs)
+
+        for attr, value in layer_filter_params.kwargs.items():
+            if layer_config.get(attr) != value:
+                return False
+
+        for c in layer_filter_params.conditions:
+            if not c.match(layer_config):
+                return False
+
+        return True

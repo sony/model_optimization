@@ -13,8 +13,8 @@
 # limitations under the License.
 # ==============================================================================f
 from typing import List, Union, Any, Dict, Tuple
-from model_compression_toolkit.core.common.constants import FOUND_TORCH
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.constants import FOUND_TORCH
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import LAYER, TRAINING
 import inspect

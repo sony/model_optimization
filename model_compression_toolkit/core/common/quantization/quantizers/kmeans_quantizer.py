@@ -16,7 +16,7 @@
 from sklearn.cluster import KMeans
 import numpy as np
 
-from model_compression_toolkit.core.common.constants import CLUSTER_CENTERS, MIN_THRESHOLD, SCALE_PER_CHANNEL
+from model_compression_toolkit.constants import CLUSTER_CENTERS, MIN_THRESHOLD, SCALE_PER_CHANNEL
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import kmeans_assign_clusters
 
 

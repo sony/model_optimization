@@ -26,6 +26,7 @@ from packaging import version
 
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.keras.quantizer.quantization_builder import quantization_builder
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 
 if version.parse(tf.__version__) < version.parse("2.6"):
@@ -105,7 +106,7 @@ class KerasGPTQTrainer(GPTQTrainer):
             [len(optimizer_params_tuple[1]) for optimizer_params_tuple in self.optimizer_with_param]) > 0
 
         if self.float_user_info.input_scale != self.gptq_user_info.input_scale:
-            common.Logger.error("Input scale mismatch between float and GPTQ networks")  # pragma: no cover
+            Logger.error("Input scale mismatch between float and GPTQ networks")  # pragma: no cover
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
@@ -126,7 +127,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         """
 
         if node.is_weights_quantization_enabled() and not self.fw_info.is_kernel_op(node.type):
-            common.Logger.error(f"GPTQ Error: Quantizing node {node.name} of type {node.type} "
+            Logger.error(f"GPTQ Error: Quantizing node {node.name} of type {node.type} "
                                 f"without a kernel isn't supported")
         return node.is_weights_quantization_enabled()
 
@@ -280,7 +281,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                     self.gptq_config.log_function(loss_value_step, grads[0], in_optimizer_with_param[0][-1],
                                                   self.compare_points)
                 self.loss_list.append(loss_value_step.numpy())
-                common.Logger.debug(f'last loss value: {self.loss_list[-1]}')
+                Logger.debug(f'last loss value: {self.loss_list[-1]}')
 
     def update_graph(self):
         """
@@ -297,7 +298,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                 if len(node) == 0 and isinstance(layer.layer, TensorFlowOpLayer):
                     node = graph.find_node_by_name('_'.join(layer.layer.name.split('_')[3:]))
                 if len(node) != 1:
-                    common.Logger.error(f"Can't update GPTQ graph due to missing layer named: {layer.layer.name}")
+                    Logger.error(f"Can't update GPTQ graph due to missing layer named: {layer.layer.name}")
                 node = node[0]
                 kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=node.type,
                                                                       fw_info=self.fw_info)

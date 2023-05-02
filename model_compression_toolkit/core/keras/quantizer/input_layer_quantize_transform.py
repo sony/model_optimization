@@ -23,7 +23,7 @@ from tensorflow_model_optimization.python.core.quantization.keras.quantize_confi
 
 
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.core.common.constants import INPUT_BASE_NAME
+from model_compression_toolkit.constants import INPUT_BASE_NAME
 
 
 class InputLayerWrapperTransform(InputLayerQuantize):

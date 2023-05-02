@@ -14,9 +14,8 @@
 # ==============================================================================
 from typing import Callable, List, Tuple
 
-from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.core.common.constants import PYTORCH
+from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GradientPTQConfigV2
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
@@ -34,7 +33,7 @@ from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
 from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
-from model_compression_toolkit.core.common.constants import FOUND_TORCH
+from model_compression_toolkit.constants import FOUND_TORCH
 
 if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
@@ -217,11 +216,11 @@ if FOUND_TORCH:
          """
 
         if not isinstance(quant_config, MixedPrecisionQuantizationConfig):
-            common.Logger.error("Given quantization config to mixed-precision facade is not of type "
+            Logger.error("Given quantization config to mixed-precision facade is not of type "
                                 "MixedPrecisionQuantizationConfig. Please use pytorch_post_training_quantization API, "
                                 "or pass a valid mixed precision configuration.")
 
-        common.Logger.info("Using experimental mixed-precision quantization. "
+        Logger.info("Using experimental mixed-precision quantization. "
                            "If you encounter an issue please file a bug.")
 
         quantization_config, mp_config = quant_config.separate_configs()

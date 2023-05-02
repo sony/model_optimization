@@ -15,8 +15,8 @@
 from enum import Enum
 from typing import Callable
 
-from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.core.common.constants import FOUND_TORCH
+from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.constants import FOUND_TORCH
 
 
 class PyTorchExportMode(Enum):

@@ -20,7 +20,7 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_searc
     MixedPrecisionSearchManager
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 import numpy as np
 
 

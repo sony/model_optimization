@@ -16,9 +16,8 @@
 import unittest
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_tp_model
-from model_compression_toolkit.target_platform_capabilities.target_platform import get_default_quantization_config_options, \
-    TargetPlatformCapabilities
+from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.target_platform_capabilities.target_platform import get_default_quantization_config_options
 
 tp = mct.target_platform
 
@@ -130,11 +129,11 @@ class QCOptionsTest(unittest.TestCase):
             'non-mixed-precision optimization process',
             str(e.exception))
 
-    def test_get_qco_for_none(self):
-        fw_tp = TargetPlatformCapabilities(get_tp_model())
+    def test_get_qco_for_none_tpc(self):
+        mock_node = BaseNode(name="", framework_attr={}, input_shape=(), output_shape=(), weights={}, layer_class=None)
         with self.assertRaises(Exception) as e:
-            fw_tp.get_qco_by_node(None)
-        self.assertEqual('Can not retrieve QC options for None node', str(e.exception))
+            mock_node.get_qco(None)
+        self.assertEqual('Can not retrieve QC options for None TPC', str(e.exception))
 
 
 class FusingTest(unittest.TestCase):

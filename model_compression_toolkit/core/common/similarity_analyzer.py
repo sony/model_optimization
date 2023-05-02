@@ -13,11 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Any, Tuple
+from typing import Any
 
 import numpy as np
 
-from model_compression_toolkit.core.common.constants import EPS
+from model_compression_toolkit.constants import EPS
 
 #########################
 #  Helpful functions

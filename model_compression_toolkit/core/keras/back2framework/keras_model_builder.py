@@ -13,8 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-from abc import abstractmethod
-
 import tensorflow as tf
 from keras.engine.input_layer import InputLayer
 from keras.models import Model, clone_model
@@ -22,7 +20,7 @@ from packaging import version
 
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.common.constants import INPUT_BASE_NAME
+from model_compression_toolkit.constants import INPUT_BASE_NAME
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 if version.parse(tf.__version__) < version.parse("2.6"):
@@ -38,7 +36,6 @@ else:
 from typing import Any, Dict, List, Tuple, Callable
 from tensorflow.python.util.object_identity import Reference as TFReference
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
-from model_compression_toolkit.core.common.logger import Logger
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO

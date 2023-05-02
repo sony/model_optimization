@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.quantization.candidate_node_quantizat
 from model_compression_toolkit.core.keras.quantizer.mixed_precision.selective_activation_quantizer import \
     SelectiveActivationQuantizer
 from packaging import version
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers import Layer  # pragma: no cover

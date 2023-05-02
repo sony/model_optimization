@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import copy
 import glob
 import os
 import unittest
@@ -23,8 +22,7 @@ from tensorboard.backend.event_processing import event_file_loader
 from tensorboard.compat.proto.graph_pb2 import GraphDef
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
 from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
@@ -32,6 +30,7 @@ from model_compression_toolkit.core.common.visualization.final_config_visualizer
 from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
@@ -72,13 +71,13 @@ class TestFileLogger(unittest.TestCase):
     """
 
     def setUp(self):
-        common.Logger.set_log_file('/tmp/')
+        Logger.set_log_file('/tmp/')
 
     def tensorboard_log_dir(self):
-        self.assertTrue(os.path.exists(os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs')))
+        self.assertTrue(os.path.exists(os.path.join(Logger.LOG_PATH, 'tensorboard_logs')))
 
     def tensorboard_initial_graph_num_of_nodes(self, num_event_files, event_to_test):
-        events_dir = os.path.join(common.Logger.LOG_PATH, 'tensorboard_logs/')
+        events_dir = os.path.join(Logger.LOG_PATH, 'tensorboard_logs/')
 
         initial_graph_events_files = glob.glob(events_dir + 'initial_graph/*events*')
         self.assertTrue(len(initial_graph_events_files) == num_event_files)  # Make sure there is only 2 event files in
@@ -160,7 +159,7 @@ class TestFileLogger(unittest.TestCase):
         self.plot_tensor_sizes()
 
         # Disable Logger
-        common.Logger.LOG_PATH = None
+        Logger.LOG_PATH = None
 
 
 if __name__ == '__main__':

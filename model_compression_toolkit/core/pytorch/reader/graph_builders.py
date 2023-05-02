@@ -25,6 +25,7 @@ from model_compression_toolkit.core.common.graph.functional_node import Function
 from model_compression_toolkit.core.pytorch.constants import OUTPUT, PLACEHOLDER, TENSOR_META, CALL_FUNCTION, TYPE, \
     CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, GET_ATTR, CONSTANT, BUFFER
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, ConstantHolder, BufferHolder
+from model_compression_toolkit.logger import Logger
 
 
 def extract_holder_weights(constant_name, node_target, model, weights, to_numpy):
@@ -92,7 +93,7 @@ def nodes_builder(model: GraphModule,
             node_type = node.target
             if node_type == getattr:
                 node_has_activation = False
-                common.Logger.warning(
+                Logger.warning(
                     'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
                     'converting the model.')
         elif node.op == PLACEHOLDER:
@@ -113,7 +114,7 @@ def nodes_builder(model: GraphModule,
             else:
                 node_type = ConstantHolder
             node_has_activation = False
-            common.Logger.warning(
+            Logger.warning(
                 'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
                 'converting the model.')
         else:

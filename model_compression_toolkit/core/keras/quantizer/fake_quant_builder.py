@@ -20,8 +20,8 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.python.util.object_identity import Reference as TFReference
 
-from model_compression_toolkit.core.common.logger import Logger
-from model_compression_toolkit.core.common.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
+from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.core.common.quantization.quantizers.uniform_quantizers import threshold_is_power_of_two
 
 

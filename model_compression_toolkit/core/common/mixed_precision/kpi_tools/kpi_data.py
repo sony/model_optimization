@@ -17,12 +17,11 @@ import numpy as np
 
 from model_compression_toolkit import FrameworkInfo, KPI, CoreConfig
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.constants import FLOAT_BITWIDTH
+from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.runner import read_model_to_graph, get_finalized_graph
-from model_compression_toolkit.core.common.logger import Logger
 
 
 def compute_kpi_data(in_model: Any,

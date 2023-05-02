@@ -33,7 +33,7 @@ def filter_fusing_patterns(fusing_patterns: List[List[Any]], node: BaseNode, idx
     valid_fusing_patterns = []
     for i,fusing_pattern in enumerate(fusing_patterns):
         if idx < len(fusing_pattern):
-            if (type(fusing_pattern[idx]) == LayerFilterParams and fusing_pattern[idx].match(node)) or fusing_pattern[idx] == node.type:
+            if (type(fusing_pattern[idx]) == LayerFilterParams and node.is_match_filter_params(fusing_pattern[idx])) or fusing_pattern[idx] == node.type:
                 valid_fusing_patterns.append(fusing_pattern)
 
     # Return only valid patterns for this node
@@ -57,7 +57,7 @@ def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List[BaseNode]) -> 
             continue
         counter = 0
         for i,layer in enumerate(fusing_pattern):
-            if (type(layer) == LayerFilterParams and layer.match(nodes[i])) or layer == nodes[i].type:
+            if (type(layer) == LayerFilterParams and nodes[i].is_match_filter_params(layer)) or layer == nodes[i].type:
                 counter += 1
         if counter == fusion_depth:
             return True

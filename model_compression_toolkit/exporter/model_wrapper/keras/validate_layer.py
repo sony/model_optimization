@@ -15,8 +15,8 @@
 from typing import Any
 
 
-from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.core.common.constants import FOUND_TF
+from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.constants import FOUND_TF
 
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer
 
