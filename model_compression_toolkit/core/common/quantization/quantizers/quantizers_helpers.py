@@ -19,6 +19,8 @@ import numpy as np
 
 from model_compression_toolkit.constants import MIN_THRESHOLD, EPS
 from model_compression_toolkit.core import common
+from model_compression_toolkit.logger import Logger
+
 
 def max_power_of_two(x: np.ndarray,
                      min_threshold: float = MIN_THRESHOLD) -> np.ndarray:

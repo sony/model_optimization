@@ -23,9 +23,9 @@ from tests.keras_tests.tpc_keras import get_16bit_tpc
 from packaging import version
 
 if version.parse(tf.__version__) < version.parse("2.6"):
-    pass
+    from tensorflow.python.keras.layers.core import TFOpLambda
 else:
-    pass
+    from keras.layers.core import TFOpLambda
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 

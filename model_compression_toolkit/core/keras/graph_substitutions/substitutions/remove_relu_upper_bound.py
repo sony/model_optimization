@@ -21,6 +21,7 @@ from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher,NodeFrameworkAttrMatcher
 from model_compression_toolkit.core.keras.constants import RELU_MAX_VALUE
 from model_compression_toolkit.constants import THRESHOLD
+from model_compression_toolkit.logger import Logger
 
 MATCHER = NodeOperationMatcher(ReLU) & NodeFrameworkAttrMatcher(RELU_MAX_VALUE, None).logic_not()
 

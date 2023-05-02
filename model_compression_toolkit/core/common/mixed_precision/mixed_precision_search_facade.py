@@ -30,6 +30,7 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.solution_refinement_procedure import \
     greedy_solution_refinement_procedure
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
+from model_compression_toolkit.logger import Logger
 
 
 class BitWidthSearchMethod(Enum):

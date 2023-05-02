@@ -17,6 +17,8 @@ from typing import Dict
 from enum import Enum
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.logger import Logger
+
 
 def _is_qat_applicable(node: common.BaseNode,
                        fw_info: FrameworkInfo) -> bool:
