@@ -19,7 +19,7 @@ from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 
 
-def apply_bias_correction_to_graph(graph: Graph,
+def apply_bias_correction_to_graph(graph_to_apply_bias_correction: Graph,
                                    core_config: CoreConfig,
                                    fw_impl: FrameworkImplementation) -> Graph:
     """
@@ -27,7 +27,7 @@ def apply_bias_correction_to_graph(graph: Graph,
     correction term in it), and apply the bias correction for each node in the graph.
 
     Args:
-        graph: Graph to apply bias correction to.
+        graph_to_apply_bias_correction: Graph to apply bias correction to.
         core_config: CoreConfig containing parameters of how the model should be quantized.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
@@ -35,6 +35,7 @@ def apply_bias_correction_to_graph(graph: Graph,
         Graph with bias correction apply to it's nodes.
     """
 
+    graph = copy.deepcopy(graph_to_apply_bias_correction)
     for n in graph.nodes:
         if n.is_weights_quantization_enabled() and core_config.quantization_config.weights_bias_correction \
                 and not n.final_weights_quantization_cfg.weights_second_moment_correction:
