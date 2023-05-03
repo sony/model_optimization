@@ -15,10 +15,16 @@
 import os
 import tempfile
 import unittest
+
 import numpy as np
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+
 import model_compression_toolkit as mct
-import tensorflow as tf
+from model_compression_toolkit import get_target_platform_capabilities
+from model_compression_toolkit.constants import TENSORFLOW
+from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
+
+DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
 class TestTFLiteExport(unittest.TestCase):
@@ -29,10 +35,18 @@ class TestTFLiteExport(unittest.TestCase):
         def rep_data():
             yield [np.random.randn(1, 224, 224, 3)]
 
-        quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(model, rep_data, new_experimental_exporter=True)
+        self.tpc = DEFAULT_KERAS_TPC
+        quantized_model, _ = mct.ptq. \
+            keras_post_training_quantization_experimental(model,
+                                                          rep_data,
+                                                          target_platform_capabilities=self.tpc,
+                                                          new_experimental_exporter=True)
 
         _, tflite_file_path = tempfile.mkstemp('.tflite')
-        mct.exporter.tflite_export_model(quantized_model, tflite_file_path, mct.exporter.TFLiteExportMode.FAKELY_QUANT)
+        mct.exporter.tflite_export_model(model=quantized_model,
+                                         save_model_path=tflite_file_path,
+                                         target_platform_capabilities=self.tpc,
+                                         serialization_format=mct.exporter.ExportSerializationFormat.TFLITE)
         os.remove(tflite_file_path)
 
 

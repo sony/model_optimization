@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from enum import Enum
 
-from model_compression_toolkit.exporter.model_exporter.fw_agonstic.export_serialization_format import \
-    ExportSerializationFormat
-from model_compression_toolkit.exporter.model_exporter.keras.keras_export_facade import keras_export_model
-from model_compression_toolkit.exporter.model_exporter.pytorch.pytorch_export_facade import pytorch_export_model
-from model_compression_toolkit.exporter.model_exporter.tflite.tflite_export_facade import tflite_export_model
 
+class ExportSerializationFormat(Enum):
+    KERAS_H5 = 0
+    TFLITE = 1
+    TORCHSCRIPT = 2
+    ONNX = 3

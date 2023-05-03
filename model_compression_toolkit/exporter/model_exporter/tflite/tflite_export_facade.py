@@ -12,57 +12,62 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from enum import Enum
 from typing import Callable
 
-from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import FOUND_TF
-
-
-class TFLiteExportMode(Enum):
-    FAKELY_QUANT = 0
-    INT8 = 1
+from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.exporter.model_exporter.fw_agonstic.export_serialization_format import \
+    ExportSerializationFormat
+from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format import \
+    QuantizationFormat
 
 if FOUND_TF:
     import keras
-    from model_compression_toolkit.exporter.model_exporter.tflite.fakely_quant_tflite_exporter import FakelyQuantTFLiteExporter
+    from model_compression_toolkit.exporter.model_exporter.tflite.fakely_quant_tflite_exporter import \
+        FakelyQuantTFLiteExporter
     from model_compression_toolkit.exporter.model_exporter.tflite.int8_tflite_exporter import INT8TFLiteExporter
     from model_compression_toolkit.exporter.model_wrapper.keras.validate_layer import is_keras_layer_exportable
 
+
     def tflite_export_model(model: keras.models.Model,
                             save_model_path: str,
-                            mode: TFLiteExportMode = TFLiteExportMode.FAKELY_QUANT,
-                            is_layer_exportable_fn: Callable = is_keras_layer_exportable
+                            target_platform_capabilities: TargetPlatformCapabilities,
+                            is_layer_exportable_fn: Callable = is_keras_layer_exportable,
+                            serialization_format: ExportSerializationFormat = ExportSerializationFormat.TFLITE
                             ):
         """
         Export a Keras quantized model to a tflite model.
         The model will be saved to the path in save_model_path.
-        Mode can be used for different exported files. Currently, tflite_export_model
-        supports TFLiteExportMode.FAKELY_QUANT (where weights and activations are
-        float fakely-quantized values), and TFLiteExportMode.INT8 (where weights
-        and activations are represented using 8bits integers).
+        Currently, tflite_export_model supports only ExportSerializationFormat.TFLITE (where the model will be saved to
+        tflite model) and QuantizationFormat.FAKELY_QUANT (where weights and activations are float fakely-quantized
+        values) or QuantizationFormat.INT8 (where weights and activations are represented using 8bits integers).
 
         Args:
             model: Model to export.
-            is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
-            mode: Mode to export the model according to.
             save_model_path: Path to save the model.
+            target_platform_capabilities: TargetPlatformCapabilities object that describes the desired inference target platform
+            (includes quantization format).
+            is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
+            serialization_format: Format to export the model according to.
 
         """
 
-        if mode == TFLiteExportMode.FAKELY_QUANT:
+        if target_platform_capabilities.tp_model.quantization_format == QuantizationFormat.FAKELY_QUANT and \
+                serialization_format == ExportSerializationFormat.TFLITE:
             exporter = FakelyQuantTFLiteExporter(model,
                                                  is_layer_exportable_fn,
                                                  save_model_path)
-        elif mode == TFLiteExportMode.INT8:
+        elif target_platform_capabilities.tp_model.quantization_format == QuantizationFormat.INT8 and \
+                serialization_format == ExportSerializationFormat.TFLITE:
             exporter = INT8TFLiteExporter(model,
                                           is_layer_exportable_fn,
                                           save_model_path)
 
         else:
             Logger.critical(
-                f'Unsupported mode was used {mode.name} to export TFLite model.'
-                f' Please see API for supported modes.')  # pragma: no cover
+                f'Unsupported quantization {target_platform_capabilities.tp_model.quantization_format} or serialization {serialization_format} '
+                f'was used to export Keras model. Please see API for supported formats.')  # pragma: no cover
 
         exporter.export()
 

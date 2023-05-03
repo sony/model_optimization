@@ -26,16 +26,20 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.quantizers_infrastructure import keras_load_quantized_model
 from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_exportable
 
+from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.constants import TENSORFLOW
+from model_compression_toolkit import get_target_platform_capabilities
+
+DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
+
 _, SAVED_EXPORTABLE_MODEL_PATH_TF = tempfile.mkstemp('.h5')
 _, SAVED_MODEL_PATH_TF = tempfile.mkstemp('.h5')
 _, SAVED_MODEL_PATH_TFLITE = tempfile.mkstemp('.tflite')
 
 
-
-
 def _get_model(input_shape):
     inputs = Input(shape=input_shape)
-    x = Conv2D(7,7)(inputs)
+    x = Conv2D(7, 7)(inputs)
     x = BatchNormalization()(x)
     x = ReLU()(x)
     x = Conv2D(3, 3)(x)
@@ -68,10 +72,12 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
 
     def run_mct(self, model, new_experimental_exporter):
         core_config = mct.core.CoreConfig()
+        self.tpc = DEFAULT_KERAS_TPC
         new_export_model, _ = mct.ptq.keras_post_training_quantization_experimental(
             in_model=model,
             core_config=core_config,
             representative_data_gen=self.representative_data_gen,
+            target_platform_capabilities=self.tpc,
             new_experimental_exporter=new_experimental_exporter)
         return new_export_model
 
@@ -81,16 +87,18 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
 
     def save_and_load_exported_tf_fakequant_model(self):
         mct.exporter.keras_export_model(model=self.exportable_model,
-                           is_layer_exportable_fn=is_keras_layer_exportable,
-                           mode=mct.exporter.KerasExportMode.FAKELY_QUANT,
-                           save_model_path=SAVED_MODEL_PATH_TF)
+                                        is_layer_exportable_fn=is_keras_layer_exportable,
+                                        save_model_path=SAVED_MODEL_PATH_TF,
+                                        target_platform_capabilities=self.tpc,
+                                        serialization_format=mct.exporter.ExportSerializationFormat.KERAS_H5)
         keras_load_quantized_model(SAVED_MODEL_PATH_TF)
 
     def save_and_load_exported_tflite_fakequant_model(self):
         mct.exporter.tflite_export_model(model=self.exportable_model,
-                            is_layer_exportable_fn=is_keras_layer_exportable,
-                            mode=mct.exporter.TFLiteExportMode.FAKELY_QUANT,
-                            save_model_path=SAVED_MODEL_PATH_TFLITE)
+                                         is_layer_exportable_fn=is_keras_layer_exportable,
+                                         save_model_path=SAVED_MODEL_PATH_TFLITE,
+                                         target_platform_capabilities=self.tpc,
+                                         serialization_format=mct.exporter.ExportSerializationFormat.TFLITE)
         interpreter = tf.lite.Interpreter(model_path=SAVED_MODEL_PATH_TFLITE)
         interpreter.allocate_tensors()
 
@@ -131,6 +139,6 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         assert kernel_tensor_index is not None, f'did not find the kernel tensor index'
 
         # Test equal weights of the first conv2d layer between exported TFLite and exported TF
-        diff = np.transpose(interpreter.tensor(kernel_tensor_index)(), (1, 2, 3, 0)) - tf_exported_model.layers[2].kernel
+        diff = np.transpose(interpreter.tensor(kernel_tensor_index)(), (1, 2, 3, 0)) - tf_exported_model.layers[
+            2].kernel
         self.assertTrue(np.sum(np.abs(diff)) == 0)
-
