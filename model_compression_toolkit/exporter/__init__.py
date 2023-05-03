@@ -17,5 +17,4 @@ from model_compression_toolkit.exporter.model_exporter.fw_agonstic.export_serial
     ExportSerializationFormat
 from model_compression_toolkit.exporter.model_exporter.keras.keras_export_facade import keras_export_model
 from model_compression_toolkit.exporter.model_exporter.pytorch.pytorch_export_facade import pytorch_export_model
-from model_compression_toolkit.exporter.model_exporter.tflite.tflite_export_facade import tflite_export_model
 

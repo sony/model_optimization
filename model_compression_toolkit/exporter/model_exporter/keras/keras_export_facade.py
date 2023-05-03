@@ -17,6 +17,9 @@ from typing import Callable, Dict
 from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.exporter.model_exporter.fw_agonstic.export_serialization_format import \
     ExportSerializationFormat
+from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_tflite_exporter import \
+    FakelyQuantTFLiteExporter
+from model_compression_toolkit.exporter.model_exporter.keras.int8_tflite_exporter import INT8TFLiteExporter
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format import \
@@ -38,15 +41,17 @@ if FOUND_TF:
         """
         Export a Keras quantized model to h5 model in fake quant format.
         The model will be saved to the path in save_model_path.
-        Currently, keras_export_model supports only the combination of QuantizationFormat.FAKELY_QUANT (where weights
+        keras_export_model supports the combination of QuantizationFormat.FAKELY_QUANT (where weights
         and activations are float fakely-quantized values) and ExportSerializationFormat.KERAS_H5 (where the model
-        will be saved to h5 model).
+        will be saved to h5 model) or the combination of ExportSerializationFormat.TFLITE (where the model will be
+        saved to tflite model) with QuantizationFormat.FAKELY_QUANT or QuantizationFormat.INT8 (where weights and
+        activations are represented using 8bits integers).
 
         Args:
             model: Model to export.
             save_model_path: Path to save the model.
-            target_platform_capabilities: TargetPlatformCapabilities object that describes the desired inference target platform
-            (includes quantization format).
+            target_platform_capabilities: TargetPlatformCapabilities object that describes the desired inference
+            target platform (includes quantization format).
             is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
             serialization_format: Format to export the model according to.
 
@@ -61,10 +66,23 @@ if FOUND_TF:
                                                 is_layer_exportable_fn,
                                                 save_model_path)
 
+        elif target_platform_capabilities.tp_model.quantization_format == QuantizationFormat.FAKELY_QUANT and \
+                serialization_format == ExportSerializationFormat.TFLITE:
+            exporter = FakelyQuantTFLiteExporter(model,
+                                                 is_layer_exportable_fn,
+                                                 save_model_path)
+
+        elif target_platform_capabilities.tp_model.quantization_format == QuantizationFormat.INT8 and \
+                serialization_format == ExportSerializationFormat.TFLITE:
+            exporter = INT8TFLiteExporter(model,
+                                          is_layer_exportable_fn,
+                                          save_model_path)
+
         else:
             Logger.critical(
-                f'Unsupported quantization {target_platform_capabilities.tp_model.quantization_format} or serialization {serialization_format} '
-                f'was used to export Keras model. Please see API for supported formats.')  # pragma: no cover
+                f'Unsupported quantization {target_platform_capabilities.tp_model.quantization_format} or serialization'
+                f'{serialization_format} was used to export Keras model. Please see API for '
+                f'supported formats.')  # pragma: no cover
 
         exporter.export()
 

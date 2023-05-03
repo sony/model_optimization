@@ -43,10 +43,10 @@ class TestTFLiteExport(unittest.TestCase):
                                                           new_experimental_exporter=True)
 
         _, tflite_file_path = tempfile.mkstemp('.tflite')
-        mct.exporter.tflite_export_model(model=quantized_model,
-                                         save_model_path=tflite_file_path,
-                                         target_platform_capabilities=self.tpc,
-                                         serialization_format=mct.exporter.ExportSerializationFormat.TFLITE)
+        mct.exporter.keras_export_model(model=quantized_model,
+                                        save_model_path=tflite_file_path,
+                                        target_platform_capabilities=self.tpc,
+                                        serialization_format=mct.exporter.ExportSerializationFormat.TFLITE)
         os.remove(tflite_file_path)
 
 
