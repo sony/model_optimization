@@ -17,9 +17,6 @@ from typing import Callable, Dict
 from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.exporter.model_exporter.fw_agonstic.export_serialization_format import \
     ExportSerializationFormat
-from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_tflite_exporter import \
-    FakelyQuantTFLiteExporter
-from model_compression_toolkit.exporter.model_exporter.keras.int8_tflite_exporter import INT8TFLiteExporter
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format import \
@@ -30,6 +27,9 @@ if FOUND_TF:
     from model_compression_toolkit.exporter.model_wrapper.keras.validate_layer import is_keras_layer_exportable
     from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import \
         FakelyQuantKerasExporter
+    from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_tflite_exporter import \
+        FakelyQuantTFLiteExporter
+    from model_compression_toolkit.exporter.model_exporter.keras.int8_tflite_exporter import INT8TFLiteExporter
 
 
     def keras_export_model(model: keras.models.Model,
