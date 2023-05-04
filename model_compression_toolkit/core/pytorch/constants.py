@@ -69,12 +69,6 @@ CPU = 'cpu'
 # ReLU bound constants
 RELU_POT_BOUND = 8.0
 
-# Supported TP models names for Pytorch:
-DEFAULT_TP_MODEL = 'default'
-IMX500_TP_MODEL = 'imx500'
-TFLITE_TP_MODEL = 'tflite'
-QNNPACK_TP_MODEL = 'qnnpack'
-
 # MultiHeadAttention layer attributes:
 EMBED_DIM = 'embed_dim'
 NUM_HEADS = 'num_heads'

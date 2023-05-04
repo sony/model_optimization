@@ -17,7 +17,7 @@ import numpy as np
 import tensorflow as tf
 
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-from model_compression_toolkit import QuantizationConfig
+from model_compression_toolkit.core import QuantizationConfig
 
 keras = tf.keras
 layers = keras.layers

@@ -1,6 +1,6 @@
 from tensorflow.keras.models import Model
 
-from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common.framework_info import ChannelAxis
 from model_compression_toolkit.core.common.model_validation import ModelValidation
 from model_compression_toolkit.core.keras.constants import CHANNELS_FORMAT, CHANNELS_FORMAT_LAST, CHANNELS_FORMAT_FIRST

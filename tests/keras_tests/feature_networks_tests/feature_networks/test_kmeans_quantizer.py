@@ -67,8 +67,8 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="kmean_quantizer_test", tp_model=tp)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationErrorMethod.MSE,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
+                                      mct.core.QuantizationErrorMethod.MSE,
                                       False, False, True)
 
     def get_input_shapes(self):
@@ -87,7 +87,7 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
         return model
 
     def get_debug_config(self):
-        return mct.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
+        return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                                         action=ChangeCandidatesWeightsQuantConfigAttr(
                                                             weights_quantization_method=target_platform.QuantizationMethod.POWER_OF_TWO))])
 
@@ -129,8 +129,8 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.MSE,
-                                      weights_error_method=mct.QuantizationErrorMethod.MSE,
+        return mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.MSE,
+                                      weights_error_method=mct.core.QuantizationErrorMethod.MSE,
                                       relu_bound_to_power_of_2=False,
                                       weights_bias_correction=False,
                                       weights_per_channel_threshold=False)

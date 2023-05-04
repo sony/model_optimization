@@ -35,8 +35,7 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import Greater, \
     Smaller, GreaterEq, Eq, SmallerEq, Contains
-from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, QNNPACK_TP_MODEL, \
-    TFLITE_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, QNNPACK_TP_MODEL, TFLITE_TP_MODEL
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.test_tp_model import TEST_QCO, TEST_QC
 
@@ -236,11 +235,11 @@ class TestGetKerasTPC(unittest.TestCase):
                                                                                target_platform_capabilities=tpc,
                                                                                new_experimental_exporter=True)
 
-        core_config = mct.CoreConfig(mixed_precision_config=mct.MixedPrecisionQuantizationConfigV2(num_of_images=1))
+        core_config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1))
         quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                                rep_data,
                                                                                core_config=core_config,
-                                                                               target_kpi=mct.KPI(np.inf),
+                                                                               target_kpi=mct.core.KPI(np.inf),
                                                                                target_platform_capabilities=tpc,
                                                                                new_experimental_exporter=True)
 

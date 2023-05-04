@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import tensorflow as tf
 
-from model_compression_toolkit import DEFAULTCONFIG
+from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph

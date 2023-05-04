@@ -35,7 +35,7 @@ class PytorchTestLogger(unittest.TestCase):
     def setUpClass(cls):
         Logger.set_log_file('/tmp/')
         model = mobilenet_v2(pretrained=True)
-        core_config = mct.CoreConfig(debug_config=mct.DebugConfig(analyze_similarity=True))
+        core_config = mct.core.CoreConfig(debug_config=mct.core.DebugConfig(analyze_similarity=True))
         mct.ptq.pytorch_post_training_quantization_experimental(model, random_datagen, core_config=core_config)
 
     @classmethod

@@ -78,7 +78,7 @@ if FOUND_ONNX:
             onnx.checker.check_model(self.exported_model_onnx)
 
         def run_mct(self, model, new_experimental_exporter):
-            core_config = mct.CoreConfig()
+            core_config = mct.core.CoreConfig()
 
             new_export_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(
                 in_module=model,
@@ -139,7 +139,7 @@ if FOUND_ONNX:
                                                                          }))
 
         def run_mct(self, model, new_experimental_exporter):
-            core_config = mct.CoreConfig()
+            core_config = mct.core.CoreConfig()
             new_export_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(
                 in_module=model,
                 core_config=core_config,

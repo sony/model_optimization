@@ -16,7 +16,7 @@ from typing import Any, Tuple
 import numpy as np
 from torch.nn import BatchNorm2d
 
-from model_compression_toolkit import FrameworkInfo
+from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.pytorch.constants import MOVING_MEAN, MOVING_VARIANCE, GAMMA, BETA

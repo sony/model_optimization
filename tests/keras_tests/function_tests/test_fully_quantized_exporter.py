@@ -48,14 +48,14 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         tpc = get_weights_quantization_disabled_keras_tpc('test_fully_quantized')
 
         self.set_seed(seed)
-        core_config = mct.CoreConfig()
+        core_config = mct.core.CoreConfig()
         old_export_model, _ = mct.ptq.keras_post_training_quantization_experimental(in_model=MobileNetV2(),
                                                                                 representative_data_gen=repr_dataset,
                                                                                 core_config=core_config,
                                                                                 target_platform_capabilities=tpc)
 
         self.set_seed(seed)
-        core_config = mct.CoreConfig()
+        core_config = mct.core.CoreConfig()
         new_export_model, _ = mct.ptq.keras_post_training_quantization_experimental(in_model=MobileNetV2(),
                                                                                 core_config=core_config,
                                                                                 representative_data_gen=repr_dataset,

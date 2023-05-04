@@ -1,6 +1,6 @@
 from typing import Any, List
 
-from model_compression_toolkit import CoreConfig, DebugConfig, QuantizationConfig
+from model_compression_toolkit.core import CoreConfig, DebugConfig, QuantizationConfig
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 import numpy as np
 

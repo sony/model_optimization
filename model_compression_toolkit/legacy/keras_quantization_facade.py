@@ -42,7 +42,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
-    from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 
     from model_compression_toolkit import get_target_platform_capabilities
 
@@ -208,13 +208,13 @@ if FOUND_TF:
              Create a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
              The candidates bitwidth for quantization should be defined in the target platform model:
 
-             >>> config = mct.MixedPrecisionQuantizationConfig()
+             >>> config = mct.core.MixedPrecisionQuantizationConfig()
 
              Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
              that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
              while the bias will not):
 
-             >>> kpi = mct.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
+             >>> kpi = mct.core.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
 
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:
