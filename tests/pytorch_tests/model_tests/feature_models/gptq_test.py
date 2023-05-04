@@ -49,7 +49,7 @@ class TestModel(nn.Module):
 
 
 class GPTQBaseTest(BasePytorchFeatureNetworkTest):
-    def __init__(self, unit_test, experimental_exporter=False, weights_bits=8, weights_quant_method=QuantizationMethod.SYMMETRIC,
+    def __init__(self, unit_test, experimental_exporter=True, weights_bits=8, weights_quant_method=QuantizationMethod.SYMMETRIC,
                  rounding_type=RoundingType.STE, per_channel=True,
                  hessian_weights=True, log_norm_weights=True, scaled_log_norm=False, params_learning=True):
         super().__init__(unit_test, input_shape=(3, 16, 16))
