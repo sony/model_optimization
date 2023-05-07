@@ -55,7 +55,7 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         """
         super().__init__(quantization_config)
         self.power_of_two = quantization_config.weights_quantization_method == QuantizationMethod.POWER_OF_TWO
-        self.threshold_values = quantization_config.weights_quantization_params[C.THRESHOLD]
+        self.threshold_values = np.array(quantization_config.weights_quantization_params[C.THRESHOLD])
         self.threshold_shape = np.asarray(self.threshold_values).shape
         self.per_channel = self.quantization_config.weights_per_channel_threshold
         self.channel_axis = self.quantization_config.weights_channels_axis

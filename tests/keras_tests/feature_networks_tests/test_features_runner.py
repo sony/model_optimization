@@ -655,12 +655,14 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_qat(self):
         QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True).run_test()
+        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True, per_channel=False).run_test()
         QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
                         weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
                         activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
         QATWrappersTest(self, layers.Dense(3, activation='relu'),
                         weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
-                        activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM).run_test()
+                        activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
+                        test_loading=True, per_channel=False).run_test()
         QATWrappersTest(self, layers.Dense(3, activation='relu')).run_test()
         QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), test_loading=True,
                         weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
