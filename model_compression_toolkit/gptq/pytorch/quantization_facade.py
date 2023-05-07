@@ -192,7 +192,7 @@ if FOUND_TORCH:
             Logger.warning('Using new experimental exported models. '
                            'Please do not use unless you are familiar with what you are doing')
 
-            return get_fully_quantized_pytorch_model(graph_gptq)
+            return get_exportable_pytorch_model(graph_gptq)
 
         return export_model(graph_gptq,
                             DEFAULT_PYTORCH_INFO,
