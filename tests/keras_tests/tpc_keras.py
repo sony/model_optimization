@@ -25,11 +25,13 @@ tp = mct.target_platform
 
 def get_tpc(name, weight_bits=8, activation_bits=8,
             weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-            activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,):
+            activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+            per_channel=True):
     tp_model = generate_test_tp_model({'weights_n_bits': weight_bits,
                                        'activation_n_bits': activation_bits,
                                        'weights_quantization_method': weights_quantization_method,
-                                       'activation_quantization_method': activation_quantization_method})
+                                       'activation_quantization_method': activation_quantization_method,
+                                       'weights_per_channel_threshold': per_channel})
     return generate_keras_tpc(name=name, tp_model=tp_model)
 
 

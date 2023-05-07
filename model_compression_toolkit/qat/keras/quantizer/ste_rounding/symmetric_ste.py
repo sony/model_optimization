@@ -55,11 +55,11 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         """
         super().__init__(quantization_config)
         self.power_of_two = quantization_config.weights_quantization_method == QuantizationMethod.POWER_OF_TWO
-        self.threshold_values = quantization_config.weights_quantization_params[C.THRESHOLD]
+        self.threshold_values = np.array(quantization_config.weights_quantization_params[C.THRESHOLD])
         self.threshold_shape = np.asarray(self.threshold_values).shape
         self.per_channel = self.quantization_config.weights_per_channel_threshold
         self.channel_axis = self.quantization_config.weights_channels_axis
-        self.np_threshold_values = np.reshape(np.asarray(self.threshold_values),[-1]) if self.channel_axis else float(self.threshold_values)
+        self.np_threshold_values = np.reshape(np.asarray(self.threshold_values),[-1]) if self.per_channel else float(self.threshold_values)
 
         if self.per_channel and self.channel_axis not in [-1, len(self.threshold_shape) - 1]:
             # Tensorflow's fake_quant_with_min_max_vars_per_channel only works on last axis, so
@@ -95,21 +95,21 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         """
         ptq_threshold_tensor = layer.add_weight(
             name + THRESHOLD_TENSOR,
-            shape=len(self.np_threshold_values) if self.channel_axis else (),
+            shape=len(self.np_threshold_values) if self.per_channel else (),
             initializer=tf.keras.initializers.Constant(1.0),
             trainable=False)
         ptq_threshold_tensor.assign(self.np_threshold_values)
 
         fq_min = layer.add_weight(
             name + FQ_MIN,
-            shape=len(self.min) if self.channel_axis else (),
+            shape=len(self.min) if self.per_channel else (),
             initializer=tf.keras.initializers.Constant(-1.0),
             trainable=False)
         fq_min.assign(self.min)
 
         fq_max = layer.add_weight(
             name + FQ_MAX,
-            shape=len(self.max) if self.channel_axis else (),
+            shape=len(self.max) if self.per_channel else (),
             initializer=tf.keras.initializers.Constant(1.0),
             trainable=False)
         fq_max.assign(self.max)
@@ -136,7 +136,7 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
 
         _min = self.get_quantizer_variable(FQ_MIN)
         _max = self.get_quantizer_variable(FQ_MAX)
-        if self.channel_axis:
+        if self.per_channel:
             if self.perm_vec:
                 inputs = tf.transpose(inputs, perm=self.perm_vec)
             q_tensor = tf.quantization.fake_quant_with_min_max_vars_per_channel(inputs, _min, _max,

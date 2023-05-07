@@ -52,8 +52,8 @@ class STEUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
 
         """
         super().__init__(quantization_config)
-        self.max_values = quantization_config.weights_quantization_params[RANGE_MAX]
-        self.min_values = quantization_config.weights_quantization_params[RANGE_MIN]
+        self.max_values = np.array(quantization_config.weights_quantization_params[RANGE_MAX])
+        self.min_values = np.array(quantization_config.weights_quantization_params[RANGE_MIN])
         self.num_bits = self.quantization_config.weights_n_bits
         self.per_channel = self.quantization_config.weights_per_channel_threshold
         self.channel_axis = self.quantization_config.weights_channels_axis
@@ -99,7 +99,6 @@ class STEUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         # save the quantizer added parameters for later calculations
         self.add_quantizer_variable(FQ_MIN, fq_min, VariableGroup.QPARAMS)
         self.add_quantizer_variable(FQ_MAX, fq_max, VariableGroup.QPARAMS)
-
 
     def __call__(self, inputs: tf.Tensor,
                  training: bool):
@@ -200,7 +199,6 @@ class STEUniformActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         # save the quantizer added parameters for later calculations
         self.add_quantizer_variable(FQ_MIN, fq_min, VariableGroup.QPARAMS)
         self.add_quantizer_variable(FQ_MAX, fq_max, VariableGroup.QPARAMS)
-
 
     def __call__(self,
                  inputs: tf.Tensor,
