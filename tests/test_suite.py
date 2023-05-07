@@ -23,7 +23,7 @@ from packaging import version
 from tests.common_tests.function_tests.test_collectors_manipulation import TestCollectorsManipulations
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 #  ----------------  Individual test suites
-from model_compression_toolkit.core.common.constants import FOUND_ONNX
+from model_compression_toolkit.constants import FOUND_ONNX
 from tests.common_tests.function_tests.test_histogram_collector import TestHistogramCollector
 from tests.common_tests.function_tests.test_kpi_object import TestKPIObject
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection

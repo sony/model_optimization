@@ -18,7 +18,7 @@ import random
 import unittest
 import numpy as np
 
-from model_compression_toolkit.core.common.constants import CLUSTER_CENTERS, SCALE_PER_CHANNEL
+from model_compression_toolkit.constants import CLUSTER_CENTERS, SCALE_PER_CHANNEL
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import \
     lut_kmeans_tensor
 

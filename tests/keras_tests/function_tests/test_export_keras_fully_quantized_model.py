@@ -23,7 +23,7 @@ from keras import Input
 from keras.layers import Conv2D, BatchNormalization, ReLU, Dropout, Dense, Activation
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import keras_load_quantized_model
+from model_compression_toolkit.quantizers_infrastructure import keras_load_quantized_model
 from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_exportable
 
 _, SAVED_EXPORTABLE_MODEL_PATH_TF = tempfile.mkstemp('.h5')
@@ -67,8 +67,8 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         self.tflite_fq_exported_weights()
 
     def run_mct(self, model, new_experimental_exporter):
-        core_config = mct.CoreConfig()
-        new_export_model, _ = mct.keras_post_training_quantization_experimental(
+        core_config = mct.core.CoreConfig()
+        new_export_model, _ = mct.ptq.keras_post_training_quantization_experimental(
             in_model=model,
             core_config=core_config,
             representative_data_gen=self.representative_data_gen,

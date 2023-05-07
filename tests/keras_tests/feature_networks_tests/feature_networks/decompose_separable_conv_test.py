@@ -31,7 +31,7 @@ class DecomposeSeparableConvTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, experimental_exporter=True)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(weights_bias_correction=False)
+        return mct.core.QuantizationConfig(weights_bias_correction=False)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

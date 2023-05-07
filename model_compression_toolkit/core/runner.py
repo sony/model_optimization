@@ -22,7 +22,7 @@ from tqdm import tqdm
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import FrameworkInfo
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.graph.base_graph import Graph
@@ -143,9 +143,9 @@ def core_runner(in_model: Any,
         weights_conf_nodes_bitwidth = tg.get_final_weights_config()
         activation_conf_nodes_bitwidth = tg.get_final_activation_config()
 
-        common.Logger.info(
+        Logger.info(
             f'Final weights bit-width configuration: {[node_b[1] for node_b in weights_conf_nodes_bitwidth]}')
-        common.Logger.info(
+        Logger.info(
             f'Final activation bit-width configuration: {[node_b[1] for node_b in activation_conf_nodes_bitwidth]}')
 
         if tb_w is not None:
@@ -259,9 +259,9 @@ def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
         A TensorBoardWriter object.
     """
     tb_w = None
-    if common.Logger.LOG_PATH is not None:
-        tb_log_dir = os.path.join(os.getcwd(), common.Logger.LOG_PATH, 'tensorboard_logs')
-        common.Logger.info(f'To use Tensorboard, please run: tensorboard --logdir {tb_log_dir}')
+    if Logger.LOG_PATH is not None:
+        tb_log_dir = os.path.join(os.getcwd(), Logger.LOG_PATH, 'tensorboard_logs')
+        Logger.info(f'To use Tensorboard, please run: tensorboard --logdir {tb_log_dir}')
         tb_w = TensorboardWriter(tb_log_dir, fw_info)
     return tb_w
 

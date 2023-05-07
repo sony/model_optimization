@@ -16,7 +16,7 @@ import copy
 from typing import List, Tuple, Dict
 
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.core.common.constants import DUMMY_TENSOR, DUMMY_NODE
+from model_compression_toolkit.constants import DUMMY_TENSOR, DUMMY_NODE
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
 from model_compression_toolkit.core.common.graph.memory_graph.memory_element import MemoryElements
 from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import ActivationMemoryTensor, MemoryGraph

@@ -61,8 +61,8 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="scope_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationErrorMethod.MSE,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
+                                      mct.core.QuantizationErrorMethod.MSE,
                                       False, False, True)
 
     def get_debug_config(self):
@@ -78,7 +78,7 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
                           EditRule(filter=NodeNameScopeFilter('2') or NodeNameScopeFilter('does_not_exist'),
                                    action=ChangeCandidatesWeightsQuantConfigAttr(enable_weights_quantization=False))
                           ]
-        return mct.DebugConfig(network_editor=network_editor)
+        return mct.core.DebugConfig(network_editor=network_editor)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, self.num_conv_channels]]
@@ -141,8 +141,8 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="name_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationErrorMethod.MSE,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
+                                      mct.core.QuantizationErrorMethod.MSE,
                                       False, False, True)
 
     def get_debug_config(self):
@@ -151,7 +151,7 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
                           EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                    action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits))
                           ]
-        return mct.DebugConfig(network_editor=network_editor)
+        return mct.core.DebugConfig(network_editor=network_editor)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, self.num_conv_channels]]
@@ -211,8 +211,8 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="type_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                      mct.QuantizationErrorMethod.MSE,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
+                                      mct.core.QuantizationErrorMethod.MSE,
                                       False, False, False)
 
     def get_debug_config(self):
@@ -227,7 +227,7 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
                                        activation_quantization_params_fn=self.activations_params_fn())),
                           EditRule(filter=NodeNameFilter(self.node_to_change_name) and NodeTypeFilter(layers.ReLU),
                                    action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=16))]
-        return mct.DebugConfig(network_editor=network_editor)
+        return mct.core.DebugConfig(network_editor=network_editor)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 224, self.num_conv_channels]]

@@ -108,7 +108,7 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
         test_name='kpi_data_test',
         tpc_name='kpi_data_test')
 
-    kpi_data = mct.pytorch_kpi_data(in_model=model,
+    kpi_data = mct.core.pytorch_kpi_data(in_model=model,
                                     representative_data_gen=random_datagen,
                                     target_platform_capabilities=tpc_dict['kpi_data_test'])
 

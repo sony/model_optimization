@@ -21,7 +21,7 @@ from model_compression_toolkit.core.common.graph.graph_matchers import NodeOpera
 from model_compression_toolkit.core.common.substitutions.linear_collapsing import Conv2DCollapsing
 from model_compression_toolkit.core.keras.constants import KERNEL, KERNEL_SIZE, STRIDES, DILATIONS, LINEAR, \
     ACTIVATION, BIAS, USE_BIAS, LAYER_NAME, FILTERS, PADDING, GROUPS, DATA_FORMAT
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 
 def linear_collapsing_node_matchers() -> Tuple[NodeOperationMatcher, NodeOperationMatcher]:

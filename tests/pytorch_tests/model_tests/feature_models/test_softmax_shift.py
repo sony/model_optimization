@@ -41,8 +41,8 @@ class SoftmaxBaseTest(BasePytorchTest):
                                          ftp_name='softmax_shift_pytorch_test')
 
     def get_core_configs(self):
-        quant_config = model_compression_toolkit.QuantizationConfig(softmax_shift=True)
-        return {"8bit_softmax_shift": model_compression_toolkit.CoreConfig(quantization_config=quant_config)}
+        quant_config = model_compression_toolkit.core.QuantizationConfig(softmax_shift=True)
+        return {"8bit_softmax_shift": model_compression_toolkit.core.CoreConfig(quantization_config=quant_config)}
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         set_model(float_model)

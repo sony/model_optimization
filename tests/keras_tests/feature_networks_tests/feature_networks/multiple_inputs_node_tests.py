@@ -33,8 +33,8 @@ class MultipleInputsNodeTests(BaseKerasFeatureNetworkTest):
         return get_16bit_tpc("multiple_inputs_test")
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.QuantizationErrorMethod.NOCLIPPING,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
+                                      mct.core.QuantizationErrorMethod.NOCLIPPING,
                                       True, False, True)
 
     def get_input_shapes(self):

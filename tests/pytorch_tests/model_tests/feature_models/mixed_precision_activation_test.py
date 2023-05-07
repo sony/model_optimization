@@ -15,7 +15,7 @@
 import torch
 import numpy as np
 
-from model_compression_toolkit import MixedPrecisionQuantizationConfig, KPI, CoreConfig, \
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, KPI, CoreConfig, \
     MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs
@@ -45,16 +45,16 @@ class MixedPercisionActivationBaseTest(BasePytorchTest):
             tpc_name='mixed_precision_activation_pytorch_test')
 
     def get_core_configs(self):
-        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE,
-                                    mct.QuantizationErrorMethod.MSE,
+        qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
+                                    mct.core.QuantizationErrorMethod.MSE,
                                     weights_bias_correction=True,
                                     weights_per_channel_threshold=True,
                                     activation_channel_equalization=False,
                                     relu_bound_to_power_of_2=False,
                                     input_scaling=False)
-        mpc = mct.MixedPrecisionQuantizationConfigV2(num_of_images=1)
+        mpc = mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1)
 
-        return {"mixed_precision_activation_model": mct.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}
+        return {"mixed_precision_activation_model": mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}
 
     def create_feature_network(self, input_shape):
         return MixedPrecisionNet(input_shape)

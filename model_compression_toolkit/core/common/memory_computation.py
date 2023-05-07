@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.core.common.constants import BITS_TO_BYTES
+from model_compression_toolkit.constants import BITS_TO_BYTES
 
 
 def compute_quantize_tensor_memory_bytes(tensor_size: float, n_bits: int) -> float:

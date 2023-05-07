@@ -16,7 +16,7 @@
 import operator
 from typing import Any, Callable, Dict
 
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 
 class Filter:

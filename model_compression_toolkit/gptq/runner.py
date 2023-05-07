@@ -15,7 +15,7 @@
 
 from typing import Callable
 
-from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
     apply_statistics_correction
@@ -28,6 +28,7 @@ from model_compression_toolkit.gptq.common.gptq_training import gptq_training
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 from model_compression_toolkit.core.common.statistics_correction.apply_bias_correction_to_graph import \
     apply_bias_correction_to_graph
+from model_compression_toolkit.logger import Logger
 
 
 def _apply_gptq(gptq_config: GradientPTQConfigV2,
@@ -55,7 +56,7 @@ def _apply_gptq(gptq_config: GradientPTQConfigV2,
 
     """
     if gptq_config is not None and gptq_config.n_epochs > 0:
-        common.Logger.info("Using experimental Gradient Based PTQ: If you encounter an issue "
+        Logger.info("Using experimental Gradient Based PTQ: If you encounter an issue "
                            "please file a bug. To disable it, do not pass a gptq configuration.")
 
         tg_bias = gptq_training(tg,

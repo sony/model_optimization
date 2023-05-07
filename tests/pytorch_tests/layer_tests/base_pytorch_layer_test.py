@@ -29,7 +29,8 @@ from torch import add, multiply, mul, sub, flatten, reshape, split, unsqueeze, c
 from torch.fx import symbolic_trace
 from torch.nn import Module
 
-from model_compression_toolkit import FrameworkInfo, pytorch_post_training_quantization_experimental
+from model_compression_toolkit.core import FrameworkInfo
+from model_compression_toolkit.ptq import pytorch_post_training_quantization_experimental
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit.core.pytorch.constants import CALL_FUNCTION, OUTPUT, CALL_METHOD, PLACEHOLDER

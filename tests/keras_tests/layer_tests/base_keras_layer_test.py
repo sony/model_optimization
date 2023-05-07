@@ -4,6 +4,7 @@ import keras.layers
 import tensorflow as tf
 from keras.engine.base_layer import Layer
 
+from model_compression_toolkit.ptq import keras_post_training_quantization_experimental
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
@@ -26,7 +27,7 @@ else:
         UpSampling2D, InputLayer, Concatenate, Softmax, PReLU, Flatten, Cropping2D, Dot, ELU, LeakyReLU, Permute, \
         LayerNormalization
 
-from model_compression_toolkit import FrameworkInfo, keras_post_training_quantization_experimental
+from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.gptq import keras_gradient_post_training_quantization_experimental
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import is_layer_fake_quant

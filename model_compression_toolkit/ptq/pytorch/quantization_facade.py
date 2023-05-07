@@ -15,11 +15,11 @@
 from typing import Callable
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common import Logger
-from model_compression_toolkit.core.common.constants import PYTORCH, FOUND_TORCH
+from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.constants import PYTORCH, FOUND_TORCH
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
-from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
@@ -31,7 +31,7 @@ from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-    from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from torch.nn import Module
     from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_exportable_pytorch_model
     from model_compression_toolkit import get_target_platform_capabilities
@@ -88,18 +88,18 @@ if FOUND_TORCH:
             Set number of clibration iterations to 1:
 
             >>> import model_compression_toolkit as mct
-            >>> quantized_module, quantization_info = mct.pytorch_post_training_quantization_experimental(module, repr_datagen)
+            >>> quantized_module, quantization_info = mct.ptq.pytorch_post_training_quantization_experimental(module, repr_datagen)
 
         """
 
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
-                common.Logger.error("Given quantization config to mixed-precision facade is not of type "
+                Logger.error("Given quantization config to mixed-precision facade is not of type "
                                     "MixedPrecisionQuantizationConfigV2. Please use "
                                     "pytorch_post_training_quantization API, or pass a valid mixed precision "
                                     "configuration.")  # pragma: no cover
 
-            common.Logger.info("Using experimental mixed-precision quantization. "
+            Logger.info("Using experimental mixed-precision quantization. "
                                "If you encounter an issue please file a bug.")
 
         tb_w = _init_tensorboard_writer(DEFAULT_PYTORCH_INFO)

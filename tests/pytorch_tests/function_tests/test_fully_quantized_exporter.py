@@ -43,8 +43,8 @@ class TestFullyQuantizedExporter(unittest.TestCase):
             yield to_torch_tensor([torch.randn(1, 3, 224, 224)])
 
     def run_mct(self, model):
-        core_config = mct.CoreConfig()
-        new_export_model, _ = mct.pytorch_post_training_quantization_experimental(
+        core_config = mct.core.CoreConfig()
+        new_export_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(
             in_module=model,
             core_config=core_config,
             representative_data_gen=self.representative_data_gen,
@@ -69,15 +69,15 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         seed = np.random.randint(0, 100, size=1)[0]
 
         self.set_seed(seed)
-        core_config = mct.CoreConfig()
-        old_export_model, _ = mct.pytorch_post_training_quantization_experimental(
+        core_config = mct.core.CoreConfig()
+        old_export_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(
             in_module=model,
             representative_data_gen=repr_dataset,
             core_config=core_config)
 
         self.set_seed(seed)
-        core_config = mct.CoreConfig()
-        new_export_model, _ = mct.pytorch_post_training_quantization_experimental(
+        core_config = mct.core.CoreConfig()
+        new_export_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(
             in_module=model,
             core_config=core_config,
             representative_data_gen=repr_dataset,

@@ -17,8 +17,8 @@ import math
 import unittest
 import numpy as np
 
-from model_compression_toolkit import QuantizationErrorMethod
-from model_compression_toolkit.core.common.constants import CLUSTER_CENTERS, MIN_THRESHOLD, THRESHOLD
+from model_compression_toolkit.core import QuantizationErrorMethod
+from model_compression_toolkit.constants import CLUSTER_CENTERS, MIN_THRESHOLD, THRESHOLD
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import \
     lut_kmeans_histogram
 

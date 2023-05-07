@@ -25,6 +25,7 @@ from model_compression_toolkit.core.common.graph.graph_matchers import NodeOpera
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.pytorch.constants import KERNEL, BIAS, INPLACE, HARDTANH_MIN_VAL, HARDTANH_MAX_VAL, \
     RELU_POT_BOUND
+from model_compression_toolkit.logger import Logger
 
 
 class ReLUBoundToPowerOfTwo(common.BaseSubstitution):
@@ -102,8 +103,8 @@ class ReLUBoundToPowerOfTwo(common.BaseSubstitution):
             else:
                 return graph
         else:
-            common.Logger.error(f"In substitution with wrong matched pattern")
-        common.Logger.debug(
+            Logger.error(f"In substitution with wrong matched pattern")
+        Logger.debug(
             f"Node named:{non_linear_node.name} changed "
             f"to:{non_linear_node.type}")
 

@@ -17,7 +17,7 @@
 import math
 from enum import Enum
 
-from model_compression_toolkit.core.common.constants import MIN_THRESHOLD
+from model_compression_toolkit.constants import MIN_THRESHOLD
 
 
 class QuantizationErrorMethod(Enum):
@@ -94,7 +94,7 @@ class QuantizationConfig:
             one can instantiate a quantization configuration:
 
             >>> import model_compression_toolkit as mct
-            >>> qc = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.NOCLIPPING,weights_error_method=mct.QuantizationErrorMethod.MSE,relu_bound_to_power_of_2=True,weights_bias_correction=True,weights_per_channel_threshold=True)
+            >>> qc = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,weights_error_method=mct.core.QuantizationErrorMethod.MSE,relu_bound_to_power_of_2=True,weights_bias_correction=True,weights_per_channel_threshold=True)
 
 
             The QuantizationConfig instanse can then be passed to

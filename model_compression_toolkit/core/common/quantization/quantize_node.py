@@ -15,7 +15,7 @@
 
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
@@ -46,7 +46,7 @@ def get_quantized_kernel_by_weights_qc(fw_info: FrameworkInfo,
     # If weights should be quantized per-channel but a kernel channels mapping is missing.
     if weights_qc.weights_per_channel_threshold and fw_info.kernel_channels_mapping is \
             None:
-        common.Logger.warning(
+        Logger.warning(
             'Weights Per Channel Quantization requires channel mapping function but framework info '
             'does not contain one')
     output_channels_axis, input_channels_axis = get_channels_axis(weights_qc,

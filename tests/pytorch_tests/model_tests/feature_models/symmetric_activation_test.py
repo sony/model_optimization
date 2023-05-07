@@ -17,7 +17,7 @@ import numpy as np
 import torch
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.constants import THRESHOLD
+from model_compression_toolkit.constants import THRESHOLD
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
@@ -53,11 +53,11 @@ class SymmetricActivationTest(BasePytorchTest):
         return {'act_8bit': generate_pytorch_tpc(name="symmetric_layer_test", tp_model=tp)}
 
     def get_core_configs(self):
-        qc = mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
-                                    mct.QuantizationErrorMethod.NOCLIPPING,
+        qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
+                                    mct.core.QuantizationErrorMethod.NOCLIPPING,
                                     shift_negative_activation_correction=True,
                                     shift_negative_ratio=np.inf)
-        return {'act_8bit': mct.CoreConfig(quantization_config=qc)}
+        return {'act_8bit': mct.core.CoreConfig(quantization_config=qc)}
 
     def create_feature_network(self, input_shape):
         return SymmetricActivationNet(input_shape)

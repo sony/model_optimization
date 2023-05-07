@@ -16,11 +16,11 @@ import copy
 from typing import Callable
 from functools import partial
 
-from model_compression_toolkit.core.common.constants import FOUND_TORCH, PYTORCH
+from model_compression_toolkit.constants import FOUND_TORCH, PYTORCH
 
-from model_compression_toolkit import CoreConfig
+from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
@@ -34,7 +34,7 @@ if FOUND_TORCH:
     import torch.nn as nn
     from torch.nn import Module
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-    from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
     from model_compression_toolkit.qat.common.qat_config import _is_qat_applicable
     from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
@@ -121,7 +121,7 @@ if FOUND_TORCH:
 
              Create a MCT core config, containing the quantization configuration:
 
-             >>> config = mct.CoreConfig()
+             >>> config = mct.core.CoreConfig()
 
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model. Now the model contains quantizer wrappers for fine tunning the weights:
@@ -134,11 +134,11 @@ if FOUND_TORCH:
 
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
-                common.Logger.error("Given quantization config to mixed-precision facade is not of type "
+                Logger.error("Given quantization config to mixed-precision facade is not of type "
                                     "MixedPrecisionQuantizationConfigV2. Please use pytorch_post_training_quantization API,"
                                     "or pass a valid mixed precision configuration.")
 
-            common.Logger.info("Using experimental mixed-precision quantization. "
+            Logger.info("Using experimental mixed-precision quantization. "
                                "If you encounter an issue please file a bug.")
 
         tb_w = _init_tensorboard_writer(fw_info)
@@ -193,7 +193,7 @@ if FOUND_TORCH:
 
              Create a MCT core config, containing the quantization configuration:
 
-             >>> config = mct.CoreConfig()
+             >>> config = mct.core.CoreConfig()
 
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:

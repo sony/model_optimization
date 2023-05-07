@@ -1,11 +1,11 @@
-from typing import Tuple, Dict, Any, Callable
+from typing import Tuple, Dict, Callable
 
 import numpy as np
 import tensorflow as tf
 from keras.layers import Layer
 from tensorflow.python.util.object_identity import Reference as TFReference
 
-from model_compression_toolkit.core.common.constants import SIGNED, CLUSTER_CENTERS, EPS, \
+from model_compression_toolkit.constants import SIGNED, CLUSTER_CENTERS, EPS, \
     MULTIPLIER_N_BITS, THRESHOLD
 
 

@@ -17,8 +17,10 @@
 from typing import Tuple, List
 import numpy as np
 
-from model_compression_toolkit.core.common.constants import MIN_THRESHOLD, EPS
+from model_compression_toolkit.constants import MIN_THRESHOLD, EPS
 from model_compression_toolkit.core import common
+from model_compression_toolkit.logger import Logger
+
 
 def max_power_of_two(x: np.ndarray,
                      min_threshold: float = MIN_THRESHOLD) -> np.ndarray:
@@ -236,7 +238,7 @@ def get_tensor_max(tensor_data: np.ndarray,
 
     """
     if n_bits < 1:
-        common.Logger.error("n_bits must be positive")
+        Logger.error("n_bits must be positive")
     if is_uniform_quantization:
         expansion_factor = 1.0
     elif n_bits == 1:

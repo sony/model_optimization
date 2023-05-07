@@ -14,7 +14,7 @@
 # ==============================================================================
 from abc import abstractmethod
 
-from model_compression_toolkit.core.common.constants import FOUND_TORCH
+from model_compression_toolkit.constants import FOUND_TORCH
 from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
 
 if FOUND_TORCH:

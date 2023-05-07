@@ -16,7 +16,7 @@
 from enum import Enum
 from typing import List, Callable, Tuple
 
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, DEFAULTCONFIG
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse

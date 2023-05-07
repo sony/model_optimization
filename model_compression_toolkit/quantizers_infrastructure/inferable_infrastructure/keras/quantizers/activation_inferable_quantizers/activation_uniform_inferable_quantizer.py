@@ -16,8 +16,8 @@ from typing import List
 
 import numpy as np
 
-from model_compression_toolkit.core.common.logger import Logger
-from model_compression_toolkit.core.common.constants import FOUND_TF
+from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer

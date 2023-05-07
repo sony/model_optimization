@@ -16,7 +16,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from model_compression_toolkit import DefaultDict
+from model_compression_toolkit.core import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
@@ -67,8 +67,8 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
             if rounding_type == RoundingType.STE else None
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.QuantizationErrorMethod.NOCLIPPING,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
+                                      mct.core.QuantizationErrorMethod.NOCLIPPING,
                                       weights_per_channel_threshold=self.per_channel)
 
     def create_networks(self):
@@ -90,7 +90,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
 
         # Run MCT with PTQ
         np.random.seed(self.seed)
-        ptq_model, _ = mct.pytorch_post_training_quantization_experimental(self.float_model,
+        ptq_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(self.float_model,
                                                                            self.representative_data_gen_experimental,
                                                                            core_config=self.get_core_config(),
                                                                            target_platform_capabilities=self.get_tpc())

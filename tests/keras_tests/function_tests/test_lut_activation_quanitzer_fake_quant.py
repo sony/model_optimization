@@ -17,7 +17,7 @@ import unittest
 
 import numpy as np
 
-from model_compression_toolkit.core.common.constants import CLUSTER_CENTERS, THRESHOLD, SIGNED, \
+from model_compression_toolkit.constants import CLUSTER_CENTERS, THRESHOLD, SIGNED, \
     MULTIPLIER_N_BITS
 from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import LUTFakeQuant
 

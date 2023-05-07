@@ -54,7 +54,7 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
         return get_16bit_tpc("scale_equalization_bound_test")
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(mct.QuantizationErrorMethod.MSE, mct.QuantizationErrorMethod.MSE,
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
                                       relu_bound_to_power_of_2=False, weights_bias_correction=False,
                                       weights_per_channel_threshold=True, activation_channel_equalization=True)
 

@@ -17,10 +17,10 @@ import copy
 import numpy as np
 from typing import Callable, Any, List
 
-from model_compression_toolkit import FrameworkInfo, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.logger import Logger
 
 
 class SensitivityEvaluation:

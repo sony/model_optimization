@@ -24,8 +24,8 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.targ
 from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import OpQuantizationConfig, \
     QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.target_platform.operators import OperatorsSetBase
-from model_compression_toolkit.core.common.immutable import ImmutableClass
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.target_platform_capabilities.immutable import ImmutableClass
+from model_compression_toolkit.logger import Logger
 
 
 def get_default_quantization_config_options() -> QuantizationConfigOptions:
@@ -223,3 +223,12 @@ class TargetPlatformModel(ImmutableClass):
 
         """
         pprint.pprint(self.get_info(), sort_dicts=False)
+
+    def set_quantization_format(self,
+                                quantization_format: Any):
+        """
+        Set quantization format.
+        Args:
+            quantization_format: A quantization format (fake-quant, int8 etc.) from enum QuantizationFormat.
+        """
+        self.quantization_format = quantization_format

@@ -17,14 +17,15 @@
 from typing import Callable
 
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common import FrameworkInfo, Logger
-from model_compression_toolkit.core.common.constants import NUM_SAMPLES_DISTANCE_TENSORBOARD
+from model_compression_toolkit.core.common import FrameworkInfo
+from model_compression_toolkit.constants import NUM_SAMPLES_DISTANCE_TENSORBOARD
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 
 from model_compression_toolkit.core.common.similarity_analyzer import compute_cs
 from model_compression_toolkit.core.common.visualization.nn_visualizer import NNVisualizer
 
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
+from model_compression_toolkit.logger import Logger
 
 
 def analyzer_model_quantization(representative_data_gen: Callable,

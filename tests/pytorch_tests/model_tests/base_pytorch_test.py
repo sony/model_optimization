@@ -65,10 +65,10 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         }
 
     def get_core_configs(self):
-        base_quant_config = mct.QuantizationConfig(mct.QuantizationErrorMethod.NOCLIPPING,
-                                                   mct.QuantizationErrorMethod.NOCLIPPING,
+        base_quant_config = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
+                                                   mct.core.QuantizationErrorMethod.NOCLIPPING,
                                                    False, True, True)
-        base_core_config = mct.CoreConfig(quantization_config=base_quant_config,
+        base_core_config = mct.core.CoreConfig(quantization_config=base_quant_config,
                                           debug_config=self.get_debug_config())
         return {
             'no_quantization': base_core_config,
@@ -145,7 +145,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
             assert core_config is not None, f"Model name {model_name} does not exists in the test's " \
                                             f"core configs dictionary keys"
 
-            ptq_model, quantization_info = mct.pytorch_post_training_quantization_experimental(in_module=model_float,
+            ptq_model, quantization_info = mct.ptq.pytorch_post_training_quantization_experimental(in_module=model_float,
                                                                                                representative_data_gen=representative_data_gen_experimental,
                                                                                                target_kpi=self.get_kpi(),
                                                                                                core_config=core_config,

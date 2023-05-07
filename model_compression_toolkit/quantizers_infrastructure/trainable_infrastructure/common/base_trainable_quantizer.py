@@ -18,7 +18,7 @@ from typing import Union, List, Any
 from inspect import signature
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common import Logger
+from model_compression_toolkit.logger import Logger
 
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer, \
     QuantizationTarget
@@ -55,9 +55,9 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         for i, (k, v) in enumerate(self.get_sig().parameters.items()):
             if i == 0:
                 if v.annotation not in [TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]:
-                    common.Logger.error(f"First parameter must be either TrainableQuantizerWeightsConfig or TrainableQuantizerActivationConfig")  # pragma: no cover
+                    Logger.error(f"First parameter must be either TrainableQuantizerWeightsConfig or TrainableQuantizerActivationConfig")  # pragma: no cover
             elif v.default is v.empty:
-                common.Logger.error(f"Parameter {k} doesn't have a default value")  # pragma: no cover
+                Logger.error(f"Parameter {k} doesn't have a default value")  # pragma: no cover
 
         super(BaseTrainableQuantizer, self).__init__()
         self.quantization_config = quantization_config
@@ -73,15 +73,15 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         if static_quantization_target == QuantizationTarget.Weights:
             self.validate_weights()
             if self.quantization_config.weights_quantization_method not in static_quantization_method:
-                common.Logger.error(
+                Logger.error(
                     f'Quantization method mismatch expected: {static_quantization_method} and got  {self.quantization_config.weights_quantization_method}')
         elif static_quantization_target == QuantizationTarget.Activation:
             self.validate_activation()
             if self.quantization_config.activation_quantization_method not in static_quantization_method:
-                common.Logger.error(
+                Logger.error(
                     f'Quantization method mismatch expected: {static_quantization_method} and got  {self.quantization_config.activation_quantization_method}')
         else:
-            common.Logger.error(
+            Logger.error(
                 f'Unknown Quantization Part:{static_quantization_target}')  # pragma: no cover
 
         self.quantizer_parameters = {}
@@ -145,7 +145,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
 
         """
         if self.activation_quantization() or not self.weights_quantization():
-            common.Logger.error(f'Expect weight quantization got activation')
+            Logger.error(f'Expect weight quantization got activation')
 
     def validate_activation(self) -> None:
         """
@@ -153,7 +153,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
 
         """
         if not self.activation_quantization() or self.weights_quantization():
-            common.Logger.error(f'Expect activation quantization got weight')
+            Logger.error(f'Expect activation quantization got weight')
 
     def convert2inferable(self) -> BaseInferableQuantizer:
         """
@@ -183,7 +183,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         if name in self.quantizer_parameters:
             return self.quantizer_parameters[name][VAR]
         else:
-            common.Logger.error(f'Variable {name} is not exist in quantizers parameters!') # pragma: no cover
+            Logger.error(f'Variable {name} is not exist in quantizers parameters!') # pragma: no cover
 
 
     @abstractmethod

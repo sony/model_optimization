@@ -20,15 +20,15 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import CoreConfig, QuantizationConfig, DEFAULTCONFIG, FrameworkInfo, DebugConfig
+from model_compression_toolkit.core import CoreConfig, QuantizationConfig, DEFAULTCONFIG, FrameworkInfo, DebugConfig
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.common.network_editors import EditRule
 from model_compression_toolkit.core.common.statistics_correction.apply_second_moment_correction_to_graph import \
     quantized_model_builder_for_second_moment_correction
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod, TargetPlatformCapabilities
-from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.core.keras.constants import EPSILON_VAL, GAMMA, BETA, MOVING_MEAN, MOVING_VARIANCE
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -65,7 +65,7 @@ class BaseSecondMomentTest(BaseKerasFeatureNetworkTest, ABC):
         return generate_keras_tpc(name="second_moment_correction_test", tp_model=tp)
 
     def get_quantization_config(self):
-        return mct.QuantizationConfig(weights_second_moment_correction=True)
+        return mct.core.QuantizationConfig(weights_second_moment_correction=True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[2].layer.__class__)[0]

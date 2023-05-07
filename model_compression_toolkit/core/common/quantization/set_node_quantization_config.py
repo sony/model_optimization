@@ -17,7 +17,8 @@
 import copy
 from typing import List
 
-from model_compression_toolkit.core.common import Logger, BaseNode
+from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
@@ -72,7 +73,7 @@ def set_quantization_configs_to_node(node: BaseNode,
         tpc: TargetPlatformCapabilities to get default OpQuantizationConfig.
         mixed_precision_enable: is mixed precision enabled
     """
-    node_qc_options = tpc.get_qco_by_node(node)
+    node_qc_options = node.get_qco(tpc)
 
     # Create QC candidates for weights and activation combined
     weight_channel_axis = fw_info.kernel_channels_mapping.get(node.type)[0]

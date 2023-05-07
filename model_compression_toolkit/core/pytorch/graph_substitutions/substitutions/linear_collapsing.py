@@ -22,7 +22,7 @@ from model_compression_toolkit.core.common.graph.graph_matchers import NodeOpera
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.substitutions.linear_collapsing import Conv2DCollapsing
 from model_compression_toolkit.core.pytorch.constants import KERNEL, KERNEL_SIZE, STRIDES, DILATIONS, BIAS, USE_BIAS, FILTERS, PADDING, GROUPS
-from model_compression_toolkit.core.common.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 
 def linear_collapsing_node_matchers() -> Tuple[NodeOperationMatcher, NodeOperationMatcher]:

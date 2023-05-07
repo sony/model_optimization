@@ -99,13 +99,6 @@ OUTPUT_BIAS = '/attention_output/bias'
 # ReLU bound constants
 RELU_POT_BOUND = 8.0
 
-# Supported TP models names for Tensorflow:
-DEFAULT_TP_MODEL = 'default'
-IMX500_TP_MODEL = 'imx500'
-TFLITE_TP_MODEL = 'tflite'
-QNNPACK_TP_MODEL = 'qnnpack'
-
-
 # TFOpLambda functions:
 ADD = 'add'
 PAD = 'pad'

@@ -13,9 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Any, Dict
-
-from model_compression_toolkit.core.common.graph.base_node import BaseNode
+from typing import Any
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import AttributeFilter
 
 
@@ -87,34 +85,34 @@ class LayerFilterParams:
         params.extend([str(c) for c in self.conditions])
         params_str = ', '.join(params)
         return f'{self.layer.__name__}({params_str})'
-
-    def match(self,
-              node: BaseNode) -> bool:
-        """
-        Check if a node matches the layer, conditions and keyword-arguments of
-        the LayerFilterParams.
-
-        Args:
-            node: Node to check if matches to the LayerFilterParams properties.
-
-        Returns:
-            Whether the node matches to the LayerFilterParams properties.
-        """
-        # Check the node has the same type as the layer in LayerFilterParams
-        if self.layer != node.type:
-            return False
-
-        # Get attributes from node to filter
-        layer_config = node.framework_attr
-        if hasattr(node, "op_call_kwargs"):
-            layer_config.update(node.op_call_kwargs)
-
-        for attr, value in self.kwargs.items():
-            if layer_config.get(attr) != value:
-                return False
-
-        for c in self.conditions:
-            if not c.match(layer_config):
-                return False
-
-        return True
+    #
+    # def match(self,
+    #           node: BaseNode) -> bool:
+    #     """
+    #     Check if a node matches the layer, conditions and keyword-arguments of
+    #     the LayerFilterParams.
+    #
+    #     Args:
+    #         node: Node to check if matches to the LayerFilterParams properties.
+    #
+    #     Returns:
+    #         Whether the node matches to the LayerFilterParams properties.
+    #     """
+    #     # Check the node has the same type as the layer in LayerFilterParams
+    #     if self.layer != node.type:
+    #         return False
+    #
+    #     # Get attributes from node to filter
+    #     layer_config = node.framework_attr
+    #     if hasattr(node, "op_call_kwargs"):
+    #         layer_config.update(node.op_call_kwargs)
+    #
+    #     for attr, value in self.kwargs.items():
+    #         if layer_config.get(attr) != value:
+    #             return False
+    #
+    #     for c in self.conditions:
+    #         if not c.match(layer_config):
+    #             return False
+    #
+    #     return True

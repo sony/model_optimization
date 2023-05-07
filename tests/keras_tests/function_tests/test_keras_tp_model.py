@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import copy
 import unittest
 from functools import partial
 
@@ -22,6 +21,8 @@ from packaging import version
 
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
+from model_compression_toolkit.core.common import BaseNode
+
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.keras.layers import Conv2D, Conv2DTranspose, ReLU, Activation, Input
 else:
@@ -29,22 +30,19 @@ else:
     from keras import Input
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.constants import TENSORFLOW
+from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import Greater, \
     Smaller, GreaterEq, Eq, SmallerEq, Contains
-from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    DEFAULT_MIXEDPRECISION_CONFIG
-from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, QNNPACK_TP_MODEL, \
-    TFLITE_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, QNNPACK_TP_MODEL, TFLITE_TP_MODEL
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.test_tp_model import TEST_QCO, TEST_QC
 
 tp = mct.target_platform
 
 
-def get_node(layer):
+def get_node(layer)->BaseNode:
     i = Input(shape=(3, 16, 16))
     x = layer(i)
     model = tf.keras.Model(i, x)
@@ -63,37 +61,37 @@ class TestKerasTPModel(unittest.TestCase):
                                              filters=3)
 
         conv = Conv2D(filters=3, kernel_size=(3, 4), activation='softmax')
-        self.assertTrue(conv_with_params.match(get_node(conv)))
+        self.assertTrue(get_node(conv).is_match_filter_params(conv_with_params))
         conv = Conv2D(filters=2, kernel_size=(3, 4), activation='softmax')
-        self.assertFalse(conv_with_params.match(get_node(conv)))
+        self.assertFalse(get_node(conv).is_match_filter_params(conv_with_params))
         conv = Conv2DTranspose(filters=3, kernel_size=(3, 4), activation='softmax')
-        self.assertFalse(conv_with_params.match(get_node(conv)))
+        self.assertFalse(get_node(conv).is_match_filter_params(conv_with_params))
 
         relu_with_params = LayerFilterParams(ReLU, GreaterEq("max_value", 0.5) | Smaller("max_value", 0.2))
-        self.assertTrue(relu_with_params.match(get_node(ReLU(max_value=0.1))))
-        self.assertTrue(relu_with_params.match(get_node(ReLU(max_value=0.5))))
-        self.assertFalse(relu_with_params.match(get_node(ReLU(max_value=0.3))))
+        self.assertTrue(get_node(ReLU(max_value=0.1)).is_match_filter_params(relu_with_params))
+        self.assertTrue(get_node(ReLU(max_value=0.5)).is_match_filter_params(relu_with_params))
+        self.assertFalse(get_node(ReLU(max_value=0.3)).is_match_filter_params(relu_with_params))
 
         relu_with_params = LayerFilterParams(ReLU, Eq("max_value", None) | Eq("max_value", 6))
-        self.assertTrue(relu_with_params.match(get_node(ReLU())))
-        self.assertTrue(relu_with_params.match(get_node(ReLU(max_value=6))))
-        self.assertFalse(relu_with_params.match(get_node(ReLU(max_value=8))))
+        self.assertTrue(get_node(ReLU()).is_match_filter_params(relu_with_params))
+        self.assertTrue(get_node(ReLU(max_value=6)).is_match_filter_params(relu_with_params))
+        self.assertFalse(get_node(ReLU(max_value=8)).is_match_filter_params(relu_with_params))
 
         lrelu_with_params = LayerFilterParams(tf.nn.leaky_relu, SmallerEq("alpha", 2))
-        self.assertTrue(lrelu_with_params.match(get_node(partial(tf.nn.leaky_relu, alpha=0.4))))
-        self.assertTrue(lrelu_with_params.match(get_node(partial(tf.nn.leaky_relu, alpha=2))))
-        self.assertFalse(lrelu_with_params.match(get_node(partial(tf.nn.leaky_relu, alpha=2.1))))
+        self.assertTrue(get_node(partial(tf.nn.leaky_relu, alpha=0.4)).is_match_filter_params(lrelu_with_params))
+        self.assertTrue(get_node(partial(tf.nn.leaky_relu, alpha=2)).is_match_filter_params(lrelu_with_params))
+        self.assertFalse(get_node(partial(tf.nn.leaky_relu, alpha=2.1)).is_match_filter_params(lrelu_with_params))
 
         lrelu_with_params = LayerFilterParams(tf.nn.leaky_relu)
-        self.assertTrue(lrelu_with_params.match(get_node(partial(tf.nn.leaky_relu, alpha=0.4))))
+        self.assertTrue(get_node(partial(tf.nn.leaky_relu, alpha=0.4)).is_match_filter_params(lrelu_with_params))
 
         conv_filter_contains = LayerFilterParams(Conv2D, Contains("name", "conv"))
         conv = Conv2D(filters=3, kernel_size=(3, 4), name="conv")
-        self.assertTrue(conv_filter_contains.match(get_node(conv)))
+        self.assertTrue(get_node(conv).is_match_filter_params(conv_filter_contains))
         conv = Conv2D(filters=3, kernel_size=(3, 4), name="layer_conv_0")
-        self.assertTrue(conv_filter_contains.match(get_node(conv)))
+        self.assertTrue(get_node(conv).is_match_filter_params(conv_filter_contains))
         conv = Conv2D(filters=2, kernel_size=(3, 4), name="CONVOLUTION")
-        self.assertFalse(conv_with_params.match(get_node(conv)))
+        self.assertFalse(get_node(conv).is_match_filter_params(conv_filter_contains))
 
     def test_get_layers_by_op(self):
         hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
@@ -175,9 +173,9 @@ class TestKerasTPModel(unittest.TestCase):
         tanh_node = get_node(tf.nn.tanh)
         relu_node = get_node(Activation('relu'))
 
-        conv_qco = hm_keras.get_qco_by_node(conv_node)
-        tanh_qco = hm_keras.get_qco_by_node(tanh_node)
-        relu_qco = hm_keras.get_qco_by_node(relu_node)
+        conv_qco = conv_node.get_qco(hm_keras)
+        tanh_qco = tanh_node.get_qco(hm_keras)
+        relu_qco = relu_node.get_qco(hm_keras)
 
         self.assertEqual(conv_qco, mixed_precision_configuration_options)
         self.assertEqual(tanh_qco, sevenbit_qco)
@@ -232,16 +230,16 @@ class TestGetKerasTPC(unittest.TestCase):
         def rep_data():
             yield [np.random.randn(1, 224, 224, 3)]
 
-        quantized_model, _ = mct.keras_post_training_quantization_experimental(model,
+        quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                                rep_data,
                                                                                target_platform_capabilities=tpc,
                                                                                new_experimental_exporter=True)
 
-        core_config = mct.CoreConfig(mixed_precision_config=mct.MixedPrecisionQuantizationConfigV2(num_of_images=1))
-        quantized_model, _ = mct.keras_post_training_quantization_experimental(model,
+        core_config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1))
+        quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                                rep_data,
                                                                                core_config=core_config,
-                                                                               target_kpi=mct.KPI(np.inf),
+                                                                               target_kpi=mct.core.KPI(np.inf),
                                                                                target_platform_capabilities=tpc,
                                                                                new_experimental_exporter=True)
 

@@ -33,8 +33,8 @@ keras = tf.keras
 layers = keras.layers
 tp = mct.target_platform
 
-QUANTIZATION_CONFIG = mct.QuantizationConfig(activation_error_method=mct.QuantizationErrorMethod.MSE,
-                                             weights_error_method=mct.QuantizationErrorMethod.MSE,
+QUANTIZATION_CONFIG = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.MSE,
+                                             weights_error_method=mct.core.QuantizationErrorMethod.MSE,
                                              relu_bound_to_power_of_2=False, weights_bias_correction=False,
                                              weights_per_channel_threshold=True)
 
@@ -99,7 +99,7 @@ class NetworkTest:
             for _ in range(self.num_calibration_iter):
                 yield inputs_list
 
-        core_config = mct.CoreConfig(quantization_config=qc)
+        core_config = mct.core.CoreConfig(quantization_config=qc)
         if self.gptq:
             arc = mct.gptq.GradientPTQConfig(n_iter=2, optimizer=tf.keras.optimizers.Adam(
                 learning_rate=0.0001), optimizer_rest=tf.keras.optimizers.Adam(
@@ -114,7 +114,7 @@ class NetworkTest:
                                                                                                       target_platform_capabilities=tpc,
                                                                                                       new_experimental_exporter=True)
         else:
-            ptq_model, quantization_info = mct.keras_post_training_quantization_experimental(self.model_float,
+            ptq_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(self.model_float,
                                                                                              representative_data_gen,
                                                                                              core_config=core_config,
                                                                                              target_platform_capabilities=tpc,

@@ -74,7 +74,7 @@ class LUTWeightsQuantizerTest(BaseKerasFeatureNetworkTest):
         return tp.TargetPlatformCapabilities(tp.TargetPlatformModel(qco))
 
     def get_debug_config(self):
-        return mct.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
+        return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                                         action=ChangeCandidatesWeightsQuantizationMethod(
                                                             weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO))])
 

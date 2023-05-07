@@ -18,7 +18,7 @@ import unittest
 from tensorflow.keras.layers import Conv2D, ReLU, Input
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.constants import FLOAT_BITWIDTH
+from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
