@@ -16,6 +16,8 @@
 IS_WEIGHTS = "is_weights"
 IS_ACTIVATIONS = "is_activations"
 ACTIVATION_QUANTIZERS = "activation_quantizers"
+# In ActivationQuantizationHolder only one quantizer is used thus a new attribute name is needed
+ACTIVATION_QUANTIZER = "activation_quantizer"
 WEIGHTS_QUANTIZERS = "weights_quantizer"
 WEIGHTS_QUANTIZATION_METHOD = 'weights_quantization_method'
 WEIGHTS_N_BITS = 'weights_n_bits'
