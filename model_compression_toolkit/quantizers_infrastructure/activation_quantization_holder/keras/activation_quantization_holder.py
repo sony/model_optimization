@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import tensorflow as tf
 
 from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.logger import Logger
@@ -20,6 +19,7 @@ from model_compression_toolkit.quantizers_infrastructure import BaseInferableQua
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import ACTIVATION_QUANTIZER
 
 if FOUND_TF:
+    import tensorflow as tf
     keras = tf.keras
 
     class ActivationQuantizationHolder(keras.layers.Layer):
