@@ -22,6 +22,9 @@ from model_compression_toolkit.core.common.back2framework.base_model_builder imp
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.constants import INPUT_BASE_NAME
 
+from model_compression_toolkit.quantizers_infrastructure.activation_quantization_holder.keras\
+    .activation_quantization_holder import ActivationQuantizationHolder
+
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.keras.layers import Input
@@ -92,7 +95,8 @@ class KerasModelBuilder(BaseModelBuilder):
                  append2output=None,
                  fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                  return_float_outputs: bool = False,
-                 wrapper: Callable = None):
+                 wrapper: Callable = None,
+                 get_activation_quantizer_holder_fn: Callable=None):
         """
 
         Args:
@@ -101,6 +105,8 @@ class KerasModelBuilder(BaseModelBuilder):
             fw_info: Information about the specific framework of the model that is built.
             return_float_outputs: Whether the model returns float tensors or not.
             wrapper: A function wrapper keras Layers.
+            get_activation_quantizer_holder_fn: Function to retrieve a quantization holder for a node.
+
         """
 
         super().__init__(graph,
@@ -111,6 +117,7 @@ class KerasModelBuilder(BaseModelBuilder):
         # Build an OperationHandler to handle conversions from graph nodes to Keras operators.
         self.oh = OperationHandler(self.graph)
         self.wrapper = wrapper
+        self.get_activation_quantizer_holder = get_activation_quantizer_holder_fn
 
     def _quantize_node_activations(self,
                                    node: BaseNode,
@@ -184,9 +191,8 @@ class KerasModelBuilder(BaseModelBuilder):
                 node_to_output_tensors_dict.update({n: [out_tensors_of_n]})
                 node_to_output_tensors_dict_float.update({n: [out_tensors_of_n_float]})
 
-        # convert node_to_output_tensors_dict keys to nodes' names since oh.node_sort contains different objects
-        # than
-        # original graph nodes.
+        # convert node_to_output_tensors_dict keys to nodes' names since oh.node_sort
+        # contains different objects than original graph nodes.
         node_name_to_outtensors = self._convert_node2name(node_to_output_tensors_dict)
         node_name_to_outtensors_float = self._convert_node2name(node_to_output_tensors_dict_float)
 
@@ -211,9 +217,13 @@ class KerasModelBuilder(BaseModelBuilder):
             def _wrap(layer):
                 _node = self.oh.layer_to_node_dict.get(layer)
                 if _node is not None:
-                    return self.wrapper(_node, layer)
-                elif is_layer_fake_quant(layer):
+                    return self.wrapper(_node,
+                                        layer,
+                                        wrap_with_activation_quantizers=not self.use_activation_quantization_holder)
+
+                elif is_layer_fake_quant(layer) or isinstance(layer, ActivationQuantizationHolder):
                     return layer
+
                 raise Exception(  # pragma: no cover
                     f'Mismatch between keras model and graph cant find node named: '
                     f'{get_node_name_from_layer(layer)}')
@@ -278,7 +288,17 @@ class KerasModelBuilder(BaseModelBuilder):
             if self.wrapper is not None:
                 # if a wrapper is defined, add an identity layer for cloning. The Identity will be warpped
                 out_tensors_of_n = op_func(out_tensors_of_n_float)
-            elif n.is_activation_quantization_enabled():
+
+                # In case the activation quantizer is attached out of the wrapper we use get_activation_quantizer_holder
+                # for the activation quantization holder
+                if self.get_activation_quantizer_holder is not None:
+                    activation_quantizer_holder = self.get_activation_quantizer_holder(n)
+
+                    # In case the node should have a holder attached:
+                    if activation_quantizer_holder is not None:
+                        out_tensors_of_n = activation_quantizer_holder(out_tensors_of_n)
+
+            elif n.is_activation_quantization_enabled(): # Used only when old exporter is used
                 out_tensors_of_n = self._quantize_node_activations(n, out_tensors_of_n_float)
             else:
                 out_tensors_of_n = out_tensors_of_n_float
@@ -299,7 +319,18 @@ class KerasModelBuilder(BaseModelBuilder):
             out_tensors_of_n = out_tensors_of_n_float
 
             # Add a fake quant node if the node has an activation threshold and a wrapper isn't defined
-            if n.is_activation_quantization_enabled() and self.wrapper is None:
+            if self.wrapper is None:
+                if n.is_activation_quantization_enabled():  # Used only when old exporter is used
+                    out_tensors_of_n = self._quantize_node_activations(n, out_tensors_of_n_float)
+            else:
+                # In case the activation quantizer is attached out of the wrapper we use get_activation_quantizer_holder
+                # for the activation quantization holder
+                if self.get_activation_quantizer_holder is not None:
+                    activation_quantizer_holder = self.get_activation_quantizer_holder(n)
+                    if activation_quantizer_holder is not None:
+                        out_tensors_of_n = activation_quantizer_holder(out_tensors_of_n_float)
+
+            if n.is_activation_quantization_enabled() and self.wrapper is None: # Used only when old exporter is used
                 out_tensors_of_n = self._quantize_node_activations(n, out_tensors_of_n_float)
 
         # Save a mapping from the layer that created the tensor to the node (as this layer is not the

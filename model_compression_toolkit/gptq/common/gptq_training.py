@@ -19,8 +19,9 @@ from typing import Callable, List, Any
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+# from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR
+from model_compression_toolkit.gptq.common.gptq_framework_implementation import GPTQFrameworkImplemantation
 from model_compression_toolkit.gptq.common.gptq_graph import get_compare_points
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.logger import Logger
@@ -35,7 +36,7 @@ class GPTQTrainer(ABC):
                  graph_float: Graph,
                  graph_quant: Graph,
                  gptq_config: GradientPTQConfig,
-                 fw_impl: FrameworkImplementation,
+                 fw_impl: GPTQFrameworkImplemantation,
                  fw_info: FrameworkInfo):
         """
         Build two models from a graph: A teacher network (float model) and a student network (quantized model).
@@ -260,7 +261,7 @@ def gptq_training(graph_float: Graph,
                   graph_quant: Graph,
                   gptq_config: GradientPTQConfig,
                   representative_data_gen: Callable,
-                  fw_impl: FrameworkImplementation,
+                  fw_impl: GPTQFrameworkImplemantation,
                   fw_info: FrameworkInfo) -> Graph:
     """
     GPTQ training process using knowledge distillation with a teacher network (float model) and a student network (quantized model).

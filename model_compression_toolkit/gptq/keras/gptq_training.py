@@ -16,18 +16,19 @@ from typing import Callable, List, Tuple, Union
 
 import tensorflow as tf
 from keras import Model
+from packaging import version
 from tensorflow.keras.layers import Layer
 from tqdm import tqdm
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
-from packaging import version
-
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.keras.quantizer.quantization_builder import quantization_builder
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
+from model_compression_toolkit.quantizers_infrastructure.activation_quantization_holder.keras \
+    .activation_quantization_holder import ActivationQuantizationHolder
 
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
@@ -131,11 +132,15 @@ class KerasGPTQTrainer(GPTQTrainer):
                                 f"without a kernel isn't supported")
         return node.is_weights_quantization_enabled()
 
-    def gptq_wrapper(self, n: common.BaseNode, layer: Layer) -> Union[qi.KerasQuantizationWrapper, Layer]:
+    def gptq_wrapper(self,
+                     n: common.BaseNode,
+                     layer: Layer,
+                     wrap_with_activation_quantizers: bool = False) -> Union[qi.KerasQuantizationWrapper, Layer]:
         """
         A function which takes a computational graph node and a keras layer and perform the quantization wrapping.
 
         Args:
+            wrap_with_activation_quantizers: Whether to use the wrapper for the activation quantizer or not
             n: A node of mct graph.
             layer: A keras layer
 
@@ -144,11 +149,37 @@ class KerasGPTQTrainer(GPTQTrainer):
         """
         if self._is_gptq_applicable(n):
             weights_quantizers, activation_quantizers = quantization_builder(n, self.gptq_config)
-            return qi.KerasQuantizationWrapper(layer,
-                                               weights_quantizers=weights_quantizers,
-                                               activation_quantizers=activation_quantizers)
+            if wrap_with_activation_quantizers:
+                return qi.KerasQuantizationWrapper(layer,
+                                                   weights_quantizers=weights_quantizers,
+                                                   activation_quantizers=activation_quantizers)
+            else:
+                return qi.KerasQuantizationWrapper(layer,
+                                                   weights_quantizers=weights_quantizers)
         else:
             return layer
+
+    def get_activation_quantizer_holder(self, n: common.BaseNode) -> Union[None, Callable]:
+        """
+        Retrieve a ActivationQuantizationHolder layer to use for activation quantization for a node.
+        If the layer is not supposed to be wrapped with activation quantizers - return None.
+
+        Args:
+            n: Node to get ActivationQuantizationHolder to attach in its output.
+
+        Returns:
+            A ActivationQuantizationHolder layer for the node activation quantization.
+        """
+        if self._is_gptq_applicable(n): # If it was wrapped before - add holder instead
+            _, activation_quantizers = quantization_builder(n, self.gptq_config)
+            # Holder by defenition uses a single quantizer for the activation quantization
+            # thus we make sure this is the only possible case (unless it's a node we no activation
+            # quantization, which in this case has an empty list).
+            if len(activation_quantizers) > 0:
+                assert len(activation_quantizers) == 1, f'ActivationQuantizationHolder supports a ' \
+                                                        f'single quantizer but {len(activation_quantizers)} quantizers were found for node {n}'
+                return ActivationQuantizationHolder(activation_quantizers[0])
+        return None
 
     def build_gptq_model(self) -> Tuple[Model, UserInformation]:
         """
@@ -162,7 +193,8 @@ class KerasGPTQTrainer(GPTQTrainer):
                                                        append2output=self.compare_points,
                                                        fw_info=self.fw_info,
                                                        return_float_outputs=True,
-                                                       wrapper=self.gptq_wrapper).build_model()
+                                                       wrapper=self.gptq_wrapper,
+                                                       get_activation_quantizer_holder_fn=self.get_activation_quantizer_holder).build_model()
 
         return gptq_model, gptq_user_info
 

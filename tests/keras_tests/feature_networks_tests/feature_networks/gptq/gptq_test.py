@@ -44,7 +44,8 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
 
     """
     inputs = layers.Input(shape=in_input_shape)
-    x = layers.Conv2D(64, 4, bias_initializer='glorot_uniform')(inputs)
+    x = layers.Conv2D(64, 4)(inputs)
+    x = layers.Conv2D(64, 4, bias_initializer='glorot_uniform')(x)
     x = layers.BatchNormalization()(x)
     x = layers.PReLU()(x)
     x = layers.Conv2D(64, 8, bias_initializer='glorot_uniform')(x)

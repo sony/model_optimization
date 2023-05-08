@@ -14,10 +14,10 @@
 # ==============================================================================
 
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import QuantizationTarget, BaseInferableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
-    TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.keras.base_keras_quantizer import BaseKerasTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.load_model import keras_load_quantized_model
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantize_wrapper import KerasQuantizationWrapper
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantize_wrapper import PytorchQuantizationWrapper
+from model_compression_toolkit.quantizers_infrastructure.activation_quantization_holder.keras.activation_quantization_holder import ActivationQuantizationHolder
 

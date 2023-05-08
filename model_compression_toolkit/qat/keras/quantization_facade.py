@@ -56,19 +56,27 @@ if FOUND_TF:
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
-    def qat_wrapper(n: common.BaseNode, layer: Layer, qat_config):
+    def qat_wrapper(n: common.BaseNode,
+                    layer: Layer,
+                    qat_config,
+                    wrap_with_activation_quantizers: bool=True):
         """
         A function which takes a computational graph node and a keras layer and perform the quantization wrapping
         Args:
             n: A node of mct graph.
-            layer: A keras layer
+            layer: A keras layer.
+            wrap_with_activation_quantizers: Whether to use the wrapper for the activation quantizer or not
+
 
         Returns: Wrapped layer
 
         """
         if _is_qat_applicable(n, DEFAULT_KERAS_INFO):
             weights_quantizers, activation_quantizers = quantization_builder(n, qat_config, DEFAULT_KERAS_INFO)
-            return qi.KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
+            if wrap_with_activation_quantizers:
+                return qi.KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
+            else:
+                return qi.KerasQuantizationWrapper(layer, weights_quantizers)
         else:
             return layer
 
@@ -186,7 +194,9 @@ if FOUND_TF:
         tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
 
         _qat_wrapper = partial(qat_wrapper, qat_config=qat_config)
-        qat_model, user_info = KerasModelBuilder(graph=tg, fw_info=fw_info, wrapper=_qat_wrapper).build_model()
+        qat_model, user_info = KerasModelBuilder(graph=tg,
+                                                 fw_info=fw_info,
+                                                 wrapper=_qat_wrapper).build_model()
 
         user_info.mixed_precision_cfg = bit_widths_config
         #TODO: remove the last output after updating documentation.
