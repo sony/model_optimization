@@ -219,7 +219,7 @@ class KerasModelBuilder(BaseModelBuilder):
                 if _node is not None:
                     return self.wrapper(_node,
                                         layer,
-                                        wrap_with_activation_quantizers=not self.use_activation_quantization_holder)
+                                        wrap_with_activation_quantizers=self.get_activation_quantizer_holder is not None)
 
                 elif is_layer_fake_quant(layer) or isinstance(layer, ActivationQuantizationHolder):
                     return layer
