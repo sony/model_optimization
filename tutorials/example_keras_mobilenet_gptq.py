@@ -14,6 +14,7 @@
 # ==============================================================================
 
 import argparse
+
 from keras.applications.mobilenet_v2 import MobileNetV2
 
 import model_compression_toolkit as mct
@@ -77,12 +78,9 @@ if __name__ == '__main__':
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
-    from model_compression_toolkit import FolderImageLoader
-
-    image_data_loader = FolderImageLoader(folder,
-                                          preprocessing=[resize, normalization],
-                                          batch_size=batch_size)
-
+    image_data_loader = mct.core.FolderImageLoader(folder,
+                                                   preprocessing=[resize, normalization],
+                                                   batch_size=batch_size)
 
     # Create a Callable representative dataset for calibration purposes.
     # The function should be called without any arguments, and should return a list numpy arrays (array for each
@@ -112,9 +110,9 @@ if __name__ == '__main__':
     gptq_config = mct.gptq.get_keras_gptq_config(n_epochs=args.num_gptq_training_iterations)
 
     quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization_experimental(model,
-                                                                                                    representative_data_gen,
-                                                                                                    gptq_config=gptq_config,
-                                                                                                    core_config=config,
-                                                                                                    target_platform_capabilities=target_platform_cap)
+                                                                                                         representative_data_gen,
+                                                                                                         gptq_config=gptq_config,
+                                                                                                         core_config=config,
+                                                                                                         target_platform_capabilities=target_platform_cap)
 
 
