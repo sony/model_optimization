@@ -14,8 +14,10 @@
 # ==============================================================================
 
 import argparse
-import model_compression_toolkit as mct
+
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+
+import model_compression_toolkit as mct
 
 """
 Mixed precision is a method for quantizing a model using different bit widths
@@ -83,11 +85,9 @@ if __name__ == '__main__':
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
-    from model_compression_toolkit import FolderImageLoader, CoreConfig, MixedPrecisionQuantizationConfigV2
-
-    image_data_loader = FolderImageLoader(folder,
-                                          preprocessing=[resize, normalization],
-                                          batch_size=batch_size)
+    image_data_loader = mct.core.FolderImageLoader(folder,
+                                                   preprocessing=[resize, normalization],
+                                                   batch_size=batch_size)
 
     # Create a Callable representative dataset for calibration purposes.
     # The function should be called without any arguments, and should return a list numpy arrays (array for each
@@ -107,8 +107,8 @@ if __name__ == '__main__':
     # MCT will search a mixed-precision configuration (namely, bit-width for each layer)
     # and quantize the model according to this configuration.
     # The candidates bit-width for quantization should be defined in the target platform model:
-    configuration = CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2(num_of_images=args.mixed_precision_num_of_images,
-                                                                                         use_grad_based_weights=args.enable_mixed_precision_gradients_weighting))
+    configuration = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=args.mixed_precision_num_of_images,
+                                                                                                           use_grad_based_weights=args.enable_mixed_precision_gradients_weighting))
 
     # Get a TargetPlatformCapabilities object that models the hardware for the quantized model inference.
     # Here, for example, we use the default platform that is attached to a Tensorflow layers representation.
@@ -118,9 +118,9 @@ if __name__ == '__main__':
     # Retrieve a KPI object with helpful information of each KPI metric,
     # to constraint the quantized model to the desired memory size.
     kpi_data = mct.core.keras_kpi_data_experimental(model,
-                                               representative_data_gen,
-                                               configuration,
-                                               target_platform_capabilities=target_platform_cap)
+                                                    representative_data_gen,
+                                                    configuration,
+                                                    target_platform_capabilities=target_platform_cap)
 
     # Set a constraint for each of the KPI metrics.
     # Create a KPI object to limit our returned model's size. Note that this values affects only layers and attributes
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     # It is also possible to constraint only part of the KPI metric, e.g., by providing only weights_memory target
     # in the past KPI object, e.g., kpi = mct.core.KPI(kpi_data.weights_memory * 0.75)
     quantized_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model,
-                                                                                           representative_data_gen,
-                                                                                           target_kpi=kpi,
-                                                                                           core_config=configuration,
-                                                                                           target_platform_capabilities=target_platform_cap)
+                                                                                               representative_data_gen,
+                                                                                               target_kpi=kpi,
+                                                                                               core_config=configuration,
+                                                                                               target_platform_capabilities=target_platform_cap)

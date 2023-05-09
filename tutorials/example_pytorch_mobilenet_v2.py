@@ -74,9 +74,7 @@ if __name__ == "__main__":
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
-    from model_compression_toolkit import FolderImageLoader
-
-    image_data_loader = FolderImageLoader(
+    image_data_loader = mct.core.FolderImageLoader(
         folder,
         preprocessing=[
             np_to_pil,

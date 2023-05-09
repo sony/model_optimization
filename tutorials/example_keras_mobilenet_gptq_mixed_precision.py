@@ -87,11 +87,9 @@ if __name__ == '__main__':
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
-    from model_compression_toolkit import FolderImageLoader
-
-    image_data_loader = FolderImageLoader(folder,
-                                          preprocessing=[resize, normalization],
-                                          batch_size=batch_size)
+    image_data_loader = mct.core.FolderImageLoader(folder,
+                                                   preprocessing=[resize, normalization],
+                                                   batch_size=batch_size)
 
 
     # Create a Callable representative dataset for calibration purposes.
