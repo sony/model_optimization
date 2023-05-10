@@ -16,7 +16,7 @@
 from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import ACTIVATION_QUANTIZER
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import ACTIVATION_HOLDER_QUANTIZER
 
 if FOUND_TF:
     import tensorflow as tf
@@ -46,7 +46,7 @@ if FOUND_TF:
             """
             base_config = super(ActivationQuantizationHolder, self).get_config()
             config = {
-                ACTIVATION_QUANTIZER: keras.utils.serialize_keras_object(self.activation_quantizer)}
+                ACTIVATION_HOLDER_QUANTIZER: keras.utils.serialize_keras_object(self.activation_quantizer)}
 
             return dict(list(base_config.items()) + list(config.items()))
 
