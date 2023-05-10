@@ -69,12 +69,12 @@ if FOUND_TF:
 
         def call(self, inputs):
             """
-            ActivationQuantizationHolder call function
+            Quantizes the input tensor using the activation quantizer the ActivationQuantizationHolder holds.
 
             Args:
                 inputs: Input tensors to quantize use the activation quantizer the object holds
 
-            Returns: Output of the activation quantizer
+            Returns: Output of the activation quantizer (quantized input tensor).
 
             """
             return self.activation_quantizer(inputs)
