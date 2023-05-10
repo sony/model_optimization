@@ -125,8 +125,7 @@ class LUTActivationQuantizerTest(BasePytorchTest):
     TODO: remove experimental_exporter argument when activation lut quantizer is added to inferable quantizers
     """
     def __init__(self, unit_test, activation_n_bits=4):
-        super().__init__(unit_test,
-                         experimental_exporter=False)
+        super().__init__(unit_test)
         self.activation_n_bits = activation_n_bits
         self.kernel = 3
         self.num_conv_channels = 3
