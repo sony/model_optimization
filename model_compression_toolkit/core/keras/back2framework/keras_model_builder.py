@@ -119,14 +119,16 @@ class KerasModelBuilder(BaseModelBuilder):
         self.get_activation_quantizer_holder = get_activation_quantizer_holder_fn
 
     @property
-    def use_activation_quantizers_in_wrapper(self) -> bool:
+    def use_activation_holder_during_model_building(self) -> bool:
         """
 
-        Returns: Whether to wrap activation quantizers in wrapper (based on whether a function for holder was passed
-        or not).
+        Returns: Whether the model builder uses ActivationQuantizationHolder during
+        model building (by adding it as a layer when converting the graph to the Keras model)
+        or not. If so - the model builder expects the activation quantizers to not be wrapped
+        in KerasQuantizeWrapper that was received in its init.
 
         """
-        return self.get_activation_quantizer_holder is None
+        return self.get_activation_quantizer_holder is not None
 
     def _quantize_node_activations(self,
                                    node: BaseNode,
@@ -228,7 +230,7 @@ class KerasModelBuilder(BaseModelBuilder):
                 if _node is not None:
                     return self.wrapper(_node,
                                         layer,
-                                        wrap_with_activation_quantizers=self.use_activation_quantizers_in_wrapper)
+                                        include_activation_quantizers=self.use_activation_holder_during_model_building)
 
                 elif is_layer_fake_quant(layer) or isinstance(layer, ActivationQuantizationHolder):
                     return layer
@@ -300,7 +302,7 @@ class KerasModelBuilder(BaseModelBuilder):
 
                 # In case the activation quantizer is attached out of the wrapper we use get_activation_quantizer_holder
                 # for the activation quantization holder
-                if not self.use_activation_quantizers_in_wrapper:
+                if not self.use_activation_holder_during_model_building:
                     activation_quantizer_holder = self.get_activation_quantizer_holder(n)
 
                     # In case the node should have a holder attached:
@@ -334,7 +336,7 @@ class KerasModelBuilder(BaseModelBuilder):
             else:
                 # In case the activation quantizer is attached out of the wrapper we use get_activation_quantizer_holder
                 # for the activation quantization holder
-                if not self.use_activation_quantizers_in_wrapper:
+                if not self.use_activation_holder_during_model_building:
                     activation_quantizer_holder = self.get_activation_quantizer_holder(n)
                     if activation_quantizer_holder is not None:
                         out_tensors_of_n = activation_quantizer_holder(out_tensors_of_n_float)

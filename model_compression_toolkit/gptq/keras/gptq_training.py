@@ -135,12 +135,12 @@ class KerasGPTQTrainer(GPTQTrainer):
     def gptq_wrapper(self,
                      n: common.BaseNode,
                      layer: Layer,
-                     wrap_with_activation_quantizers: bool = False) -> Union[qi.KerasQuantizationWrapper, Layer]:
+                     include_activation_quantizers: bool = False) -> Union[qi.KerasQuantizationWrapper, Layer]:
         """
         A function which takes a computational graph node and a keras layer and perform the quantization wrapping.
 
         Args:
-            wrap_with_activation_quantizers: Whether to use the wrapper for the activation quantizer or not
+            include_activation_quantizers: Whether to use the wrapper for the activation quantizer or not
             n: A node of mct graph.
             layer: A keras layer
 
@@ -149,7 +149,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         """
         if self._is_gptq_applicable(n):
             weights_quantizers, activation_quantizers = quantization_builder(n, self.gptq_config)
-            if wrap_with_activation_quantizers:
+            if include_activation_quantizers:
                 return qi.KerasQuantizationWrapper(layer,
                                                    weights_quantizers=weights_quantizers,
                                                    activation_quantizers=activation_quantizers)

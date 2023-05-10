@@ -30,18 +30,19 @@ if FOUND_TF:
 
     def _get_wrapper(node: common.BaseNode,
                      layer: Layer,
-                     wrap_with_activation_quantizers=True) -> qi.KerasQuantizationWrapper:
+                     include_activation_quantizers=True) -> qi.KerasQuantizationWrapper:
         """
         A function which takes a computational graph node and a keras layer and perform the quantization wrapping
         Args:
             n: A node of mct graph.
             layer: A keras layer
+            include_activation_quantizers: Whether to use the wrapper for the activation quantizer or not
 
         Returns: Wrapped layer with weights quantizers and activation quantizers
 
         """
         weights_quantizers, activation_quantizers = get_quantization_quantizers(node)
-        if wrap_with_activation_quantizers:
+        if include_activation_quantizers:
             return qi.KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
         else:
             return qi.KerasQuantizationWrapper(layer, weights_quantizers)

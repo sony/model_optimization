@@ -58,14 +58,15 @@ if FOUND_TF:
 
     def qat_wrapper(n: common.BaseNode,
                     layer: Layer,
-                    qat_config,
-                    wrap_with_activation_quantizers: bool=True):
+                    qat_config: QATConfig,
+                    include_activation_quantizers: bool=True):
         """
         A function which takes a computational graph node and a keras layer and perform the quantization wrapping
         Args:
+            qat_config: Configuration of QAT (such as training methods for example).
             n: A node of mct graph.
             layer: A keras layer.
-            wrap_with_activation_quantizers: Whether to use the wrapper for the activation quantizer or not
+            include_activation_quantizers: Whether to use the wrapper for the activation quantizer or not
 
 
         Returns: Wrapped layer
@@ -73,7 +74,7 @@ if FOUND_TF:
         """
         if _is_qat_applicable(n, DEFAULT_KERAS_INFO):
             weights_quantizers, activation_quantizers = quantization_builder(n, qat_config, DEFAULT_KERAS_INFO)
-            if wrap_with_activation_quantizers:
+            if include_activation_quantizers:
                 return qi.KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
             else:
                 return qi.KerasQuantizationWrapper(layer, weights_quantizers)
