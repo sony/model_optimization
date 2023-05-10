@@ -26,17 +26,12 @@ from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.
     TestGetTrainableQuantizer
 from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.trainable_keras.test_keras_base_quantizer import TestKerasBaseWeightsQuantizer, \
     TestKerasBaseActivationsQuantizer, TestKerasQuantizerWithoutMarkDecorator
-from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.trainable_keras.test_keras_quantization_wrapper import \
-    TestKerasWeightsQuantizationWrapper, TestKerasActivationsQuantizationWrapper
+
 
 layers = tf.keras.layers
 
 
 class KerasTrainableInfrastructureTestRunner(unittest.TestCase):
-
-    def test_layer_keras_infrastructure(self):
-        TestKerasWeightsQuantizationWrapper(self).run_test()
-        TestKerasActivationsQuantizationWrapper(self).run_test()
 
     def test_keras_base_quantizer(self):
         TestKerasBaseWeightsQuantizer(self).run_test()

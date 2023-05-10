@@ -13,12 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
+import numpy as np
 import tensorflow as tf
 
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
-from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.base_keras_trainable_infra_test import \
-    BaseKerasTrainableInfrastructureTest, \
-    IdentityWeightsQuantizer, ZeroActivationsQuantizer
+from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.base_inferable_quantizer_test import \
+    BaseInferableQuantizerTest
 
 keras = tf.keras
 layers = keras.layers
@@ -27,26 +27,74 @@ WEIGHT = 'kernel'
 CLASS_NAME = 'class_name'
 
 
-class TestKerasWeightsQuantizationWrapper(BaseKerasTrainableInfrastructureTest):
+class IdentityWeightsQuantizer:
+    """
+    A dummy quantizer for test usage - "quantize" the layer's weights to the original weights
+    """
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self,
+                 inputs: tf.Tensor,
+                 training: bool):
+        return inputs
+
+    def initialize_quantization(self, tensor_shape, name, layer):
+        return {}
+
+
+class ZeroWeightsQuantizer:
+    """
+    A dummy quantizer for test usage - "quantize" the layer's weights to 0
+    """
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self,
+                 inputs: tf.Tensor,
+                 training: bool):
+        return inputs * 0
+
+    def initialize_quantization(self, tensor_shape, name, layer):
+        return {}
+
+
+class ZeroActivationsQuantizer:
+    """
+    A dummy quantizer for test usage - "quantize" the layer's activation to 0
+    """
+
+    def __call__(self,
+                 inputs: tf.Tensor,
+                 training: bool = True) -> tf.Tensor:
+        return inputs * 0
+
+    def initialize_quantization(self, tensor_shape, name, layer):
+        return {}
+
+
+class TestKerasWeightsQuantizationWrapper(BaseInferableQuantizerTest):
 
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
+        self.input_shapes = [(1, 8, 8, 3)]
+        self.inputs = [np.random.randn(*in_shape) for in_shape in self.input_shapes]
+
     def create_networks(self):
-        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        inputs = layers.Input(shape=self.input_shapes[0][1:])
         x = layers.Conv2D(6, 7, use_bias=False)(inputs)
         return keras.Model(inputs=inputs, outputs=x)
 
     def run_test(self):
         model = self.create_networks()
         conv_layer = model.layers[1]
-        inputs = self.generate_inputs()[0]
 
-        wrapper = self.get_wrapper(conv_layer)
-        wrapper.add_weights_quantizer(WEIGHT, IdentityWeightsQuantizer(self.get_weights_quantization_config()))
+        wrapper = KerasQuantizationWrapper(conv_layer)
+        wrapper.add_weights_quantizer(WEIGHT, IdentityWeightsQuantizer())
 
         # build
-        wrapper.build(self.get_input_shapes())
+        wrapper.build(self.input_shapes)
         (name, weight, quantizer) = wrapper._weights_vars[0]
         self.unit_test.assertTrue(isinstance(wrapper, KerasQuantizationWrapper))
         self.unit_test.assertTrue(isinstance(wrapper.layer, layers.Conv2D))
@@ -55,8 +103,9 @@ class TestKerasWeightsQuantizationWrapper(BaseKerasTrainableInfrastructureTest):
         self.unit_test.assertTrue(isinstance(quantizer, IdentityWeightsQuantizer))
 
         # call
-        outputs = wrapper.call(inputs.astype('float32'))
-        self.unit_test.assertTrue((outputs == conv_layer(inputs)).numpy().all())
+        call_inputs = self.inputs[0]
+        outputs = wrapper.call(call_inputs.astype('float32'))
+        self.unit_test.assertTrue((outputs == conv_layer(call_inputs)).numpy().all())
 
 
 class TestKerasActivationsQuantizationWrapper(TestKerasWeightsQuantizationWrapper):
@@ -67,16 +116,15 @@ class TestKerasActivationsQuantizationWrapper(TestKerasWeightsQuantizationWrappe
     def run_test(self):
         model = self.create_networks()
         conv_layer = model.layers[1]
-        inputs = self.generate_inputs()[0]
 
-        wrapper = self.get_wrapper(conv_layer, activation_quantizers=[ZeroActivationsQuantizer(
-            self.get_activation_quantization_config())])
+        wrapper = KerasQuantizationWrapper(conv_layer, activation_quantizers=[ZeroActivationsQuantizer()])
 
         # build
-        wrapper.build(self.get_input_shapes())
+        wrapper.build(self.input_shapes)
         (act_quantizer) = wrapper._activation_vars[0]
         self.unit_test.assertTrue(isinstance(act_quantizer, ZeroActivationsQuantizer))
 
         # apply the wrapper on inputs
-        outputs = wrapper.call(inputs.astype('float32'))
+        call_inputs = self.inputs[0]
+        outputs = wrapper.call(call_inputs.astype('float32'))
         self.unit_test.assertTrue((outputs == 0).numpy().all())
