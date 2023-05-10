@@ -19,16 +19,11 @@ import numpy as np
 
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import \
-    mark_quantizer
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers import \
-    BasePyTorchInferableQuantizer
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.base_inferable_quantizer_test import \
     BaseInferableQuantizerTest
 
 
-class ZeroWeightsQuantizer(BasePyTorchInferableQuantizer):
+class ZeroWeightsQuantizer:
     """
     A dummy quantizer for test usage - "quantize" the layer's weights to 0
     """
