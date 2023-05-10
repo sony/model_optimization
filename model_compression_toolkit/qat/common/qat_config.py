@@ -42,8 +42,10 @@ class TrainingMethod(Enum):
     An enum for selecting a QAT training method
 
     STE - Standard straight-through estimator. Includes PowerOfTwo, symmetric & uniform quantizers
+    DQA -  DNN Quantization with Attention. Includes a smooth quantization introduces by DQA method
     """
     STE = "STE",
+    DQA = "DQA"
 
 
 class QATConfig:
