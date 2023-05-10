@@ -21,7 +21,7 @@ from torch import Tensor
 
 from model_compression_toolkit.core.common.constants import RANGE_MAX, RANGE_MIN
 from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX, Attention, Temperature
+from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit.core.common import constants as C
 from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
@@ -31,6 +31,7 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import uniform_quantizer
 from model_compression_toolkit.quantizers_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
+
 
 
 @mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
@@ -65,6 +66,8 @@ class DQAUniformWeightQuantizer(BasePytorchQATTrainableQuantizer):
         self.bitwidth_option=[self.num_bits, 2*self.num_bits,4*self.num_bits]
 
         self.quantizer_parameters = {}
+        self.Attention = "attention"
+        self.Temperature = "temperature"
 
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
@@ -82,8 +85,8 @@ class DQAUniformWeightQuantizer(BasePytorchQATTrainableQuantizer):
             Dictionary of new variables.
         """
         # define temperature and attention values
-        layer.register_parameter(name+"_"+Temperature, torch.zero(1))
-        layer.register_parameter(name+"_"+Attention, nn.Parameter(torch.FloatTensor([4/7,2/7,1/7])))
+        layer.register_parameter(name+"_"+self.Temperature, torch.zero(1))
+        layer.register_parameter(name+"_"+self.Attention, nn.Parameter(torch.FloatTensor([4/7,2/7,1/7])))
         #layer.register_parameter(name+"_"+'Attention_factor', nn.Parameter(torch.FloatTensor([1,4,8]))) # should be done with the loss function for training.
         
 
@@ -93,7 +96,7 @@ class DQAUniformWeightQuantizer(BasePytorchQATTrainableQuantizer):
 
         # Save the quantizer parameters for later calculations
         self.quantizer_parameters = {FQ_MIN: layer.get_parameter(name+"_"+FQ_MIN), FQ_MAX: layer.get_parameter(name+"_"+FQ_MAX), 
-        Attention:layer.get_parameter(name+"_"+Attention),Temperature:layer.get_parameter(name+"_"+Temperature)}
+        self.Attention:layer.get_parameter(name+"_"+self.Attention),self.Temperature:layer.get_parameter(name+"_"+self.Temperature)}
 
         return self.quantizer_parameters
 
@@ -108,9 +111,9 @@ class DQAUniformWeightQuantizer(BasePytorchQATTrainableQuantizer):
         Returns:
             quantized tensor
         """
-        attention = self.quantizer_parameters[Attention] / self.quantizer_parameters[Attention].std() 
+        attention = self.quantizer_parameters[self.Attention] / self.quantizer_parameters[self.Attention].std() 
         
-        attention = torch.nn.functional.softmax(self.quantizer_parameters[Temperature] * attention)
+        attention = torch.nn.functional.softmax(self.quantizer_parameters[self.Temperature] * attention)
         q=0
         for i in range(len(self.bitwidth_option)):
             q+= attention[i]*uniform_quantizer(inputs, self.quantizer_parameters[FQ_MIN], self.quantizer_parameters[FQ_MAX], self.bitwidth_option[i])
