@@ -17,11 +17,6 @@ import numpy as np
 import tensorflow as tf
 
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import \
-    mark_quantizer, QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
-    BaseKerasInferableQuantizer
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.base_inferable_quantizer_test import \
     BaseInferableQuantizerTest
 
@@ -32,9 +27,7 @@ WEIGHT = 'kernel'
 CLASS_NAME = 'class_name'
 
 
-@mark_quantizer(quantization_target=QuantizationTarget.Weights,
-                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
-class IdentityWeightsQuantizer(BaseKerasInferableQuantizer):
+class IdentityWeightsQuantizer:
     """
     A dummy quantizer for test usage - "quantize" the layer's weights to the original weights
     """
@@ -46,13 +39,11 @@ class IdentityWeightsQuantizer(BaseKerasInferableQuantizer):
                  training: bool):
         return inputs
 
-    def get_config(self):
+    def initialize_quantization(self, tensor_shape, name, layer):
         return {}
 
 
-@mark_quantizer(quantization_target=QuantizationTarget.Weights,
-                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
-class ZeroWeightsQuantizer(BaseKerasInferableQuantizer):
+class ZeroWeightsQuantizer:
     """
     A dummy quantizer for test usage - "quantize" the layer's weights to 0
     """
@@ -64,23 +55,22 @@ class ZeroWeightsQuantizer(BaseKerasInferableQuantizer):
                  training: bool):
         return inputs * 0
 
-    def get_config(self):
+    def initialize_quantization(self, tensor_shape, name, layer):
         return {}
 
 
-@mark_quantizer(quantization_target=QuantizationTarget.Activation,
-                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
-class ZeroActivationsQuantizer(BaseKerasInferableQuantizer):
+class ZeroActivationsQuantizer:
     """
     A dummy quantizer for test usage - "quantize" the layer's activation to 0
     """
-    def __init__(self):
-        super().__init__()
 
     def __call__(self,
                  inputs: tf.Tensor,
                  training: bool = True) -> tf.Tensor:
         return inputs * 0
+
+    def initialize_quantization(self, tensor_shape, name, layer):
+        return {}
 
 
 class TestKerasWeightsQuantizationWrapper(BaseInferableQuantizerTest):

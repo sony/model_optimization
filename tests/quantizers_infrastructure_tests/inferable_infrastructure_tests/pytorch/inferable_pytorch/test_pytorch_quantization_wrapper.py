@@ -28,8 +28,6 @@ from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.base_i
     BaseInferableQuantizerTest
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
-                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
 class ZeroWeightsQuantizer(BasePyTorchInferableQuantizer):
     """
     A dummy quantizer for test usage - "quantize" the layer's weights to 0
@@ -44,10 +42,11 @@ class ZeroWeightsQuantizer(BasePyTorchInferableQuantizer):
 
         return inputs * 0
 
+    def initialize_quantization(self, tensor_shape, name, layer):
+        return {}
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
-                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
-class ZeroActivationsQuantizer(BasePyTorchInferableQuantizer):
+
+class ZeroActivationsQuantizer:
     """
     A dummy quantizer for test usage - "quantize" the layer's activation to 0
     """
@@ -60,6 +59,9 @@ class ZeroActivationsQuantizer(BasePyTorchInferableQuantizer):
                  training: bool = True) -> nn.Parameter:
 
         return inputs * 0
+
+    def initialize_quantization(self, tensor_shape, name, layer):
+        return {}
 
 
 class TestPytorchWeightsQuantizationWrapper(BaseInferableQuantizerTest):
@@ -98,6 +100,5 @@ class TestPytorchActivationQuantizationWrapper(TestPytorchWeightsQuantizationWra
 
         (quantizer) = wrapper._activation_vars[0]
         self.unit_test.assertTrue(isinstance(quantizer, ZeroActivationsQuantizer))
-        # y = wrapper(torch.Tensor(np.random.random((4, 3, 224, 224)))) # apply the wrapper on some random inputs
         y = wrapper(torch.Tensor(self.inputs[0]))  # apply the wrapper on some random inputs
         self.unit_test.assertTrue((y == 0).any())  # check the wrapper's outputs are equal to biases
