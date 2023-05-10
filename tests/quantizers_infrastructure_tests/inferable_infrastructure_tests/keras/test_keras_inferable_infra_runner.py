@@ -40,6 +40,8 @@ from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_weights_lut_inferable_quantizer import \
     TestKerasWeightsSymmetricLUTQuantizer, TestKerasWeightsPOTLUTQuantizer, \
     TestKerasWeightsSymmetricLUTQuantizerAssertions, TestKerasWeightsLUTPOTQuantizerAssertions
+from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_keras_quantization_wrapper import \
+    TestKerasWeightsQuantizationWrapper, TestKerasActivationsQuantizationWrapper
 
 layers = tf.keras.layers
 
@@ -102,6 +104,10 @@ class KerasInferableInfrastructureTestRunner(unittest.TestCase):
                                   quant_method=QuantizationMethod.UNIFORM,
                                   quantizer_base_class=BaseKerasInferableQuantizer,
                                   expected_quantizer_class=ActivationUniformInferableQuantizer).run_test()
+
+    def test_layer_keras_infrastructure(self):
+        TestKerasWeightsQuantizationWrapper(self).run_test()
+        TestKerasActivationsQuantizationWrapper(self).run_test()
 
 
 if __name__ == '__main__':

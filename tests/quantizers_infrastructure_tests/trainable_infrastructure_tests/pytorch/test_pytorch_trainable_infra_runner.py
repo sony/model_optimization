@@ -29,16 +29,9 @@ from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.pytorc
     TestPytorchBaseWeightsQuantizer, TestPytorchBaseActivationQuantizer, TestPytorchQuantizerWithoutMarkDecorator
 from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.pytorch.trainable_pytorch.test_pytorch_get_quantizers import \
     TestGetTrainableQuantizer
-from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.pytorch.trainable_pytorch.test_pytorch_quantization_wrapper import \
-    TestPytorchWeightsQuantizationWrapper, TestPytorchActivationQuantizationWrapper
 
 
 class PytorchTrainableInfrastructureTestRunner(unittest.TestCase):
-
-    def test_layer_pytorch_infrastructre(self):
-        TestPytorchWeightsQuantizationWrapper(self).run_test()
-        TestPytorchActivationQuantizationWrapper(self).run_test()
-
 
     def test_pytorch_base_quantizer(self):
         TestPytorchBaseWeightsQuantizer(self).run_test()
