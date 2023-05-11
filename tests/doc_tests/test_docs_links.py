@@ -34,10 +34,7 @@ class TestDocsLinks(unittest.TestCase):
             return False
 
     def test_readme_files(self):
-        cwd = getcwd()
-        print('Current working directory: ', cwd)
-
-        mct_folder = join(cwd, "model_optimization")
+        mct_folder = getcwd()
         for filepath, _, filenames in walk(mct_folder):
             for filename in filenames:
                 if filename.endswith(".md"):
@@ -56,4 +53,3 @@ class TestDocsLinks(unittest.TestCase):
                                     _link = _link.split('#')[0]
                                     self.assertTrue(isdir(join(filepath, _link)) or isfile(join(filepath, _link)),
                                                     msg=f'Broken link: {_link} in {join(filepath, filename)}')
-            rmtree(mct_folder)
