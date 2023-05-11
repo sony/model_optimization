@@ -44,7 +44,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         input_shape = (8, 8, 3)
         gptq_model = self._get_gptq_model(input_shape, basic_model)
         self.assertTrue(isinstance(gptq_model.layers[3], ActivationQuantizationHolder))
-        self.assertTrue(isinstance(gptq_model.layers[3].activation_quantizer, ActivationPOTInferableQuantizer))
+        self.assertTrue(isinstance(gptq_model.layers[3].activation_holder_quantizer, ActivationPOTInferableQuantizer))
         for l in gptq_model.layers:
             if isinstance(l, KerasQuantizationWrapper):
                 self.assertTrue(len(l.activation_quantizers)==0)
@@ -54,8 +54,8 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         gptq_model = self._get_gptq_model(input_shape, reuse_model)
         self.assertTrue(isinstance(gptq_model.layers[3], ActivationQuantizationHolder))
         self.assertTrue(isinstance(gptq_model.layers[4], ActivationQuantizationHolder))
-        self.assertTrue(isinstance(gptq_model.layers[3].activation_quantizer, ActivationPOTInferableQuantizer))
-        self.assertTrue(isinstance(gptq_model.layers[4].activation_quantizer, ActivationPOTInferableQuantizer))
+        self.assertTrue(isinstance(gptq_model.layers[3].activation_holder_quantizer, ActivationPOTInferableQuantizer))
+        self.assertTrue(isinstance(gptq_model.layers[4].activation_holder_quantizer, ActivationPOTInferableQuantizer))
         for l in gptq_model.layers:
             if isinstance(l, KerasQuantizationWrapper):
                 self.assertTrue(len(l.activation_quantizers)==0)

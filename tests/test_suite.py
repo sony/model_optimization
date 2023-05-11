@@ -30,7 +30,6 @@ from tests.common_tests.function_tests.test_threshold_selection import TestThres
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
 
-
 if FOUND_ONNX:
     from tests.pytorch_tests.function_tests.test_export_pytorch_fully_quantized_model import TestPyTorchFakeQuantExporter
 
@@ -78,6 +77,7 @@ if found_tf:
     from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.test_keras_trainable_infra_runner import \
         KerasTrainableInfrastructureTestRunner
     from tests.keras_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer
+    from tests.keras_tests.function_tests.test_activation_quantization_holder_gptq import TestGPTQModelBuilderWithActivationHolder
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationQuantizationHolder))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQModelBuilderWithActivationHolder))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ExporterTestsRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityMetricInterestPoints))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
