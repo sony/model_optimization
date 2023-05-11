@@ -85,7 +85,6 @@ if FOUND_TORCH:
             Returns:
                 quantized tensor.
             """
-            inputs.requires_grad = False
             return lut_quantizer(inputs, cluster_centers=self.cluster_centers, signed=self.signed,
                                  threshold=self.threshold, multiplier_n_bits=self.multiplier_n_bits, eps=self.eps)
 
