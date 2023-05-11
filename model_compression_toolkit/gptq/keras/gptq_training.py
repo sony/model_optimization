@@ -27,8 +27,7 @@ from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribut
 from model_compression_toolkit.gptq.keras.quantizer.quantization_builder import quantization_builder
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
-from model_compression_toolkit.quantizers_infrastructure.activation_quantization_holder.keras \
-    .activation_quantization_holder import ActivationQuantizationHolder
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.activation_quantization_holder import ActivationQuantizationHolder
 
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer

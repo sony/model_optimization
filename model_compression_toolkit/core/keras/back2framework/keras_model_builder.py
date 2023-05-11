@@ -21,8 +21,7 @@ from packaging import version
 from model_compression_toolkit.constants import INPUT_BASE_NAME
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.quantizers_infrastructure.activation_quantization_holder.keras \
-    .activation_quantization_holder import ActivationQuantizationHolder
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.activation_quantization_holder import ActivationQuantizationHolder
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 if version.parse(tf.__version__) < version.parse("2.6"):
