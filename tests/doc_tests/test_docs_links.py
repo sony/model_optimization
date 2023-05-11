@@ -37,9 +37,6 @@ class TestDocsLinks(unittest.TestCase):
         cwd = getcwd()
         print('Current working directory: ', cwd)
 
-        result = subprocess.run(["git", "clone", "https://github.com/sony/model_optimization.git"], capture_output=True, text=True)
-        self.assertTrue(result.returncode == 0)
-
         mct_folder = join(cwd, "model_optimization")
         for filepath, _, filenames in walk(mct_folder):
             for filename in filenames:
@@ -53,8 +50,10 @@ class TestDocsLinks(unittest.TestCase):
                                 if _link[0] == '#':
                                     pass
                                 elif 'http://' in _link or 'https://' in _link:
-                                    self.assertTrue(self.check_link(_link))
+                                    self.assertTrue(self.check_link(_link),
+                                                    msg=f'Broken link: {_link} in {join(filepath, filename)}')
                                 else:
                                     _link = _link.split('#')[0]
-                                    self.assertTrue(isdir(join(filepath, _link)) or isfile(join(filepath, _link)))
+                                    self.assertTrue(isdir(join(filepath, _link)) or isfile(join(filepath, _link)),
+                                                    msg=f'Broken link: {_link} in {join(filepath, filename)}')
             rmtree(mct_folder)
