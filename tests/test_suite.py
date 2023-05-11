@@ -41,7 +41,6 @@ found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util
 
 if found_tf:
     import tensorflow as tf
-    from tests.quantizers_infrastructure_tests.activation_quantization_holder_tests.keras.test_activation_quantizer_holder import TestActivationQuantizationHolder
     from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
     from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
     from tests.keras_tests.function_tests.test_tensorboard_writer import TestFileLogger

@@ -27,17 +27,17 @@ if FOUND_TF:
         Keras layer to hold an activation quantizer and quantize during inference.
         """
         def __init__(self,
-                     activation_quantizer: BaseInferableQuantizer,
+                     activation_holder_quantizer: BaseInferableQuantizer,
                      **kwargs):
             """
 
             Args:
-                activation_quantizer: Quantizer to use during inference.
+                activation_holder_quantizer: Quantizer to use during inference.
                 **kwargs: Key-word arguments for the base layer
             """
 
             super(ActivationQuantizationHolder, self).__init__(**kwargs)
-            self.activation_quantizer = activation_quantizer
+            self.activation_holder_quantizer = activation_holder_quantizer
 
         def get_config(self):
             """
@@ -46,7 +46,7 @@ if FOUND_TF:
             """
             base_config = super(ActivationQuantizationHolder, self).get_config()
             config = {
-                ACTIVATION_HOLDER_QUANTIZER: keras.utils.serialize_keras_object(self.activation_quantizer)}
+                ACTIVATION_HOLDER_QUANTIZER: keras.utils.serialize_keras_object(self.activation_holder_quantizer)}
 
             return dict(list(base_config.items()) + list(config.items()))
 
@@ -61,11 +61,12 @@ if FOUND_TF:
 
             """
             config = config.copy()
-            activation_quantizer = keras.utils.deserialize_keras_object(config.pop(ACTIVATION_QUANTIZER),
-                                                                        module_objects=globals(),
-                                                                        custom_objects=None)
+            activation_holder_quantizer = keras.utils.deserialize_keras_object(config.pop(ACTIVATION_HOLDER_QUANTIZER),
+                                                                               module_objects=globals(),
+                                                                               custom_objects=None)
 
-            return cls(activation_quantizer=activation_quantizer, **config)
+            return cls(activation_holder_quantizer=activation_holder_quantizer,
+                       **config)
 
         def call(self, inputs):
             """
@@ -77,7 +78,7 @@ if FOUND_TF:
             Returns: Output of the activation quantizer (quantized input tensor).
 
             """
-            return self.activation_quantizer(inputs)
+            return self.activation_holder_quantizer(inputs)
 
 else:
     class ActivationQuantizationHolder:  # pragma: no cover
