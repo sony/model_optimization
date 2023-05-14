@@ -101,60 +101,60 @@ class FeatureNetworkFloatTest(unittest.TestCase):
         from tensorflow.keras.applications.mobilenet import MobileNet
         self.run_network(MobileNet(), input_shapes)
 
-    # def test_mobilenet_v2(self):
-    #     input_shapes = [[1, 224, 224, 3]]
-    #     from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
-    #     self.run_network(MobileNetV2(), input_shapes)
-    #
-    # def test_xception(self):
-    #     input_shapes = [[1, 299, 299, 3]]
-    #     from tensorflow.keras.applications.xception import Xception
-    #     self.run_network(Xception(), input_shapes)
-    #
-    # def test_resnet(self):
-    #     input_shapes = [[1, 224, 224, 3]]
-    #     from tensorflow.keras.applications.resnet import ResNet50
-    #     self.run_network(ResNet50(), input_shapes)
-    #
-    # def test_efficientnetbo(self):
-    #     input_shapes = [[4, 224, 224, 3]]
-    #     from tensorflow.keras.applications.efficientnet import EfficientNetB0
-    #     self.run_network(EfficientNetB0(), input_shapes)
-    #
-    # def test_nasnetmobile(self):
-    #     input_shapes = [[1, 224, 224, 3]]
-    #     from tensorflow.keras.applications.nasnet import NASNetMobile
-    #     self.run_network(NASNetMobile(), input_shapes)
-    #
-    # def test_nasnetlarge(self):
-    #     input_shapes = [[4, 331, 331, 3]]
-    #     from tensorflow.keras.applications.nasnet import NASNetLarge
-    #     self.run_network(NASNetLarge(), input_shapes)
-    #
-    # def test_resnetv2(self):
-    #     input_shapes = [[1, 224, 224, 3]]
-    #     from tensorflow.keras.applications.resnet_v2 import ResNet50V2
-    #     self.run_network(ResNet50V2(), input_shapes)
-    #
-    # def test_densenet121(self):
-    #     input_shapes = [[1, 224, 224, 3]]
-    #     from tensorflow.keras.applications.densenet import DenseNet121
-    #     self.run_network(DenseNet121(), input_shapes)
-    #
-    # def test_vgg(self):
-    #     input_shapes = [[1, 224, 224, 3]]
-    #     from tensorflow.keras.applications.vgg16 import VGG16
-    #     self.run_network(VGG16(), input_shapes)
-    #
-    # def test_inceptionresnet(self):
-    #     input_shapes = [[1, 299, 299, 3]]
-    #     from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2
-    #     self.run_network(InceptionResNetV2(), input_shapes)
-    #
-    # def test_inception(self):
-    #     input_shapes = [[1, 299, 299, 3]]
-    #     from tensorflow.keras.applications.inception_v3 import InceptionV3
-    #     self.run_network(InceptionV3(), input_shapes)
+    def test_mobilenet_v2(self):
+        input_shapes = [[1, 224, 224, 3]]
+        from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+        self.run_network(MobileNetV2(), input_shapes)
+
+    def test_xception(self):
+        input_shapes = [[1, 299, 299, 3]]
+        from tensorflow.keras.applications.xception import Xception
+        self.run_network(Xception(), input_shapes)
+
+    def test_resnet(self):
+        input_shapes = [[1, 224, 224, 3]]
+        from tensorflow.keras.applications.resnet import ResNet50
+        self.run_network(ResNet50(), input_shapes)
+
+    def test_efficientnetbo(self):
+        input_shapes = [[4, 224, 224, 3]]
+        from tensorflow.keras.applications.efficientnet import EfficientNetB0
+        self.run_network(EfficientNetB0(), input_shapes)
+
+    def test_nasnetmobile(self):
+        input_shapes = [[1, 224, 224, 3]]
+        from tensorflow.keras.applications.nasnet import NASNetMobile
+        self.run_network(NASNetMobile(), input_shapes)
+
+    def test_nasnetlarge(self):
+        input_shapes = [[4, 331, 331, 3]]
+        from tensorflow.keras.applications.nasnet import NASNetLarge
+        self.run_network(NASNetLarge(), input_shapes)
+
+    def test_resnetv2(self):
+        input_shapes = [[1, 224, 224, 3]]
+        from tensorflow.keras.applications.resnet_v2 import ResNet50V2
+        self.run_network(ResNet50V2(), input_shapes)
+
+    def test_densenet121(self):
+        input_shapes = [[1, 224, 224, 3]]
+        from tensorflow.keras.applications.densenet import DenseNet121
+        self.run_network(DenseNet121(), input_shapes)
+
+    def test_vgg(self):
+        input_shapes = [[1, 224, 224, 3]]
+        from tensorflow.keras.applications.vgg16 import VGG16
+        self.run_network(VGG16(), input_shapes)
+
+    def test_inceptionresnet(self):
+        input_shapes = [[1, 299, 299, 3]]
+        from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2
+        self.run_network(InceptionResNetV2(), input_shapes)
+
+    def test_inception(self):
+        input_shapes = [[1, 299, 299, 3]]
+        from tensorflow.keras.applications.inception_v3 import InceptionV3
+        self.run_network(InceptionV3(), input_shapes)
 
 
 if __name__ == '__main__':

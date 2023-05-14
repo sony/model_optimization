@@ -64,30 +64,13 @@ class FolderImageLoader(object):
         """
 
         self.folder = folder
-        _imagenet_file = '/Vols/vol_design/tools/swat/users/eladc/repos/imagenet.pickle'
-        _coco_file = '/Vols/vol_design/tools/swat/users/eladc/repos/coco.pickle'
-        if os.path.isfile(_imagenet_file) and folder=='/data/projects/swat/datasets_src/ImageNet/ILSVRC2012_img_train':
-            import pickle
-            # with open(_imagenet_file, 'wb') as f:
-            #     pickle.dump(self.image_list, f)
-            with open(_imagenet_file, 'rb') as f:
-                self.image_list = pickle.load(f)
-            print(f"Loading image list from pickle: {_imagenet_file}")
-        elif os.path.isfile(_coco_file) and folder == '/data/projects/swat/datasets_src/COCO/images/train2017':
-            import pickle
-            # with open(_coco_file, 'wb') as f:
-            #     pickle.dump(self.image_list, f)
-            with open(_coco_file, 'rb') as f:
-                self.image_list = pickle.load(f)
-            print(f"Loading image list from pickle: {_coco_file}")
-        else:
-            self.image_list = []
-            print(f"Starting Scanning Disk: {self.folder}")
-            for root, dirs, files in os.walk(self.folder):
-                for file in files:
-                    file_type = file.split('.')[-1].lower()
-                    if file_type in file_types:
-                        self.image_list.append(os.path.join(root, file))
+        self.image_list = []
+        print(f"Starting Scanning Disk: {self.folder}")
+        for root, dirs, files in os.walk(self.folder):
+            for file in files:
+                file_type = file.split('.')[-1].lower()
+                if file_type in file_types:
+                    self.image_list.append(os.path.join(root, file))
         self.n_files = len(self.image_list)
         assert self.n_files > 0, f'Folder to load can not be empty.'
         print(f"Finished Disk Scanning: Found {self.n_files} files")
