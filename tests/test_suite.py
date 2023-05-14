@@ -77,6 +77,7 @@ if found_tf:
     from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.test_keras_trainable_infra_runner import \
         KerasTrainableInfrastructureTestRunner
     from tests.keras_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as keras_gptq_soft_quantizer_test
+    from tests.keras_tests.function_tests.test_activation_quantization_holder_gptq import TestGPTQModelBuilderWithActivationHolder
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -107,6 +108,7 @@ if __name__ == '__main__':
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQModelBuilderWithActivationHolder))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ExporterTestsRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityMetricInterestPoints))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))

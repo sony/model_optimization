@@ -32,8 +32,13 @@ import model_compression_toolkit as mct
 tp = mct.target_platform
 
 
-def prepare_graph_with_configs(in_model, fw_impl, fw_info, representative_dataset, get_tpc_func,
-                               qc=DEFAULTCONFIG, mixed_precision_enabled=False):
+def prepare_graph_with_configs(in_model,
+                               fw_impl,
+                               fw_info,
+                               representative_dataset,
+                               get_tpc_func,
+                               qc=DEFAULTCONFIG,
+                               mixed_precision_enabled=False):
     # TPC
     base_config, op_cfg_list = get_op_quantization_configs()
 
@@ -60,10 +65,22 @@ def prepare_graph_with_configs(in_model, fw_impl, fw_info, representative_datase
     return graph
 
 
-def prepare_graph_with_quantization_parameters(in_model, fw_impl, fw_info, representative_dataset, get_tpc_func,
-                                               input_shape, qc=DEFAULTCONFIG, mixed_precision_enabled=False):
-    graph = prepare_graph_with_configs(in_model, fw_impl, fw_info, representative_dataset, get_tpc_func,
-                                       qc, mixed_precision_enabled)
+def prepare_graph_with_quantization_parameters(in_model,
+                                               fw_impl,
+                                               fw_info,
+                                               representative_dataset,
+                                               get_tpc_func,
+                                               input_shape,
+                                               qc=DEFAULTCONFIG,
+                                               mixed_precision_enabled=False):
+
+    graph = prepare_graph_with_configs(in_model,
+                                       fw_impl,
+                                       fw_info,
+                                       representative_dataset,
+                                       get_tpc_func,
+                                       qc,
+                                       mixed_precision_enabled)
 
     analyzer_graph(node_analyze_func=fw_impl.attach_sc_to_node,
                    graph=graph,

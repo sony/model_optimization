@@ -28,6 +28,7 @@ from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.
     TestKerasActivationsUniformInferableQuantizer, TestKerasActivationsUniformInferableZeroNotInRange
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_activation_lut_inferable_quantizer import \
     TestKerasActivationPOTLUTQuantizerAssertions, TestKerasActivationPOTLUTQuantizer
+from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_activation_quantizer_holder import TestActivationQuantizationHolderInference, TestActivationQuantizationHolderSaveAndLoad
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_get_quantizers import \
     TestGetInferableQuantizer
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_weights_inferable_quantizer import \
@@ -40,6 +41,8 @@ from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_weights_lut_inferable_quantizer import \
     TestKerasWeightsSymmetricLUTQuantizer, TestKerasWeightsPOTLUTQuantizer, \
     TestKerasWeightsSymmetricLUTQuantizerAssertions, TestKerasWeightsLUTPOTQuantizerAssertions
+from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_keras_quantization_wrapper import \
+    TestKerasWeightsQuantizationWrapper, TestKerasActivationsQuantizationWrapper
 
 layers = tf.keras.layers
 
@@ -102,6 +105,14 @@ class KerasInferableInfrastructureTestRunner(unittest.TestCase):
                                   quant_method=QuantizationMethod.UNIFORM,
                                   quantizer_base_class=BaseKerasInferableQuantizer,
                                   expected_quantizer_class=ActivationUniformInferableQuantizer).run_test()
+
+    def test_layer_keras_infrastructure(self):
+        TestKerasWeightsQuantizationWrapper(self).run_test()
+        TestKerasActivationsQuantizationWrapper(self).run_test()
+
+    def test_activation_quantization_holder(self):
+        TestActivationQuantizationHolderInference(self).run_test()
+        TestActivationQuantizationHolderSaveAndLoad(self).run_test()
 
 
 if __name__ == '__main__':

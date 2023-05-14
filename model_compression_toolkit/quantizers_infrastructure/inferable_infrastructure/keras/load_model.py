@@ -20,9 +20,7 @@ if FOUND_TF:
     import tensorflow as tf
     from model_compression_toolkit import quantizers_infrastructure as qi
     from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
-    from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.base_keras_inferable_quantizer \
-        import \
-        BaseKerasInferableQuantizer
+    from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.base_keras_inferable_quantizer import BaseKerasInferableQuantizer
     keras = tf.keras
 
     def keras_load_quantized_model(filepath, custom_objects=None, compile=True, options=None):
@@ -57,6 +55,8 @@ if FOUND_TF:
 
         # Add non-quantizers custom objects
         qi_custom_objects.update({qi.KerasQuantizationWrapper.__name__: qi.KerasQuantizationWrapper})
+        qi_custom_objects.update({qi.ActivationQuantizationHolder.__name__: qi.ActivationQuantizationHolder})
+
         if custom_objects is not None:
             qi_custom_objects.update(custom_objects)
         return tf.keras.models.load_model(filepath,

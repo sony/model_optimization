@@ -29,18 +29,23 @@ if FOUND_TF:
     from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizers import get_quantization_quantizers
 
     def _get_wrapper(node: common.BaseNode,
-                     layer: Layer) -> qi.KerasQuantizationWrapper:
+                     layer: Layer,
+                     include_activation_quantizers=True) -> qi.KerasQuantizationWrapper:
         """
         A function which takes a computational graph node and a keras layer and perform the quantization wrapping
         Args:
             n: A node of mct graph.
             layer: A keras layer
+            include_activation_quantizers: Whether to use the wrapper for the activation quantizer or not
 
         Returns: Wrapped layer with weights quantizers and activation quantizers
 
         """
         weights_quantizers, activation_quantizers = get_quantization_quantizers(node)
-        return qi.KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
+        if include_activation_quantizers:
+            return qi.KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
+        else:
+            return qi.KerasQuantizationWrapper(layer, weights_quantizers)
 
 
     def get_exportable_keras_model(graph: Graph) -> Tuple[tf.keras.models.Model, UserInformation]:
@@ -56,7 +61,7 @@ if FOUND_TF:
             Exportable Keras model and user information.
         """
         exportable_model, user_info = KerasModelBuilder(graph=graph,
-                                             wrapper=_get_wrapper).build_model()
+                                                        wrapper=_get_wrapper).build_model()
         exportable_model.trainable = False
         return exportable_model, user_info
 else:

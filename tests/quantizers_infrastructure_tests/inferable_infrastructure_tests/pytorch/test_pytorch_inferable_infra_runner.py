@@ -40,6 +40,8 @@ from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.pytorc
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.pytorch.inferable_pytorch.test_weights_lut_inferable_quantizer import \
     TestPytorchWeightsSymmetricLUTQuantizerAssertions, TestPytorchWeightsSymmetricLUTQuantizer, \
     TestPytorchWeightsLUTPOTQuantizerAssertions, TestPytorchWeightsPOTLUTQuantizer
+from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.pytorch.inferable_pytorch.test_pytorch_quantization_wrapper import \
+    TestPytorchWeightsQuantizationWrapper, TestPytorchActivationQuantizationWrapper
 
 
 class PytorchInferableInfrastructureTestRunner(unittest.TestCase):
@@ -110,6 +112,10 @@ class PytorchInferableInfrastructureTestRunner(unittest.TestCase):
                                   quant_method=QuantizationMethod.LUT_POT_QUANTIZER,
                                   quantizer_base_class=BasePyTorchInferableQuantizer,
                                   expected_quantizer_class=ActivationLutPOTInferableQuantizer).run_test()
+
+    def test_layer_pytorch_infrastructre(self):
+        TestPytorchWeightsQuantizationWrapper(self).run_test()
+        TestPytorchActivationQuantizationWrapper(self).run_test()
 
 
 if __name__ == '__main__':
