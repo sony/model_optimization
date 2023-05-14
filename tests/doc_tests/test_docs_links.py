@@ -22,6 +22,10 @@ import re
 
 
 class TestDocsLinks(unittest.TestCase):
+    """
+    A test for checking links in 'readme' (.md files) and '.rst' files. Searches for external
+    links (https:) and local folder or files links.
+    """
 
     @staticmethod
     def check_link(_url):
@@ -33,18 +37,23 @@ class TestDocsLinks(unittest.TestCase):
             print(f"Error checking link '{_url}': {e}")
             return False
 
-    def test_readme_files(self):
+    def test_readme_and_rst_files(self):
         mct_folder = getcwd()
         for filepath, _, filenames in walk(mct_folder):
             for filename in filenames:
+
                 if filename.endswith(".md"):
+                    # readme file detected. go over lines in search of links.
                     with open(join(filepath, filename), "r") as fh:
                         lines = fh.readlines()
                         for i, l in enumerate(lines):
+                            # Search links in readme files with regular expressions:
+                            # format: search for a string between [] followed by a string in (). the latter is the link.
                             _strs = re.findall(r'\[.[^]]*\]\(.[^)]*\)', l)
                             for link_str in _strs:
                                 _link = link_str.split(']')[-1][1:-1]
                                 if _link[0] == '#':
+                                    # A link starting with '#' is a local reference to a headline in the current file --> ignore
                                     pass
                                 elif 'http://' in _link or 'https://' in _link:
                                     self.assertTrue(self.check_link(_link),
@@ -52,4 +61,24 @@ class TestDocsLinks(unittest.TestCase):
                                 else:
                                     _link = _link.split('#')[0]
                                     self.assertTrue(isdir(join(filepath, _link)) or isfile(join(filepath, _link)),
+                                                    msg=f'Broken link: {_link} in {join(filepath, filename)}')
+
+                elif filename.endswith(".rst"):
+                    # doc source file detected. go over lines in search of links.
+                    with open(join(filepath, filename), "r") as fh:
+                        lines = fh.readlines()
+                        for i, l in enumerate(lines):
+                            # Search links in doc source files (.rst) with regular expressions:
+                            # format: search for a string between <>, which is the link
+                            _strs = re.findall(r"<([^<>]+)>", l)
+                            for _link in _strs:
+                                if _link.startswith('ug-'):
+                                    # A link starting with 'ug-' is a reference to another .rst file --> ignore
+                                    # This link is checked when generating the docs
+                                    pass
+                                elif 'http://' in _link or 'https://' in _link:
+                                    self.assertTrue(self.check_link(_link),
+                                                    msg=f'Broken link: {_link} in {join(filepath, filename)}')
+                                else:
+                                    self.assertTrue(isfile(join(filepath, _link.replace('../', '') + '.rst')),
                                                     msg=f'Broken link: {_link} in {join(filepath, filename)}')
