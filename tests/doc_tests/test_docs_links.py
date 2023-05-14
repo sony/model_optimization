@@ -39,6 +39,7 @@ class TestDocsLinks(unittest.TestCase):
 
     def test_readme_and_rst_files(self):
         mct_folder = getcwd()
+        print("MCT folder:", mct_folder)
         for filepath, _, filenames in walk(mct_folder):
             for filename in filenames:
 
@@ -58,10 +59,12 @@ class TestDocsLinks(unittest.TestCase):
                                 elif 'http://' in _link or 'https://' in _link:
                                     self.assertTrue(self.check_link(_link),
                                                     msg=f'Broken link: {_link} in {join(filepath, filename)}')
+                                    print("Link ok:", _link)
                                 else:
                                     _link = _link.split('#')[0]
                                     self.assertTrue(isdir(join(filepath, _link)) or isfile(join(filepath, _link)),
                                                     msg=f'Broken link: {_link} in {join(filepath, filename)}')
+                                    print("Link ok:", _link)
 
                 elif filename.endswith(".rst"):
                     # doc source file detected. go over lines in search of links.
@@ -79,6 +82,8 @@ class TestDocsLinks(unittest.TestCase):
                                 elif 'http://' in _link or 'https://' in _link:
                                     self.assertTrue(self.check_link(_link),
                                                     msg=f'Broken link: {_link} in {join(filepath, filename)}')
+                                    print("Link ok:", _link)
                                 else:
                                     self.assertTrue(isfile(join(filepath, _link.replace('../', '') + '.rst')),
                                                     msg=f'Broken link: {_link} in {join(filepath, filename)}')
+                                    print("Link ok:", _link)
