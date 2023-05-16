@@ -18,7 +18,8 @@ import numpy as np
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, BaseKerasTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, BaseKerasTrainableQuantizer, \
+    ActivationQuantizationHolder
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_all_subclasses import get_all_subclasses
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
     BaseKerasInferableQuantizer
@@ -119,8 +120,9 @@ class QuantizationAwareTrainingQuantizersTest(QuantizationAwareTrainingTest):
             dw_weight = float_model.layers[1].weights[0].numpy()
             quantized_dw_weight = quantized_model.layers[2].weights[0].numpy()
         else:
-            self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.DepthwiseConv2D))
-            for name, quantizer in quantized_model.layers[2].weights_quantizers.items():
+            self.unit_test.assertTrue(isinstance(quantized_model.layers[2], ActivationQuantizationHolder))
+            self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.DepthwiseConv2D))
+            for name, quantizer in quantized_model.layers[3].weights_quantizers.items():
                 w_select = [w for w in float_model.layers[1].weights if name + ":0" in w.name]
                 if len(w_select) != 1:
                     raise Exception()
@@ -128,6 +130,43 @@ class QuantizationAwareTrainingQuantizersTest(QuantizationAwareTrainingTest):
                 quantized_dw_weight = quantizer(dw_weight, False)
         self.unit_test.assertTrue(np.all(dw_weight == quantized_dw_weight))
 
+
+
+
+
+class QuantizationAwareTrainingQuantizerHolderTest(QuantizationAwareTrainingTest):
+
+    def __init__(self, unit_test):
+        super().__init__(unit_test,
+                         layer=layers.Conv2D(3,3))
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        outputs = self.layer(inputs)
+        return keras.Model(inputs=inputs, outputs=outputs)
+
+    def compare(self, quantized_model, float_model, loaded_model, input_x=None, quantization_info=None):
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], ActivationQuantizationHolder))
+        self.unit_test.assertTrue(quantized_model.layers[2].get_config()['activation_holder_quantizer']['class_name'] == 'STEActivationQATQuantizer')
+        self.unit_test.assertTrue(quantized_model.layers[2].get_config()['activation_holder_quantizer']['config']['quantization_config']['activation_n_bits'] == 4)
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[4], ActivationQuantizationHolder))
+        self.unit_test.assertTrue(quantized_model.layers[4].get_config()['activation_holder_quantizer']['class_name'] == 'STEActivationQATQuantizer')
+        self.unit_test.assertTrue(quantized_model.layers[4].get_config()['activation_holder_quantizer']['config']['quantization_config']['activation_n_bits'] == 4)
+
+        # Assert weights of quantizer were added to the quantization holder layer
+        w_names = [w.name for w in quantized_model.layers[2].weights]
+        self.unit_test.assertTrue(any(['out_ptq_threshold_tensor' in w for w in w_names]))
+        self.unit_test.assertTrue(any(['out_min' in w for w in w_names]))
+        self.unit_test.assertTrue(any(['out_max' in w for w in w_names]))
+
+        w_names = [w.name for w in quantized_model.layers[4].weights]
+        self.unit_test.assertTrue(any(['out_ptq_threshold_tensor' in w for w in w_names]))
+        self.unit_test.assertTrue(any(['out_min' in w for w in w_names]))
+        self.unit_test.assertTrue(any(['out_max' in w for w in w_names]))
+
+        # Make sure the wrapper layers do not hold activation quantizers
+        self.unit_test.assertTrue(len(quantized_model.layers[1].activation_quantizers) == 0)
+        self.unit_test.assertTrue(len(quantized_model.layers[3].activation_quantizers)==0)
 
 class QATWrappersTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, layer, weight_bits=2, activation_bits=4, finalize=True,

@@ -49,7 +49,8 @@ if FOUND_TF:
     from model_compression_toolkit.qat.common.qat_config import _is_qat_applicable
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-    from model_compression_toolkit.qat.keras.quantizer.quantization_builder import quantization_builder
+    from model_compression_toolkit.qat.keras.quantizer.quantization_builder import quantization_builder, \
+    get_activation_quantizer_holder
     from model_compression_toolkit.qat.common.qat_config import QATConfig
     from model_compression_toolkit import quantizers_infrastructure as qi
 
@@ -59,7 +60,7 @@ if FOUND_TF:
     def qat_wrapper(n: common.BaseNode,
                     layer: Layer,
                     qat_config: QATConfig,
-                    include_activation_quantizers: bool=True):
+                    include_activation_quantizers: bool=False):
         """
         A function which takes a computational graph node and a keras layer and perform the quantization wrapping
         Args:
@@ -197,7 +198,9 @@ if FOUND_TF:
         _qat_wrapper = partial(qat_wrapper, qat_config=qat_config)
         qat_model, user_info = KerasModelBuilder(graph=tg,
                                                  fw_info=fw_info,
-                                                 wrapper=_qat_wrapper).build_model()
+                                                 wrapper=_qat_wrapper,
+                                                 get_activation_quantizer_holder_fn=partial(get_activation_quantizer_holder,
+                                                                                            qat_config=qat_config)).build_model()
 
         user_info.mixed_precision_cfg = bit_widths_config
         #TODO: remove the last output after updating documentation.
