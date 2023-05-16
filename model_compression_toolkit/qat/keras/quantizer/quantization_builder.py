@@ -46,7 +46,7 @@ def get_activation_quantizer_holder(n: common.BaseNode,
                                                         DEFAULT_KERAS_INFO)
 
         # Holder by definition uses a single quantizer for the activation quantization
-        # thus we make sure this is the only possible case (unless it's a node we no activation
+        # thus we make sure this is the only possible case (unless it's a node with no activation
         # quantization, which in this case has an empty list).
         if len(activation_quantizers) > 0:
             assert len(activation_quantizers) == 1, f'ActivationQuantizationHolder supports a ' \
