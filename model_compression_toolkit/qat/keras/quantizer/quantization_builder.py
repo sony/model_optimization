@@ -12,18 +12,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict, List, Union, Callable
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.qat.common.qat_config import QATConfig, _is_qat_applicable
+from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, ActivationQuantizationHolder
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizer_config import \
     get_trainable_quantizer_weights_config, get_trainable_quantizer_activation_config, \
     get_trainable_quantizer_quantization_candidates
-from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
-from model_compression_toolkit.qat.common.qat_config import QATConfig
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizers import \
     get_trainable_quantizer_class
+
+
+def get_activation_quantizer_holder(n: common.BaseNode,
+                                    qat_config: QATConfig) -> Union[None, Callable]:
+    """
+    Retrieve a ActivationQuantizationHolder layer to use for activation quantization for a node.
+    If the layer is not supposed to be wrapped with activation quantizers - return None.
+
+    Args:
+        n: Node to get ActivationQuantizationHolder to attach in its output.
+        qat_config: Configuration of QAT (such as training methods for example).
+
+    Returns:
+        A ActivationQuantizationHolder layer for the node activation quantization.
+    """
+    if _is_qat_applicable(n, DEFAULT_KERAS_INFO):
+        _, activation_quantizers = quantization_builder(n,
+                                                        qat_config,
+                                                        DEFAULT_KERAS_INFO)
+
+        # Holder by definition uses a single quantizer for the activation quantization
+        # thus we make sure this is the only possible case (unless it's a node with no activation
+        # quantization, which in this case has an empty list).
+        if len(activation_quantizers) > 0:
+            assert len(activation_quantizers) == 1, f'ActivationQuantizationHolder supports a ' \
+                                                    f'single quantizer but {len(activation_quantizers)} quantizers ' \
+                                                    f'were found for node {n}'
+            return ActivationQuantizationHolder(activation_quantizers[0])
+    return None
 
 
 def quantization_builder(n: common.BaseNode,
