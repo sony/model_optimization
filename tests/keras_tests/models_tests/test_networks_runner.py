@@ -13,21 +13,21 @@
 # limitations under the License.
 # ==============================================================================
 import os
-import tempfile
-
-import model_compression_toolkit.gptq.common.gptq_config
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-import tensorflow as tf
-import numpy as np
-import unittest
-import model_compression_toolkit as mct
-from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
-from tests.keras_tests.tpc_keras import get_16bit_tpc
-from tests.common_tests.helpers.tensors_compare import cosine_similarity
-from enum import Enum
 import random
+import tempfile
+import unittest
+from enum import Enum
+
+import numpy as np
+import tensorflow as tf
+
+import model_compression_toolkit as mct
+from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.tensors_compare import cosine_similarity
+from tests.keras_tests.tpc_keras import get_16bit_tpc
 
 keras = tf.keras
 layers = keras.layers
@@ -88,7 +88,10 @@ class NetworkTest:
             try:
                 # New inferable model, thus 'classic' tflite conversion will not work. We use exporter instead
                 _, tflite_file_path = tempfile.mkstemp('.tflite')
-                mct.exporter.tflite_export_model(quantized_model, tflite_file_path, mct.exporter.TFLiteExportMode.FAKELY_QUANT)
+                mct.exporter.keras_export_model(model=quantized_model,
+                                                save_model_path=tflite_file_path,
+                                                target_platform_capabilities=tpc,
+                                                serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE)
                 os.remove(tflite_file_path)
             except Exception as e:
                 error_msg = e.message if hasattr(e, 'message') else str(e)
@@ -106,19 +109,20 @@ class NetworkTest:
                 learning_rate=0.0001), loss=multiple_tensors_mse_loss)
             arc2 = mct.gptq.GradientPTQConfigV2.from_v1(self.num_calibration_iter, arc)
 
-            ptq_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization_experimental(self.model_float,
-                                                                                                      representative_data_gen,
-                                                                                                      core_config=core_config,
-                                                                                                      fw_info=DEFAULT_KERAS_INFO,
-                                                                                                      gptq_config=arc2,
-                                                                                                      target_platform_capabilities=tpc,
-                                                                                                      new_experimental_exporter=True)
+            ptq_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization_experimental(
+                self.model_float,
+                representative_data_gen,
+                core_config=core_config,
+                fw_info=DEFAULT_KERAS_INFO,
+                gptq_config=arc2,
+                target_platform_capabilities=tpc,
+                new_experimental_exporter=True)
         else:
             ptq_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(self.model_float,
-                                                                                             representative_data_gen,
-                                                                                             core_config=core_config,
-                                                                                             target_platform_capabilities=tpc,
-                                                                                             new_experimental_exporter=True)
+                                                                                                 representative_data_gen,
+                                                                                                 core_config=core_config,
+                                                                                                 target_platform_capabilities=tpc,
+                                                                                                 new_experimental_exporter=True)
         self.compare(inputs_list, ptq_model, qc, tpc)
 
 
@@ -142,16 +146,19 @@ class FeatureNetworkTest(unittest.TestCase):
     def run_network(self, model_float, input_shapes, num_calibration_iter, gptq=False):
         inputs_list = FeatureNetworkTest.create_inputs(input_shapes)
 
-        NetworkTest(self, model_float, input_shapes, num_calibration_iter, gptq=gptq).run_network(inputs_list,
-                                                                                                  QUANTIZATION_CONFIG,
-                                                                                                  EIGHT_BIT_QUANTIZATION)
+        NetworkTest(self, model_float, input_shapes, num_calibration_iter,
+                    gptq=gptq).run_network(inputs_list,
+                                           QUANTIZATION_CONFIG,
+                                           EIGHT_BIT_QUANTIZATION)
         if not gptq:
-            NetworkTest(self, model_float, input_shapes, num_calibration_iter, gptq=gptq).run_network(inputs_list,
-                                                                                                      QUANTIZATION_CONFIG,
-                                                                                                      TWO_BIT_QUANTIZATION)
-            NetworkTest(self, model_float, input_shapes, num_calibration_iter, gptq=gptq).run_network(inputs_list,
-                                                                                                      QUANTIZATION_CONFIG,
-                                                                                                      FLOAT_QUANTIZATION)
+            NetworkTest(self, model_float, input_shapes, num_calibration_iter,
+                        gptq=gptq).run_network(inputs_list,
+                                               QUANTIZATION_CONFIG,
+                                               TWO_BIT_QUANTIZATION)
+            NetworkTest(self, model_float, input_shapes, num_calibration_iter,
+                        gptq=gptq).run_network(inputs_list,
+                                               QUANTIZATION_CONFIG,
+                                               FLOAT_QUANTIZATION)
 
     def test_mobilenet_v1(self):
         input_shapes = [[10, 224, 224, 3]]

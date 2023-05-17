@@ -23,10 +23,9 @@ import tensorflow as tf
 from keras import Input
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import get_target_platform_capabilities
-from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 import tests.keras_tests.exporter_tests.constants as constants
+from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_int8_tpc
+
 
 class TFLiteINT8ExporterBaseTest:
 
@@ -54,9 +53,10 @@ class TFLiteINT8ExporterBaseTest:
 
         # Export model in INT8 format
         _, self.int8_model_file_path = tempfile.mkstemp('.tflite')
-        mct.exporter.tflite_export_model(model=self.exportable_model,
-                            mode=mct.exporter.TFLiteExportMode.INT8,
-                            save_model_path=self.int8_model_file_path)
+        mct.exporter.keras_export_model(model=self.exportable_model,
+                                        save_model_path=self.int8_model_file_path,
+                                        target_platform_capabilities=self.get_tpc(),
+                                        serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE)
 
         # Load model
         self.interpreter = tf.lite.Interpreter(model_path=self.int8_model_file_path)
@@ -74,7 +74,7 @@ class TFLiteINT8ExporterBaseTest:
         return [(16, 16, 3)]
 
     def get_tpc(self):
-        return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
+        return get_int8_tpc(edit_params_dict={})
 
     def __get_repr_dataset(self):
         for _ in range(1):
@@ -103,7 +103,8 @@ class TFLiteINT8ExporterBaseTest:
     def run_common_checks(self):
         # Assert output shapes are the same
         # Ignore batch dim as it is constantly 1 in tflite models
-        assert np.all(self.interpreter.get_output_details()[0][constants.SHAPE][1:] == self.exportable_model.output_shape[1:]), \
+        assert np.all(
+            self.interpreter.get_output_details()[0][constants.SHAPE][1:] == self.exportable_model.output_shape[1:]), \
             f'Expected shapes of exportable model and int8 tflite model are expected to be equal but exportable ' \
             f'output shape is {self.exportable_model.output_shape} and int8 output shape is ' \
             f'{self.interpreter.get_output_details()[0][constants.SHAPE]}'
@@ -123,11 +124,12 @@ class TFLiteINT8ExporterBaseTest:
             if len(t[constants.QUANTIZATION_PARAMETERS][constants.SCALES]) > 0:
                 scales = t[constants.QUANTIZATION_PARAMETERS][constants.SCALES]
                 break
-        assert len(scales)==1, f'Expected to find a single scale in the tensor details but scales are: {scales}'
+        assert len(scales) == 1, f'Expected to find a single scale in the tensor details but scales are: {scales}'
 
         # Tolerance is an LSB due to rounding differences
         are_predictions_close = np.isclose(exportable_predictions, tflite_predictions, atol=scales[0])
-        assert np.all(are_predictions_close), f'Outputs expected to be similar up to an LSB, but LSB is {scales[0]} and max error is {np.max(np.abs(exportable_predictions-tflite_predictions))}'
+        assert np.all(
+            are_predictions_close), f'Outputs expected to be similar up to an LSB, but LSB is {scales[0]} and max error is {np.max(np.abs(exportable_predictions - tflite_predictions))}'
 
         # Compare int8 model size to original float model
         float_model_size = os.path.getsize(self.float_model_file_path)
