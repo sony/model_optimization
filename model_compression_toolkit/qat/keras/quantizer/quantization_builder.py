@@ -40,20 +40,22 @@ def get_activation_quantizer_holder(n: common.BaseNode,
     Returns:
         A ActivationQuantizationHolder layer for the node activation quantization.
     """
-    if _is_qat_applicable(n, DEFAULT_KERAS_INFO):
-        _, activation_quantizers = quantization_builder(n,
-                                                        qat_config,
-                                                        DEFAULT_KERAS_INFO)
+    # if _is_qat_applicable(n, DEFAULT_KERAS_INFO):
+    _, activation_quantizers = quantization_builder(n,
+                                                    qat_config,
+                                                    DEFAULT_KERAS_INFO)
 
-        # Holder by definition uses a single quantizer for the activation quantization
-        # thus we make sure this is the only possible case (unless it's a node with no activation
-        # quantization, which in this case has an empty list).
-        if len(activation_quantizers) > 0:
-            assert len(activation_quantizers) == 1, f'ActivationQuantizationHolder supports a ' \
-                                                    f'single quantizer but {len(activation_quantizers)} quantizers ' \
-                                                    f'were found for node {n}'
-            return ActivationQuantizationHolder(activation_quantizers[0])
-    return None
+    # Holder by definition uses a single quantizer for the activation quantization
+    # thus we make sure this is the only possible case (unless it's a node with no activation
+    # quantization, which in this case has an empty list).
+    if len(activation_quantizers) > 0:
+        assert len(activation_quantizers) == 1, f'ActivationQuantizationHolder supports a ' \
+                                                f'single quantizer but {len(activation_quantizers)} quantizers ' \
+                                                f'were found for node {n}'
+        return ActivationQuantizationHolder(activation_quantizers[0])
+
+    # If no quantization is needed use identity functino
+    return lambda x: x
 
 
 def quantization_builder(n: common.BaseNode,
