@@ -15,8 +15,6 @@
 from enum import Enum
 
 
-class ExportSerializationFormat(Enum):
-    KERAS_H5 = 0
-    TFLITE = 1
-    TORCHSCRIPT = 2
-    ONNX = 3
+class PytorchExportSerializationFormat(Enum):
+    TORCHSCRIPT = 0
+    ONNX = 1

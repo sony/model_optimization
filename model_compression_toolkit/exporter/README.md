@@ -53,68 +53,9 @@ quantized_exportable_model, _ = mct.ptq.keras_post_training_quantization_experim
                                                                                               (1, 224, 224, 3))],
                                                                                       new_experimental_exporter=True)
 ```
-### H5
-
-The model will be exported as a tensorflow `.h5` model where weights and activations are quantized but represented as
-float (fakely quant).
-
-#### Usage Example
-
-```python
-import tempfile
-
-from mct.target_platform_capabilities.tpc_models.default_tpc.latest import get_keras_tpc_latest
-from mct.exporter.model_exporter.fw_agonstic.export_serialization_format import ExportSerializationFormat
-
-# Path of exported model
-_, h5_file_path = tempfile.mkstemp('.h5')
-
-# Get TPC
-keras_tpc = get_keras_tpc_latest()
-
-# Use mode ExportSerializationFormat.KERAS_H5 for keras h5 model and default keras tpc for fakely-quantized weights 
-# and activations
-mct.exporter.keras_export_model(model=quantized_exportable_model, save_model_path=h5_file_path,
-                                target_platform_capabilities=keras_tpc,
-                                serialization_format=ExportSerializationFormat.KERAS_H5)
-```
-
-Notice that the fakely-quantized model has the same size as the quantized exportable model as weights data types are
-float.
 
 ### TFLite
 The tflite serialization format export in two qauntization formats 
-
-#### Fakely-Quantized TFLite
-
-The model will be exported as a tflite model where weights and activations are quantized but represented as float.
-Notice that activation quantizers are implemented
-using [tf.quantization.fake_quant_with_min_max_vars](https://www.tensorflow.org/api_docs/python/tf/quantization/fake_quant_with_min_max_vars)
-operators.
-
-##### Usage Example
-
-```python
-
-from mct.target_platform_capabilities.tpc_models.default_tpc.latest import get_keras_tpc_latest
-from mct.exporter.model_exporter.fw_agonstic.export_serialization_format import ExportSerializationFormat
-
-# Path of exported model
-_, tflite_file_path = tempfile.mkstemp('.tflite')
-
-# Get TPC
-keras_tpc = get_keras_tpc_latest()
-
-# Use mode ExportSerializationFormat.TFLITE for tflite model and keras tpc for fakely-quantized weights 
-# and activations
-mct.exporter.keras_export_model(model=quantized_exportable_model,
-                                save_model_path=tflite_file_path,
-                                target_platform_capabilities=keras_tpc,
-                                serialization_format=ExportSerializationFormat.TFLITE)
-```
-
-Notice that the fakely-quantized model has the same size as the quantized exportable model as weights data types are
-float.
 
 #### INT8 TFLite
 
@@ -124,9 +65,10 @@ The model will be exported as a tflite model where weights and activations are r
 
 ```python
 import tempfile
-
+# In order ro the exporter will export an int8 model, the TPC must be configured using the appropriate 
+# quantization format
 from mct.target_platform_capabilities.tpc_models.tflite_tpc.latest import get_keras_tpc_latest
-from mct.exporter.model_exporter.fw_agonstic.export_serialization_format import ExportSerializationFormat
+from mct.exporter.model_exporter.keras.export_serialization_format import KerasExportSerializationFormat
 
 # Path of exported model
 _, tflite_file_path = tempfile.mkstemp('.tflite')
@@ -134,10 +76,10 @@ _, tflite_file_path = tempfile.mkstemp('.tflite')
 # Get TPC
 tflite_int8_tpc = get_keras_tpc_latest()
 
-# Use mode ExportSerializationFormat.TFLITE for tflite model and tflite keras tpc for INT8 data type.
+# Use mode KerasExportSerializationFormat.TFLITE for tflite model and tflite keras tpc for INT8 data type.
 mct.exporter.keras_export_model(model=quantized_exportable_model, save_model_path=tflite_file_path,
                                 target_platform_capabilities=tflite_int8_tpc,
-                                serialization_format=ExportSerializationFormat.TFLITE)
+                                serialization_format=KerasExportSerializationFormat.TFLITE)
 ```
 
 Compare size of float and quantized model:
@@ -153,6 +95,66 @@ print("Float model in Mb:", os.path.getsize(float_file_path) / float(2 ** 20))
 print("Quantized model in Mb:", os.path.getsize(tflite_file_path) / float(2 ** 20))
 print(f'Compression ratio: {os.path.getsize(float_file_path) / os.path.getsize(tflite_file_path)}')
 ```
+
+#### Fakely-Quantized TFLite
+
+The model will be exported as a tflite model where weights and activations are quantized but represented as float.
+Notice that activation quantizers are implemented
+using [tf.quantization.fake_quant_with_min_max_vars](https://www.tensorflow.org/api_docs/python/tf/quantization/fake_quant_with_min_max_vars)
+operators.
+
+##### Usage Example
+
+```python
+
+from mct.target_platform_capabilities.tpc_models.default_tpc.latest import get_keras_tpc_latest
+from mct.exporter.model_exporter.keras.export_serialization_format import KerasExportSerializationFormat
+
+# Path of exported model
+_, tflite_file_path = tempfile.mkstemp('.tflite')
+
+# Get TPC
+keras_tpc = get_keras_tpc_latest()
+
+# Use mode KerasExportSerializationFormat.TFLITE for tflite model and keras tpc for fakely-quantized weights 
+# and activations
+mct.exporter.keras_export_model(model=quantized_exportable_model,
+                                save_model_path=tflite_file_path,
+                                target_platform_capabilities=keras_tpc,
+                                serialization_format=KerasExportSerializationFormat.TFLITE)
+```
+
+Notice that the fakely-quantized model has the same size as the quantized exportable model as weights data types are
+float.
+
+### H5
+
+The model will be exported as a tensorflow `.h5` model where weights and activations are quantized but represented as
+float (fakely quant).
+
+#### Usage Example
+
+```python
+import tempfile
+
+from mct.target_platform_capabilities.tpc_models.default_tpc.latest import get_keras_tpc_latest
+from mct.exporter.model_exporter.keras.export_serialization_format import KerasExportSerializationFormat
+
+# Path of exported model
+_, h5_file_path = tempfile.mkstemp('.h5')
+
+# Get TPC
+keras_tpc = get_keras_tpc_latest()
+
+# Use mode KerasExportSerializationFormat.KERAS_H5 for keras h5 model and default keras tpc for fakely-quantized weights 
+# and activations
+mct.exporter.keras_export_model(model=quantized_exportable_model, save_model_path=h5_file_path,
+                                target_platform_capabilities=keras_tpc,
+                                serialization_format=KerasExportSerializationFormat.KERAS_H5)
+```
+
+Notice that the fakely-quantized model has the same size as the quantized exportable model as weights data types are
+float.
 
 ## Export PyTorch models
 
@@ -191,7 +193,7 @@ The model will be exported in ONNX format where weights and activations are quan
 import tempfile
 
 from mct.target_platform_capabilities.tpc_models.default_tpc.latest import get_pytorch_tpc_latest
-from mct.exporter.model_exporter.fw_agonstic.export_serialization_format import ExportSerializationFormat
+from mct.exporter.model_exporter.pytorch.export_serialization_format import PytorchExportSerializationFormat
 
 # Path of exported model
 _, onnx_file_path = tempfile.mkstemp('.onnx')
@@ -199,11 +201,11 @@ _, onnx_file_path = tempfile.mkstemp('.onnx')
 # Get TPC
 pytorch_tpc = get_pytorch_tpc_latest()
 
-# Use mode ExportSerializationFormat.ONNX for keras h5 model and default pytorch tpc for fakely-quantized weights 
+# Use mode PytorchExportSerializationFormat.ONNX for keras h5 model and default pytorch tpc for fakely-quantized weights 
 # and activations
 mct.exporter.pytorch_export_model(model=quantized_exportable_model, save_model_path=onnx_file_path,
                                   repr_dataset=representative_data_gen, target_platform_capabilities=pytorch_tpc,
-                                  serialization_format=ExportSerializationFormat.ONNX)
+                                  serialization_format=PytorchExportSerializationFormat.ONNX)
 ```
 
 Notice that the fakely-quantized model has the same size as the quantized exportable model as weights data types are
@@ -220,7 +222,7 @@ The model will be exported in TorchScript format where weights and activations a
 import tempfile
 
 from mct.target_platform_capabilities.tpc_models.default_tpc.latest import get_pytorch_tpc_latest
-from mct.exporter.model_exporter.fw_agonstic.export_serialization_format import ExportSerializationFormat
+from mct.exporter.model_exporter.pytorch.export_serialization_format import PytorchExportSerializationFormat
 
 # Path of exported model
 _, torchscript_file_path = tempfile.mkstemp('.pt')
@@ -228,11 +230,11 @@ _, torchscript_file_path = tempfile.mkstemp('.pt')
 # Get TPC
 pytorch_tpc = get_pytorch_tpc_latest()
 
-# Use mode ExportSerializationFormat.TORCHSCRIPT for keras h5 model and default pytorch tpc for fakely-quantized weights 
+# Use mode PytorchExportSerializationFormat.TORCHSCRIPT for keras h5 model and default pytorch tpc for fakely-quantized weights 
 # and activations
 mct.exporter.pytorch_export_model(model=quantized_exportable_model, save_model_path=torchscript_file_path,
                                   repr_dataset=representative_data_gen, target_platform_capabilities=pytorch_tpc,
-                                  serialization_format=ExportSerializationFormat.TORCHSCRIPT)
+                                  serialization_format=PytorchExportSerializationFormat.TORCHSCRIPT)
 ```
 
 Notice that the fakely-quantized model has the same size as the quantized exportable model as weights data types are

@@ -24,7 +24,7 @@ from keras import Input
 
 import model_compression_toolkit as mct
 import tests.keras_tests.exporter_tests.constants as constants
-from tests.keras_tests.exporter_tests.tflite_int8.int8_tp_model import get_int8_tpc
+from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_int8_tpc
 
 
 class TFLiteINT8ExporterBaseTest:
@@ -56,7 +56,7 @@ class TFLiteINT8ExporterBaseTest:
         mct.exporter.keras_export_model(model=self.exportable_model,
                                         save_model_path=self.int8_model_file_path,
                                         target_platform_capabilities=self.get_tpc(),
-                                        serialization_format=mct.exporter.ExportSerializationFormat.TFLITE)
+                                        serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE)
 
         # Load model
         self.interpreter = tf.lite.Interpreter(model_path=self.int8_model_file_path)

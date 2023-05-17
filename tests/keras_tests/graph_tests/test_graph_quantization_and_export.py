@@ -22,7 +22,7 @@ from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 import model_compression_toolkit as mct
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 
 DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
@@ -46,7 +46,7 @@ class TestTFLiteExport(unittest.TestCase):
         mct.exporter.keras_export_model(model=quantized_model,
                                         save_model_path=tflite_file_path,
                                         target_platform_capabilities=self.tpc,
-                                        serialization_format=mct.exporter.ExportSerializationFormat.TFLITE)
+                                        serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE)
         os.remove(tflite_file_path)
 
 

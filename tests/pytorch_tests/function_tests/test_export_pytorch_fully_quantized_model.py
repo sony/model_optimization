@@ -23,7 +23,7 @@ from torchvision.models.mobilenetv2 import mobilenet_v2
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import FOUND_ONNX, FOUND_ONNXRUNTIME, PYTORCH
-from model_compression_toolkit.core.pytorch.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.exporter import pytorch_export_model
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc
@@ -71,14 +71,14 @@ if FOUND_ONNX:
                                  save_model_path=SAVED_MODEL_PATH_PTH,
                                  repr_dataset=self.repr_datagen,
                                  target_platform_capabilities=self.tpc,
-                                 serialization_format=mct.exporter.ExportSerializationFormat.TORCHSCRIPT)
+                                 serialization_format=mct.exporter.PytorchExportSerializationFormat.TORCHSCRIPT)
             self.exported_model_pth = torch.load(SAVED_MODEL_PATH_PTH)
             self.exported_model_pth.eval()
             pytorch_export_model(model=self.exportable_model,
                                  save_model_path=SAVED_MODEL_PATH_ONNX,
                                  repr_dataset=self.repr_datagen,
                                  target_platform_capabilities=self.tpc,
-                                 serialization_format=mct.exporter.ExportSerializationFormat.ONNX)
+                                 serialization_format=mct.exporter.PytorchExportSerializationFormat.ONNX)
             self.exported_model_onnx = onnx.load(SAVED_MODEL_PATH_ONNX)
             # Check that the model is well formed
             onnx.checker.check_model(self.exported_model_onnx)
@@ -136,7 +136,7 @@ if FOUND_ONNX:
                                  save_model_path=SAVED_MP_MODEL_PATH_ONNX,
                                  repr_dataset=self.repr_datagen,
                                  target_platform_capabilities=self.get_tpc(),
-                                 serialization_format=mct.exporter.ExportSerializationFormat.ONNX)
+                                 serialization_format=mct.exporter.PytorchExportSerializationFormat.ONNX)
             self.exported_model_onnx = onnx.load(SAVED_MP_MODEL_PATH_ONNX)
             # Check that the model is well formed
             onnx.checker.check_model(self.exported_model_onnx)

@@ -26,7 +26,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.quantizers_infrastructure import keras_load_quantized_model
 from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_exportable
 
-from model_compression_toolkit.core.keras.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit import get_target_platform_capabilities
 
@@ -90,7 +90,7 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
                                         is_layer_exportable_fn=is_keras_layer_exportable,
                                         save_model_path=SAVED_MODEL_PATH_TF,
                                         target_platform_capabilities=self.tpc,
-                                        serialization_format=mct.exporter.ExportSerializationFormat.KERAS_H5)
+                                        serialization_format=mct.exporter.KerasExportSerializationFormat.KERAS_H5)
         keras_load_quantized_model(SAVED_MODEL_PATH_TF)
 
     def save_and_load_exported_tflite_fakequant_model(self):
@@ -98,7 +98,7 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
                                         is_layer_exportable_fn=is_keras_layer_exportable,
                                         save_model_path=SAVED_MODEL_PATH_TFLITE,
                                         target_platform_capabilities=self.tpc,
-                                        serialization_format=mct.exporter.ExportSerializationFormat.TFLITE)
+                                        serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE)
         interpreter = tf.lite.Interpreter(model_path=SAVED_MODEL_PATH_TFLITE)
         interpreter.allocate_tensors()
 

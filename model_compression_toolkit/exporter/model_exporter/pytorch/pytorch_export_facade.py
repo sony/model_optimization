@@ -15,8 +15,8 @@
 from typing import Callable
 
 from model_compression_toolkit.constants import FOUND_TORCH
-from model_compression_toolkit.exporter.model_exporter.fw_agonstic.export_serialization_format import \
-    ExportSerializationFormat
+from model_compression_toolkit.exporter.model_exporter.pytorch.export_serialization_format import \
+    PytorchExportSerializationFormat
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format import \
@@ -30,50 +30,68 @@ if FOUND_TORCH:
         FakelyQuantTorchScriptPyTorchExporter
     from model_compression_toolkit.exporter.model_wrapper.pytorch.validate_layer import is_pytorch_layer_exportable
 
+    supported_serialization_quantization_export_dict = {
+        PytorchExportSerializationFormat.TORCHSCRIPT: [QuantizationFormat.FAKELY_QUANT],
+        PytorchExportSerializationFormat.ONNX: [QuantizationFormat.FAKELY_QUANT]
+    }
 
     def pytorch_export_model(model: torch.nn.Module,
                              save_model_path: str,
                              repr_dataset: Callable,
                              target_platform_capabilities: TargetPlatformCapabilities,
                              is_layer_exportable_fn: Callable = is_pytorch_layer_exportable,
-                             serialization_format: ExportSerializationFormat = ExportSerializationFormat.TORCHSCRIPT) -> None:
+                             serialization_format: PytorchExportSerializationFormat =
+                             PytorchExportSerializationFormat.TORCHSCRIPT) -> None:
         """
-        Export a PyTorch quantized model to a torchscript or onnx model in fake quant format.
+        Export a PyTorch quantized model to a torchscript or onnx model.
         The model will be saved to the path in save_model_path.
         Currently, pytorch_export_model supports only QuantizationFormat.FAKELY_QUANT (where weights
-        and activations are float fakely-quantized values) and ExportSerializationFormat.TORCHSCRIPT (where the model
-        will be saved to TorchScript model) or ExportSerializationFormat.ONNX (where the model will be saved to
-        ONNX model).
+        and activations are float fakely-quantized values) and PytorchExportSerializationFormat.TORCHSCRIPT
+        (where the model will be saved to TorchScript model) or PytorchExportSerializationFormat.ONNX
+        (where the model will be saved to ONNX model).
 
         Args:
             model: Model to export.
             save_model_path: Path to save the model.
             repr_dataset: Representative dataset for tracing the pytorch model (mandatory for exporting it).
-            target_platform_capabilities: TargetPlatformCapabilities object that describes the desired inference target platform
-            (includes quantization format).
+            target_platform_capabilities: TargetPlatformCapabilities object that describes the desired inference
+            target platform (includes quantization format).
             is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
-            serialization_format: Format to export the model according to.
+            serialization_format: Format to export the model according to (by default
+            PytorchExportSerializationFormat.TORCHSCRIPT).
 
         """
 
-        if target_platform_capabilities.tp_model.quantization_format == QuantizationFormat.FAKELY_QUANT and\
-                serialization_format == ExportSerializationFormat.TORCHSCRIPT:
-            exporter = FakelyQuantTorchScriptPyTorchExporter(model,
-                                                             is_layer_exportable_fn,
-                                                             save_model_path,
-                                                             repr_dataset)
+        if serialization_format == PytorchExportSerializationFormat.TORCHSCRIPT:
+            if target_platform_capabilities.tp_model.quantization_format in \
+                    supported_serialization_quantization_export_dict[serialization_format]:
+                exporter = FakelyQuantTorchScriptPyTorchExporter(model,
+                                                                 is_layer_exportable_fn,
+                                                                 save_model_path,
+                                                                 repr_dataset)
+            else:
+                Logger.critical(
+                    f'Unsupported quantization {target_platform_capabilities.tp_model.quantization_format} for '
+                    f'serialization {serialization_format} was used to export Pytorch model. Please see API for '
+                    f'supported formats.')  # pragma: no cover
 
-        elif target_platform_capabilities.tp_model.quantization_format == QuantizationFormat.FAKELY_QUANT and\
-                serialization_format == ExportSerializationFormat.ONNX:
-            exporter = FakelyQuantONNXPyTorchExporter(model,
-                                                      is_layer_exportable_fn,
-                                                      save_model_path,
-                                                      repr_dataset)
+        elif serialization_format == PytorchExportSerializationFormat.ONNX:
+            if target_platform_capabilities.tp_model.quantization_format in \
+                    supported_serialization_quantization_export_dict[serialization_format]:
+                exporter = FakelyQuantONNXPyTorchExporter(model,
+                                                          is_layer_exportable_fn,
+                                                          save_model_path,
+                                                          repr_dataset)
+            else:
+                Logger.critical(
+                    f'Unsupported quantization {target_platform_capabilities.tp_model.quantization_format} for '
+                    f'serialization {serialization_format} was used to export Pytorch model. Please see API for '
+                    f'supported formats.')  # pragma: no cover
 
         else:
             Logger.critical(
-                f'Unsupported quantization {target_platform_capabilities.tp_model.quantization_format} or serialization {serialization_format} '
-                f'was used to export Keras model. Please see API for supported formats.')  # pragma: no cover
+                f'Unsupported serialization {serialization_format} was used to export Pytorch model. Please see API '
+                f'for supported formats.')  # pragma: no cover
 
         exporter.export()
 

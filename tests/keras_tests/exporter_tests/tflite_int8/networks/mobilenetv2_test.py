@@ -19,7 +19,7 @@ from keras.applications import MobileNetV2
 
 import tests.keras_tests.exporter_tests.constants as constants
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from tests.keras_tests.exporter_tests.tflite_int8.int8_tp_model import get_int8_tpc
+from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_int8_tpc
 from tests.keras_tests.exporter_tests.tflite_int8.tflite_int8_exporter_base_test import TFLiteINT8ExporterBaseTest
 
 layers = keras.layers
