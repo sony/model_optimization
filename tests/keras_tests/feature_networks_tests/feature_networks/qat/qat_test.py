@@ -23,6 +23,7 @@ from model_compression_toolkit.quantizers_infrastructure import QuantizationTarg
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_all_subclasses import get_all_subclasses
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
     BaseKerasInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_tests import \
     MixedPrecisionActivationBaseTest
 from tests.keras_tests.tpc_keras import get_tpc
@@ -225,6 +226,15 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         if self.finalize:
             # QAT finalize model
             qat_finalize_model = mct.qat.keras_quantization_aware_training_finalize(qat_model)
+            for layer in qat_finalize_model.layers:
+                if isinstance(layer, qi.KerasQuantizationWrapper):
+                    self.unit_test.assertTrue(len(layer.activation_quantizers)==0, f'Found {len(layer.activation_quantizers)} activation quantizers in layer wrapper, but activation quantizers should be in ActivationQuantizationHolder layers')
+                    for q in layer.weights_quantizers.values():
+                        self.unit_test.assertFalse(isinstance(q, BaseTrainableQuantizer), f'Quantizer {type(q)} is trainable after finalizing the model')
+                elif isinstance(layer, ActivationQuantizationHolder):
+                    q = layer.activation_holder_quantizer
+                    self.unit_test.assertFalse(isinstance(q, BaseTrainableQuantizer), f'Quantizer {type(q)} is trainable after finalizing the model')
+
             self.compare(qat_finalize_model,
                          finalize=True,
                          input_x=self.representative_data_gen(),

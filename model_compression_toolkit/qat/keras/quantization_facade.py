@@ -22,6 +22,7 @@ from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.quantizers_infrastructure import ActivationQuantizationHolder
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
 from model_compression_toolkit.ptq.runner import ptq_runner
@@ -261,7 +262,7 @@ if FOUND_TF:
 
          """
         def _export(layer):
-            if isinstance(layer, qi.KerasQuantizationWrapper):
+            if isinstance(layer, (qi.KerasQuantizationWrapper, ActivationQuantizationHolder)):
                 layer.convert_to_inferable_quantizers()
             return layer
 

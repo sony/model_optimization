@@ -15,7 +15,7 @@
 
 from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer, BaseKerasTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import \
     ACTIVATION_HOLDER_QUANTIZER, TRAINING, STEPS
 
@@ -125,6 +125,18 @@ if FOUND_TF:
                     _make_quantizer_fn(self.activation_holder_quantizer, inputs, False))
 
             return self.activation_holder_quantizer(inputs)
+
+        def convert_to_inferable_quantizers(self):
+            """
+            Convert layer's quantizer to inferable quantizer.
+
+            Returns:
+                None
+            """
+            if isinstance(self.activation_holder_quantizer, BaseKerasTrainableQuantizer):
+                self.activation_holder_quantizer = self.activation_holder_quantizer.convert2inferable()
+
+
 
 
 else:
