@@ -2,6 +2,7 @@ import unittest
 
 import keras
 import numpy as np
+from keras.layers import ReLU
 from tensorflow.keras.layers import Conv2D, Input
 
 import model_compression_toolkit as mct
@@ -24,6 +25,13 @@ def basic_model(input_shape):
     x = Conv2D(3, 3)(x)
     return keras.Model(inputs=inputs, outputs=x)
 
+def activation_quantization_for_relu_model(input_shape):
+    # Check that activation holder was added to GPTQ after ReLU
+    inputs = Input(shape=input_shape)
+    x = Conv2D(3, 3)(inputs)
+    x = ReLU()(x)
+    x = Conv2D(3, 3)(x)
+    return keras.Model(inputs=inputs, outputs=x)
 
 def reuse_model(input_shape):
     conv = Conv2D(3, 3)
@@ -63,6 +71,12 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         # Test that two holders are getting inputs from reused conv2d (the layer that is wrapped)
         self.assertTrue(gptq_model.layers[2].layer.get_output_at(0).ref() == gptq_model.layers[3].input.ref())
         self.assertTrue(gptq_model.layers[2].layer.get_output_at(1).ref() == gptq_model.layers[4].input.ref())
+
+    def test_adding_holder_after_relu(self):
+        input_shape = (8, 8, 3)
+        gptq_model = self._get_gptq_model(input_shape, activation_quantization_for_relu_model)
+        self.assertTrue(isinstance(gptq_model.layers[4], ReLU))
+        self.assertTrue(isinstance(gptq_model.layers[5], ActivationQuantizationHolder))
 
 
     def _get_gptq_model(self, input_shape, get_model_fn):

@@ -50,6 +50,7 @@ def get_gptq_trainable_parameters(fxp_model: Model,
                                                                   fw_info=DEFAULT_KERAS_INFO)
 
             # collect trainable weights per quantizer
+            assert kernel_attribute in layer.weights_quantizers, f'{kernel_attribute} was not found in weight quantizers of layer {layer.layer}'
             quantizer_trainable_weights = layer.weights_quantizers[kernel_attribute].get_trainable_variables(VariableGroup.WEIGHTS)
             quantizer_trainable_threshold = layer.weights_quantizers[kernel_attribute].get_trainable_variables(VariableGroup.QPARAMS)
             trainable_weights.append(quantizer_trainable_weights)

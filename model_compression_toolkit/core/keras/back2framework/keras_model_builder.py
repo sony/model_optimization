@@ -228,8 +228,7 @@ class KerasModelBuilder(BaseModelBuilder):
                 _node = self.oh.layer_to_node_dict.get(layer)
                 if _node is not None:
                     return self.wrapper(_node,
-                                        layer,
-                                        include_activation_quantizers=not self.use_activation_holder_during_model_building)
+                                        layer)
 
                 elif is_layer_fake_quant(layer) or isinstance(layer, ActivationQuantizationHolder):
                     return layer
@@ -303,10 +302,9 @@ class KerasModelBuilder(BaseModelBuilder):
                 # for the activation quantization holder
                 if self.use_activation_holder_during_model_building:
                     activation_quantizer_holder = self.get_activation_quantizer_holder(n)
+                    out_tensors_of_n = activation_quantizer_holder(out_tensors_of_n)
 
-                    # In case the node should have a holder attached:
-                    if activation_quantizer_holder is not None:
-                        out_tensors_of_n = activation_quantizer_holder(out_tensors_of_n)
+
 
             elif n.is_activation_quantization_enabled(): # Used only when old exporter is used
                 out_tensors_of_n = self._quantize_node_activations(n, out_tensors_of_n_float)
@@ -337,11 +335,7 @@ class KerasModelBuilder(BaseModelBuilder):
                 # for the activation quantization holder
                 if self.use_activation_holder_during_model_building:
                     activation_quantizer_holder = self.get_activation_quantizer_holder(n)
-                    if activation_quantizer_holder is not None:
-                        out_tensors_of_n = activation_quantizer_holder(out_tensors_of_n_float)
-
-            if n.is_activation_quantization_enabled() and self.wrapper is None: # Used only when old exporter is used
-                out_tensors_of_n = self._quantize_node_activations(n, out_tensors_of_n_float)
+                    out_tensors_of_n = activation_quantizer_holder(out_tensors_of_n_float)
 
         # Save a mapping from the layer that created the tensor to the node (as this layer is not the
         # same instance as op_func. We do this to solve an issue that names are different between these
