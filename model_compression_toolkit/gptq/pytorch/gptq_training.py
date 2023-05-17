@@ -35,6 +35,7 @@ from model_compression_toolkit.gptq.pytorch.quantizer.quantization_builder impor
 from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.gptq.pytorch.quantizer.regularization_factory import get_regularization
 from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.activation_quantization_holder import PytorchActivationQuantizationHolder
 
 
 class PytorchGPTQTrainer(GPTQTrainer):
@@ -105,24 +106,52 @@ class PytorchGPTQTrainer(GPTQTrainer):
                          f"without a kernel isn't supported.")
         return node.is_weights_quantization_enabled()
 
-    def gptq_wrapper(self, n: BaseNode, layer: Module) -> Union[qi.PytorchQuantizationWrapper, Module]:
+    def gptq_wrapper(self,
+                     n: BaseNode,
+                     layer: Module,
+                     include_activation_quantizers: bool = False) -> Union[qi.PytorchQuantizationWrapper, Module]:
         """
         A function which takes a computational graph node and a pytorch layer and perform the quantization wrapping.
 
         Args:
             n: A node of mct graph.
             layer: A pytorch layer
+            include_activation_quantizers: Whether or not to use the wrapper for the activation quantizer
 
         Returns: Wrapped layer if the layer should be wrap, otherwise returns the layer as is.
         """
 
         if self._is_gptq_applicable(n):
             weights_quantizers, activation_quantizers = quantization_builder(n, self.gptq_config)
-            return qi.PytorchQuantizationWrapper(layer,
-                                                 weights_quantizers=weights_quantizers,
-                                                 activation_quantizers=activation_quantizers)
+            if include_activation_quantizers:
+                return qi.PytorchQuantizationWrapper(layer,
+                                                     weights_quantizers=weights_quantizers,
+                                                     activation_quantizers=activation_quantizers)
+            else:
+                return qi.PytorchQuantizationWrapper(layer,
+                                                     weights_quantizers=weights_quantizers)
         else:
             return layer
+
+    def get_activation_quantizer_holder(self, n: BaseNode) -> Union[None, Callable]:
+        """
+        Retrieve a PytorchActivationQuantizationHolder layer to use for activation quantization of a node.
+        If the layer is not supposed to be wrapped with an activation quantizer - return None.
+        Args:
+            n: Node to attach a PytorchActivationQuantizationHolder to its output.
+        Returns:
+            A PytorchActivationQuantizationHolder module for the node's activation quantization.
+        """
+        if self._is_gptq_applicable(n): # If it was wrapped before - add holder instead
+            _, activation_quantizers = quantization_builder(n, self.gptq_config)
+            # Holder by defenition uses a single quantizer for the activation quantization
+            # thus we make sure this is the only possible case (unless it's a node we no activation
+            # quantization, which in this case has an empty list).
+            if len(activation_quantizers) > 0:
+                assert len(activation_quantizers) == 1, f'PytorchActivationQuantizationHolder supports a ' \
+                                                        f'single quantizer but {len(activation_quantizers)} quantizers were found for node {n}'
+                return PytorchActivationQuantizationHolder(activation_quantizers[0])
+        return None
 
     def build_gptq_model(self):
         """
@@ -134,7 +163,8 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                                          append2output=self.compare_points,
                                                          fw_info=self.fw_info,
                                                          wrapper=self.gptq_wrapper,
-                                                         return_float_outputs=True).build_model()
+                                                         return_float_outputs=True,
+                                                         get_activation_quantizer_holder_fn=self.get_activation_quantizer_holder).build_model()
 
         return gptq_model, gptq_user_info
 

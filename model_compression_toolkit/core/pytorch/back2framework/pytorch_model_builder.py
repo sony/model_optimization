@@ -30,6 +30,9 @@ from model_compression_toolkit.core.pytorch.default_framework_info import DEFAUL
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, BufferHolder
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 from model_compression_toolkit.core.pytorch.constants import BUFFER
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import \
+    ACTIVATION_HOLDER_QUANTIZER
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.activation_quantization_holder import PytorchActivationQuantizationHolder
 
 
 def _build_input_tensors_list(node: BaseNode,
@@ -66,7 +69,8 @@ def _run_operation(n: BaseNode,
                    input_tensors: List,
                    op_func: Any,
                    quantize_node_activation_fn,
-                   is_wrapped: bool) -> Tuple[Union[List,torch.Tensor], Union[List,torch.Tensor]]:
+                   use_activation_quantization: bool,
+                   use_activation_quantization_holder: bool) -> Tuple[Union[List,torch.Tensor], Union[List,torch.Tensor]]:
     """
     Applying the layer (op_func) to the input tensors (input_tensors).
     If quantized is set to True, and the layer's corresponding node (n) has quantization
@@ -77,7 +81,8 @@ def _run_operation(n: BaseNode,
         input_tensors: List of Pytorch tensors that are the layer's inputs.
         op_func: Module/functional to apply to the input tensors.
         quantize_node_activation_fn: quantization function
-        is_wrapped : Flag to indicate if layer is already quantization wrapped so no activation is needed
+        use_activation_quantization: Flag to indicate if we have an activation function.
+        use_activation_quantization_holder: Flag to indicate if we use an activation quantization holder.
     Returns:
         A tuple of Pytorch tensors. The Module/functional output tensors after applying the
         Module/functional to the input tensors.
@@ -90,12 +95,15 @@ def _run_operation(n: BaseNode,
     else:
         out_tensors_of_n_float = op_func(*input_tensors + op_call_args, **functional_kwargs)
 
-    # Add a fake quant node if the node has an activation threshold.
+        # Add a fake quant node if the node has an activation threshold.
     out_tensors_of_n = out_tensors_of_n_float
-    if n.is_activation_quantization_enabled() and not is_wrapped:
+    if n.is_activation_quantization_enabled() and use_activation_quantization:
         if isinstance(out_tensors_of_n_float, list):
             out_tensors_of_n_float = torch.cat(out_tensors_of_n_float, dim=0)
-        out_tensors_of_n = quantize_node_activation_fn(n, out_tensors_of_n_float)
+        if use_activation_quantization_holder:
+            out_tensors_of_n = quantize_node_activation_fn(out_tensors_of_n_float)
+        else:
+            out_tensors_of_n = quantize_node_activation_fn(n, out_tensors_of_n_float)
 
     return out_tensors_of_n, out_tensors_of_n_float
 
@@ -145,7 +153,8 @@ class PytorchModel(torch.nn.Module):
                  append2output: List[Any] = None,
                  fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                  return_float_outputs: bool = False,
-                 wrapper: Callable = identity_wrapper):
+                 wrapper: Callable = identity_wrapper,
+                 get_activation_quantizer_holder_fn: Callable=None):
         """
         Construct a Pytorch model.
 
@@ -155,16 +164,29 @@ class PytorchModel(torch.nn.Module):
             fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
             return_float_outputs: Whether the model returns float tensors or not.
             wrapper: A function wrapper Pytorch Layers.
+            get_activation_quantizer_holder_fn: Function to retrieve a quantization holder for a node.
+
         """
         super(PytorchModel, self).__init__()
         self.graph = graph
         self.node_sort = list(topological_sort(graph))
-        self.nodes_dict = {}
+        self.node_to_activation_quantization_holder = {}
         self.append2output = append2output
         self.return_float_outputs = return_float_outputs
         self.fw_info = fw_info
         self.wrapper = wrapper
+        self.get_activation_quantizer_holder = get_activation_quantizer_holder_fn
         self._add_modules()
+
+    @property
+    def use_activation_holder_during_model_building(self) -> bool:
+        """
+        Returns: Whether or not the model builder uses a PytorchActivationQuantizationHolder during
+        model building (by adding it as a module when converting the graph to a Pytorch model).
+        If so - the model builder expects the activation quantizers not to be wrapped
+        in a PytorchQuantizeWrapper.
+        """
+        return self.get_activation_quantizer_holder is not None
 
     @abstractmethod
     def _quantize_node_activations(self,
@@ -188,14 +210,27 @@ class PytorchModel(torch.nn.Module):
         for n in self.node_sort:
             if isinstance(n, FunctionalNode):
                 # for functional layers
-                setattr(self, n.name, self.wrapper(n, n.type))
+                setattr(self, n.name,
+                        self.wrapper(n,
+                                     n.type,
+                                     include_activation_quantizers=not self.use_activation_holder_during_model_building)
+                        )
             else:
                 if n.type == BufferHolder:
                     self.add_module(n.name, node_builder(n))
                     self.get_submodule(n.name). \
                         register_buffer(n.name, torch.Tensor(n.get_weights_by_keys(BUFFER)).to(get_working_device()))
                 else:
-                    self.add_module(n.name, self.wrapper(n, node_builder(n)))
+                    self.add_module(n.name,
+                                    self.wrapper(n,
+                                                 node_builder(n),
+                                                 include_activation_quantizers=not self.use_activation_holder_during_model_building)
+                                    )
+            if self.get_activation_quantizer_holder is not None:
+                activation_quantizer_holder = self.get_activation_quantizer_holder(n)
+                if activation_quantizer_holder is not None:
+                    self.add_module(n.name + '_' + ACTIVATION_HOLDER_QUANTIZER, activation_quantizer_holder)
+                    self.node_to_activation_quantization_holder.update({n.name: n.name + '_' + ACTIVATION_HOLDER_QUANTIZER})
 
     def forward(self,
                 *args: Any) -> Any:
@@ -215,13 +250,15 @@ class PytorchModel(torch.nn.Module):
                                                       node_to_output_tensors_dict)
 
             op_func = self._get_op_func(n, configurable_nodes)
+            use_activation_quantization, use_activation_quantization_holder, activation_quantization_fn = self._get_activation_quantization_fn(n)
 
             # Run node operation and fetch outputs
             out_tensors_of_n, out_tensors_of_n_float = _run_operation(n,
                                                                       input_tensors,
                                                                       op_func=op_func,
-                                                                      quantize_node_activation_fn=self._quantize_node_activations,
-                                                                      is_wrapped=self.wrapper is not identity_wrapper)
+                                                                      quantize_node_activation_fn=activation_quantization_fn,
+                                                                      use_activation_quantization=use_activation_quantization,
+                                                                      use_activation_quantization_holder=use_activation_quantization_holder)
 
             if isinstance(out_tensors_of_n, list):
                 node_to_output_tensors_dict.update({n: out_tensors_of_n})
@@ -256,6 +293,18 @@ class PytorchModel(torch.nn.Module):
         """
         return getattr(self, node.name)
 
+    def _get_activation_quantization_fn(self, node):
+        activation_quantization = self.node_to_activation_quantization_holder.get(node.name)
+        if activation_quantization is None:
+            activation_quantization_fn = self._quantize_node_activations
+            use_activation_quantization = not(self.wrapper is not identity_wrapper)
+            use_activation_quantization_holder = False
+        else:
+            activation_quantization_fn = getattr(self, activation_quantization)
+            use_activation_quantization = True
+            use_activation_quantization_holder = self.use_activation_holder_during_model_building
+        return use_activation_quantization, use_activation_quantization_holder, activation_quantization_fn
+
 
 class PyTorchModelBuilder(BaseModelBuilder):
     """
@@ -267,7 +316,8 @@ class PyTorchModelBuilder(BaseModelBuilder):
                  append2output=None,
                  fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                  return_float_outputs: bool = False,
-                 wrapper: Callable = identity_wrapper):
+                 wrapper: Callable = identity_wrapper,
+                 get_activation_quantizer_holder_fn: Callable=None):
         """
 
         Args:
@@ -276,6 +326,7 @@ class PyTorchModelBuilder(BaseModelBuilder):
             fw_info: Information about the specific framework of the model that is built.
             return_float_outputs: Whether the model returns float tensors or not.
             wrapper: A function wrapper Pytorch Layers.
+            get_activation_quantizer_holder_fn: Function to retrieve a quantization holder for a node.
         """
 
         super().__init__(graph,
@@ -284,6 +335,7 @@ class PyTorchModelBuilder(BaseModelBuilder):
                          return_float_outputs)
 
         self.wrapper = wrapper
+        self.get_activation_quantizer_holder_fn = get_activation_quantizer_holder_fn
 
     def build_model(self) -> Tuple[PytorchModel, UserInformation]:
         """
@@ -294,4 +346,5 @@ class PyTorchModelBuilder(BaseModelBuilder):
         return PytorchModel(self.graph,
                             self.append2output,
                             return_float_outputs=self.return_float_outputs,
-                            wrapper=self.wrapper), self.graph.user_info
+                            wrapper=self.wrapper,
+                            get_activation_quantizer_holder_fn=self.get_activation_quantizer_holder_fn), self.graph.user_info

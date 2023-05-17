@@ -90,6 +90,9 @@ if found_pytorch:
     from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.pytorch.test_pytorch_trainable_infra_runner import \
         PytorchTrainableInfrastructureTestRunner
     from tests.pytorch_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as pytorch_gptq_soft_quantier_test
+    from tests.pytorch_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer
+    from tests.pytorch_tests.function_tests.test_activation_quantization_holder_gptq import \
+        TestGPTQModelBuilderWithActivationHolder as TestGPTQModelBuilderWithActivationHolderPytorch
 
 
 if __name__ == '__main__':
@@ -145,6 +148,7 @@ if __name__ == '__main__':
             suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLayerTest))
 
     if found_pytorch:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQModelBuilderWithActivationHolderPytorch))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TorchLayerTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureModelsTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FunctionTestRunner))
