@@ -10,7 +10,7 @@ You can export your quantized model in the following quantization formats:
 * INT8 (where weights and activations are represented using 8bits integers)
 
 The quantization format value set in the target platform (an edge device with dedicated hardware).
-For more details, please read the [TPC README](model_compression_toolkit/target_platform_capabilities/README.md).  
+For more details, please read the [TPC README](../target_platform_capabilities/README.md).  
 ```python
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format import \
