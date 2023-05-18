@@ -18,6 +18,7 @@ from typing import List
 from model_compression_toolkit.core.pytorch.constants import BIAS
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
@@ -46,6 +47,8 @@ def get_gptq_trainable_parameters(fxp_model: nn.Module,
                                                                   fw_info=DEFAULT_PYTORCH_INFO)
 
             # collect trainable weights per quantizer
+            if kernel_attribute not in layer.weights_quantizers:
+                Logger.error(f'{kernel_attribute} was not found in weight quantizers of layer {layer.layer}')
             quantizer_trainable_weights = layer.weights_quantizers[kernel_attribute].get_trainable_variables(VariableGroup.WEIGHTS)
             quantizer_trainable_threshold = layer.weights_quantizers[kernel_attribute].get_trainable_variables(VariableGroup.QPARAMS)
             trainable_aux_weights.extend(quantizer_trainable_weights)

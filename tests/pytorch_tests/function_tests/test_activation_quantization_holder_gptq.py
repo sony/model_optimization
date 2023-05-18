@@ -2,7 +2,6 @@ import unittest
 import torch
 from torch.nn import Conv2d
 import numpy as np
-from torch.testing._internal.codegen.random_topo_test import DEVICE
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
@@ -35,6 +34,21 @@ class BasicModel(torch.nn.Module):
         return x
 
 
+class ReLUModel(torch.nn.Module):
+    def __init__(self, num_channels=3, kernel_size=1):
+        super(ReLUModel, self).__init__()
+        self.conv1 = Conv2d(num_channels, num_channels, kernel_size=kernel_size, bias=False)
+        self.conv2 = Conv2d(num_channels, num_channels, kernel_size=kernel_size, bias=False)
+        self.relu = torch.nn.ReLU()
+
+    def forward(self, inp):
+        x = self.conv1(inp)
+        x = self.relu(x)
+        x = self.conv2(x)
+        x = self.relu(x)
+        return x
+
+
 class ReuseModel(torch.nn.Module):
     def __init__(self, num_channels=3, kernel_size=1):
         super(ReuseModel, self).__init__()
@@ -60,21 +74,27 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         activation_quantization_holders_in_model = [m[1] for m in gptq_model.named_modules() if isinstance(m[1], PytorchActivationQuantizationHolder)]
         # the last module should be an activation quantization holder
         self.assertTrue(isinstance(last_module, PytorchActivationQuantizationHolder))
-        # check that 2 activation quantization holders where generated
-        self.assertTrue(len(activation_quantization_holders_in_model) == 2)
+        # check that 4 activation quantization holders where generated
+        self.assertTrue(len(activation_quantization_holders_in_model) == 4)
         for a in activation_quantization_holders_in_model:
             self.assertTrue(isinstance(a.activation_holder_quantizer, ActivationPOTInferableQuantizer))
         for name, module in gptq_model.named_modules():
             if isinstance(module, PytorchQuantizationWrapper):
                 self.assertTrue(len(module.activation_quantizers) == 0)
 
-    def test_gptq_activation_quantization(self):
-        input_tensor = torch.from_numpy(np.random.rand(*INPUT_SHAPE). astype(np.float32) * 100 - 50, ).to(DEVICE)
-        float_model = ReuseModel().to(DEVICE)
-        gptq_model = self._get_gptq_model(INPUT_SHAPE, float_model)
-        out_float = float_model(input_tensor)
-        out_gptq = gptq_model(input_tensor)
-        print()
+    def test_adding_holder_after_relu(self):
+        gptq_model = self._get_gptq_model(INPUT_SHAPE, ReLUModel())
+        last_module = list(gptq_model.named_modules())[-1][1]
+        activation_quantization_holders_in_model = [m[1] for m in gptq_model.named_modules() if isinstance(m[1], PytorchActivationQuantizationHolder)]
+        # the last module should be an activation quantization holder
+        self.assertTrue(isinstance(last_module, PytorchActivationQuantizationHolder))
+        # check that 3 activation quantization holders where generated
+        self.assertTrue(len(activation_quantization_holders_in_model) == 3)
+        for a in activation_quantization_holders_in_model:
+            self.assertTrue(isinstance(a.activation_holder_quantizer, ActivationPOTInferableQuantizer))
+        for name, module in gptq_model.named_modules():
+            if isinstance(module, PytorchQuantizationWrapper):
+                self.assertTrue(len(module.activation_quantizers) == 0)
 
     def test_adding_holders_after_reuse(self):
         float_model = ReuseModel()
@@ -83,8 +103,8 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         last_module = list(gptq_model.named_modules())[-1][1]
         # the last module should be an activation quantization holder
         self.assertTrue(isinstance(last_module, PytorchActivationQuantizationHolder))
-        # check that 2 activation quantization holders where generated
-        self.assertTrue(len(activation_quantization_holders_in_model) == 2)
+        # check that 4 activation quantization holders where generated
+        self.assertTrue(len(activation_quantization_holders_in_model) == 4)
         for a in activation_quantization_holders_in_model:
             self.assertTrue(isinstance(a.activation_holder_quantizer, ActivationPOTInferableQuantizer))
         for name, module in gptq_model.named_modules():

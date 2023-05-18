@@ -91,7 +91,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
         self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
 
-    def _is_gptq_applicable(self,
+    def _is_gptq_weights_trainable(self,
                             node: BaseNode) -> bool:
         """
         A function for deciding if a layer should be fine-tuned during GPTQ.
@@ -108,28 +108,21 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
     def gptq_wrapper(self,
                      n: BaseNode,
-                     layer: Module,
-                     include_activation_quantizers: bool = False) -> Union[qi.PytorchQuantizationWrapper, Module]:
+                     layer: Module) -> Union[qi.PytorchQuantizationWrapper, Module]:
         """
         A function which takes a computational graph node and a pytorch layer and perform the quantization wrapping.
 
         Args:
             n: A node of mct graph.
             layer: A pytorch layer
-            include_activation_quantizers: Whether or not to use the wrapper for the activation quantizer
 
         Returns: Wrapped layer if the layer should be wrap, otherwise returns the layer as is.
         """
 
-        if self._is_gptq_applicable(n):
+        if self._is_gptq_weights_trainable(n):
             weights_quantizers, activation_quantizers = quantization_builder(n, self.gptq_config)
-            if include_activation_quantizers:
-                return qi.PytorchQuantizationWrapper(layer,
-                                                     weights_quantizers=weights_quantizers,
-                                                     activation_quantizers=activation_quantizers)
-            else:
-                return qi.PytorchQuantizationWrapper(layer,
-                                                     weights_quantizers=weights_quantizers)
+            return qi.PytorchQuantizationWrapper(layer,
+                                                 weights_quantizers=weights_quantizers)
         else:
             return layer
 
@@ -142,16 +135,15 @@ class PytorchGPTQTrainer(GPTQTrainer):
         Returns:
             A PytorchActivationQuantizationHolder module for the node's activation quantization.
         """
-        if self._is_gptq_applicable(n): # If it was wrapped before - add holder instead
-            _, activation_quantizers = quantization_builder(n, self.gptq_config)
-            # Holder by defenition uses a single quantizer for the activation quantization
-            # thus we make sure this is the only possible case (unless it's a node we no activation
-            # quantization, which in this case has an empty list).
-            if len(activation_quantizers) > 0:
-                assert len(activation_quantizers) == 1, f'PytorchActivationQuantizationHolder supports a ' \
-                                                        f'single quantizer but {len(activation_quantizers)} quantizers were found for node {n}'
-                return PytorchActivationQuantizationHolder(activation_quantizers[0])
-        return None
+        _, activation_quantizers = quantization_builder(n, self.gptq_config)
+        # Holder by definition uses a single quantizer for the activation quantization
+        # thus we make sure this is the only possible case (unless it's a node we no activation
+        # quantization, which in this case has an empty list).
+        if len(activation_quantizers) == 1:
+            return PytorchActivationQuantizationHolder(activation_quantizers[0])
+        Logger.error(
+            f'PytorchActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
+            f'were found for node {n}')
 
     def build_gptq_model(self):
         """
