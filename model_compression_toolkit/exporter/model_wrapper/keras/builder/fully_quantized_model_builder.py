@@ -29,8 +29,7 @@ if FOUND_TF:
     from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizers import get_quantization_quantizers
 
     def _get_wrapper(node: common.BaseNode,
-                     layer: Layer,
-                     include_activation_quantizers=True) -> qi.KerasQuantizationWrapper:
+                     layer: Layer) -> qi.KerasQuantizationWrapper:
         """
         A function which takes a computational graph node and a keras layer and perform the quantization wrapping
         Args:
@@ -42,10 +41,7 @@ if FOUND_TF:
 
         """
         weights_quantizers, activation_quantizers = get_quantization_quantizers(node)
-        if include_activation_quantizers:
-            return qi.KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
-        else:
-            return qi.KerasQuantizationWrapper(layer, weights_quantizers)
+        return qi.KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
 
 
     def get_exportable_keras_model(graph: Graph) -> Tuple[tf.keras.models.Model, UserInformation]:

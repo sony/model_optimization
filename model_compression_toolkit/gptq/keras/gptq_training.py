@@ -145,7 +145,7 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         """
         if self._is_gptq_weights_trainable(n):
-            weights_quantizers, activation_quantizers = quantization_builder(n, self.gptq_config)
+            weights_quantizers, _ = quantization_builder(n, self.gptq_config) # TODO: split quantizers building into two functions: for weights and activations
             return qi.KerasQuantizationWrapper(layer,
                                                weights_quantizers=weights_quantizers)
         else:
@@ -162,17 +162,18 @@ class KerasGPTQTrainer(GPTQTrainer):
         Returns:
             A ActivationQuantizationHolder layer for the node activation quantization.
         """
-        _, activation_quantizers = quantization_builder(n, self.gptq_config)
+        _, activation_quantizers = quantization_builder(n, self.gptq_config) # TODO: split quantizers building into two functions: for weights and activations
+
         # Holder by definition uses a single quantizer for the activation quantization
-        # thus we make sure this is the only possible case (unless it's a node we no activation
+        # thus we make sure this is the only possible case (unless it's a node with no activation
         # quantization, which in this case has an empty list).
-        if len(activation_quantizers) > 0:
-            assert len(activation_quantizers) == 1, f'ActivationQuantizationHolder supports a ' \
-                                                    f'single quantizer but {len(activation_quantizers)} quantizers were found for node {n}'
+        if len(activation_quantizers) == 1:
             return ActivationQuantizationHolder(activation_quantizers[0])
 
-        # Return identity function if no quantization is needed
-        return lambda x: x
+        Logger.error(
+            f'ActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
+            f'were found for node {n}')
+
 
     def build_gptq_model(self) -> Tuple[Model, UserInformation]:
         """

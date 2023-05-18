@@ -299,12 +299,10 @@ class KerasModelBuilder(BaseModelBuilder):
                 out_tensors_of_n = op_func(out_tensors_of_n_float)
 
                 # In case the activation quantizer is attached out of the wrapper we use get_activation_quantizer_holder
-                # for the activation quantization holder
-                if self.use_activation_holder_during_model_building:
+                # for the activation quantization holder (if the node's activations are quantized)
+                if n.is_activation_quantization_enabled() and self.use_activation_holder_during_model_building:
                     activation_quantizer_holder = self.get_activation_quantizer_holder(n)
                     out_tensors_of_n = activation_quantizer_holder(out_tensors_of_n)
-
-
 
             elif n.is_activation_quantization_enabled(): # Used only when old exporter is used
                 out_tensors_of_n = self._quantize_node_activations(n, out_tensors_of_n_float)
@@ -333,7 +331,7 @@ class KerasModelBuilder(BaseModelBuilder):
             else:
                 # In case the activation quantizer is attached out of the wrapper we use get_activation_quantizer_holder
                 # for the activation quantization holder
-                if self.use_activation_holder_during_model_building:
+                if n.is_activation_quantization_enabled() and self.use_activation_holder_during_model_building:
                     activation_quantizer_holder = self.get_activation_quantizer_holder(n)
                     out_tensors_of_n = activation_quantizer_holder(out_tensors_of_n_float)
 
