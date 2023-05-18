@@ -114,8 +114,8 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
 
-    def _is_gptq_applicable(self,
-                            node: common.BaseNode) -> bool:
+    def _is_gptq_weights_trainable(self,
+                                   node: common.BaseNode) -> bool:
         """
         A function for deciding if a layer should be fine-tuned during GPTQ.
 
@@ -133,28 +133,21 @@ class KerasGPTQTrainer(GPTQTrainer):
 
     def gptq_wrapper(self,
                      n: common.BaseNode,
-                     layer: Layer,
-                     include_activation_quantizers: bool = False) -> Union[qi.KerasQuantizationWrapper, Layer]:
+                     layer: Layer) -> Union[qi.KerasQuantizationWrapper, Layer]:
         """
         A function which takes a computational graph node and a keras layer and perform the quantization wrapping.
 
         Args:
-            include_activation_quantizers: Whether to use the wrapper for the activation quantizer or not
             n: A node of mct graph.
             layer: A keras layer
 
         Returns: Wrapped layer if the layer should be wrap, otherwise returns the layer as is.
 
         """
-        if self._is_gptq_applicable(n):
-            weights_quantizers, activation_quantizers = quantization_builder(n, self.gptq_config)
-            if include_activation_quantizers:
-                return qi.KerasQuantizationWrapper(layer,
-                                                   weights_quantizers=weights_quantizers,
-                                                   activation_quantizers=activation_quantizers)
-            else:
-                return qi.KerasQuantizationWrapper(layer,
-                                                   weights_quantizers=weights_quantizers)
+        if self._is_gptq_weights_trainable(n):
+            weights_quantizers, _ = quantization_builder(n, self.gptq_config) # TODO: split quantizers building into two functions: for weights and activations
+            return qi.KerasQuantizationWrapper(layer,
+                                               weights_quantizers=weights_quantizers)
         else:
             return layer
 
@@ -169,16 +162,18 @@ class KerasGPTQTrainer(GPTQTrainer):
         Returns:
             A ActivationQuantizationHolder layer for the node activation quantization.
         """
-        if self._is_gptq_applicable(n): # If it was wrapped before - add holder instead
-            _, activation_quantizers = quantization_builder(n, self.gptq_config)
-            # Holder by defenition uses a single quantizer for the activation quantization
-            # thus we make sure this is the only possible case (unless it's a node we no activation
-            # quantization, which in this case has an empty list).
-            if len(activation_quantizers) > 0:
-                assert len(activation_quantizers) == 1, f'ActivationQuantizationHolder supports a ' \
-                                                        f'single quantizer but {len(activation_quantizers)} quantizers were found for node {n}'
-                return ActivationQuantizationHolder(activation_quantizers[0])
-        return None
+        _, activation_quantizers = quantization_builder(n, self.gptq_config) # TODO: split quantizers building into two functions: for weights and activations
+
+        # Holder by definition uses a single quantizer for the activation quantization
+        # thus we make sure this is the only possible case (unless it's a node with no activation
+        # quantization, which in this case has an empty list).
+        if len(activation_quantizers) == 1:
+            return ActivationQuantizationHolder(activation_quantizers[0])
+
+        Logger.error(
+            f'ActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
+            f'were found for node {n}')
+
 
     def build_gptq_model(self) -> Tuple[Model, UserInformation]:
         """

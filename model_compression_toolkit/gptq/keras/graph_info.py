@@ -20,6 +20,7 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from tensorflow.keras.models import Model
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
@@ -50,6 +51,9 @@ def get_gptq_trainable_parameters(fxp_model: Model,
                                                                   fw_info=DEFAULT_KERAS_INFO)
 
             # collect trainable weights per quantizer
+            if kernel_attribute not in layer.weights_quantizers:
+                Logger.error(f'{kernel_attribute} was not found in weight quantizers of layer {layer.layer}')
+
             quantizer_trainable_weights = layer.weights_quantizers[kernel_attribute].get_trainable_variables(VariableGroup.WEIGHTS)
             quantizer_trainable_threshold = layer.weights_quantizers[kernel_attribute].get_trainable_variables(VariableGroup.QPARAMS)
             trainable_weights.append(quantizer_trainable_weights)
