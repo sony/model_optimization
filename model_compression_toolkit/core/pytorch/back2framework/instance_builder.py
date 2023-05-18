@@ -38,6 +38,7 @@ def node_builder(n: BaseNode) -> Module:
     return node_instance
 
 
+# todo: remove. It is not used anymore
 def identity_wrapper(node: BaseNode,
                      module: Module,
                      include_activation_quantizers: bool):
