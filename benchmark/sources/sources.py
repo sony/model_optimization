@@ -6,6 +6,17 @@ def get_model_source(args):
     elif args.model_source == 'timm':
         from .timm.model_timm import ModelTimm as ModelConfig
     elif args.model_source == 'ultralytics':
-        from .ultralytics.model_yolo import ModelYolo as ModelConfig
+        from .ultralytics.model_ultralytics import ModelUltralytics as ModelConfig
 
     return ModelConfig(args)
+
+
+def supported_datasets(model_source):
+    if model_source == 'torchvision':
+        dataset_list = ["IMAGENET"]
+    elif model_source == 'timm':
+        dataset_list = ["IMAGENET"]
+    elif model_source == 'ultralytics':
+        dataset_list = ["COCO"]
+
+    return dataset_list

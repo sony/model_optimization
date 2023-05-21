@@ -7,7 +7,7 @@ def quant(ModelSrc, args):
     model = ModelSrc.get_model()
 
     representative_data_gen = ModelSrc.get_representative_dataset(
-        representative_dataset_folder=args.train_data_path,
+        representative_dataset_folder=args.representative_dataset_folder,
         n_iter=n_iter,
         batch_size=args.batch_size,
         n_images=args.n_images,

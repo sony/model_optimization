@@ -9,12 +9,22 @@ def argument_handler():
 
     parser.add_argument('--model_name', '-m', type=str, required=True,
                         help='The name of the model to run')
-    parser.add_argument('--model_source', type=str, default='torchvision')
-    parser.add_argument('--dataset_name', type=str, default='IMAGENET')
-    parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--train_data_path', type=str, default='')
-    parser.add_argument('--val_data_path', type=str, default='')
-    parser.add_argument('--n_images', type=int, default=1024)
+    parser.add_argument('--model_source', type=str, default='torchvision',
+                        help='The source of the model out of supported packages')
+    parser.add_argument('--dataset_name', type=str, default='IMAGENET',
+                        help='The name of the dataset used for the pre-trained model')
+    parser.add_argument('--batch_size', type=int, default=32,
+                        help='Batch size for model evaluation')
+    parser.add_argument('--validation_dataset_folder', type=str, default='',
+                        help='Path to the validation dataset')
+    parser.add_argument('--representative_dataset_folder', type=str, default='',
+                        help='Path to the representative dataset used for quantization')
+    parser.add_argument('--n_images', type=int, default=1024,
+                        help='Number of images for representative dataset')
+    parser.add_argument('--image_size', type=int, default=224,
+                        help='Image size required by the pretrained model')
+    parser.add_argument('--random_seed', type=int, default=0,
+                        help='Random seed')
 
     args = parser.parse_args()
     return args
