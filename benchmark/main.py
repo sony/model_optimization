@@ -41,17 +41,16 @@ if __name__ == '__main__':
     # Import the relevant source and pre-trained model
     #################################################
     ModelSrc = get_model_source(args)
-    model = ModelSrc.get_model()
 
     #################################################
     # Evaluate float model
     #################################################
-    float_results = ModelSrc.evaluation(model, args)
+    float_results = ModelSrc.evaluation(ModelSrc.get_model(), args)
 
     #################################################
     # Run model compression toolkit
     #################################################
-    quantized_model = quant(ModelSrc, args)
+    quantized_model = ModelSrc.quantize(args)
 
     #################################################
     # Evaluate quantized model

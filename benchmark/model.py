@@ -1,5 +1,6 @@
 from logging import error
 
+from benchmark.quant import quant
 from benchmark.sources.sources import supported_datasets
 
 
@@ -20,6 +21,9 @@ class Model(object):
     # return the representative dataset (for quantization)
     def get_representative_dataset(self):
         return
+
+    def quantize(self, args):
+        return quant(self, args)
 
     # perform evaluation for a given model
     def evaluation(self, model):
