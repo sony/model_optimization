@@ -12,7 +12,7 @@ class Model(object):
         self.model_name = args.model_name
 
         if not self.dataset_name in supported_datasets(args.model_source):
-            error(f'Dataset {args.dataset_name} is not supported for models from {args.model_source}')
+            raise Exception(f'Dataset {args.dataset_name} is not supported for models from {args.model_source}')
 
     # return the float model (for quantization)
     def get_model(self):

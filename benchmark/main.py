@@ -10,7 +10,8 @@ def argument_handler():
     parser.add_argument('--model_name', '-m', type=str, required=True,
                         help='The name of the model to run')
     parser.add_argument('--model_source', type=str, default='torchvision',
-                        help='The source of the model out of supported packages')
+                        help='The source of the model out of supported packages',
+                        choices=['torchvision', 'timm', 'ultralytics'])
     parser.add_argument('--dataset_name', type=str, default='IMAGENET',
                         help='The name of the dataset used for the pre-trained model')
     parser.add_argument('--batch_size', type=int, default=32,
@@ -56,9 +57,3 @@ if __name__ == '__main__':
     # Evaluate quantized model
     #################################################
     quant_results = ModelSrc.evaluation(quantized_model, args)
-
-
-
-
-
-

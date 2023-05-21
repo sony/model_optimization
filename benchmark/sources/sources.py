@@ -7,6 +7,8 @@ def get_model_source(args):
         from .timm.model_timm import ModelTimm as ModelConfig
     elif args.model_source == 'ultralytics':
         from .ultralytics.model_ultralytics import ModelUltralytics as ModelConfig
+    else:
+        raise Exception(f'Unsupported model source: {args.model_source}')
 
     return ModelConfig(args)
 
@@ -18,5 +20,7 @@ def supported_datasets(model_source):
         dataset_list = ["IMAGENET"]
     elif model_source == 'ultralytics':
         dataset_list = ["COCO"]
+    else:
+        raise Exception(f'Unsupported model source: {model_source}')
 
     return dataset_list
