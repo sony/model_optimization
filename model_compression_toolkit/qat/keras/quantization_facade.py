@@ -72,8 +72,11 @@ if FOUND_TF:
 
         """
         if _is_qat_applicable(n, DEFAULT_KERAS_INFO):
-            weights_quantizers, activation_quantizers = quantization_builder(n, qat_config, DEFAULT_KERAS_INFO)
-            return qi.KerasQuantizationWrapper(layer, weights_quantizers)
+            weights_quantizers, _ = quantization_builder(n,
+                                                         qat_config,
+                                                         DEFAULT_KERAS_INFO)
+            if len(weights_quantizers) > 0:
+                return qi.KerasQuantizationWrapper(layer, weights_quantizers)
         return layer
 
 

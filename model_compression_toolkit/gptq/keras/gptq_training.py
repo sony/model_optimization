@@ -145,11 +145,12 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         """
         if self._is_gptq_weights_trainable(n):
-            weights_quantizers, _ = quantization_builder(n, self.gptq_config) # TODO: split quantizers building into two functions: for weights and activations
-            return qi.KerasQuantizationWrapper(layer,
-                                               weights_quantizers=weights_quantizers)
-        else:
-            return layer
+            weights_quantizers, _ = quantization_builder(n,
+                                                         self.gptq_config) # TODO: split quantizers building into two functions: for weights and activations
+            if len(weights_quantizers) > 0:
+                return qi.KerasQuantizationWrapper(layer,
+                                                   weights_quantizers=weights_quantizers)
+        return layer
 
     def get_activation_quantizer_holder(self, n: common.BaseNode) -> Union[None, Callable]:
         """
