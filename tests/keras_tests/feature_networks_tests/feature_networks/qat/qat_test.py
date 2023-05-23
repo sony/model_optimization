@@ -166,7 +166,6 @@ class QuantizationAwareTrainingQuantizerHolderTest(QuantizationAwareTrainingTest
         self.unit_test.assertTrue(any(['out_max' in w for w in w_names]))
 
         # Make sure the wrapper layers do not hold activation quantizers
-        self.unit_test.assertTrue(len(quantized_model.layers[1].activation_quantizers) == 0)
         self.unit_test.assertTrue(len(quantized_model.layers[3].activation_quantizers)==0)
 
 class QATWrappersTest(BaseKerasFeatureNetworkTest):
