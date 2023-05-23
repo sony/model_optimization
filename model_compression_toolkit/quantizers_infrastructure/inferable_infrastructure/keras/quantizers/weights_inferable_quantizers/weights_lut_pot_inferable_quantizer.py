@@ -37,7 +37,7 @@ if FOUND_TF:
 
         def __init__(self,
                      num_bits: int,
-                     cluster_centers: np.ndarray,
+                     cluster_centers: List[float],
                      threshold: List[float],
                      per_channel: bool,
                      channel_axis: int = None,
@@ -67,8 +67,8 @@ if FOUND_TF:
                                                                   multiplier_n_bits=multiplier_n_bits,
                                                                   eps=eps)
 
-            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in self.threshold.flatten()])
-            assert is_threshold_pot, f'Expected threshold to be power of 2 but is {self.threshold}'
+            is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in self._np_threshold.flatten()])
+            assert is_threshold_pot, f'Expected threshold to be power of 2 but is {self._np_threshold}'
 
 
 else:

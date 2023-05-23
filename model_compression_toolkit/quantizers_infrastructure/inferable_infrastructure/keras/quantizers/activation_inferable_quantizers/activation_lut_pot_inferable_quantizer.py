@@ -42,7 +42,7 @@ if FOUND_TF:
 
         def __init__(self,
                      num_bits: int,
-                     cluster_centers: np.ndarray,
+                     cluster_centers: List[int],
                      threshold: List[float],
                      signed: bool,
                      multiplier_n_bits: int = MULTIPLIER_N_BITS,
@@ -74,7 +74,13 @@ if FOUND_TF:
             is_threshold_pot = np.all([int(np.log2(x)) == np.log2(x) for x in threshold])
             assert is_threshold_pot, f'Expected threshold to be power of 2 but is {threshold}'
 
-            self.threshold = threshold[0]
+            self.threshold = threshold
+
+            # Convert cluster_centers to numpy array for all assertions, and convert it back to list before saving.
+            # The reason for doing so is that during deserialization (when get_config is called) the returned value
+            # is a list (even if it was a numpy array during serialization) thus the expected cluster centers type
+            # must be a list. The conversion to numpy is to make assertions more clean.
+            cluster_centers = np.asarray(cluster_centers)
 
             assert len(np.unique(cluster_centers)) <= 2 ** num_bits, \
                 f'Expected num of cluster centers to be less or equal than {2 ** num_bits} ' \
@@ -103,7 +109,10 @@ if FOUND_TF:
                                                      f'quantization '
 
             self.num_bits = num_bits
-            self.cluster_centers = cluster_centers
+            # Save as a numpy array to avoid conversion during inference
+            self._cluster_centers_as_np = cluster_centers
+            # Save as a list for serialization purposes
+            self.cluster_centers = cluster_centers.tolist()
             self.signed = signed
             self.multiplier_n_bits = multiplier_n_bits
             self.eps = eps
@@ -121,8 +130,14 @@ if FOUND_TF:
             assert inputs.dtype == tf.float32, f'Input tensor was expected to be a float tensor but is of type ' \
                                                f'{inputs.dtype}'
 
-            return lut_quantizer(inputs, cluster_centers=self.cluster_centers, signed=self.signed,
-                                 threshold=self.threshold, multiplier_n_bits=self.multiplier_n_bits, eps=self.eps)
+            return lut_quantizer(inputs,
+                                 cluster_centers=self._cluster_centers_as_np,
+                                 signed=self.signed,
+                                 # In activation per-channel quantization is not supported
+                                 # thus we expect a single threshold value. Assertion is made in init.
+                                 threshold=self.threshold[0],
+                                 multiplier_n_bits=self.multiplier_n_bits,
+                                 eps=self.eps)
 
         def get_config(self):
             """

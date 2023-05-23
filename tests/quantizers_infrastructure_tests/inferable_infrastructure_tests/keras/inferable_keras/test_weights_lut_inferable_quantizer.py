@@ -203,6 +203,8 @@ class BaseKerasWeightsLUTQuantizerTest(BaseInferableQuantizerTest):
         clip_max = 2 ** (multiplier_n_bits - 1) - 1
         clip_min = -2 ** (multiplier_n_bits - 1)
 
+        cluster_centers = np.asarray(cluster_centers, np.float32)
+
         if per_channel:
             for i in range(len(threshold)):
                 channel_slice_i = quantized_tensor[:, :, :, i]
@@ -325,7 +327,7 @@ class TestKerasWeightsSymmetricLUTQuantizer(BaseKerasWeightsLUTQuantizerTest):
 
     def run_test(self):
         inferable_quantizer = WeightsLUTSymmetricInferableQuantizer
-        cluster_centers = np.asarray([-25, 25])
+        cluster_centers = [-25, 25]
         per_channel = True
         input_rank = 4
         num_bits = 8
@@ -373,7 +375,7 @@ class TestKerasWeightsLUTPOTQuantizerAssertions(BaseKerasWeightsLUTQuantizerTest
                                 threshold=[3.],
                                 channel_axis=None,
                                 input_rank=4)
-        self.unit_test.assertEqual('Expected threshold to be power of 2 but is 3.0', str(e.exception))
+        self.unit_test.assertEqual('Expected threshold to be power of 2 but is [3.]', str(e.exception))
 
         cluster_centers = np.asarray([-25.6, 25])
         per_channel = False

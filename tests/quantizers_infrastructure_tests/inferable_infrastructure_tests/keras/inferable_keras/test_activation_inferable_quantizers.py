@@ -198,7 +198,7 @@ class TestKerasActivationsUnsignedPOTInferableQuantizer(BaseInferableQuantizerTe
             np.log2(delta) == np.log2(delta).astype(int))
         self.unit_test.assertTrue(is_pot_delta, f'Expected delta to be POT but: {delta}')
 
-        self.unit_test.assertTrue(np.all(quantizer.min_range == 0))
+        self.unit_test.assertTrue(np.all(quantizer.min_range == [0]))
 
         # Initialize a random input to quantize between -50 to 50.
         input_tensor = tf.constant(np.random.rand(1, 50, 50, 3) * 100 - 50, tf.float32)
