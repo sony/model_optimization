@@ -26,7 +26,8 @@ if FOUND_TORCH:
     from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizers import \
         get_quantization_quantizers
 
-    def fully_quantized_wrapper(node: common.BaseNode, module: torch.nn.Module) -> qi.PytorchQuantizationWrapper:
+    def fully_quantized_wrapper(node: common.BaseNode,
+                                module: torch.nn.Module) -> qi.PytorchQuantizationWrapper:
         """
         A function which takes a computational graph node and a pytorch module and
         perform the quantization wrapping
@@ -34,7 +35,6 @@ if FOUND_TORCH:
         Args:
             node: A node of mct graph.
             module: A Pytorch module
-
         Returns: Wrapped layer
 
         """

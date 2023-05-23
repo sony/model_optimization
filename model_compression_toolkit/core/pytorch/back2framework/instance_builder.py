@@ -38,12 +38,16 @@ def node_builder(n: BaseNode) -> Module:
     return node_instance
 
 
-def identity_wrapper(node: BaseNode, module: Module):
+# todo: remove. It is not used anymore
+def identity_wrapper(node: BaseNode,
+                     module: Module,
+                     include_activation_quantizers: bool):
     """
     A function which takes a computational graph node and a pytorch module and return an identity wrapping which return the layer itself
     Args:
         node: A node of mct graph.
         layer: A pytorch module
+        include_activation_quantizers: bool flag.
     Returns: pytorch module
     """
     return module

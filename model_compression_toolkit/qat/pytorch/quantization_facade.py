@@ -46,19 +46,26 @@ if FOUND_TORCH:
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
 
-    def qat_wrapper(n: common.BaseNode, module: nn.Module, qat_config: QATConfig):
+    def qat_wrapper(n: common.BaseNode,
+                    module: nn.Module,
+                    qat_config: QATConfig,
+                    include_activation_quantizers: bool = True):
         """
         A function which takes a computational graph node and a pytorch module and perform the quantization wrapping
         Args:
             n: A node of mct graph.
             module: A Pytorch module
             qat_config (QATConfig): QAT configuration
+            include_activation_quantizers: Whether or not to use the wrapper for the activation quantizer
         Returns: Wrapped layer
 
         """
         if _is_qat_applicable(n, DEFAULT_PYTORCH_INFO):
             weights_quantizers, activation_quantizers = quantization_builder(n, qat_config, DEFAULT_PYTORCH_INFO)
-            return qi.PytorchQuantizationWrapper(module, weights_quantizers, activation_quantizers)
+            if include_activation_quantizers:
+                return qi.PytorchQuantizationWrapper(module, weights_quantizers, activation_quantizers)
+            else:
+                return qi.PytorchQuantizationWrapper(module, weights_quantizers)
         else:
             return module
 

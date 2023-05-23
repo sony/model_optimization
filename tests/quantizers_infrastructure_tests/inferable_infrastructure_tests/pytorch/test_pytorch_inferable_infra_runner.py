@@ -25,6 +25,8 @@ from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructur
     ActivationLutPOTInferableQuantizer
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.pytorch.inferable_pytorch.test_activation_lut_inferable_quantizer import \
     TestPytorchActivationPOTLUTQuantizerAssertions, TestPytorchActivationPOTLUTQuantizer
+from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.pytorch.inferable_pytorch.test_activation_quantizer_holder import \
+    TestPytorchActivationQuantizationHolderInference, TestPytorchActivationQuantizationHolderSaveAndLoad
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.pytorch.inferable_pytorch.test_activations_inferable_quantizer import \
     TestPytorchActivationsSymmetricInferableQuantizer, \
     TestPytorchActivationsUnsignedSymmetricInferableQuantizer, TestPytorchActivationsPOTInferableQuantizerRaise, \
@@ -117,6 +119,9 @@ class PytorchInferableInfrastructureTestRunner(unittest.TestCase):
         TestPytorchWeightsQuantizationWrapper(self).run_test()
         TestPytorchActivationQuantizationWrapper(self).run_test()
 
+    def test_activation_quantization_holder(self):
+        TestPytorchActivationQuantizationHolderInference(self).run_test()
+        TestPytorchActivationQuantizationHolderSaveAndLoad(self).run_test()
 
 if __name__ == '__main__':
     unittest.main()
