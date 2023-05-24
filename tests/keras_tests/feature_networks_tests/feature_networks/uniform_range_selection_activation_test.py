@@ -83,11 +83,20 @@ class UniformRangeSelectionBoundedActivationTest(UniformRangeSelectionActivation
         input_layer_min, input_layer_max = fake_layer_input_args['min_range'], fake_layer_input_args['max_range']
         softmax_layer_min, softmax_layer_max = fake_layer_softmax_args['min_range'], fake_layer_softmax_args['max_range']
 
+        self.unit_test.assertTrue(len(input_layer_min) == 1,
+                                  f'Activation quantizer must have a single min value but found {len(input_layer_min)}')
+        self.unit_test.assertTrue(len(input_layer_max) == 1,
+                                  f'Activation quantizer must have a single max value but found {len(input_layer_max)}')
+        self.unit_test.assertTrue(len(softmax_layer_min) == 1,
+                                  f'Activation quantizer must have a single min value but found {len(softmax_layer_min)}')
+        self.unit_test.assertTrue(len(softmax_layer_max) == 1,
+                                  f'Activation quantizer must have a single max value but found {len(softmax_layer_max)}')
+
         # Verify quantization range contains zero
-        self.unit_test.assertTrue(input_layer_min <= 0.0 <= input_layer_max,
-                                  msg=f"0.0 is not within the quantization range ({input_layer_min}, {input_layer_max})"
+        self.unit_test.assertTrue(input_layer_min[0] <= 0.0 <= input_layer_max[0],
+                                  msg=f"0.0 is not within the quantization range ({input_layer_min[0]}, {input_layer_max[0]})"
                                       f"for Input layer.")
 
         # Check range_min, range_max == softmax_layer's bound
-        self.unit_test.assertTrue(softmax_layer_min == 0.0)
-        self.unit_test.assertTrue(softmax_layer_max == 1.0)
+        self.unit_test.assertTrue(softmax_layer_min[0] == 0.0)
+        self.unit_test.assertTrue(softmax_layer_max[0] == 1.0)

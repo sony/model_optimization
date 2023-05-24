@@ -148,9 +148,9 @@ class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
             # Check that lut quantizer layer is added where expected (after each layer, for quantizing activation)
             self.unit_test.assertTrue(isinstance(ll.activation_quantizers[0], ActivationLutPOTInferableQuantizer))
             # Check layer's thresholds are power of two
-            self.unit_test.assertTrue(math.log2(ll.activation_quantizers[0].get_config()[THRESHOLD]).is_integer())
+            self.unit_test.assertTrue(math.log2(ll.activation_quantizers[0].get_config()[THRESHOLD][0]).is_integer())
             # Check layers number of clusters and clusters values
-            self.unit_test.assertTrue(ll.activation_quantizers[0].get_config()[CLUSTER_CENTERS].shape[0] <= 2 ** self.activation_n_bits)
+            self.unit_test.assertTrue(len(ll.activation_quantizers[0].get_config()[CLUSTER_CENTERS]) <= 2 ** self.activation_n_bits)
             self.unit_test.assertTrue(np.all(np.mod(ll.activation_quantizers[0].get_config()[CLUSTER_CENTERS], 1) == 0))
 
 
