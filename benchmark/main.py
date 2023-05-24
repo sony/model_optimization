@@ -1,7 +1,8 @@
 import argparse
+import importlib
 
-from benchmark.quant import quant
-from benchmark.sources.sources import get_model_source
+from benchmark.utils.quant import quantize
+from benchmark.libraries.sources import get_library_name
 
 
 def argument_handler():
@@ -9,7 +10,7 @@ def argument_handler():
 
     parser.add_argument('--model_name', '-m', type=str, required=True,
                         help='The name of the model to run')
-    parser.add_argument('--model_source', type=str, default='torchvision',
+    parser.add_argument('--model_library', type=str, default='torchvision',
                         help='The source of the model out of supported packages',
                         choices=['torchvision', 'timm', 'ultralytics'])
     parser.add_argument('--dataset_name', type=str, default='IMAGENET',
@@ -39,21 +40,29 @@ if __name__ == '__main__':
     args = argument_handler()
 
     #################################################
-    # Import the relevant source and pre-trained model
+    # Import the relevant models library and pre-trained model
     #################################################
-    ModelSrc = get_model_source(args)
+    model_library = get_library_name(args.model_library)
+    try:
+        # dynamic import of models library
+        library = importlib.import_module(model_library)
+    except ImportError:
+        print(f'Error: Failed to import {model_library}')
+
+    ml = library.ModelLib(args)
+    float_model = ml.select_model(args.model_name)
 
     #################################################
     # Evaluate float model
     #################################################
-    float_results = ModelSrc.evaluation(ModelSrc.get_model(), args)
+    float_results = ml.evaluate(float_model)
 
     #################################################
     # Run model compression toolkit
     #################################################
-    quantized_model = ModelSrc.quantize(args)
+    quantized_model = quantize(float_model, ml.get_representative_dataset, args)
 
     #################################################
     # Evaluate quantized model
     #################################################
-    quant_results = ModelSrc.evaluation(quantized_model, args)
+    quant_results = ml.evaluate(quantized_model)

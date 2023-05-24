@@ -2,11 +2,10 @@ import math
 import model_compression_toolkit as mct
 
 
-def quant(ModelSrc, args):
+def quantize(model, get_representative_dataset, args):
     n_iter = math.ceil(args.n_images // args.batch_size)
-    model = ModelSrc.get_model()
 
-    representative_data_gen = ModelSrc.get_representative_dataset(
+    representative_data_gen = get_representative_dataset(
         representative_dataset_folder=args.representative_dataset_folder,
         n_iter=n_iter,
         batch_size=args.batch_size,

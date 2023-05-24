@@ -3,24 +3,23 @@ import torch
 import timm
 from timm.data import create_dataset, create_loader, resolve_data_config
 
-from model import Model
+from benchmark.libraries.base_model_lib import BaseModelLib
 from logging import error
 
-from benchmark.utils import get_representative_dataset, classification_eval
+from benchmark.utils.helpers import classification_eval, get_representative_dataset
 
 
-class ModelTimm(Model):
+class ModelLib(BaseModelLib):
 
     def __init__(self, args):
-
-        model_list = timm.list_models('')
-        if args.model_name not in model_list:
-            error(f'Unknown model, Available timm models : {model_list}')
-        self.model = timm.create_model(args.model_name, pretrained=True)
-        self.data_config = resolve_data_config(vars(args), model=self.model)
         super().__init__(args)
 
-    def get_model(self):
+    def select_model(self, model_name):
+        model_list = timm.list_models('')
+        if model_name not in model_list:
+            error(f'Unknown model, Available timm models : {model_list}')
+        self.model = timm.create_model(model_name, pretrained=True)
+        self.data_config = resolve_data_config([], model=self.model)
         return self.model.cuda()
 
     def get_representative_dataset(self, representative_dataset_folder, n_iter, batch_size, n_images, image_size,
@@ -38,8 +37,8 @@ class ModelTimm(Model):
             crop_pct=self.data_config['crop_pct'])
         return get_representative_dataset(dl, n_iter)
 
-    def evaluation(self, model, args):
-        batch_size = args.batch_size
+    def evaluate(self, model):
+        batch_size = self.args.batch_size
         val_dataset = create_dataset(name='', root=self.validation_dataset_folder, is_training=False,
                                            batch_size=batch_size)
         testloader = create_loader(
