@@ -15,7 +15,8 @@
 
 from model_compression_toolkit.constants import FOUND_TORCH
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import BaseInferableQuantizer, BasePytorchTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import ACTIVATION_HOLDER_QUANTIZER
 
 if FOUND_TORCH:
     import torch
@@ -36,6 +37,9 @@ if FOUND_TORCH:
 
             super(PytorchActivationQuantizationHolder, self).__init__(**kwargs)
             self.activation_holder_quantizer = activation_holder_quantizer
+            self.activation_holder_quantizer.initialize_quantization(None,
+                                                                     ACTIVATION_HOLDER_QUANTIZER+"_out",
+                                                                     self)
 
         def forward(self, inputs):
             """
@@ -48,6 +52,17 @@ if FOUND_TORCH:
 
             """
             return self.activation_holder_quantizer(inputs)
+
+
+        def convert_to_inferable_quantizers(self):
+            """
+            Convert layer's quantizer to inferable quantizer.
+
+            Returns:
+                None
+            """
+            if isinstance(self.activation_holder_quantizer, BasePytorchTrainableQuantizer):
+                self.activation_holder_quantizer = self.activation_holder_quantizer.convert2inferable()
 
 else:
     class PytorchActivationQuantizationHolder:  # pragma: no cover

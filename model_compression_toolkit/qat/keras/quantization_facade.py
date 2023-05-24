@@ -47,7 +47,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.common import BaseNode
     from model_compression_toolkit.constants import TENSORFLOW
     from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-    from model_compression_toolkit.qat.common.qat_config import _is_qat_applicable
+    from model_compression_toolkit.qat.common.qat_config import is_qat_applicable
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.qat.keras.quantizer.quantization_builder import quantization_builder, \
@@ -71,7 +71,7 @@ if FOUND_TF:
         Returns: Wrapped layer
 
         """
-        if _is_qat_applicable(n, DEFAULT_KERAS_INFO):
+        if is_qat_applicable(n, DEFAULT_KERAS_INFO):
             weights_quantizers, _ = quantization_builder(n,
                                                          qat_config,
                                                          DEFAULT_KERAS_INFO)

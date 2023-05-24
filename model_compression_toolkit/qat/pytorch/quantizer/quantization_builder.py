@@ -12,18 +12,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union, Callable
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.qat.common.qat_config import QATConfig
+from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizer_config import \
     get_trainable_quantizer_quantization_candidates, get_trainable_quantizer_weights_config, \
     get_trainable_quantizer_activation_config
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.activation_quantization_holder import PytorchActivationQuantizationHolder
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizers import \
     get_trainable_quantizer_class
+
+def get_activation_quantizer_holder(n: common.BaseNode,
+                                    qat_config: QATConfig) -> Union[None, Callable]:
+    """
+    Retrieve a ActivationQuantizationHolder layer to use for activation quantization for a node.
+    If the layer is not supposed to be wrapped with activation quantizers - return None.
+
+    Args:
+        n: Node to get ActivationQuantizationHolder to attach in its output.
+        qat_config: Configuration of QAT (such as training methods for example).
+
+    Returns:
+        A ActivationQuantizationHolder layer for the node activation quantization.
+    """
+    _, activation_quantizers = quantization_builder(n,
+                                                    qat_config,
+                                                    DEFAULT_PYTORCH_INFO)
+
+    # Holder by definition uses a single quantizer for the activation quantization
+    # thus we make sure this is the only possible case (unless it's a node with no activation
+    # quantization, which in this case has an empty list).
+    if len(activation_quantizers) == 1:
+        return PytorchActivationQuantizationHolder(activation_quantizers[0])
+    Logger.error(f'ActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers were found for node {n}')
 
 
 def quantization_builder(n: common.BaseNode,
