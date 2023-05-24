@@ -11,16 +11,6 @@ from pathlib import Path
 from ultralytics.yolo.utils.tal import dist2bbox, make_anchors
 
 
-class C2fReplacer(C2f):
-
-    def forward(self, x):
-        # y = list(self.cv1(x).chunk(2, 1))
-        y1 = self.cv1(x).chunk(2, 1)
-        y = [y1[0], y1[1]]
-        y.extend(m(y[-1]) for m in self.m)
-        return self.cv2(torch.cat(y, 1))
-
-
 class ModuleReplacer:
 
     def __init__(self):
@@ -29,8 +19,21 @@ class ModuleReplacer:
     def get_new_module(self):
         return
 
+    def get_config(self):
+        return
+
     def replace(self):
         return
+
+
+class C2fReplacer(C2f):
+
+    def forward(self, x):
+        # y = list(self.cv1(x).chunk(2, 1))
+        y1 = self.cv1(x).chunk(2, 1)
+        y = [y1[0], y1[1]]
+        y.extend(m(y[-1]) for m in self.m)
+        return self.cv2(torch.cat(y, 1))
 
 
 class C2fModuleReplacer(ModuleReplacer):
