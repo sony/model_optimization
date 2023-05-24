@@ -29,7 +29,7 @@ from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_m
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc
-from model_compression_toolkit import quantizers_infrastructure as qi
+from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs
@@ -120,15 +120,13 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         all_trainable_quantizers = get_all_subclasses(BasePytorchQATTrainableQuantizer)
         # check relevant layers are wrapped and correct quantizers were chosen
         for _, layer in qat_ready_model.named_children():
-            if isinstance(layer, DummyPlaceHolder) or isinstance(layer, nn.SiLU):
-                continue
-            elif isinstance(layer, PytorchActivationQuantizationHolder):
+            if isinstance(layer, PytorchActivationQuantizationHolder):
                 q = [_q for _q in all_trainable_quantizers if _q.quantizer_type == mct.qat.TrainingMethod.STE
                      and _q.quantization_target == QuantizationTarget.Activation
                      and self.activation_quantization_method in _q.quantization_method]
                 self.unit_test.assertTrue(len(q) == 1)
                 self.unit_test.assertTrue(isinstance(layer.activation_holder_quantizer, q[0]))
-            elif isinstance(layer.layer, nn.Conv2d):
+            elif isinstance(layer, PytorchQuantizationWrapper) and isinstance(layer.layer, nn.Conv2d):
                 q = [_q for _q in all_trainable_quantizers if _q.quantizer_type == mct.qat.TrainingMethod.STE
                      and _q.quantization_target == QuantizationTarget.Weights
                      and self.weights_quantization_method in _q.quantization_method]
@@ -143,15 +141,13 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         if self.finalize:
             all_inferable_quantizers = get_all_subclasses(BasePyTorchInferableQuantizer)
             for _, layer in qat_finalized_model.named_children():
-                if isinstance(layer, DummyPlaceHolder) or isinstance(layer, nn.SiLU):
-                    continue
-                elif isinstance(layer, PytorchActivationQuantizationHolder):
+                if isinstance(layer, PytorchActivationQuantizationHolder):
                     q = [_q for _q in all_inferable_quantizers if
                          _q.quantization_target == QuantizationTarget.Activation
                          and self.activation_quantization_method in _q.quantization_method]
                     self.unit_test.assertTrue(len(q) == 1)
                     self.unit_test.assertTrue(isinstance(layer.activation_holder_quantizer, q[0]))
-                elif isinstance(layer.layer, nn.Conv2d):
+                elif isinstance(layer, PytorchQuantizationWrapper) and isinstance(layer.layer, nn.Conv2d):
                     q = [_q for _q in all_inferable_quantizers if
                          _q.quantization_target == QuantizationTarget.Weights
                          and self.weights_quantization_method in _q.quantization_method]
@@ -237,11 +233,9 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
 
         # check that quantizer gets multiple bits configuration
         for _, layer in qat_ready_model.named_children():
-            if isinstance(layer, DummyPlaceHolder) or isinstance(layer, nn.SiLU):
-                continue
             if isinstance(layer, PytorchActivationQuantizationHolder):
                 self.unit_test.assertTrue(len(layer.activation_holder_quantizer.quantization_config.activation_bits_candidates) > 1)
-            elif layer.is_weights_quantization:
+            elif isinstance(layer, PytorchQuantizationWrapper) and layer.is_weights_quantization:
                 self.unit_test.assertTrue(len(layer.weights_quantizers['weight'].quantization_config.weights_bits_candidates) > 1)
 
 
@@ -284,9 +278,7 @@ class QuantizationAwareTrainingMixedPrecisionKpiCfgTest(QuantizationAwareTrainin
 
         # check that quantizer gets multiple bits configuration
         for _, layer in qat_ready_model.named_children():
-            if isinstance(layer, DummyPlaceHolder) or isinstance(layer, nn.SiLU):
-                continue
             if isinstance(layer, PytorchActivationQuantizationHolder):
                 self.unit_test.assertTrue(len(layer.activation_holder_quantizer.quantization_config.activation_bits_candidates) > 1)
-            elif layer.is_weights_quantization:
+            elif isinstance(layer, PytorchQuantizationWrapper) and layer.is_weights_quantization:
                 self.unit_test.assertTrue(len(layer.weights_quantizers['weight'].quantization_config.weights_bits_candidates) > 1)

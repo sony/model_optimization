@@ -56,7 +56,7 @@ if FOUND_TORCH:
 
         def convert_to_inferable_quantizers(self):
             """
-            Convert layer's quantizer to inferable quantizer.
+            Convert a layer's quantizer to an inferable quantizer.
 
             Returns:
                 None

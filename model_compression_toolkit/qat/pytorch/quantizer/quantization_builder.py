@@ -35,11 +35,11 @@ def get_activation_quantizer_holder(n: common.BaseNode,
     If the layer is not supposed to be wrapped with activation quantizers - return None.
 
     Args:
-        n: Node to get ActivationQuantizationHolder to attach in its output.
-        qat_config: Configuration of QAT (such as training methods for example).
+        n: Node for which to retrieve anActivationQuantizationHolder to attach to its output.
+        qat_config: QAT configuration (for example, training methods).
 
     Returns:
-        A ActivationQuantizationHolder layer for the node activation quantization.
+        A ActivationQuantizationHolder layer for the node's activation quantization.
     """
     _, activation_quantizers = quantization_builder(n,
                                                     qat_config,
