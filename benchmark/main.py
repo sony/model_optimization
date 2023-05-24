@@ -1,7 +1,7 @@
 import argparse
 import importlib
 
-from benchmark.utils.quant import quantize
+from benchmark.utils.pytorch.quant import quantize
 from benchmark.libraries.sources import get_library_name
 
 

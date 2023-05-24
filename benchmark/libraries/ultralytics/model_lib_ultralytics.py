@@ -4,7 +4,7 @@ from benchmark.libraries.ultralytics.replacers import C2fModuleReplacer, DetectM
 from torchvision.transforms import transforms
 
 from benchmark.libraries.ultralytics.replacers import prepare_model_for_ultralytics_val
-from benchmark.utils.helpers import get_representative_dataset
+from benchmark.utils.pytorch.helpers import get_representative_dataset
 from ultralytics.yolo.data.dataset import YOLODataset
 
 from benchmark.libraries.base_model_lib import BaseModelLib

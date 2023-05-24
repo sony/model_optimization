@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 
 from benchmark.libraries.base_model_lib import BaseModelLib
 
-from benchmark.utils.helpers import classification_eval, get_representative_dataset
+from benchmark.utils.pytorch.helpers import classification_eval, get_representative_dataset
 
 
 class ModelLib(BaseModelLib):
