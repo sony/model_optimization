@@ -71,8 +71,10 @@ if FOUND_TF:
                                              adj_min=_min_range,
                                              adj_max=_max_range)
 
-            self.max_range = _max_range[0]
-            self.min_range = _min_range[0]
+            # Save ranges as lists since during deserialization
+            # init expects list as returned values from get_config
+            self.max_range = _max_range.tolist()
+            self.min_range = _min_range.tolist()
 
 
         def __call__(self, inputs:tf.Tensor) -> tf.Tensor:
@@ -88,8 +90,8 @@ if FOUND_TF:
             assert inputs.dtype==tf.float32, f'Input tensor was expected to be a float tensor but is of type {inputs.dtype}'
 
             return tf.quantization.fake_quant_with_min_max_vars(inputs,
-                                                                min=self.min_range,
-                                                                max=self.max_range,
+                                                                min=self.min_range[0],
+                                                                max=self.max_range[0],
                                                                 num_bits=self.num_bits)
 
         def get_config(self):

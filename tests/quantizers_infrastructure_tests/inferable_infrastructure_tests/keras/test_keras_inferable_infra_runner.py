@@ -31,6 +31,8 @@ from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_activation_quantizer_holder import TestActivationQuantizationHolderInference, TestActivationQuantizationHolderSaveAndLoad
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_get_quantizers import \
     TestGetInferableQuantizer
+from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_load_model import \
+    TestKerasLoadModel
 from tests.quantizers_infrastructure_tests.inferable_infrastructure_tests.keras.inferable_keras.test_weights_inferable_quantizer import \
     TestKerasWeightsPOTInferableQuantizerRaise, \
     TestKerasWeightsPOTInferableSignedPerTensorQuantizer, TestKerasWeightsPOTInferableSignedPerChannelQuantizer, \
@@ -48,6 +50,17 @@ layers = tf.keras.layers
 
 
 class KerasInferableInfrastructureTestRunner(unittest.TestCase):
+
+    def test_save_and_load_quantizers(self):
+        TestKerasLoadModel().test_save_and_load_weights_uniform()
+        TestKerasLoadModel().test_save_and_load_weights_symmetric()
+        TestKerasLoadModel().test_save_and_load_weights_pot()
+        TestKerasLoadModel().test_save_and_load_weights_lut_symmetric()
+        TestKerasLoadModel().test_save_and_load_weights_lut_pot()
+        TestKerasLoadModel().test_save_and_load_activation_lut_pot()
+        TestKerasLoadModel().test_save_and_load_activation_pot()
+        TestKerasLoadModel().test_save_and_load_activation_uniform()
+        TestKerasLoadModel().test_save_and_load_activation_symmetric()
 
     def test_weights_inferable_quantizers(self):
         TestKerasWeightsPOTInferableQuantizerRaise(self).run_test()

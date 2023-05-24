@@ -30,6 +30,7 @@ if FOUND_TF:
     from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizer_utils import \
         lut_quantizer
 
+
     @mark_quantizer(quantization_target=QuantizationTarget.Weights,
                     quantization_method=[QuantizationMethod.LUT_SYM_QUANTIZER],
                     quantizer_type=None)
@@ -40,7 +41,7 @@ if FOUND_TF:
 
         def __init__(self,
                      num_bits: int,
-                     cluster_centers: np.ndarray,
+                     cluster_centers: List[float],
                      threshold: List[float],
                      per_channel: bool,
                      channel_axis: int = None,
@@ -68,7 +69,10 @@ if FOUND_TF:
                         threshold]), f'Expected threshold list to contain float or np.float values but found ' \
                                      f'{[type(x) for x in threshold]}'
 
-            self.threshold = np.asarray(threshold)
+            self.threshold = threshold
+            self._np_threshold = np.asarray(threshold)
+            self.cluster_centers = cluster_centers
+            self._np_cluster_centers = np.asarray(cluster_centers, dtype=np.float32)
 
             if per_channel:
                 assert input_rank is not None, f'Input rank is missing in per channel quantization'
@@ -78,18 +82,18 @@ if FOUND_TF:
             else:
                 assert len(threshold) == 1, f'In per-tensor quantization threshold should be of length 1 but is' \
                                             f' {len(threshold)}'
-                self.threshold = self.threshold[0]
 
-            assert len(np.unique(cluster_centers)) <= 2 ** num_bits, \
+            assert len(np.unique(self._np_cluster_centers)) <= 2 ** num_bits, \
                 f'Expected num of cluster centers to be less or equal than {2 ** num_bits} ' \
-                f'but got {len(cluster_centers)}'
+                f'but got {len(self._np_cluster_centers)}'
 
-            assert not np.any(cluster_centers - cluster_centers.astype(int)), f'Expected cluster centers to be integers'
+            assert not np.any(self._np_cluster_centers - self._np_cluster_centers.astype(
+                int)), f'Expected cluster centers to be integers'
 
             # Weight quantization is signed, hence the quantization range is
             # [-2**(multiplier_n_bits - 1), 2**(multiplier_n_bits - 1) - 1]
-            assert np.all((-1 * (2 ** (multiplier_n_bits - 1)) <= cluster_centers) &
-                          (cluster_centers <= (2 ** (multiplier_n_bits - 1) - 1))), \
+            assert np.all((-1 * (2 ** (multiplier_n_bits - 1)) <= self._np_cluster_centers) &
+                          (self._np_cluster_centers <= (2 ** (multiplier_n_bits - 1) - 1))), \
                 f'Expected cluster centers in the quantization range'
 
             # num_bits must be less than multiplier_n_bits
@@ -100,7 +104,6 @@ if FOUND_TF:
                               "inefficient in that case, consider using SymmetricInferableQuantizer instead")
 
             self.num_bits = num_bits
-            self.cluster_centers = cluster_centers
             self.multiplier_n_bits = multiplier_n_bits
             self.eps = eps
             self.per_channel = per_channel
@@ -138,21 +141,30 @@ if FOUND_TF:
                 # If a permutation vector has been created to move the channel axis to the last position
                 if self.perm_vec:
                     # Transpose the input tensor to move the channel axis to the last position
-                    inputs = tf.transpose(inputs, perm=self.perm_vec)
+                    inputs = tf.transpose(inputs,
+                                          perm=self.perm_vec)
 
                 # Quantize the input tensor using per-channel quantization
-                q_tensor = lut_quantizer(inputs, cluster_centers=self.cluster_centers, signed=True,
-                                         threshold=self.threshold, multiplier_n_bits=self.multiplier_n_bits,
+                q_tensor = lut_quantizer(inputs,
+                                         cluster_centers=self._np_cluster_centers,
+                                         signed=True,
+                                         threshold=self._np_threshold,
+                                         multiplier_n_bits=self.multiplier_n_bits,
                                          eps=self.eps)
                 if self.perm_vec:
                     # Transpose the quantized tensor back to its original shape
-                    q_tensor = tf.transpose(q_tensor, perm=self.perm_vec)
+                    q_tensor = tf.transpose(q_tensor,
+                                            perm=self.perm_vec)
 
                 # Return the quantized tensor
                 return q_tensor
             else:
-                return lut_quantizer(inputs, cluster_centers=self.cluster_centers, signed=True,
-                                     threshold=self.threshold, multiplier_n_bits=self.multiplier_n_bits, eps=self.eps)
+                return lut_quantizer(inputs,
+                                     cluster_centers=self._np_cluster_centers,
+                                     signed=True,
+                                     threshold=self._np_threshold,
+                                     multiplier_n_bits=self.multiplier_n_bits,
+                                     eps=self.eps)
 
         def get_config(self):
             """
