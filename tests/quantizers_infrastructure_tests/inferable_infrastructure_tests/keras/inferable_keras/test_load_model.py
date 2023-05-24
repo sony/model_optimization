@@ -18,6 +18,7 @@ import tempfile
 import unittest
 
 import numpy as np
+from keras import Input
 from keras.layers import Conv2D
 from tensorflow import keras
 
@@ -32,7 +33,11 @@ from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructur
 class TestKerasLoadModel(unittest.TestCase):
 
     def _one_layer_model_save_and_load(self, layer_with_quantizer):
-        model = keras.Sequential([layer_with_quantizer])
+        # Create one layer model (layer is reused twice)
+        model_input = Input((5,5,3))
+        x = layer_with_quantizer(model_input)
+        model_output = layer_with_quantizer(x)
+        model = keras.models.Model(model_input, model_output)
 
         x = np.random.randn(1,5,5,3)
         pred = model(x)
