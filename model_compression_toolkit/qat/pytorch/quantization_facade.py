@@ -25,10 +25,10 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
+    TargetPlatformCapabilities
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
 from model_compression_toolkit.ptq.runner import ptq_runner
-
 
 if FOUND_TORCH:
     import torch.nn as nn
@@ -36,38 +36,37 @@ if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-    from model_compression_toolkit.qat.common.qat_config import _is_qat_applicable
+    from model_compression_toolkit.qat.common.qat_config import is_qat_applicable
     from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
     from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
     from model_compression_toolkit import quantizers_infrastructure as qi
     from model_compression_toolkit import get_target_platform_capabilities
     from model_compression_toolkit.qat.common.qat_config import QATConfig
+    from model_compression_toolkit.qat.pytorch.quantizer.quantization_builder import get_activation_quantizer_holder
+    from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.activation_quantization_holder import \
+        PytorchActivationQuantizationHolder
     from model_compression_toolkit.qat.pytorch.quantizer.quantization_builder import quantization_builder
+
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
 
     def qat_wrapper(n: common.BaseNode,
                     module: nn.Module,
-                    qat_config: QATConfig,
-                    include_activation_quantizers: bool = True):
+                    qat_config: QATConfig):
         """
         A function which takes a computational graph node and a pytorch module and perform the quantization wrapping
         Args:
             n: A node of mct graph.
             module: A Pytorch module
             qat_config (QATConfig): QAT configuration
-            include_activation_quantizers: Whether or not to use the wrapper for the activation quantizer
         Returns: Wrapped layer
 
         """
-        if _is_qat_applicable(n, DEFAULT_PYTORCH_INFO):
-            weights_quantizers, activation_quantizers = quantization_builder(n, qat_config, DEFAULT_PYTORCH_INFO)
-            if include_activation_quantizers:
-                return qi.PytorchQuantizationWrapper(module, weights_quantizers, activation_quantizers)
-            else:
+        if is_qat_applicable(n, DEFAULT_PYTORCH_INFO):
+            weights_quantizers, _ = quantization_builder(n, qat_config, DEFAULT_PYTORCH_INFO)
+            if len(weights_quantizers) > 0:
                 return qi.PytorchQuantizationWrapper(module, weights_quantizers)
-        else:
-            return module
+        return module
 
 
     def pytorch_quantization_aware_training_init(in_model: Module,
@@ -142,11 +141,11 @@ if FOUND_TORCH:
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
                 Logger.error("Given quantization config to mixed-precision facade is not of type "
-                                    "MixedPrecisionQuantizationConfigV2. Please use pytorch_post_training_quantization API,"
-                                    "or pass a valid mixed precision configuration.")
+                             "MixedPrecisionQuantizationConfigV2. Please use pytorch_post_training_quantization API,"
+                             "or pass a valid mixed precision configuration.")
 
             Logger.info("Using experimental mixed-precision quantization. "
-                               "If you encounter an issue please file a bug.")
+                        "If you encounter an issue please file a bug.")
 
         tb_w = _init_tensorboard_writer(fw_info)
 
@@ -165,11 +164,17 @@ if FOUND_TORCH:
 
         _qat_wrapper = partial(qat_wrapper, qat_config=qat_config)
 
-        qat_model, user_info = PyTorchModelBuilder(graph=tg, fw_info=fw_info, wrapper=_qat_wrapper).build_model()
+        qat_model, user_info = PyTorchModelBuilder(graph=tg,
+                                                   fw_info=fw_info,
+                                                   wrapper=_qat_wrapper,
+                                                   get_activation_quantizer_holder_fn=partial(
+                                                       get_activation_quantizer_holder,
+                                                       qat_config=qat_config)).build_model()
 
         user_info.mixed_precision_cfg = bit_widths_config
 
         return qat_model, user_info
+
 
     def pytorch_quantization_aware_training_finalize(in_model: Module):
         """
@@ -214,7 +219,7 @@ if FOUND_TORCH:
          """
         exported_model = copy.deepcopy(in_model)
         for _, layer in exported_model.named_children():
-            if isinstance(layer, PytorchQuantizationWrapper):
+            if isinstance(layer, (PytorchQuantizationWrapper, PytorchActivationQuantizationHolder)):
                 layer.convert_to_inferable_quantizers()
 
         return exported_model
@@ -227,6 +232,7 @@ else:
         Logger.critical('Installing Pytorch is mandatory '
                         'when using pytorch_quantization_aware_training_init. '
                         'Could not find the torch package.')  # pragma: no cover
+
 
     def pytorch_quantization_aware_training_finalize(*args, **kwargs):
         Logger.critical('Installing Pytorch is mandatory '

@@ -23,7 +23,7 @@ from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test im
     MixedPrecisionBopsAndWeightsKPITest, MixedPrecisionBopsAndActivationKPITest, MixedPrecisionBopsAndTotalKPITest, \
     MixedPrecisionBopsWeightsActivationKPITest, MixedPrecisionBopsMultipleOutEdgesTest
 from tests.pytorch_tests.model_tests.feature_models.qat_test import QuantizationAwareTrainingTest, \
-    QuantizationAwareTrainingMixedPrecisionCfgTest, QuantizationAwareTrainingMixedPrecisionKpiCfgTest
+    QuantizationAwareTrainingMixedPrecisionCfgTest, QuantizationAwareTrainingMixedPrecisionKpiCfgTest, QuantizationAwareTrainingQuantizerHolderTest
 from tests.pytorch_tests.model_tests.feature_models.relu_replacement_test import SingleLayerReplacementTest, \
     ReluReplacementTest, ReluReplacementWithAddBiasTest
 from tests.pytorch_tests.model_tests.feature_models.remove_assert_test import AssertNetTest
@@ -499,6 +499,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
                                       weights_quantization_method=_method,
                                       activation_quantization_method=_method,
                                       finalize=True).run_test()
+        QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionKpiCfgTest(self).run_test()
 

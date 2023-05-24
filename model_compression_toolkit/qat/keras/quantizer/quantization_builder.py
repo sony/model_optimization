@@ -18,7 +18,7 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.qat.common.qat_config import QATConfig, _is_qat_applicable
+from model_compression_toolkit.qat.common.qat_config import QATConfig
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, ActivationQuantizationHolder
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizer_config import \
