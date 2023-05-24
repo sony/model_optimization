@@ -3,10 +3,10 @@ import torch
 import timm
 from timm.data import create_dataset, create_loader, resolve_data_config
 
-from benchmark.libraries.base_model_lib import BaseModelLib
+from benchmark.common.base_model_lib import BaseModelLib
 from logging import error
 
-from benchmark.utils.pytorch.helpers import classification_eval, get_representative_dataset
+from benchmark.pytorch_code.helpers import classification_eval, get_representative_dataset
 
 
 class ModelLib(BaseModelLib):

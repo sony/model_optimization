@@ -1,13 +1,13 @@
 from torch.utils.data import DataLoader
 
-from benchmark.libraries.ultralytics.replacers import C2fModuleReplacer, DetectModuleReplacer, YOLOReplacer, DetectionModelModuleReplacer
+from benchmark.pytorch_code.ultralytics.replacers import C2fModuleReplacer, DetectModuleReplacer, YOLOReplacer, DetectionModelModuleReplacer
 from torchvision.transforms import transforms
 
-from benchmark.libraries.ultralytics.replacers import prepare_model_for_ultralytics_val
-from benchmark.utils.pytorch.helpers import get_representative_dataset
+from benchmark.pytorch_code.ultralytics.replacers import prepare_model_for_ultralytics_val
+from benchmark.pytorch_code.helpers import get_representative_dataset
 from ultralytics.yolo.data.dataset import YOLODataset
 
-from benchmark.libraries.base_model_lib import BaseModelLib
+from benchmark.common.base_model_lib import BaseModelLib
 from enum import Enum
 from ultralytics.yolo.utils.torch_utils import initialize_weights
 

@@ -1,4 +1,4 @@
-from benchmark.libraries.sources import supported_datasets
+from benchmark.common.sources import supported_datasets
 
 
 class BaseModelLib(object):

@@ -1,8 +1,7 @@
 import argparse
 import importlib
 
-from benchmark.utils.pytorch.quant import quantize
-from benchmark.libraries.sources import get_library_name
+from benchmark.common.sources import get_library_name, find_modules
 
 
 def argument_handler():
@@ -42,14 +41,14 @@ if __name__ == '__main__':
     #################################################
     # Import the relevant models library and pre-trained model
     #################################################
-    model_library = get_library_name(args.model_library)
-    try:
-        # dynamic import of models library
-        library = importlib.import_module(model_library)
-    except ImportError:
-        print(f'Error: Failed to import {model_library}')
 
-    ml = library.ModelLib(args)
+    # Find relevant modules to import according to the model_library
+    model_lib_module, quant_module = find_modules(args.model_library)
+    model_lib = importlib.import_module(model_lib_module)
+    quant = importlib.import_module(quant_module)
+
+    # Create ModelLibrary object and get the pre-trained model
+    ml = model_lib.ModelLib(args)
     float_model = ml.select_model(args.model_name)
 
     #################################################
@@ -60,7 +59,7 @@ if __name__ == '__main__':
     #################################################
     # Run model compression toolkit
     #################################################
-    quantized_model = quantize(float_model, ml.get_representative_dataset, args)
+    quantized_model = quant.quantize(float_model, ml.get_representative_dataset, args)
 
     #################################################
     # Evaluate quantized model

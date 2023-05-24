@@ -5,9 +5,9 @@ from torch.utils.data import Subset
 from torchvision import models
 import torchvision.transforms as transforms
 
-from benchmark.libraries.base_model_lib import BaseModelLib
+from benchmark.common.base_model_lib import BaseModelLib
 
-from benchmark.utils.pytorch.helpers import classification_eval, get_representative_dataset
+from benchmark.pytorch_code.helpers import classification_eval, get_representative_dataset
 
 
 class ModelLib(BaseModelLib):
