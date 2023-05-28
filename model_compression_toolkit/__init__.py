@@ -25,7 +25,6 @@ from model_compression_toolkit import ptq
 from model_compression_toolkit import qat
 from model_compression_toolkit import exporter
 from model_compression_toolkit import gptq
-from model_compression_toolkit.gptq import GradientPTQConfig
 
 
 # Old API (will not be accessible in future releases)
