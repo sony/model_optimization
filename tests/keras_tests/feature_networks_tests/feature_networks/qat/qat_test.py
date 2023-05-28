@@ -23,6 +23,10 @@ from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer impo
 from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder, keras_load_quantized_model, \
     KerasQuantizationWrapper
 
+from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste import STEActivationQATQuantizer, \
+    STEWeightQATQuantizer
+from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste import STEUniformActivationQATQuantizer, \
+    STEUniformWeightQATQuantizer
 from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_tests import \
@@ -210,7 +214,10 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         qat_model = ptq_model
         if self.test_loading:
             qat_model.save('qat2model.h5')
-            qat_model = keras_load_quantized_model('qat2model.h5')
+            qat_model = keras_load_quantized_model('qat2model.h5', custom_objects={STEActivationQATQuantizer.__name__: STEActivationQATQuantizer,
+                                                                                   STEWeightQATQuantizer.__name__: STEWeightQATQuantizer,
+                                                                                   STEUniformActivationQATQuantizer.__name__: STEUniformActivationQATQuantizer,
+                                                                                   STEUniformWeightQATQuantizer.__name__: STEUniformWeightQATQuantizer})
             os.remove('qat2model.h5')
 
         self.compare(qat_model,

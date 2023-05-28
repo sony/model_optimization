@@ -19,7 +19,6 @@ import unittest
 import tensorflow as tf
 from tensorflow.keras.layers import PReLU, ELU
 
-import model_compression_toolkit as mct
 from model_compression_toolkit.core import QuantizationErrorMethod
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.gptq import RoundingType
@@ -658,16 +657,16 @@ class FeatureNetworkTest(unittest.TestCase):
         QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True).run_test()
         QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True, per_channel=False).run_test()
         QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
-                        weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
-                        activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
+                        weights_quantization_method=QuantizationMethod.UNIFORM,
+                        activation_quantization_method=QuantizationMethod.SYMMETRIC).run_test()
         QATWrappersTest(self, layers.Dense(3, activation='relu'),
-                        weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
-                        activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
+                        weights_quantization_method=QuantizationMethod.UNIFORM,
+                        activation_quantization_method=QuantizationMethod.UNIFORM,
                         test_loading=True, per_channel=False).run_test()
         QATWrappersTest(self, layers.Dense(3, activation='relu')).run_test()
         QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), test_loading=True,
-                        weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
-                        activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC).run_test()
+                        weights_quantization_method=QuantizationMethod.SYMMETRIC,
+                        activation_quantization_method=QuantizationMethod.SYMMETRIC).run_test()
         QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu')).run_test()
         # DW-Conv2D are tested under the tests below because an extra check is needed to verify the
         # quantization per channel of its kernel TODO: should be part of the quantizers tests
